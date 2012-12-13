@@ -462,12 +462,12 @@
       }
 
       this._pushTrace({
-            exception: {
-              'class': errClass,
-              message: errMsg
-            },
-            frames: frames
-          }, null);
+        exception: {
+          'class': errClass,
+          message: errMsg
+        },
+        frames: frames
+      }, null);
     },
     
     handleError: function(err, callback) {
@@ -496,9 +496,11 @@
     *
     * var trace = {
     *  exception: {'class': 'TypeError', 'message': 'blah'},
-    *  trace: [...list of frames...]
+    *  frames: [{filename: 'http://example.com/script.js', method: 'doSomething', lineno: 55}, ...]
     * }
-    * _ratchet.push({_t: 'trace', trace: trace})
+    *
+    * To call via _ratchet.push():
+    * _ratchet.push({_t: 'trace', trace: trace});
     *
     */
     handleErrorTrace: function(obj, callback) {
@@ -514,9 +516,10 @@
       this._pushTrace(obj.trace, callback);
     },
 
-    // Internal function for pushing stack traces
+    /*
+    * Pushes a trace object onto the queue and calls handleEvents()
+    */
     _pushTrace: function(trace, callback) {
-
       var item = {body: {trace: trace}};
       if (callback) {
         item.callback = callback;
