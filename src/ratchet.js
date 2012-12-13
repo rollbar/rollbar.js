@@ -396,6 +396,10 @@
         args.hasOwnProperty("_t") &&
         args['_t'] === 'uncaught') {
         this.handleUncaughtError(args.e, args.u, args.l);
+      } else if (args instanceof Object &&
+        args.hasOwnProperty("_t") &&
+        args['_t'] === 'trace') {
+        this.handleErrorTrace(args, callback);
       } else if (args instanceof Object) {
         this.handleMessage(args, callback);
       } else {
@@ -456,18 +460,14 @@
         errClass = errClassMatch[errClassMatch.length - 1];
         errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
       }
-      this.items.push({
-        body: {
-          trace: {
+
+      _pushTrace({
             exception: {
               'class': errClass,
               message: errMsg
             },
             frames: frames
-          }
-        }
-      });
-      this.handleEvents();
+          }, null);
     },
     
     handleError: function(err, callback) {
@@ -488,6 +488,35 @@
         } 
       }
       
+      _pushTrace(trace, callback);
+    },
+    
+    /*
+    * Reports raw trace objects. This is used for building enhanced or modified stack traces.
+    *
+    * var trace = {
+    *  exception: {'class': 'TypeError', 'message': 'blah'},
+    *  trace: [...list of frames...]
+    * }
+    * _ratchet.push({_t: 'trace', trace: trace})
+    *
+    */
+    handleErrorTrace: function(obj, callback) {
+      if (!obj.trace) {
+        var errorMsg = "Trace objects must contain the property 'trace'";
+        this.logger(errorMsg);
+        if (callback) {
+          callback(new Error(errorMsg));
+        }
+        return;
+      }
+
+      _pushTrace(obj.trace);
+    },
+
+    // Internal function for pushing stack traces
+    _pushTrace: function(trace, callback) {
+
       var item = {body: {trace: trace}};
       if (callback) {
         item.callback = callback;
@@ -496,7 +525,7 @@
       this.items.push(item);
       this.handleEvents();
     },
-    
+
     handleEvents: function() {
       if (this.handler) {
         clearTimeout(this.handler);
