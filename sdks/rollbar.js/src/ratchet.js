@@ -461,7 +461,7 @@
         errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
       }
 
-      _pushTrace({
+      this._pushTrace({
             exception: {
               'class': errClass,
               message: errMsg
@@ -488,7 +488,7 @@
         } 
       }
       
-      _pushTrace(trace, callback);
+      this._pushTrace(trace, callback);
     },
     
     /*
@@ -511,7 +511,7 @@
         return;
       }
 
-      _pushTrace(obj.trace, callback);
+      this._pushTrace(obj.trace, callback);
     },
 
     // Internal function for pushing stack traces
