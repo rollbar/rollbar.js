@@ -346,7 +346,7 @@
       this.accessToken = accessToken;
       this.environment = environment || params['server.environment'];
       this.defaultLevel = params.level || this.defaultLevel;
-      this.endpoint = params.endpoint || 'https://submit.ratchet.io/api/1/';
+      this.endpoint = params.endpoint || '//submit.ratchet.io/api/1/';
       this.extraParams = params;
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
@@ -487,8 +487,13 @@
           trace.frames = frames;
         } 
       }
-      
-      this._pushTrace(trace, callback);
+
+      if (!trace.frames) {
+        // no frames - not useful as a trace. just report as a message.
+        this.handleMessage({msg: className + ': ' + message, level: 'error'}, callback);
+      } else {
+        this._pushTrace(trace, callback);
+      }
     },
     
     /*
