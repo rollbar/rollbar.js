@@ -387,20 +387,20 @@
     push: function(args, callback) {
       if (args instanceof Error) {
         this.handleError(args, callback);
-      } else if (args instanceof Object && 
+      } else if (typeof args == 'object' && 
         !args.hasOwnProperty('msg') &&
         args.hasOwnProperty(0) && args.hasOwnProperty(1) && args.hasOwnProperty(2)) {
         // 'args instanceof Array' for above check doesn't work.
         this.handleUncaughtError(args[0], args[1], args[2]);
-      } else if (args instanceof Object &&
+      } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
         args['_t'] === 'uncaught') {
         this.handleUncaughtError(args.e, args.u, args.l);
-      } else if (args instanceof Object &&
+      } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
         args['_t'] === 'trace') {
         this.handleErrorTrace(args, callback);
-      } else if (args instanceof Object) {
+      } else if (typeof args == 'object') {
         this.handleMessage(args, callback);
       } else {
         this.handleMessage({level: 'info', msg: args.toString()}, callback);
