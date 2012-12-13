@@ -511,7 +511,7 @@
         return;
       }
 
-      _pushTrace(obj.trace);
+      _pushTrace(obj.trace, callback);
     },
 
     // Internal function for pushing stack traces
