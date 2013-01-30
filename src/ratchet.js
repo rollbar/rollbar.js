@@ -341,12 +341,15 @@
     browserPlugins: [],
     logger: null,
     defaultLevel: 'warning',
+    itemsPerMinute: 5,
+    pastMinuteItems: 0,
     
     initialize: function(accessToken, params, environment, logger) {
       this.accessToken = accessToken;
       this.environment = environment || params['server.environment'];
       this.defaultLevel = params.level || this.defaultLevel;
       this.endpoint = params.endpoint || '//submit.ratchet.io/api/1/';
+      this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute == 0 ? params.itemsPerMinute : this.itemsPerMinute);
       this.extraParams = params;
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
@@ -559,6 +562,22 @@
     },
 
     postItem: function(payload, itemCallback) {
+      // Only send this item if there have been less than itemsPerMinute in the
+      // past minute
+      if (this.pastMinuteItems < this.itemsPerMinute) {
+        var context = this;
+        
+        if (this.pastMinuteItems === 0) {
+          setTimeout(function() {
+            context.pastMinuteItems = 0;
+          }, 60000);
+        }
+        
+        this.pastMinuteItems++;
+      } else if (this.itemsPerMinute > 0) {
+        return;
+      }
+      
       var request = RatchetNotifier.createXMLHTTPObject();
       if (request) {
         
@@ -661,7 +680,7 @@
             }
           },
           server: {},
-          notifier: {name: 'ratchet-browser-js', version: '0.9'}
+          notifier: {name: 'ratchet-browser-js', version: '0.9.1'}
         }
       };
       var k;
