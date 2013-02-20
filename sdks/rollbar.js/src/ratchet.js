@@ -348,11 +348,22 @@
       this.accessToken = accessToken;
       this.environment = environment || params['server.environment'];
       this.defaultLevel = params.level || this.defaultLevel;
-      this.endpoint = params.endpoint || '//submit.ratchet.io/api/1/';
       this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute == 0 ? params.itemsPerMinute : this.itemsPerMinute);
       this.extraParams = params;
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
+      
+      if (params.endpoint) {
+        this.endpoint = params.endpoint;
+      } else {
+        var protocol;
+        if (window.location.protocol.indexOf('http') === 0) {
+          protocol = window.location.protocol;
+        } else {
+          protocol = 'https:';
+        }
+        this.endpoint = protocol + '//submit.ratchet.io/api/1/';
+      }
 
       var navPlugins = (window.navigator.plugins || []);
       var cur;
@@ -433,10 +444,13 @@
           message: { body: obj.msg }
         }
       };
+      if (obj._fingerprint) {
+        item.fingerprint = obj._fingerprint;
+      }
       
       // add other keys to body.message
       for (k in obj) {
-        if (obj.hasOwnProperty(k) && k !== 'level' && k !== 'msg') {
+        if (obj.hasOwnProperty(k) && k !== 'level' && k !== 'msg' && k !== '_fingerprint') {
           item.body.message[k] = obj[k];
         }
       }
@@ -680,7 +694,7 @@
             }
           },
           server: {},
-          notifier: {name: 'ratchet-browser-js', version: '0.9.1'}
+          notifier: {name: 'ratchet-browser-js', version: '0.9.2'}
         }
       };
       var k;
