@@ -1,4 +1,4 @@
-ratchet.js
+rollbar.js
 =========
 
-Ratchet.io browser javascript library
+Rollbar browser javascript library

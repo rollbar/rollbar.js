@@ -173,7 +173,7 @@
       return n < 10 ? '0' + n : n;
     }
 
-    Date.prototype.toRatchetJSON = function (key) {
+    Date.prototype.toRollbarJSON = function (key) {
 
         return isFinite(this.valueOf())
             ? this.getUTCFullYear()     + '-' +
@@ -185,9 +185,9 @@
             : null;
     };
 
-    String.prototype.toRatchetJSON      =
-        Number.prototype.toRatchetJSON  =
-        Boolean.prototype.toRatchetJSON = function (key) {
+    String.prototype.toRollbarJSON      =
+        Number.prototype.toRollbarJSON  =
+        Boolean.prototype.toRollbarJSON = function (key) {
           return this.valueOf();
         };
 
@@ -230,8 +230,8 @@
           value = holder[key];
 
       if (value && typeof value === 'object' &&
-              typeof value.toRatchetJSON === 'function') {
-        value = value.toRatchetJSON(key);
+              typeof value.toRollbarJSON === 'function') {
+        value = value.toRollbarJSON(key);
       }
 
       if (typeof rep === 'function') {
@@ -333,7 +333,7 @@
 
   var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
 
-  var RatchetNotifier = {
+  var RollbarNotifier = {
     accessToken: null,
     extraParams: null,
     handler: null,
@@ -362,7 +362,7 @@
         } else {
           protocol = 'https:';
         }
-        this.endpoint = protocol + '//submit.ratchet.io/api/1/';
+        this.endpoint = protocol + '//api.rollbar.com/api/1/';
       }
 
       var navPlugins = (window.navigator.plugins || []);
@@ -384,7 +384,7 @@
 
     createXMLHTTPObject: function() {
       var xmlhttp = false;
-      var factories = RatchetNotifier.XMLHttpFactories;
+      var factories = RollbarNotifier.XMLHttpFactories;
       var i;
       var numFactories = factories.length;
       for (i = 0; i < numFactories; i++) {
@@ -521,8 +521,8 @@
     *  frames: [{filename: 'http://example.com/script.js', method: 'doSomething', lineno: 55}, ...]
     * }
     *
-    * To call via _ratchet.push():
-    * _ratchet.push({_t: 'trace', trace: trace});
+    * To call via _rollbar.push():
+    * _rollbar.push({_t: 'trace', trace: trace});
     *
     */
     handleErrorTrace: function(obj, callback) {
@@ -561,17 +561,17 @@
     asyncHandler: function() {
       var item;
       var payload;
-      var buildPayload = RatchetNotifier.buildPayload;
-      var postItem = RatchetNotifier.postItem;
+      var buildPayload = RollbarNotifier.buildPayload;
+      var postItem = RollbarNotifier.postItem;
       try {
-        item = RatchetNotifier.items.shift();
+        item = RollbarNotifier.items.shift();
         while (item) {
           payload = buildPayload(item);
-          RatchetNotifier.postItem(payload, item.callback);
-          item = RatchetNotifier.items.shift();
+          RollbarNotifier.postItem(payload, item.callback);
+          item = RollbarNotifier.items.shift();
         }
       } catch (exc) {
-        RatchetNotifier.printInternalError(exc);
+        RollbarNotifier.printInternalError(exc);
       }
     },
 
@@ -592,7 +592,7 @@
         return;
       }
       
-      var request = RatchetNotifier.createXMLHTTPObject();
+      var request = RollbarNotifier.createXMLHTTPObject();
       if (request) {
         
         try {
@@ -623,7 +623,7 @@
               }
             };
             
-            request.open('POST', RatchetNotifier.endpoint + 'item/', true);
+            request.open('POST', RollbarNotifier.endpoint + 'item/', true);
             if (request.setRequestHeader) {
               request.setRequestHeader('Content-Type', 'application/json');
             }
@@ -655,7 +655,7 @@
               request.ontimeout = ontimeout;
               request.onerror = onerror;
               request.onload = onload;
-              request.open('POST', RatchetNotifier.endpoint + 'item/', true);
+              request.open('POST', RollbarNotifier.endpoint + 'item/', true);
               request.send(payload);
             }
           }
@@ -667,10 +667,10 @@
     
     buildPayload: function(item) {
       var payload = {
-        access_token: RatchetNotifier.accessToken,
+        access_token: RollbarNotifier.accessToken,
         data: {
-          environment: RatchetNotifier.environment,
-          level: RatchetNotifier.defaultLevel,
+          environment: RollbarNotifier.environment,
+          level: RollbarNotifier.defaultLevel,
           platform: 'browser',
           framework: 'browser-js',
           language: 'javascript',
@@ -680,7 +680,7 @@
             user_ip: "$remote_ip"
           },
           client: {
-            runtime_ms: (new Date()).getTime() - RatchetNotifier.startTime,
+            runtime_ms: (new Date()).getTime() - RollbarNotifier.startTime,
             timestamp: Math.round((new Date()).getTime() / 1000),
             javascript: {
               browser: window.navigator.userAgent,
@@ -690,11 +690,11 @@
                 width: window.screen.width,
                 height: window.screen.height
               },
-              plugins: RatchetNotifier.browserPlugins
+              plugins: RollbarNotifier.browserPlugins
             }
           },
           server: {},
-          notifier: {name: 'ratchet-browser-js', version: '0.9.2'}
+          notifier: {name: 'rollbar-browser-js', version: '0.9.3'}
         }
       };
       var k;
@@ -711,7 +711,7 @@
       }
 
       // merge in user-supplied params
-      var extraParams = RatchetNotifier.extraParams;
+      var extraParams = RollbarNotifier.extraParams;
       for (k in extraParams) {
         if (extraParams.hasOwnProperty(k)) {
           value = extraParams[k];
@@ -728,12 +728,12 @@
         }
       }
 
-      return RatchetNotifier.stringify(payload);
+      return RollbarNotifier.stringify(payload);
     },
 
     printInternalError: function(exc) {
-      if (RatchetNotifier.logger) {
-        RatchetNotifier.logger('Internal ratchet error: ' + exc);
+      if (RollbarNotifier.logger) {
+        RollbarNotifier.logger('Internal rollbar error: ' + exc);
       }
     }
     
@@ -744,23 +744,23 @@
   try {
     var serialized = JSON.stringify(testData);
     if (serialized !== '{"a":[{"b":1}]}') {
-      RatchetNotifier.stringify = setupCustomStringify();
+      RollbarNotifier.stringify = setupCustomStringify();
     } else {
-      RatchetNotifier.stringify = JSON.stringify;
+      RollbarNotifier.stringify = JSON.stringify;
     }
   } catch (e) {
-    RatchetNotifier.stringify = setupCustomStringify();
+    RollbarNotifier.stringify = setupCustomStringify();
   }
 
-  // Initialize the global ratchet notifier instance
-  if (typeof window._ratchet !== 'undefined' && window._ratchet.shift) {
-    var accessToken = _ratchet.shift();
-    var extraParams = _ratchet.shift();
-    var notifier = RatchetNotifier;
-    var preSetupErrors = _ratchet;
+  // Initialize the global rollbar notifier instance
+  if (typeof window._rollbar !== 'undefined' && window._rollbar.shift) {
+    var accessToken = _rollbar.shift();
+    var extraParams = _rollbar.shift();
+    var notifier = RollbarNotifier;
+    var preSetupErrors = _rollbar;
     var err = preSetupErrors.shift();
     notifier.initialize(accessToken, extraParams);
-    window._ratchet = notifier;
+    window._rollbar = notifier;
 
     while (err) {
       notifier.push(err);
@@ -768,6 +768,6 @@
     }
   }
 
-  /*** END ratchet.js ***/
+  /*** END rollbar.js ***/
 
 })(window, document);
