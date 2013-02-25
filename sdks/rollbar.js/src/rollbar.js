@@ -753,14 +753,18 @@
   }
 
   // Initialize the global rollbar notifier instance
-  if (typeof window._rollbar !== 'undefined' && window._rollbar.shift) {
-    var accessToken = _rollbar.shift();
-    var extraParams = _rollbar.shift();
+  var _global = window._rollbar || window._ratchet;
+  if (typeof _global !== 'undefined' && _global.shift) {
+    var accessToken = _global.shift();
+    var extraParams = _global.shift();
     var notifier = RollbarNotifier;
-    var preSetupErrors = _rollbar;
+    var preSetupErrors = _global;
     var err = preSetupErrors.shift();
     notifier.initialize(accessToken, extraParams);
+
+    // Initialize window._rollbar and window._ratchet to support older versions of rollbar
     window._rollbar = notifier;
+    window._ratchet = notifier;
 
     while (err) {
       notifier.push(err);
