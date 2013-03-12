@@ -343,6 +343,7 @@
     defaultLevel: 'warning',
     itemsPerMinute: 5,
     pastMinuteItems: 0,
+    checkIgnore: null,
     
     initialize: function(accessToken, params, environment, logger) {
       this.accessToken = accessToken;
@@ -352,6 +353,7 @@
       this.extraParams = params;
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
+      this.checkIgnore = params.checkIgnore || this.checkIgnore;
       
       if (params.endpoint) {
         this.endpoint = params.endpoint;
@@ -467,6 +469,16 @@
       errMsg = errMsg || 'uncaught exception';
       url = url || '(unknown)';
       lineNo = lineNo || 0;
+
+      if (this.checkIgnore !== null) {
+        try {
+          if (this.checkIgnore(errMsg, url, lineNo) === true) {
+            return;
+          }
+        } catch (e) {
+          this.logger('Exception during check ignore: ' + e);
+        }
+      }
       
       var baseUrl = sanitizeUrl(url);
       var frames = [{filename: baseUrl, lineno: parseInt(lineNo, 10) || null}];
@@ -476,6 +488,7 @@
       if (errClassMatch) {
         errClass = errClassMatch[errClassMatch.length - 1];
         errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+        errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
       }
 
       this._pushTrace({
@@ -546,7 +559,7 @@
       if (callback) {
         item.callback = callback;
       }
-      
+
       this.items.push(item);
       this.handleEvents();
     },
