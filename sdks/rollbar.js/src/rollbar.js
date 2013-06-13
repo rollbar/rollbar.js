@@ -155,7 +155,15 @@
           filename = '<native code>';
           lineno = 0;
         }
-        frames.push({filename: filename, lineno: lineno, method: fn});
+        
+        var frame = {filename: filename, lineno: lineno, method: fn};
+        
+        // Firefox gives a column number for the first frame
+        if (i == 0 && e.columnNumber) {
+          frame.colno = e.columnNumber;
+        }
+        
+        frames.push(frame);
       }
     }
     return frames;
@@ -707,7 +715,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.9.4'}
+          notifier: {name: 'rollbar-browser-js', version: '0.9.5'}
         }
       };
       var k;
