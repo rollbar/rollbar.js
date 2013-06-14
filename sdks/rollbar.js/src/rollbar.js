@@ -160,7 +160,9 @@
         
         // Firefox gives a column number for the first frame
         if (i == 0 && e.columnNumber) {
-          frame.colno = e.columnNumber;
+          // Add 1 to represent a column number starting from 1 since Firefox
+          // provides a 0-based column number
+          frame.colno = e.columnNumber + 1;
         }
         
         frames.push(frame);
@@ -715,7 +717,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.9.5'}
+          notifier: {name: 'rollbar-browser-js', version: '0.9.6'}
         }
       };
       var k;
