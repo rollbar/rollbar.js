@@ -91,7 +91,7 @@
 
       if (chunks.length > 2) {
         fn = chunks.slice(0, -1).join(' ');
-        filename = chunks.slice(-1);
+        filename = chunks.slice(-1)[0];
         lineno = 0;
       } else if (chunks.length === 2) {
         fn = chunks[0];
@@ -717,7 +717,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.9.8'}
+          notifier: {name: 'rollbar-browser-js', version: '0.9.9'}
         }
       };
       var k;
