@@ -717,7 +717,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.9.7'}
+          notifier: {name: 'rollbar-browser-js', version: '0.9.8'}
         }
       };
       var k;
