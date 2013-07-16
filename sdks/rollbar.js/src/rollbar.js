@@ -357,7 +357,7 @@
     
     initialize: function(accessToken, params, environment, logger) {
       this.accessToken = accessToken;
-      this.environment = environment || params['server.environment'];
+      this.environment = environment || params['server.environment'] || 'unspecified';
       this.defaultLevel = params.level || this.defaultLevel;
       this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute == 0 ? params.itemsPerMinute : this.itemsPerMinute);
       this.extraParams = params;
