@@ -187,12 +187,17 @@ for (var i = 0; i < someVar; ++i) {
 
 To use Rollbar with PhoneGap, browser extensions, or any other environment where your code is loaded from a protocol besides ```http``` or ```https```, use the following snippet instead. The only change is to use ```https``` instead of a protocol-less URL.
 
-<textarea readonly class="span10" style="font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;font-size:12px;line-height:normal;color:#333;height:165px;cursor:default;background-color:whiteSmoke;width:100%;" onclick="this.focus();this.select();">
-&lt;script&gt;
+<!-- EditableTextAreaStart -->
+<!-- RemoveNext -->
+```html
+<script>
 var _rollbarParams = {"server.environment": "production"};
 _rollbarParams["notifier.snippet_version"] = "2"; var _rollbar=["POST_CLIENT_ITEM_ACCESS_TOKEN", _rollbarParams]; var _ratchet=_rollbar;
 (function(w,d){w.onerror=function(e,u,l){_rollbar.push({_t:'uncaught',e:e,u:u,l:l});};var i=function(){var s=d.createElement("script");var 
 f=d.getElementsByTagName("script")[0];s.src="https://d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js";s.async=!0;
 f.parentNode.insertBefore(s,f);};if(w.addEventListener){w.addEventListener("load",i,!1);}else{w.attachEvent("onload",i);}})(window,document);
-&lt;script&gt;
-</textarea>
+</script>
+```
+<!-- RemovePrev -->
+<!-- EditableTextAreaEnd -->
+
