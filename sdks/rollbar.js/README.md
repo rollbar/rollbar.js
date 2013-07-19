@@ -1,20 +1,24 @@
 # Rollbar notifier for JavaScript
 
-[TOC]
+<!-- Sub:[TOC] -->
 
 ## Quick start
 
 Copy-paste the following code into the ```<head>``` of every page you want to track. It should be as high as possible, before any other ```<script>``` tags.
 
-<textarea readonly class="span10" style="font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;font-size:12px;line-height:normal;color:#333;height:165px;cursor:default;background-color:whiteSmoke;width:100%;" onclick="this.focus();this.select();">
-&lt;script&gt;
+<!-- EditableTextAreaStart -->
+<!-- RemoveNext -->
+```html
+<script>
 var _rollbarParams = {"server.environment": "production"};
 _rollbarParams["notifier.snippet_version"] = "2"; var _rollbar=["POST_CLIENT_ITEM_ACCESS_TOKEN", _rollbarParams]; var _ratchet=_rollbar;
 (function(w,d){w.onerror=function(e,u,l){_rollbar.push({_t:'uncaught',e:e,u:u,l:l});};var i=function(){var s=d.createElement("script");var 
 f=d.getElementsByTagName("script")[0];s.src="//d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js";s.async=!0;
 f.parentNode.insertBefore(s,f);};if(w.addEventListener){w.addEventListener("load",i,!1);}else{w.attachEvent("onload",i);}})(window,document);
-&lt;script&gt;
-</textarea>
+</script>
+```
+<!-- RemovePrev -->
+<!-- EditableTextAreaEnd -->
 
 If you're running Rollbar on an environment besides production, change the ```server.environment``` value to something else (e.g. "staging").
   
