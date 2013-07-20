@@ -44,13 +44,13 @@ In addition to catching top-level errors, you can use ```_rollbar.push``` to sen
 
 - An ```Error``` instance (i.e. for reporting a caught exception):
 
-    ```javascript
-    try {
-      doSomething();
-    } catch (e) {
-      _rollbar.push(e);
-    }
-    ```
+```javascript
+try {
+  doSomething();
+} catch (e) {
+  _rollbar.push(e);
+}
+```
 
 - A plain string:
 
@@ -117,54 +117,62 @@ var _rollbarParams = {
 
   All of these are configurable via the ```_rollbarParams``` object.
     
-  checkIgnore
-  :   An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(errMsg, url, lineNo) { ... }``` and should return ```true``` if the error should be ignored.
+  <dl>
+  <dt>checkIgnore</dt>
+  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(errMsg, url, lineNo) { ... }``` and should return ```true``` if the error should be ignored.
 
-       Default: ```null```
+Default: ```null```
 
-  context
-  :   Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
-
-  custom
-  :   An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
-
-  itemsPerMinute
-  :   Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```_rollbar.push()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
+  </dd>
+  <dt>context</dt>
+  <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
+  </dd>
+  <dt>custom</dt>
+  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
+  </dd>
+  <dt>itemsPerMinute</dt>
+  <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```_rollbar.push()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
   
-      Default: ```5```
+Default: ```5```
+
+  </dd>
+  <dt>level</dt>
+  <dd>The severity level to report javascript errors at. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+
+Default: ```"warning"```
+
+  </dd>
+  <dt>person</dt>
+  <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
+  </dd>
+  <dt>server.branch</dt>
+  <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
   
-  level
-  :   The severity level to report javascript errors at. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+Default: ```"master"```
 
-      Default: ```"warning"```
+  </dd>
+  <dt>server.environment</dt>
+  <dd>Environment name
 
-  person
-  :   An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
+e.g. ```"production"``` or ```"development"```
 
-  server.branch
-  :   The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
-  
-      Default: ```"master"```
-  
-  server.environment
-  :   Environment name
+Can be an arbitrary string, though to take advantage of the default notifications settings, we recommend using ```"production"``` for your production environment.
 
-      e.g. ```"production"``` or ```"development"```
+Default: ```"production"```
 
-      Can be an arbitrary string, though to take advantage of the default notifications settings, we recommend using ```"production"``` for your production environment.
+  </dd>
+  <dt>server.host</dt>
+  <dd>The hostname of the machine that rendered the page
 
-      Default: ```"production"```
-  
-  server.host
-  :   The hostname of the machine that rendered the page
+e.g. ```"web1.mysite.com"```
 
-      e.g. ```"web1.mysite.com"```
+e.g. in Python, use ```socket.gethostname()```
 
-      e.g. in Python, use ```socket.gethostname()```
-      
-  server.sha
-  :   Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
-
+  </dd>
+  <dt>server.sha</dt>
+  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
+  </dd>
+  </dl>
 
 #### Callbacks
 
