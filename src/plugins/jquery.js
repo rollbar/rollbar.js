@@ -1,5 +1,12 @@
 /*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false, indent: 2 */
 (function(jQuery, window, document) {
+  var _rollbarParams = {
+    "notifier.plugins.jquery": {
+      version: '0.0.1'
+    }
+  };
+  window._rollbar.push({_rollbarParams: _rollbarParams});
+      
   // Report any ajax errors to Rollbar
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     var status = jqXHR.status;

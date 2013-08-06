@@ -411,7 +411,12 @@
     },
     
     push: function(args, callback) {
-      if (args instanceof Error) {
+      if (typeof args === 'object' && args._rollbarParams) {
+        var k;
+        for (k in args._rollbarParams) {
+          this.extraParams[k] = args._rollbarParams[k];
+        }
+      } else if (args instanceof Error) {
         this.handleError(args, callback);
       } else if (typeof args == 'object' && 
         !args.hasOwnProperty('msg') &&
@@ -717,7 +722,11 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.9.9'}
+          notifier: {
+            name: 'rollbar-browser-js',
+            version: '0.10.0',
+            plugins: {}
+          }
         }
       };
       var k;
