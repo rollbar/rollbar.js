@@ -194,6 +194,26 @@ for (var i = 0; i < someVar; ++i) {
 }
 ```
   
+### Instrumenting jQuery
+
+If you use jQuery 1.7 and up, you can include a plugin script that will instrument jQuery to wrap any functions passed into jQuery's ready(), on() and off() to catch errors and report them to Rollbar. The plugin will also report any AJAX errors using jQuery's ajaxError() handler. To install this plugin, copy the following snippet into your pages, making sure it is BELOW the `<script>` tag where jQuery is loaded:
+
+<!-- EditableTextAreaStart -->
+<!-- RemoveNext -->
+```html
+<script>
+!function(r,n,t){r(t).ajaxError(function(r,t,e,u){var f=t.status;var o=e.url;n._rollbar.push({level:"warning",msg:"jQuery ajax error for url "
++o,jquery_status:f,jquery_url:o,jquery_thrown_error:u})});var e=r.fn.ready;r.fn.ready=function(r){return e.call(this,function(){
+try{r()}catch(t){n._rollbar.push(t)}})};var u={};var f=r.fn.on;r.fn.on=function(r,t,e,o){var a=function(r){var t=function(){try{
+return r.apply(this,arguments)}catch(t){n._rollbar.push(t);return null}};u[r]=t;return t};if(t&&typeof t==="function"){
+t=a(t)}else if(e&&typeof e==="function"){e=a(e)}else if(o&&typeof o==="function"){o=a(o)}return f.call(this,r,t,e,o)};
+var o=r.fn.off;r.fn.off=function(r,n,t){if(n&&typeof n==="function"){n=u[n];delete u[n]}else{t=u[t];delete u[t]}
+return o.call(this,r,n,t)}}(jQuery,window,document);
+</script>
+```
+<!-- RemovePrev -->
+<!-- EditableTextAreaEnd -->
+
 ### Using in embedded browsers or extensions
 
 To use Rollbar with PhoneGap, browser extensions, or any other environment where your code is loaded from a protocol besides ```http``` or ```https```, use the following snippet instead. The only change is to use ```https``` instead of a protocol-less URL.
