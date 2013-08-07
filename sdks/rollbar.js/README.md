@@ -196,13 +196,13 @@ for (var i = 0; i < someVar; ++i) {
   
 ### Instrumenting jQuery
 
-If you use jQuery 1.7 and up, you can include a plugin script that will instrument jQuery to wrap any functions passed into jQuery's ready(), on() and off() to catch errors and report them to Rollbar. The plugin will also report any AJAX errors using jQuery's ajaxError() handler. To install this plugin, copy the following snippet into your pages, making sure it is BELOW the `<script>` tag where jQuery is loaded:
+If you use jQuery 1.7 and up, you can include a plugin script that will instrument jQuery to wrap any functions passed into jQuery's ready(), on() and off() to catch errors and report them to Rollbar. To install this plugin, copy the following snippet into your pages, making sure it is BELOW the `<script>` tag where jQuery is loaded:
 
 <!-- EditableTextAreaStart -->
 <!-- RemoveNext -->
 ```html
 <script>
-!function(r,n,t){var e={"notifier.plugins.jquery":{version:"0.0.1"}};n._rollbar.push({_rollbarParams:e});r(t).ajaxError(function(r,t,e,u){
+!function(r,n,t){var e={"notifier.plugins.jquery.version":"0.0.1"};n._rollbar.push({_rollbarParams:e});r(t).ajaxError(function(r,t,e,u){
 var o=t.status;var a=e.url;n._rollbar.push({level:"warning",msg:"jQuery ajax error for url "+a,jquery_status:o,jquery_url:a,jquery_thrown_error:u})});
 var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(){try{r()}catch(t){n._rollbar.push(t)}})};var o={};var a=r.fn.on;
 r.fn.on=function(r,t,e,u){var f=function(r){var t=function(){try{return r.apply(this,arguments)}catch(t){n._rollbar.push(t);
@@ -213,6 +213,11 @@ t=o[t];delete o[t]}return f.call(this,r,n,t)}}(jQuery,window,document);
 ```
 <!-- RemovePrev -->
 <!-- EditableTextAreaEnd -->
+
+The plugin will also automatically report any AJAX errors using jQuery's `ajaxError()` handler. You can disable this functionality by providing the following configuration option in the `_rollbarParams` of your base snippet:
+```javascript
+"notifier.plugins.jquery.ignoreAjaxErrors": true
+```
 
 ### Using in embedded browsers or extensions
 
