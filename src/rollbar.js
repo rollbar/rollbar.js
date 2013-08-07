@@ -360,7 +360,7 @@
       this.environment = environment || params['server.environment'] || 'unspecified';
       this.defaultLevel = params.level || this.defaultLevel;
       this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute == 0 ? params.itemsPerMinute : this.itemsPerMinute);
-      this.extraParams = params;
+      this.extraParams = {};
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
       this.checkIgnore = params.checkIgnore || this.checkIgnore;
@@ -385,6 +385,48 @@
         cur = navPlugins[i];
         this.browserPlugins.push({name: cur.name, description: cur.description});
       }
+      
+      // merge in user-supplied params
+      var k;
+      for (k in params) {
+        if (params.hasOwnProperty(k)) {
+          this.parseParam(k, params[k]);
+        }
+      }
+    },
+    
+    parseParam: function(key, value) {
+      var path = key.split(".");
+      
+      // traverse the path to second-to-last elem
+      var target = this.extraParams;
+      var i;
+      for (i = 0; i < path.length - 1; i++) {
+        if (!target.hasOwnProperty(path[i])) {
+          target[path[i]] = {};
+        }
+        target = target[path[i]];
+      }
+
+      // now save
+      target[path[path.length - 1]] = value;
+    },
+    
+    mergeObjects: function(obj1, obj2) {
+      var k;
+      for (k in obj2) {
+        if (obj2[k].constructor == Object) {
+          if (!obj1.hasOwnProperty(k)) {
+            obj1[k] = obj2[k];
+          } else {
+            obj1[k] = RollbarNotifier.mergeObjects(obj1[k], obj2[k]);
+          }
+        } else {
+          obj1[k] = obj2[k];
+        }
+      }
+      
+      return obj1;
     },
 
     XMLHttpFactories: [
@@ -414,7 +456,7 @@
       if (typeof args === 'object' && args._rollbarParams) {
         var k;
         for (k in args._rollbarParams) {
-          this.extraParams[k] = args._rollbarParams[k];
+          this.parseParam(k, args._rollbarParams[k]);
         }
       } else if (args instanceof Error) {
         this.handleError(args, callback);
@@ -586,6 +628,17 @@
       this.handler = setTimeout(this.asyncHandler, 200);
     },
     
+    internalCheckIgnore: function(item) {
+      var plugins = RollbarNotifier.extraParams.notifier.plugins;
+      
+      if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors
+          && item.body.message && item.body.message.jquery_ajax_error) {
+        return true;
+      }
+      
+      return false;
+    },
+    
     asyncHandler: function() {
       var item;
       var payload;
@@ -594,8 +647,10 @@
       try {
         item = RollbarNotifier.items.shift();
         while (item) {
-          payload = buildPayload(item);
-          RollbarNotifier.postItem(payload, item.callback);
+          if (!RollbarNotifier.internalCheckIgnore(item)) {
+            payload = buildPayload(item);
+            RollbarNotifier.postItem(payload, item.callback);
+          }
           item = RollbarNotifier.items.shift();
         }
       } catch (exc) {
@@ -722,11 +777,7 @@
             }
           },
           server: {},
-          notifier: {
-            name: 'rollbar-browser-js',
-            version: '0.10.0',
-            plugins: {}
-          }
+          notifier: {name: 'rollbar-browser-js', version: '0.10.1'}
         }
       };
       var k;
@@ -741,24 +792,8 @@
           payload.data[k] = item[k];
         }
       }
-
-      // merge in user-supplied params
-      var extraParams = RollbarNotifier.extraParams;
-      for (k in extraParams) {
-        if (extraParams.hasOwnProperty(k)) {
-          value = extraParams[k];
-          path = k.split(".");
-          
-          // traverse the path to second-to-last elem
-          target = payload.data;
-          for (i = 0; i < path.length - 1; i++) {
-            target = target[path[i]];
-          }
-
-          // now save
-          target[path[path.length - 1]] = value;
-        }
-      }
+      
+      RollbarNotifier.mergeObjects(payload.data, RollbarNotifier.extraParams);
 
       return RollbarNotifier.stringify(payload);
     },

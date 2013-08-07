@@ -1,9 +1,7 @@
 /*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false, indent: 2 */
 (function(jQuery, window, document) {
   var _rollbarParams = {
-    "notifier.plugins.jquery": {
-      version: '0.0.1'
-    }
+    "notifier.plugins.jquery.version": '0.0.1'
   };
   window._rollbar.push({_rollbarParams: _rollbarParams});
       
@@ -17,7 +15,8 @@
       msg: 'jQuery ajax error for url ' + url,
       jquery_status: status,
       jquery_url: url,
-      jquery_thrown_error: thrownError
+      jquery_thrown_error: thrownError,
+      jquery_ajax_error: true
     });
   });
   
