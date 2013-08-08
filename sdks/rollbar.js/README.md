@@ -202,13 +202,13 @@ If you use jQuery 1.7 and up, you can include a plugin script that will instrume
 <!-- RemoveNext -->
 ```html
 <script>
-!function(r,n,t){var e={"notifier.plugins.jquery.version":"0.0.1"};n._rollbar.push({_rollbarParams:e});r(t).ajaxError(function(r,t,e,u){
-var o=t.status;var a=e.url;n._rollbar.push({level:"warning",msg:"jQuery ajax error for url "+a,jquery_status:o,jquery_url:a,jquery_thrown_error:u})});
-var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(){try{r()}catch(t){n._rollbar.push(t)}})};var o={};var a=r.fn.on;
-r.fn.on=function(r,t,e,u){var f=function(r){var t=function(){try{return r.apply(this,arguments)}catch(t){n._rollbar.push(t);
-return null}};o[r]=t;return t};if(t&&typeof t==="function"){t=f(t)}else if(e&&typeof e==="function"){e=f(e)}else if(u&&typeof u==="function"){
-u=f(u)}return a.call(this,r,t,e,u)};var f=r.fn.off;r.fn.off=function(r,n,t){if(n&&typeof n==="function"){n=o[n];delete o[n]}else{
-t=o[t];delete o[t]}return f.call(this,r,n,t)}}(jQuery,window,document);
+!function(r,n,e){var t={"notifier.plugins.jquery.version":"0.0.1"};n._rollbar.push({_rollbarParams:t});r(e).ajaxError(function(r,e,t,u){
+var o=e.status;var a=t.url;n._rollbar.push({level:"warning",msg:"jQuery ajax error for url "+a,jquery_status:o,jquery_url:a,jquery_thrown_error:u,
+jquery_ajax_error:true})});var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(){try{r()}catch(e){n._rollbar.push(e)}})};var o={};
+var a=r.fn.on;r.fn.on=function(r,e,t,u){var f=function(r){var e=function(){try{return r.apply(this,arguments)}catch(e){n._rollbar.push(e);
+return null}};o[r]=e;return e};if(e&&typeof e==="function"){e=f(e)}else if(t&&typeof t==="function"){t=f(t)}else if(u&&typeof u==="function"){
+u=f(u)}return a.call(this,r,e,t,u)};var f=r.fn.off;r.fn.off=function(r,n,e){if(n&&typeof n==="function"){n=o[n];delete o[n]}else{e=o[e];
+delete o[e]}return f.call(this,r,n,e)}}(jQuery,window,document);
 </script>
 ```
 <!-- RemovePrev -->
