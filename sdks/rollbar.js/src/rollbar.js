@@ -476,6 +476,22 @@
     },
     
     handleUncaughtError: function(errMsg, url, lineNo) {
+      // Make sure this is a valid uncaught error.
+      // NOTE(cory): sometimes users will trigger an "error" event
+      // on the window object directly which will result in errMsg
+      // being an Object instead of a string.
+      //
+      if (typeof errMsg === 'object') {
+        var target = errMsg.target || 'window';
+        errMsg = 'Error event triggered on ' + target;
+
+        // If this is not actually an uncaught error, we'll have a
+        // valid stack trace so let's _rollbar.push() the error.
+        var e = new Error(errMsg);
+        this.push(e);
+        return;
+      }
+
       errMsg = errMsg || 'uncaught exception';
       url = url || '(unknown)';
       lineNo = lineNo || 0;
