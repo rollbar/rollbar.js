@@ -1,7 +1,7 @@
 /*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false, indent: 2 */
 (function(jQuery, window, document) {
   
-  if (!window._rolllbar) {
+  if (!window._rollbar) {
     return;
   }
   
