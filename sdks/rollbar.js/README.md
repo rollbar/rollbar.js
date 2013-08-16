@@ -202,7 +202,7 @@ If you use jQuery 1.7 and up, you can include a plugin script that will instrume
 <!-- RemoveNext -->
 ```html
 <script>
-!function(r,n,e){var t={"notifier.plugins.jquery.version":"0.0.1"};n._rollbar.push({_rollbarParams:t});r(e).ajaxError(function(r,e,t,u){
+!function(r,n,e){var t={"notifier.plugins.jquery.version":"0.0.2"};n._rollbar.push({_rollbarParams:t});r(e).ajaxError(function(r,e,t,u){
 var o=e.status;var a=t.url;n._rollbar.push({level:"warning",msg:"jQuery ajax error for url "+a,jquery_status:o,jquery_url:a,jquery_thrown_error:u,
 jquery_ajax_error:true})});var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(){try{r()}catch(e){n._rollbar.push(e)}})};var o={};
 var a=r.fn.on;r.fn.on=function(r,e,t,u){var f=function(r){var e=function(){try{return r.apply(this,arguments)}catch(e){n._rollbar.push(e);
