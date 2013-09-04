@@ -45,7 +45,7 @@
   // Wraps functions (if any) passed into jQuery's on() with try/catch
   // to report errors to Rollbar
   var origOn = jQuery.fn.on;
-  jQuery.fn.on = function(events, selector, data, fn) {
+  jQuery.fn.on = function(events, selector, data, fn, internal) {
     var wrap = function(fn) {
       var newFunc = function() {
         try {
@@ -68,7 +68,7 @@
       fn = wrap(fn);
     }
     
-    return origOn.call(this, events, selector, data, fn);
+    return origOn.call(this, events, selector, data, fn, internal);
   };
   
   // Replaces any passed in functions with the Rollbar-wrapped version
