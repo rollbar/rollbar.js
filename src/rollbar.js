@@ -854,6 +854,11 @@
       err = preSetupErrors.shift();
     }
   }
+  
+  // Export `RollbarNotifier` to window
+  // (Used for embedded implemetations and other instances where 
+  // the library is loaded before `_rollbar` is setup)
+  window['RollbarNotifier'] = RollbarNotifier;
 
   /*** END rollbar.js ***/
 
