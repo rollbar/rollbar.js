@@ -6,10 +6,16 @@
   }
   
   var _rollbarParams = {
-    "notifier.plugins.jquery.version": '0.0.3'
+    "notifier.plugins.jquery.version": '0.0.4'
   };
   window._rollbar.push({_rollbarParams: _rollbarParams});
-      
+  
+  var logError = function(e) {
+    if (window.console) {
+      window.console.log(e.message + ' [reported to Rollbar]');
+    }
+  }
+  
   // Report any ajax errors to Rollbar
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     var status = jqXHR.status;
@@ -34,6 +40,7 @@
         fn();
       } catch (e) {
         window._rollbar.push(e);
+        logError(e);
       }
     });
   };
@@ -52,6 +59,7 @@
           return fn.apply(this, arguments);
         } catch (e) {
           window._rollbar.push(e);
+          logError(e);
           return null;
         }
       }
