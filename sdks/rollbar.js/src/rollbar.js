@@ -528,14 +528,10 @@
       // on the window object directly which will result in errMsg
       // being an Object instead of a string.
       //
-      if (typeof errMsg === 'object') {
-        var target = errMsg.target || 'window';
-        errMsg = 'Error event triggered on ' + target;
-
+      if (url && url.hasOwnProperty('stack')) {
         // If this is not actually an uncaught error, we'll have a
         // valid stack trace so let's _rollbar.push() the error.
-        var e = new Error(errMsg);
-        this.push(e);
+        this.push(url);
         return;
       }
 
@@ -793,7 +789,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.2'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.3'}
         }
       };
       var k;
