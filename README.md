@@ -176,12 +176,12 @@ e.g. in Python, use ```socket.gethostname()```
 
 #### Callbacks
 
-You can pass in an optional callback to ```_rollbar.push(obj, callback)``` which will be called when the item is reported to the Rollbar servers. If an error occurs, the callback will be evaluated with 1 argument defining the error that occurred.
+You can pass in an optional callback to ```_rollbar.push(obj, callback)``` which will be called when the item is reported to the Rollbar servers. If an error occurs, the callback will be evaluated with 1 argument defining the error that occurred, otherwise the callback will be evaluated a null error and the reported item's uuid as the second argument.
 
 ```javascript
 for (var i = 0; i < someVar; ++i) {
   var elem = i;
-  var callback = function(err) {
+  var callback = function(err, uuid) {
     if (err !== null) {
       console.log('An error occurred while reporting elem ' + elem + ' to Rollbar, ' + err);
     }

@@ -660,8 +660,19 @@
         item = RollbarNotifier.items.shift();
         while (item) {
           if (!RollbarNotifier.internalCheckIgnore(item)) {
+            var uuid = RollbarNotifier.uuid4();
+            var origCallback = item.callback;
+            var wrappedCallback;
+
+            if (origCallback) {
+              wrappedCallback = function(err) {
+                return origCallback(err, uuid);
+              }
+            }
+
+            item.uuid = uuid;
             payload = buildPayload(item);
-            RollbarNotifier.postItem(payload, item.callback);
+            RollbarNotifier.postItem(payload, wrappedCallback);
           }
           item = RollbarNotifier.items.shift();
         }
@@ -741,7 +752,7 @@
               
               var onload = function(args) {
                 if (itemCallback) {
-                  itemCallback();
+                  itemCallback(null);
                 }
               };
             
@@ -789,7 +800,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.3'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.4'}
         }
       };
       var k;
@@ -814,6 +825,17 @@
       if (RollbarNotifier.logger) {
         RollbarNotifier.logger('Internal rollbar error: ' + exc);
       }
+    },
+
+    // from http://stackoverflow.com/a/8809472/1138191
+    uuid4: function() {
+      var d = new Date().getTime();
+      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+      });
+      return uuid;
     }
     
   };
