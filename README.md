@@ -6,8 +6,8 @@
 
 Copy-paste the following code into the ```<head>``` of every page you want to track. It should be as high as possible, before any other ```<script>``` tags.
 
-<!-- RemoveNext -->
-Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's access token, which you can find in the Rollbar.com interface.
+<!-- RemoveNextIfProject -->
+Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's ```post_client_item``` access token, which you can find in the Rollbar.com interface.
 
 <!-- EditableTextAreaStart -->
 <!-- RemoveNext -->
