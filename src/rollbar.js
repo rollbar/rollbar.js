@@ -366,10 +366,19 @@
       this.checkIgnore = params.checkIgnore || this.checkIgnore;
       this.scrubFields = params.scrubFields || ['passwd', 'password', 'secret', 'confirm_password', 'password_confirmation'];
       this.scrubQueryParamRes = [];
+      this.scrubParamRes = [];
 
       var numFields = this.scrubFields.length;
-      for (var i = 0; i < numFields; ++i) {
-        this.scrubQueryParamRes.push(new RegExp('(\\[?(%5[bB])?' + this.scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?=)([^&\\n]+)', 'igm'));
+      var paramPat;
+      var i;
+
+      // Build two lists of regular expression objects. The first will be used to see
+      // if the key's name matches something that we want to scrub. The second is for
+      // scrubbing things that look like query params.
+      for (i = 0; i < numFields; ++i) {
+        paramPat = '\\[?(%5[bB])?' + this.scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+        this.scrubParamRes.push(new RegExp(paramPat, 'i'));
+        this.scrubQueryParamRes.push(new RegExp('(' + paramPat + '=)([^&\\n]+)', 'igm'));
       }
       
       if (params.endpoint) {
@@ -386,7 +395,6 @@
 
       var navPlugins = (window.navigator.plugins || []);
       var cur;
-      var i;
       var numPlugins = navPlugins.length;
       for (i = 0; i < numPlugins; ++i) {
         cur = navPlugins[i];
@@ -834,11 +842,13 @@
         var k;
         var v;
         for (k in o) {
-          v = o[k];
-          if (v !== null && typeof(v) === 'object') {
-            traverse(v, func);
-          } else {
-            o[k] = func.apply(this, [k, v]);
+          if (o.hasOwnProperty(k)) {
+            v = o[k];
+            if (v !== null && typeof(v) === 'object') {
+              traverse(v, func);
+            } else {
+              o[k] = func.apply(this, [k, v]);
+            }
           }
         }
       };
@@ -854,21 +864,25 @@
       };
 
       var scrubFields = RollbarNotifier.scrubFields;
-      var res = RollbarNotifier.scrubQueryParamRes;
+      var queryRes = RollbarNotifier.scrubQueryParamRes;
+      var paramRes = RollbarNotifier.scrubParamRes;
       var paramScrubber = function(v) {
         var i;
-        var match;
         if (typeof(v) === 'string') {
-          for (i = 0; i < res.length; ++i) {
-            v = v.replace(res[i], redactQueryParam);
+          for (i = 0; i < queryRes.length; ++i) {
+            v = v.replace(queryRes[i], redactQueryParam);
           }
         }
         return v;
       };
 
       var valScrubber = function(k, v) {
-        if (scrubFields.indexOf(k.toLowerCase()) >= 0) {
-          return redactVal(v);
+        var i;
+        for (i = 0; i < paramRes.length; ++i) {
+          if (paramRes[i].test(k)) {
+            v = redactVal(v);
+            break;
+          }
         }
         return v;
       };
