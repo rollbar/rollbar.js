@@ -364,6 +364,13 @@
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
       this.checkIgnore = params.checkIgnore || this.checkIgnore;
+      this.scrubFields = params.scrubFields || ['passwd', 'password', 'secret', 'confirm_password', 'password_confirmation'];
+      this.scrubQueryParamRes = [];
+
+      var numFields = this.scrubFields.length;
+      for (var i = 0; i < numFields; ++i) {
+        this.scrubQueryParamRes.push(new RegExp('(' + this.scrubFields[i] + '=)([^&\\n]+)', 'igm'));
+      }
       
       if (params.endpoint) {
         this.endpoint = params.endpoint;
@@ -800,7 +807,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.4'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.5'}
         }
       };
       var k;
@@ -817,8 +824,63 @@
       }
       
       RollbarNotifier.mergeObjects(payload.data, RollbarNotifier.extraParams);
+      RollbarNotifier.scrubObj(payload);
 
       return RollbarNotifier.stringify(payload);
+    },
+
+    scrubObj: function(obj) {
+      var traverse = function(o, func) {
+        var k;
+        var v;
+        for (k in o) {
+          v = o[k];
+          if (v !== null && typeof(v) === 'object') {
+            traverse(v, func);
+          } else {
+            o[k] = func.apply(this, [k, v]);
+          }
+        }
+      };
+
+      var redactVal = function(val) {
+        return new Array(val.length + 1).join('*');
+      };
+
+      var redactQueryParam = function(match, paramPart, valPart, offset, string) {
+        return paramPart + redactVal(valPart);
+      };
+
+      var scrubFields = RollbarNotifier.scrubFields;
+      var res = RollbarNotifier.scrubQueryParamRes;
+      var paramScrubber = function(v) {
+        var i;
+        var match;
+        if (typeof(v) === 'string') {
+          for (i = 0; i < res.length; ++i) {
+            v = v.replace(res[i], redactQueryParam);
+          }
+        }
+        return v;
+      };
+
+      var valScrubber = function(k, v) {
+        if (scrubFields.indexOf(k.toLowerCase()) >= 0) {
+          return redactVal(v);
+        }
+        return v;
+      };
+
+      var scrubber = function(k, v) {
+        var tmpV = valScrubber(k, v);
+        if (tmpV === v) {
+          return paramScrubber(tmpV);
+        } else {
+          return tmpV;
+        }
+      };
+
+      traverse(obj, scrubber);
     },
 
     printInternalError: function(exc) {
