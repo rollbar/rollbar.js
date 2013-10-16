@@ -369,7 +369,7 @@
 
       var numFields = this.scrubFields.length;
       for (var i = 0; i < numFields; ++i) {
-        this.scrubQueryParamRes.push(new RegExp('(' + this.scrubFields[i] + '=)([^&\\n]+)', 'igm'));
+        this.scrubQueryParamRes.push(new RegExp('(\\[?(%5[bB])?' + this.scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?=)([^&\\n]+)', 'igm'));
       }
       
       if (params.endpoint) {
@@ -844,10 +844,12 @@
       };
 
       var redactVal = function(val) {
+        val = new String(val);
         return new Array(val.length + 1).join('*');
       };
 
-      var redactQueryParam = function(match, paramPart, valPart, offset, string) {
+      var redactQueryParam = function(match, paramPart, dummy1,
+          dummy2, dummy3, valPart, offset, string) {
         return paramPart + redactVal(valPart);
       };
 
