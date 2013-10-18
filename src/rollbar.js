@@ -815,23 +815,20 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.5'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.6'}
         }
       };
-      var k;
-      var i;
-      var value;
-      var path;
-      var target;
+
+      RollbarNotifier.mergeObjects(payload.data, RollbarNotifier.extraParams);
 
       // grab body, any other params set
+      var k;
       for (k in item) {
         if (item.hasOwnProperty(k)) {
           payload.data[k] = item[k];
         }
       }
-      
-      RollbarNotifier.mergeObjects(payload.data, RollbarNotifier.extraParams);
+
       RollbarNotifier.scrubObj(payload);
 
       return RollbarNotifier.stringify(payload);
