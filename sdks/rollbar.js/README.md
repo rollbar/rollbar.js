@@ -124,6 +124,9 @@ var _rollbarParams = {
 Default: ```null```
 
   </dd>
+  <dt>client.javascript.code_version</dt>
+  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
+  </dd>
   <dt>context</dt>
   <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
   </dd>
@@ -168,9 +171,6 @@ e.g. ```"web1.mysite.com"```
 
 e.g. in Python, use ```socket.gethostname()```
 
-  </dd>
-  <dt>server.sha</dt>
-  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
   </dd>
   </dl>
 
