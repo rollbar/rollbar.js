@@ -483,7 +483,7 @@
       } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
         args['_t'] === 'uncaught') {
-        this.handleUncaughtError(args.e, args.u, args.l);
+        this.handleUncaughtError(args.e, args.u, args.l, args.c, args.err);
       } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
         args['_t'] === 'trace') {
@@ -538,6 +538,21 @@
     },
     
     handleUncaughtError: function(errMsg, url, lineNo, colNo, error) {
+
+      errMsg = errMsg || 'uncaught exception';
+      url = url || '(unknown)';
+      lineNo = lineNo || 0;
+
+      if (this.checkIgnore !== null) {
+        try {
+          if (this.checkIgnore(errMsg, url, lineNo) === true) {
+            return;
+          }
+        } catch (e) {
+          this.logger('Exception during check ignore: ' + e);
+        }
+      }
+
       // Make sure this is a valid uncaught error.
       // NOTE(cory): sometimes users will trigger an "error" event
       // on the window object directly which will result in errMsg
@@ -555,20 +570,6 @@
         return;
       }
 
-
-      errMsg = errMsg || 'uncaught exception';
-      url = url || '(unknown)';
-      lineNo = lineNo || 0;
-
-      if (this.checkIgnore !== null) {
-        try {
-          if (this.checkIgnore(errMsg, url, lineNo) === true) {
-            return;
-          }
-        } catch (e) {
-          this.logger('Exception during check ignore: ' + e);
-        }
-      }
       
       var baseUrl = sanitizeUrl(url);
       var frames = [{filename: baseUrl, lineno: parseInt(lineNo, 10) || null}];
