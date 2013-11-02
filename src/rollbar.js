@@ -537,7 +537,7 @@
       this.handleEvents();
     },
     
-    handleUncaughtError: function(errMsg, url, lineNo) {
+    handleUncaughtError: function(errMsg, url, lineNo, colNo, error) {
       // Make sure this is a valid uncaught error.
       // NOTE(cory): sometimes users will trigger an "error" event
       // on the window object directly which will result in errMsg
@@ -548,7 +548,13 @@
         // valid stack trace so let's _rollbar.push() the error.
         this.push(url);
         return;
+      } else if (error && error.hasOwnProperty('stack')) {
+        // Newer versions of browsers are sending through the column number
+        // and the error.
+        this.push(error);
+        return;
       }
+
 
       errMsg = errMsg || 'uncaught exception';
       url = url || '(unknown)';
