@@ -45,53 +45,40 @@
     });
   };
   
-  // Keeps track of a mapping of original function to wrapped function
-  // when used with jQuery's on() and off() event handling
-  var onFuncs = {};
-  
-  // Wraps functions (if any) passed into jQuery's on() with try/catch
-  // to report errors to Rollbar
-  var origOn = jQuery.fn.on;
-  jQuery.fn.on = function(events, selector, data, fn, internal) {
+  // Modified from the code removed from Tracekit in this commit
+  // https://github.com/occ/TraceKit/commit/0d39401
+  var _oldEventAdd = jQuery.event.add;
+  jQuery.event.add = function(elem, types, handler, data, selector) {
+    var _handler;
     var wrap = function(fn) {
-      var newFunc = function() {
+      return function(){
         try {
           return fn.apply(this, arguments);
         } catch (e) {
           window._rollbar.push(e);
           logError(e);
-          return null;
-        }
+        }   
       }
-      
-      onFuncs[fn] = newFunc;
-      return newFunc;
-    }
+    };
     
-    if (selector && typeof selector === 'function') {
-      selector = wrap(selector);
-    } else if (data && typeof data === 'function') {
-      data = wrap(data);
-    } else if (fn && typeof fn === 'function') {
-      fn = wrap(fn);
-    }
-    
-    return origOn.call(this, events, selector, data, fn, internal);
-  };
-  
-  // Replaces any passed in functions with the Rollbar-wrapped version
-  // created above in on(), deletes the mapping, and passes the resulting
-  // function into jQuery's off() to remove the event handling
-  var origOff = jQuery.fn.off;
-  jQuery.fn.off = function(events, selector, fn) {
-    if (selector && typeof selector === 'function') {
-      selector = onFuncs[selector];
-      delete onFuncs[selector];
+    if (handler.handler) {
+      _handler = handler.handler;
+      handler.handler = wrap(handler.handler);
     } else {
-      fn = onFuncs[fn];
-      delete onFuncs[fn];
+      _handler = handler;
+      handler = wrap(handler);
     }
     
-    return origOff.call(this, events, selector, fn);
+    // If the handler we are attaching doesn’t have the same guid as
+    // the original, it will never be removed when someone tries to
+    // unbind the original function later. Technically as a result of
+    // this our guids are no longer globally unique, but whatever, that
+    // never hurt anybody RIGHT?!
+    if (_handler.guid) {
+      handler.guid = _handler.guid;
+    } else {
+      handler.guid = _handler.guid = jQuery.guid++;
+    }
+    return _oldEventAdd.call(this, elem, types, handler, data, selector);
   };
 })(jQuery, window, document);
