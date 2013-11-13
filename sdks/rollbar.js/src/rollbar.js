@@ -663,7 +663,12 @@
     },
     
     internalCheckIgnore: function(item) {
-      var plugins = RollbarNotifier.extraParams.notifier.plugins;
+      var plugins = null;
+      try {
+        plugins = RollbarNotifier.extraParams.notifier.plugins;
+      } catch (e) {
+        // pas
+      }
       
       if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors
           && item.body.message && item.body.message.jquery_ajax_error) {
