@@ -667,7 +667,7 @@
       try {
         plugins = RollbarNotifier.extraParams.notifier.plugins;
       } catch (e) {
-        // pas
+        // pass
       }
       
       if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors
