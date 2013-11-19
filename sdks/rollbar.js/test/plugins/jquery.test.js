@@ -8,8 +8,11 @@ it("should call the second attached callback", function(){
   var $div = $("<div></div>");
 
   // Create a callback function creator
+  var result = [];
   var makeCallback = function(number){
-    return function(){result = number};
+    return function() {
+      result.push(number);
+    };
   }
 
   // Create two seperate callback functions.
@@ -34,5 +37,5 @@ it("should call the second attached callback", function(){
 
   // Expect the result to equal the second callback that should still
   // be attached.
-  expect(result).to.equal(2);
+  expect(result).to.deep.equal([2]);
 });    
