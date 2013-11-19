@@ -21,10 +21,10 @@ it("should call the second attached callback", function(){
   // console.log(func1.toString() === func2.toString());
 
   // Add the first event handler to the click
-  $div.on('click',func1);
+  $div.on('click', func1);
 
   // Add the second event handler to the click
-  $div.on('click',func2);
+  $div.on('click', func2);
 
   // Remove the first event handler from the click
   $div.off('click', func1);        
