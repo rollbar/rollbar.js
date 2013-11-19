@@ -8,8 +8,8 @@ lint:
 	@echo ""
 
 build:
-	@./node_modules/.bin/uglifyjs src/rollbar.js --source-map dist/rollbar.min.map --source-map-url ${CDN}/static/js/rollbar.min.map --output dist/rollbar.min.js
-	@./node_modules/.bin/uglifyjs src/plugins/jquery.js --output dist/plugins/jquery.min.js
+	@./node_modules/.bin/uglifyjs src/rollbar.js --source-map dist/rollbar.min.map --source-map-url ${CDN}/static/js/rollbar.min.map --output dist/rollbar.min.js -m
+	@./node_modules/.bin/uglifyjs src/plugins/jquery.js --output dist/plugins/jquery.min.js -m
 
 test:
 	./node_modules/.bin/mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs -R dot test/index.html
