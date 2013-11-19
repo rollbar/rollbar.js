@@ -6,7 +6,7 @@
   }
   
   var _rollbarParams = {
-    "notifier.plugins.jquery.version": '0.0.4'
+    "notifier.plugins.jquery.version": '0.0.5'
   };
   window._rollbar.push({_rollbarParams: _rollbarParams});
   
