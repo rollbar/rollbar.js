@@ -15,4 +15,8 @@ test:
 	./node_modules/.bin/mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs -R dot test/index.html
 	@echo ""
 
+test-dist:
+	./node_modules/.bin/mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs -R dot test/index.dist.html
+	@echo ""
+
 .PHONY: test
