@@ -9,5 +9,8 @@
     "chai": "~1.8.1",
     "phantomjs": "~1.9.2-2",
     "sinon": "~1.7.3"
+  },
+  "scripts": {
+    "test": "make test"
   }
 }
