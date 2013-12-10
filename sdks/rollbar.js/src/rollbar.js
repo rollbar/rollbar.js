@@ -545,7 +545,7 @@
 
       if (this.checkIgnore !== null) {
         try {
-          if (this.checkIgnore(errMsg, url, lineNo) === true) {
+          if (this.checkIgnore(errMsg, url, lineNo, colNo, error) === true) {
             return;
           }
         } catch (e) {
@@ -840,7 +840,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.7'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.8'}
         }
       };
 
