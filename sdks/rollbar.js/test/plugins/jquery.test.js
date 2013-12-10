@@ -44,7 +44,7 @@ it("should call the second attached callback", function() {
 it("should collect method and url for ajax errors", function(done) {
   this.timeout(1000);
 
-  var url = 'http://localhost:99999';
+  var url = 'asdf';
   var method = 'PUT';
     
   var oldRollbar = window._rollbar;
@@ -53,7 +53,6 @@ it("should collect method and url for ajax errors", function(done) {
 
   $.ajax({url: url, type: method});
   setTimeout(function() {
-    
     expect(mock[0].msg).to.equal('jQuery ajax error for ' + method + ' ' + url);
     expect(mock[0].jquery_url).to.equal(url);
     expect(mock[0].jquery_type).to.equal(method);

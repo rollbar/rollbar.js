@@ -6,7 +6,7 @@
   }
   
   var _rollbarParams = {
-    "notifier.plugins.jquery.version": '0.0.5'
+    "notifier.plugins.jquery.version": '0.0.6'
   };
   window._rollbar.push({_rollbarParams: _rollbarParams});
   
@@ -15,7 +15,7 @@
       window.console.log(e.message + ' [reported to Rollbar]');
     }
   }
-  
+
   // Report any ajax errors to Rollbar
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     var status = jqXHR.status;
