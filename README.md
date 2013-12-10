@@ -95,7 +95,7 @@ Using all config options:
 
 ```javascript
 var _rollbarParams = {
-  checkIgnore: function(errMsg, url, lineNo) {
+  checkIgnore: function(msg, url, lineNo, colNo, error) {
     // don't ignore anything (default)
     return false;
   },
@@ -119,7 +119,7 @@ var _rollbarParams = {
     
   <dl>
   <dt>checkIgnore</dt>
-  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(errMsg, url, lineNo) { ... }``` and should return ```true``` if the error should be ignored.
+  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. It will receive the same arguments as passed by the browser window.onerror. The function signature should be: ```function checkIgnore(msg, url, lineNo, colNo, error) { ... }``` and should return ```true``` if the error should be ignored.
 
 Default: ```null```
 

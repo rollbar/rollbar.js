@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "0.10.7",
+  "version": "0.10.8",
   "devDependencies": {
     "mocha": "~1.14.0",
     "mocha-phantomjs": "~3.1.6",

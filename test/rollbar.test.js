@@ -10,7 +10,6 @@ it("should load window._rollbar", function(done) {
 
 it("should report uncaught errors", function() {
   var _rollbar = window._rollbar;
-  var oldHandleEvents = _rollbar.handleEvents;
   
   var msg, err;
   var filename = 'test_file';
@@ -37,9 +36,34 @@ it("should report uncaught errors", function() {
 });
 
 
+it("should pass all 5 args to checkIgnore", function() {
+  var _rollbar = window._rollbar;
+
+  var oldCheckIgnore = _rollbar.checkIgnore;
+  _rollbar.checkIgnore = function(m, file, line, col, err) {
+    return false;
+  }
+  var spy = sinon.spy(_rollbar, "checkIgnore");
+
+  var error;
+  try { var foo = bar; } catch (e) { error = e; }
+  var args = {_t: "uncaught", e: "error!", u: "filename", l: 1, c: 2, err: error};
+  _rollbar.push(args);
+
+  var callArgs = spy.getCall(0).args;
+  expect(callArgs[0]).to.equal(args.e);
+  expect(callArgs[1]).to.equal(args.u);
+  expect(callArgs[2]).to.equal(args.l);
+  expect(callArgs[3]).to.equal(args.c);
+  expect(callArgs[4]).to.equal(args.err);
+
+  _rollbar.checkIgnore.restore();
+  _rollbar.checkIgnore = oldCheckIgnore;
+});
+
+
 it("should respect level for 'trace' items", function() {
   var _rollbar = window._rollbar;
-  var oldHandleEvents = _rollbar.handleEvents;
   
   var trace = {
     frames: [{lineno: 5, filename: "testfile"}], 
