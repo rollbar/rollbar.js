@@ -231,3 +231,20 @@ f.parentNode.insertBefore(s,f);};if(w.addEventListener){w.addEventListener("load
 <!-- RemovePrev -->
 <!-- EditableTextAreaEnd -->
 
+## Help / Support
+
+If you run into any issues, please email us at [support@rollbar.com](mailto:support@rollbar.com)
+
+You can also find us in IRC: [#rollbar on chat.freenode.net](irc://chat.freenode.net/rollbar)
+
+For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rollbar.js/issues/new).
+
+## Contributing
+
+1. [Fork it](https://github.com/rollbar/rollbar.js)
+2. Create your feature branch (```git checkout -b my-new-feature```).
+3. Commit your changes (```git commit -am 'Added some feature'```)
+4. Push to the branch (```git push origin my-new-feature```)
+5. Create new Pull Request
+
+To set up a development environment, you'll need Node.js and npm. Run `npm install`, then `make test` to run the tests.
