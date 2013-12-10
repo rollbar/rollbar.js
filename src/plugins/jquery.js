@@ -20,12 +20,14 @@
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     var status = jqXHR.status;
     var url = ajaxSettings.url;
+    var type = ajaxSettings.type;
     
     window._rollbar.push({
       level: 'warning',
-      msg: 'jQuery ajax error for url ' + url,
+      msg: 'jQuery ajax error for ' + type + ' ' + url,
       jquery_status: status,
       jquery_url: url,
+      jquery_type: type,
       jquery_thrown_error: thrownError,
       jquery_ajax_error: true
     });
