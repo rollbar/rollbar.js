@@ -639,7 +639,20 @@
         return;
       }
 
-      this._pushTrace(obj.trace, callback);
+      var item = {body: {trace: obj.trace}};
+      if (callback) {
+        item.callback = callback;
+      }
+
+      // merge other props as top-level
+      for (var k in obj) {
+        if (k !== 'trace' && k !== '_t') {
+          item[k] = obj[k];
+        }
+      }
+
+      this.items.push(item);
+      this.handleEvents();
     },
 
     /*
@@ -827,7 +840,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.6'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.7'}
         }
       };
 
