@@ -1,6 +1,6 @@
 var expect = chai.expect;
 
-it("should call the second attached callback", function(){
+it("should call the second attached callback", function() {
   // Variable to store result;
   var result;
 
@@ -9,7 +9,7 @@ it("should call the second attached callback", function(){
 
   // Create a callback function creator
   var result = [];
-  var makeCallback = function(number){
+  var makeCallback = function(number) {
     return function() {
       result.push(number);
     };
@@ -39,3 +39,27 @@ it("should call the second attached callback", function(){
   // be attached.
   expect(result).to.deep.equal([2]);
 });    
+
+
+it("should collect method and url for ajax errors", function(done) {
+  this.timeout(1000);
+
+  var url = 'http://localhost:99999';
+  var method = 'PUT';
+    
+  var oldRollbar = window._rollbar;
+  var mock = [];
+  window._rollbar = mock;
+
+  $.ajax({url: url, type: method});
+  setTimeout(function() {
+    
+    expect(mock[0].msg).to.equal('jQuery ajax error for ' + method + ' ' + url);
+    expect(mock[0].jquery_url).to.equal(url);
+    expect(mock[0].jquery_type).to.equal(method);
+  
+    window._rollbar = oldRollbar;
+
+    done();
+  }, 500);
+});
