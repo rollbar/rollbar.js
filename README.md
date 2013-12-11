@@ -215,7 +215,7 @@ The plugin will also automatically report any AJAX errors using jQuery's `ajaxEr
 
 ### Using in embedded browsers or extensions
 
-To use Rollbar with PhoneGap, browser extensions, or any other environment where your code is loaded from a protocol besides ```http``` or ```https```, use the following snippet instead. The only change is to use ```https``` instead of a protocol-less URL.
+To use Rollbar with PhoneGap, browser extensions, or any other environment where your code is loaded from a protocol besides ```http``` or ```https```, use the following snippet instead. The only change is to use ```https``` instead of a schemaless URL.
 
 <!-- EditableTextAreaStart -->
 <!-- RemoveNext -->
