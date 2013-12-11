@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <title>Rollbar - Late initialization example</title>
+
+    <script>
+    // Create a temproary buffer that will be used to collect any errors that occur before rollbar 
+    // is initialized. This is handled by the default snippet, but we're circumventing some of that 
+    // logic here.
+    var _rollbarBuffer = [];
+    // Create a temporary window.onerror to write to our buffer.
+    window.onerror = function(msg, file, line, col, err) {
+      console.log("Logging error to _rollbarBuffer", msg);
+      _rollbarBuffer.push({_t: 'uncaught', e: msg, u: file, l: line, c: col, err: err});
+    }
+
+    // Load rollbar.min.js asynchronously, on load.
+    // You can replace this with your own script loader if you like.
+    // The important parts are that:
+    // 1. _rollbarBuffer already exists, and the above onerror handler has been set
+    // 2. window._rollbar does not exist yet.
+    function loadRollbarOnLoad() {
+      (function(w,d) {
+        // Apologies for this ugly, partially-deminified code...
+        var i = function() {
+          var s = d.createElement("script");
+          var f = d.getElementsByTagName("script")[0];
+          s.src = "//d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js";
+          s.async = true;
+          f.parentNode.insertBefore(s, f);
+        }
+        if (w.addEventListener) {
+          w.addEventListener("load", i, !1);
+        } else {
+          w.attachEvent("onload", i);
+        }
+      })(window,document);
+    }
+  
+    // Or, load it on demand. Can replace this with your own script loader.
+    function loadRollbar() {
+      console.log("loadRollbar");
+      var script = document.createElement("script");
+      script.src = "//d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js";
+      document.getElementsByTagName("head")[0].appendChild(script);
+    }
+
+    function initRollbar() {
+      console.log("initRollbar");
+
+      var accessToken = "POST_CLIENT_ITEM_ACCESS_TOKEN";
+      var params = {
+        "server.environment": "test"
+      };
+
+      if (window.RollbarNotifier) {
+        console.log("rollbar.min.js has already loaded.");
+        // rollbar.min.js has loaded by now. Initialize it ourself.
+        var _rollbar = window._rollbar = window.RollbarNotifier;
+        _rollbar.initialize(accessToken, params);
+
+        // replace the onerror handler with one that writes to the real _rollbar
+        window.onerror = function(msg, file, line, col, err) {
+          console.log("Logging error to _rollbar", msg);
+          _rollbar.push({_t: 'uncaught', e: msg, u: file, l: line, c: col, err: err});
+        }
+
+        // push any errors collected on the buffer
+        var item = _rollbarBuffer.shift();
+        while (item) {
+          console.log("pushing item:", item);
+          _rollbar.push(item);
+          item = _rollbarBuffer.shift();
+        }
+      } else {
+        console.log("rollbar.min.js has not yet loaded.");
+        // rollbar.min.js has not yet loaded. Set up global variables it will look for, 
+        // and let it initialize itself as soon as rollbar.min.js loads.
+        var _rollbar = window._rollbar = [accessToken, params];
+      
+        // Copy any errors that have already happened from _rollbarBuffer to _rollbar
+        _rollbar.push.apply(_rollbar, _rollbarBuffer);
+        
+        // Replace the onerror handler with one that writes to the real _rollbar.
+        window.onerror = function(msg, file, line, col, err) {
+          console.log("Logging error to _rollbar", msg);
+          window._rollbar.push({_t: 'uncaught', e: msg, u: file, l: line, c: col, err: err});
+        }
+      }
+    }
+
+    loadRollbarOnLoad();
+    // comment prev and uncomment next to see what happens if loading happens later.
+    //setTimeout(loadRollbar, 4000);
+    
+    // Cause an error before init
+    setTimeout(function() {
+      var foo = bar;
+    }, 100);
+    
+    // Then init
+    setTimeout(initRollbar, 2000);
+    
+    // Then cause an error after init
+    setTimeout(function() {
+      var x = y;
+    }, 6000);
+    
+    </script>
+  </head>
+  <body>
+    <h1>Late initialization</h1>
+    <p>This file shows how to initialize rollbar.js yourself. View source and watch the console logs.</p>
+  </body>
+</html>
