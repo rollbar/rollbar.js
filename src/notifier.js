@@ -15,6 +15,7 @@ function Notifier(parentNotifier) {
     }
   }
   this.payloadQueue = [];
+  this.plugins = {};
 }
 
 Notifier._generateLogFn = function(level) {
@@ -109,7 +110,8 @@ Notifier.prototype.scope = function(options) {
   var scopedNotifier = new Notifier();
 
   // Set the payloadQueue of the scoped notifier to
-  // be the same one as thi
+  // be the same one as this notifier so we can have
+  // a single queue where we process payloads.
   scopedNotifier.payloadQueue = this.payloadQueue;
 
   // Create an object from this.options
@@ -121,4 +123,17 @@ Notifier.prototype.scope = function(options) {
   scopedNotifier.configure(scopedOptions);
 
   return scopedNotifier;
+};
+
+/*
+ * Add a new plugin which will be given
+ */
+Notifier.prototype.addPlugin = function(plugin) {
+  this.plugins[plugin.name] = plugin;
+
+  // Implement the logic to add the plugin's version to the appropriate
+  // section in this.options
+
+  plugin.notifier = this;
+
 };
