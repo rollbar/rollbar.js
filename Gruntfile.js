@@ -12,7 +12,6 @@ module.exports = function(grunt) {
     },
     concat: {
       options: {
-        separator: ';',
         banner: '(function(window, document){\n',
         footer: '})(window, document);'
       },
