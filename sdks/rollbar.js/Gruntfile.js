@@ -8,7 +8,7 @@ module.exports = function(grunt) {
           window: true
         }
       },
-      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/init.js']
+      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/init.js']
     },
     concat: {
       options: {
@@ -17,8 +17,8 @@ module.exports = function(grunt) {
         footer: '})(window, document);'
       },
       dist: {
-        src: ['src/notifier.js', 'src/stacktrace.js', 'src/init.js'],
-        dest: 'dist/rollbar.js',
+        src: ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/init.js'],
+        dest: 'dist/<%= pkg.name %>.js'
       }
     },
     uglify: {
@@ -33,7 +33,7 @@ module.exports = function(grunt) {
           }
         },
         files: {
-          'dist/rollbar.min.js': 'dist/rollbar.js',
+          'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
           'dist/snippet.min.js': 'src/snippet.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
