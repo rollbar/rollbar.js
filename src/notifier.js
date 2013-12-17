@@ -1,4 +1,7 @@
 function Notifier(parentNotifier) {
+  this.payloadQueue = [];
+  this.plugins = {};
+
   if (parentNotifier) {
     // If the parent notifier has the shimQueue
     // property it means that it's the Rollbar shim.
@@ -14,8 +17,6 @@ function Notifier(parentNotifier) {
       this.configure(parentNotifier.options);
     }
   }
-  this.payloadQueue = [];
-  this.plugins = {};
 }
 
 Notifier._generateLogFn = function(level) {
