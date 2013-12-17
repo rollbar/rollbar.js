@@ -49,7 +49,7 @@
   }
 
   // Expose Rollbar globally
-  w.Rollbar = Rollbar;
+  w.Rollbar = client;
 
   // Finally, return the new client
   return client;

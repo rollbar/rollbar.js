@@ -8,7 +8,7 @@ module.exports = function(grunt) {
           window: true
         }
       },
-      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/init.js']
+      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/util.js', 'src/notifier.js', 'src/init.js']
     },
     concat: {
       options: {
@@ -17,7 +17,7 @@ module.exports = function(grunt) {
         footer: '})(window, document);'
       },
       dist: {
-        src: ['src/notifier.js', 'src/stacktrace.js', 'src/init.js'],
+        src: ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/init.js'],
         dest: 'dist/rollbar.js',
       }
     },

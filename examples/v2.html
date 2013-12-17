@@ -8,11 +8,14 @@
         if (w.Rollbar) {
           return w.Rollbar;
         }
-        var Rollbar = function() {
-          this.initTs = new Date().getTime();
-          this.shimQueue = [];
+        var Rollbar = function(parentShim) {
+          this.shimId = ++Rollbar.shimCounter;
           this.notifier = null;
+          this.parentShim = parentShim;
         };
+
+        Rollbar.shimCounter = 0;
+
         var methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'configure', 'scope', 'uncaughtError'];
         for (var i = 0; i < methods.length; ++i) {
           Rollbar.prototype[methods[i]] = function(method) {
@@ -20,11 +23,16 @@
               if (this.notifier) {
                 this.notifier[method].apply(this, arguments);
               } else {
-                var data = {method: method, args: arguments, ts: new Date().getTime()};
-                this.shimQueue.push(data);
-              }
-              if (method === 'scope') {
-                return this;
+                var shim = this;
+                if (method === 'scope') {
+                  shim = new Rollbar(this);
+                }
+                var data = {shim: shim, method: method, args: arguments, ts: new Date()};
+                w.RollbarShimQueue.push(data);
+
+                if (method === 'scope') {
+                  return shim;
+                }
               }
             };
           }(methods[i]);
@@ -42,7 +50,7 @@
         var loader = function() {
           var s = d.createElement("script");
           var f = d.getElementsByTagName("script")[0];
-          s.src = "../src/rollbar.js";
+          s.src = "../dist/rollbar.js";
           s.async = true;
           f.parentNode.insertBefore(s, f);
         };
@@ -55,7 +63,10 @@
         }
 
         // Expose Rollbar globally
-        w.Rollbar = Rollbar;
+        w.Rollbar = client;
+
+        // Create the global shim queue
+        w.RollbarShimQueue = [];
 
         // Finally, return the new client
         return client;
@@ -73,14 +84,16 @@
       Rollbar.info('Hello world', {customVar: 333});
 
       // Log error level exception
+      var err;
       try {
         foo();
       } catch (e) {
-        Rollbar.error('foo didn\'t work', e);
+        err = e;
+        Rollbar.error('foo didn\'t work', err);
       }
 
       // Log error level exception with custom data
-      Rollbar.error('foo didn\'t work', e, {customVal: 333});
+      Rollbar.error('foo didn\'t work', err, {customVal: 333});
 
       // Set person data and log warning with custom data (with chaining)
       Rollbar.scope({personId: 12345}).warning('User did something crazy', {crazyId: 'asdf'});
