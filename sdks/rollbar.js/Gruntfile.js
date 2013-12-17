@@ -26,6 +26,10 @@ module.exports = function(grunt) {
         options: {
           sourceMap: function(path) {
             return path.replace(/.js$/, ".map");
+          },
+          sourceMappingURL: function(path) {
+            var prefix = 'https://d37gvrvc0wt4s1.cloudfront.net/static/js/';
+            return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
           }
         },
         files: {
