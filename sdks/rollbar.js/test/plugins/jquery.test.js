@@ -47,11 +47,21 @@ it("should collect method and url for ajax errors", function(done) {
   var url = 'asdf';
   var method = 'PUT';
     
-  var oldRollbar = window._rollbar;
+  var oldShimQueue = window.RollbarShimQueue;
   var mock = [];
-  window._rollbar = mock;
+  window.RollbarShimQueue = mock;
+
+  $.mockjax({
+    url: url,
+    type: method,
+    status: 200,
+    responseText: '{"err":0}'
+  });
 
   $.ajax({url: url, type: method});
+
+  $.mockjaxClear();
+
   setTimeout(function() {
     expect(mock[0].msg).to.equal('jQuery ajax error for ' + method + ' ' + url);
     expect(mock[0].jquery_url).to.equal(url);

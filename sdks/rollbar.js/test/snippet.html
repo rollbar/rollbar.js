@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Rollbar Mocha Tests</title>
+    <title>Rollbar Snippet Mocha Tests</title>
     <link rel="stylesheet" href="lib/mocha/mocha.css"/>
   </head>
   <body>
@@ -10,12 +10,6 @@
     <div id="mocha"></div>
     <div id="mesages"></div>
     <div id="fixtures"></div>
-
-    <!-- jquery -->
-    <script src="lib/jquery/jquery-1.8.3.min.js" type="text/javascript" charset="utf-8"></script>
-
-    <!-- jquery-mockjax -->
-    <script src="lib/jquery-mockjax/jquery-mockjax-1.5.3.js" type="text/javascript" charset="utf-8"></script>
 
     <!-- mocha/chai/sinon -->
     <script src="lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
@@ -41,21 +35,11 @@
       });
     </script>
 
-    <!-- rollbar.js and plugin -->
-    <script type="text/javascript" charset="utf-8">
-      // create the rollbar params before the rollbar.js script loads
-      var rollbarParams = {
-        'endpoint': 'http://localhost/api/1/',
-        'server.branch': 'develop',
-        'server.environment': 'test'
-      };
-      var _rollbar = ['DUMMY_ACCESS_TOKEN', rollbarParams];
-    </script>
-    <script src="../src/rollbar.js" type="text/javascript" charset="utf-8"></script>
-    <script src="../src/plugins/jquery.js" type="text/javascript" charset="utf-8"></script>
+    <!-- snippet source -->
+    <script src="../src/snippet.js" type="text/javascript" charset="utf-8"></script>
 
-    <script src="./rollbar.test.js"></script>
-    <script src="plugins/jquery.test.js"></script>
+    <!-- snippet tests -->
+    <script src="/snippet.test.js" type="text/javascript" charset="utf-8"></script>
 
     <script type="text/javascript" charset="utf-8">
       if (window.mochaPhantomJS) {
