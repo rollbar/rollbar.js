@@ -92,6 +92,10 @@ Notifier.prototype._log = function(level, message, err, custom, callback) {
   // Implement me
 };
 
+Notifier.prototype.route = function(path) {
+  return this.options.endpoint + path;
+};
+
 Notifier.prototype.log = Notifier._generateLogFn();
 Notifier.prototype.debug = Notifier._generateLogFn('debug');
 Notifier.prototype.info = Notifier._generateLogFn('info');
