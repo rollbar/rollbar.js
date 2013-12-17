@@ -1,0 +1,3 @@
+[submodule "vendor/jquery-mockjax"]
+	path = vendor/jquery-mockjax
+	url = https://github.com/rollbar/jquery-mockjax.git
