@@ -8,7 +8,7 @@ module.exports = function(grunt) {
           window: true
         }
       },
-      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js']
+      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js', 'src/shim.js']
     },
     concat: {
       options: {
@@ -16,8 +16,10 @@ module.exports = function(grunt) {
         footer: '})(window, document);'
       },
       dist: {
-        src: ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
-        dest: 'dist/<%= pkg.name %>.js'
+        files: {
+          'dist/<%= pkg.name %>.js': ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js']
+        }
       }
     },
     uglify: {
@@ -33,7 +35,7 @@ module.exports = function(grunt) {
         },
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
-          'dist/snippet.min.js': 'src/snippet.js',
+          'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
       }

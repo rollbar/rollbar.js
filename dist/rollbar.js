@@ -178,7 +178,8 @@ Notifier.prototype.scope = function(options) {
   var scopedNotifier = new Notifier(this);
   return scopedNotifier;
 };
-;/*
+
+/*
  * Derived work from raven-js at https://github.com/lincolnloop/raven-js
  *
  * Requires Util.sanitizeUrl
@@ -302,7 +303,8 @@ function _parseFirefoxOrSafariExc(e) {
   }
   return frames;
 }
-;var Util = {
+
+var Util = {
   merge: function(to, from) {
     var k;
     for (k in from) {
@@ -371,7 +373,8 @@ function _parseFirefoxOrSafariExc(e) {
     return url;
   }
 };
-;var XHR = {
+
+var XHR = {
   XMLHttpFactories: [
       function () {return new XMLHttpRequest();},
       function () {return new ActiveXObject("Msxml2.XMLHTTP");},
@@ -468,7 +471,8 @@ function _parseFirefoxOrSafariExc(e) {
     }
   }
 };
-;var RollbarJSON = {
+
+var RollbarJSON = {
   /*
    * Derived work from json2.js at http://www.JSON.org/js.html
    */
@@ -644,7 +648,8 @@ try {
 } catch (e) {
   RollbarJSON.stringify = RollbarJSON.setupCustomStringify();
 }
-;if (!window._rollbarInitialized) {
+
+if (!window._rollbarInitialized) {
   var shim = window.Rollbar;
   var fullRollbar = new Notifier(shim);
   fullRollbar._processShimQueue(window.RollbarShimQueue || []);
