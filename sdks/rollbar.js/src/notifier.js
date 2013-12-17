@@ -124,16 +124,3 @@ Notifier.prototype.scope = function(options) {
 
   return scopedNotifier;
 };
-
-/*
- * Add a new plugin which will be given
- */
-Notifier.prototype.addPlugin = function(plugin) {
-  this.plugins[plugin.name] = plugin;
-
-  // Implement the logic to add the plugin's version to the appropriate
-  // section in this.options
-
-  plugin.notifier = this;
-
-};

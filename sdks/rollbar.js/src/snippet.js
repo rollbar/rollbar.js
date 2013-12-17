@@ -7,7 +7,7 @@
     this.shimQueue = [];
     this.notifier = null;
   };
-  var methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'configure', 'scope', 'addPlugin', 'uncaughtError'];
+  var methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'configure', 'scope', 'uncaughtError'];
   for (var i = 0; i < methods.length; ++i) {
     Rollbar.prototype[methods[i]] = function(method) {
       return function() {
