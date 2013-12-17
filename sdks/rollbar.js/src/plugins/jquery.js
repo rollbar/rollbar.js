@@ -14,7 +14,7 @@
     if (window.console) {
       window.console.log(e.message + ' [reported to Rollbar]');
     }
-  }
+  };
 
   // Report any ajax errors to Rollbar
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -53,14 +53,14 @@
   jQuery.event.add = function(elem, types, handler, data, selector) {
     var _handler;
     var wrap = function(fn) {
-      return function(){
+      return function() {
         try {
           return fn.apply(this, arguments);
         } catch (e) {
           window._rollbar.push(e);
           logError(e);
-        }   
-      }
+        }
+      };
     };
     
     if (handler.handler) {
