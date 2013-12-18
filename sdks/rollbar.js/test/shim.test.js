@@ -4,12 +4,9 @@ var config = {
   accessToken: 'ACCESS_TOKEN',
   captureUncaught: true    
 };
+Rollbar.init(window, config);
 
 it("should load window.Rollbar", function(done) {
-  expect(window.Rollbar).to.be.a('function');
-
-  window.Rollbar.init(window, config);
-
   expect(window.Rollbar).to.be.an('object');
   done();
 });
@@ -56,23 +53,25 @@ it("should push initial configure onto RollbarShimQueue", function(done) {
 
 
 it("should report uncaught errors", function(done) {
+  var err;
   try {
     // Simulate an uncaught error by wrapping this in a try/catch
     foo();
   } catch (e) {
-    window.Rollbar.uncaughtError('test message where foo is undefined', 'test_file.js', 33, 22, e);
-
-    expect(window.RollbarShimQueue[1]).to.be.an('object');
-    expect(window.RollbarShimQueue[1]).to.have.property('method', 'uncaughtError');
-    expect(window.RollbarShimQueue[1].args).to.not.equal(undefined);
-    expect(window.RollbarShimQueue[1].args[0]).to.contain('foo');
-    expect(window.RollbarShimQueue[1].args[1]).to.equal('test_file.js');
-    expect(window.RollbarShimQueue[1].args[2]).to.equal(33);
-    expect(window.RollbarShimQueue[1].args[3]).to.equal(22);
-    expect(window.RollbarShimQueue[1].args[4]).to.equal(e);
-
-    done();
+    err = e;
+    window.Rollbar.uncaughtError('test message where foo is undefined', 'test_file.js', 33, 22, err);
   }
+
+  expect(window.RollbarShimQueue[1]).to.be.an('object');
+  expect(window.RollbarShimQueue[1]).to.have.property('method', 'uncaughtError');
+  expect(window.RollbarShimQueue[1].args).to.not.equal(undefined);
+  expect(window.RollbarShimQueue[1].args[0]).to.contain('foo');
+  expect(window.RollbarShimQueue[1].args[1]).to.equal('test_file.js');
+  expect(window.RollbarShimQueue[1].args[2]).to.equal(33);
+  expect(window.RollbarShimQueue[1].args[3]).to.equal(22);
+  expect(window.RollbarShimQueue[1].args[4]).to.equal(err);
+
+  done();
 });
 
 
