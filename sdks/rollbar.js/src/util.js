@@ -6,7 +6,7 @@ var Util = {
         if (!to.hasOwnProperty(k)) {
           to[k] = from[k];
         } else {
-          to[k] = merge(to[k], from[k]);
+          to[k] = this.merge(to[k], from[k]);
         }
       } else {
         to[k] = from[k];
