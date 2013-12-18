@@ -31,7 +31,7 @@ var XHR = {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
-                  callback(null);
+                  callback(null, request.responseText);
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
                   //return valid http status codes
@@ -76,7 +76,7 @@ var XHR = {
 
             var onload = function(args) {
               if (callback) {
-                callback(null);
+                callback(null, request.responseText);
               }
             };
 
