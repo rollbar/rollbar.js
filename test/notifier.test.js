@@ -10,16 +10,12 @@ Rollbar.init(window, config);
 
 /***** Misc setup tests *****/
 
-it("should not equal window.Rollbar", function(done) {
-  var notifier = new Notifier();
-  expect(notifier).to.not.equal(window.Rollbar);
-  done();
-});
-
-
-
-it("should not enqueue to the window.RollbarShimQueue", function(done) {
-  done();
+describe("Misc", function() {
+  it("should not equal window.Rollbar", function(done) {
+    var notifier = new Notifier();
+    expect(notifier).to.not.equal(window.Rollbar);
+    done();
+  });
 });
 
 
@@ -29,8 +25,10 @@ it("should not enqueue to the window.RollbarShimQueue", function(done) {
  * Notifier()
  */
 
-it("should have all of the window.Rollbar methods", function(done) {
-  done();
+describe("Notifier()", function() {
+  it("should have all of the window.Rollbar methods", function(done) {
+    done();
+  });
 });
 
 
@@ -38,13 +36,14 @@ it("should have all of the window.Rollbar methods", function(done) {
  * Notifier(shim)
  */
 
-it("should not have any of the shim properties", function(done) {
-  done();
-});
+describe("Notifier(shim)", function() {
+  it("should not have any of the shim properties", function(done) {
+    done();
+  });
 
-
-it("should set the shim's notifier to itself", function(done) {
-  done();
+  it("should set the shim's notifier to itself", function(done) {
+    done();
+  });
 });
 
 
@@ -52,8 +51,10 @@ it("should set the shim's notifier to itself", function(done) {
  * Notifier(notifier)
  */
 
-it("should reference it's parent notifier", function(done) {
-  done();
+describe("Notifier(notifier)", function() {
+  it("should reference it's parent notifier", function(done) {
+    done();
+  });
 });
 
 
@@ -61,13 +62,14 @@ it("should reference it's parent notifier", function(done) {
  * Notifier.configure()
  */
 
-it("should save options via configure()", function(done) {
-  done();
-});
+describe("Notifier.configure()", function() {
+  it("should save options via configure()", function(done) {
+    done();
+  });
 
-
-it("should overwrite previous options via configure()", function(done) {
-  done();
+  it("should overwrite previous options via configure()", function(done) {
+    done();
+  });
 });
 
 
@@ -75,32 +77,42 @@ it("should overwrite previous options via configure()", function(done) {
  * Notifier.uncaughtError()
  */
 
+describe("Notifier.uncaughtError()", function() {
+});
+
 
 /*
  * Notifier.scope()
  */
 
-it("should create a new Notifier with scope()", function(done) {
-  done();
-});
+describe("Notifier.scope()", function() {
+  it("should create a new Notifier with scope()", function(done) {
+    done();
+  });
 
-it("should make a copy of the options with scope()", function(done) {
-  done();
-});
+  it("should make a copy of the options with scope()", function(done) {
+    done();
+  });
 
-it("should not modify parentNotifier's options from a scope() instance when calling configure()", function(done) {
-  done();
+  it("should not modify parentNotifier's options from a scope() instance when calling configure()", function(done) {
+    done();
+  });
 });
 
 
 /*
  * Notifier.log()
  */
+describe("Notifier.log()", function() {
+});
 
 
 /*
  * Notifier.debug/warning/error/critical()
  */
+
+describe("Notifier.debug/warning/error/critical()", function() {
+});
 
 
 /***** Notifier internal API tests *****/
@@ -109,8 +121,10 @@ it("should not modify parentNotifier's options from a scope() instance when call
  * Notifier._log()
  */
 
-it("should enqueue to the Notifier.payloadQueue", function(done) {
-  done();
+describe("Notifier._log()", function() {
+  it("should enqueue to the Notifier.payloadQueue", function(done) {
+    done();
+  });
 });
 
 
@@ -118,9 +132,15 @@ it("should enqueue to the Notifier.payloadQueue", function(done) {
  * Notifier._route()
  */
 
+describe("Notifier._route()", function() {
+});
+
 
 /*
  * Notifier._processShimQueue()
  */
+
+describe("Notifier._processShimQueue()", function() {
+});
 
 
