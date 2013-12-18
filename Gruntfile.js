@@ -62,6 +62,17 @@ module.exports = function(grunt) {
     watch: {
       files: ['<%= jshint.files %>'],
       tasks: ['jshint', 'concat', 'uglify']
+    },
+    blanket_mocha: {
+      all: ['test/shim.html'],
+      options: {
+        threshold: 70,
+        '--web-security' : false,
+        '--local-to-remote-url-access' : true,
+        run: false,
+        log: true,
+        reporter: 'Spec'
+      } 
     }
   });
 
