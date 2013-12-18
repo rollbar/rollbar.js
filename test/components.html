@@ -20,6 +20,8 @@
     <script type="text/javascript" charset="utf-8">
       mocha.ui('bdd');
       mocha.reporter('html');
+      var expect = chai.expect;
+      var assert = chai.assert;
     </script>
 
     <!-- mock library setup -->
@@ -33,10 +35,23 @@
       });
     </script>
 
+    <script src="../src/util.js" type="text/javascript" charset="utf-8"></script>
+
     <script src="../src/json.js" type="text/javascript" charset="utf-8"></script>
     <script src="./json.test.js"></script>
 
     <script src="../src/xhr.js" type="text/javascript" charset="utf-8"></script>
     <script src="./xhr.test.js"></script>
+
+    <script src="../src/stacktrace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./stacktrace.test.js"></script>
+
+    <script type="text/javascript" charset="utf-8">
+      if (window.mochaPhantomJS) {
+        mochaPhantomJS.run();
+      } else {
+        mocha.run();
+      }
+    </script>
   </body>
 </html>
