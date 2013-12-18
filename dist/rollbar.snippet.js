@@ -6,13 +6,17 @@ var Rollbar = function(parentShim) {
 };
 
 Rollbar.shimCounter = 0;
-Rollbar.shimQueue = [];
 
 Rollbar.init = function(window, config) {
-  if (window.Rollbar) {
+  if (typeof window.Rollbar === 'object') {
     return window.Rollbar;
   }
+
+  // Expose the global shim queue
+  window.RollbarShimQueue = [];
+
   var client = new Rollbar();
+  client.configure(config);
 
   if (!config || (config && config.captureUncaught)) {
     // Create the client and set the onerror handler
@@ -27,9 +31,6 @@ Rollbar.init = function(window, config) {
 
   // Expose Rollbar globally
   window.Rollbar = client;
-
-  // Expose the global shim queue
-  window.RollbarShimQueue = [];
 };
 
 Rollbar.load = function(window, document) {
@@ -77,7 +78,7 @@ for (var i = 0; i < _methods.length; ++i) {
 }
 
 var config = {
-  access_token: 'ACCESS_TOKEN',
+  accessToken: 'ACCESS_TOKEN',
   captureUncaught: true
 };
 
