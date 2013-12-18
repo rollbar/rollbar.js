@@ -68,8 +68,21 @@ Notifier.prototype._getLogArgs = function(args) {
 
   // TODO(cory): somehow pass in timestamp too...
   
-  return {level: level, message: message, err: err, custom: custom, callback: callback};
+  return {
+    level: level,
+    message: message,
+    err: err,
+    custom: custom,
+    callback: callback
+  };
 };
+
+
+Notifier.prototype._route = function(path) {
+  // TODO(cory): make this work well with path/, /path, /path/, etc...
+  return this.options.endpoint + path;
+};
+
 
 /*
  * Given a queue containing each call to the shim, call the
@@ -146,10 +159,6 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
 Notifier.prototype._log = function(level, message, err, custom, callback) {
   // Implement me
   console.log('IMPLEMENT ME', level, message, err, custom);
-};
-
-Notifier.prototype.route = function(path) {
-  return this.options.endpoint + path;
 };
 
 Notifier.prototype.log = Notifier._generateLogFn();
