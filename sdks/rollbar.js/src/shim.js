@@ -1,10 +1,10 @@
+_shimCounter = 0;
+
 var Rollbar = function(parentShim) {
-  this.shimId = ++Rollbar.shimCounter;
+  this.shimId = ++_shimCounter;
   this.notifier = null;
   this.parentShim = parentShim;
 };
-
-Rollbar.shimCounter = 0;
 
 Rollbar.init = function(window, config) {
   if (typeof window.Rollbar === 'object') {
@@ -52,6 +52,7 @@ Rollbar.load = function(window, document) {
 
 // Stub out rollbar.js methods
 function stub(method) {
+  var R = Rollbar;
   return function() {
     if (this.notifier) {
       this.notifier[method].apply(this, arguments);
@@ -59,7 +60,7 @@ function stub(method) {
       var shim = this;
       var isScope = method === 'scope';
       if (isScope) {
-        shim = new Rollbar(this);
+        shim = new R(this);
       }
       var args = Array.prototype.slice.call(arguments, 0);
       var data = {shim: shim, method: method, args: args, ts: new Date()};

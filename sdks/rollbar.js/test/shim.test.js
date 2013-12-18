@@ -74,51 +74,36 @@ it("should report uncaught errors", function(done) {
   done();
 });
 
+it("should return a new shim for scope()", function(done) {
+  var newScope = window.Rollbar.scope();
 
-/*
-it("should pass all 5 args to checkIgnore", function() {
-  var _rollbar = window._rollbar;
+  expect(newScope).to.be.an('object');
+  expect(newScope).to.not.equal(window.Rollbar);
 
-  var oldCheckIgnore = _rollbar.checkIgnore;
-  _rollbar.checkIgnore = function(m, file, line, col, err) {
-    return false;
-  }
-  var spy = sinon.spy(_rollbar, "checkIgnore");
-
-  var error;
-  try { var foo = bar; } catch (e) { error = e; }
-  var args = {_t: "uncaught", e: "error!", u: "filename", l: 1, c: 2, err: error};
-  _rollbar.push(args);
-
-  var callArgs = spy.getCall(0).args;
-  expect(callArgs[0]).to.equal(args.e);
-  expect(callArgs[1]).to.equal(args.u);
-  expect(callArgs[2]).to.equal(args.l);
-  expect(callArgs[3]).to.equal(args.c);
-  expect(callArgs[4]).to.equal(args.err);
-
-  _rollbar.checkIgnore.restore();
-  _rollbar.checkIgnore = oldCheckIgnore;
-});
-
-
-it("should respect level for 'trace' items", function() {
-  var _rollbar = window._rollbar;
-  
-  var trace = {
-    frames: [{lineno: 5, filename: "testfile"}], 
-    exception: {"class": "ClassName", message: "the message"}
+  var props = {
+    log: 'function',
+    debug: 'function',
+    info: 'function',
+    warning: 'function',
+    error: 'function',
+    critical: 'function',
+    uncaughtError: 'function',
+    configure: 'function',
+    scope: 'function',
+    shimId: 'number',
+    notifier: 'null',
+    parentShim: 'object'
   };
-  var level = "info";
 
-  var spy = sinon.spy(_rollbar.items, "push");
-  
-  _rollbar.push({_t: "trace", trace: trace, level: level});
+  for (var prop in props) {
+    console.log('checking', prop, 'expected to be', props[prop]);
+    expect(newScope).to.have.property(prop).that.is.a(props[prop]);
+  }
 
-  expect(spy.called).to.be.true;
-  var item = spy.getCall(0).args[0];
-  expect(item.level).to.equal(level);
-  expect(item.body.trace).to.deep.equal(trace);
+  expect(newScope.shimId).to.be.above(window.Rollbar.shimId);
+  expect(newScope.parentShim).to.equal(window.Rollbar);
+  expect(newScope.log).to.equal(window.Rollbar.log);
+
+  done();
 });
-*/
 
