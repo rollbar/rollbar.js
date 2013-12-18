@@ -44,7 +44,18 @@ module.exports = function(grunt) {
       test: {
         src: ['test/**/*.html'],
         options: {
-          run: true
+          '--web-security' : false,
+          '--local-to-remote-url-access' : true,
+          run: true,
+          log: true,
+          reporter: 'Spec'
+        }
+      }
+    },
+    express: {
+      dist: {
+        options: {
+          server: './test/express'
         }
       }
     },
@@ -59,7 +70,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-express');
 
-  grunt.registerTask('test', ['jshint', 'mocha']);
-  grunt.registerTask('default', ['jshint', 'concat', 'uglify', 'mocha']);
+  grunt.registerTask('test', ['jshint', 'express', 'mocha']);
+  grunt.registerTask('default', ['jshint', 'concat', 'uglify', 'express', 'mocha']);
 };
