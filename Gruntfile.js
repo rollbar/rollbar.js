@@ -8,7 +8,7 @@ module.exports = function(grunt) {
           window: true
         }
       },
-      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js', 'src/shim.js']
+      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
     },
     concat: {
       options: {
@@ -18,7 +18,7 @@ module.exports = function(grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.js': ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
-          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js']
+          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/shimload.js']
         }
       }
     },
