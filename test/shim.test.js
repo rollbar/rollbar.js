@@ -80,12 +80,33 @@ describe("window.Rollbar.uncaughtError", function() {
 
 
 describe("window.Rollbar.configure()", function() {
+  it("should not return anything", function(done) {
+    expect(window.Rollbar.configure()).to.equal(undefined);
+    done();
+  });
+
+  it("should should pass all arguments to the RollbarShimQueue", function(done) {
+    var preLen = window.RollbarShimQueue.length;
+    var options = {hello: 'world'};
+    window.Rollbar.configure(options, 33);
+
+    expect(window.RollbarShimQueue).to.have.length(preLen + 1);
+
+    var configData = window.RollbarShimQueue[preLen];
+    expect(configData).to.be.an('object');
+    expect(configData.args).to.be.an('array');
+    expect(configData.args).to.have.length(2);
+    expect(configData.args[0]).to.equal(options);
+    expect(configData.args[1]).to.equal(33);
+
+    done();
+  });
 });
 
 
 describe("window.Rollbar.scope()", function() {
 
-  it("should return a new shim)", function(done) {
+  it("should return a new shim", function(done) {
     var newScope = window.Rollbar.scope();
 
     expect(newScope).to.be.an('object');
