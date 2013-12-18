@@ -4,7 +4,7 @@
  * Requires Util.sanitizeUrl
  */
 
-var StackTrace = function(exc) {
+function StackTrace(exc) {
   var frames = [];
 
   if (exc.arguments && exc.stack) {
@@ -22,7 +22,8 @@ var StackTrace = function(exc) {
     frames = [{filename: fileUrl, lineno: lineno}];
   }
   this.frames = frames.reverse();
-};
+}
+
 
 function _parseChromeExc(e) {
   var chunks, fn, filename, lineno, colno,
@@ -79,6 +80,7 @@ function _parseChromeExc(e) {
   } 
   return frames;
 }
+
 
 function _parseFirefoxOrSafariExc(e) {
   var chunks, fn, filename, lineno,
