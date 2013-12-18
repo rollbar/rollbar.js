@@ -69,8 +69,21 @@ Notifier.prototype._getLogArgs = function(args) {
 
   // TODO(cory): somehow pass in timestamp too...
   
-  return {level: level, message: message, err: err, custom: custom, callback: callback};
+  return {
+    level: level,
+    message: message,
+    err: err,
+    custom: custom,
+    callback: callback
+  };
 };
+
+
+Notifier.prototype._route = function(path) {
+  // TODO(cory): make this work well with path/, /path, /path/, etc...
+  return this.options.endpoint + path;
+};
+
 
 /*
  * Given a queue containing each call to the shim, call the
@@ -149,10 +162,6 @@ Notifier.prototype._log = function(level, message, err, custom, callback) {
   console.log('IMPLEMENT ME', level, message, err, custom);
 };
 
-Notifier.prototype.route = function(path) {
-  return this.options.endpoint + path;
-};
-
 Notifier.prototype.log = Notifier._generateLogFn();
 Notifier.prototype.debug = Notifier._generateLogFn('debug');
 Notifier.prototype.info = Notifier._generateLogFn('info');
@@ -185,7 +194,7 @@ Notifier.prototype.scope = function(options) {
  * Requires Util.sanitizeUrl
  */
 
-var StackTrace = function(exc) {
+function StackTrace(exc) {
   var frames = [];
 
   if (exc.arguments && exc.stack) {
@@ -203,7 +212,8 @@ var StackTrace = function(exc) {
     frames = [{filename: fileUrl, lineno: lineno}];
   }
   this.frames = frames.reverse();
-};
+}
+
 
 function _parseChromeExc(e) {
   var chunks, fn, filename, lineno, colno,
@@ -261,6 +271,7 @@ function _parseChromeExc(e) {
   return frames;
 }
 
+
 function _parseFirefoxOrSafariExc(e) {
   var chunks, fn, filename, lineno,
       traceback = [],
@@ -312,7 +323,7 @@ var Util = {
         if (!to.hasOwnProperty(k)) {
           to[k] = from[k];
         } else {
-          to[k] = merge(to[k], from[k]);
+          to[k] = this.merge(to[k], from[k]);
         }
       } else {
         to[k] = from[k];

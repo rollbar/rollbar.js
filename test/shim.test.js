@@ -54,8 +54,8 @@ describe("Script load", function() {
 });
 
 
-describe("window.Rollbar", function() {
-  it("should report uncaught errors", function(done) {
+describe("window.Rollbar.uncaughtError", function() {
+  it("should report all args", function(done) {
     var err;
     try {
       // Simulate an uncaught error by wrapping this in a try/catch
@@ -76,8 +76,16 @@ describe("window.Rollbar", function() {
 
     done();
   });
+});
 
-  it("should return a new shim for scope()", function(done) {
+
+describe("window.Rollbar.configure()", function() {
+});
+
+
+describe("window.Rollbar.scope()", function() {
+
+  it("should return a new shim)", function(done) {
     var newScope = window.Rollbar.scope();
 
     expect(newScope).to.be.an('object');
@@ -99,7 +107,6 @@ describe("window.Rollbar", function() {
     };
 
     for (var prop in props) {
-      console.log('checking', prop, 'expected to be', props[prop]);
       expect(newScope).to.have.property(prop).that.is.a(props[prop]);
     }
 
@@ -109,4 +116,14 @@ describe("window.Rollbar", function() {
 
     done();
   });
+
+  // TODO(cory): negative test cases for invalid params
+});
+
+
+describe("window.Rollbar.log()", function() {
+});
+
+
+describe("window.Rollbar.debug/info/warning/error/critical()", function() {
 });
