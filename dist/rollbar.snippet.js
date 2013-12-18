@@ -62,7 +62,8 @@ function stub(method) {
       if (isScope) {
         shim = new Rollbar(this);
       }
-      var data = {shim: shim, method: method, args: arguments, ts: new Date()};
+      var args = Array.prototype.slice.call(arguments, 0);
+      var data = {shim: shim, method: method, args: args, ts: new Date()};
       window.RollbarShimQueue.push(data);
 
       if (isScope) {
