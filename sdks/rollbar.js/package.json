@@ -28,6 +28,9 @@
   "cdn": {
     "host": "d37gvrvc0wt4s1.cloudfront.net"
   },
+  "defaults": {
+    "endpoint": "https://api.rollbar.com/api/1/item/"
+  },
   "plugins": {
     "jquery": {
       "version": "0.0.6"

@@ -18,6 +18,7 @@ function Notifier(parentNotifier) {
 
 // Updated by the build process to match package.json
 Notifier.VERSION = '0.10.8';
+Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
@@ -82,9 +83,14 @@ Notifier.prototype._getLogArgs = function(args) {
 
 
 Notifier.prototype._route = function(path) {
-  var endpoint = this.options.endpoint || 'https://api.rollbar.com/api/1/item/';
+  var endpoint = this.options.endpoint || Notifier.DEFAULT_ENDPOINT;
 
-  // TODO(cory): make this work well with path/, /path, /path/, etc...
+  if (/\/$/.test(endpoint) && /^\//.test(path)) {
+    path = path.substring(1);
+  } else if (!(/\/$/.test(endpoint)) && !(/^\//.test(path))) {
+    path = '/' + path;
+  }
+
   return endpoint + path;
 };
 

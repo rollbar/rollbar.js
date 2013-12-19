@@ -62,12 +62,9 @@ describe("Notifier(shim)", function() {
     var shim = window.Rollbar;
     var notifier = new Notifier(shim);
 
-    var prop;
-    for (prop in shim) {
-      if (shim.hasOwnProperty(prop)) {
-        expect(notifier).to.not.have.property(prop);
-      }
-    }
+    expect(notifier).to.not.have.property('shimId');
+    expect(notifier).to.not.have.property('notifier');
+    expect(notifier).to.not.have.property('parentShim');
 
     done();
   });
@@ -105,8 +102,11 @@ describe("Notifier(notifier)", function() {
 describe("Notifier.configure()", function() {
   it("should save options via configure()", function(done) {
     var notifier = new Notifier();
-    notifier.configure({foo: 'bar'});
-    expect(notifier.options.foo).to.equal('bar');
+    var config = {foo: 'bar', a: {b: 'c', array: ['a', 'b']}, d: [1, 2, 3]};
+    notifier.configure(config);
+
+    expect(notifier.options).to.deep.equal(config);
+    expect(notifier.options).to.not.equal(config);
 
     done();
   });
@@ -148,6 +148,7 @@ describe("Notifier.scope()", function() {
 
     expect(x).to.not.equal(notifier);
     expect(x.constructor).to.equal(Notifier);
+    expect(x.parentNotifier).to.equal(notifier);
 
     done();
   });
@@ -247,95 +248,30 @@ describe("Notifier.log()", function() {
  */
 
 describe("Notifier.debug/warning/error/critical()", function() {
-  it("should report a message with a debug level", function(done) {
-    var notifier = new Notifier();
-    var spy = sinon.spy(notifier, "_log");
+  var logLevelTest = function(level) {
+    it("should report a message with a " + level + " level", function(done) {
+      var notifier = new Notifier();
+      var spy = sinon.spy(notifier, "_log");
+      notifier[level](level);
 
-    notifier.debug('debug');
+      expect(spy.called).to.be.true;
 
-    expect(spy.called).to.be.true;
+      var call = spy.getCall(0);
+      level = call.args[0];
+      var message = call.args[1];
 
-    var call = spy.getCall(0);
-    var level = call.args[0];
-    var message = call.args[1];
+      expect(level).to.be.equal(level);
+      expect(message).to.be.equal(level);
 
-    expect(level).to.be.equal('debug');
-    expect(message).to.be.equal('debug');
+      done();
+    });
+  };
 
-    done();
-  });
-
-  it("should report a message with a info level", function(done) {
-    var notifier = new Notifier();
-    var spy = sinon.spy(notifier, "_log");
-
-    notifier.info('info');
-
-    expect(spy.called).to.be.true;
-
-    var call = spy.getCall(0);
-    var level = call.args[0];
-    var message = call.args[1];
-
-    expect(level).to.be.equal('info');
-    expect(message).to.be.equal('info');
-
-    done();
-  });
-
-  it("should report a message with a warning level", function(done) {
-    var notifier = new Notifier();
-    var spy = sinon.spy(notifier, "_log");
-
-    notifier.warning('warning');
-
-    expect(spy.called).to.be.true;
-
-    var call = spy.getCall(0);
-    var level = call.args[0];
-    var message = call.args[1];
-
-    expect(level).to.be.equal('warning');
-    expect(message).to.be.equal('warning');
-
-    done();
-  });
-
-  it("should report a message with a error level", function(done) {
-    var notifier = new Notifier();
-    var spy = sinon.spy(notifier, "_log");
-
-    notifier.error('error');
-
-    expect(spy.called).to.be.true;
-
-    var call = spy.getCall(0);
-    var level = call.args[0];
-    var message = call.args[1];
-
-    expect(level).to.be.equal('error');
-    expect(message).to.be.equal('error');
-
-    done();
-  });
-
-  it("should report a message with a debug critical", function(done) {
-    var notifier = new Notifier();
-    var spy = sinon.spy(notifier, "_log");
-
-    notifier.critical('critical');
-
-    expect(spy.called).to.be.true;
-
-    var call = spy.getCall(0);
-    var level = call.args[0];
-    var message = call.args[1];
-
-    expect(level).to.be.equal('critical');
-    expect(message).to.be.equal('critical');
-
-    done();
-  });
+  var i;
+  var levels = ['debug', 'info', 'warning', 'error', 'critical'];
+  for (i = 0; i < levels.length; ++i) {
+    logLevelTest(levels[i]);
+  }
 });
 
 
@@ -360,12 +296,49 @@ describe("Notifier._log()", function() {
 describe("Notifier._route()", function() {
   it("should route using the default endpoint", function(done) {
     var notifier = new Notifier();
-
     expect(notifier._route('test')).to.equal('https://api.rollbar.com/api/1/item/test');
 
     notifier.configure({endpoint: 'http://test.com/'});
-
     expect(notifier._route('test')).to.equal('http://test.com/test');
+
+    done();
+  });
+
+  it("should route using a custom endpoint", function(done) {
+    var notifier = new Notifier();
+
+    notifier.configure({endpoint: 'http://test.com/'});
+    expect(notifier._route('test')).to.equal('http://test.com/test');
+
+    done();
+  });
+
+  it("should route using various combinations of '/'", function(done) {
+    var notifier = new Notifier();
+
+    notifier.configure({endpoint: 'http://test.com/'});
+    expect(notifier._route('/test')).to.equal('http://test.com/test');
+
+    notifier.configure({endpoint: 'http://test.com/'});
+    expect(notifier._route('test/')).to.equal('http://test.com/test/');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('/test/')).to.equal('http://test.com/test/');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('test')).to.equal('http://test.com/test');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('test')).to.equal('http://test.com/test');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('/test')).to.equal('http://test.com/test');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('/test/')).to.equal('http://test.com/test/');
+
+    notifier.configure({endpoint: 'http://test.com'});
+    expect(notifier._route('test/')).to.equal('http://test.com/test/');
 
     done();
   });
