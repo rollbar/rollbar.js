@@ -1,5 +1,5 @@
 function Notifier(parentNotifier) {
-  this.options = {};
+  this.options = {payload: {}};
   this.plugins = {};
   this.parentNotifier = parentNotifier;
 
@@ -22,13 +22,16 @@ Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
-window.RollbarPayloadQueue = [];
+window._rollbarPayloadQueue = [];
+
+// This contains global options for all Rollbar notifiers.
+window._globalRollbarOptions = [];
 
 Notifier._generateLogFn = function(level) {
   return function() {
     var args = this._getLogArgs(arguments);
 
-    return this._log(level || args.level || this.options.level || 'debug',
+    return this._log(level || args.level || this.options.defaultLogLevel || 'debug',
         args.message, args.err, args.custom, args.callback);
   };
 };
@@ -42,8 +45,7 @@ Notifier._generateLogFn = function(level) {
  * }
  */
 Notifier.prototype._getLogArgs = function(args) {
-  console.log(args);
-  var level = this.options.level || 'debug';
+  var level = this.options.defaultLogLevel || 'debug';
   var ts;
   var message;
   var err;
@@ -155,6 +157,17 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
   }
 };
 
+
+/*
+ * Builds and returns an Object that will be enqueued onto the
+ * window._rollbarPayloadQueue array to be sent to Rollbar.
+ */
+Notifier.prototype._buildPayload = function(ts, level, message, err, custom, callback) {
+  // Implement me
+  throw new Error('implement me');
+};
+
+
 /*
  * Logs stuff to Rollbar and console.log using the default
  * logging level.
@@ -184,7 +197,15 @@ Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
   console.log(message, url, lineNo, colNo, err);
 };
 
+
+Notifier.prototype.global = function(options) {
+  Util.merge(window._globalRollbarOptions, options);
+};
+
+
 Notifier.prototype.configure = function(options) {
+  // TODO(cory): only allow non-payload keys that we understand
+
   // Make a copy of the options object for this notifier
   Util.merge(this.options, options);
 };
@@ -193,8 +214,8 @@ Notifier.prototype.configure = function(options) {
  * Create a new Notifier instance which has the same options
  * as the current notifier + options to override them.
  */
-Notifier.prototype.scope = function(options) {
+Notifier.prototype.scope = function(payloadOptions) {
   var scopedNotifier = new Notifier(this);
-  Util.merge(scopedNotifier.options, options);
+  Util.merge(scopedNotifier.options.payload, payloadOptions);
   return scopedNotifier;
 };
