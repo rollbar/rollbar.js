@@ -3,5 +3,5 @@ var config = {
   captureUncaught: true
 };
 
-Rollbar.init(window, config);
-Rollbar.load(window, document);
+var r = Rollbar.init(window, config);
+r.loadFull(window, document);

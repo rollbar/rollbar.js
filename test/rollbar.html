@@ -41,18 +41,20 @@
       });
     </script>
 
-    <script src="../src/snippet.js" type="text/javascript" charset="utf-8"></script>
+    <!-- sources -->
+    <script src="../dist/snippet.js" type="text/javascript" charset="utf-8"></script>
     <script src="../dist/rollbar.js" type="text/javascript" charset="utf-8"></script>
-    <script src="../src/plugins/jquery.js" type="text/javascript" charset="utf-8"></script>
 
+    <!-- tests -->
     <script src="./rollbar.test.js"></script>
-    <script src="plugins/jquery.test.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-      if (window.mochaPhantomJS) {
-        mochaPhantomJS.run();
-      } else {
-        mocha.run();
+      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        if (window.mochaPhantomJS) {
+          mochaPhantomJS.run();
+        } else {
+          mocha.run();
+        }
       }
     </script>
   </body>
