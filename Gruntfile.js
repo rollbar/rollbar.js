@@ -49,21 +49,24 @@ module.exports = function(grunt) {
         replacements: [
           {
             // package version
-            from: /(VERSION|version) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
+            from: /(VERSION|version) = (["'])[0-9_\.a-zA-Z]+(["'])/g,
             to: '$1 = $2<%= pkg.version %>$3'
           },
           {
             // jquery plugin version
-            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
+            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.a-zA-Z]+(["'])/g,
             to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
-          }/*,
-
+          },
           {
             // default scrub fields
-            from: /(DEFAULT_SCRUB_FIELDS|defaultScrubFields) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
-            to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
+            from: /(DEFAULT_SCRUB_FIELDS|defaultScrubFields) = \[.+\]/g,
+            to: '$1 = <%= JSON.stringify(pkg.defaults.scrubFields) %>'
+          },
+          {
+            // default endpoint
+            from: /(DEFAULT_ENDPOINT|defaultEndpoint) = (["'])[0-9_\.a-zA-Z:\/]+(["'])/g,
+            to: '$1 = $2<%= pkg.defaults.endpoint %>$3'
           }
-          */
         ]
       }
     },
