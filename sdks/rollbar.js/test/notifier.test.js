@@ -132,7 +132,10 @@ describe("Notifier.configure()", function() {
  */
 
 describe("Notifier.uncaughtError()", function() {
-  // Implement me
+  it("should be IMPLEMENTED", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
 });
 
 
@@ -347,7 +350,7 @@ describe("Notifier.debug/warning/error/critical()", function() {
 
 describe("Notifier._log()", function() {
   it("should enqueue to the Notifier.payloadQueue", function(done) {
-    // Implement me...
+    expect(1).to.equal(0);
     done();
   });
 });
@@ -377,6 +380,10 @@ describe("Notifier._route()", function() {
  */
 
 describe("Notifier._processShimQueue()", function() {
+  it("should be IMPLEMENTED", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
 });
 
 
