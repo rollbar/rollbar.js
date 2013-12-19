@@ -28,6 +28,10 @@
   "cdn": {
     "host": "d37gvrvc0wt4s1.cloudfront.net"
   },
+  "defaults": {
+    "endpoint": "https://api.rollbar.com/api/1/item/",
+    "scrubFields": ["passwd", "password", "secret", "confirm_password", "password_confirmation"]
+  },
   "plugins": {
     "jquery": {
       "version": "0.0.6"
