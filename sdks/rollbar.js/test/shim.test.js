@@ -88,6 +88,30 @@ describe("window.Rollbar.uncaughtError", function() {
 });
 
 
+describe("window.Rollbar.global()", function() {
+  it("should not return anything", function(done) {
+    expect(window.Rollbar.global()).to.equal(undefined);
+    done();
+  });
+
+  it("should should pass all arguments to the RollbarShimQueue", function(done) {
+    var preLen = window.RollbarShimQueue.length;
+    var options = {hello: 'world'};
+    window.Rollbar.global(options, 33);
+
+    expect(window.RollbarShimQueue).to.have.length(preLen + 1);
+
+    var globalData = window.RollbarShimQueue[preLen];
+    expect(globalData).to.be.an('object');
+    expect(globalData.args).to.be.an('array');
+    expect(globalData.args).to.have.length(2);
+    expect(globalData.args[0]).to.equal(options);
+    expect(globalData.args[1]).to.equal(33);
+
+    done();
+  });
+});
+
 describe("window.Rollbar.configure()", function() {
   it("should not return anything", function(done) {
     expect(window.Rollbar.configure()).to.equal(undefined);
@@ -191,9 +215,31 @@ describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
 });
 
 
-describe("window.Rollbar.load()", function() {
+describe("window.Rollbar.loadFull()", function() {
+
+  var successSpy;
+  var errSpy;
+
+  var preFullLoad = function(origShim) {
+    // Call log() once with a callback to make sure the callback
+    // is invoked once the full script loads.
+    var successCallback = function() {};
+    successSpy = sinon.spy(successCallback);
+    origShim.log('testing success callback', successCallback);
+
+    // Call log() once and expect it to fail. It should call
+    // the callback with an error.
+    var errCallback = function() {};
+    errSpy = sinon.spy(errCallback);
+    origShim.scope({endpoint: 'http://localhost/nonexistant'}).log('testing error callback', errCallback);
+  };
+
   it("should set window.Rollbar to a Notifier", function(done) {
+
     var origShim = window.Rollbar;
+
+    // setup some stuff for subsequent tests
+    preFullLoad(origShim);
 
     // Brings in the full rollbar.js file into the DOM
     Rollbar.loadFull(window, document, true);
@@ -214,5 +260,42 @@ describe("window.Rollbar.load()", function() {
 
       done();
     }, 20);
+  });
+
+  it("should call the success callback", function(done) {
+    // Wait 30 milliseconds for the Rollbar.loadFull() to complete and call
+    // the callback
+    setTimeout(function() {
+      expect(successSpy).to.not.be.equal(undefined);
+      expect(successSpy.called).to.be.equal(true);
+      var call = successSpy.getCall(0);
+
+      expect(call.args).to.have.length(2);
+
+      var errParam = call.args[0];
+      var respParam = call.args[1];
+
+      expect(errParam).to.equal(null);
+      expect(respParam).to.be.an('object');
+
+      done();
+    }, 30);
+  });
+
+  it("should call the error callback", function(done) {
+    // Wait 30 milliseconds for the Rollbar.loadFull() to complete and call
+    // the callback
+    setTimeout(function() {
+      expect(errSpy).to.not.be.equal(undefined);
+      expect(errSpy.called).to.be.equal(true);
+      var call = errSpy.getCall(0);
+
+      expect(call.args).to.have.length(1);
+
+      var errParam = call.args[0];
+      expect(errParam).to.not.equal(null);
+
+      done();
+    }, 30);
   });
 });

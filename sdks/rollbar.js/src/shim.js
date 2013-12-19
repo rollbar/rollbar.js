@@ -85,7 +85,7 @@ function stub(method) {
   };
 }
 
-var _methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'configure', 'scope', 'uncaughtError'];
+var _methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'global', 'configure', 'scope', 'uncaughtError'];
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
