@@ -4,7 +4,7 @@
 
 ## Quick start
 
-Copy-paste the following code into the ```<head>``` of every page you want to track. It should be as high as possible, before any other ```<script>``` tags.
+Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
 <!-- RemoveNextIfProject -->
 Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's ```post_client_item``` access token, which you can find in the Rollbar.com interface.
@@ -23,9 +23,7 @@ f.parentNode.insertBefore(s,f);};if(w.addEventListener){w.addEventListener("load
 <!-- RemovePrev -->
 <!-- EditableTextAreaEnd -->
 
-If you're running Rollbar on an environment besides production, change the ```server.environment``` value to something else (e.g. "staging").
-  
-See below for additional configuration options.
+If you're running Rollbar on an environment besides production, change the ```server.environment``` value to something else (e.g. "staging"). See below for more configuration options.
   
 ### Test your installation
 
@@ -36,200 +34,63 @@ As long as you don't happen to have a function by that name, this will cause an 
 
 ## Usage
 
-### Generic logging
+In addition to catching top-level errors, you can send caught errors or custom log messages. All of the following methods are fully-asynchronous and safe to call anywhere in your code after the ```<script>``` tag above.
 
-In addition to catching top-level errors, you can use ```_rollbar.push``` to send custom log messages. It is fully-asynchronous and safe to call anywhere in your code after the ```<script>``` tag above.
-  
-```_rollbar.push``` accepts arguments of any of the following forms:
-
-- An ```Error``` instance (i.e. for reporting a caught exception):
-
-```javascript
+```js
+// Caught errors
 try {
   doSomething();
 } catch (e) {
-  _rollbar.push(e);
+  Rollbar.error("Something went wrong", e);
 }
-```
 
-- A plain string:
+// Arbitrary log messages. 'critical' is most severe; 'debug' is least.
+Rollbar.critical("Connection error from remote Payments API");
+Rollbar.error("Some unexpected condition");
+Rollbar.warning("Connection error from Twitter API");
+Rollbar.info("User opened the purchase dialog");
+Rollbar.debug("Purchase dialog finished rendering");
 
-```javascript
-_rollbar.push("Some log message");
-```
+// Can include custom data with any of the above.
+// It will appear as `custom.postId` in the Occurrences tab
+Rollbar.info("Post published", {postId: 123});
 
-- An object containing a 'msg' property, an optional 'level' property, an optional '_fingerprint' property, and any arbitrary data you want to send (as long as it can be encoded by ```JSON.stringify())```:
-
-```javascript
-_rollbar.push({level: 'warning', msg: "Some warning message", point: {x: 5, y: 10}});
-```
-
-  - **Note:** jQuery objects can _not_ be encoded by ```JSON.stringify()```, so don't pass them as-is.
-    - ```level``` is optional and can take any of the following values: 'critical', 'error', 'warning', 'info', 'debug'
-    - ```_fingerprint``` is optional; if provided, it will be override the fingerprint used for grouping. Should be a string no longer than 40 characters.
-
-
-If you want to wrap ```console.log```, try the following:
-
-```javascript
-if (typeof console === 'undefined') {
-  console = {log: function() {}};
-}
-var old_console_log = console.log;
-function rollbar_console_log() {
-  old_console_log.apply(this, arguments);
-  var message = {level: 'info', msg: arguments[0]};
-  for (var i = 1; i < arguments.length; i++) {
-    message[i] = arguments[i];
+// Callback functions
+Rollbar.error(e, function(err, data) {
+  if (err) {
+    console.log("Error while reporting error to Rollbar: ", e);
+  } else {
+    console.log("Error successfully reported to Rollbar. UUID:", data.uuid);
   }
-  _rollbar.push(message);
-}
-console.log = rollbar_console_log;
-```
-    
-### Configuration
-
-#### Example
-
-Using all config options:
-
-```javascript
-var _rollbarParams = {
-  checkIgnore: function(msg, url, lineNo, colNo, error) {
-    // don't ignore anything (default)
-    return false;
-  },
-  context: "home#index",
-  itemsPerMinute: 60,
-  level: "error",
-  person: {
-    id: 12345,
-    username: "johndoe",
-    email: "johndoe@example.com"
-  },
-  "server.branch": "develop",
-  "server.environment": "staging",
-  "server.host": "web1"
-};
+});
 ```
 
-#### Defaults
+To set configuration options at runtime, use `Rollbar.configure`:
 
-  All of these are configurable via the ```_rollbarParams``` object.
-    
-  <dl>
-  <dt>checkIgnore</dt>
-  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. It will receive the same arguments as passed by the browser window.onerror. The function signature should be: ```function checkIgnore(msg, url, lineNo, colNo, error) { ... }``` and should return ```true``` if the error should be ignored.
-
-Default: ```null```
-
-  </dd>
-  <dt>client.javascript.code_version</dt>
-  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
-  </dd>
-  <dt>context</dt>
-  <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
-  </dd>
-  <dt>custom</dt>
-  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
-  </dd>
-  <dt>itemsPerMinute</dt>
-  <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```_rollbar.push()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
-  
-Default: ```5```
-
-  </dd>
-  <dt>level</dt>
-  <dd>The severity level to report javascript errors at. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
-
-Default: ```"warning"```
-
-  </dd>
-  <dt>person</dt>
-  <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
-  </dd>
-  <dt>server.branch</dt>
-  <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
-  
-Default: ```"master"```
-
-  </dd>
-  <dt>server.environment</dt>
-  <dd>Environment name
-
-e.g. ```"production"``` or ```"development"```
-
-Can be an arbitrary string, though to take advantage of the default notifications settings, we recommend using ```"production"``` for your production environment.
-
-Default: ```"production"```
-
-  </dd>
-  <dt>server.host</dt>
-  <dd>The hostname of the machine that rendered the page
-
-e.g. ```"web1.mysite.com"```
-
-e.g. in Python, use ```socket.gethostname()```
-
-  </dd>
-  </dl>
-
-#### Callbacks
-
-You can pass in an optional callback to ```_rollbar.push(obj, callback)``` which will be called when the item is reported to the Rollbar servers. If an error occurs, the callback will be evaluated with 1 argument defining the error that occurred, otherwise the callback will be evaluated a null error and the reported item's uuid as the second argument.
-
-```javascript
-for (var i = 0; i < someVar; ++i) {
-  var elem = i;
-  var callback = function(err, uuid) {
-    if (err !== null) {
-      console.log('An error occurred while reporting elem ' + elem + ' to Rollbar, ' + err);
-    }
-  }
-  try {
-    doSomething();
-  } catch (e) {
-    _rollbar.push(e, callback);
-  }
-}
-```
-  
-### Instrumenting jQuery
-
-If you use jQuery 1.7 and up, you can include a plugin script that will instrument jQuery to wrap any functions passed into jQuery's ready(), on() and off() to catch errors and report them to Rollbar. To install this plugin, copy the following snippet into your pages, making sure it is BELOW the `<script>` tag where jQuery is loaded:
-
-<!-- EditableTextAreaStart -->
-<!-- RemoveNext -->
-```html
-<script>
-(function(r,e,a){if(!e._rollbar){return}var n={"notifier.plugins.jquery.version":"0.0.6"};e._rollbar.push({_rollbarParams:n});var u=function(r){if(e.console){e.console.log(r.message+" [reported to Rollbar]")}};r(a).ajaxError(function(r,a,n,u){var t=a.status;var l=n.url;var o=n.type;e._rollbar.push({level:"warning",msg:"jQuery ajax error for "+o+" "+l,jquery_status:t,jquery_url:l,jquery_type:o,jquery_thrown_error:u,jquery_ajax_error:true})});var t=r.fn.ready;r.fn.ready=function(r){return t.call(this,function(){try{r()}catch(a){e._rollbar.push(a);u(a)}})};var l=r.event.add;r.event.add=function(a,n,t,o,i){var s;var d=function(r){return function(){try{return r.apply(this,arguments)}catch(a){e._rollbar.push(a);u(a)}}};if(t.handler){s=t.handler;t.handler=d(t.handler)}else{s=t;t=d(t)}if(s.guid){t.guid=s.guid}else{t.guid=s.guid=r.guid++}return l.call(this,a,n,t,o,i)}})(jQuery,window,document);
-</script>
-```
-<!-- RemovePrev -->
-<!-- EditableTextAreaEnd -->
-
-The plugin will also automatically report any AJAX errors using jQuery's `ajaxError()` handler. You can disable this functionality by providing the following configuration option in the `_rollbarParams` of your base snippet:
-```javascript
-"notifier.plugins.jquery.ignoreAjaxErrors": true
+```js
+Rollbar.configure({
+  personId: 456,
+  personUsername: "foo",
+  personEmail: "foo@example.com"
+});
 ```
 
-### Using in embedded browsers or extensions
+(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api_items/), use `Rollbar.scope`:
 
-To use Rollbar with PhoneGap, browser extensions, or any other environment where your code is loaded from a protocol besides ```http``` or ```https```, use the following snippet instead. The only change is to use ```https``` instead of a schemaless URL.
-
-<!-- EditableTextAreaStart -->
-<!-- RemoveNext -->
-```html
-<script>
-var _rollbarParams = {"server.environment": "production"};
-_rollbarParams["notifier.snippet_version"] = "2"; var _rollbar=["POST_CLIENT_ITEM_ACCESS_TOKEN", _rollbarParams]; var _ratchet=_rollbar;
-(function(w,d){w.onerror=function(e,u,l,c,err){_rollbar.push({_t:'uncaught',e:e,u:u,l:l,c:c,err:err});};var i=function(){var s=d.createElement("script");var 
-f=d.getElementsByTagName("script")[0];s.src="https://d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js";s.async=!0;
-f.parentNode.insertBefore(s,f);};if(w.addEventListener){w.addEventListener("load",i,!1);}else{w.attachEvent("onload",i);}})(window,document);
-</script>
+```js
+Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
 ```
-<!-- RemovePrev -->
-<!-- EditableTextAreaEnd -->
+
+## Source Maps
+
+If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
+
+## Next steps
+
+- [Configuration reference](#)
+- [API reference](#)
+- [Plugins](#)
+- [Best Practices](#)
 
 ## Help / Support
 

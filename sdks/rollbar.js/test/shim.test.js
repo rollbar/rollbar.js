@@ -4,15 +4,24 @@ var config = {
   accessToken: 'ACCESS_TOKEN',
   captureUncaught: true    
 };
-Rollbar.init(window, config);
 
-describe("Script load", function() {
-  it("should load window.Rollbar", function(done) {
+describe("window.Rollbar.init()", function() {
+
+  it("should set window.Rollbar to the shim", function(done) {
+    // window.Rollbar will be exposed as a function since shim has 
+    // it as a top-level function.
+    // var Rollbar = function() {...}
+    expect(window.Rollbar).to.be.a('function');
+
+    Rollbar.init(window, config);
+
     expect(window.Rollbar).to.be.an('object');
+    expect(window.RollbarShimQueue).to.be.an('array');
+
     done();
   });
 
-  it("should create a shim", function(done) {
+  it("should create a shim with the expected properties", function(done) {
     expect(window.Rollbar).to.have.property('shimId', 1);
     expect(window.Rollbar).to.have.property('notifier', null);
     expect(window.Rollbar).to.have.ownProperty('parentShim');
@@ -178,5 +187,32 @@ describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
     check('critical', 'hello critical world');
 
     done();
+  });
+});
+
+
+describe("window.Rollbar.load()", function() {
+  it("should set window.Rollbar to a Notifier", function(done) {
+    var origShim = window.Rollbar;
+
+    // Brings in the full rollbar.js file into the DOM
+    Rollbar.loadFull(window, document, true);
+
+    // Wait 20 milliseconds before checking window.Rollbar
+    setTimeout(function() {
+      expect(window.Rollbar).to.be.an('object');
+      expect(window.Rollbar).to.not.equal(origShim);
+      expect(window.Rollbar.constructor.name).to.equal('Notifier');
+      expect(window.Rollbar.parentNotifier).to.be.equal(origShim);
+
+      expect(origShim.notifier).to.be.equal(window.Rollbar);
+
+      var shimQueueSize = window.RollbarShimQueue.length;
+
+      origShim.log('hello world');
+      expect(window.RollbarShimQueue.length).is.equal(shimQueueSize);
+
+      done();
+    }, 20);
   });
 });

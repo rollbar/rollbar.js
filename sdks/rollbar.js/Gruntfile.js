@@ -1,6 +1,7 @@
 module.exports = function(grunt) {
+  var pkg = grunt.file.readJSON('package.json');
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: pkg,
     jshint: {
       options: {
         globals: {
@@ -29,8 +30,9 @@ module.exports = function(grunt) {
             return path.replace(/.js$/, ".map");
           },
           sourceMappingURL: function(path) {
-            var prefix = 'https://d37gvrvc0wt4s1.cloudfront.net/static/js/';
-            return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
+              // pkg.cdn set above initConfig() above
+              var prefix = 'https://' + pkg.cdn.host + '/static/js/';
+              return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
           }
         },
         files: {
@@ -38,6 +40,24 @@ module.exports = function(grunt) {
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
+      }
+    },
+    replace: {
+      js: {
+        src: ['src/**/*.js'],
+        overwrite: true,
+        replacements: [
+          {
+            // package version
+            from: /(VERSION|version) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
+            to: '$1 = $2<%= pkg.version %>$3'
+          },
+          {
+            // jquery plugin version
+            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
+            to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
+          }
+        ]
       }
     },
     mocha: {
@@ -63,17 +83,6 @@ module.exports = function(grunt) {
       files: ['<%= jshint.files %>'],
       tasks: ['jshint', 'concat', 'uglify']
     },
-    blanket_mocha: {
-      all: ['test/shim.html'],
-      options: {
-        threshold: 70,
-        '--web-security' : false,
-        '--local-to-remote-url-access' : true,
-        run: false,
-        log: true,
-        reporter: 'Spec'
-      } 
-    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -82,7 +91,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-express');
+  grunt.loadNpmTasks('grunt-text-replace');
 
-  grunt.registerTask('test', ['jshint', 'express', 'mocha']);
-  grunt.registerTask('default', ['jshint', 'concat', 'uglify', 'express', 'mocha']);
+  grunt.registerTask('test', ['replace', 'jshint', 'express', 'mocha']);
+  grunt.registerTask('default', ['replace', 'jshint', 'concat', 'uglify', 'express', 'mocha']);
 };

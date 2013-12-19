@@ -1,11 +1,14 @@
 (function(window, document){
 _shimCounter = 0;
 
-var Rollbar = function(parentShim) {
+function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
   this.notifier = null;
   this.parentShim = parentShim;
-};
+}
+
+// Updated by the build process to match package.json
+Rollbar.VERSION = '0.10.8';
 
 Rollbar.init = function(window, config) {
   if (typeof window.Rollbar === 'object') {
@@ -15,10 +18,12 @@ Rollbar.init = function(window, config) {
   // Expose the global shim queue
   window.RollbarShimQueue = [];
 
+  config = config || {};
+
   var client = new Rollbar();
   client.configure(config);
 
-  if (!config || (config && config.captureUncaught)) {
+  if (config.captureUncaught) {
     // Create the client and set the onerror handler
     var old = window.onerror;
     window.onerror = function() {
@@ -31,23 +36,30 @@ Rollbar.init = function(window, config) {
 
   // Expose Rollbar globally
   window.Rollbar = client;
+  return client;
 };
 
-Rollbar.load = function(window, document) {
+Rollbar.prototype.loadFull = function(window, document, immediate) {
   // Create the main rollbar script loader
   var loader = function() {
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
-    s.src = "../src/rollbar.js";
-    s.async = true;
+    s.src = "../dist/rollbar.js";
+    s.async = !immediate;
     f.parentNode.insertBefore(s, f);
   };
 
-  // Have the window load up the script ASAP
-  if (window.addEventListener) {
-    window.addEventListener("load", loader, false);
-  } else { 
-    window.attachEvent("onload", loader);
+  if (immediate) {
+    loader();
+  } else {
+    // Have the window load up the script ASAP
+    if (window.addEventListener) {
+      console.log('loading with addEventListener');
+      window.addEventListener("load", loader, false);
+    } else { 
+      console.log('loading with attachEvent');
+      window.attachEvent("onload", loader);
+    }
   }
 };
 
@@ -56,7 +68,7 @@ function stub(method) {
   var R = Rollbar;
   return function() {
     if (this.notifier) {
-      this.notifier[method].apply(this, arguments);
+      this.notifier[method].apply(this.notifier, arguments);
     } else {
       var shim = this;
       var isScope = method === 'scope';
@@ -84,6 +96,6 @@ var config = {
   captureUncaught: true
 };
 
-Rollbar.init(window, config);
-Rollbar.load(window, document);
+var r = Rollbar.init(window, config);
+r.loadFull(window, document);
 })(window, document);

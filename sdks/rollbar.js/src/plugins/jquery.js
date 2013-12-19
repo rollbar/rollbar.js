@@ -5,8 +5,9 @@
     return;
   }
   
+  var JQUERY_PLUGIN_VERSION = '0.0.6';
   var _rollbarParams = {
-    "notifier.plugins.jquery.version": '0.0.6'
+    "notifier.plugins.jquery.version": JQUERY_PLUGIN_VERSION
   };
   window._rollbar.push({_rollbarParams: _rollbarParams});
   
