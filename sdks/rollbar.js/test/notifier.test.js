@@ -387,3 +387,56 @@ describe("Notifier._processShimQueue()", function() {
 });
 
 
+/*
+ * Notifier._buildPayload(ts, level, message, err, custom, callback)
+ */
+
+describe("Notifier._buildPayload()", function() {
+  it("should return a valid payload object", function(done) {
+    // check for expected keys
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should not reference Notifier.options", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should not share references with other calls to _buildPayload()", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should respect timestamps from the past/future", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should respect timestamps from the past/future", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should error if level is not valid", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should error if missing message && err && custom", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should not error if missing callback", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should not error if missing err || custom", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+});
+
+

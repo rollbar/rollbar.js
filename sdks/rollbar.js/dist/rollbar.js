@@ -150,6 +150,17 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
   }
 };
 
+
+/*
+ * Builds and returns an Object that will be enqueued onto the
+ * window._rollbarPayloadQueue array to be sent to Rollbar.
+ */
+Notifier.prototype._buildPayload = function(ts, level, message, err, custom, callback) {
+  // Implement me
+  throw new Error('implement me');
+};
+
+
 /*
  * Logs stuff to Rollbar and console.log using the default
  * logging level.
