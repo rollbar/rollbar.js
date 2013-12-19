@@ -97,6 +97,36 @@ describe("Notifier(notifier)", function() {
   });
 });
 
+/*
+ * Notifier.global()
+ */
+
+describe("Notifier.global()", function() {
+  it("should save options to window._globalRollbarOptions", function(done) {
+    var notifier = new Notifier();
+    notifier.global({foo: 'bar'});
+    expect(window._globalRollbarOptions.foo).to.equal('bar');
+
+    done();
+  });
+
+  it("should overwrite previous options via global()", function(done) {
+    var notifier = new Notifier();
+    notifier.global({foo: 'bar', bar: 'foo'});
+    notifier.global({foo: 'baz'});
+
+    expect(window._globalRollbarOptions).to.have.property('foo');
+    expect(window._globalRollbarOptions).to.have.property('bar');
+
+    expect(window._globalRollbarOptions.foo).to.equal('baz');
+    expect(window._globalRollbarOptions.bar).to.equal('foo');
+
+    done();
+  });
+});
+
+
+
 
 /*
  * Notifier.configure()
@@ -122,6 +152,11 @@ describe("Notifier.configure()", function() {
     expect(notifier.options.foo).to.equal('baz');
     expect(notifier.options.bar).to.equal('foo');
 
+    done();
+  });
+
+  it("should save payload options", function(done) {
+    expect(1).to.equal(0);
     done();
   });
 });
@@ -161,8 +196,12 @@ describe("Notifier.scope()", function() {
 
     var x = notifier.scope({foo: 'baz', level: 'critical'});
 
-    expect(x.options.foo).to.equal('baz');
-    expect(x.options.level).to.equal('critical');
+    // scope() will put all options into .payload
+    expect(x.options.foo).to.not.equal('baz');
+    expect(x.options.level).to.not.equal('critical');
+
+    expect(x.options.payload.foo).to.equal('baz');
+    expect(x.options.payload.level).to.equal('critical');
 
     done();
   });
@@ -437,6 +476,42 @@ describe("Notifier._buildPayload()", function() {
     expect(1).to.equal(0);
     done();
   });
+
+  it("should scrub appropriate fields", function(done) {
+    // Make sure Notifier._scrub is called with the payload and returns the thing returned
+    // by _buildPayload()
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should not contain any global options", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
 });
 
 
+/*
+ * Notifier._scrub(obj)
+ */
+
+describe("Notifier._scrub()", function() {
+  it("should return an object with scrubbed values", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should return an object that has query params scrubbed", function(done) {
+    // e.g. {url: 'http://foo.com/?password=ASDFASDF'} should become
+    //      {url: 'http://foo.com/?password=********'}
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should respect global() params for scrub values", function(done) {
+    // i.e. var x = Notifier.scope(); window.Rollbar.global({scrubParams: ['password']});
+    expect(1).to.equal(0);
+    done();
+  });
+
+});

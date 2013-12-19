@@ -88,6 +88,30 @@ describe("window.Rollbar.uncaughtError", function() {
 });
 
 
+describe("window.Rollbar.global()", function() {
+  it("should not return anything", function(done) {
+    expect(window.Rollbar.global()).to.equal(undefined);
+    done();
+  });
+
+  it("should should pass all arguments to the RollbarShimQueue", function(done) {
+    var preLen = window.RollbarShimQueue.length;
+    var options = {hello: 'world'};
+    window.Rollbar.global(options, 33);
+
+    expect(window.RollbarShimQueue).to.have.length(preLen + 1);
+
+    var globalData = window.RollbarShimQueue[preLen];
+    expect(globalData).to.be.an('object');
+    expect(globalData.args).to.be.an('array');
+    expect(globalData.args).to.have.length(2);
+    expect(globalData.args[0]).to.equal(options);
+    expect(globalData.args[1]).to.equal(33);
+
+    done();
+  });
+});
+
 describe("window.Rollbar.configure()", function() {
   it("should not return anything", function(done) {
     expect(window.Rollbar.configure()).to.equal(undefined);
