@@ -1,62 +1,84 @@
 var expect = chai.expect;
 
-var config = {
-  accessToken: 'ACCESS_TOKEN',
-  captureUncaught: true    
-};
+describe("Script load", function() {
+  describe("Shim", function() {
+    it("should be connected to window.Rollbar", function(done) {
 
-Rollbar.configure(config);
+      done();
+    });
 
-it("should load window._rollbar", function(done) {
-  expect(window._rollbar.accessToken).to.equal('DUMMY_ACCESS_TOKEN');
-  expect(window._rollbar.environment).to.equal('test');
-  expect(window._rollbar.extraParams.server.branch).to.equal('develop');
-  done();
+    it("should configure window.Rollbar via shim.configure()", function(done) {
+
+      done();
+    });
+
+    it("should create a child scope of window.Rollbar via shim.scope()", function(done) {
+
+      done();
+    });
+
+    it("should not affect window.Rollbar when modified", function(done) {
+      // Change origRollbar._log to something else then call window.Rollbar.log()
+      // and verify it works. (then reset origRollbar._log.)
+
+      done();
+    });
+
+    it("should create the same payload as window.Rollbar via shim.error()", function(done) {
+
+      done();
+    });
+  });
 });
 
 
-it("should pass all 5 args to checkIgnore", function() {
-  var _rollbar = window._rollbar;
+describe("window.Rollbar.configure()", function() {
+  describe("window.Rollbar.checkIgnore()", function() {
+    it("should be called with the correct arguments", function(done) {
+      
+      done();
+    });
 
-  var oldCheckIgnore = _rollbar.checkIgnore;
-  _rollbar.checkIgnore = function(m, file, line, col, err) {
-    return false;
-  }
-  var spy = sinon.spy(_rollbar, "checkIgnore");
+    it("should be available for child scopes", function(done) {
 
-  var error;
-  try { var foo = bar; } catch (e) { error = e; }
-  var args = {_t: "uncaught", e: "error!", u: "filename", l: 1, c: 2, err: error};
-  _rollbar.push(args);
+      done();
+    });
 
-  var callArgs = spy.getCall(0).args;
-  expect(callArgs[0]).to.equal(args.e);
-  expect(callArgs[1]).to.equal(args.u);
-  expect(callArgs[2]).to.equal(args.l);
-  expect(callArgs[3]).to.equal(args.c);
-  expect(callArgs[4]).to.equal(args.err);
+    it("should not be overwritten by child scopes", function(done) {
 
-  _rollbar.checkIgnore.restore();
-  _rollbar.checkIgnore = oldCheckIgnore;
+      done();
+    });
+  });
+
+  describe("Reconfigure", function() {
+    it("should not change child scopes", function(done) {
+
+      done();
+    });
+  });
+
+  describe("window.Rollbar.log()", function() {
+    it("should respect default level", function(done) {
+
+      done();
+    });
+
+    it("should pass along custom fingerprint", function(done) {
+
+      done();
+    });
+  });
 });
 
 
-it("should respect level for 'trace' items", function() {
-  var _rollbar = window._rollbar;
-  
-  var trace = {
-    frames: [{lineno: 5, filename: "testfile"}], 
-    exception: {"class": "ClassName", message: "the message"}
-  };
-  var level = "info";
+describe("window.Rollbar.log()", function() {
+  it("should create a valid payload and put onto window._rollbarPayloadQueue", function(done) {
 
-  var spy = sinon.spy(_rollbar.items, "push");
-  
-  _rollbar.push({_t: "trace", trace: trace, level: level});
+    done();
+  });
 
-  expect(spy.called).to.be.true;
-  var item = spy.getCall(0).args[0];
-  expect(item.level).to.equal(level);
-  expect(item.body.trace).to.deep.equal(trace);
+  it("should put payloads onto window._rollbarPayloadQueue in order", function(done) {
+
+    done();
+  });
 });
-

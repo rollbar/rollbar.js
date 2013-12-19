@@ -42,20 +42,29 @@
     </script>
 
     <!-- sources -->
-    <script src="../dist/snippet.js" type="text/javascript" charset="utf-8"></script>
-    <script src="../dist/rollbar.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../src/shim.js" type="text/javascript" charset="utf-8"></script>
 
     <!-- tests -->
     <script src="./rollbar.test.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-        if (window.mochaPhantomJS) {
-          mochaPhantomJS.run();
-        } else {
-          mocha.run();
+      var config = {
+        accessToken: 'ACCESS_TOKEN',
+        captureUncaught: true
+      };
+      var origRollbar = Rollbar.init(window, config);
+      origRollbar.loadFull(window, document, true);
+
+      // Wait 20 milliseconds before running the tests so that the snippet can load rollbar.js
+      setTimeout(function() {
+        if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+          if (window.mochaPhantomJS) {
+            mochaPhantomJS.run();
+          } else {
+            mocha.run();
+          }
         }
-      }
+      }, 20);
     </script>
   </body>
 </html>
