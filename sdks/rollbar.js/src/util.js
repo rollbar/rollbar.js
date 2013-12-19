@@ -104,5 +104,25 @@ var Util = {
 
     url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
     return url;
+  },
+
+  traverse: function(obj, func) {
+    var k;
+    var v;
+    for (k in obj) {
+      if (obj.hasOwnProperty(k)) {
+        v = obj[k];
+        if (v !== null && typeof(v) === 'object') {
+          Util.traverse(v, func);
+        } else {
+          obj[k] = func.apply(Util, [k, v]);
+        }
+      }
+    }
+  },
+
+  redact: function(val) {
+    val = String(val);
+    return new Array(val.length + 1).join('*');
   }
 };
