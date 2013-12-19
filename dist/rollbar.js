@@ -28,7 +28,7 @@ Notifier._generateLogFn = function(level) {
   return function() {
     var args = this._getLogArgs(arguments);
 
-    return this._log(args.level || this.options.level || 'debug',
+    return this._log(level || args.level || this.options.level || 'debug',
         args.message, args.err, args.custom, args.callback);
   };
 };
@@ -83,8 +83,10 @@ Notifier.prototype._getLogArgs = function(args) {
 
 
 Notifier.prototype._route = function(path) {
+  var endpoint = this.options.endpoint || 'https://api.rollbar.com/api/1/item/';
+
   // TODO(cory): make this work well with path/, /path, /path/, etc...
-  return this.options.endpoint + path;
+  return endpoint + path;
 };
 
 
@@ -179,7 +181,7 @@ Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
 
 Notifier.prototype.configure = function(options) {
   // Make a copy of the options object for this notifier
-  this.options = Util.copy(options);
+  Util.merge(this.options, options);
 };
 
 /*
@@ -188,6 +190,7 @@ Notifier.prototype.configure = function(options) {
  */
 Notifier.prototype.scope = function(options) {
   var scopedNotifier = new Notifier(this);
+  Util.merge(scopedNotifier.options, options);
   return scopedNotifier;
 };
 
