@@ -316,20 +316,53 @@ function _parseFirefoxOrSafariExc(e) {
 }
 
 var Util = {
-  merge: function(to, from) {
-    var k;
-    for (k in from) {
-      if (from[k].constructor == Object) {
-        if (!to.hasOwnProperty(k)) {
-          to[k] = from[k];
-        } else {
-          to[k] = this.merge(to[k], from[k]);
+  // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
+  merge: function() {
+    var options, name, src, copy, copyIsArray, clone,
+      target = arguments[0] || {},
+      i = 1,
+      length = arguments.length,
+      deep = true;
+
+    // Handle case when target is a string or something (possible in deep copy)
+    if (typeof target !== "object" && typeof target !== 'function') {
+      target = {};
+    }
+
+    for (; i < length; i++) {
+      // Only deal with non-null/undefined values
+      if ((options = arguments[i]) !== null) {
+        // Extend the base object
+        for (name in options) {
+          src = target[name];
+          copy = options[name];
+
+          // Prevent never-ending loop
+          if (target === copy) {
+            continue;
+          }
+
+          // Recurse if we're merging plain objects or arrays
+          if (deep && copy && (copy.constructor == Object || (copyIsArray = (copy.constructor == Array)))) {
+            if (copyIsArray) {
+              copyIsArray = false;
+              clone = src && src.constructor == Array ? src : [];
+            } else {
+              clone = src && src.constructor == Object ? src : {};
+            }
+
+            // Never move original objects, clone them
+            target[name] = Util.merge(clone, copy);
+          // Don't bring in undefined values
+          } else if (copy !== undefined) {
+            target[name] = copy;
+          }
         }
-      } else {
-        to[k] = from[k];
       }
     }
-    return to;
+
+    // Return the modified object
+    return target;
   },
 
   copy: function(obj) {
@@ -352,6 +385,10 @@ var Util = {
   },
 
   parseUri: function(str) {
+    if (!str || (typeof str !== 'string' && !(str instanceof String))) {
+      throw new Error('Util.parseUri() received invalid input');
+    }
+
     var o = Util.parseUriOptions;
     var m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
     var uri = {};
@@ -372,15 +409,17 @@ var Util = {
   },
 
   sanitizeUrl: function(url) {
-    if (url) {
-      var baseUrlParts = Util.parseUri(url);
-      // remove a trailing # if there is no anchor
-      if (baseUrlParts.anchor === '') {
-        baseUrlParts.source = baseUrlParts.source.replace('#', '');
-      }
-      var baseUrl = baseUrlParts.source.replace('?' + baseUrlParts.query, ''); 
-      url = baseUrl;
+    if (!url || (typeof url !== 'string' && !(url instanceof String))) {
+      throw new Error('Util.sanitizeUrl() received invalid input');
     }
+
+    var baseUrlParts = Util.parseUri(url);
+    // remove a trailing # if there is no anchor
+    if (baseUrlParts.anchor === '') {
+      baseUrlParts.source = baseUrlParts.source.replace('#', '');
+    }
+
+    url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
     return url;
   }
 };
@@ -418,7 +457,7 @@ var XHR = {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
-                  callback(null);
+                  callback(null, request.responseText);
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
                   //return valid http status codes
@@ -463,7 +502,7 @@ var XHR = {
 
             var onload = function(args) {
               if (callback) {
-                callback(null);
+                callback(null, request.responseText);
               }
             };
 

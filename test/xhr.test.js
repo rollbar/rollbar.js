@@ -11,8 +11,9 @@ describe('XHR', function() {
     var url = 'http://localhost:3000/';
     var payload = '{}';
 
-    XHR.post(url, payload, function(err) {
+    XHR.post(url, payload, function(err, response) {
       expect(err).to.equal(null);
+      expect(response).to.equal('It works!');
       done();
     });
   });
