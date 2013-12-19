@@ -138,13 +138,45 @@ describe("window.Rollbar.scope()", function() {
     done();
   });
 
-  // TODO(cory): negative test cases for invalid params
+  it("should increment the shimId on each call", function(done) {
+    var newScope = window.Rollbar.scope();
+    expect(newScope.shimId).is.above(window.Rollbar.shimId);
+
+    var prevScope = newScope;
+    newScope = newScope.scope();
+    expect(newScope.shimId).is.above(prevScope.shimId);
+
+    done();
+  });
 });
 
 
-describe("window.Rollbar.log()", function() {
-});
+describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
+  it("should add a log message to RollbarShimQueue", function(done) {
+    var check = function(method, message) {
+      var obj = window.RollbarShimQueue[window.RollbarShimQueue.length - 1];
+      expect(obj.method).to.equal(method);
+      expect(obj.args[0]).to.equal(message);
+    };
 
+    window.Rollbar.log('hello world');
+    check('log', 'hello world');
 
-describe("window.Rollbar.debug/info/warning/error/critical()", function() {
+    window.Rollbar.debug('hello debug world');
+    check('debug', 'hello debug world');
+
+    window.Rollbar.info('hello info world');
+    check('info', 'hello info world');
+
+    window.Rollbar.warning('hello warning world');
+    check('warning', 'hello warning world');
+
+    window.Rollbar.error('hello error world');
+    check('error', 'hello error world');
+
+    window.Rollbar.critical('hello critical world');
+    check('critical', 'hello critical world');
+
+    done();
+  });
 });
