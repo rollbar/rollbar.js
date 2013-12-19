@@ -17,9 +17,12 @@ function Notifier(parentNotifier) {
   }
 }
 
+// Updated by the build process to match package.json
+Notifier.VERSION = '0.10.8';
+
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
-Notifier.payloadQueue = [];
+window.RollbarPayloadQueue = [];
 
 Notifier._generateLogFn = function(level) {
   return function() {

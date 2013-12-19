@@ -19,9 +19,18 @@
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-watch": "~0.5.3",
     "express": "~3.4.7",
-    "grunt-express": "~1.2.1"
+    "grunt-express": "~1.2.1",
+    "grunt-text-replace": "~0.3.10"
   },
   "scripts": {
     "test": "make test"
+  },
+  "cdn": {
+    "host": "d37gvrvc0wt4s1.cloudfront.net"
+  },
+  "plugins": {
+    "jquery": {
+      "version": "0.0.6"
+    }
   }
 }
