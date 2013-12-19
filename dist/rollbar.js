@@ -580,91 +580,96 @@ var RollbarJSON = {
       }) + '"' : '"' + string + '"';
     }
 
+    return function (value, replacer, space) {
+      var seen = [];
 
-    function str(key, holder) {
+      function str(key, holder) {
 
-      var i,          // The loop counter.
-          k,          // The member key.
-          v,          // The member value.
-          length,
-          mind = gap,
-          partial,
-          value = holder[key];
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
 
-      if (value && typeof value === 'object' &&
-              typeof value.toRollbarJSON === 'function') {
-        value = value.toRollbarJSON(key);
-      }
+        if (value && typeof value === 'object' &&
+                typeof value.toRollbarJSON === 'function') {
+          value = value.toRollbarJSON(key);
+        }
 
-      if (typeof rep === 'function') {
-        value = rep.call(holder, key, value);
-      }
+        if (typeof rep === 'function') {
+          value = rep.call(holder, key, value);
+        }
 
-      switch (typeof value) {
-        case 'string':
-          return quote(value);
-        case 'number':
-          return isFinite(value) ? String(value) : 'null';
-        case 'boolean':
-        case 'null':
-          return String(value);
-        case 'object':
+        switch (typeof value) {
+          case 'string':
+            return quote(value);
+          case 'number':
+            return isFinite(value) ? String(value) : 'null';
+          case 'boolean':
+          case 'null':
+            return String(value);
+          case 'object':
 
-          if (!value) {
-              return 'null';
-          }
+            if (!value) {
+                return 'null';
+            }
 
-          gap += indent;
-          partial = [];
+            if (seen.indexOf(value) !== -1) {
+              throw new TypeError('RollbarJSON.stringify cannot serialize cyclic structures.');
+            }
+            seen.push(value);
 
-          if (Object.prototype.toString.apply(value) === '[object Array]') {
+            gap += indent;
+            partial = [];
 
-            length = value.length;
-            for (i = 0; i < length; i += 1) {
-                partial[i] = str(i, value) || 'null';
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+              length = value.length;
+              for (i = 0; i < length; i += 1) {
+                  partial[i] = str(i, value) || 'null';
+              }
+
+              v = partial.length === 0 ?
+                  '[]' : gap ?
+                  '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']' :
+                  '[' + partial.join(',') + ']';
+              gap = mind;
+              return v;
+            }
+
+            if (rep && typeof rep === 'object') {
+              length = rep.length;
+              for (i = 0; i < length; i += 1) {
+                if (typeof rep[i] === 'string') {
+                  k = rep[i];
+                  v = str(k, value);
+                  if (v) {
+                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                  }
+                }
+              }
+            } else {
+
+              for (k in value) {
+                if (Object.prototype.hasOwnProperty.call(value, k)) {
+                  v = str(k, value);
+                  if (v) {
+                      partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                  }
+                }
+              }
             }
 
             v = partial.length === 0 ?
-                '[]' : gap ?
-                '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']' :
-                '[' + partial.join(',') + ']';
+                '{}' : gap ?
+              '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                : '{' + partial.join(',') + '}';
             gap = mind;
             return v;
-          }
-
-          if (rep && typeof rep === 'object') {
-            length = rep.length;
-            for (i = 0; i < length; i += 1) {
-              if (typeof rep[i] === 'string') {
-                k = rep[i];
-                v = str(k, value);
-                if (v) {
-                  partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                }
-              }
-            }
-          } else {
-
-            for (k in value) {
-              if (Object.prototype.hasOwnProperty.call(value, k)) {
-                v = str(k, value);
-                if (v) {
-                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                }
-              }
-            }
-          }
-
-          v = partial.length === 0 ?
-              '{}' : gap ?
-            '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
-              : '{' + partial.join(',') + '}';
-          gap = mind;
-          return v;
+        }
       }
-    }
-
-    return function (value, replacer, space) {
 
       var i;
       gap = '';
