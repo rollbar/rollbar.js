@@ -24,7 +24,9 @@ Notifier.VERSION = '0.10.8';
 window._rollbarPayloadQueue = [];
 
 // This contains global options for all Rollbar notifiers.
-window._globalRollbarOptions = [];
+window._globalRollbarOptions = {
+  startTime: (new Date()).getTime(),
+};
 
 Notifier._generateLogFn = function(level) {
   return function() {
@@ -157,8 +159,123 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
  * window._rollbarPayloadQueue array to be sent to Rollbar.
  */
 Notifier.prototype._buildPayload = function(ts, level, message, err, custom, callback) {
-  // Implement me
-  throw new Error('implement me');
+  var accessToken = this.options.accessToken;
+  var environment = this.options.environment;
+
+  var notifierOptions = Util.copy(this.options);
+
+  var payloadData = {
+    environment: environment,
+    level: level,
+    platform: 'browser',
+    framework: 'browser-js',
+    language: 'javascript',
+    request: {
+      url: window.location.href,
+      query_string: window.location.search,
+      user_ip: "$remote_ip"
+    },
+    client: {
+      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
+      timestamp: Math.round(ts.getTime() / 1000),
+      javascript: {
+        browser: window.navigator.userAgent,
+        language: window.navigator.language,
+        cookie_enabled: window.navigator.cookieEnabled,
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height
+        },
+        plugins: this._getBrowserPlugins()
+      }
+    }
+  };
+
+  // Overwrite the options from configure() with the payload
+  // data.
+  var payload = {
+    access_token: accessToken,
+    data: Util.merge(notifierOptions, payloadData),
+    server: {},
+    notifier: {
+      name: 'rollbar-browser-js',
+      version: Notifier.VERSION
+    }
+  };
+
+  if (custom) {
+    Util.merge(payload.data, custom);
+  }
+
+  this._scrub(payload);
+
+  return RollbarJSON.stringify(payload);
+};
+
+
+Notifier.prototype._getBrowserPlugins = function() {
+  if (!this._browserPlugins) {
+    var navPlugins = (window.navigator.plugins || []);
+    var cur;
+    var numPlugins = navPlugins.length;
+    var plugins = [];
+    for (i = 0; i < numPlugins; ++i) {
+      cur = navPlugins[i];
+      plugins.push({name: cur.name, description: cur.description});
+    }
+    this._browserPlugins = plugins;
+  }
+  return this._browserPlugins;
+};
+
+
+/*
+ * Does an in-place modification of obj such that:
+ * 1. All keys that match the window._globalRollbarOptions.scrubParams
+ *    list will be normalized into all '*'
+ * 2. Any query string params that match the same criteria will have
+ *    their values normalized as well.
+ */
+Notifier.prototype._scrub = function(obj) {
+  var redactQueryParam = function(match, paramPart, dummy1,
+      dummy2, dummy3, valPart, offset, string) {
+    return paramPart + Util.redact(valPart);
+  };
+
+  var scrubFields = RollbarNotifier.scrubFields;
+  var queryRes = RollbarNotifier.scrubQueryParamRes;
+  var paramRes = RollbarNotifier.scrubParamRes;
+  var paramScrubber = function(v) {
+    var i;
+    if (typeof(v) === 'string') {
+      for (i = 0; i < queryRes.length; ++i) {
+        v = v.replace(queryRes[i], redactQueryParam);
+      }
+    }
+    return v;
+  };
+
+  var valScrubber = function(k, v) {
+    var i;
+    for (i = 0; i < paramRes.length; ++i) {
+      if (paramRes[i].test(k)) {
+        v = Util.redact(v);
+        break;
+      }
+    }
+    return v;
+  };
+
+  var scrubber = function(k, v) {
+    var tmpV = valScrubber(k, v);
+    if (tmpV === v) {
+      return paramScrubber(tmpV);
+    } else {
+      return tmpV;
+    }
+  };
+
+  traverse(obj, scrubber);
 };
 
 

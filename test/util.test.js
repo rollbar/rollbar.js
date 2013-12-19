@@ -112,4 +112,34 @@ describe('Util', function() {
 
     done();
   });
+
+  it("should traverse all keys of an object", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should traverse all keys of a nested object", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should redact strings", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should redact ints", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should redact arrays", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should redact objects", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
 });

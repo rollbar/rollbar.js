@@ -56,7 +56,14 @@ module.exports = function(grunt) {
             // jquery plugin version
             from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
             to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
+          }/*,
+
+          {
+            // default scrub fields
+            from: /(DEFAULT_SCRUB_FIELDS|defaultScrubFields) = (["'])[0-9_\.-a-zA-Z]+(["'])/g,
+            to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
           }
+          */
         ]
       }
     },
