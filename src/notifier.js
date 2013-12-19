@@ -21,7 +21,7 @@ Notifier.VERSION = '0.10.8';
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
-window.RollbarPayloadQueue = [];
+window._rollbarPayloadQueue = [];
 
 Notifier._generateLogFn = function(level) {
   return function() {
