@@ -104,11 +104,14 @@ Notifier.prototype._getLogArgs = function(args) {
 
 
 Notifier.prototype._route = function(path) {
-  var endpoint = this.options.endpoint || Notifier.DEFAULT_ENDPOINT;
+  var endpoint = this.options.endpoint;
 
-  if (/\/$/.test(endpoint) && /^\//.test(path)) {
+  var endpointTrailingSlash = /\/$/.test(endpoint);
+  var pathBeginningSlash = /^\//.test(path);
+
+  if (endpointTrailingSlash && pathBeginningSlash) {
     path = path.substring(1);
-  } else if (!(/\/$/.test(endpoint)) && !(/^\//.test(path))) {
+  } else if (!endpointTrailingSlash && !pathBeginningSlash) {
     path = '/' + path;
   }
 
@@ -664,7 +667,15 @@ var Util = {
   },
 
   copy: function(obj) {
-    var dest = {};
+    var dest;
+    if (typeof obj === 'object') {
+      if (obj.constructor == Object) {
+        dest = {};
+      } else if (obj.constructor == Array) {
+        dest = [];
+      }
+    }
+
     Util.merge(dest, obj);
     return dest;
   },

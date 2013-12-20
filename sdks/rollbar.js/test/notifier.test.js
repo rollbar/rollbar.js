@@ -329,7 +329,22 @@ describe("Notifier.debug/warning/error/critical()", function() {
 
 describe("Notifier._log()", function() {
   it("should enqueue to the Notifier.payloadQueue", function(done) {
-    expect(1).to.equal(0);
+    var beforeSize = window._rollbarPayloadQueue.length;
+
+    var notifier = new Notifier();
+    notifier.configure({endpoint: 'http://foo.com/'});
+    var cb = function() {};
+    notifier._log('debug', 'debug message', new Error('broken'), {custom: 'data'}, cb);
+
+    var afterSize = window._rollbarPayloadQueue.length;
+    expect(afterSize).to.be.equal(beforeSize + 1);
+
+    var payload = window._rollbarPayloadQueue[afterSize - 1];
+    expect(payload).to.be.an('object');
+    expect(payload).to.have.property('callback').to.equal(cb);
+    expect(payload).to.have.property('endpointUrl').to.be.a('string');
+    expect(payload.endpointUrl).to.equal('http://foo.com/item/');
+    expect(payload.payload).to.be.an('object');
     done();
   });
 });
@@ -342,7 +357,7 @@ describe("Notifier._log()", function() {
 describe("Notifier._route()", function() {
   it("should route using the default endpoint", function(done) {
     var notifier = new Notifier();
-    expect(notifier._route('test')).to.equal('https://api.rollbar.com/api/1/item/test');
+    expect(notifier._route('item/test')).to.equal('https://api.rollbar.com/api/1/item/test');
 
     notifier.configure({endpoint: 'http://test.com/'});
     expect(notifier._route('test')).to.equal('http://test.com/test');
