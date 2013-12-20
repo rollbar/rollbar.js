@@ -49,7 +49,15 @@ var Util = {
   },
 
   copy: function(obj) {
-    var dest = {};
+    var dest;
+    if (typeof obj === 'object') {
+      if (obj.constructor == Object) {
+        dest = {};
+      } else if (obj.constructor == Array) {
+        dest = [];
+      }
+    }
+
     Util.merge(dest, obj);
     return dest;
   },
