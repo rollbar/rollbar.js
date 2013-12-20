@@ -1,5 +1,26 @@
+
+// Updated by the build process to match package.json
+Notifier.VERSION = '0.10.8';
+Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
+Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
+
+// This is the global queue where all notifiers will put their
+// payloads to be sent to Rollbar.
+window._rollbarPayloadQueue = [];
+
+// This contains global options for all Rollbar notifiers.
+window._globalRollbarOptions = {
+  startTime: (new Date()).getTime(),
+};
+
+
 function Notifier(parentNotifier) {
-  this.options = {payload: {}};
+  this.options = {
+    endpoint: Notifier.DEFAULT_ENDPOINT,
+    scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+    payload: {}
+  };
+
   this.plugins = {};
   this.parentNotifier = parentNotifier;
 
@@ -16,19 +37,6 @@ function Notifier(parentNotifier) {
   }
 }
 
-// Updated by the build process to match package.json
-Notifier.VERSION = '0.10.8';
-Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
-Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
-
-// This is the global queue where all notifiers will put their
-// payloads to be sent to Rollbar.
-window._rollbarPayloadQueue = [];
-
-// This contains global options for all Rollbar notifiers.
-window._globalRollbarOptions = {
-  startTime: (new Date()).getTime(),
-};
 
 Notifier._generateLogFn = function(level) {
   return function() {
@@ -38,6 +46,7 @@ Notifier._generateLogFn = function(level) {
         args.message, args.err, args.custom, args.callback);
   };
 };
+
 
 /*
  * Returns an Object with keys:
@@ -169,14 +178,18 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
   var accessToken = this.options.accessToken;
   var environment = this.options.environment;
 
-  var notifierOptions = Util.copy(this.options);
+  var notifierOptions = Util.copy(this.options.payload);
+  var uuid = Util.uuid4();
 
   var payloadData = {
     environment: environment,
+    endpoint: this.options.endpoint,
+    uuid: uuid,
     level: level,
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
+    body: this._buildBody(message, err),
     request: {
       url: window.location.href,
       query_string: window.location.search,
@@ -195,6 +208,11 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
         },
         plugins: this._getBrowserPlugins()
       }
+    },
+    server: {},
+    notifier: {
+      name: 'rollbar-browser-js',
+      version: Notifier.VERSION
     }
   };
 
@@ -202,12 +220,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
   // data.
   var payload = {
     access_token: accessToken,
-    data: Util.merge(notifierOptions, payloadData),
-    server: {},
-    notifier: {
-      name: 'rollbar-browser-js',
-      version: Notifier.VERSION
-    }
+    data: Util.merge(notifierOptions, payloadData)
   };
 
   if (custom) {
@@ -216,7 +229,56 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
 
   this._scrub(payload);
 
-  return RollbarJSON.stringify(payload);
+  return payload;
+};
+
+
+Notifier.prototype._buildBody = function(message, err) {
+  var buildTrace = function(description, err) {
+    var className = err.name || typeof err;
+    var message = err.message || err.toString();
+    var trace = {
+      exception: {
+        'class': className,
+        message: err.message || err.toString()
+      }
+    };
+
+    if (message) {
+      trace.exception.description = description;
+    }
+
+    if (err.stack) {
+      var st = new StackTrace(err);
+      var frames = st.frames;
+      if (frames) {
+        trace.frames = frames;
+      } 
+    }
+
+    if (!trace.frames) {
+      // no frames - not useful as a trace. just report as a message.
+      return buildMessage(className + ': ' + message);
+    } else {
+      return trace;
+    }
+  };
+
+  var buildMessage = function(message) {
+    return {
+      message: {
+        body: message
+      }
+    };
+  };
+
+  var body;
+  if (err) {
+    body = buildTrace(message, err);
+  } else {
+    body = buildMessage(message);  
+  }
+  return body;
 };
 
 
@@ -249,9 +311,9 @@ Notifier.prototype._scrub = function(obj) {
     return paramPart + Util.redact(valPart);
   };
 
-  var scrubFields = RollbarNotifier.scrubFields;
-  var queryRes = RollbarNotifier.scrubQueryParamRes;
-  var paramRes = RollbarNotifier.scrubParamRes;
+  var scrubFields = this.options.scrubFields;
+  var paramRes = this._getScrubFieldRegexs(scrubFields);
+  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
   var paramScrubber = function(v) {
     var i;
     if (typeof(v) === 'string') {
@@ -282,7 +344,30 @@ Notifier.prototype._scrub = function(obj) {
     }
   };
 
-  traverse(obj, scrubber);
+  Util.traverse(obj, scrubber);
+  return obj;
+};
+
+
+Notifier.prototype._getScrubFieldRegexs = function(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp(pat, 'i'));
+  }
+  return ret;
+};
+
+
+Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+  }
+  return ret;
 };
 
 
