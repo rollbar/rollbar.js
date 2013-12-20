@@ -53,6 +53,30 @@ describe('Util', function() {
     done();
   });
 
+  it("should deep copy an array properly", function(done) {
+    var array = [{a: 'b'}, {c: {d: 'e'}}, 2, [{m: 'n'}, 2]];
+    var copy = Util.copy(array);
+
+    expect(array).to.not.equal(copy);
+    expect(array).to.deep.equal(copy);
+
+    // Make sure changes to the source does not affect the copy
+    array[2] = 3;
+    expect(copy[2]).to.equal(2);
+
+    array[0]['a'] = {o: 3};
+    expect(array).to.not.deep.equal(copy);
+
+    // Make sure objects within arrays are deep copied
+    expect(array[3][0]).to.not.equal(copy[3][0]);
+
+    array[3].push('a');
+    // Make sure changes to a nested object/array in the source does not affect the copy
+    expect(copy[3]).to.have.length(2);
+
+    done();
+  });
+
   it("should parse a URI properly", function(done) {
     var uri = 'http://usr:pwd@www.test.com:81/dir/dir.2/index.htm?q1=0&&test1&test2=value#top';
 
