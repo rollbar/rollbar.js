@@ -30,9 +30,9 @@ module.exports = function(grunt) {
             return path.replace(/.js$/, ".map");
           },
           sourceMappingURL: function(path) {
-              // pkg.cdn set above initConfig() above
-              var prefix = 'https://' + pkg.cdn.host + '/static/js/';
-              return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
+            // pkg.cdn set above initConfig() above
+            var prefix = 'https://' + pkg.cdn.host + '/static/js/';
+            return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
           }
         },
         files: {
@@ -103,6 +103,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-express');
   grunt.loadNpmTasks('grunt-text-replace');
 
+  grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
   grunt.registerTask('test', ['replace', 'jshint', 'express', 'mocha']);
   grunt.registerTask('default', ['replace', 'jshint', 'concat', 'uglify', 'express', 'mocha']);
 };
