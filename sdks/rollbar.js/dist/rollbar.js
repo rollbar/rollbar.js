@@ -16,9 +16,15 @@ window._globalRollbarOptions = {
 
 
 function Notifier(parentNotifier) {
+  var protocol = window.location.protocol;
+  if (protocol.indexOf('http') !== 0) {
+    protocol = 'https:';
+  }
+  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
-    endpoint: '//' + Notifier.DEFAULT_ENDPOINT,
+    endpoint: endpoint,
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+    checkIgnore: null, 
     payload: {}
   };
 
@@ -175,7 +181,7 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
  * Builds and returns an Object that will be enqueued onto the
  * window._rollbarPayloadQueue array to be sent to Rollbar.
  */
-Notifier.prototype._buildPayload = function(ts, level, message, err, custom, callback) {
+Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
   var accessToken = this.options.accessToken;
   var environment = this.options.environment;
 
@@ -387,8 +393,14 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
  * - callback: Function to call once the item is reported to Rollbar
  */
 Notifier.prototype._log = function(level, message, err, custom, callback) {
-  // Implement me
-  console.log('IMPLEMENT ME', level, message, err, custom);
+  var payload = this._buildPayload(new Date(), level, message, err, custom);
+
+  // TODO(cory): implement checkIgnore
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
 };
 
 Notifier.prototype.log = Notifier._generateLogFn();
@@ -425,6 +437,54 @@ Notifier.prototype.scope = function(payloadOptions) {
   Util.merge(scopedNotifier.options.payload, payloadOptions);
   return scopedNotifier;
 };
+
+
+/***** Payload processor *****/
+
+var payloadProcessorTimeout;
+Notifier.processPayloads = function() {
+  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000); 
+};
+
+
+function _payloadProcessorTimer() {
+  var payloadObj;
+  while ((payloadObj = window._rollbarPayloadQueue.pop())) {
+    _processPayload(payloadObj.endpointUrl, payloadObj.payload, payloadObj.callback);
+  }
+  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+}
+
+
+var rateLimitStartTime = new Date().getTime();
+var rateLimitCounter = 0;
+function _processPayload(url, payload, callback) {
+  callback = callback || function() {};
+  var now = new Date().getTime();
+  if (now - rateLimitStartTime >= 60000) {
+    rateLimitStartTime = now;
+    rateLimitCounter = 0;
+  }
+
+  // Check to see if we have a rate limit set or if
+  // the rate limit has been met/exceeded.
+  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
+  if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
+    callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
+    return;
+  }
+
+  // There's either no rate limit or we haven't met it yet so
+  // go ahead and send it.
+  XHR.post(url, payload, function(err, resp) {
+    if (err) {
+      return callback(err);
+    }
+
+    // TODO(cory): parse resp as JSON
+    callback(null, resp);
+  });
+}
 
 /*
  * Derived work from raven-js at https://github.com/lincolnloop/raven-js
@@ -716,13 +776,14 @@ var XHR = {
     return xmlhttp;
   },
   post: function(url, payload, callback) {
+    callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
     if (request) {
       try {
         try {
           var onreadystatechange = function(args) {
             try {
-              if (callback && onreadystatechange && request.readyState === 4) {
+              if (onreadystatechange && request.readyState === 4) {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
@@ -742,15 +803,14 @@ var XHR = {
               //jquery source mentions firefox may error out while accessing the
               //request members if there is a network error
               //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             }
           };
 
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('Origin', 'notifier');
           }
           request.onreadystatechange = onreadystatechange;
           request.send(payload);
@@ -758,21 +818,15 @@ var XHR = {
           // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
           if (typeof XDomainRequest !== "undefined") {
             var ontimeout = function(args) {
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             };
 
             var onerror = function(args) {
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             };
 
             var onload = function(args) {
-              if (callback) {
-                callback(null, request.responseText);
-              }
+              callback(null, request.responseText);
             };
 
             request = new XDomainRequest();
@@ -785,7 +839,7 @@ var XHR = {
           }
         }
       } catch (e2) {
-        // ignore
+        callback(e2);
       }
     }
   }
@@ -979,5 +1033,6 @@ if (!window._rollbarInitialized) {
   fullRollbar._processShimQueue(window.RollbarShimQueue || []);
   window.Rollbar = fullRollbar;
   window._rollbarInitialized = true;
+  Notifier.processPayloads();
 }
 })(window, document);

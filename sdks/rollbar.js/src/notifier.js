@@ -15,9 +15,15 @@ window._globalRollbarOptions = {
 
 
 function Notifier(parentNotifier) {
+  var protocol = window.location.protocol;
+  if (protocol.indexOf('http') !== 0) {
+    protocol = 'https:';
+  }
+  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
-    endpoint: '//' + Notifier.DEFAULT_ENDPOINT,
+    endpoint: endpoint,
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+    checkIgnore: null, 
     payload: {}
   };
 
@@ -177,7 +183,7 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
  * Builds and returns an Object that will be enqueued onto the
  * window._rollbarPayloadQueue array to be sent to Rollbar.
  */
-Notifier.prototype._buildPayload = function(ts, level, message, err, custom, callback) {
+Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
   var accessToken = this.options.accessToken;
   var environment = this.options.environment;
 
@@ -389,8 +395,14 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
  * - callback: Function to call once the item is reported to Rollbar
  */
 Notifier.prototype._log = function(level, message, err, custom, callback) {
-  // Implement me
-  console.log('IMPLEMENT ME', level, message, err, custom);
+  var payload = this._buildPayload(new Date(), level, message, err, custom);
+
+  // TODO(cory): implement checkIgnore
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
 };
 
 Notifier.prototype.log = Notifier._generateLogFn();
@@ -427,3 +439,51 @@ Notifier.prototype.scope = function(payloadOptions) {
   Util.merge(scopedNotifier.options.payload, payloadOptions);
   return scopedNotifier;
 };
+
+
+/***** Payload processor *****/
+
+var payloadProcessorTimeout;
+Notifier.processPayloads = function() {
+  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000); 
+};
+
+
+function _payloadProcessorTimer() {
+  var payloadObj;
+  while ((payloadObj = window._rollbarPayloadQueue.pop())) {
+    _processPayload(payloadObj.endpointUrl, payloadObj.payload, payloadObj.callback);
+  }
+  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+}
+
+
+var rateLimitStartTime = new Date().getTime();
+var rateLimitCounter = 0;
+function _processPayload(url, payload, callback) {
+  callback = callback || function() {};
+  var now = new Date().getTime();
+  if (now - rateLimitStartTime >= 60000) {
+    rateLimitStartTime = now;
+    rateLimitCounter = 0;
+  }
+
+  // Check to see if we have a rate limit set or if
+  // the rate limit has been met/exceeded.
+  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
+  if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
+    callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
+    return;
+  }
+
+  // There's either no rate limit or we haven't met it yet so
+  // go ahead and send it.
+  XHR.post(url, payload, function(err, resp) {
+    if (err) {
+      return callback(err);
+    }
+
+    // TODO(cory): parse resp as JSON
+    callback(null, resp);
+  });
+}
