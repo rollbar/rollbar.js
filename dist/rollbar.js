@@ -235,51 +235,53 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
 
 
 Notifier.prototype._buildBody = function(message, err) {
-  var buildTrace = function(description, err) {
-    var className = err.name || typeof err;
-    var message = err.message || err.toString();
-    var trace = {
-      exception: {
-        'class': className,
-        message: err.message || err.toString()
-      }
-    };
-
-    if (message) {
-      trace.exception.description = description;
-    }
-
-    if (err.stack) {
-      var st = new StackTrace(err);
-      var frames = st.frames;
-      if (frames) {
-        trace.frames = frames;
-      } 
-    }
-
-    if (!trace.frames) {
-      // no frames - not useful as a trace. just report as a message.
-      return buildMessage(className + ': ' + message);
-    } else {
-      return trace;
-    }
-  };
-
-  var buildMessage = function(message) {
-    return {
-      message: {
-        body: message
-      }
-    };
-  };
-
   var body;
   if (err) {
-    body = buildTrace(message, err);
+    body = this._buildPayloadBodyTrace(message, err);
   } else {
-    body = buildMessage(message);  
+    body = this._buildPayloadBodyMessage(message);  
   }
   return body;
+};
+
+
+Notifier.prototype._buildPayloadBodyMessage = function(message) {
+  return {
+    message: {
+      body: message
+    }
+  };
+};
+
+
+Notifier.prototype._buildPayloadBodyTrace = function(description, err) {
+  var className = err.name || typeof err;
+  var message = err.message || err.toString();
+  var trace = {
+    exception: {
+      'class': className,
+      message: err.message || err.toString()
+    }
+  };
+
+  if (message) {
+    trace.exception.description = description;
+  }
+
+  if (err.stack) {
+    var st = new StackTrace(err);
+    var frames = st.frames;
+    if (frames) {
+      trace.frames = frames;
+    } 
+  }
+
+  if (!trace.frames) {
+    // no frames - not useful as a trace. just report as a message.
+    return buildMessage(className + ': ' + message);
+  } else {
+    return trace;
+  }
 };
 
 
