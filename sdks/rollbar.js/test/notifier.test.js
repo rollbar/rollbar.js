@@ -132,10 +132,14 @@ describe("Notifier.global()", function() {
 describe("Notifier.configure()", function() {
   it("should save options via configure()", function(done) {
     var notifier = new Notifier();
+    var originalOptions = Util.copy(notifier.options);
+
     var config = {foo: 'bar', a: {b: 'c', array: ['a', 'b']}, d: [1, 2, 3]};
     notifier.configure(config);
 
-    expect(notifier.options).to.deep.equal(config);
+    Util.merge(originalOptions, config);
+
+    expect(notifier.options).to.deep.equal(originalOptions);
     expect(notifier.options).to.not.equal(config);
 
     done();
@@ -294,7 +298,7 @@ describe("Notifier.debug/warning/error/critical()", function() {
     it("should report a message with a " + level + " level", function(done) {
       var notifier = new Notifier();
       var spy = sinon.spy(notifier, "_log");
-      notifier[level](level);
+      notifier[level]('Hello ' + level + ' world');
 
       expect(spy.called).to.be.true;
 
@@ -303,7 +307,7 @@ describe("Notifier.debug/warning/error/critical()", function() {
       var message = call.args[1];
 
       expect(level).to.be.equal(level);
-      expect(message).to.be.equal(level);
+      expect(message).to.be.equal('Hello ' + level + ' world');
 
       done();
     });
@@ -468,21 +472,134 @@ describe("Notifier._buildPayload()", function() {
  */
 
 describe("Notifier._scrub()", function() {
-  it("should return an object with scrubbed values", function(done) {
-    expect(1).to.equal(0);
+  it("should return an object with scrubbed values using default scrub fields", function(done) {
+    var notifier = new Notifier();
+
+    ["passwd", "password", "secret", "confirm_password", "password_confirmation"]
+
+    var payload = {
+      passwd: 'passwd',
+      password: 'password',
+      secret: 'secret',
+      confirm_password: 'confirm_password',
+      password_confirmation: 'password_confirmation',
+      visible: 'visible',
+      extra: {
+        password: 'password',
+        visible: 'visible'
+      }
+    };
+
+    notifier._scrub(payload);
+
+    expect(payload).to.deep.equal({
+      passwd: '******',
+      password: '********',
+      secret: '******',
+      confirm_password: '****************',
+      password_confirmation: '*********************',
+      visible: 'visible',
+      extra: {
+        password: '********',
+        visible: 'visible'
+      }
+    });
+
+    done();
+  });
+
+  it("should return an object with scrubbed values using custom scrub fields", function(done) {
+    var notifier = new Notifier();
+
+    notifier.configure({
+      scrubFields: ['hidden']
+    });
+
+    var payload = {
+      visible: 'visible',
+      hidden: 'hidden',
+      custom: {
+        inner: {
+          hidden: 'hidden'
+        },
+        hidden: 'hidden',
+        visible: 'visible'
+      }
+    };
+
+    notifier._scrub(payload);
+
+    expect(payload).to.deep.equal({
+      visible: 'visible',
+      hidden: '******',
+      custom: {
+        inner: {
+          hidden: '******'
+        },
+        hidden: '******',
+        visible: 'visible'
+      }
+    });
+
     done();
   });
 
   it("should return an object that has query params scrubbed", function(done) {
-    // e.g. {url: 'http://foo.com/?password=ASDFASDF'} should become
-    //      {url: 'http://foo.com/?password=********'}
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    var payload = {
+      url: 'http://foo.com/?password=ASDFASDF',
+      other_url: 'http://foo.com/?passwd=passwd&visible=visible'
+    };
+
+    notifier._scrub(payload);
+
+    expect(payload).to.deep.equal({
+      url: 'http://foo.com/?password=********',
+      other_url: 'http://foo.com/?passwd=******&visible=visible'
+    });
+
     done();
   });
 
-  it("should respect global() params for scrub values", function(done) {
-    // i.e. var x = Notifier.scope(); window.Rollbar.global({scrubParams: ['password']});
-    expect(1).to.equal(0);
+  it("should handle different scrub fields for different notifiers at the same time", function(done) {
+    var notifier1 = new Notifier();
+    notifier1.configure({
+      scrubFields: ['notifier1']
+    });
+
+    var notifier2 = notifier1.scope();
+    notifier2.configure({
+      scrubFields: ['notifier2']
+    });
+
+    var payload1 = {
+      visible: 'visible',
+      notifier1: 'hidden',
+      notifier2: 'visible'
+    };
+
+    var payload2 = {
+      visible: 'visible',
+      notifier1: 'visible',
+      notifier2: 'hidden'
+    };
+
+    notifier1._scrub(payload1);
+    notifier2._scrub(payload2);
+
+    expect(payload1).to.deep.equal({
+      visible: 'visible',
+      notifier1: '******',
+      notifier2: 'visible'
+    });
+
+    expect(payload2).to.deep.equal({
+      visible: 'visible',
+      notifier1: 'visible',
+      notifier2: '******'
+    });
+
     done();
   });
 
