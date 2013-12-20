@@ -2,7 +2,7 @@
 
 // Updated by the build process to match package.json
 Notifier.VERSION = '0.10.8';
-Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
+Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 
 // This is the global queue where all notifiers will put their
@@ -17,7 +17,7 @@ window._globalRollbarOptions = {
 
 function Notifier(parentNotifier) {
   this.options = {
-    endpoint: Notifier.DEFAULT_ENDPOINT,
+    endpoint: '//' + Notifier.DEFAULT_ENDPOINT,
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     payload: {}
   };
