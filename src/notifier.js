@@ -1,7 +1,7 @@
 
 // Updated by the build process to match package.json
 Notifier.VERSION = '0.10.8';
-Notifier.DEFAULT_ENDPOINT = 'https://api.rollbar.com/api/1/item/';
+Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 
 // This is the global queue where all notifiers will put their
@@ -16,7 +16,7 @@ window._globalRollbarOptions = {
 
 function Notifier(parentNotifier) {
   this.options = {
-    endpoint: Notifier.DEFAULT_ENDPOINT,
+    endpoint: '//' + Notifier.DEFAULT_ENDPOINT,
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     payload: {}
   };
@@ -237,51 +237,53 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom, cal
 
 
 Notifier.prototype._buildBody = function(message, err) {
-  var buildTrace = function(description, err) {
-    var className = err.name || typeof err;
-    var message = err.message || err.toString();
-    var trace = {
-      exception: {
-        'class': className,
-        message: err.message || err.toString()
-      }
-    };
-
-    if (message) {
-      trace.exception.description = description;
-    }
-
-    if (err.stack) {
-      var st = new StackTrace(err);
-      var frames = st.frames;
-      if (frames) {
-        trace.frames = frames;
-      } 
-    }
-
-    if (!trace.frames) {
-      // no frames - not useful as a trace. just report as a message.
-      return buildMessage(className + ': ' + message);
-    } else {
-      return trace;
-    }
-  };
-
-  var buildMessage = function(message) {
-    return {
-      message: {
-        body: message
-      }
-    };
-  };
-
   var body;
   if (err) {
-    body = buildTrace(message, err);
+    body = this._buildPayloadBodyTrace(message, err);
   } else {
-    body = buildMessage(message);  
+    body = this._buildPayloadBodyMessage(message);  
   }
   return body;
+};
+
+
+Notifier.prototype._buildPayloadBodyMessage = function(message) {
+  return {
+    message: {
+      body: message
+    }
+  };
+};
+
+
+Notifier.prototype._buildPayloadBodyTrace = function(description, err) {
+  var className = err.name || typeof err;
+  var message = err.message || err.toString();
+  var trace = {
+    exception: {
+      'class': className,
+      message: err.message || err.toString()
+    }
+  };
+
+  if (message) {
+    trace.exception.description = description;
+  }
+
+  if (err.stack) {
+    var st = new StackTrace(err);
+    var frames = st.frames;
+    if (frames) {
+      trace.frames = frames;
+    } 
+  }
+
+  if (!trace.frames) {
+    // no frames - not useful as a trace. just report as a message.
+    return buildMessage(className + ': ' + message);
+  } else {
+    return trace;
+  }
 };
 
 

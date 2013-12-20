@@ -47,6 +47,33 @@ Rollbar.prototype.loadFull = function(window, document, immediate) {
     s.src = "../dist/rollbar.js";
     s.async = !immediate;
     f.parentNode.insertBefore(s, f);
+    s.onload = handleLoadErr;
+  };
+
+  var handleLoadErr = function() {
+    if (window._rollbarPayloadQueue === undefined) {
+      // rollbar.js did not load correctly, call any queued callbacks
+      // with an error.
+      var obj;
+      var cb;
+      var args;
+      var i;
+      var err = new Error('rollbar.js did not load');
+
+      // Go through each of the shim objects. If one of their args
+      // was a function, treat it as the callback and call it with
+      // err as the first arg.
+      while ((obj = window.RollbarShimQueue.shift())) {
+        args = obj.args;
+        for (i = 0; i < args.length; ++i) {
+          cb = args[i];
+          if (typeof cb === 'function') {
+            cb(err);
+            break;
+          }
+        }
+      }
+    }
   };
 
   if (immediate) {
@@ -54,10 +81,8 @@ Rollbar.prototype.loadFull = function(window, document, immediate) {
   } else {
     // Have the window load up the script ASAP
     if (window.addEventListener) {
-      console.log('loading with addEventListener');
       window.addEventListener("load", loader, false);
     } else { 
-      console.log('loading with attachEvent');
       window.attachEvent("onload", loader);
     }
   }
@@ -86,7 +111,7 @@ function stub(method) {
   };
 }
 
-var _methods = ['log', 'debug', 'info', 'warning', 'error', 'critical', 'global', 'configure', 'scope', 'uncaughtError'];
+var _methods = 'log,debug,info,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
