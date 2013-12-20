@@ -4,4 +4,5 @@ if (!window._rollbarInitialized) {
   fullRollbar._processShimQueue(window.RollbarShimQueue || []);
   window.Rollbar = fullRollbar;
   window._rollbarInitialized = true;
+  Notifier.processPayloads();
 }

@@ -45,8 +45,11 @@ Rollbar.prototype.loadFull = function(window, document, immediate) {
     var f = document.getElementsByTagName("script")[0];
     s.src = "../dist/rollbar.js";
     s.async = !immediate;
-    f.parentNode.insertBefore(s, f);
+
+    // NOTE(cory): this may not work for some versions of IE
     s.onload = handleLoadErr;
+
+    f.parentNode.insertBefore(s, f);
   };
 
   var handleLoadErr = function() {

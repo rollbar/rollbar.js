@@ -21,13 +21,14 @@ var XHR = {
     return xmlhttp;
   },
   post: function(url, payload, callback) {
+    callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
     if (request) {
       try {
         try {
           var onreadystatechange = function(args) {
             try {
-              if (callback && onreadystatechange && request.readyState === 4) {
+              if (onreadystatechange && request.readyState === 4) {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
@@ -47,15 +48,14 @@ var XHR = {
               //jquery source mentions firefox may error out while accessing the
               //request members if there is a network error
               //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             }
           };
 
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('Origin', 'notifier');
           }
           request.onreadystatechange = onreadystatechange;
           request.send(payload);
@@ -63,21 +63,15 @@ var XHR = {
           // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
           if (typeof XDomainRequest !== "undefined") {
             var ontimeout = function(args) {
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             };
 
             var onerror = function(args) {
-              if (callback) {
-                callback(new Error());
-              }
+              callback(new Error());
             };
 
             var onload = function(args) {
-              if (callback) {
-                callback(null, request.responseText);
-              }
+              callback(null, request.responseText);
             };
 
             request = new XDomainRequest();
@@ -90,7 +84,7 @@ var XHR = {
           }
         }
       } catch (e2) {
-        // ignore
+        callback(e2);
       }
     }
   }
