@@ -30,7 +30,8 @@
   },
   "defaults": {
     "endpoint": "api.rollbar.com/api/1/",
-    "scrubFields": ["passwd", "password", "secret", "confirm_password", "password_confirmation"]
+    "scrubFields": ["passwd", "password", "secret", "confirm_password", "password_confirmation"],
+    "logLevel": "debug"
   },
   "plugins": {
     "jquery": {
