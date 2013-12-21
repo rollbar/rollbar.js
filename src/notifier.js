@@ -22,6 +22,7 @@ function Notifier(parentNotifier) {
   var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
     endpoint: endpoint,
+    environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null, 
     payload: {}
@@ -190,6 +191,14 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
 
+  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+    throw new Error('Invalid level');
+  }
+
+  if (!message && !err && !custom) {
+    throw new Error('No message, error or custom data');
+  }
+
   var payloadData = {
     environment: environment,
     endpoint: this.options.endpoint,
@@ -198,7 +207,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
-    body: this._buildBody(message, err),
+    body: this._buildBody(message, err, custom),
     request: {
       url: window.location.href,
       query_string: window.location.search,
@@ -225,16 +234,16 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
     }
   };
 
+  if (notifierOptions.body) {
+    delete notifierOptions.body;
+  }
+
   // Overwrite the options from configure() with the payload
   // data.
   var payload = {
     access_token: accessToken,
-    data: Util.merge(notifierOptions, payloadData)
+    data: Util.merge(payloadData, notifierOptions)
   };
-
-  if (custom) {
-    Util.merge(payload.data, custom);
-  }
 
   this._scrub(payload);
 
@@ -242,27 +251,33 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
 };
 
 
-Notifier.prototype._buildBody = function(message, err) {
+Notifier.prototype._buildBody = function(message, err, custom) {
   var body;
   if (err) {
-    body = this._buildPayloadBodyTrace(message, err);
+    body = this._buildPayloadBodyTrace(message, err, custom);
   } else {
-    body = this._buildPayloadBodyMessage(message);  
+    body = this._buildPayloadBodyMessage(message, custom);
   }
   return body;
 };
 
 
-Notifier.prototype._buildPayloadBodyMessage = function(message) {
+Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+  var result = {
+    body: message
+  };
+
+  if (custom) {
+    result.extra = Util.copy(custom);
+  }
+
   return {
-    message: {
-      body: message
-    }
+    message: result
   };
 };
 
 
-Notifier.prototype._buildPayloadBodyTrace = function(description, err) {
+Notifier.prototype._buildPayloadBodyTrace = function(description, err, custom) {
   var className = err.name || typeof err;
   var message = err.message || err.toString();
   var trace = {
@@ -272,7 +287,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, err) {
     }
   };
 
-  if (message) {
+  if (description) {
     trace.exception.description = description;
   }
 
@@ -284,11 +299,17 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, err) {
     } 
   }
 
+  if (custom) {
+    trace.extra = Util.copy(custom);
+  }
+
   if (!trace.frames) {
     // no frames - not useful as a trace. just report as a message.
-    return buildMessage(className + ': ' + message);
+    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
   } else {
-    return trace;
+    return {
+      trace: trace
+    };
   }
 };
 
