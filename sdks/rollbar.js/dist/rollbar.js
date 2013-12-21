@@ -12,7 +12,7 @@ window._rollbarPayloadQueue = [];
 
 // This contains global options for all Rollbar notifiers.
 window._globalRollbarOptions = {
-  startTime: (new Date()).getTime(),
+  startTime: (new Date()).getTime()
 };
 
 var TK = TraceKit.noConflict();
@@ -26,6 +26,7 @@ function Notifier(parentNotifier) {
   var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
     endpoint: endpoint,
+    environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null, 
     payload: {}
@@ -194,6 +195,14 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
 
+  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+    throw new Error('Invalid level');
+  }
+
+  if (!message && !stackInfo && !custom) {
+    throw new Error('No message, stack info or custom data');
+  }
+
   var payloadData = {
     environment: environment,
     endpoint: this.options.endpoint,
@@ -202,7 +211,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
-    body: this._buildBody(message, stackInfo),
+    body: this._buildBody(message, stackInfo, custom),
     request: {
       url: window.location.href,
       query_string: window.location.search,
@@ -229,16 +238,16 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     }
   };
 
+  if (notifierOptions.body) {
+    delete notifierOptions.body;
+  }
+
   // Overwrite the options from configure() with the payload
   // data.
   var payload = {
     access_token: accessToken,
-    data: Util.merge(notifierOptions, payloadData)
+    data: Util.merge(payloadData, notifierOptions)
   };
-
-  if (custom) {
-    Util.merge(payload.data, custom);
-  }
 
   this._scrub(payload);
 
@@ -246,29 +255,36 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
 };
 
 
-Notifier.prototype._buildBody = function(message, stackInfo) {
+Notifier.prototype._buildBody = function(message, stackInfo, custom) {
   var body;
   if (stackInfo && stackInfo.mode !== 'failed') {
-    body = this._buildPayloadBodyTrace(message, stackInfo);
+    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
-    body = this._buildPayloadBodyMessage(message);  
+    body = this._buildPayloadBodyMessage(message, custom);
   }
   return body;
 };
 
 
-Notifier.prototype._buildPayloadBodyMessage = function(message) {
+Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+  var result = {
+    body: message
+  };
+
+  if (custom) {
+    result.extra = Util.copy(custom);
+  }
+
   return {
-    message: {
-      body: message
-    }
+    message: result
   };
 };
 
 
-Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
-  var className = stackInfo.name || 'Error';
-  var message = stackInfo.message;
+Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
+  var guess = _guessErrorClass(stackInfo.message);
+  var className = stackInfo.name || guess[0];
+  var message = guess[1];
   var trace = {
     exception: {
       'class': className,
@@ -277,7 +293,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
   };
 
   if (description) {
-    trace.exception.description = description;
+    trace.exception.description = description || 'uncaught exception';
   }
 
   // Transform a TraceKit stackInfo object into a Rollbar trace
@@ -294,9 +310,9 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
     for (i = 0; i < stackInfo.stack.length; ++i) {
       stackFrame = stackInfo.stack[i];
       frame = {
-        filename: stackFrame.url || '(unknown)',
-        lineno: stackFrame.line,
-        method: stackFrame.func || '[anonymous]',
+        filename: stackFrame.url ? Util.sanitizeUrl(stackFrame.url) : '(unknown)',
+        lineno: stackFrame.line || null,
+        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
         colno: stackFrame.column
       };
 
@@ -329,10 +345,13 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
 
       trace.frames.push(frame);
     }
+    if (custom) {
+      trace.extra = Util.copy(custom);
+    }
     return {trace: trace};
   } else {
     // no frames - not useful as a trace. just report as a message.
-    return this._buildPayloadBodyMessage(className + ': ' + message);
+    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
   }
 };
 
@@ -465,20 +484,29 @@ Notifier.prototype.critical = Notifier._generateLogFn('critical');
 
 // Adapted from tracekit.js
 Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
-  if (err) {
+  if (err && err.stack) {
     this._log('error', message, err, null, true);
     return;
   }
 
+  // NOTE(cory): sometimes users will trigger an "error" event
+  // on the window object directly which will result in errMsg
+  // being an Object instead of a string.
+  //
+  if (url && url.stack) {
+    this._log('error', message, url, null, true);
+    return;
+  }
+
   var location = {
-    'url': url,
+    'url': url || '',
     'line': lineNo
   };
   location.func = TK.computeStackTrace.guessFunctionName(location.url, location.line);
   location.context = TK.computeStackTrace.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
-    'message': message,
+    'message': message || 'uncaught exception',
     'url': document.location.href,
     'stack': [location],
     'useragent': navigator.userAgent
@@ -511,6 +539,19 @@ Notifier.prototype.scope = function(payloadOptions) {
   return scopedNotifier;
 };
 
+
+var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+function _guessErrorClass(errMsg) {
+  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+  var errClass = '(unknown)';
+  
+  if (errClassMatch) {
+    errClass = errClassMatch[errClassMatch.length - 1];
+    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+  }
+  return [errClass, errMsg];
+}
 
 /***** Payload processor *****/
 

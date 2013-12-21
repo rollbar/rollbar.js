@@ -226,38 +226,138 @@ describe("Notifier.uncaughtError()", function() {
     done();
   });
 
-  it("should handle the case where an Error event is passed in place of the url", function(done) {
-    expect(1).to.equal(0);
+  it("should handle the case where an error event is passed in place of the url", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_log');
+
+    var err = new Error('uncaught error event');
+    notifier.uncaughtError('testing uncaught error event', err);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.equal(5);
+    expect(args[0]).to.equal('error');
+    expect(args[1]).to.equal('testing uncaught error event');
+    expect(args[2]).to.equal(err);
+    expect(args[3]).to.equal(null);
+    expect(args[4]).to.equal(true);
+
     done();
   });
 
   it("should sanitize the url", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('error message', 'http://foo.com/#', 111);
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.frames[0].filename).to.equal('http://foo.com/');
+
     done();
   });
 
-  it("should use \"(unknown)\" for the url if one is not provided", function(done) {
-    expect(1).to.equal(0);
+  it("should use \"(unknown)\" for the url if null is given", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('error message', null, 111);
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.frames[0].filename).to.equal('(unknown)');
+
+    done();
+  });
+
+  it("should use \"(unknown)\" for the url if '' is given", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('error message', '', 111);
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.frames[0].filename).to.equal('(unknown)');
+
     done();
   });
 
   it("should use \"uncaught exception\" for the error message if one is not provided", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError(null, 'http://foo.com/', 111);
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.exception.message).to.equal('uncaught exception');
+
     done();
   });
 
   it("should have a null lineno if one is not provided", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('something broke', 'http://foo.com/');
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.frames[0].lineno).to.equal(null);
+
     done();
   });
 
   it("should attempt to guess the error class from the message", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('SyntaxError: Unexpected token ;', 'http://foo.com/');
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.exception['class']).to.equal('SyntaxError');
+
     done();
   });
 
   it("should have a single frame if no error object was provided", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload')
+
+    notifier.uncaughtError('something broke', 'http://foo.com/');
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    var payload = args[0]; 
+
+    expect(payload.data.body.trace.frames.length).to.equal(1);
+    console.log(payload.data.body.trace.frames[0]);
+
     done();
   });
 });
@@ -741,7 +841,7 @@ describe("Notifier._buildPayload()", function() {
 
     expect(function() {
       notifier._buildPayload(new Date(), 'error');
-    }).to.throw('No message, error or custom data');
+    }).to.throw('No message, stack info or custom data');
 
     done();
   });

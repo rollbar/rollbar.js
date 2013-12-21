@@ -11,7 +11,7 @@ window._rollbarPayloadQueue = [];
 
 // This contains global options for all Rollbar notifiers.
 window._globalRollbarOptions = {
-  startTime: (new Date()).getTime(),
+  startTime: (new Date()).getTime()
 };
 
 var TK = TraceKit.noConflict();
@@ -198,8 +198,8 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     throw new Error('Invalid level');
   }
 
-  if (!message && !err && !custom) {
-    throw new Error('No message, error or custom data');
+  if (!message && !stackInfo && !custom) {
+    throw new Error('No message, stack info or custom data');
   }
 
   var payloadData = {
@@ -281,8 +281,9 @@ Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
 
 
 Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
-  var className = stackInfo.name || 'Error';
-  var message = stackInfo.message;
+  var guess = _guessErrorClass(stackInfo.message);
+  var className = stackInfo.name || guess[0];
+  var message = guess[1];
   var trace = {
     exception: {
       'class': className,
@@ -291,7 +292,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
   };
 
   if (description) {
-    trace.exception.description = description;
+    trace.exception.description = description || 'uncaught exception';
   }
 
   // Transform a TraceKit stackInfo object into a Rollbar trace
@@ -308,9 +309,9 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
     for (i = 0; i < stackInfo.stack.length; ++i) {
       stackFrame = stackInfo.stack[i];
       frame = {
-        filename: stackFrame.url || '(unknown)',
-        lineno: stackFrame.line,
-        method: stackFrame.func || '[anonymous]',
+        filename: stackFrame.url ? Util.sanitizeUrl(stackFrame.url) : '(unknown)',
+        lineno: stackFrame.line || null,
+        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
         colno: stackFrame.column
       };
 
@@ -482,20 +483,29 @@ Notifier.prototype.critical = Notifier._generateLogFn('critical');
 
 // Adapted from tracekit.js
 Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
-  if (err) {
+  if (err && err.stack) {
     this._log('error', message, err, null, true);
     return;
   }
 
+  // NOTE(cory): sometimes users will trigger an "error" event
+  // on the window object directly which will result in errMsg
+  // being an Object instead of a string.
+  //
+  if (url && url.stack) {
+    this._log('error', message, url, null, true);
+    return;
+  }
+
   var location = {
-    'url': url,
+    'url': url || '',
     'line': lineNo
   };
   location.func = TK.computeStackTrace.guessFunctionName(location.url, location.line);
   location.context = TK.computeStackTrace.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
-    'message': message,
+    'message': message || 'uncaught exception',
     'url': document.location.href,
     'stack': [location],
     'useragent': navigator.userAgent
@@ -528,6 +538,19 @@ Notifier.prototype.scope = function(payloadOptions) {
   return scopedNotifier;
 };
 
+
+var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+function _guessErrorClass(errMsg) {
+  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+  var errClass = '(unknown)';
+  
+  if (errClassMatch) {
+    errClass = errClassMatch[errClassMatch.length - 1];
+    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+  }
+  return [errClass, errMsg];
+}
 
 /***** Payload processor *****/
 
