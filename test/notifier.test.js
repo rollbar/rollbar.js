@@ -429,41 +429,6 @@ describe("Notifier._buildPayload()", function() {
 
     expect(payload.constructor).to.equal(Object);
 
-    /*
-    environment: environment,
-    endpoint: this.options.endpoint,
-    uuid: uuid,
-    level: level,
-    platform: 'browser',
-    framework: 'browser-js',
-    language: 'javascript',
-    body: this._buildBody(message, err),
-    request: {
-      url: window.location.href,
-      query_string: window.location.search,
-      user_ip: "$remote_ip"
-    },
-    client: {
-      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
-      timestamp: Math.round(ts.getTime() / 1000),
-      javascript: {
-        browser: window.navigator.userAgent,
-        language: window.navigator.language,
-        cookie_enabled: window.navigator.cookieEnabled,
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height
-        },
-        plugins: this._getBrowserPlugins()
-      }
-    },
-    server: {},
-    notifier: {
-      name: 'rollbar-browser-js',
-      version: Notifier.VERSION
-    }
-     */
-
     expect(payload.data).to.include.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
       'language', 'body', 'request', 'client', 'server', 'notifier']);
 
