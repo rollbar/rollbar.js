@@ -18,7 +18,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.js': ['src/notifier.js', 'src/stacktrace.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.js': ['src/notifier.js', 'vendor/TraceKit/tracekit.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/shimload.js']
         }
       }
@@ -66,6 +66,11 @@ module.exports = function(grunt) {
             // default endpoint
             from: /(DEFAULT_ENDPOINT|defaultEndpoint) = (["'])[0-9_\.a-zA-Z:\/]+(["'])/g,
             to: '$1 = $2<%= pkg.defaults.endpoint %>$3'
+          },
+          {
+            // default log level
+            from: /(DEFAULT_LOG_LEVEL|defaultLogLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
+            to: '$1 = $2<%= pkg.defaults.logLevel %>$4'
           }
         ]
       }

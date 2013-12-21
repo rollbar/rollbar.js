@@ -130,7 +130,7 @@ describe("Notifier.global()", function() {
  */
 
 describe("Notifier.configure()", function() {
-  it("should save options via configure()", function(done) {
+  it("should save options", function(done) {
     var notifier = new Notifier();
     var originalOptions = Util.copy(notifier.options);
 
@@ -145,7 +145,7 @@ describe("Notifier.configure()", function() {
     done();
   });
 
-  it("should overwrite previous options via configure()", function(done) {
+  it("should overwrite previous options", function(done) {
     var notifier = new Notifier();
     notifier.configure({foo: 'bar', bar: 'foo'});
     notifier.configure({foo: 'baz'});
@@ -160,7 +160,13 @@ describe("Notifier.configure()", function() {
   });
 
   it("should save payload options", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    notifier.configure({endpoint: 'http://foo.com/', itemsPerMinute: 33, payload: {server: {host: 'web1'}}});
+
+    expect(notifier.options).to.have.property('payload');
+    expect(notifier.options.payload).to.have.property('server');
+    expect(notifier.options.payload.server).to.have.property('host').to.equal('web1');
+
     done();
   });
 });
@@ -171,7 +177,86 @@ describe("Notifier.configure()", function() {
  */
 
 describe("Notifier.uncaughtError()", function() {
-  it("should be IMPLEMENTED", function(done) {
+  it("should enqueue a payload with the provided error object", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_log');
+
+    var err = new Error('uncaught error message');
+    notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21, err);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.equal(5);
+    expect(args[0]).to.equal('error');
+    expect(args[1]).to.equal('testing uncaught error');
+    expect(args[2]).to.equal(err);
+    expect(args[3]).to.equal(null);
+    expect(args[4]).to.equal(true);
+
+    done();
+  });
+
+  it("should enqueue a payload with an error if an error object was not provided", function(done) {
+    var notifier = new Notifier();
+    var _logSpy = sinon.spy(notifier, '_log');
+    var _enqueueSpy = sinon.spy(notifier, '_enqueuePayload');
+
+    notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21);
+
+    // only call _log when we have an error
+    expect(_logSpy.called).to.equal(false);
+    expect(_enqueueSpy.called).to.equal(true);
+
+    var call = _enqueueSpy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.equal(3);
+    expect(args[0]).to.be.an('object');
+    expect(args[1]).to.equal(true);
+    expect(args[2]).to.be.an('array');
+    expect(args[2].length).to.equal(5);
+    expect(args[2][0]).to.equal('testing uncaught error');
+    expect(args[2][1]).to.equal('http://foo.com/');
+    expect(args[2][2]).to.equal(33);
+    expect(args[2][3]).to.equal(21);
+
+    done();
+  });
+
+  it("should handle the case where an Error event is passed in place of the url", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should sanitize the url", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should use \"(unknown)\" for the url if one is not provided", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should use \"uncaught exception\" for the error message if one is not provided", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should have a null lineno if one is not provided", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should attempt to guess the error class from the message", function(done) {
+    expect(1).to.equal(0);
+    done();
+  });
+
+  it("should have a single frame if no error object was provided", function(done) {
     expect(1).to.equal(0);
     done();
   });

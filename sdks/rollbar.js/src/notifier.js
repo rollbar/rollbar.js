@@ -3,6 +3,7 @@
 Notifier.VERSION = '0.10.8';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
+Notifier.DEFAULT_LOG_LEVEL = 'debug';
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
@@ -13,6 +14,8 @@ window._globalRollbarOptions = {
   startTime: (new Date()).getTime(),
 };
 
+var TK = TraceKit.noConflict();
+TK.remoteFetching = false;
 
 function Notifier(parentNotifier) {
   var protocol = window.location.protocol;
@@ -46,10 +49,10 @@ function Notifier(parentNotifier) {
 
 
 Notifier._generateLogFn = function(level) {
-  return function() {
+  return function _logFn() {
     var args = this._getLogArgs(arguments);
 
-    return this._log(level || args.level || this.options.defaultLogLevel || 'debug',
+    return this._log(level || args.level || this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL,
         args.message, args.err, args.custom, args.callback);
   };
 };
@@ -64,7 +67,7 @@ Notifier._generateLogFn = function(level) {
  * }
  */
 Notifier.prototype._getLogArgs = function(args) {
-  var level = this.options.defaultLogLevel || 'debug';
+  var level = this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL;
   var ts;
   var message;
   var err;
@@ -184,7 +187,7 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
  * Builds and returns an Object that will be enqueued onto the
  * window._rollbarPayloadQueue array to be sent to Rollbar.
  */
-Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
+Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custom) {
   var accessToken = this.options.accessToken;
   var environment = this.options.environment;
 
@@ -207,7 +210,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
-    body: this._buildBody(message, err, custom),
+    body: this._buildBody(message, stackInfo, custom),
     request: {
       url: window.location.href,
       query_string: window.location.search,
@@ -251,10 +254,10 @@ Notifier.prototype._buildPayload = function(ts, level, message, err, custom) {
 };
 
 
-Notifier.prototype._buildBody = function(message, err, custom) {
+Notifier.prototype._buildBody = function(message, stackInfo, custom) {
   var body;
-  if (err) {
-    body = this._buildPayloadBodyTrace(message, err, custom);
+  if (stackInfo && stackInfo.mode !== 'failed') {
+    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
     body = this._buildPayloadBodyMessage(message, custom);
   }
@@ -277,13 +280,13 @@ Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
 };
 
 
-Notifier.prototype._buildPayloadBodyTrace = function(description, err, custom) {
-  var className = err.name || typeof err;
-  var message = err.message || err.toString();
+Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
+  var className = stackInfo.name || 'Error';
+  var message = stackInfo.message;
   var trace = {
     exception: {
       'class': className,
-      message: err.message || err.toString()
+      message: message
     }
   };
 
@@ -291,25 +294,62 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, err, custom) {
     trace.exception.description = description;
   }
 
-  if (err.stack) {
-    var st = new StackTrace(err);
-    var frames = st.frames;
-    if (frames) {
-      trace.frames = frames;
-    } 
-  }
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  if (stackInfo.stack) {
+    var stackFrame;
+    var frame;
+    var code;
+    var pre;
+    var post;
+    var contextLength;
+    var i, j, mid;
 
-  if (custom) {
-    trace.extra = Util.copy(custom);
-  }
+    trace.frames = [];
+    for (i = 0; i < stackInfo.stack.length; ++i) {
+      stackFrame = stackInfo.stack[i];
+      frame = {
+        filename: stackFrame.url || '(unknown)',
+        lineno: stackFrame.line,
+        method: stackFrame.func || '[anonymous]',
+        colno: stackFrame.column
+      };
 
-  if (!trace.frames) {
+      code = pre = post = null;
+      contextLength = stackFrame.context ? stackFrame.context.length : 0;
+      if (contextLength) {
+        mid = Math.floor(contextLength / 2);
+        pre = stackFrame.context.slice(0, mid);
+        code = stackFrame.context[mid];
+        post = stackFrame.context.slice(mid);
+      }
+
+      if (code) {
+        frame.code = code; 
+      }
+
+      if (pre || post) {
+        frame.context = {};
+        if (pre && pre.length) {
+          frame.context.pre = pre;
+        }
+        if (post && post.length) {
+          frame.context.post = post;
+        }
+      }
+
+      if (stackFrame.args) {
+        frame.arge = args;
+      }
+
+      trace.frames.push(frame);
+    }
+    if (custom) {
+      trace.extra = Util.copy(custom);
+    }
+    return {trace: trace};
+  } else {
     // no frames - not useful as a trace. just report as a message.
     return this._buildPayloadBodyMessage(className + ': ' + message, custom);
-  } else {
-    return {
-      trace: trace
-    };
   }
 };
 
@@ -338,15 +378,12 @@ Notifier.prototype._getBrowserPlugins = function() {
  *    their values normalized as well.
  */
 Notifier.prototype._scrub = function(obj) {
-  var redactQueryParam = function(match, paramPart, dummy1,
+  function redactQueryParam(match, paramPart, dummy1,
       dummy2, dummy3, valPart, offset, string) {
     return paramPart + Util.redact(valPart);
-  };
+  }
 
-  var scrubFields = this.options.scrubFields;
-  var paramRes = this._getScrubFieldRegexs(scrubFields);
-  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
-  var paramScrubber = function(v) {
+  function paramScrubber(v) {
     var i;
     if (typeof(v) === 'string') {
       for (i = 0; i < queryRes.length; ++i) {
@@ -354,9 +391,9 @@ Notifier.prototype._scrub = function(obj) {
       }
     }
     return v;
-  };
+  }
 
-  var valScrubber = function(k, v) {
+  function valScrubber(k, v) {
     var i;
     for (i = 0; i < paramRes.length; ++i) {
       if (paramRes[i].test(k)) {
@@ -365,16 +402,20 @@ Notifier.prototype._scrub = function(obj) {
       }
     }
     return v;
-  };
+  }
 
-  var scrubber = function(k, v) {
+  function scrubber(k, v) {
     var tmpV = valScrubber(k, v);
     if (tmpV === v) {
       return paramScrubber(tmpV);
     } else {
       return tmpV;
     }
-  };
+  }
+
+  var scrubFields = this.options.scrubFields;
+  var paramRes = this._getScrubFieldRegexs(scrubFields);
+  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
 
   Util.traverse(obj, scrubber);
   return obj;
@@ -403,6 +444,17 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 };
 
 
+Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
+  // TODO(cory): implement checkIgnore
+
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
+};
+
+
 /*
  * Logs stuff to Rollbar and console.log using the default
  * logging level.
@@ -415,15 +467,10 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
  *   the item
  * - callback: Function to call once the item is reported to Rollbar
  */
-Notifier.prototype._log = function(level, message, err, custom, callback) {
-  var payload = this._buildPayload(new Date(), level, message, err, custom);
-
-  // TODO(cory): implement checkIgnore
-  window._rollbarPayloadQueue.push({
-    callback: callback,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  });
+Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
+  var stackInfo = err ? TK.computeStackTrace(err) : null;
+  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
+  this._enqueuePayload(payload, isUncaught, [level, message, err, custom], callback);
 };
 
 Notifier.prototype.log = Notifier._generateLogFn();
@@ -433,9 +480,29 @@ Notifier.prototype.warning = Notifier._generateLogFn('warning');
 Notifier.prototype.error = Notifier._generateLogFn('error');
 Notifier.prototype.critical = Notifier._generateLogFn('critical');
 
+// Adapted from tracekit.js
 Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
-  // Implement me
-  console.log(message, url, lineNo, colNo, err);
+  if (err) {
+    this._log('error', message, err, null, true);
+    return;
+  }
+
+  var location = {
+    'url': url,
+    'line': lineNo
+  };
+  location.func = TK.computeStackTrace.guessFunctionName(location.url, location.line);
+  location.context = TK.computeStackTrace.gatherContext(location.url, location.line);
+  var stack = {
+    'mode': 'onerror',
+    'message': message,
+    'url': document.location.href,
+    'stack': [location],
+    'useragent': navigator.userAgent
+  };
+
+  var payload = this._buildPayload(new Date(), 'error', message, stack);
+  this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
 };
 
 
@@ -482,7 +549,7 @@ function _payloadProcessorTimer() {
 var rateLimitStartTime = new Date().getTime();
 var rateLimitCounter = 0;
 function _processPayload(url, payload, callback) {
-  callback = callback || function() {};
+  callback = callback || function cb() {};
   var now = new Date().getTime();
   if (now - rateLimitStartTime >= 60000) {
     rateLimitStartTime = now;
@@ -499,7 +566,7 @@ function _processPayload(url, payload, callback) {
 
   // There's either no rate limit or we haven't met it yet so
   // go ahead and send it.
-  XHR.post(url, payload, function(err, resp) {
+  XHR.post(url, payload, function xhrCallback(err, resp) {
     if (err) {
       return callback(err);
     }
