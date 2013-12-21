@@ -477,6 +477,27 @@ describe("Notifier._buildPayload()", function() {
     done();
   });
 
+  it("should build the correct message payload for an error with no frames", function(done) {
+    var notifier = new Notifier();
+
+    var err;
+    try {
+      a = b;
+    } catch(e) {
+      err = e;
+    }
+
+    // Simulate an error with no frame info
+    err.stack = '';
+
+    var payload = notifier._buildPayload(new Date(), 'debug', null, err);
+
+    expect(payload.data.body).to.have.key('message');
+    expect(payload.data.body.message.body).to.equal('ReferenceError: b is not defined');
+
+    done();
+  });
+
   it("should set extra data for a logged message in body.message.extra", function(done) {
     var notifier = new Notifier();
     var custom = {
@@ -487,7 +508,7 @@ describe("Notifier._buildPayload()", function() {
     var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world', null, custom);
 
     expect(payload.data.body).to.have.key('message');
-    expect(payload.data.body.message).to.have.keys('body', 'extra');
+    expect(payload.data.body.message).to.have.keys(['body', 'extra']);
     expect(payload.data.body.message.extra).to.deep.equal(custom);
 
     done();
@@ -496,7 +517,12 @@ describe("Notifier._buildPayload()", function() {
   it("should set extra data for a logged error in body.trace.extra", function(done) {
     var notifier = new Notifier();
 
-    var err = new Error('test');
+    var err;
+    try {
+      a = b;
+    } catch(e) {
+      err = e;
+    }
 
     var custom = {
       foo: 'bar',
@@ -506,7 +532,7 @@ describe("Notifier._buildPayload()", function() {
     var payload = notifier._buildPayload(new Date(), 'debug', null, err, custom);
 
     expect(payload.data.body).to.have.key('trace');
-    expect(payload.data.body.trace).to.have.keys('frames', 'exception', 'extra');
+    expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
     expect(payload.data.body.trace.extra).to.deep.equal(custom);
 
     done();
@@ -515,7 +541,13 @@ describe("Notifier._buildPayload()", function() {
   it("should set extra data for a logged mesage + error in body.trace.extra", function(done) {
     var notifier = new Notifier();
     var message = 'Hello world';
-    var err = new Error('test');
+
+    var err;
+    try {
+      a = b;
+    } catch(e) {
+      err = e;
+    }
 
     var custom = {
       foo: 'bar',
@@ -525,7 +557,7 @@ describe("Notifier._buildPayload()", function() {
     var payload = notifier._buildPayload(new Date(), 'debug', message, err, custom);
 
     expect(payload.data.body).to.have.key('trace');
-    expect(payload.data.body.trace).to.have.keys('frames', 'exception', 'extra');
+    expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
     expect(payload.data.body.trace.extra).to.deep.equal(custom);
     expect(payload.data.body.trace.exception.description).to.equal(message);
 
