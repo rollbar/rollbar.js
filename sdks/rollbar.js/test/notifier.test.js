@@ -442,7 +442,7 @@ describe("Notifier._log()", function() {
 describe("Notifier._route()", function() {
   it("should route using the default endpoint", function(done) {
     var notifier = new Notifier();
-    expect(notifier._route('item/test')).to.equal('https://api.rollbar.com/api/1/item/test');
+    expect(notifier._route('test')).to.equal('https://api.rollbar.com/api/1/test');
 
     notifier.configure({endpoint: 'http://test.com/'});
     expect(notifier._route('test')).to.equal('http://test.com/test');
@@ -508,60 +508,245 @@ describe("Notifier._processShimQueue()", function() {
 
 describe("Notifier._buildPayload()", function() {
   it("should return a valid payload object", function(done) {
-    // check for expected keys
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload.constructor).to.equal(Object);
+
+    expect(payload.data).to.include.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
+      'language', 'body', 'request', 'client', 'server', 'notifier']);
+
+    expect(payload.data.client).to.have.keys(['runtime_ms', 'timestamp', 'javascript']);
+    expect(payload.data.client.javascript).to.have.keys(['browser', 'language', 'cookie_enabled', 'screen', 'plugins']);
+
+    expect(payload.data.notifier.name).to.equal('rollbar-browser-js');
+    expect(payload.data.notifier.version).to.equal(Notifier.VERSION);
+
+    // Check passed in data
+    expect(payload.data.level).to.equal('debug');
+
+    expect(payload.data.body.message).to.have.key('body');
+    expect(payload.data.body.message.body).to.equal('Hello world');
+
     done();
   });
 
   it("should not reference Notifier.options", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+    var x = notifier.scope({
+      test: {
+        a: 'b',
+        c: ['d', 'e']
+      }
+    });
+
+    var payload = x._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload).to.not.equal(notifier.options.payload);
+    expect(payload.data).to.not.equal(notifier.options.payload);
+    expect(payload.data.client).to.not.equal(notifier.options.payload.client);
+
+    expect(payload.data).to.have.property('test');
+    expect(payload.data.test.a).to.equal('b');
+    expect(payload.data.test.c).to.deep.equal(['d', 'e']);
+
+    // Make sure changing the payload doesn't affect the notifier
+    payload.data.test.c.push('f');
+    expect(x.options.payload.test.c).to.have.length(2);
+
+    // Make sure changing the notifier doesn't affect the notifier
+    x.options.payload.test.a = 'g';
+    expect(payload.data.test.a).to.equal('b');
+
+    done();
+  });
+
+  it("should set extra data for a logged message in body.message.extra", function(done) {
+    var notifier = new Notifier();
+    var custom = {
+      foo: 'bar',
+      bar: 'foo'
+    };
+
+    var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world', null, custom);
+
+    expect(payload.data.body).to.have.key('message');
+    expect(payload.data.body.message).to.have.keys('body', 'extra');
+    expect(payload.data.body.message.extra).to.deep.equal(custom);
+
+    done();
+  });
+
+  it("should set extra data for a logged error in body.trace.extra", function(done) {
+    var notifier = new Notifier();
+
+    var err = new Error('test');
+
+    var custom = {
+      foo: 'bar',
+      bar: 'foo'
+    };
+
+    var payload = notifier._buildPayload(new Date(), 'debug', null, err, custom);
+
+    expect(payload.data.body).to.have.key('trace');
+    expect(payload.data.body.trace).to.have.keys('frames', 'exception', 'extra');
+    expect(payload.data.body.trace.extra).to.deep.equal(custom);
+
+    done();
+  });
+
+  it("should set extra data for a logged mesage + error in body.trace.extra", function(done) {
+    var notifier = new Notifier();
+    var message = 'Hello world';
+    var err = new Error('test');
+
+    var custom = {
+      foo: 'bar',
+      bar: 'foo'
+    };
+
+    var payload = notifier._buildPayload(new Date(), 'debug', message, err, custom);
+
+    expect(payload.data.body).to.have.key('trace');
+    expect(payload.data.body.trace).to.have.keys('frames', 'exception', 'extra');
+    expect(payload.data.body.trace.extra).to.deep.equal(custom);
+    expect(payload.data.body.trace.exception.description).to.equal(message);
+
+    done();
+  });
+
+  it("should update payload root data with scope()", function(done) {
+    var notifier = new Notifier();
+
+    var x = notifier.scope({
+      newKey: 'newValue',
+      request: {
+        newRequestKey: 'newRequestValue',
+        query_string: 'fake=query_string'
+      }
+    });
+
+    var payload = x._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload.data.newKey).to.equal('newValue');
+    expect(payload.data.request.newRequestKey).to.equal('newRequestValue');
+    expect(payload.data.request.query_string).to.equal('fake=query_string');
+    done();
+  });
+
+  it("should not be able to update body using scope()", function(done) {
+    var notifier = new Notifier();
+
+    var x = notifier.scope({
+      body: 'badBody'
+    });
+
+    var payload = x._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload.data.body).to.have.key('message');
+    expect(payload.data.body.message).to.deep.equal({
+      body: 'Hello world'
+    });
+
     done();
   });
 
   it("should not share references with other calls to _buildPayload()", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    var custom = {
+      a: 'b'
+    };
+
+    var payload1 = notifier._buildPayload(new Date(), 'debug', 'Hello world', null, custom);
+    var payload2 = notifier._buildPayload(new Date(), 'warning', 'Hello world #2', null, custom);
+
+    expect(payload1).to.not.equal(payload2);
+    expect(payload1.data.body.message.extra).to.not.equal(payload2.data.body.message.extra);
+    expect(payload1.data.body.message.extra).to.deep.equal(payload2.data.body.message.extra);
+
+    payload1.data.body.message.newKey = 'newValue';
+
+    expect(payload2.data.body.message).to.not.have.property('newKey');
+
     done();
   });
 
   it("should respect timestamps from the past/future", function(done) {
-    expect(1).to.equal(0);
-    done();
-  });
+    var notifier = new Notifier();
 
-  it("should respect timestamps from the past/future", function(done) {
-    expect(1).to.equal(0);
+    var pastDate = new Date(new Date().getTime() - 10000);
+    var futureDate = new Date(new Date().getTime() + 10000);
+
+    var pastMessage = 'Hello past!';
+    var futureMessage = 'Hello future!';
+
+    var payload1 = notifier._buildPayload(pastDate, 'debug', pastMessage);
+    var payload2 = notifier._buildPayload(futureDate, 'debug', futureMessage);
+
+    expect(payload1.data.client.timestamp).to.equal(Math.round(pastDate.getTime() / 1000));
+    expect(payload2.data.client.timestamp).to.equal(Math.round(futureDate.getTime() / 1000));
+    expect(payload1.data.body.message.body).to.equal(pastMessage);
+    expect(payload2.data.body.message.body).to.equal(futureMessage);
+
     done();
   });
 
   it("should error if level is not valid", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    expect(function() {
+      notifier._buildPayload(new Date(), 'eror', 'Hello world');
+    }).to.throw('Invalid level');
+
     done();
   });
 
   it("should error if missing message && err && custom", function(done) {
-    expect(1).to.equal(0);
-    done();
-  });
+    var notifier = new Notifier();
 
-  it("should not error if missing callback", function(done) {
-    expect(1).to.equal(0);
-    done();
-  });
+    expect(function() {
+      notifier._buildPayload(new Date(), 'error');
+    }).to.throw('No message, error or custom data');
 
-  it("should not error if missing err || custom", function(done) {
-    expect(1).to.equal(0);
     done();
   });
 
   it("should scrub appropriate fields", function(done) {
-    // Make sure Notifier._scrub is called with the payload and returns the thing returned
-    // by _buildPayload()
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    var custom = {
+      password: 'hidden',
+      visible: 'visible'
+    };
+
+    var spy = sinon.spy(notifier, "_scrub");
+
+    var payload = notifier._buildPayload(new Date(), 'error', 'Hello world', null, custom);
+
+    expect(spy.called).to.be.true;
+
+    var call = spy.getCall(0);
+    var scrubbedPayload = call.args[0];
+
+    expect(payload).to.equal(scrubbedPayload);
+    expect(payload).to.deep.equal(scrubbedPayload);
+
+    expect(payload.data.body.message.extra.password).to.equal('******');
+    expect(payload.data.body.message.extra.visible).to.equal('visible');
+
     done();
   });
 
   it("should not contain any global options", function(done) {
-    expect(1).to.equal(0);
+    var notifier = new Notifier();
+
+    var payload = notifier._buildPayload(new Date(), 'error', 'Hello world');
+
+    expect(payload).to.not.have.keys(Object.keys(window._globalRollbarOptions));
+
     done();
   });
 });
@@ -574,8 +759,6 @@ describe("Notifier._buildPayload()", function() {
 describe("Notifier._scrub()", function() {
   it("should return an object with scrubbed values using default scrub fields", function(done) {
     var notifier = new Notifier();
-
-    ["passwd", "password", "secret", "confirm_password", "password_confirmation"]
 
     var payload = {
       passwd: 'passwd',
@@ -648,15 +831,29 @@ describe("Notifier._scrub()", function() {
     var notifier = new Notifier();
 
     var payload = {
-      url: 'http://foo.com/?password=ASDFASDF',
-      other_url: 'http://foo.com/?passwd=passwd&visible=visible'
+      url: 'http://foo.com/?password=hidden',
+      other_url: 'http://foo.com/?passwd=hidden&visible=visible',
+      extra: {
+        another_url: 'http://foo.com/?passwd=hidden&visible=visible&password_confirmation=hidden',
+        array: [
+          'http://foo.com/?passwd=hidden&visible=visible&password_confirmation=hidden&seen=seen',
+          'http://www.foo.com?passwd=&test=test&foo'
+        ]
+      }
     };
 
     notifier._scrub(payload);
 
     expect(payload).to.deep.equal({
-      url: 'http://foo.com/?password=********',
-      other_url: 'http://foo.com/?passwd=******&visible=visible'
+      url: 'http://foo.com/?password=******',
+      other_url: 'http://foo.com/?passwd=******&visible=visible',
+      extra: {
+        another_url: 'http://foo.com/?passwd=******&visible=visible&password_confirmation=******',
+        array: [
+          'http://foo.com/?passwd=******&visible=visible&password_confirmation=******&seen=seen',
+          'http://www.foo.com?passwd=&test=test&foo'
+        ]
+      }
     });
 
     done();

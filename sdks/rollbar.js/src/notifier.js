@@ -25,6 +25,7 @@ function Notifier(parentNotifier) {
   var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
     endpoint: endpoint,
+    environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null, 
     payload: {}
@@ -193,6 +194,14 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
 
+  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+    throw new Error('Invalid level');
+  }
+
+  if (!message && !err && !custom) {
+    throw new Error('No message, error or custom data');
+  }
+
   var payloadData = {
     environment: environment,
     endpoint: this.options.endpoint,
@@ -201,7 +210,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
-    body: this._buildBody(message, stackInfo),
+    body: this._buildBody(message, stackInfo, custom),
     request: {
       url: window.location.href,
       query_string: window.location.search,
@@ -228,16 +237,16 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     }
   };
 
+  if (notifierOptions.body) {
+    delete notifierOptions.body;
+  }
+
   // Overwrite the options from configure() with the payload
   // data.
   var payload = {
     access_token: accessToken,
-    data: Util.merge(notifierOptions, payloadData)
+    data: Util.merge(payloadData, notifierOptions)
   };
-
-  if (custom) {
-    Util.merge(payload.data, custom);
-  }
 
   this._scrub(payload);
 
@@ -245,27 +254,33 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
 };
 
 
-Notifier.prototype._buildBody = function(message, stackInfo) {
+Notifier.prototype._buildBody = function(message, stackInfo, custom) {
   var body;
   if (stackInfo && stackInfo.mode !== 'failed') {
-    body = this._buildPayloadBodyTrace(message, stackInfo);
+    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
-    body = this._buildPayloadBodyMessage(message);  
+    body = this._buildPayloadBodyMessage(message, custom);
   }
   return body;
 };
 
 
-Notifier.prototype._buildPayloadBodyMessage = function(message) {
+Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+  var result = {
+    body: message
+  };
+
+  if (custom) {
+    result.extra = Util.copy(custom);
+  }
+
   return {
-    message: {
-      body: message
-    }
+    message: result
   };
 };
 
 
-Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
+Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
   var className = stackInfo.name || 'Error';
   var message = stackInfo.message;
   var trace = {
@@ -328,10 +343,13 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo) {
 
       trace.frames.push(frame);
     }
+    if (custom) {
+      trace.extra = Util.copy(custom);
+    }
     return {trace: trace};
   } else {
     // no frames - not useful as a trace. just report as a message.
-    return this._buildPayloadBodyMessage(className + ': ' + message);
+    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
   }
 };
 
