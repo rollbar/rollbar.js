@@ -673,9 +673,8 @@ describe("Notifier._buildPayload()", function() {
     }
 
     // Simulate an error with no frame info
-    err.stack = '';
-
-    var payload = notifier._buildPayload(new Date(), 'debug', null, err);
+    var mock = {message: 'ReferenceError: b is not defined'};
+    var payload = notifier._buildPayload(new Date(), 'debug', null, mock);
 
     expect(payload.data.body).to.have.key('message');
     expect(payload.data.body.message.body).to.equal('ReferenceError: b is not defined');
