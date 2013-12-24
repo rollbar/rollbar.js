@@ -44,19 +44,16 @@
     <!-- sources -->
     <script src="../src/shim.js" type="text/javascript" charset="utf-8"></script>
 
-    <!-- tracekit source, needed for testing Notifier(notifier) -->
-    <script src="../vendor/TraceKit/tracekit.js" type="text/javascript" charset="utf-8"></script>
-
     <!-- tests -->
     <script src="./rollbar.test.js"></script>
 
     <script type="text/javascript" charset="utf-8">
       var config = {
-        accessToken: 'ACCESS_TOKEN',
-        captureUncaught: true
+        accessToken: '12c99de67a444c229fca100e0967486f',
+        captureUncaught: false
       };
       var origRollbar = Rollbar.init(window, config);
-      origRollbar.loadFull(window, document, true);
+      origRollbar.loadFull(window, document, true, '../dist/rollbar.js');
 
       // Wait 20 milliseconds before running the tests so that the snippet can load rollbar.js
       setTimeout(function() {

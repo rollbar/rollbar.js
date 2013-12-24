@@ -1,9 +1,18 @@
 
 // Updated by the build process to match package.json
-Notifier.VERSION = '0.10.8';
+Notifier.VERSION = '1.0.0-beta1';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
+Notifier.DEFAULT_REPORT_LEVEL = 'warning';
+
+Notifier.LEVELS = {
+  debug: 0,
+  info: 1,
+  warning: 2,
+  error: 3,
+  critical: 4
+};
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
@@ -14,8 +23,7 @@ window._globalRollbarOptions = {
   startTime: (new Date()).getTime()
 };
 
-var TK = TraceKit.noConflict();
-TK.remoteFetching = false;
+var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 
 function Notifier(parentNotifier) {
   var protocol = window.location.protocol;
@@ -28,6 +36,8 @@ function Notifier(parentNotifier) {
     environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null, 
+    logLevel: Notifier.DEFAULT_LOG_LEVEL,
+    reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
     payload: {}
   };
 
@@ -52,7 +62,7 @@ Notifier._generateLogFn = function(level) {
   return function _logFn() {
     var args = this._getLogArgs(arguments);
 
-    return this._log(level || args.level || this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL,
+    return this._log(level || args.level || this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL,
         args.message, args.err, args.custom, args.callback);
   };
 };
@@ -67,7 +77,7 @@ Notifier._generateLogFn = function(level) {
  * }
  */
 Notifier.prototype._getLogArgs = function(args) {
-  var level = this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL;
+  var level = this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL;
   var ts;
   var message;
   var err;
@@ -146,6 +156,8 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
   // 1. get/create the notifier for that shim
   // 2. apply the message to the notifier
   while ((obj = shimQueue.shift())) {
+    console.log('Notifier._processShimQueue() processing', obj);
+
     shim = obj.shim;
     method = obj.method;
     args = obj.args;
@@ -446,13 +458,37 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
-  // TODO(cory): implement checkIgnore
+  // Internal checkIgnore will check the level against the minimum
+  // report level from this.options
+  if (!this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+    return;
+  }
+
+  // Users can set their own ignore criteria using this.options.checkIgnore()
+  if (this.options.checkIgnore && 
+      typeof this.options.checkIgnore === 'function' &&
+      !this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+    return;
+  }
 
   window._rollbarPayloadQueue.push({
     callback: callback,
     endpointUrl: this._route('item/'),
     payload: payload
   });
+};
+
+
+Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
+  var level = callerArgs[0];
+  var levelVal = Notifier.LEVELS[level] || 0;
+  var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
+
+  if (levelVal < reportLevel) {
+    return false;
+  }
+
+  return true;
 };
 
 
@@ -469,9 +505,9 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
  * - callback: Function to call once the item is reported to Rollbar
  */
 Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
-  var stackInfo = err ? TK.computeStackTrace(err) : null;
+  var stackInfo = err ? TK(err) : null;
   var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
-  this._enqueuePayload(payload, isUncaught, [level, message, err, custom], callback);
+  this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
 };
 
 Notifier.prototype.log = Notifier._generateLogFn();
@@ -484,7 +520,7 @@ Notifier.prototype.critical = Notifier._generateLogFn('critical');
 // Adapted from tracekit.js
 Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
   if (err && err.stack) {
-    this._log('error', message, err, null, true);
+    this._log('error', message, err, null, null, true);
     return;
   }
 
@@ -493,7 +529,7 @@ Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
   // being an Object instead of a string.
   //
   if (url && url.stack) {
-    this._log('error', message, url, null, true);
+    this._log('error', message, url, null, null, true);
     return;
   }
 
@@ -501,8 +537,8 @@ Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
     'url': url || '',
     'line': lineNo
   };
-  location.func = TK.computeStackTrace.guessFunctionName(location.url, location.line);
-  location.context = TK.computeStackTrace.gatherContext(location.url, location.line);
+  location.func = TK.guessFunctionName(location.url, location.line);
+  location.context = TK.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
     'message': message || 'uncaught exception',
@@ -556,7 +592,10 @@ function _guessErrorClass(errMsg) {
 
 var payloadProcessorTimeout;
 Notifier.processPayloads = function() {
-  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000); 
+  console.log('Notifier.processPayloads()');
+  if (!payloadProcessorTimeout) {
+    _payloadProcessorTimer();
+  }
 };
 
 
@@ -585,14 +624,21 @@ function _processPayload(url, payload, callback) {
   if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
     callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
     return;
+  } else {
+    rateLimitCounter++;
   }
+
+  console.log('_processPayload() POSTing payload');
 
   // There's either no rate limit or we haven't met it yet so
   // go ahead and send it.
   XHR.post(url, payload, function xhrCallback(err, resp) {
     if (err) {
+      console.log('_processPayload() POST failed: ' + err);
       return callback(err);
     }
+
+    console.log('_processPayload() POST complete');
 
     // TODO(cory): parse resp as JSON
     callback(null, resp);

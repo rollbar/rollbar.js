@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "0.10.8",
+  "version": "1.0.0-beta1",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -20,7 +20,8 @@
     "grunt-contrib-watch": "~0.5.3",
     "express": "~3.4.7",
     "grunt-express": "~1.2.1",
-    "grunt-text-replace": "~0.3.10"
+    "grunt-text-replace": "~0.3.10",
+    "semver": "~2.2.1"
   },
   "scripts": {
     "test": "make test"
@@ -30,8 +31,15 @@
   },
   "defaults": {
     "endpoint": "api.rollbar.com/api/1/",
-    "scrubFields": ["passwd", "password", "secret", "confirm_password", "password_confirmation"],
-    "logLevel": "debug"
+    "scrubFields": [
+      "passwd",
+      "password",
+      "secret",
+      "confirm_password",
+      "password_confirmation"
+    ],
+    "logLevel": "debug",
+    "reportLevel": "warning"
   },
   "plugins": {
     "jquery": {

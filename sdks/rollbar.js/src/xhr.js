@@ -21,6 +21,10 @@ var XHR = {
     return xmlhttp;
   },
   post: function(url, payload, callback) {
+    if (typeof payload !== 'object') {
+      throw new Error('Expected an object to POST');
+    }
+    payload = JSON.stringify(payload);
     callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
     if (request) {
@@ -32,7 +36,7 @@ var XHR = {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
-                  callback(null, request.responseText);
+                  callback(null, JSON.parse(request.responseText));
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
                   //return valid http status codes
@@ -44,18 +48,23 @@ var XHR = {
                   callback(new Error());
                 }
               }
-            } catch (firefoxAccessException) {
+            } catch (ex) {
               //jquery source mentions firefox may error out while accessing the
               //request members if there is a network error
               //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
-              callback(new Error());
+              var exc;
+              if (typeof ex === 'object' && ex.stack) {
+                exc = ex;
+              } else {
+                exc = new Error(ex);
+              }
+              callback(exc);
             }
           };
 
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
-            request.setRequestHeader('Origin', 'notifier');
           }
           request.onreadystatechange = onreadystatechange;
           request.send(payload);
@@ -71,7 +80,7 @@ var XHR = {
             };
 
             var onload = function(args) {
-              callback(null, request.responseText);
+              callback(null, JSON.parse(request.responseText));
             };
 
             request = new XDomainRequest();

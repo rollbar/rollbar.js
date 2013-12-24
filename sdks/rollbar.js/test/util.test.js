@@ -138,32 +138,99 @@ describe('Util', function() {
   });
 
   it("should traverse all keys of an object", function(done) {
-    expect(1).to.equal(0);
+    var obj = {
+      a: 'a',
+      b: 'b',
+      2: 2,
+      null: null
+    };
+
+    var visited = {};
+    Util.traverse(obj, function(k, v) {
+      visited[k] = v;
+      return v;
+    });
+    expect(obj).to.deep.equal(visited);
+
     done();
   });
 
   it("should traverse all keys of a nested object", function(done) {
-    expect(1).to.equal(0);
+    var obj = {
+      a: 'a',
+      b: 'b',
+      2: 'c',
+      null: {
+        1: 'd',
+        2: 'e',
+        asdf: ['f', {cruel: 'g'}, [1, 2, 3], undefined, null]
+      },
+      c: [],
+      d: {}
+    };
+
+    var visited = [];
+    Util.traverse(obj, function(k, v) {
+      visited.push(v);
+      return v;
+    });
+    expect(visited).to.have.length(12);
+
+    // Don't expect [] and {} since those don't have anything to
+    // traverse over
+    expect(['a', 'b', 'c', 'd', 'e', 'f', 'g', 1, 2, 3, undefined, null]).to.include.members(visited);
+
     done();
   });
 
   it("should redact strings", function(done) {
-    expect(1).to.equal(0);
+    expect(Util.redact('asdf')).to.equal('****');
+    expect(Util.redact('')).to.equal('');
+    expect(Util.redact(' ')).to.equal('*');
+    expect(Util.redact('  ')).to.equal('**');
+    expect(Util.redact('\t')).to.equal('*');
+    expect(Util.redact('\n')).to.equal('*');
+    expect(Util.redact('asdf\nasdf')).to.equal('*********');
+    expect(Util.redact('√')).to.equal('*');
+    expect(Util.redact(String('hello'))).to.equal('*****');
+    expect(Util.redact(new String('hello'))).to.equal('*****');
+
     done();
   });
 
   it("should redact ints", function(done) {
-    expect(1).to.equal(0);
+    expect(Util.redact(1)).to.equal('*');
+    expect(Util.redact(100)).to.equal('***');
+    expect(Util.redact(0)).to.equal('*');
+    expect(Util.redact(0xf)).to.equal('**');
+    expect(Util.redact(NaN)).to.equal('***');
+    expect(Util.redact(parseInt('33'))).to.equal('**');
+    expect(Util.redact(Number(33))).to.equal('**');
+    expect(Util.redact(new Number(33))).to.equal('**');
+
     done();
   });
 
   it("should redact arrays", function(done) {
-    expect(1).to.equal(0);
+    expect(Util.redact([1, 2, 3])).to.equal('*****');
+    expect(Util.redact([])).to.equal('');
+    expect(Util.redact(new Array(5))).to.equal('****');
+
     done();
   });
 
   it("should redact objects", function(done) {
-    expect(1).to.equal(0);
+    // {} -> "[object Object]" -> "***************"
+    var redactedObj = "***************";
+    expect(Util.redact({})).to.equal(redactedObj);
+    expect(Util.redact({1:2})).to.equal(redactedObj);
+    expect(Util.redact({1:[3, 2, 1]})).to.equal(redactedObj);
+    expect(Util.redact({hello:[3, 2, 1]})).to.equal(redactedObj);
+    expect(Util.redact(new Object())).to.equal(redactedObj);
+
+    // null is an object, (typeof null === 'object')... how silly is that?
+    expect(Util.redact(null)).to.equal('****');
+
     done();
   });
 });

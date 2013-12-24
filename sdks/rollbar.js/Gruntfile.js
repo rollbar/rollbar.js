@@ -1,5 +1,14 @@
+var semver = require('semver');
+
 module.exports = function(grunt) {
   var pkg = grunt.file.readJSON('package.json');
+  var semVer = semver.parse(pkg.version);
+
+  // Get the minimum minor version to put into the CDN URL
+  semVer.patch = 0;
+  semVer.prerelease = [];
+  pkg.pinnedVersion = semVer.major + '.' + semVer.minor;
+
   grunt.initConfig({
     pkg: pkg,
     jshint: {
@@ -9,7 +18,7 @@ module.exports = function(grunt) {
           window: true
         }
       },
-      files: ['Gruntfile.js', 'src/stacktrace.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
+      files: ['Gruntfile.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
     },
     concat: {
       options: {
@@ -18,7 +27,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.js': ['src/notifier.js', 'vendor/TraceKit/tracekit.js', 'src/util.js', 'src/xhr.js', 'src/json.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js', 'src/util.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/shimload.js']
         }
       }
@@ -49,7 +58,7 @@ module.exports = function(grunt) {
         replacements: [
           {
             // package version
-            from: /(VERSION|version) = (["'])[0-9_\.a-zA-Z]+(["'])/g,
+            from: /(VERSION|version) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
             to: '$1 = $2<%= pkg.version %>$3'
           },
           {
@@ -71,6 +80,16 @@ module.exports = function(grunt) {
             // default log level
             from: /(DEFAULT_LOG_LEVEL|defaultLogLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
             to: '$1 = $2<%= pkg.defaults.logLevel %>$4'
+          },
+          {
+            // default min report level
+            from: /(DEFAULT_REPORT_LEVEL|defaultReportLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
+            to: '$1 = $2<%= pkg.defaults.reportLevel %>$4'
+          },
+          {
+            // default rollbar.js CDN URL
+            from: /(DEFAULT_ROLLBARJS_URL|defaultRollbarJsUrl) = (["']).*(["'])/g,
+            to: '$1 = $2//<%= pkg.cdn.host %>/js/<%= pkg.pinnedVersion %>/rollbar.min.js$3'
           }
         ]
       }
@@ -109,6 +128,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-text-replace');
 
   grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
-  grunt.registerTask('test', ['replace', 'jshint', 'express', 'mocha']);
+  grunt.registerTask('test', ['express', 'mocha']);
   grunt.registerTask('default', ['replace', 'jshint', 'concat', 'uglify', 'express', 'mocha']);
 };

@@ -7,9 +7,10 @@ function Rollbar(parentShim) {
 }
 
 // Updated by the build process to match package.json
-Rollbar.VERSION = '0.10.8';
+Rollbar.VERSION = '1.0.0-beta1';
 
 Rollbar.init = function(window, config) {
+  console.log('Rollbar.init()');
   if (typeof window.Rollbar === 'object') {
     return window.Rollbar;
   }
@@ -33,17 +34,20 @@ Rollbar.init = function(window, config) {
     };
   }
 
+  console.log('Rollbar.init() setting window.Rollbar to a ' + client.constructor.name);
+
   // Expose Rollbar globally
   window.Rollbar = client;
   return client;
 };
 
-Rollbar.prototype.loadFull = function(window, document, immediate) {
+Rollbar.prototype.loadFull = function(window, document, immediate, rollbarJsSrc) {
   // Create the main rollbar script loader
   var loader = function() {
+    console.log('Rollbar.loadFull() loading ' + (immediate ? 'immediately' : 'async'));
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
-    s.src = "../dist/rollbar.js";
+    s.src = rollbarJsSrc;
     s.async = !immediate;
 
     // NOTE(cory): this may not work for some versions of IE
@@ -53,6 +57,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate) {
   };
 
   var handleLoadErr = function() {
+    console.log('Rollbar.loadFull().handleLoadErr() rollbar.js is' + (window._rollbarPayloadQueue === undefined ? ' not' : '') + ' fully loaded');
     if (window._rollbarPayloadQueue === undefined) {
       // rollbar.js did not load correctly, call any queued callbacks
       // with an error.
@@ -95,7 +100,7 @@ function stub(method) {
   var R = Rollbar;
   return function() {
     if (this.notifier) {
-      this.notifier[method].apply(this.notifier, arguments);
+      return this.notifier[method].apply(this.notifier, arguments);
     } else {
       var shim = this;
       var isScope = method === 'scope';

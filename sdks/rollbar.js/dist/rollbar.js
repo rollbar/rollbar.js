@@ -1,919 +1,504 @@
 (function(window, document){
-
-// Updated by the build process to match package.json
-Notifier.VERSION = '0.10.8';
-Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
-Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
-Notifier.DEFAULT_LOG_LEVEL = 'debug';
-
-// This is the global queue where all notifiers will put their
-// payloads to be sent to Rollbar.
-window._rollbarPayloadQueue = [];
-
-// This contains global options for all Rollbar notifiers.
-window._globalRollbarOptions = {
-  startTime: (new Date()).getTime()
-};
-
-var TK = TraceKit.noConflict();
-TK.remoteFetching = false;
-
-function Notifier(parentNotifier) {
-  var protocol = window.location.protocol;
-  if (protocol.indexOf('http') !== 0) {
-    protocol = 'https:';
-  }
-  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
-  this.options = {
-    endpoint: endpoint,
-    environment: 'production',
-    scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
-    checkIgnore: null, 
-    payload: {}
-  };
-
-  this.plugins = {};
-  this.parentNotifier = parentNotifier;
-
-  if (parentNotifier) {
-    // If the parent notifier has the shimId
-    // property it means that it's a Rollbar shim.
-    if (parentNotifier.hasOwnProperty('shimId')) {
-      // After we set this, the shim is just a proxy to this
-      // Notifier instance.
-      parentNotifier.notifier = this;
-    } else {
-      this.configure(parentNotifier.options);
-    }
-  }
-}
-
-
-Notifier._generateLogFn = function(level) {
-  return function _logFn() {
-    var args = this._getLogArgs(arguments);
-
-    return this._log(level || args.level || this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL,
-        args.message, args.err, args.custom, args.callback);
-  };
-};
-
-
 /*
- * Returns an Object with keys:
- * {
- *  message: String,
- *  err: Error,
- *  custom: Object
- * }
- */
-Notifier.prototype._getLogArgs = function(args) {
-  var level = this.options.defaultLogLevel || Notifier.DEFAULT_LOG_LEVEL;
-  var ts;
-  var message;
-  var err;
-  var custom;
-  var callback;
-
-  var argT;
-  var arg;
-  for (var i = 0; i < args.length; ++i) {
-    arg = args[i];
-    argT = typeof arg;
-    if (argT === 'string') {
-      message = arg;
-    } else if (argT === 'function') {
-      callback = arg;
-    } else if (argT === 'object') {
-      if (arg.constructor.name === 'Date') {
-        ts = arg;
-      } else if (arg.hasOwnProperty('stack')) {
-        err = arg;
-      } else {
-        custom = arg;
-      }
-    }
-  }
-
-  // TODO(cory): somehow pass in timestamp too...
-  
-  return {
-    level: level,
-    message: message,
-    err: err,
-    custom: custom,
-    callback: callback
-  };
-};
-
-
-Notifier.prototype._route = function(path) {
-  var endpoint = this.options.endpoint;
-
-  var endpointTrailingSlash = /\/$/.test(endpoint);
-  var pathBeginningSlash = /^\//.test(path);
-
-  if (endpointTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!endpointTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-
-  return endpoint + path;
-};
-
-
-/*
- * Given a queue containing each call to the shim, call the
- * corresponding method on this instance.
- *
- * shim queue contains:
- *
- * {shim: Rollbar, method: 'info', args: ['hello world', exc], ts: Date}
- */
-Notifier.prototype._processShimQueue = function(shimQueue) {
-  // implement me
-  var shim;
-  var obj;
-  var tmp;
-  var method;
-  var args;
-  var shimToNotifier = {};
-  var parentShim;
-  var parentNotifier;
-  var notifier;
-
-  // For each of the messages in the shimQueue we need to:
-  // 1. get/create the notifier for that shim
-  // 2. apply the message to the notifier
-  while ((obj = shimQueue.shift())) {
-    shim = obj.shim;
-    method = obj.method;
-    args = obj.args;
-    parentShim = shim.parentShim;
-
-    // Get the current notifier based on the shimId
-    notifier = shimToNotifier[shim.shimId];
-    if (!notifier) {
-
-      // If there is no notifier associated with the shimId
-      // Check to see if there's a parent shim
-      if (parentShim) {
-
-        // If there is a parent shim, get the parent notifier
-        // and create a new notifier for the current shim.
-        parentNotifier = shimToNotifier[parentShim.shimId];
-
-        // Create a new Notifier which will process all of the shim's
-        // messages
-        notifier = new Notifier(parentNotifier);
-      } else {
-        // If there is no parent, assume the shim is the top
-        // level shim and thus, should use this as the notifier.
-        notifier = this;
-      }
-
-      // Save off the shimId->notifier mapping
-      shimToNotifier[shim.shimId] = notifier;
-    }
-
-    if (notifier[method] && typeof notifier[method] === 'function') {
-      notifier[method].apply(notifier, args);
-    }
-  }
-};
-
-
-/*
- * Builds and returns an Object that will be enqueued onto the
- * window._rollbarPayloadQueue array to be sent to Rollbar.
- */
-Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custom) {
-  var accessToken = this.options.accessToken;
-  var environment = this.options.environment;
-
-  var notifierOptions = Util.copy(this.options.payload);
-  var uuid = Util.uuid4();
-
-  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
-    throw new Error('Invalid level');
-  }
-
-  if (!message && !stackInfo && !custom) {
-    throw new Error('No message, stack info or custom data');
-  }
-
-  var payloadData = {
-    environment: environment,
-    endpoint: this.options.endpoint,
-    uuid: uuid,
-    level: level,
-    platform: 'browser',
-    framework: 'browser-js',
-    language: 'javascript',
-    body: this._buildBody(message, stackInfo, custom),
-    request: {
-      url: window.location.href,
-      query_string: window.location.search,
-      user_ip: "$remote_ip"
-    },
-    client: {
-      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
-      timestamp: Math.round(ts.getTime() / 1000),
-      javascript: {
-        browser: window.navigator.userAgent,
-        language: window.navigator.language,
-        cookie_enabled: window.navigator.cookieEnabled,
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height
-        },
-        plugins: this._getBrowserPlugins()
-      }
-    },
-    server: {},
-    notifier: {
-      name: 'rollbar-browser-js',
-      version: Notifier.VERSION
-    }
-  };
-
-  if (notifierOptions.body) {
-    delete notifierOptions.body;
-  }
-
-  // Overwrite the options from configure() with the payload
-  // data.
-  var payload = {
-    access_token: accessToken,
-    data: Util.merge(payloadData, notifierOptions)
-  };
-
-  this._scrub(payload);
-
-  return payload;
-};
-
-
-Notifier.prototype._buildBody = function(message, stackInfo, custom) {
-  var body;
-  if (stackInfo && stackInfo.mode !== 'failed') {
-    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
-  } else {
-    body = this._buildPayloadBodyMessage(message, custom);
-  }
-  return body;
-};
-
-
-Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
-  var result = {
-    body: message
-  };
-
-  if (custom) {
-    result.extra = Util.copy(custom);
-  }
-
-  return {
-    message: result
-  };
-};
-
-
-Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
-  var guess = _guessErrorClass(stackInfo.message);
-  var className = stackInfo.name || guess[0];
-  var message = guess[1];
-  var trace = {
-    exception: {
-      'class': className,
-      message: message
-    }
-  };
-
-  if (description) {
-    trace.exception.description = description || 'uncaught exception';
-  }
-
-  // Transform a TraceKit stackInfo object into a Rollbar trace
-  if (stackInfo.stack) {
-    var stackFrame;
-    var frame;
-    var code;
-    var pre;
-    var post;
-    var contextLength;
-    var i, j, mid;
-
-    trace.frames = [];
-    for (i = 0; i < stackInfo.stack.length; ++i) {
-      stackFrame = stackInfo.stack[i];
-      frame = {
-        filename: stackFrame.url ? Util.sanitizeUrl(stackFrame.url) : '(unknown)',
-        lineno: stackFrame.line || null,
-        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
-        colno: stackFrame.column
-      };
-
-      code = pre = post = null;
-      contextLength = stackFrame.context ? stackFrame.context.length : 0;
-      if (contextLength) {
-        mid = Math.floor(contextLength / 2);
-        pre = stackFrame.context.slice(0, mid);
-        code = stackFrame.context[mid];
-        post = stackFrame.context.slice(mid);
-      }
-
-      if (code) {
-        frame.code = code; 
-      }
-
-      if (pre || post) {
-        frame.context = {};
-        if (pre && pre.length) {
-          frame.context.pre = pre;
-        }
-        if (post && post.length) {
-          frame.context.post = post;
-        }
-      }
-
-      if (stackFrame.args) {
-        frame.arge = args;
-      }
-
-      trace.frames.push(frame);
-    }
-    if (custom) {
-      trace.extra = Util.copy(custom);
-    }
-    return {trace: trace};
-  } else {
-    // no frames - not useful as a trace. just report as a message.
-    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
-  }
-};
-
-
-Notifier.prototype._getBrowserPlugins = function() {
-  if (!this._browserPlugins) {
-    var navPlugins = (window.navigator.plugins || []);
-    var cur;
-    var numPlugins = navPlugins.length;
-    var plugins = [];
-    for (i = 0; i < numPlugins; ++i) {
-      cur = navPlugins[i];
-      plugins.push({name: cur.name, description: cur.description});
-    }
-    this._browserPlugins = plugins;
-  }
-  return this._browserPlugins;
-};
-
-
-/*
- * Does an in-place modification of obj such that:
- * 1. All keys that match the window._globalRollbarOptions.scrubParams
- *    list will be normalized into all '*'
- * 2. Any query string params that match the same criteria will have
- *    their values normalized as well.
- */
-Notifier.prototype._scrub = function(obj) {
-  function redactQueryParam(match, paramPart, dummy1,
-      dummy2, dummy3, valPart, offset, string) {
-    return paramPart + Util.redact(valPart);
-  }
-
-  function paramScrubber(v) {
-    var i;
-    if (typeof(v) === 'string') {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
-      }
-    }
-    return v;
-  }
-
-  function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
-        v = Util.redact(v);
-        break;
-      }
-    }
-    return v;
-  }
-
-  function scrubber(k, v) {
-    var tmpV = valScrubber(k, v);
-    if (tmpV === v) {
-      return paramScrubber(tmpV);
-    } else {
-      return tmpV;
-    }
-  }
-
-  var scrubFields = this.options.scrubFields;
-  var paramRes = this._getScrubFieldRegexs(scrubFields);
-  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
-
-  Util.traverse(obj, scrubber);
-  return obj;
-};
-
-
-Notifier.prototype._getScrubFieldRegexs = function(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
-};
-
-
-Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-  }
-  return ret;
-};
-
-
-Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
-  // TODO(cory): implement checkIgnore
-
-  window._rollbarPayloadQueue.push({
-    callback: callback,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  });
-};
-
-
-/*
- * Logs stuff to Rollbar and console.log using the default
- * logging level.
- *
- * Can be called with the following, (order doesn't matter but type does):
- * - message: String
- * - err: Error object, must have a .stack property or it will be
- *   treated as custom data
- * - custom: Object containing custom data to be sent along with
- *   the item
- * - callback: Function to call once the item is reported to Rollbar
- */
-Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
-  var stackInfo = err ? TK.computeStackTrace(err) : null;
-  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
-  this._enqueuePayload(payload, isUncaught, [level, message, err, custom], callback);
-};
-
-Notifier.prototype.log = Notifier._generateLogFn();
-Notifier.prototype.debug = Notifier._generateLogFn('debug');
-Notifier.prototype.info = Notifier._generateLogFn('info');
-Notifier.prototype.warning = Notifier._generateLogFn('warning');
-Notifier.prototype.error = Notifier._generateLogFn('error');
-Notifier.prototype.critical = Notifier._generateLogFn('critical');
-
-// Adapted from tracekit.js
-Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
-  if (err && err.stack) {
-    this._log('error', message, err, null, true);
-    return;
-  }
-
-  // NOTE(cory): sometimes users will trigger an "error" event
-  // on the window object directly which will result in errMsg
-  // being an Object instead of a string.
-  //
-  if (url && url.stack) {
-    this._log('error', message, url, null, true);
-    return;
-  }
-
-  var location = {
-    'url': url || '',
-    'line': lineNo
-  };
-  location.func = TK.computeStackTrace.guessFunctionName(location.url, location.line);
-  location.context = TK.computeStackTrace.gatherContext(location.url, location.line);
-  var stack = {
-    'mode': 'onerror',
-    'message': message || 'uncaught exception',
-    'url': document.location.href,
-    'stack': [location],
-    'useragent': navigator.userAgent
-  };
-
-  var payload = this._buildPayload(new Date(), 'error', message, stack);
-  this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
-};
-
-
-Notifier.prototype.global = function(options) {
-  Util.merge(window._globalRollbarOptions, options);
-};
-
-
-Notifier.prototype.configure = function(options) {
-  // TODO(cory): only allow non-payload keys that we understand
-
-  // Make a copy of the options object for this notifier
-  Util.merge(this.options, options);
-};
-
-/*
- * Create a new Notifier instance which has the same options
- * as the current notifier + options to override them.
- */
-Notifier.prototype.scope = function(payloadOptions) {
-  var scopedNotifier = new Notifier(this);
-  Util.merge(scopedNotifier.options.payload, payloadOptions);
-  return scopedNotifier;
-};
-
-
-var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
-function _guessErrorClass(errMsg) {
-  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
-  var errClass = '(unknown)';
-  
-  if (errClassMatch) {
-    errClass = errClassMatch[errClassMatch.length - 1];
-    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
-    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
-  }
-  return [errClass, errMsg];
-}
-
-/***** Payload processor *****/
-
-var payloadProcessorTimeout;
-Notifier.processPayloads = function() {
-  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000); 
-};
-
-
-function _payloadProcessorTimer() {
-  var payloadObj;
-  while ((payloadObj = window._rollbarPayloadQueue.pop())) {
-    _processPayload(payloadObj.endpointUrl, payloadObj.payload, payloadObj.callback);
-  }
-  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
-}
-
-
-var rateLimitStartTime = new Date().getTime();
-var rateLimitCounter = 0;
-function _processPayload(url, payload, callback) {
-  callback = callback || function cb() {};
-  var now = new Date().getTime();
-  if (now - rateLimitStartTime >= 60000) {
-    rateLimitStartTime = now;
-    rateLimitCounter = 0;
-  }
-
-  // Check to see if we have a rate limit set or if
-  // the rate limit has been met/exceeded.
-  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
-  if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
-    callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
-    return;
-  }
-
-  // There's either no rate limit or we haven't met it yet so
-  // go ahead and send it.
-  XHR.post(url, payload, function xhrCallback(err, resp) {
-    if (err) {
-      return callback(err);
-    }
-
-    // TODO(cory): parse resp as JSON
-    callback(null, resp);
-  });
-}
-
-/*
- TraceKit - Cross brower stack traces - github.com/occ/TraceKit
- MIT license
+    json2.js
+    2013-05-26
+
+    Public Domain.
+
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+    See http://www.JSON.org/js.html
+
+
+    This code should be minified before deployment.
+    See http://javascript.crockford.com/jsmin.html
+
+    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+    NOT CONTROL.
+
+
+    This file creates a global JSON object containing two methods: stringify
+    and parse.
+
+        JSON.stringify(value, replacer, space)
+            value       any JavaScript value, usually an object or array.
+
+            replacer    an optional parameter that determines how object
+                        values are stringified for objects. It can be a
+                        function or an array of strings.
+
+            space       an optional parameter that specifies the indentation
+                        of nested structures. If it is omitted, the text will
+                        be packed without extra whitespace. If it is a number,
+                        it will specify the number of spaces to indent at each
+                        level. If it is a string (such as '\t' or '&nbsp;'),
+                        it contains the characters used to indent at each level.
+
+            This method produces a JSON text from a JavaScript value.
+
+            When an object value is found, if the object contains a toJSON
+            method, its toJSON method will be called and the result will be
+            stringified. A toJSON method does not serialize: it returns the
+            value represented by the name/value pair that should be serialized,
+            or undefined if nothing should be serialized. The toJSON method
+            will be passed the key associated with the value, and this will be
+            bound to the value
+
+            For example, this would serialize Dates as ISO strings.
+
+                Date.prototype.toJSON = function (key) {
+                    function f(n) {
+                        // Format integers to have at least two digits.
+                        return n < 10 ? '0' + n : n;
+                    }
+
+                    return this.getUTCFullYear()   + '-' +
+                         f(this.getUTCMonth() + 1) + '-' +
+                         f(this.getUTCDate())      + 'T' +
+                         f(this.getUTCHours())     + ':' +
+                         f(this.getUTCMinutes())   + ':' +
+                         f(this.getUTCSeconds())   + 'Z';
+                };
+
+            You can provide an optional replacer method. It will be passed the
+            key and value of each member, with this bound to the containing
+            object. The value that is returned from your method will be
+            serialized. If your method returns undefined, then the member will
+            be excluded from the serialization.
+
+            If the replacer parameter is an array of strings, then it will be
+            used to select the members to be serialized. It filters the results
+            such that only members with keys listed in the replacer array are
+            stringified.
+
+            Values that do not have JSON representations, such as undefined or
+            functions, will not be serialized. Such values in objects will be
+            dropped; in arrays they will be replaced with null. You can use
+            a replacer function to replace those with JSON values.
+            JSON.stringify(undefined) returns undefined.
+
+            The optional space parameter produces a stringification of the
+            value that is filled with line breaks and indentation to make it
+            easier to read.
+
+            If the space parameter is a non-empty string, then that string will
+            be used for indentation. If the space parameter is a number, then
+            the indentation will be that many spaces.
+
+            Example:
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}]);
+            // text is '["e",{"pluribus":"unum"}]'
+
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+
+            text = JSON.stringify([new Date()], function (key, value) {
+                return this[key] instanceof Date ?
+                    'Date(' + this[key] + ')' : value;
+            });
+            // text is '["Date(---current time---)"]'
+
+
+        JSON.parse(text, reviver)
+            This method parses a JSON text to produce an object or array.
+            It can throw a SyntaxError exception.
+
+            The optional reviver parameter is a function that can filter and
+            transform the results. It receives each of the keys and values,
+            and its return value is used instead of the original value.
+            If it returns what it received, then the structure is not modified.
+            If it returns undefined then the member is deleted.
+
+            Example:
+
+            // Parse the text. Values that look like ISO date strings will
+            // be converted to Date objects.
+
+            myData = JSON.parse(text, function (key, value) {
+                var a;
+                if (typeof value === 'string') {
+                    a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+                    if (a) {
+                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                            +a[5], +a[6]));
+                    }
+                }
+                return value;
+            });
+
+            myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+                var d;
+                if (typeof value === 'string' &&
+                        value.slice(0, 5) === 'Date(' &&
+                        value.slice(-1) === ')') {
+                    d = new Date(value.slice(5, -1));
+                    if (d) {
+                        return d;
+                    }
+                }
+                return value;
+            });
+
+
+    This is a reference implementation. You are free to copy, modify, or
+    redistribute.
 */
 
-(function(window, undefined) {
+/*jslint evil: true, regexp: true */
+
+/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
 
 
-var TraceKit = {};
-var _oldTraceKit = window.TraceKit;
+// Create a JSON object only if one does not already exist. We create the
+// methods in a closure to avoid creating global variables.
 
-// global reference to slice
-var _slice = [].slice;
-var UNKNOWN_FUNCTION = '?';
-
-
-/**
- * _has, a better form of hasOwnProperty
- * Example: _has(MainHostObject, property) === true/false
- *
- * @param {Object} host object to check property
- * @param {string} key to check
- */
-function _has(object, key) {
-    return Object.prototype.hasOwnProperty.call(object, key);
+if (typeof JSON !== 'object') {
+    JSON = {};
 }
+
+(function () {
+    'use strict';
+
+    function f(n) {
+        // Format integers to have at least two digits.
+        return n < 10 ? '0' + n : n;
+    }
+
+    if (typeof Date.prototype.toJSON !== 'function') {
+
+        Date.prototype.toJSON = function () {
+
+            return isFinite(this.valueOf())
+                ? this.getUTCFullYear()     + '-' +
+                    f(this.getUTCMonth() + 1) + '-' +
+                    f(this.getUTCDate())      + 'T' +
+                    f(this.getUTCHours())     + ':' +
+                    f(this.getUTCMinutes())   + ':' +
+                    f(this.getUTCSeconds())   + 'Z'
+                : null;
+        };
+
+        String.prototype.toJSON      =
+            Number.prototype.toJSON  =
+            Boolean.prototype.toJSON = function () {
+                return this.valueOf();
+            };
+    }
+
+    var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        gap,
+        indent,
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"' : '\\"',
+            '\\': '\\\\'
+        },
+        rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        escapable.lastIndex = 0;
+        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+            var c = meta[a];
+            return typeof c === 'string'
+                ? c
+                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        }) + '"' : '"' + string + '"';
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (value && typeof value === 'object' &&
+                typeof value.toJSON === 'function') {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === 'function') {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case 'string':
+            return quote(value);
+
+        case 'number':
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return isFinite(value) ? String(value) : 'null';
+
+        case 'boolean':
+        case 'null':
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce 'null'. The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is 'object', we might be dealing with an object or an array or
+// null.
+
+        case 'object':
+
+// Due to a specification blunder in ECMAScript, typeof null is 'object',
+// so watch out for that case.
+
+            if (!value) {
+                return 'null';
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || 'null';
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? '[]'
+                    : gap
+                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                    : '[' + partial.join(',') + ']';
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === 'object') {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === 'string') {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? '{}'
+                : gap
+                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                : '{' + partial.join(',') + '}';
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+    if (typeof JSON.stringify !== 'function') {
+        JSON.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = '';
+            indent = '';
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === 'number') {
+                for (i = 0; i < space; i += 1) {
+                    indent += ' ';
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === 'string') {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== 'function' &&
+                    (typeof replacer !== 'object' ||
+                    typeof replacer.length !== 'number')) {
+                throw new Error('JSON.stringify');
+            }
+
+// Make a fake root object containing our value under the key of ''.
+// Return the result of stringifying the value.
+
+            return str('', {'': value});
+        };
+    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+    if (typeof JSON.parse !== 'function') {
+        JSON.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k, v, value = holder[key];
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            cx.lastIndex = 0;
+            if (cx.test(text)) {
+                text = text.replace(cx, function (a) {
+                    return '\\u' +
+                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with '()' and 'new'
+// because they can cause invocation, and '=' because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+// replace all simple value tokens with ']' characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or ']' or
+// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+            if (/^[\],:{}\s]*$/
+                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval('(' + text + ')');
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return typeof reviver === 'function'
+                    ? walk({'': j}, '')
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError('JSON.parse');
+        };
+    }
+}());
+
 
 function _isUndefined(what) {
     return typeof what === 'undefined';
 }
 
-/**
- * TraceKit.noConflict: Export TraceKit out to another variable
- * Example: var TK = TraceKit.noConflict()
- */
-TraceKit.noConflict = function noConflict() {
-    window.TraceKit = _oldTraceKit;
-    return TraceKit;
-};
-
-/**
- * TraceKit.wrap: Wrap any function in a TraceKit reporter
- * Example: func = TraceKit.wrap(func);
- *
- * @param {Function} func Function to be wrapped
- * @return {Function} The wrapped func
- */
-TraceKit.wrap = function traceKitWrapper(func) {
-    function wrapped() {
-        try {
-            return func.apply(this, arguments);
-        } catch (e) {
-            TraceKit.report(e);
-            throw e;
-        }
-    }
-    return wrapped;
-};
-
-/**
- * TraceKit.report: cross-browser processing of unhandled exceptions
- *
- * Syntax:
- *   TraceKit.report.subscribe(function(stackInfo) { ... })
- *   TraceKit.report.unsubscribe(function(stackInfo) { ... })
- *   TraceKit.report(exception)
- *   try { ...code... } catch(ex) { TraceKit.report(ex); }
- *
- * Supports:
- *   - Firefox: full stack trace with line numbers, plus column number
- *              on top frame; column number is not guaranteed
- *   - Opera:   full stack trace with line and column numbers
- *   - Chrome:  full stack trace with line and column numbers
- *   - Safari:  line and column number for the top frame only; some frames
- *              may be missing, and column number is not guaranteed
- *   - IE:      line and column number for the top frame only; some frames
- *              may be missing, and column number is not guaranteed
- *
- * In theory, TraceKit should work on all of the following versions:
- *   - IE5.5+ (only 8.0 tested)
- *   - Firefox 0.9+ (only 3.5+ tested)
- *   - Opera 7+ (only 10.50 tested; versions 9 and earlier may require
- *     Exceptions Have Stacktrace to be enabled in opera:config)
- *   - Safari 3+ (only 4+ tested)
- *   - Chrome 1+ (only 5+ tested)
- *   - Konqueror 3.5+ (untested)
- *
- * Requires TraceKit.computeStackTrace.
- *
- * Tries to catch all unhandled exceptions and report them to the
- * subscribed handlers. Please note that TraceKit.report will rethrow the
- * exception. This is REQUIRED in order to get a useful stack trace in IE.
- * If the exception does not reach the top of the browser, you will only
- * get a stack trace from the point where TraceKit.report was called.
- *
- * Handlers receive a stackInfo object as described in the
- * TraceKit.computeStackTrace docs.
- */
-TraceKit.report = (function reportModuleWrapper() {
-    var handlers = [],
-        lastException = null,
-        lastExceptionStack = null;
-
-    /**
-     * Add a crash handler.
-     * @param {Function} handler
-     */
-    function subscribe(handler) {
-        installGlobalHandler();
-        handlers.push(handler);
-    }
-
-    /**
-     * Remove a crash handler.
-     * @param {Function} handler
-     */
-    function unsubscribe(handler) {
-        for (var i = handlers.length - 1; i >= 0; --i) {
-            if (handlers[i] === handler) {
-                handlers.splice(i, 1);
-            }
-        }
-    }
-
-    /**
-     * Dispatch stack information to all handlers.
-     * @param {Object.<string, *>} stack
-     */
-    function notifyHandlers(stack, windowError) {
-        var exception = null;
-        if (windowError && !TraceKit.collectWindowErrors) {
-          return;
-        }
-        for (var i in handlers) {
-            if (_has(handlers, i)) {
-                try {
-                    handlers[i].apply(null, [stack].concat(_slice.call(arguments, 2)));
-                } catch (inner) {
-                    exception = inner;
-                }
-            }
-        }
-
-        if (exception) {
-            throw exception;
-        }
-    }
-
-    var _oldOnerrorHandler, _onErrorHandlerInstalled;
-
-    /**
-     * Ensures all global unhandled exceptions are recorded.
-     * Supported by Gecko and IE.
-     * @param {string} message Error message.
-     * @param {string} url URL of script that generated the exception.
-     * @param {(number|string)} lineNo The line number at which the error
-     * occurred.
-     */
-    function traceKitWindowOnError(message, url, lineNo, column, ex) {
-        var stack = null;
-
-         if (ex) {
-            stack = TraceKit.computeStackTrace(ex);
-        } else if (lastExceptionStack) {
-            TraceKit.computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, message);
-            stack = lastExceptionStack;
-            lastExceptionStack = null;
-            lastException = null;
-        } else {
-            var location = {
-                'url': url,
-                'line': lineNo
-            };
-            location.func = TraceKit.computeStackTrace.guessFunctionName(location.url, location.line);
-            location.context = TraceKit.computeStackTrace.gatherContext(location.url, location.line);
-            stack = {
-                'mode': 'onerror',
-                'message': message,
-                'url': document.location.href,
-                'stack': [location],
-                'useragent': navigator.userAgent
-            };
-        }
-
-        notifyHandlers(stack, 'from window.onerror');
-
-        if (_oldOnerrorHandler) {
-            return _oldOnerrorHandler.apply(this, arguments);
-        }
-
-        return false;
-    }
-
-    function installGlobalHandler ()
-    {
-        if (_onErrorHandlerInstalled === true) {
-            return;
-        }
-        _oldOnerrorHandler = window.onerror;
-        window.onerror = traceKitWindowOnError;
-        _onErrorHandlerInstalled = true;
-    }
-
-    /**
-     * Reports an unhandled Error to TraceKit.
-     * @param {Error} ex
-     */
-    function report(ex) {
-        var args = _slice.call(arguments, 1);
-        if (lastExceptionStack) {
-            if (lastException === ex) {
-                return; // already caught by an inner catch block, ignore
-            } else {
-                var s = lastExceptionStack;
-                lastExceptionStack = null;
-                lastException = null;
-                notifyHandlers.apply(null, [s, null].concat(args));
-            }
-        }
-
-        var stack = TraceKit.computeStackTrace(ex);
-        lastExceptionStack = stack;
-        lastException = ex;
-
-        // If the stack trace is incomplete, wait for 2 seconds for
-        // slow slow IE to see if onerror occurs or not before reporting
-        // this exception; otherwise, we will end up with an incomplete
-        // stack trace
-        window.setTimeout(function () {
-            if (lastException === ex) {
-                lastExceptionStack = null;
-                lastException = null;
-                notifyHandlers.apply(null, [stack, null].concat(args));
-            }
-        }, (stack.incomplete ? 2000 : 0));
-
-        throw ex; // re-throw to propagate to the top level (and cause window.onerror)
-    }
-
-    report.subscribe = subscribe;
-    report.unsubscribe = unsubscribe;
-    return report;
-}());
-
-/**
- * TraceKit.computeStackTrace: cross-browser stack traces in JavaScript
- *
- * Syntax:
- *   s = TraceKit.computeStackTrace.ofCaller([depth])
- *   s = TraceKit.computeStackTrace(exception) // consider using TraceKit.report instead (see below)
- * Returns:
- *   s.name              - exception name
- *   s.message           - exception message
- *   s.stack[i].url      - JavaScript or HTML file URL
- *   s.stack[i].func     - function name, or empty for anonymous functions (if guessing did not work)
- *   s.stack[i].args     - arguments passed to the function, if known
- *   s.stack[i].line     - line number, if known
- *   s.stack[i].column   - column number, if known
- *   s.stack[i].context  - an array of source code lines; the middle element corresponds to the correct line#
- *   s.mode              - 'stack', 'stacktrace', 'multiline', 'callers', 'onerror', or 'failed' -- method used to collect the stack trace
- *
- * Supports:
- *   - Firefox:  full stack trace with line numbers and unreliable column
- *               number on top frame
- *   - Opera 10: full stack trace with line and column numbers
- *   - Opera 9-: full stack trace with line numbers
- *   - Chrome:   full stack trace with line and column numbers
- *   - Safari:   line and column number for the topmost stacktrace element
- *               only
- *   - IE:       no line numbers whatsoever
- *
- * Tries to guess names of anonymous functions by looking for assignments
- * in the source code. In IE and Safari, we have to guess source file names
- * by searching for function bodies inside all page scripts. This will not
- * work for scripts that are loaded cross-domain.
- * Here be dragons: some function names may be guessed incorrectly, and
- * duplicate functions may be mismatched.
- *
- * TraceKit.computeStackTrace should only be used for tracing purposes.
- * Logging of unhandled exceptions should be done with TraceKit.report,
- * which builds on top of TraceKit.computeStackTrace and provides better
- * IE support by utilizing the window.onerror event to retrieve information
- * about the top of the stack.
- *
- * Note: In IE and Safari, no stack trace is recorded on the Error object,
- * so computeStackTrace instead walks its *own* chain of callers.
- * This means that:
- *  * in Safari, some methods may be missing from the stack trace;
- *  * in IE, the topmost function in the stack trace will always be the
- *    caller of computeStackTrace.
- *
- * This is okay for tracing (because you are likely to be calling
- * computeStackTrace from the function you want to be the topmost element
- * of the stack trace anyway), but not okay for logging unhandled
- * exceptions (because your catch block will likely be far away from the
- * inner function that actually caused the exception).
- *
- * Tracing example:
- *     function trace(message) {
- *         var stackInfo = TraceKit.computeStackTrace.ofCaller();
- *         var data = message + "\n";
- *         for(var i in stackInfo.stack) {
- *             var item = stackInfo.stack[i];
- *             data += (item.func || '[anonymous]') + "() in " + item.url + ":" + (item.line || '0') + "\n";
- *         }
- *         if (window.console)
- *             console.info(data);
- *         else
- *             alert(data);
- *     }
- */
-TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
+var UNKNOWN_FUNCTION = '?';
+function computeStackTraceWrapper(options) {
     var debug = false,
         sourceCache = {};
+
+    var remoteFetching = options.remoteFetching;
+    var linesOfContext = options.linesOfContext;
+    var tracekitReport = options.tracekitReport;
 
     /**
      * Attempts to retrieve source code via XMLHttpRequest, which is used
@@ -922,7 +507,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
      * @return {string} Source contents.
      */
     function loadSource(url) {
-        if (!TraceKit.remoteFetching) { //Only attempt request if remoteFetching is on.
+        if (!remoteFetching) { //Only attempt request if remoteFetching is on.
             return '';
         }
         try {
@@ -950,7 +535,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
      * @return {Array.<string>} Source contents.
      */
     function getSource(url) {
-        if (!_has(sourceCache, url)) {
+        if (!sourceCache.hasOwnProperty(url)) {
             // URL needs to be able to fetched within the acceptable domain.  Otherwise,
             // cross-domain errors will be triggered.
             var source = '';
@@ -1018,9 +603,9 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
             // linesBefore & linesAfter are inclusive with the offending line.
             // if linesOfContext is even, there will be one extra line
             //   *before* the offending line.
-            linesBefore = Math.floor(TraceKit.linesOfContext / 2),
+            linesBefore = Math.floor(linesOfContext / 2),
             // Add one extra line if linesOfContext is odd
-            linesAfter = linesBefore + (TraceKit.linesOfContext % 2),
+            linesAfter = linesBefore + (linesOfContext % 2),
             start = Math.max(0, line - linesBefore - 1),
             end = Math.min(source.length, line + linesAfter - 1);
 
@@ -1378,7 +963,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
             source;
 
         for (i in scripts) {
-            if (_has(scripts, i) && !scripts[i].src) {
+            if (scripts.hasOwnProperty(i) && !scripts[i].src) {
                 inlineScriptBlocks.push(scripts[i]);
             }
         }
@@ -1525,7 +1110,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
             source;
 
         for (var curr = computeStackTraceByWalkingCallerChain.caller; curr && !recursion; curr = curr.caller) {
-            if (curr === computeStackTrace || curr === TraceKit.report) {
+            if (curr === computeStackTrace || curr === tracekitReport) {
                 // console.log('skipping internal function');
                 continue;
             }
@@ -1665,55 +1250,7 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
     computeStackTrace.ofCaller = computeStackTraceOfCaller;
 
     return computeStackTrace;
-}());
-
-/**
- * Extends support for global error handling for asynchronous browser
- * functions. Adopted from Closure Library's errorhandler.js
- */
-(function extendToAsynchronousCallbacks() {
-    var _helper = function _helper(fnName) {
-        var originalFn = window[fnName];
-        window[fnName] = function traceKitAsyncExtension() {
-            // Make a copy of the arguments
-            var args = _slice.call(arguments);
-            var originalCallback = args[0];
-            if (typeof (originalCallback) === 'function') {
-                args[0] = TraceKit.wrap(originalCallback);
-            }
-            // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
-            // also only supports 2 argument and doesn't care what "this" is, so we
-            // can just call the original function directly.
-            if (originalFn.apply) {
-                return originalFn.apply(this, args);
-            } else {
-                return originalFn(args[0], args[1]);
-            }
-        };
-    };
-
-    _helper('setTimeout');
-    _helper('setInterval');
-}());
-
-//Default options:
-if (!TraceKit.remoteFetching) {
-  TraceKit.remoteFetching = true;
 }
-if (!TraceKit.collectWindowErrors) {
-  TraceKit.collectWindowErrors = true;
-}
-if (!TraceKit.linesOfContext || TraceKit.linesOfContext < 1) {
-  // 5 lines before, the offending line, 5 lines after
-  TraceKit.linesOfContext = 11;
-}
-
-
-
-// Export to global object
-window.TraceKit = TraceKit;
-
-}(window));
 
 var Util = {
   // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
@@ -1834,16 +1371,45 @@ var Util = {
   traverse: function(obj, func) {
     var k;
     var v;
-    for (k in obj) {
-      if (obj.hasOwnProperty(k)) {
-        v = obj[k];
-        if (v !== null && typeof(v) === 'object') {
-          Util.traverse(v, func);
-        } else {
-          obj[k] = func.apply(Util, [k, v]);
+    var i;
+    var isObj = typeof obj === 'object';
+    var keys = [];
+
+    if (isObj) {
+      if (obj.constructor === Object) {
+        for (k in obj) {
+          if (obj.hasOwnProperty(k)) {
+            keys.push(k);
+          }
+        }
+      } else if (obj.constructor === Array) {
+        for (i = 0; i < obj.length; ++i) {
+          keys.push(i);
         }
       }
     }
+    
+    for (i = 0; i < keys.length; ++i) {
+      k = keys[i];
+      v = obj[k];
+      isObj = typeof v === 'object';
+      if (isObj) {
+        if (v === null) {
+          obj[k] = func(k, v);
+        } else if (v.constructor === Object) {
+          obj[k] = Util.traverse(v, func);
+        } else if (v.constructor === Array) {
+          obj[k] = Util.traverse(v, func);
+        } else {
+          obj[k] = func(k, v);
+        }
+      } else {
+        obj[k] = func(k, v);
+      }
+    }
+
+    return obj;
+
   },
 
   redact: function(val) {
@@ -1886,6 +1452,10 @@ var XHR = {
     return xmlhttp;
   },
   post: function(url, payload, callback) {
+    if (typeof payload !== 'object') {
+      throw new Error('Expected an object to POST');
+    }
+    payload = JSON.stringify(payload);
     callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
     if (request) {
@@ -1897,7 +1467,7 @@ var XHR = {
                 onreadystatechange = undefined;
 
                 if (request.status === 200) {
-                  callback(null, request.responseText);
+                  callback(null, JSON.parse(request.responseText));
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
                   //return valid http status codes
@@ -1909,18 +1479,23 @@ var XHR = {
                   callback(new Error());
                 }
               }
-            } catch (firefoxAccessException) {
+            } catch (ex) {
               //jquery source mentions firefox may error out while accessing the
               //request members if there is a network error
               //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
-              callback(new Error());
+              var exc;
+              if (typeof ex === 'object' && ex.stack) {
+                exc = ex;
+              } else {
+                exc = new Error(ex);
+              }
+              callback(exc);
             }
           };
 
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
-            request.setRequestHeader('Origin', 'notifier');
           }
           request.onreadystatechange = onreadystatechange;
           request.send(payload);
@@ -1936,7 +1511,7 @@ var XHR = {
             };
 
             var onload = function(args) {
-              callback(null, request.responseText);
+              callback(null, JSON.parse(request.responseText));
             };
 
             request = new XDomainRequest();
@@ -1955,186 +1530,651 @@ var XHR = {
   }
 };
 
-var RollbarJSON = {
-  /*
-   * Derived work from json2.js at http://www.JSON.org/js.html
-   */
 
-  setupCustomStringify: function() {
-    function f(n) {
-      // Format integers to have at least two digits.
-      return n < 10 ? '0' + n : n;
+// Updated by the build process to match package.json
+Notifier.VERSION = '1.0.0-beta1';
+Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
+Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
+Notifier.DEFAULT_LOG_LEVEL = 'debug';
+Notifier.DEFAULT_REPORT_LEVEL = 'warning';
+
+Notifier.LEVELS = {
+  debug: 0,
+  info: 1,
+  warning: 2,
+  error: 3,
+  critical: 4
+};
+
+// This is the global queue where all notifiers will put their
+// payloads to be sent to Rollbar.
+window._rollbarPayloadQueue = [];
+
+// This contains global options for all Rollbar notifiers.
+window._globalRollbarOptions = {
+  startTime: (new Date()).getTime()
+};
+
+var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
+
+function Notifier(parentNotifier) {
+  var protocol = window.location.protocol;
+  if (protocol.indexOf('http') !== 0) {
+    protocol = 'https:';
+  }
+  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
+  this.options = {
+    endpoint: endpoint,
+    environment: 'production',
+    scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+    checkIgnore: null, 
+    logLevel: Notifier.DEFAULT_LOG_LEVEL,
+    reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
+    payload: {}
+  };
+
+  this.plugins = {};
+  this.parentNotifier = parentNotifier;
+
+  if (parentNotifier) {
+    // If the parent notifier has the shimId
+    // property it means that it's a Rollbar shim.
+    if (parentNotifier.hasOwnProperty('shimId')) {
+      // After we set this, the shim is just a proxy to this
+      // Notifier instance.
+      parentNotifier.notifier = this;
+    } else {
+      this.configure(parentNotifier.options);
+    }
+  }
+}
+
+
+Notifier._generateLogFn = function(level) {
+  return function _logFn() {
+    var args = this._getLogArgs(arguments);
+
+    return this._log(level || args.level || this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL,
+        args.message, args.err, args.custom, args.callback);
+  };
+};
+
+
+/*
+ * Returns an Object with keys:
+ * {
+ *  message: String,
+ *  err: Error,
+ *  custom: Object
+ * }
+ */
+Notifier.prototype._getLogArgs = function(args) {
+  var level = this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL;
+  var ts;
+  var message;
+  var err;
+  var custom;
+  var callback;
+
+  var argT;
+  var arg;
+  for (var i = 0; i < args.length; ++i) {
+    arg = args[i];
+    argT = typeof arg;
+    if (argT === 'string') {
+      message = arg;
+    } else if (argT === 'function') {
+      callback = arg;
+    } else if (argT === 'object') {
+      if (arg.constructor.name === 'Date') {
+        ts = arg;
+      } else if (arg.hasOwnProperty('stack')) {
+        err = arg;
+      } else {
+        custom = arg;
+      }
+    }
+  }
+
+  // TODO(cory): somehow pass in timestamp too...
+  
+  return {
+    level: level,
+    message: message,
+    err: err,
+    custom: custom,
+    callback: callback
+  };
+};
+
+
+Notifier.prototype._route = function(path) {
+  var endpoint = this.options.endpoint;
+
+  var endpointTrailingSlash = /\/$/.test(endpoint);
+  var pathBeginningSlash = /^\//.test(path);
+
+  if (endpointTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!endpointTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+
+  return endpoint + path;
+};
+
+
+/*
+ * Given a queue containing each call to the shim, call the
+ * corresponding method on this instance.
+ *
+ * shim queue contains:
+ *
+ * {shim: Rollbar, method: 'info', args: ['hello world', exc], ts: Date}
+ */
+Notifier.prototype._processShimQueue = function(shimQueue) {
+  // implement me
+  var shim;
+  var obj;
+  var tmp;
+  var method;
+  var args;
+  var shimToNotifier = {};
+  var parentShim;
+  var parentNotifier;
+  var notifier;
+
+  // For each of the messages in the shimQueue we need to:
+  // 1. get/create the notifier for that shim
+  // 2. apply the message to the notifier
+  while ((obj = shimQueue.shift())) {
+    console.log('Notifier._processShimQueue() processing', obj);
+
+    shim = obj.shim;
+    method = obj.method;
+    args = obj.args;
+    parentShim = shim.parentShim;
+
+    // Get the current notifier based on the shimId
+    notifier = shimToNotifier[shim.shimId];
+    if (!notifier) {
+
+      // If there is no notifier associated with the shimId
+      // Check to see if there's a parent shim
+      if (parentShim) {
+
+        // If there is a parent shim, get the parent notifier
+        // and create a new notifier for the current shim.
+        parentNotifier = shimToNotifier[parentShim.shimId];
+
+        // Create a new Notifier which will process all of the shim's
+        // messages
+        notifier = new Notifier(parentNotifier);
+      } else {
+        // If there is no parent, assume the shim is the top
+        // level shim and thus, should use this as the notifier.
+        notifier = this;
+      }
+
+      // Save off the shimId->notifier mapping
+      shimToNotifier[shim.shimId] = notifier;
     }
 
-    Date.prototype.toRollbarJSON = function (key) {
-
-        return isFinite(this.valueOf()) ?
-                this.getUTCFullYear()     + '-' +
-                f(this.getUTCMonth() + 1) + '-' +
-                f(this.getUTCDate())      + 'T' +
-                f(this.getUTCHours())     + ':' +
-                f(this.getUTCMinutes())   + ':' +
-                f(this.getUTCSeconds())   + 'Z'
-            : null;
-    };
-
-    String.prototype.toRollbarJSON      =
-        Number.prototype.toRollbarJSON  =
-        Boolean.prototype.toRollbarJSON = function (key) {
-          return this.valueOf();
-        };
-
-    var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        gap,
-        indent,
-        meta = {    // table of character substitutions
-            '\b': '\\b',
-            '\t': '\\t',
-            '\n': '\\n',
-            '\f': '\\f',
-            '\r': '\\r',
-            '"' : '\\"',
-            '\\': '\\\\'
-        },
-        rep;
-
-
-    function quote(string) {
-
-      escapable.lastIndex = 0;
-      return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
-        var c = meta[a];
-        return typeof c === 'string' ?
-          c : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-      }) + '"' : '"' + string + '"';
+    if (notifier[method] && typeof notifier[method] === 'function') {
+      notifier[method].apply(notifier, args);
     }
-
-    return function (value, replacer, space) {
-      var seen = [];
-
-      function str(key, holder) {
-
-        var i,          // The loop counter.
-            k,          // The member key.
-            v,          // The member value.
-            length,
-            mind = gap,
-            partial,
-            value = holder[key];
-
-        if (value && typeof value === 'object' &&
-                typeof value.toRollbarJSON === 'function') {
-          value = value.toRollbarJSON(key);
-        }
-
-        if (typeof rep === 'function') {
-          value = rep.call(holder, key, value);
-        }
-
-        switch (typeof value) {
-          case 'string':
-            return quote(value);
-          case 'number':
-            return isFinite(value) ? String(value) : 'null';
-          case 'boolean':
-          case 'null':
-            return String(value);
-          case 'object':
-
-            if (!value) {
-                return 'null';
-            }
-
-            if (seen.indexOf(value) !== -1) {
-              throw new TypeError('RollbarJSON.stringify cannot serialize cyclic structures.');
-            }
-            seen.push(value);
-
-            gap += indent;
-            partial = [];
-
-            if (Object.prototype.toString.apply(value) === '[object Array]') {
-
-              length = value.length;
-              for (i = 0; i < length; i += 1) {
-                  partial[i] = str(i, value) || 'null';
-              }
-
-              v = partial.length === 0 ?
-                  '[]' : gap ?
-                  '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']' :
-                  '[' + partial.join(',') + ']';
-              gap = mind;
-              return v;
-            }
-
-            if (rep && typeof rep === 'object') {
-              length = rep.length;
-              for (i = 0; i < length; i += 1) {
-                if (typeof rep[i] === 'string') {
-                  k = rep[i];
-                  v = str(k, value);
-                  if (v) {
-                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                  }
-                }
-              }
-            } else {
-
-              for (k in value) {
-                if (Object.prototype.hasOwnProperty.call(value, k)) {
-                  v = str(k, value);
-                  if (v) {
-                      partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                  }
-                }
-              }
-            }
-
-            v = partial.length === 0 ?
-                '{}' : gap ?
-              '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
-                : '{' + partial.join(',') + '}';
-            gap = mind;
-            return v;
-        }
-      }
-
-      var i;
-      gap = '';
-      indent = '';
-
-      if (typeof space === 'number') {
-        for (i = 0; i < space; i += 1) {
-          indent += ' ';
-        }
-      } else if (typeof space === 'string') {
-        indent = space;
-      }
-
-      rep = replacer;
-      if (replacer && typeof replacer !== 'function' &&
-              (typeof replacer !== 'object' ||
-              typeof replacer.length !== 'number')) {
-        throw new Error('JSON.stringify');
-      }
-      return str('', {'': value});
-    };
   }
 };
 
-// test JSON.stringify since some old libraries don't implement it correctly
-var testData = {a:[{b:1}]};
-try {
-  var serialized = JSON.stringify(testData);
-  if (serialized !== '{"a":[{"b":1}]}') {
-    RollbarJSON.stringify = RollbarJSON.setupCustomStringify();
-  } else {
-    RollbarJSON.stringify = JSON.stringify;
+
+/*
+ * Builds and returns an Object that will be enqueued onto the
+ * window._rollbarPayloadQueue array to be sent to Rollbar.
+ */
+Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custom) {
+  var accessToken = this.options.accessToken;
+  var environment = this.options.environment;
+
+  var notifierOptions = Util.copy(this.options.payload);
+  var uuid = Util.uuid4();
+
+  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+    throw new Error('Invalid level');
   }
-} catch (e) {
-  RollbarJSON.stringify = RollbarJSON.setupCustomStringify();
+
+  if (!message && !stackInfo && !custom) {
+    throw new Error('No message, stack info or custom data');
+  }
+
+  var payloadData = {
+    environment: environment,
+    endpoint: this.options.endpoint,
+    uuid: uuid,
+    level: level,
+    platform: 'browser',
+    framework: 'browser-js',
+    language: 'javascript',
+    body: this._buildBody(message, stackInfo, custom),
+    request: {
+      url: window.location.href,
+      query_string: window.location.search,
+      user_ip: "$remote_ip"
+    },
+    client: {
+      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
+      timestamp: Math.round(ts.getTime() / 1000),
+      javascript: {
+        browser: window.navigator.userAgent,
+        language: window.navigator.language,
+        cookie_enabled: window.navigator.cookieEnabled,
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height
+        },
+        plugins: this._getBrowserPlugins()
+      }
+    },
+    server: {},
+    notifier: {
+      name: 'rollbar-browser-js',
+      version: Notifier.VERSION
+    }
+  };
+
+  if (notifierOptions.body) {
+    delete notifierOptions.body;
+  }
+
+  // Overwrite the options from configure() with the payload
+  // data.
+  var payload = {
+    access_token: accessToken,
+    data: Util.merge(payloadData, notifierOptions)
+  };
+
+  this._scrub(payload);
+
+  return payload;
+};
+
+
+Notifier.prototype._buildBody = function(message, stackInfo, custom) {
+  var body;
+  if (stackInfo && stackInfo.mode !== 'failed') {
+    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
+  } else {
+    body = this._buildPayloadBodyMessage(message, custom);
+  }
+  return body;
+};
+
+
+Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+  var result = {
+    body: message
+  };
+
+  if (custom) {
+    result.extra = Util.copy(custom);
+  }
+
+  return {
+    message: result
+  };
+};
+
+
+Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
+  var guess = _guessErrorClass(stackInfo.message);
+  var className = stackInfo.name || guess[0];
+  var message = guess[1];
+  var trace = {
+    exception: {
+      'class': className,
+      message: message
+    }
+  };
+
+  if (description) {
+    trace.exception.description = description || 'uncaught exception';
+  }
+
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  if (stackInfo.stack) {
+    var stackFrame;
+    var frame;
+    var code;
+    var pre;
+    var post;
+    var contextLength;
+    var i, j, mid;
+
+    trace.frames = [];
+    for (i = 0; i < stackInfo.stack.length; ++i) {
+      stackFrame = stackInfo.stack[i];
+      frame = {
+        filename: stackFrame.url ? Util.sanitizeUrl(stackFrame.url) : '(unknown)',
+        lineno: stackFrame.line || null,
+        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
+        colno: stackFrame.column
+      };
+
+      code = pre = post = null;
+      contextLength = stackFrame.context ? stackFrame.context.length : 0;
+      if (contextLength) {
+        mid = Math.floor(contextLength / 2);
+        pre = stackFrame.context.slice(0, mid);
+        code = stackFrame.context[mid];
+        post = stackFrame.context.slice(mid);
+      }
+
+      if (code) {
+        frame.code = code; 
+      }
+
+      if (pre || post) {
+        frame.context = {};
+        if (pre && pre.length) {
+          frame.context.pre = pre;
+        }
+        if (post && post.length) {
+          frame.context.post = post;
+        }
+      }
+
+      if (stackFrame.args) {
+        frame.arge = args;
+      }
+
+      trace.frames.push(frame);
+    }
+    if (custom) {
+      trace.extra = Util.copy(custom);
+    }
+    return {trace: trace};
+  } else {
+    // no frames - not useful as a trace. just report as a message.
+    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
+  }
+};
+
+
+Notifier.prototype._getBrowserPlugins = function() {
+  if (!this._browserPlugins) {
+    var navPlugins = (window.navigator.plugins || []);
+    var cur;
+    var numPlugins = navPlugins.length;
+    var plugins = [];
+    for (i = 0; i < numPlugins; ++i) {
+      cur = navPlugins[i];
+      plugins.push({name: cur.name, description: cur.description});
+    }
+    this._browserPlugins = plugins;
+  }
+  return this._browserPlugins;
+};
+
+
+/*
+ * Does an in-place modification of obj such that:
+ * 1. All keys that match the window._globalRollbarOptions.scrubParams
+ *    list will be normalized into all '*'
+ * 2. Any query string params that match the same criteria will have
+ *    their values normalized as well.
+ */
+Notifier.prototype._scrub = function(obj) {
+  function redactQueryParam(match, paramPart, dummy1,
+      dummy2, dummy3, valPart, offset, string) {
+    return paramPart + Util.redact(valPart);
+  }
+
+  function paramScrubber(v) {
+    var i;
+    if (typeof(v) === 'string') {
+      for (i = 0; i < queryRes.length; ++i) {
+        v = v.replace(queryRes[i], redactQueryParam);
+      }
+    }
+    return v;
+  }
+
+  function valScrubber(k, v) {
+    var i;
+    for (i = 0; i < paramRes.length; ++i) {
+      if (paramRes[i].test(k)) {
+        v = Util.redact(v);
+        break;
+      }
+    }
+    return v;
+  }
+
+  function scrubber(k, v) {
+    var tmpV = valScrubber(k, v);
+    if (tmpV === v) {
+      return paramScrubber(tmpV);
+    } else {
+      return tmpV;
+    }
+  }
+
+  var scrubFields = this.options.scrubFields;
+  var paramRes = this._getScrubFieldRegexs(scrubFields);
+  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
+
+  Util.traverse(obj, scrubber);
+  return obj;
+};
+
+
+Notifier.prototype._getScrubFieldRegexs = function(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp(pat, 'i'));
+  }
+  return ret;
+};
+
+
+Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+  }
+  return ret;
+};
+
+
+Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
+  // Internal checkIgnore will check the level against the minimum
+  // report level from this.options
+  if (!this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+    return;
+  }
+
+  // Users can set their own ignore criteria using this.options.checkIgnore()
+  if (this.options.checkIgnore && 
+      typeof this.options.checkIgnore === 'function' &&
+      !this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+    return;
+  }
+
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
+};
+
+
+Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
+  var level = callerArgs[0];
+  var levelVal = Notifier.LEVELS[level] || 0;
+  var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
+
+  if (levelVal < reportLevel) {
+    return false;
+  }
+
+  return true;
+};
+
+
+/*
+ * Logs stuff to Rollbar and console.log using the default
+ * logging level.
+ *
+ * Can be called with the following, (order doesn't matter but type does):
+ * - message: String
+ * - err: Error object, must have a .stack property or it will be
+ *   treated as custom data
+ * - custom: Object containing custom data to be sent along with
+ *   the item
+ * - callback: Function to call once the item is reported to Rollbar
+ */
+Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
+  var stackInfo = err ? TK(err) : null;
+  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
+  this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
+};
+
+Notifier.prototype.log = Notifier._generateLogFn();
+Notifier.prototype.debug = Notifier._generateLogFn('debug');
+Notifier.prototype.info = Notifier._generateLogFn('info');
+Notifier.prototype.warning = Notifier._generateLogFn('warning');
+Notifier.prototype.error = Notifier._generateLogFn('error');
+Notifier.prototype.critical = Notifier._generateLogFn('critical');
+
+// Adapted from tracekit.js
+Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
+  if (err && err.stack) {
+    this._log('error', message, err, null, null, true);
+    return;
+  }
+
+  // NOTE(cory): sometimes users will trigger an "error" event
+  // on the window object directly which will result in errMsg
+  // being an Object instead of a string.
+  //
+  if (url && url.stack) {
+    this._log('error', message, url, null, null, true);
+    return;
+  }
+
+  var location = {
+    'url': url || '',
+    'line': lineNo
+  };
+  location.func = TK.guessFunctionName(location.url, location.line);
+  location.context = TK.gatherContext(location.url, location.line);
+  var stack = {
+    'mode': 'onerror',
+    'message': message || 'uncaught exception',
+    'url': document.location.href,
+    'stack': [location],
+    'useragent': navigator.userAgent
+  };
+
+  var payload = this._buildPayload(new Date(), 'error', message, stack);
+  this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
+};
+
+
+Notifier.prototype.global = function(options) {
+  Util.merge(window._globalRollbarOptions, options);
+};
+
+
+Notifier.prototype.configure = function(options) {
+  // TODO(cory): only allow non-payload keys that we understand
+
+  // Make a copy of the options object for this notifier
+  Util.merge(this.options, options);
+};
+
+/*
+ * Create a new Notifier instance which has the same options
+ * as the current notifier + options to override them.
+ */
+Notifier.prototype.scope = function(payloadOptions) {
+  var scopedNotifier = new Notifier(this);
+  Util.merge(scopedNotifier.options.payload, payloadOptions);
+  return scopedNotifier;
+};
+
+
+var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+function _guessErrorClass(errMsg) {
+  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+  var errClass = '(unknown)';
+  
+  if (errClassMatch) {
+    errClass = errClassMatch[errClassMatch.length - 1];
+    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+  }
+  return [errClass, errMsg];
+}
+
+/***** Payload processor *****/
+
+var payloadProcessorTimeout;
+Notifier.processPayloads = function() {
+  console.log('Notifier.processPayloads()');
+  if (!payloadProcessorTimeout) {
+    _payloadProcessorTimer();
+  }
+};
+
+
+function _payloadProcessorTimer() {
+  var payloadObj;
+  while ((payloadObj = window._rollbarPayloadQueue.pop())) {
+    _processPayload(payloadObj.endpointUrl, payloadObj.payload, payloadObj.callback);
+  }
+  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+}
+
+
+var rateLimitStartTime = new Date().getTime();
+var rateLimitCounter = 0;
+function _processPayload(url, payload, callback) {
+  callback = callback || function cb() {};
+  var now = new Date().getTime();
+  if (now - rateLimitStartTime >= 60000) {
+    rateLimitStartTime = now;
+    rateLimitCounter = 0;
+  }
+
+  // Check to see if we have a rate limit set or if
+  // the rate limit has been met/exceeded.
+  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
+  if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
+    callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
+    return;
+  } else {
+    rateLimitCounter++;
+  }
+
+  console.log('_processPayload() POSTing payload');
+
+  // There's either no rate limit or we haven't met it yet so
+  // go ahead and send it.
+  XHR.post(url, payload, function xhrCallback(err, resp) {
+    if (err) {
+      console.log('_processPayload() POST failed: ' + err);
+      return callback(err);
+    }
+
+    console.log('_processPayload() POST complete');
+
+    // TODO(cory): parse resp as JSON
+    callback(null, resp);
+  });
 }
 
 if (!window._rollbarInitialized) {

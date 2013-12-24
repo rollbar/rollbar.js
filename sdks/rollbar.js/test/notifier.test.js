@@ -1,8 +1,8 @@
 var expect = chai.expect;
 
 var config = {
-  accessToken: 'ACCESS_TOKEN',
-  captureUncaught: true    
+  accessToken: '12c99de67a444c229fca100e0967486f',
+  captureUncaught: false    
 };
 Rollbar.init(window, config);
 
@@ -27,6 +27,7 @@ describe("Misc", function() {
 describe("Notifier()", function() {
   it("should have all of the window.Rollbar methods", function(done) {
     var notifier = new Notifier();
+    console.log(notifier);
     expect(notifier).to.have.property('_getLogArgs');
     expect(notifier).to.have.property('_route');
     expect(notifier).to.have.property('_processShimQueue');
@@ -181,7 +182,12 @@ describe("Notifier.uncaughtError()", function() {
     var notifier = new Notifier();
     var spy = sinon.spy(notifier, '_log');
 
-    var err = new Error('uncaught error message');
+    var err;
+    try {
+      throw new Error('uncaught exception');
+    } catch (e) {
+      err = e;
+    }
     notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21, err);
 
     expect(spy.called).to.equal(true);
@@ -189,12 +195,13 @@ describe("Notifier.uncaughtError()", function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.equal(5);
+    expect(args.length).to.equal(6);
     expect(args[0]).to.equal('error');
     expect(args[1]).to.equal('testing uncaught error');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
-    expect(args[4]).to.equal(true);
+    expect(args[4]).to.equal(null);
+    expect(args[5]).to.equal(true);
 
     done();
   });
@@ -230,7 +237,12 @@ describe("Notifier.uncaughtError()", function() {
     var notifier = new Notifier();
     var spy = sinon.spy(notifier, '_log');
 
-    var err = new Error('uncaught error event');
+    var err;
+    try {
+      throw new Error('uncaught error event');
+    } catch (e) {
+      err = e;
+    }
     notifier.uncaughtError('testing uncaught error event', err);
 
     expect(spy.called).to.equal(true);
@@ -238,12 +250,13 @@ describe("Notifier.uncaughtError()", function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.equal(5);
+    expect(args.length).to.equal(6);
     expect(args[0]).to.equal('error');
     expect(args[1]).to.equal('testing uncaught error event');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
-    expect(args[4]).to.equal(true);
+    expect(args[4]).to.equal(null);
+    expect(args[5]).to.equal(true);
 
     done();
   });
@@ -376,6 +389,7 @@ describe("Notifier.scope()", function() {
     expect(x).to.not.equal(notifier);
     expect(x.constructor).to.equal(Notifier);
     expect(x.parentNotifier).to.equal(notifier);
+    expect(x.options.payload).to.deep.equal({});
 
     done();
   });
@@ -519,7 +533,13 @@ describe("Notifier._log()", function() {
     var notifier = new Notifier();
     notifier.configure({endpoint: 'http://foo.com/'});
     var cb = function() {};
-    notifier._log('debug', 'debug message', new Error('broken'), {custom: 'data'}, cb);
+    var err;
+    try {
+      throw new Error('broken');
+    } catch (e) {
+      err = e;
+    }
+    notifier._log('debug', 'debug message', err, {custom: 'data'}, cb);
 
     var afterSize = window._rollbarPayloadQueue.length;
     expect(afterSize).to.be.equal(beforeSize + 1);

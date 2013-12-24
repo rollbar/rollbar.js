@@ -117,16 +117,45 @@ var Util = {
   traverse: function(obj, func) {
     var k;
     var v;
-    for (k in obj) {
-      if (obj.hasOwnProperty(k)) {
-        v = obj[k];
-        if (v !== null && typeof(v) === 'object') {
-          Util.traverse(v, func);
-        } else {
-          obj[k] = func.apply(Util, [k, v]);
+    var i;
+    var isObj = typeof obj === 'object';
+    var keys = [];
+
+    if (isObj) {
+      if (obj.constructor === Object) {
+        for (k in obj) {
+          if (obj.hasOwnProperty(k)) {
+            keys.push(k);
+          }
+        }
+      } else if (obj.constructor === Array) {
+        for (i = 0; i < obj.length; ++i) {
+          keys.push(i);
         }
       }
     }
+    
+    for (i = 0; i < keys.length; ++i) {
+      k = keys[i];
+      v = obj[k];
+      isObj = typeof v === 'object';
+      if (isObj) {
+        if (v === null) {
+          obj[k] = func(k, v);
+        } else if (v.constructor === Object) {
+          obj[k] = Util.traverse(v, func);
+        } else if (v.constructor === Array) {
+          obj[k] = Util.traverse(v, func);
+        } else {
+          obj[k] = func(k, v);
+        }
+      } else {
+        obj[k] = func(k, v);
+      }
+    }
+
+    return obj;
+
   },
 
   redact: function(val) {
