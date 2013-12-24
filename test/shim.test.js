@@ -1,8 +1,8 @@
 var expect = chai.expect;
 
 var config = {
-  accessToken: 'ACCESS_TOKEN',
-  captureUncaught: true    
+  accessToken: '12c99de67a444c229fca100e0967486f',
+  captureUncaught: false    
 };
 
 describe("window.Rollbar.init()", function() {
@@ -214,24 +214,18 @@ describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
   });
 });
 
-
 describe("window.Rollbar.loadFull()", function() {
-
-  var successSpy;
-  var errSpy;
+  var errArgs;
 
   var preFullLoad = function(origShim) {
-    // Call log() once with a callback to make sure the callback
-    // is invoked once the full script loads.
-    var successCallback = function() {};
-    successSpy = sinon.spy(successCallback);
-    origShim.log('testing success callback', successCallback);
-
     // Call log() once and expect it to fail. It should call
     // the callback with an error.
-    var errCallback = function() {};
-    errSpy = sinon.spy(errCallback);
-    origShim.scope({endpoint: 'http://localhost/nonexistant'}).log('testing error callback', errCallback);
+    var errCallback = function() {
+      errArgs = arguments;
+    };
+    var scoped = origShim.scope();
+    scoped.configure({endpoint: 'http://localhost/nonexistant'});
+    scoped.log('testing error callback', errCallback);
   };
 
   it("should set window.Rollbar to a Notifier", function(done) {
@@ -242,9 +236,9 @@ describe("window.Rollbar.loadFull()", function() {
     preFullLoad(origShim);
 
     // Brings in the full rollbar.js file into the DOM
-    Rollbar.loadFull(window, document, true);
+    Rollbar.loadFull(window, document, true, '../dist/rollbar.js');
 
-    // Wait 20 milliseconds before checking window.Rollbar
+    // Wait 30 milliseconds before checking window.Rollbar
     setTimeout(function() {
       expect(window.Rollbar).to.be.an('object');
       expect(window.Rollbar).to.not.equal(origShim);
@@ -259,26 +253,6 @@ describe("window.Rollbar.loadFull()", function() {
       expect(window.RollbarShimQueue.length).is.equal(shimQueueSize);
 
       done();
-    }, 20);
-  });
-
-  it("should call the success callback", function(done) {
-    // Wait 30 milliseconds for the Rollbar.loadFull() to complete and call
-    // the callback
-    setTimeout(function() {
-      expect(successSpy).to.not.be.equal(undefined);
-      expect(successSpy.called).to.be.equal(true);
-      var call = successSpy.getCall(0);
-
-      expect(call.args).to.have.length(2);
-
-      var errParam = call.args[0];
-      var respParam = call.args[1];
-
-      expect(errParam).to.equal(null);
-      expect(respParam).to.be.an('object');
-
-      done();
     }, 30);
   });
 
@@ -286,13 +260,10 @@ describe("window.Rollbar.loadFull()", function() {
     // Wait 30 milliseconds for the Rollbar.loadFull() to complete and call
     // the callback
     setTimeout(function() {
-      expect(errSpy).to.not.be.equal(undefined);
-      expect(errSpy.called).to.be.equal(true);
-      var call = errSpy.getCall(0);
+      expect(errArgs).to.not.be.equal(undefined);
+      expect(errArgs).to.have.length(1);
 
-      expect(call.args).to.have.length(1);
-
-      var errParam = call.args[0];
+      var errParam = errArgs[0];
       expect(errParam).to.not.equal(null);
 
       done();
