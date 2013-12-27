@@ -22,7 +22,8 @@
     "grunt-express": "~1.2.1",
     "grunt-text-replace": "~0.3.10",
     "semver": "~2.2.1",
-    "mocha-phantomjs": "~3.3.0"
+    "mocha-phantomjs": "~3.3.0",
+    "grunt-cli": "~0.1.11"
   },
   "scripts": {
     "test": "make test"
