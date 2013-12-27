@@ -12,7 +12,7 @@ build:
 	@./node_modules/.bin/uglifyjs src/plugins/jquery.js --output dist/plugins/jquery.min.js -m
 
 test:
-	./node_modules/.bin/mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs -R dot test/index.html
+	./node_modules/.bin/mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs -R dot test/*.html
 	@echo ""
 
 test-dist:
