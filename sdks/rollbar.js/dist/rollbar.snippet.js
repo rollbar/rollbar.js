@@ -11,7 +11,6 @@ function Rollbar(parentShim) {
 Rollbar.VERSION = '1.0.0-beta1';
 
 Rollbar.init = function(window, config) {
-  console.log('Rollbar.init()');
   if (typeof window.Rollbar === 'object') {
     return window.Rollbar;
   }
@@ -35,8 +34,6 @@ Rollbar.init = function(window, config) {
     };
   }
 
-  console.log('Rollbar.init() setting window.Rollbar to a ' + client.constructor.name);
-
   // Expose Rollbar globally
   window.Rollbar = client;
   return client;
@@ -45,7 +42,6 @@ Rollbar.init = function(window, config) {
 Rollbar.prototype.loadFull = function(window, document, immediate, rollbarJsSrc) {
   // Create the main rollbar script loader
   var loader = function() {
-    console.log('Rollbar.loadFull() loading ' + (immediate ? 'immediately' : 'async'));
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
     s.src = rollbarJsSrc;
@@ -58,7 +54,6 @@ Rollbar.prototype.loadFull = function(window, document, immediate, rollbarJsSrc)
   };
 
   var handleLoadErr = function() {
-    console.log('Rollbar.loadFull().handleLoadErr() rollbar.js is' + (window._rollbarPayloadQueue === undefined ? ' not' : '') + ' fully loaded');
     if (window._rollbarPayloadQueue === undefined) {
       // rollbar.js did not load correctly, call any queued callbacks
       // with an error.

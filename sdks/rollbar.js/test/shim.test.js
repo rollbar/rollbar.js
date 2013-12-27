@@ -225,7 +225,7 @@ describe("window.Rollbar.loadFull()", function() {
     };
     var scoped = origShim.scope();
     scoped.configure({endpoint: 'http://localhost/nonexistant'});
-    scoped.log('testing error callback', errCallback);
+    scoped.error('testing error callback', errCallback);
   };
 
   it("should set window.Rollbar to a Notifier", function(done) {
@@ -238,7 +238,7 @@ describe("window.Rollbar.loadFull()", function() {
     // Brings in the full rollbar.js file into the DOM
     Rollbar.loadFull(window, document, true, '../dist/rollbar.js');
 
-    // Wait 30 milliseconds before checking window.Rollbar
+    // Wait before checking window.Rollbar
     setTimeout(function() {
       expect(window.Rollbar).to.be.an('object');
       expect(window.Rollbar).to.not.equal(origShim);
@@ -253,11 +253,11 @@ describe("window.Rollbar.loadFull()", function() {
       expect(window.RollbarShimQueue.length).is.equal(shimQueueSize);
 
       done();
-    }, 30);
+    }, 60);
   });
 
   it("should call the error callback", function(done) {
-    // Wait 30 milliseconds for the Rollbar.loadFull() to complete and call
+    // Wait for the Rollbar.loadFull() to complete and call
     // the callback
     setTimeout(function() {
       expect(errArgs).to.not.be.equal(undefined);
@@ -267,6 +267,6 @@ describe("window.Rollbar.loadFull()", function() {
       expect(errParam).to.not.equal(null);
 
       done();
-    }, 30);
+    }, 60);
   });
 });

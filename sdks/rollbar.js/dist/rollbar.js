@@ -1688,8 +1688,6 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
   // 1. get/create the notifier for that shim
   // 2. apply the message to the notifier
   while ((obj = shimQueue.shift())) {
-    console.log('Notifier._processShimQueue() processing', obj);
-
     shim = obj.shim;
     method = obj.method;
     args = obj.args;
@@ -2124,7 +2122,6 @@ function _guessErrorClass(errMsg) {
 
 var payloadProcessorTimeout;
 Notifier.processPayloads = function() {
-  console.log('Notifier.processPayloads()');
   if (!payloadProcessorTimeout) {
     _payloadProcessorTimer();
   }
@@ -2160,17 +2157,12 @@ function _processPayload(url, payload, callback) {
     rateLimitCounter++;
   }
 
-  console.log('_processPayload() POSTing payload');
-
   // There's either no rate limit or we haven't met it yet so
   // go ahead and send it.
   XHR.post(url, payload, function xhrCallback(err, resp) {
     if (err) {
-      console.log('_processPayload() POST failed: ' + err);
       return callback(err);
     }
-
-    console.log('_processPayload() POST complete');
 
     // TODO(cory): parse resp as JSON
     callback(null, resp);

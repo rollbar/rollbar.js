@@ -53,18 +53,14 @@
         captureUncaught: false
       };
       var origRollbar = Rollbar.init(window, config);
-      origRollbar.loadFull(window, document, true, '../dist/rollbar.js');
 
-      // Wait 20 milliseconds before running the tests so that the snippet can load rollbar.js
-      setTimeout(function() {
-        if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-          if (window.mochaPhantomJS) {
-            mochaPhantomJS.run();
-          } else {
-            mocha.run();
-          }
+      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        if (window.mochaPhantomJS) {
+          mochaPhantomJS.run();
+        } else {
+          mocha.run();
         }
-      }, 20);
+      }
     </script>
   </body>
 </html>
