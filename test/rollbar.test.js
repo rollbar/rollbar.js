@@ -3,9 +3,12 @@ var expect = chai.expect;
 describe("Script load", function() {
   describe("Shim", function() {
     it("should be connected to window.Rollbar", function(done) {
-      expect(origRollbar.notifier).to.equal(window.Rollbar);
+      origRollbar.loadFull(window, document, true, '../dist/rollbar.js');
 
-      done();
+      setTimeout(function() {
+        expect(origRollbar.notifier).to.equal(window.Rollbar);
+        done();
+      }, 30);
     });
 
     it("should configure window.Rollbar via shim.configure()", function(done) {
@@ -47,7 +50,6 @@ describe("Script load", function() {
     });
 
     it("should create a payload when calling shim.error()", function(done) {
-
       var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
       var err;
 
@@ -68,6 +70,8 @@ describe("Script load", function() {
       expect(JSON.stringify(args[0])).to.contain('cool');
       expect(JSON.stringify(args[0])).to.contain('some crazy error');
       expect(JSON.stringify(args[0])).to.contain('payload omg!');
+
+      window.Rollbar._enqueuePayload.restore();
 
       done();
     });
@@ -189,14 +193,63 @@ describe("window.Rollbar.configure()", function() {
 
 describe("window.Rollbar.log()", function() {
   it("should create a valid payload and put onto window._rollbarPayloadQueue", function(done) {
+    var pushSpy = sinon.spy(window._rollbarPayloadQueue, 'push');
 
-    expect(1).to.equal(0);
+    window.Rollbar.error('hello world');
+
+    var call = pushSpy.getCall(0);
+    var payload = call.args[0].payload.data;
+
+    expect(payload.environment).to.equal('production');
+    expect(payload.uuid).to.not.equal(undefined);
+    expect(payload.level).to.equal('error');
+    expect(payload.platform).to.equal('browser');
+    expect(payload.framework).to.equal('browser-js');
+    expect(payload.language).to.equal('javascript');
+    expect(payload.body).to.be.an('object');
+    expect(payload.request).to.be.an('object');
+    expect(payload.request.url).to.not.equal(undefined);
+    expect(payload.client).to.be.an('object');
+    expect(payload.server).to.be.an('object');
+    expect(payload.notifier).to.be.an('object');
+    expect(payload.notifier.name).to.equal('rollbar-browser-js');
+    expect(payload.client.timestamp).to.be.a('number');
+
+    window._rollbarPayloadQueue.push.restore();
+
     done();
   });
 
   it("should put payloads into window._rollbarPayloadQueue in order", function(done) {
+    var pushSpy = sinon.spy(window._rollbarPayloadQueue, 'push');
+    var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
 
-    expect(1).to.equal(0);
+    window.Rollbar.error('one');
+    window.Rollbar.error('two');
+    window.Rollbar.error('three');
+
+    expect(spy.called).to.equal(true);
+    expect(pushSpy.called).to.equal(true);
+    
+    var call1 = spy.getCall(0);
+    var call2 = spy.getCall(1);
+    var call3 = spy.getCall(2);
+
+    var c1 = pushSpy.getCall(0);
+    var c2 = pushSpy.getCall(1);
+    var c3 = pushSpy.getCall(2);
+
+    expect(JSON.stringify(call1.args[0])).to.contain('one');
+    expect(JSON.stringify(call2.args[0])).to.contain('two');
+    expect(JSON.stringify(call3.args[0])).to.contain('three');
+
+    expect(JSON.stringify(c1.args[0])).to.contain('one');
+    expect(JSON.stringify(c2.args[0])).to.contain('two');
+    expect(JSON.stringify(c3.args[0])).to.contain('three');
+
+    window.Rollbar._enqueuePayload.restore();
+    window._rollbarPayloadQueue.push.restore();
+
     done();
   });
 });

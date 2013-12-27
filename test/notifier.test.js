@@ -27,7 +27,6 @@ describe("Misc", function() {
 describe("Notifier()", function() {
   it("should have all of the window.Rollbar methods", function(done) {
     var notifier = new Notifier();
-    console.log(notifier);
     expect(notifier).to.have.property('_getLogArgs');
     expect(notifier).to.have.property('_route');
     expect(notifier).to.have.property('_processShimQueue');
@@ -369,7 +368,6 @@ describe("Notifier.uncaughtError()", function() {
     var payload = args[0]; 
 
     expect(payload.data.body.trace.frames.length).to.equal(1);
-    console.log(payload.data.body.trace.frames[0]);
 
     done();
   });
@@ -539,7 +537,7 @@ describe("Notifier._log()", function() {
     } catch (e) {
       err = e;
     }
-    notifier._log('debug', 'debug message', err, {custom: 'data'}, cb);
+    notifier._log('warning', 'debug message', err, {custom: 'data'}, cb);
 
     var afterSize = window._rollbarPayloadQueue.length;
     expect(afterSize).to.be.equal(beforeSize + 1);
@@ -606,17 +604,6 @@ describe("Notifier._route()", function() {
     notifier.configure({endpoint: 'http://test.com'});
     expect(notifier._route('test/')).to.equal('http://test.com/test/');
 
-    done();
-  });
-});
-
-/*
- * Notifier._processShimQueue()
- */
-
-describe("Notifier._processShimQueue()", function() {
-  it("should be IMPLEMENTED", function(done) {
-    expect(1).to.equal(0);
     done();
   });
 });
