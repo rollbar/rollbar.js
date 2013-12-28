@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.0.0-beta1",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -23,7 +23,10 @@
     "grunt-text-replace": "~0.3.10",
     "semver": "~2.2.1",
     "mocha-phantomjs": "~3.3.0",
-    "grunt-cli": "~0.1.11"
+    "grunt-cli": "~0.1.11",
+    "grunt-tagrelease": "~0.3.0",
+    "grunt-bumpup": "~0.5.0",
+    "grunt-contrib-copy": "~0.5.0"
   },
   "scripts": {
     "test": "make test"
