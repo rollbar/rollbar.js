@@ -116,27 +116,8 @@ module.exports = function(grunt) {
     bumpup: 'package.json',
     tagrelease: {
       file: 'package.json',
-      prefix: 'v'
-    },
-    copy: {
-      release: {
-        files: [
-          {
-            src: ['dist/rollbar.js', 'dist/rollbar.min.js', 'dist/rollbar.min.map'],
-            dest: 'release/',
-            rename: function(dest, src) {
-              var filename = src.substring(src.indexOf('/'));
-              console.log('FILENAME', filename);
-              var name = filename.substring(0, filename.indexOf('.'));
-              var rest = filename.substring(filename.indexOf('.'));
-              console.log('NAME', name);
-              console.log('REST', rest);
-              var version = pkg.version;
-              return 'release/' + name + '-' + version + rest;
-            }
-          }
-        ]
-      }
+      prefix: 'v',
+      commit: false
     },
     watch: {
       files: ['<%= jshint.files %>'],
@@ -147,7 +128,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-express');
@@ -156,6 +136,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-tagrelease');
 
   grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
+  grunt.registerTask('release', ['build', 'copyrelease']);
   grunt.registerTask('test', ['express', 'mocha']);
 
   grunt.registerTask('default', function() {
@@ -163,11 +144,27 @@ module.exports = function(grunt) {
     grunt.task.run('test');
   });
 
-  grunt.registerTask('release', function(type) {
+  grunt.registerTask('bumpversion', function(type) {
     type = type ? type : 'patch';
     grunt.task.run('bumpup:' + type);
-    grunt.task.run('build');
-    grunt.task.run('copy:release');
-    grunt.task.run('tagrelease');
+  });
+
+  grunt.registerTask('copyrelease', function() {
+    var version = pkg.version;
+
+    var rollbarJs = 'dist/rollbar.js';
+    var releaseRollbarJs = 'release/rollbar-' + version + '.js';
+
+    var rollbarMinJs = 'dist/rollbar.min.js';
+    var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
+
+    var rollbarMinMap = 'dist/rollbar.min.map';
+    var releaseRollbarMinMap = 'release/rollbar-' + version + '.min.map';
+
+    grunt.file.copy(rollbarJs, releaseRollbarJs);
+    grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
+    grunt.file.copy(rollbarMinMap, releaseRollbarMinMap);
+
+    //grunt.task.run('tagrelease');
   });
 };
