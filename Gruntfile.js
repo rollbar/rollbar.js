@@ -89,7 +89,7 @@ module.exports = function(grunt) {
           {
             // default rollbar.js CDN URL
             from: /(DEFAULT_ROLLBARJS_URL|defaultRollbarJsUrl) = (["']).*(["'])/g,
-            to: '$1 = $2//<%= pkg.cdn.host %>/js/<%= pkg.pinnedVersion %>/rollbar.min.js$3'
+            to: '$1 = $2//<%= pkg.cdn.host %>/js/v<%= pkg.pinnedVersion %>/rollbar.min.js$3'
           }
         ]
       }
