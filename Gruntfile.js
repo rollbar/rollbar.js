@@ -165,6 +165,6 @@ module.exports = function(grunt) {
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
     grunt.file.copy(rollbarMinMap, releaseRollbarMinMap);
 
-    //grunt.task.run('tagrelease');
+    grunt.task.run('tagrelease');
   });
 };
