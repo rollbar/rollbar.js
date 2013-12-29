@@ -123,6 +123,31 @@ module.exports = function(grunt) {
       files: ['<%= jshint.files %>'],
       tasks: ['jshint', 'concat', 'uglify']
     },
+    connect: {
+      server: {
+        options: {
+          base: '.',
+          port: 9999
+        }
+      }
+    },
+    'saucelabs-mocha': {
+      all: {
+        options: {
+          urls: ['http://127.0.0.1:9999/test/rollbar.html'],
+                 //'http://127.0.0.1:9999/test/shim.html',
+                 //'http://127.0.0.1:9999/test/notifier.html',
+                 //'http://127.0.0.1:9999/test/components.html'],
+          tunnelTimeout: 5,
+          build: process.env.TRAVIS_JOB_ID,
+          concurrency: 3,
+          browsers: browsers,
+          testname: "mocha tests",
+          username: process.env.SAUCE_USERNAME,
+          key: process.env.SAUCE_ACCESS_KEY
+        }
+      }
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -134,14 +159,22 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-bumpup');
   grunt.loadNpmTasks('grunt-tagrelease');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-saucelabs');
 
   grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
   grunt.registerTask('release', ['build', 'copyrelease']);
-  grunt.registerTask('test', ['express', 'mocha']);
+
+  var testjobs = ['express', 'connect'];
+  if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined'){
+    testjobs.push('saucelabs-mocha');
+  } else {
+    testjobs.push('mocha');
+  }
+  grunt.registerTask('test', testjobs);
 
   grunt.registerTask('default', function() {
     grunt.task.run('build');
-    grunt.task.run('test');
   });
 
   grunt.registerTask('bumpversion', function(type) {
@@ -168,3 +201,41 @@ module.exports = function(grunt) {
     grunt.task.run('tagrelease');
   });
 };
+
+
+var browsers = [
+  {
+    browserName: 'firefox',
+    version: '19',
+    platform: 'XP'
+  },
+  {
+    browserName: 'chrome',
+    platform: 'XP'
+  },
+  {
+    browserName: 'chrome',
+    platform: 'linux'
+  },
+  {
+    browserName: 'internet explorer',
+    platform: 'WIN8',
+    version: '10'
+  },
+  {
+    browserName: 'internet explorer',
+    platform: 'VISTA',
+    version: '9'
+  },
+  {
+    browserName: 'internet explorer',
+    platform: 'XP',
+    version: '8'
+  },
+  {
+    browserName: 'opera',
+    platform: 'Windows 2008',
+    version: '12'
+  }
+];
+

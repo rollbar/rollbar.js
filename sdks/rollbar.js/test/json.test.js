@@ -16,17 +16,23 @@ describe('RollbarJSON', function() {
     object.self = object;
 
     // Make sure circular references are caught
-    expect(function() {
+    try {
       stringify(object);
-    }).to.throw(TypeError, 'RollbarJSON.stringify cannot serialize cyclic structures.');
+    } catch (e) {
+      expect(e.constructor.name).to.equal('TypeError');
+    }
 
-    expect(function() {
+    try {
       stringify(window);
-    }).to.throw(TypeError, 'RollbarJSON.stringify cannot serialize cyclic structures.');
+    } catch (e) {
+      expect(e.constructor.name).to.equal('TypeError');
+    }
 
-    expect(function() {
+    try {
       stringify(document.querySelector('#mocha'));
-    }).to.throw(TypeError, 'RollbarJSON.stringify cannot serialize cyclic structures.');
+    } catch (e) {
+      expect(e.constructor.name).to.equal('TypeError');
+    }
 
     expect(stringify()).to.equal(undefined);
     expect(stringify(null)).to.equal('null');
