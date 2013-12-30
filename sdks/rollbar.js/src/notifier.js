@@ -383,7 +383,7 @@ Notifier.prototype._getBrowserPlugins = function() {
 
 /*
  * Does an in-place modification of obj such that:
- * 1. All keys that match the window._globalRollbarOptions.scrubParams
+ * 1. All keys that match the notifier's options.scrubFields
  *    list will be normalized into all '*'
  * 2. Any query string params that match the same criteria will have
  *    their values normalized as well.
@@ -622,7 +622,7 @@ function _processPayload(url, payload, callback) {
 
   // Check to see if we have a rate limit set or if
   // the rate limit has been met/exceeded.
-  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
+  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMinute;
   if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
     callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
     return;
