@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Rollbar Shim Mocha Tests</title>
+    <link rel="stylesheet" href="lib/mocha/mocha.css"/>
+  </head>
+  <body>
+    <!-- Required for browser reporter -->
+    <div id="mocha"></div>
+    <div id="mesages"></div>
+    <div id="fixtures"></div>
+
+    <!-- mocha/chai/sinon -->
+    <script src="lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/chai/chai.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/sinon/sinon-1.7.3.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- initialize mocha -->
+    <script type="text/javascript" charset="utf-8">
+      mocha.ui('bdd');
+      mocha.reporter('html');
+      var expect = chai.expect;
+      var assert = chai.assert;
+    </script>
+
+    <!-- mock library setup -->
+    <script type="text/javascript" charset="utf-8">
+      beforeEach(function() {
+        this.sinon = sinon.sandbox.create();
+      });
+
+      afterEach(function() {
+        this.sinon.restore();
+      });
+    </script>
+
+    <!-- shim source -->
+    <script src="../src/shim.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- shim tests -->
+    <script src="./shimalias.test.js" type="text/javascript" charset="utf-8"></script>
+
+    <script type="text/javascript" charset="utf-8">
+      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        if (window.mochaPhantomJS) {
+          mochaPhantomJS.run();
+        } else {
+          mocha.run();
+        }
+      }
+    </script>
+  </body>
+</html>
+

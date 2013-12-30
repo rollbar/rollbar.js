@@ -8,12 +8,13 @@ function Rollbar(parentShim) {
 }
 
 Rollbar.init = function(window, config) {
-  if (typeof window.Rollbar === 'object') {
-    return window.Rollbar;
+  var alias = config.globalAlias || 'Rollbar';
+  if (typeof window[alias] === 'object') {
+    return window[alias];
   }
 
   // Expose the global shim queue
-  window.RollbarShimQueue = [];
+  window._rollbarShimQueue = [];
 
   config = config || {};
 
@@ -32,16 +33,16 @@ Rollbar.init = function(window, config) {
   }
 
   // Expose Rollbar globally
-  window.Rollbar = client;
+  window[alias] = client;
   return client;
 };
 
-Rollbar.prototype.loadFull = function(window, document, immediate, rollbarJsSrc) {
+Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   // Create the main rollbar script loader
   var loader = function() {
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
-    s.src = rollbarJsSrc;
+    s.src = config.rollbarJsUrl;
     s.async = !immediate;
 
     // NOTE(cory): this may not work for some versions of IE
@@ -63,7 +64,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, rollbarJsSrc)
       // Go through each of the shim objects. If one of their args
       // was a function, treat it as the callback and call it with
       // err as the first arg.
-      while ((obj = window.RollbarShimQueue.shift())) {
+      while ((obj = window._rollbarShimQueue.shift())) {
         args = obj.args;
         for (i = 0; i < args.length; ++i) {
           cb = args[i];
@@ -102,7 +103,7 @@ function stub(method) {
       }
       var args = Array.prototype.slice.call(arguments, 0);
       var data = {shim: shim, method: method, args: args, ts: new Date()};
-      window.RollbarShimQueue.push(data);
+      window._rollbarShimQueue.push(data);
 
       if (isScope) {
         return shim;
@@ -117,6 +118,7 @@ for (var i = 0; i < _methods.length; ++i) {
 }
 
 var defaultRollbarJsUrl = '//d37gvrvc0wt4s1.cloudfront.net/js/v1.0/rollbar.min.js';
+_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
 var r = Rollbar.init(window, _rollbarConfig);
-r.loadFull(window, document, true, defaultRollbarJsUrl);
+r.loadFull(window, document, false, _rollbarConfig);
 })(window, document);

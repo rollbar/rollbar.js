@@ -16,7 +16,7 @@ describe("window.Rollbar.init()", function() {
     Rollbar.init(window, config);
 
     expect(window.Rollbar).to.be.an('object');
-    expect(window.RollbarShimQueue).to.be.an('array');
+    expect(window._rollbarShimQueue).to.be.an('array');
 
     done();
   });
@@ -29,34 +29,34 @@ describe("window.Rollbar.init()", function() {
     done();
   });
 
-  it("should create the global RollbarShimQueue", function(done) {
-    expect(window.RollbarShimQueue).to.be.an('array');
+  it("should create the global _rollbarShimQueue", function(done) {
+    expect(window._rollbarShimQueue).to.be.an('array');
     done();
   });
 
-  it("should push initial configure onto RollbarShimQueue", function(done) {
-    expect(window.RollbarShimQueue).to.have.length(1);
+  it("should push initial configure onto _rollbarShimQueue", function(done) {
+    expect(window._rollbarShimQueue).to.have.length(1);
 
     // Make sure the object has the expected keys
-    expect(window.RollbarShimQueue[0]).to.be.an('object');
-    expect(window.RollbarShimQueue[0]).to.have.keys('shim', 'method', 'args', 'ts');
+    expect(window._rollbarShimQueue[0]).to.be.an('object');
+    expect(window._rollbarShimQueue[0]).to.have.keys('shim', 'method', 'args', 'ts');
 
     // Make sure the object's shim value is valid
-    expect(window.RollbarShimQueue[0].shim).to.be.an('object');
-    expect(window.RollbarShimQueue[0].shim).to.be.equal(window.Rollbar);
+    expect(window._rollbarShimQueue[0].shim).to.be.an('object');
+    expect(window._rollbarShimQueue[0].shim).to.be.equal(window.Rollbar);
 
     // Make sure the object's method value is correct
-    expect(window.RollbarShimQueue[0].method).to.equal('configure');
+    expect(window._rollbarShimQueue[0].method).to.equal('configure');
 
     // Make sure the object's ts value is valid
-    expect(window.RollbarShimQueue[0].ts).to.be.an.instanceOf(Date);
-    expect(window.RollbarShimQueue[0].ts.getTime()).to.be.at.most(new Date().getTime());
+    expect(window._rollbarShimQueue[0].ts).to.be.an.instanceOf(Date);
+    expect(window._rollbarShimQueue[0].ts.getTime()).to.be.at.most(new Date().getTime());
 
     // Make sure the object's arguments are correct
-    expect(window.RollbarShimQueue[0].args).to.have.property(0);
-    expect(window.RollbarShimQueue[0].args[0]).to.be.an('object');
-    expect(window.RollbarShimQueue[0].args[0]).to.have.property('accessToken', config.accessToken);
-    expect(window.RollbarShimQueue[0].args[0]).to.have.property('captureUncaught', config.captureUncaught);
+    expect(window._rollbarShimQueue[0].args).to.have.property(0);
+    expect(window._rollbarShimQueue[0].args[0]).to.be.an('object');
+    expect(window._rollbarShimQueue[0].args[0]).to.have.property('accessToken', config.accessToken);
+    expect(window._rollbarShimQueue[0].args[0]).to.have.property('captureUncaught', config.captureUncaught);
 
     done();
   });
@@ -74,14 +74,14 @@ describe("window.Rollbar.uncaughtError", function() {
       window.Rollbar.uncaughtError('test message where foo is undefined', 'test_file.js', 33, 22, err);
     }
 
-    expect(window.RollbarShimQueue[1]).to.be.an('object');
-    expect(window.RollbarShimQueue[1]).to.have.property('method', 'uncaughtError');
-    expect(window.RollbarShimQueue[1].args).to.not.equal(undefined);
-    expect(window.RollbarShimQueue[1].args[0]).to.contain('foo');
-    expect(window.RollbarShimQueue[1].args[1]).to.equal('test_file.js');
-    expect(window.RollbarShimQueue[1].args[2]).to.equal(33);
-    expect(window.RollbarShimQueue[1].args[3]).to.equal(22);
-    expect(window.RollbarShimQueue[1].args[4]).to.equal(err);
+    expect(window._rollbarShimQueue[1]).to.be.an('object');
+    expect(window._rollbarShimQueue[1]).to.have.property('method', 'uncaughtError');
+    expect(window._rollbarShimQueue[1].args).to.not.equal(undefined);
+    expect(window._rollbarShimQueue[1].args[0]).to.contain('foo');
+    expect(window._rollbarShimQueue[1].args[1]).to.equal('test_file.js');
+    expect(window._rollbarShimQueue[1].args[2]).to.equal(33);
+    expect(window._rollbarShimQueue[1].args[3]).to.equal(22);
+    expect(window._rollbarShimQueue[1].args[4]).to.equal(err);
 
     done();
   });
@@ -94,14 +94,14 @@ describe("window.Rollbar.global()", function() {
     done();
   });
 
-  it("should should pass all arguments to the RollbarShimQueue", function(done) {
-    var preLen = window.RollbarShimQueue.length;
+  it("should should pass all arguments to the _rollbarShimQueue", function(done) {
+    var preLen = window._rollbarShimQueue.length;
     var options = {hello: 'world'};
     window.Rollbar.global(options, 33);
 
-    expect(window.RollbarShimQueue).to.have.length(preLen + 1);
+    expect(window._rollbarShimQueue).to.have.length(preLen + 1);
 
-    var globalData = window.RollbarShimQueue[preLen];
+    var globalData = window._rollbarShimQueue[preLen];
     expect(globalData).to.be.an('object');
     expect(globalData.args).to.be.an('array');
     expect(globalData.args).to.have.length(2);
@@ -118,14 +118,14 @@ describe("window.Rollbar.configure()", function() {
     done();
   });
 
-  it("should should pass all arguments to the RollbarShimQueue", function(done) {
-    var preLen = window.RollbarShimQueue.length;
+  it("should should pass all arguments to the _rollbarShimQueue", function(done) {
+    var preLen = window._rollbarShimQueue.length;
     var options = {hello: 'world'};
     window.Rollbar.configure(options, 33);
 
-    expect(window.RollbarShimQueue).to.have.length(preLen + 1);
+    expect(window._rollbarShimQueue).to.have.length(preLen + 1);
 
-    var configData = window.RollbarShimQueue[preLen];
+    var configData = window._rollbarShimQueue[preLen];
     expect(configData).to.be.an('object');
     expect(configData.args).to.be.an('array');
     expect(configData.args).to.have.length(2);
@@ -185,9 +185,9 @@ describe("window.Rollbar.scope()", function() {
 
 
 describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
-  it("should add a log message to RollbarShimQueue", function(done) {
+  it("should add a log message to _rollbarShimQueue", function(done) {
     var check = function(method, message) {
-      var obj = window.RollbarShimQueue[window.RollbarShimQueue.length - 1];
+      var obj = window._rollbarShimQueue[window._rollbarShimQueue.length - 1];
       expect(obj.method).to.equal(method);
       expect(obj.args[0]).to.equal(message);
     };
@@ -236,7 +236,7 @@ describe("window.Rollbar.loadFull()", function() {
     preFullLoad(origShim);
 
     // Brings in the full rollbar.js file into the DOM
-    Rollbar.loadFull(window, document, true, '../dist/rollbar.js');
+    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
 
     // Wait before checking window.Rollbar
     setTimeout(function() {
@@ -247,10 +247,10 @@ describe("window.Rollbar.loadFull()", function() {
 
       expect(origShim.notifier).to.be.equal(window.Rollbar);
 
-      var shimQueueSize = window.RollbarShimQueue.length;
+      var shimQueueSize = window._rollbarShimQueue.length;
 
       origShim.log('hello world');
-      expect(window.RollbarShimQueue.length).is.equal(shimQueueSize);
+      expect(window._rollbarShimQueue.length).is.equal(shimQueueSize);
 
       done();
     }, 60);

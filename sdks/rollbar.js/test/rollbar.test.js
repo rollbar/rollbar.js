@@ -3,7 +3,7 @@ var expect = chai.expect;
 describe("Script load", function() {
   describe("Shim", function() {
     it("should be connected to window.Rollbar", function(done) {
-      origRollbar.loadFull(window, document, true, '../dist/rollbar.js');
+      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
 
       setTimeout(function() {
         expect(origRollbar.notifier).to.equal(window.Rollbar);
