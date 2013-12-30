@@ -1,80 +1,154 @@
 # Configuration Reference
 
-## Example
+There are 2 types of configuration data:
+1. Context
+   - Information about the error being sent to Rollbar
+   - e.g. server hostname, user's IP, custom fingerprint
+2. Payload
+   - Information about the error - usually custom
+   - e.g. The name of the javascript component that triggered the error
 
-Using all config options:
+Rollbar can be configured at 3 different levels:
+- Global configuration
+  - Affects all notifiers
+  - Set by calling `global()` on any notifier
+  - Merges/overwrites previous configuration
+  - Currently, the only supported option is `itemsPerMinute`
+- Per-notifier configuration - Context and/or Payload
+  - Affects only the notifier you call `configure()` on
+  - Child notifiers inherit this configuration
+  - Merges/overwrites previous configuration for the notifier you call `configure()` on
+- Scope configuration - Just payload
+  - Affects only the notifier created by calling `scope()`
+  - Inherited by all child notifiers
+  - Only affects the payload of items sent to Rollbar, not the context
 
-```javascript
-Rollbar.configure({
-  checkIgnore: function(msg, url, lineNo, colNo, error) {
-    // don't ignore anything (default)
-    return false;
-  },
-  context: "home#index",
-  itemsPerMinute: 60,
-  level: "error",
-  person: {
-    id: 12345,
-    username: "johndoe",
-    email: "johndoe@example.com"
-  },
-  "server.branch": "develop",
-  "server.environment": "staging",
-  "server.host": "web1"
-});
+## Global configuration example
+
+```js
+// Only send a max of 5 items to Rollbar per minute
+Rollbar.global('itemsPerMinute', 5);
 ```
 
-## Reference
+## Per-notifier configuration
 
-All of these are configurable via the ```_rollbarParams``` object.
-    
+```js
+// Set the top-level notifier's checkIgnore() function
+window.Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
+    // ignore all uncaught errors and all 'debug' items
+    return isUncaught === true || payload.data.level === 'debug';
+});
+
+// Set the default log level and the context
+window.Rollbar.configure({logLevel: 'info', context: 'home#index'});
+window.Rollbar.log('this will be sent with level="info"');
+
+// Only send "error" or higher items to Rollbar
+window.Rollbar.configure({reportLevel: 'error'});
+window.Rollbar.info('this will not get reported to Rollbar since it\'s at the "info" level');
+
+// Set the person information to be sent with all to Rollbar
+window.Rollbar.configure({person: {id: 12345, email: 'stewie@familyguy.com'}});
+
+// Add the following payload data to all items sent to Rollbar from this
+// notifier or any created using window.Rollbar.scope()
+window.Rollbar.configure({payload: {sessionId: "asdf12345"}});
+
+// Scrub any payload keys/query parameters named 'creditCardNumber'
+window.Rollbar.configure({scrubFields: ['creditCardNumber']});
+```
+
+## Scope configuration
+
+```js
+// Create a notifier for two different components, each having a different name
+var commentBoxNotifier = window.Rollbar.scope({component: {name: 'commentBox'}});
+var accountSettingsNotifier = window.Rollbar.scope({component: {name: 'accountSettings'}});
+
+commentBoxNotifier.info('will send a payload containing {component: {name: "commentBox"}}');
+accountSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}}');
+
+// Override the accountSettingsNotifier's payload settings
+var projectSettingsNotifier = accountSettingsNotifier.scope({projectName: 'the-new-hotness'});
+projectSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}, projectName: "the-new-hotness"}');
+```
+
+## Global configuration reference
+
   <dl>
+  <dt>itemsPerMinute</dt>
+  <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
+
+Default: ```undefined``` - no limit
+  </dl>
+
+## Context configuration reference
+
+  <dl>
+
   <dt>checkIgnore</dt>
-  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. It will receive the same arguments as passed by the browser window.onerror. The function signature should be: ```function checkIgnore(msg, url, lineNo, colNo, error) { ... }``` and should return ```true``` if the error should be ignored.
+  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
 
 Default: ```null```
 
+isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
+args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
+payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is mainly useful for advanced ignore functionality.
   </dd>
+
+  <dt>scrubFields</dt>
+  <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
+
+Default: ```["passwd", "password", "secret", "confirm_password", "password_confirmation"]```
+  </dd>
+
+  <dt>logLevel</dt>
+  <dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+
+Default: ```"debug"```
+  </dd>
+
+  <dt>reportLevel</dt>
+  <dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
+
+Default: ```"warning"```
+  </dd>
+
+  <dt>person</dt>
+  <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
+  </dd>
+
+  <dt>context</dt>
+  <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
+  </dd>
+
+  <dt>payload</dt>
+  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
+  </dd>
+
   <dt>client.javascript.code_version</dt>
   <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
   </dd>
+
   <dt>client.javascript.source_map_enabled</dt>
   <dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
 
 Default: ```false```
   </dd>
+
   <dt>client.javascript.guess_uncaught_frames</dt>
   <dd>When `true`, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers. Works best when the minified javascript file is generated using newlines instead of semicolons.
 
 Default: ```false```
   </dd>
-  <dt>context</dt>
-  <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
-  </dd>
-  <dt>custom</dt>
-  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
-  </dd>
-  <dt>itemsPerMinute</dt>
-  <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```_rollbar.push()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
-  
-Default: ```5```
 
-  </dd>
-  <dt>level</dt>
-  <dd>The severity level to report javascript errors at. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
-
-Default: ```"warning"```
-
-  </dd>
-  <dt>person</dt>
-  <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
-  </dd>
   <dt>server.branch</dt>
   <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
   
 Default: ```"master"```
 
   </dd>
+
   <dt>server.environment</dt>
   <dd>Environment name
 
@@ -85,6 +159,7 @@ Can be an arbitrary string, though to take advantage of the default notification
 Default: ```"production"```
 
   </dd>
+
   <dt>server.host</dt>
   <dd>The hostname of the machine that rendered the page
 
