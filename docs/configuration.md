@@ -1,6 +1,7 @@
 # Configuration Reference
 
 There are 2 types of configuration data:
+
 1. Context
    - Information about the error being sent to Rollbar
    - e.g. server hostname, user's IP, custom fingerprint
@@ -14,14 +15,14 @@ Rollbar can be configured at 3 different levels:
   - Set by calling `global()` on any notifier
   - Merges/overwrites previous configuration
   - Currently, the only supported option is `itemsPerMinute`
-- Per-notifier configuration - Context and/or Payload
+- Per-notifier configuration - context and/or payload
   - Affects only the notifier you call `configure()` on
-  - Child notifiers inherit this configuration
   - Merges/overwrites previous configuration for the notifier you call `configure()` on
-- Scope configuration - Just payload
+- Scope configuration - only payload
   - Affects only the notifier created by calling `scope()`
-  - Inherited by all child notifiers
   - Only affects the payload of items sent to Rollbar, not the context
+
+All child notifiers, (created with ```Rollbar.scope()```) will inherit configuration from their parent notifier.
 
 ## Global configuration example
 
@@ -34,36 +35,36 @@ Rollbar.global('itemsPerMinute', 5);
 
 ```js
 // Set the top-level notifier's checkIgnore() function
-window.Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
+Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
     // ignore all uncaught errors and all 'debug' items
     return isUncaught === true || payload.data.level === 'debug';
 });
 
 // Set the default log level and the context
-window.Rollbar.configure({logLevel: 'info', context: 'home#index'});
-window.Rollbar.log('this will be sent with level="info"');
+Rollbar.configure({logLevel: 'info', context: 'home#index'});
+Rollbar.log('this will be sent with level="info"');
 
 // Only send "error" or higher items to Rollbar
-window.Rollbar.configure({reportLevel: 'error'});
-window.Rollbar.info('this will not get reported to Rollbar since it\'s at the "info" level');
+Rollbar.configure({reportLevel: 'error'});
+Rollbar.info('this will not get reported to Rollbar since it\'s at the "info" level');
 
 // Set the person information to be sent with all to Rollbar
-window.Rollbar.configure({person: {id: 12345, email: 'stewie@familyguy.com'}});
+Rollbar.configure({person: {id: 12345, email: 'stewie@familyguy.com'}});
 
 // Add the following payload data to all items sent to Rollbar from this
 // notifier or any created using window.Rollbar.scope()
-window.Rollbar.configure({payload: {sessionId: "asdf12345"}});
+Rollbar.configure({payload: {sessionId: "asdf12345"}});
 
 // Scrub any payload keys/query parameters named 'creditCardNumber'
-window.Rollbar.configure({scrubFields: ['creditCardNumber']});
+Rollbar.configure({scrubFields: ['creditCardNumber']});
 ```
 
 ## Scope configuration
 
 ```js
 // Create a notifier for two different components, each having a different name
-var commentBoxNotifier = window.Rollbar.scope({component: {name: 'commentBox'}});
-var accountSettingsNotifier = window.Rollbar.scope({component: {name: 'accountSettings'}});
+var commentBoxNotifier = Rollbar.scope({component: {name: 'commentBox'}});
+var accountSettingsNotifier = Rollbar.scope({component: {name: 'accountSettings'}});
 
 commentBoxNotifier.info('will send a payload containing {component: {name: "commentBox"}}');
 accountSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}}');
@@ -91,9 +92,9 @@ Default: ```undefined``` - no limit
 
 Default: ```null```
 
-isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
-args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
-payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is mainly useful for advanced ignore functionality.
+- isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
+- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
+- payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
   </dd>
 
   <dt>scrubFields</dt>
