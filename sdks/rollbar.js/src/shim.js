@@ -6,9 +6,6 @@ function Rollbar(parentShim) {
   this.parentShim = parentShim;
 }
 
-// Updated by the build process to match package.json
-Rollbar.VERSION = '1.0.0-beta1';
-
 Rollbar.init = function(window, config) {
   if (typeof window.Rollbar === 'object') {
     return window.Rollbar;

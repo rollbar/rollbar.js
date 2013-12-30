@@ -1,6 +1,6 @@
 
 // Updated by the build process to match package.json
-Notifier.VERSION = '1.0.0-beta1';
+Notifier.NOTIFIER_VERSION = '1.0.0-beta1';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -243,7 +243,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     server: {},
     notifier: {
       name: 'rollbar-browser-js',
-      version: Notifier.VERSION
+      version: Notifier.NOTIFIER_VERSION
     }
   };
 
@@ -458,7 +458,7 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
-  if (!this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+  if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
     return;
   }
 
@@ -483,10 +483,15 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
   var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
 
   if (levelVal < reportLevel) {
-    return false;
+    return true;
   }
 
-  return true;
+  var plugins = this.options ? this.options.plugins : {};
+  if (plugins && plugins.jquery) {
+    return plugins.jquery.isAjax ? true : false;
+  }
+
+  return false;
 };
 
 
