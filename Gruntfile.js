@@ -58,12 +58,12 @@ module.exports = function(grunt) {
         replacements: [
           {
             // package version
-            from: /(VERSION|version) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
+            from: /(NOTIFIER_VERSION|notifierVersion) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
             to: '$1 = $2<%= pkg.version %>$3'
           },
           {
             // jquery plugin version
-            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.a-zA-Z]+(["'])/g,
+            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
             to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
           },
           {

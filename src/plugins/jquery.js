@@ -1,17 +1,24 @@
-/*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false, indent: 2 */
 (function(jQuery, window, document) {
   
-  if (!window._rollbar) {
+  var rb = window.Rollbar;
+  if (!rb) {
     return;
   }
   
-  var JQUERY_PLUGIN_VERSION = '1.0.0-beta1';
-  var _rollbarParams = {
-    "notifier.plugins.jquery.version": JQUERY_PLUGIN_VERSION
-  };
-  window._rollbar.push({_rollbarParams: _rollbarParams});
+  var JQUERY_PLUGIN_VERSION = '0.0.6';
+
+  rb.configure({
+    notifier: {
+      plugins: {
+        jquery: {
+          version: JQUERY_PLUGIN_VERSION
+        }
+      }
+    }
+  });
   
   var logError = function(e) {
+    rb.error(e);
     if (window.console) {
       window.console.log(e.message + ' [reported to Rollbar]');
     }
@@ -22,16 +29,19 @@
     var status = jqXHR.status;
     var url = ajaxSettings.url;
     var type = ajaxSettings.type;
+
+    var err;
+    if (thrownError && thrownError.hasOwnProperty('stack')) {
+      err = thrownError;
+    }
     
-    window._rollbar.push({
-      level: 'warning',
-      msg: 'jQuery ajax error for ' + type + ' ' + url,
-      jquery_status: status,
-      jquery_url: url,
-      jquery_type: type,
-      jquery_thrown_error: thrownError,
-      jquery_ajax_error: true
-    });
+    var extra = {
+      status: status,
+      url: url,
+      type: type,
+      isAjax: true
+    };
+    rb.warning('jQuery ajax error for ' + type, extra, err);
   });
   
   // Wraps functions passed into jQuery's ready() with try/catch to
@@ -42,7 +52,6 @@
       try {
         fn();
       } catch (e) {
-        window._rollbar.push(e);
         logError(e);
       }
     });
@@ -58,7 +67,6 @@
         try {
           return fn.apply(this, arguments);
         } catch (e) {
-          window._rollbar.push(e);
           logError(e);
         }
       };

@@ -628,7 +628,7 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.data.client.javascript).to.have.keys(['browser', 'language', 'cookie_enabled', 'screen', 'plugins']);
 
     expect(payload.data.notifier.name).to.equal('rollbar-browser-js');
-    expect(payload.data.notifier.version).to.equal(Notifier.VERSION);
+    expect(payload.data.notifier.version).to.equal(Notifier.NOTIFIER_VERSION);
 
     // Check passed in data
     expect(payload.data.level).to.equal('debug');

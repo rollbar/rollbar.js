@@ -7,9 +7,6 @@ function Rollbar(parentShim) {
   this.parentShim = parentShim;
 }
 
-// Updated by the build process to match package.json
-Rollbar.VERSION = '1.0.0-beta1';
-
 Rollbar.init = function(window, config) {
   if (typeof window.Rollbar === 'object') {
     return window.Rollbar;
@@ -120,6 +117,6 @@ for (var i = 0; i < _methods.length; ++i) {
 }
 
 var defaultRollbarJsUrl = '//d37gvrvc0wt4s1.cloudfront.net/js/v1.0/rollbar.min.js';
-var r = Rollbar.init(window, _rollbaConfig);
+var r = Rollbar.init(window, _rollbarConfig);
 r.loadFull(window, document, true, defaultRollbarJsUrl);
 })(window, document);
