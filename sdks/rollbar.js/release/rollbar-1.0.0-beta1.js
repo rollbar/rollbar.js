@@ -1995,10 +1995,16 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   // Users can set their own ignore criteria using this.options.checkIgnore()
-  if (this.options.checkIgnore && 
-      typeof this.options.checkIgnore === 'function' &&
-      !this.options.checkIgnore(isUncaught, callerArgs, payload)) {
-    return;
+  try {
+    if (this.options.checkIgnore && 
+        typeof this.options.checkIgnore === 'function' &&
+        !this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+      return;
+    }
+  } catch (e) {
+    // Disable the custom checkIgnore and report errors in the checkIgnore function
+    this.configure({checkIgnore: null});
+    this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
   window._rollbarPayloadQueue.push({
