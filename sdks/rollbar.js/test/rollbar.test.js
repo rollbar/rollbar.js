@@ -146,6 +146,26 @@ describe("window.Rollbar.configure()", function() {
 
       done();
     });
+
+    it("should be disabled if custom checkIgnore() throws an error", function(done) {
+      var notifier = window.Rollbar.scope();
+      var spy = sinon.stub().throws(new Error('intentional'));
+      var prev = notifier.options.checkIgnore;
+      notifier.configure({checkIgnore: spy});
+
+      notifier.error('initial error');
+
+      try {
+        expect(spy.called).to.equal(true);
+        expect(notifier.options.checkIgnore).to.equal(null);
+      } catch (e) {
+        notifier.options.checkIgnore = prev;
+        throw e;
+      }
+      notifier.options.checkIgnore = prev;
+
+      done();
+    });
   });
 
   describe("Reconfigure", function() {
