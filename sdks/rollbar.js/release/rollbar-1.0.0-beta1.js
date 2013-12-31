@@ -1532,7 +1532,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.VERSION = '1.0.0-beta1';
+Notifier.NOTIFIER_VERSION = '1.0.0-beta1';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -1775,7 +1775,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     server: {},
     notifier: {
       name: 'rollbar-browser-js',
-      version: Notifier.VERSION
+      version: Notifier.NOTIFIER_VERSION
     }
   };
 
@@ -1915,7 +1915,7 @@ Notifier.prototype._getBrowserPlugins = function() {
 
 /*
  * Does an in-place modification of obj such that:
- * 1. All keys that match the window._globalRollbarOptions.scrubParams
+ * 1. All keys that match the notifier's options.scrubFields
  *    list will be normalized into all '*'
  * 2. Any query string params that match the same criteria will have
  *    their values normalized as well.
@@ -1990,7 +1990,7 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
-  if (!this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+  if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
     return;
   }
 
@@ -2015,10 +2015,15 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
   var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
 
   if (levelVal < reportLevel) {
-    return false;
+    return true;
   }
 
-  return true;
+  var plugins = this.options ? this.options.plugins : {};
+  if (plugins && plugins.jquery) {
+    return plugins.jquery.isAjax ? true : false;
+  }
+
+  return false;
 };
 
 
@@ -2149,7 +2154,7 @@ function _processPayload(url, payload, callback) {
 
   // Check to see if we have a rate limit set or if
   // the rate limit has been met/exceeded.
-  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMin;
+  var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMinute;
   if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
     callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
     return;
@@ -2170,10 +2175,12 @@ function _processPayload(url, payload, callback) {
 }
 
 if (!window._rollbarInitialized) {
-  var shim = window.Rollbar;
+  var config = window._rollbarConfig || {};
+  var alias = config.globalAlias || 'Rollbar';
+  var shim = window[alias];
   var fullRollbar = new Notifier(shim);
-  fullRollbar._processShimQueue(window.RollbarShimQueue || []);
-  window.Rollbar = fullRollbar;
+  fullRollbar._processShimQueue(window._rollbarShimQueue || []);
+  window[alias] = fullRollbar;
   window._rollbarInitialized = true;
   Notifier.processPayloads();
 }
