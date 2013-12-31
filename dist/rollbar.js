@@ -1998,7 +1998,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   try {
     if (this.options.checkIgnore && 
         typeof this.options.checkIgnore === 'function' &&
-        !this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+        this.options.checkIgnore(isUncaught, callerArgs, payload)) {
       return;
     }
   } catch (e) {
