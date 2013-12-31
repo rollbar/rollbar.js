@@ -116,6 +116,72 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
+    it("should not allow ReferenceErrors", function(done) {
+      function checkIgnore(isUncaught, args, payload) {
+        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        return isReferenceErr;
+      }
+
+      var spy = sinon.stub(window._rollbarPayloadQueue, 'push');
+      var notifier = window.Rollbar.scope();
+      var beforePayloadLength = window._rollbarPayloadQueue.length;
+
+      notifier.configure({checkIgnore: checkIgnore});
+
+      var refErr;
+      try {
+        poop();
+      } catch (e) {
+        refErr = e;
+      }
+
+      notifier.error(refErr);
+
+      expect(spy.called).to.equal(false);
+      expect(window._rollbarPayloadQueue.length).to.equal(beforePayloadLength);
+
+      window._rollbarPayloadQueue.push.restore();
+
+      done();
+    });
+
+    it("should only allow ReferenceErrors", function(done) {
+      function checkIgnore(isUncaught, args, payload) {
+        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        return !isReferenceErr;
+      }
+
+      var spy = sinon.stub(window._rollbarPayloadQueue, 'push');
+      var notifier = window.Rollbar.scope();
+      var beforePayloadLength = window._rollbarPayloadQueue.length;
+
+      notifier.configure({checkIgnore: checkIgnore});
+
+      var synErr;
+      try {
+        eval('dd(');
+      } catch (e) {
+        synErr = e;
+      }
+
+      notifier.error(synErr);
+      expect(spy.called).to.equal(false);
+
+      var refErr;
+      try {
+        poop();
+      } catch (e) {
+        refErr = e;
+      }
+
+      notifier.error(refErr);
+      expect(spy.called).to.equal(true);
+
+      window._rollbarPayloadQueue.push.restore();
+
+      done();
+    });
+
     it("should be available for child scopes", function(done) {
       // ignore everything
       var spy = sinon.stub().returns(true);
