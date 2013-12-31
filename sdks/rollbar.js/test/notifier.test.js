@@ -636,6 +636,22 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.data.body.message).to.have.key('body');
     expect(payload.data.body.message.body).to.equal('Hello world');
 
+    // Check a trace object
+    var err;
+    try {
+      x = y;
+    } catch (e) {
+      err = e
+    }
+    payload = notifier._buildPayload(new Date(), 'error', 'reference err', err);
+
+    expect(payload.data.body.trace).to.be.an('object');
+    expect(payload.data.body.trace.exception).to.be.an('object');
+    expect(payload.data.body.trace.exception.class).to.equal('ReferenceError');
+    expect(payload.data.body.trace.exception.message).to.be.a('string');
+    expect(payload.data.body.trace.exception.description).to.equal('reference err');
+    expect(payload.data.body.trace.frames).to.be.an('array');
+
     done();
   });
 
@@ -671,13 +687,6 @@ describe("Notifier._buildPayload()", function() {
 
   it("should build the correct message payload for an error with no frames", function(done) {
     var notifier = new Notifier();
-
-    var err;
-    try {
-      a = b;
-    } catch(e) {
-      err = e;
-    }
 
     // Simulate an error with no frame info
     var mock = {message: 'ReferenceError: b is not defined'};
@@ -720,7 +729,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', null, err, custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', null, TK(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -745,12 +754,30 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', message, err, custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', message, TK(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
     expect(payload.data.body.trace.extra).to.deep.equal(custom);
     expect(payload.data.body.trace.exception.description).to.equal(message);
+
+    done();
+  });
+
+  it("should create a payload from an eval() error", function(done) {
+    var err;
+    try {
+      eval('dd(');
+    } catch (e) {
+      err = e;
+    }
+
+    var notifier = new Notifier();
+    var payload = notifier._buildPayload(new Date(), 'error', 'message here', TK(err));
+
+    expect(payload.data.body).to.have.key('trace');
+    expect(payload.data.body.trace).to.have.keys(['frames', 'exception']);
+    expect(payload.data.body.trace.exception.class).to.equal('SyntaxError');
 
     done();
   });

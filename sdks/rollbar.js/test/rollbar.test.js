@@ -157,14 +157,14 @@ describe("window.Rollbar.configure()", function() {
 
       notifier.configure({checkIgnore: checkIgnore});
 
-      var synErr;
+      var err;
+      var a;
       try {
-        eval('dd(');
+        a['asdf'] = "hello";
       } catch (e) {
-        synErr = e;
+        err = e;
       }
-
-      notifier.error(synErr);
+      notifier.error('some err', err);
       expect(spy.called).to.equal(false);
 
       var refErr;

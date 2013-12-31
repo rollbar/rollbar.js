@@ -1628,7 +1628,7 @@ Notifier.prototype._getLogArgs = function(args) {
     } else if (argT === 'object') {
       if (arg.constructor.name === 'Date') {
         ts = arg;
-      } else if (arg.hasOwnProperty('stack')) {
+      } else if (arg instanceof Error || arg.prototype === Error.prototype || arg.hasOwnProperty('stack')) {
         err = arg;
       } else {
         custom = arg;
@@ -2034,7 +2034,7 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
 
 
 /*
- * Logs stuff to Rollbar and console.log using the default
+ * Logs stuff to Rollbar using the default
  * logging level.
  *
  * Can be called with the following, (order doesn't matter but type does):
