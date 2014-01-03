@@ -1,37 +1,54 @@
 # Configuration Reference
 
-There are 2 types of configuration data:
+<!-- Sub:[TOC] -->
 
-1. Context
-   - Information about the error being sent to Rollbar
-   - e.g. server hostname, user's IP, custom fingerprint
-2. Payload
-   - Information about the error - usually custom
-   - e.g. The name of the javascript component that triggered the error
+## Configuration types
 
-Rollbar can be configured at 3 different levels:
-- Global configuration
+There are 2 types of configuration data -- context and payload. Context provides information about the environment of the error while payload describes information about the error itself.
+
+### Context
+
+  - Information about the environment of the error being sent to Rollbar
+  - e.g. server hostname, user's IP, custom fingerprint
+
+### Payload
+
+  - Information about the error -- usually custom
+  - e.g. The name of the javascript component that triggered the error
+
+## Configuration levels
+
+Rollbar can be configured at 3 different levels -- global, notifier and scope. All configuration is inherited at each level, so global configuration affects all notifiers while notifier configuration only affects the notifier being configured and any child notifiers created after the call to ```configure()```.
+
+### Global configuration
+
   - Affects all notifiers
   - Set by calling `global()` on any notifier
   - Merges/overwrites previous configuration
   - Currently, the only supported option is `itemsPerMinute`
-- Per-notifier configuration - context and/or payload
+
+### Notifier configuration - context and/or payload
+
   - Affects only the notifier you call `configure()` on
   - Merges/overwrites previous configuration for the notifier you call `configure()` on
-- Scope configuration - only payload
+
+### Scope configuration - only payload
+
   - Affects only the notifier created by calling `scope()`
   - Only affects the payload of items sent to Rollbar, not the context
 
 All child notifiers, (created with ```Rollbar.scope()```) will inherit configuration from their parent notifier.
 
-## Global configuration example
+## Examples
+
+### Global
 
 ```js
 // Only send a max of 5 items to Rollbar per minute
 Rollbar.global('itemsPerMinute', 5);
 ```
 
-## Per-notifier configuration
+### Notifier
 
 ```js
 // Set the top-level notifier's checkIgnore() function
@@ -59,7 +76,7 @@ Rollbar.configure({payload: {sessionId: "asdf12345"}});
 Rollbar.configure({scrubFields: ['creditCardNumber']});
 ```
 
-## Scope configuration
+### Scope
 
 ```js
 // Create a notifier for two different components, each having a different name
@@ -74,7 +91,11 @@ var projectSettingsNotifier = accountSettingsNotifier.scope({projectName: 'the-n
 projectSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}, projectName: "the-new-hotness"}');
 ```
 
-## Global configuration reference
+## Reference
+
+Both global and context configuration have the following reserved key names that Rollbar uses to aggregate, notifiy and display.
+
+### Global
 
   <dl>
   <dt>itemsPerMinute</dt>
@@ -83,7 +104,7 @@ projectSettingsNotifier.info('will send a payload containing {component: {name: 
 Default: ```undefined``` - no limit
   </dl>
 
-## Context configuration reference
+### Context
 
   <dl>
 
@@ -124,33 +145,68 @@ Default: ```"warning"```
   </dd>
 
   <dt>payload</dt>
-  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable.
+  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable. This object will be merged/overwritten with calls to ```scope()```.
   </dd>
 
-  <dt>client.javascript.code_version</dt>
-  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
-  </dd>
+  <dt>client</dt>
+  <dd>
+  An object describing properties of the client device reporting the error.
 
-  <dt>client.javascript.source_map_enabled</dt>
+  This object should have a key that points to another object, ```javascript``` which describes properties of the javascript code/environment to Rollbar.
+
+  ```client.javascript``` supports the following properties:
+
+  <dl>
+  <dt>code_version</dt>
+  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.</dd>
+ 
+  <dt>source_map_enabled</dt>
   <dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
 
 Default: ```false```
+
   </dd>
 
-  <dt>client.javascript.guess_uncaught_frames</dt>
+  <dt>guess_uncaught_frames</dt>
   <dd>When `true`, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers. Works best when the minified javascript file is generated using newlines instead of semicolons.
 
 Default: ```false```
   </dd>
 
-  <dt>server.branch</dt>
+  E.g.
+
+```js
+
+Rollbar.configure({
+    scrubFields: ["creditCard"], // "creditCard" will be added to the list of default scrubFields
+    client: {
+      javascript: {
+        code_version: "ce0227180bd7429fde128f6ef8fad77396d8fbd4",  // Git SHA of your deployed code
+        source_map_enabled: true,
+        guess_uncaught_frames: true
+      }
+    }
+});
+
+```
+
+  </dl>
+
+  <dt>server</dt>
+  <dd>
+  An object describing properties of the server that was used to generate the page the notifier is reporting on.
+
+  The following properties are supported:
+
+  <dl>
+  <dt>branch</dt>
   <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
   
 Default: ```"master"```
 
   </dd>
 
-  <dt>server.environment</dt>
+  <dt>environment</dt>
   <dd>Environment name
 
 e.g. ```"production"``` or ```"development"```
@@ -161,7 +217,7 @@ Default: ```"production"```
 
   </dd>
 
-  <dt>server.host</dt>
+  <dt>host</dt>
   <dd>The hostname of the machine that rendered the page
 
 e.g. ```"web1.mysite.com"```
@@ -171,3 +227,25 @@ e.g. in Python, use ```socket.gethostname()```
   </dd>
   </dl>
 
+  E.g.
+
+```js
+
+Rollbar.configure({
+    logLevel: "warning", // Rollbar.log() will be sent with a level = "warning"
+    server: {
+      branch: "master",
+      environment: "production",
+      host: "web1.mysite.com"
+    }
+});
+
+```
+  </dd>
+
+  </dl>
+
+
+## More info
+
+Check out the [API docs](https://rollbar.com/docs/notifier/rollbar.js/api) for more information on how to use ```global/configure/scope()```.
