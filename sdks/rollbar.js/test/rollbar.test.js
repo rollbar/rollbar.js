@@ -5,10 +5,15 @@ describe("Script load", function() {
     it("should be connected to window.Rollbar", function(done) {
       origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
 
-      setTimeout(function() {
-        expect(origRollbar.notifier).to.equal(window.Rollbar);
-        done();
-      }, 30);
+      function test() {
+        if (origRollbar.notifier !== null) {
+          expect(origRollbar.notifier).to.equal(window.Rollbar);
+          done();
+        } else {
+          setTimeout(test, 1);
+        }
+      }
+      test();
     });
 
     it("should configure window.Rollbar via shim.configure()", function(done) {
