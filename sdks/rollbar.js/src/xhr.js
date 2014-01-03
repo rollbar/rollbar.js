@@ -35,16 +35,17 @@ var XHR = {
               if (onreadystatechange && request.readyState === 4) {
                 onreadystatechange = undefined;
 
+                // TODO(cory): have the notifier log an internal error on non-200 response codes
                 if (request.status === 200) {
                   callback(null, JSON.parse(request.responseText));
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
-                  //return valid http status codes
+                  // return valid http status codes
                   callback(new Error(request.status.toString()));
                 } else {
-                  //IE will return a status 12000+ on some sort of connection failure,
-                  //so we return a blank error
-                  //http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
+                  // IE will return a status 12000+ on some sort of connection failure,
+                  // so we return a blank error
+                  // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
                   callback(new Error());
                 }
               }

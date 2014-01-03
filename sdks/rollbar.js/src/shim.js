@@ -1,9 +1,16 @@
-_shimCounter = 0;
+var _shimCounter = 0;
 
 function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
   this.notifier = null;
   this.parentShim = parentShim;
+  this.logger = function() {};
+  
+  if (window.console) {
+    if (!window.console.hasOwnProperty('shimId')) {
+      this.logger = window.console.log;
+    }
+  }
 }
 
 Rollbar.init = function(window, config) {
@@ -18,27 +25,31 @@ Rollbar.init = function(window, config) {
   config = config || {};
 
   var client = new Rollbar();
-  client.configure(config);
 
-  if (config.captureUncaught) {
-    // Create the client and set the onerror handler
-    var old = window.onerror;
-    window.onerror = function() {
-      client.uncaughtError.apply(client, arguments); 
-      if (old) {
-        old.apply(window, arguments);
-      }
-    };
-  }
+  return (_wrapInternalErr(function() {
+    client.configure(config);
 
-  // Expose Rollbar globally
-  window[alias] = client;
-  return client;
+    if (config.captureUncaught) {
+      // Create the client and set the onerror handler
+      var old = window.onerror;
+      window.onerror = function() {
+        client.uncaughtError.apply(client, arguments); 
+        if (old) {
+          old.apply(window, arguments);
+        }
+      };
+    }
+
+    // Expose Rollbar globally
+    window[alias] = client;
+    return client;
+  }, client.logger))();
 };
 
 Rollbar.prototype.loadFull = function(window, document, immediate, config) {
+  var self = this;
   // Create the main rollbar script loader
-  var loader = function() {
+  var loader = _wrapInternalErr(this.logger, function() {
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
     s.src = config.rollbarJsUrl;
@@ -48,9 +59,9 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
     s.onload = handleLoadErr;
 
     f.parentNode.insertBefore(s, f);
-  };
+  });
 
-  var handleLoadErr = function() {
+  var handleLoadErr = _wrapInternalErr(function() {
     if (window._rollbarPayloadQueue === undefined) {
       // rollbar.js did not load correctly, call any queued callbacks
       // with an error.
@@ -74,24 +85,26 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
         }
       }
     }
-  };
+  }, this.logger);
 
-  if (immediate) {
-    loader();
-  } else {
-    // Have the window load up the script ASAP
-    if (window.addEventListener) {
-      window.addEventListener("load", loader, false);
-    } else { 
-      window.attachEvent("onload", loader);
+  (_wrapInternalErr(function() {
+    if (immediate) {
+      loader();
+    } else {
+      // Have the window load up the script ASAP
+      if (window.addEventListener) {
+        window.addEventListener("load", loader, false);
+      } else { 
+        window.attachEvent("onload", loader);
+      }
     }
-  }
+  }, this.logger))();
 };
 
 // Stub out rollbar.js methods
 function stub(method) {
   var R = Rollbar;
-  return function() {
+  return _wrapInternalErr(function() {
     if (this.notifier) {
       return this.notifier[method].apply(this.notifier, arguments);
     } else {
@@ -108,10 +121,21 @@ function stub(method) {
         return shim;
       }
     }
+  });
+}
+
+function _wrapInternalErr(f, logger) {
+  logger = logger || this.logger;
+  return function() {
+    try {
+      return f.apply(this, arguments);
+    } catch (e) {
+      logger('Rollbar internal error:', e);
+    }
   };
 }
 
-var _methods = 'log,debug,info,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
+var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }

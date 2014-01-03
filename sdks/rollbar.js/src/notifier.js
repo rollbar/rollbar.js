@@ -43,8 +43,16 @@ function Notifier(parentNotifier) {
 
   this.plugins = {};
   this.parentNotifier = parentNotifier;
+  this.logger = function() {
+    if (window.console && window.console.log) {
+      var args = ['Rollbar internal error:'].concat(Array.prototype.slice.call(arguments, 0));
+      window.console.log(args);
+    }
+  };
 
   if (parentNotifier) {
+    this.logger = parentNotifier.logger;
+
     // If the parent notifier has the shimId
     // property it means that it's a Rollbar shim.
     if (parentNotifier.hasOwnProperty('shimId')) {
@@ -59,12 +67,12 @@ function Notifier(parentNotifier) {
 
 
 Notifier._generateLogFn = function(level) {
-  return function _logFn() {
+  return _wrapNotifierFn(function _logFn() {
     var args = this._getLogArgs(arguments);
 
     return this._log(level || args.level || this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL,
         args.message, args.err, args.custom, args.callback);
-  };
+  });
 };
 
 
@@ -92,7 +100,7 @@ Notifier.prototype._getLogArgs = function(args) {
     if (argT === 'string') {
       message = arg;
     } else if (argT === 'function') {
-      callback = arg;
+      callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
     } else if (argT === 'object') {
       if (arg.constructor.name === 'Date') {
         ts = arg;
@@ -204,7 +212,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
 
-  if (['debug', 'info', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+  if (['debug', 'info', 'warn', 'warning', 'error', 'critical'].indexOf(level) == -1) {
     throw new Error('Invalid level');
   }
 
@@ -522,12 +530,13 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
 Notifier.prototype.log = Notifier._generateLogFn();
 Notifier.prototype.debug = Notifier._generateLogFn('debug');
 Notifier.prototype.info = Notifier._generateLogFn('info');
+Notifier.prototype.warn = Notifier._generateLogFn('warning'); // for console.warn() compatibility
 Notifier.prototype.warning = Notifier._generateLogFn('warning');
 Notifier.prototype.error = Notifier._generateLogFn('error');
 Notifier.prototype.critical = Notifier._generateLogFn('critical');
 
 // Adapted from tracekit.js
-Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
+Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err) {
   if (err && err.stack) {
     this._log('error', message, err, null, null, true);
     return;
@@ -558,30 +567,44 @@ Notifier.prototype.uncaughtError = function(message, url, lineNo, colNo, err) {
 
   var payload = this._buildPayload(new Date(), 'error', message, stack);
   this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
-};
+});
 
 
-Notifier.prototype.global = function(options) {
+Notifier.prototype.global = _wrapNotifierFn(function(options) {
   Util.merge(window._globalRollbarOptions, options);
-};
+});
 
 
-Notifier.prototype.configure = function(options) {
+Notifier.prototype.configure = _wrapNotifierFn(function(options) {
   // TODO(cory): only allow non-payload keys that we understand
 
   // Make a copy of the options object for this notifier
   Util.merge(this.options, options);
-};
+});
 
 /*
  * Create a new Notifier instance which has the same options
  * as the current notifier + options to override them.
  */
-Notifier.prototype.scope = function(payloadOptions) {
+Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
   var scopedNotifier = new Notifier(this);
   Util.merge(scopedNotifier.options.payload, payloadOptions);
   return scopedNotifier;
-};
+});
+
+
+/***** Misc *****/
+
+function _wrapNotifierFn(fn, ctx) {
+  return function() {
+    var self = ctx || this;
+    try {
+      return fn.apply(self, arguments);
+    } catch (e) {
+      self.logger(e);
+    }
+  };
+}
 
 
 var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');

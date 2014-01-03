@@ -149,6 +149,7 @@ describe("window.Rollbar.scope()", function() {
       log: 'function',
       debug: 'function',
       info: 'function',
+      warn: 'function',
       warning: 'function',
       error: 'function',
       critical: 'function',
@@ -184,7 +185,7 @@ describe("window.Rollbar.scope()", function() {
 });
 
 
-describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
+describe("window.Rollbar.log/debug/info/warn/warning/error/critical()", function() {
   it("should add a log message to _rollbarShimQueue", function(done) {
     var check = function(method, message) {
       var obj = window._rollbarShimQueue[window._rollbarShimQueue.length - 1];
@@ -200,6 +201,10 @@ describe("window.Rollbar.log/debug/info/warning/error/critical()", function() {
 
     window.Rollbar.info('hello info world');
     check('info', 'hello info world');
+
+    // Special case for "warn" since it's an alias for "warning"
+    window.Rollbar.warn('hello warn world');
+    check('warn', 'hello warn world');
 
     window.Rollbar.warning('hello warning world');
     check('warning', 'hello warning world');
