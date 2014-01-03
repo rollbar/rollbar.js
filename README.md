@@ -4,6 +4,8 @@
 
 ## Quick start
 
+__Note__: This notifier is in beta. For previous, stable versions see the [v0.10.8](https://github.com/rollbar/rollbar.js/releases/tag/v0.10.8) release.
+
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
 <!-- RemoveNextIfProject -->
