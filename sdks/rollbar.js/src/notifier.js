@@ -601,7 +601,9 @@ function _wrapNotifierFn(fn, ctx) {
     try {
       return fn.apply(self, arguments);
     } catch (e) {
-      self.logger(e);
+      if (self) {
+        self.logger(e);
+      }
     }
   };
 }
