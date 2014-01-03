@@ -29,11 +29,16 @@ describe("window.Rollbar.loadFull()", function() {
     window._rollbarConfig = config;
     window.testingRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'})
 
-    setTimeout(function() {
-      expect(window.testingRollbar.constructor.name).to.equal('Notifier');
-      expect(window.Rollbar).to.be.a('function');
+    function test() {
+      if (window.testingRollbar.constructor.name === 'Notifier') {
+        expect(window.testingRollbar.constructor.name).to.equal('Notifier');
+        expect(window.Rollbar).to.be.a('function');
 
-      done();
-    }, 20);
+        done();
+      } else {
+        setTimeout(test, 1);
+      }
+    }
+    test();
   });
 });

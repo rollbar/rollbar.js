@@ -244,34 +244,44 @@ describe("window.Rollbar.loadFull()", function() {
     Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
 
     // Wait before checking window.Rollbar
-    setTimeout(function() {
-      expect(window.Rollbar).to.be.an('object');
-      expect(window.Rollbar).to.not.equal(origShim);
-      expect(window.Rollbar.constructor.name).to.equal('Notifier');
-      expect(window.Rollbar.parentNotifier).to.be.equal(origShim);
+    function test() {
+      if (window.Rollbar && window.Rollbar.constructor.name === 'Notifier') {
+        expect(window.Rollbar).to.be.an('object');
+        expect(window.Rollbar).to.not.equal(origShim);
+        expect(window.Rollbar.constructor.name).to.equal('Notifier');
+        expect(window.Rollbar.parentNotifier).to.be.equal(origShim);
 
-      expect(origShim.notifier).to.be.equal(window.Rollbar);
+        expect(origShim.notifier).to.be.equal(window.Rollbar);
 
-      var shimQueueSize = window._rollbarShimQueue.length;
+        var shimQueueSize = window._rollbarShimQueue.length;
 
-      origShim.log('hello world');
-      expect(window._rollbarShimQueue.length).is.equal(shimQueueSize);
+        origShim.log('hello world');
+        expect(window._rollbarShimQueue.length).is.equal(shimQueueSize);
 
-      done();
-    }, 60);
+        done();
+      } else {
+        setTimeout(test, 1);
+      }
+    }
+    test();
   });
 
   it("should call the error callback", function(done) {
     // Wait for the Rollbar.loadFull() to complete and call
     // the callback
-    setTimeout(function() {
-      expect(errArgs).to.not.be.equal(undefined);
-      expect(errArgs).to.have.length(1);
+    function test() {
+      if (window.Rollbar && window.Rollbar.constructor.name === 'Notifier') {
+        expect(errArgs).to.not.be.equal(undefined);
+        expect(errArgs).to.have.length(1);
 
-      var errParam = errArgs[0];
-      expect(errParam).to.not.equal(null);
+        var errParam = errArgs[0];
+        expect(errParam).to.not.equal(null);
 
-      done();
-    }, 60);
+        done();
+      } else {
+        setTimeout(test, 1);
+      }
+    }
+    test();
   });
 });
