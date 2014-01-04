@@ -7,7 +7,7 @@ function Rollbar(parentShim) {
   this.logger = function() {};
   
   if (window.console) {
-    if (!window.console.hasOwnProperty('shimId')) {
+    if (window.console.shimId === undefined) {
       this.logger = window.console.log;
     }
   }
