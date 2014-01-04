@@ -211,7 +211,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
 
-  if (['debug', 'info', 'warn', 'warning', 'error', 'critical'].indexOf(level) == -1) {
+  if (Notifier.LEVELS[level] === undefined) {
     throw new Error('Invalid level');
   }
 
