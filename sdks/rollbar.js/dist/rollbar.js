@@ -1584,8 +1584,6 @@ function Notifier(parentNotifier) {
   };
 
   if (parentNotifier) {
-    this.logger = parentNotifier.logger;
-
     // If the parent notifier has the shimId
     // property it means that it's a Rollbar shim.
     if (parentNotifier.hasOwnProperty('shimId')) {
@@ -1593,6 +1591,7 @@ function Notifier(parentNotifier) {
       // Notifier instance.
       parentNotifier.notifier = this;
     } else {
+      this.logger = parentNotifier.logger;
       this.configure(parentNotifier.options);
     }
   }
