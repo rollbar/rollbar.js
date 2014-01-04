@@ -1889,7 +1889,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
       }
 
       if (stackFrame.args) {
-        frame.arge = args;
+        frame.args = stackFrame.args;
       }
 
       trace.frames.push(frame);
