@@ -50,7 +50,7 @@ Rollbar.init = function(window, config) {
 Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   var self = this;
   // Create the main rollbar script loader
-  var loader = _wrapInternalErr(this.logger, function() {
+  var loader = _wrapInternalErr(function() {
     var s = document.createElement("script");
     var f = document.getElementsByTagName("script")[0];
     s.src = config.rollbarJsUrl;
@@ -60,7 +60,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
     s.onload = handleLoadErr;
 
     f.parentNode.insertBefore(s, f);
-  });
+  }, this.logger);
 
   var handleLoadErr = _wrapInternalErr(function() {
     if (window._rollbarPayloadQueue === undefined) {
