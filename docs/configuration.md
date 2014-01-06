@@ -45,7 +45,7 @@ All child notifiers, (created with ```Rollbar.scope()```) will inherit configura
 
 ```js
 // Only send a max of 5 items to Rollbar per minute
-Rollbar.global('itemsPerMinute', 5);
+Rollbar.global({itemsPerMinute: 5});
 ```
 
 ### Notifier
