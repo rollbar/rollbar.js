@@ -4,7 +4,7 @@
 
 ## Rollbar.global()
 
-(See the section on [configuration](https://rollbar.com/docs/configuration).)
+(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
 __Note__: This method will overwrite any existing global configuration.
 
@@ -17,7 +17,7 @@ __Returns__: `undefined`
 
 ## Rollbar.configure()
 
-(See the section on [configuration](https://rollbar.com/docs/configuration).)
+(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
 __Note__: This method will overwrite any existing configuration for the `Rollbar` instance used.
 
@@ -30,7 +30,7 @@ __Returns__: `undefined`
 
 ## Rollbar.scope()
 
-(See the section on [configuration](https://rollbar.com/docs/configuration).)
+(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
 This method acts the same as `configure()` except it will not overwrite any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
 
@@ -64,7 +64,7 @@ Log a message and potentially send it to Rollbar. The level that the message or 
 
 In order for the message to be sent to Rollbar, the log level must be greater than or equal to the `reportLevel` config option. 
 
-See [configuration](https://rollbar.com/docs/configuration) for more information on configuring log levels.
+See [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) for more information on configuring log levels.
 
 __Returns__: `undefined`
 
