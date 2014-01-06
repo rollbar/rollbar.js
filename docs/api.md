@@ -121,3 +121,8 @@ try {
   Rollbar.log(e, continueFormSubmission);
 }
 ```
+
+
+## Rollbar.debug/info/warn/warning/error/critical()
+
+These methods are all shorthand for `Rollbar.log()` with the appropriate log level set.
