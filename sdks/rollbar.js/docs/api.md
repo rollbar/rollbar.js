@@ -52,8 +52,10 @@ __Returns__: `undefined`
 1. message: `String`: The error message.
 1. url: `String`: url that the error occurred on.
 1. lineNo: `Integer`: The line number, (if known) that the error occurred on.
-1. colNo: `Integer`: The column number that the error occurred on. __Note__: Only newer browsers provide this variable.
-1. err: `Exception`: The exception that caused the `window.onerror` event to occur. __Note__: Only newer browsers provide this variable.
+1. colNo: `Integer`: The column number that the error occurred on.
+  1. __Note__: Only newer browsers provide this variable.
+1. err: `Exception`: The exception that caused the `window.onerror` event to occur.
+  1. __Note__: Only newer browsers provide this variable.
 
 
 ## Rollbar.log()
@@ -77,21 +79,23 @@ __Note__: order does not matter
 
 ### Examples
 
-- Log a debug message
+#### Log a debug message
 
 ```js
-// By default, the .log() method uses the "debug" log level and "warning" report level so this message will not be sent to Rollbar.
+// By default, the .log() method uses the 
+// "debug" log level and "warning" report level 
+// so this message will not be sent to Rollbar.
 Rollbar.log("hello world!");
 ```
 
-- Log a warning along with custom data
+#### Log a warning along with custom data
 
 ```js
 Rollbar.configure({logLevel: "warning"});
 Rollbar.log("Uh oh! The user pressed the wrong button.", {buttonId: "redButton"});
 ```
 
-- Log a debug message along with an error
+#### Log a debug message along with an error
 
 ```js
 try {
@@ -101,7 +105,7 @@ try {
 }
 ```
 
-- Log an error and call a function when the error is reported to Rollbar
+#### Log an error and call a function when the error is reported to Rollbar
 
 ```js
 Rollbar.configure({logLevel: "error"});
