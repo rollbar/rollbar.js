@@ -6,24 +6,24 @@
 
 (See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
-__Note__: This method will overwrite any existing global configuration.
-
-### Params
-
-1. options: `Object` - A javascript object that contains global configuration.
+_Note_: This method will overwrite any existing global configuration.
 
 __Returns__: `undefined`
+
+__Params__
+
+1. options: `Object` - A javascript object that contains global configuration.
 
 
 ## Rollbar.configure()
 
 (See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
-__Note__: This method will overwrite any existing configuration for the `Rollbar` instance used.
+_Note_: This method will overwrite any existing configuration for the `Rollbar` instance used.
 
 __Returns__: `undefined`
 
-### Params
+__Params__
 
 1. options: `Object` - A javascript object that contains the notifier configuration.
 
@@ -36,7 +36,7 @@ This method acts the same as `configure()` except it will not overwrite any conf
 
 __Returns__: a new `Rollbar` instance
 
-### Params
+__Params__
 
 1. options: `Object` - A javascript object that contains the notifier configuration.
 
@@ -47,7 +47,7 @@ This method is used to record uncaught exceptions from `window.onerror`. The Rol
 
 __Returns__: `undefined`
 
-### Params
+__Params__
 
 1. message: `String`: The error message.
 1. url: `String`: url that the error occurred on.
@@ -68,9 +68,9 @@ See [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) 
 
 __Returns__: `undefined`
 
-### Params
+__Params__
 
-__Note__: order does not matter
+_Note_: order does not matter
 
 - message: `String` - The message to send to Rollbar.
 - err: `Exception` - The exception object to send.
