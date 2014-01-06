@@ -53,9 +53,9 @@ __Params__
 1. url: `String`: url that the error occurred on.
 1. lineNo: `Integer`: The line number, (if known) that the error occurred on.
 1. colNo: `Integer`: The column number that the error occurred on.
-  1. __Note__: Only newer browsers provide this variable.
+    1. _Note_: Only newer browsers provide this variable.
 1. err: `Exception`: The exception that caused the `window.onerror` event to occur.
-  1. __Note__: Only newer browsers provide this variable.
+    1. _Note_: Only newer browsers provide this variable.
 
 
 ## Rollbar.log()
