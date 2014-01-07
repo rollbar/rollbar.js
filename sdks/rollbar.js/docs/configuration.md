@@ -57,8 +57,8 @@ Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
     return isUncaught === true || payload.data.level === 'debug';
 });
 
-// Set the default log level and the context
-Rollbar.configure({logLevel: 'info', context: 'home#index'});
+// Set the environment, default log level and the context
+Rollbar.configure({environment: 'staging', logLevel: 'info', context: 'home#index'});
 Rollbar.log('this will be sent with level="info"');
 
 // Only send "error" or higher items to Rollbar
