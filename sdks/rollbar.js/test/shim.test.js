@@ -270,7 +270,7 @@ describe("window.Rollbar.loadFull()", function() {
     // Wait for the Rollbar.loadFull() to complete and call
     // the callback
     function test() {
-      if (window.Rollbar && window.Rollbar.constructor.name === 'Notifier') {
+      if (errArgs) {
         expect(errArgs).to.not.be.equal(undefined);
         expect(errArgs).to.have.length(1);
 
