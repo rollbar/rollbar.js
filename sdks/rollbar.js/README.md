@@ -25,7 +25,7 @@ var _rollbarConfig = {
 <!-- RemovePrev -->
 <!-- EditableTextAreaEnd -->
 
-If you're running Rollbar on an environment besides production, change the ```server.environment``` value to something else (e.g. "staging"). See below for more configuration options.
+If you're running Rollbar on an environment besides production, change the ```environment``` value to something else (e.g. "staging"). See below for more configuration options.
   
 ### Test your installation
 
