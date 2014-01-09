@@ -71,10 +71,15 @@ Rollbar.error(e, function(err, data) {
 To set configuration options at runtime, use `Rollbar.configure`:
 
 ```js
+// Set the person data to be sent with all errors for this notifier.
 Rollbar.configure({
-  personId: 456,
-  personUsername: "foo",
-  personEmail: "foo@example.com"
+  payload: {
+    person: {
+      id: 456,
+      username: "foo",
+      email: "foo@example.com"
+    }
+  }
 });
 ```
 
