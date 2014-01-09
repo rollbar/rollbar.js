@@ -1,6 +1,6 @@
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-beta1';
+Notifier.NOTIFIER_VERSION = '1.0.0-beta2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -34,6 +34,7 @@ function Notifier(parentNotifier) {
   this.options = {
     endpoint: endpoint,
     environment: 'production',
+    context: function() { return window.location.pathname; },
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null, 
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
@@ -207,6 +208,7 @@ Notifier.prototype._processShimQueue = function(shimQueue) {
 Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custom) {
   var accessToken = this.options.accessToken;
   var environment = this.options.environment;
+  var context = typeof(this.options.context) === 'function' ? this.options.context() : this.options.context;
 
   var notifierOptions = Util.copy(this.options.payload);
   var uuid = Util.uuid4();
@@ -227,6 +229,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     platform: 'browser',
     framework: 'browser-js',
     language: 'javascript',
+    context: context,
     body: this._buildBody(message, stackInfo, custom),
     request: {
       url: window.location.href,
@@ -265,7 +268,9 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
     data: Util.merge(payloadData, notifierOptions)
   };
 
-  this._scrub(payload);
+  // Only scrub the data section since we never want to scrub "access_token"
+  // even if it's in the scrub fields
+  this._scrub(payload.data);
 
   return payload;
 };

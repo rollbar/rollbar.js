@@ -917,7 +917,7 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.constructor).to.equal(Object);
 
     expect(payload.data).to.include.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
-      'language', 'body', 'request', 'client', 'server', 'notifier']);
+      'language', 'body', 'request', 'client', 'server', 'notifier', 'context']);
 
     expect(payload.data.client).to.have.keys(['runtime_ms', 'timestamp', 'javascript']);
     expect(payload.data.client.javascript).to.have.keys(['browser', 'language', 'cookie_enabled', 'screen', 'plugins']);
@@ -977,6 +977,24 @@ describe("Notifier._buildPayload()", function() {
     x.options.payload.test.a = 'g';
     expect(payload.data.test.a).to.equal('b');
 
+    done();
+  });
+
+  it("should have a default context", function(done) {
+    var notifier = new Notifier();
+    var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload.data.context).to.be.a('string');
+    done();
+  });
+
+  it("should override the default context", function(done) {
+    var notifier = new Notifier();
+    notifier.configure({context: 'test/action'});
+    var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world');
+
+    expect(payload.data.context).to.be.a('string');
+    expect(payload.data.context).to.equal('test/action');
     done();
   });
 
@@ -1191,10 +1209,38 @@ describe("Notifier._buildPayload()", function() {
     var call = spy.getCall(0);
     var scrubbedPayload = call.args[0];
 
-    expect(payload).to.equal(scrubbedPayload);
-    expect(payload).to.deep.equal(scrubbedPayload);
+    expect(payload.data).to.equal(scrubbedPayload);
+    expect(payload.data).to.deep.equal(scrubbedPayload);
 
     expect(payload.data.body.message.extra.password).to.equal('******');
+    expect(payload.data.body.message.extra.visible).to.equal('visible');
+
+    done();
+  });
+
+  it("should not scrub top-level access_token field", function(done) {
+    var notifier = new Notifier();
+    notifier.configure({accessToken: 'access token', scrubFields: ['access_token']});
+
+    var custom = {
+      access_token: 'hidden',
+      visible: 'visible'
+    };
+
+    var spy = sinon.spy(notifier, "_scrub");
+
+    var payload = notifier._buildPayload(new Date(), 'error', 'Hello world', null, custom);
+
+    expect(spy.called).to.be.true;
+
+    var call = spy.getCall(0);
+    var scrubbedPayload = call.args[0];
+
+    expect(payload.data).to.equal(scrubbedPayload);
+    expect(payload.data).to.deep.equal(scrubbedPayload);
+
+    expect(payload.access_token).to.equal('access token');
+    expect(payload.data.body.message.extra.access_token).to.equal('******');
     expect(payload.data.body.message.extra.visible).to.equal('visible');
 
     done();
