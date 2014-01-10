@@ -14,7 +14,7 @@
     if (window.console) {
       window.console.log(e.message + ' [reported to Rollbar]');
     }
-  }
+  };
 
   // Report any ajax errors to Rollbar
   jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -60,7 +60,7 @@
           window._rollbar.push(e);
           logError(e);
         }   
-      }
+      };
     };
     
     if (handler.handler) {

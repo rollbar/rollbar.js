@@ -1,7 +1,5 @@
-/*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false, indent: 2 */
+/*jslint continue: true, nomen: true, plusplus: true, regexp: true, vars: true, white: true, passfail: false */
 (function(window, document) {
-  'use strict';
-
   var parseUriOptions = {
     strictMode: false,
     key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
@@ -159,7 +157,7 @@
         var frame = {filename: filename, lineno: lineno, method: fn};
         
         // Firefox gives a column number for the first frame
-        if (i == 0 && e.columnNumber) {
+        if (i === 0 && e.columnNumber) {
           // Add 1 to represent a column number starting from 1 since Firefox
           // provides a 0-based column number
           frame.colno = e.columnNumber + 1;
@@ -185,36 +183,36 @@
 
     Date.prototype.toRollbarJSON = function (key) {
 
-        return isFinite(this.valueOf())
-            ? this.getUTCFullYear()     + '-' +
-                f(this.getUTCMonth() + 1) + '-' +
-                f(this.getUTCDate())      + 'T' +
-                f(this.getUTCHours())     + ':' +
-                f(this.getUTCMinutes())   + ':' +
-                f(this.getUTCSeconds())   + 'Z'
-            : null;
+      return isFinite(this.valueOf()) ?
+              this.getUTCFullYear()     + '-' +
+              f(this.getUTCMonth() + 1) + '-' +
+              f(this.getUTCDate())      + 'T' +
+              f(this.getUTCHours())     + ':' +
+              f(this.getUTCMinutes())   + ':' +
+              f(this.getUTCSeconds())   + 'Z'
+          : null;
     };
 
     String.prototype.toRollbarJSON      =
-        Number.prototype.toRollbarJSON  =
-        Boolean.prototype.toRollbarJSON = function (key) {
-          return this.valueOf();
-        };
+      Number.prototype.toRollbarJSON  =
+      Boolean.prototype.toRollbarJSON = function (key) {
+        return this.valueOf();
+      };
 
     var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        gap,
-        indent,
-        meta = {    // table of character substitutions
-            '\b': '\\b',
-            '\t': '\\t',
-            '\n': '\\n',
-            '\f': '\\f',
-            '\r': '\\r',
-            '"' : '\\"',
-            '\\': '\\\\'
-        },
-        rep;
+      escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+      gap,
+      indent,
+      meta = {    // table of character substitutions
+        '\b': '\\b',
+        '\t': '\\t',
+        '\n': '\\n',
+        '\f': '\\f',
+        '\r': '\\r',
+        '"' : '\\"',
+        '\\': '\\\\'
+      },
+      rep;
 
 
     function quote(string) {
@@ -222,9 +220,8 @@
       escapable.lastIndex = 0;
       return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
         var c = meta[a];
-        return typeof c === 'string'
-            ? c
-            : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        return typeof c === 'string' ?
+            c : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
       }) + '"' : '"' + string + '"';
     }
 
@@ -259,7 +256,7 @@
         case 'object':
 
           if (!value) {
-              return 'null';
+            return 'null';
           }
 
           gap += indent;
@@ -269,14 +266,14 @@
 
             length = value.length;
             for (i = 0; i < length; i += 1) {
-                partial[i] = str(i, value) || 'null';
+              partial[i] = str(i, value) || 'null';
             }
 
-            v = partial.length === 0
-                ? '[]'
-                : gap
-                ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
-                : '[' + partial.join(',') + ']';
+            v = partial.length === 0 ?
+              '[]'
+              : gap ?
+              '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+              : '[' + partial.join(',') + ']';
             gap = mind;
             return v;
           }
@@ -298,17 +295,17 @@
               if (Object.prototype.hasOwnProperty.call(value, k)) {
                 v = str(k, value);
                 if (v) {
-                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                  partial.push(quote(k) + (gap ? ': ' : ':') + v);
                 }
               }
             }
           }
 
-          v = partial.length === 0
-              ? '{}'
-              : gap
-              ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
-              : '{' + partial.join(',') + '}';
+          v = partial.length === 0 ?
+            '{}'
+            : gap ?
+            '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+            : '{' + partial.join(',') + '}';
           gap = mind;
           return v;
       }
@@ -359,7 +356,7 @@
       this.accessToken = accessToken;
       this.environment = environment || params['server.environment'] || 'unspecified';
       this.defaultLevel = params.level || this.defaultLevel;
-      this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute == 0 ? params.itemsPerMinute : this.itemsPerMinute);
+      this.itemsPerMinute = (params.itemsPerMinute || params.itemsPerMinute === 0 ? params.itemsPerMinute : this.itemsPerMinute);
       this.extraParams = {};
       this.startTime = (new Date()).getTime();
       this.logger = logger || (window.console ? function(args) { window.console.log(args); } : function(){});
@@ -482,11 +479,11 @@
         this.handleUncaughtError(args[0], args[1], args[2]);
       } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
-        args['_t'] === 'uncaught') {
+        args._t === 'uncaught') {
         this.handleUncaughtError(args.e, args.u, args.l, args.c, args.err);
       } else if (typeof args == 'object' &&
         args.hasOwnProperty("_t") &&
-        args['_t'] === 'trace') {
+        args._t === 'trace') {
         this.handleErrorTrace(args, callback);
       } else if (typeof args == 'object') {
         this.handleMessage(args, callback);
@@ -683,8 +680,8 @@
         // pass
       }
       
-      if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors
-          && item.body.message && item.body.message.jquery_ajax_error) {
+      if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors &&
+          item.body.message && item.body.message.jquery_ajax_error) {
         return true;
       }
       
@@ -707,7 +704,7 @@
             if (origCallback) {
               wrappedCallback = function(err) {
                 return origCallback(err, uuid);
-              }
+              };
             }
 
             item.uuid = uuid;
@@ -750,8 +747,8 @@
                   
                   if (request.status === 200) {
                     itemCallback(null);
-                  } else if (typeof(request.status) === "number"
-                             && request.status >= 400  && request.status < 600) {
+                  } else if (typeof(request.status) === "number" &&
+                      request.status >= 400  && request.status < 600) {
                     //return valid http status codes
                     itemCallback(new Error(request.status.toString()));
                   } else {
@@ -876,7 +873,7 @@
       };
 
       var redactVal = function(val) {
-        val = new String(val);
+        val = String(val);
         return new Array(val.length + 1).join('*');
       };
 
@@ -976,7 +973,7 @@
   // Export `RollbarNotifier` to window
   // (Used for embedded implemetations and other instances where 
   // the library is loaded before `_rollbar` is setup)
-  window['RollbarNotifier'] = RollbarNotifier;
+  window.RollbarNotifier = RollbarNotifier;
 
   /*** END rollbar.js ***/
 
