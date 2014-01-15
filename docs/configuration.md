@@ -58,15 +58,15 @@ Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
 });
 
 // Set the environment, default log level and the context
-Rollbar.configure({environment: 'staging', logLevel: 'info', context: 'home#index'});
+Rollbar.configure({logLevel: 'info', payload: {environment: 'staging', context: 'home#index'}});
 Rollbar.log('this will be sent with level="info"');
 
 // Only send "error" or higher items to Rollbar
 Rollbar.configure({reportLevel: 'error'});
 Rollbar.info('this will not get reported to Rollbar since it\'s at the "info" level');
 
-// Set the person information to be sent with all to Rollbar
-Rollbar.configure({person: {id: 12345, email: 'stewie@familyguy.com'}});
+// Set the person information to be sent with all items to Rollbar
+Rollbar.configure({payload: {person: {id: 12345, email: 'stewie@familyguy.com'}}});
 
 // Add the following payload data to all items sent to Rollbar from this
 // notifier or any created using window.Rollbar.scope()
