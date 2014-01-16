@@ -135,6 +135,23 @@ Default: ```"debug"```
 
 Default: ```"warning"```
   </dd>
+  <dl>
+
+### Payload
+
+These keys should all be within the `payload` key.
+
+e.g. 
+```js
+Rollbar.configure({
+  payload: {
+    person: ...,
+    context: ...
+  }
+});
+```
+
+  <dl>
 
   <dt>person</dt>
   <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
@@ -142,10 +159,6 @@ Default: ```"warning"```
 
   <dt>context</dt>
   <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
-  </dd>
-
-  <dt>payload</dt>
-  <dd>An object containing any custom data you'd like to include with all reports. Must be JSON serializable -- note that jQuery objects are _not_ JSON serializable. This object will be merged/overwritten with calls to ```scope()```.
   </dd>
 
   <dt>client</dt>
@@ -176,9 +189,9 @@ Default: ```false```
   E.g.
 
 ```js
-
 Rollbar.configure({
-    scrubFields: ["creditCard"], // "creditCard" will be added to the list of default scrubFields
+  scrubFields: ["creditCard"], // "creditCard" will be added to the list of default scrubFields
+  payload: {
     client: {
       javascript: {
         code_version: "ce0227180bd7429fde128f6ef8fad77396d8fbd4",  // Git SHA of your deployed code
@@ -186,8 +199,8 @@ Rollbar.configure({
         guess_uncaught_frames: true
       }
     }
+  }
 });
-
 ```
 
   </dl>
@@ -206,17 +219,6 @@ Default: ```"master"```
 
   </dd>
 
-  <dt>environment</dt>
-  <dd>Environment name
-
-e.g. ```"production"``` or ```"development"```
-
-Can be an arbitrary string, though to take advantage of the default notifications settings, we recommend using ```"production"``` for your production environment.
-
-Default: ```"production"```
-
-  </dd>
-
   <dt>host</dt>
   <dd>The hostname of the machine that rendered the page
 
@@ -225,6 +227,7 @@ e.g. ```"web1.mysite.com"```
 e.g. in Python, use ```socket.gethostname()```
 
   </dd>
+
   </dl>
 
   E.g.
@@ -232,12 +235,13 @@ e.g. in Python, use ```socket.gethostname()```
 ```js
 
 Rollbar.configure({
-    logLevel: "warning", // Rollbar.log() will be sent with a level = "warning"
+  logLevel: "warning", // Rollbar.log() will be sent with a level = "warning"
+  payload: {
     server: {
       branch: "master",
-      environment: "production",
       host: "web1.mysite.com"
     }
+  }
 });
 
 ```
