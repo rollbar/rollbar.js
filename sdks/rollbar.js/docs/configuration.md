@@ -101,7 +101,9 @@ Both global and context configuration have the following reserved key names that
   <dt>itemsPerMinute</dt>
   <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
 
-Default: ```undefined``` - no limit
+  If you would like to remove this limit, set it to `undefined`.
+
+Default: ```60```
   </dl>
 
 ### Context
