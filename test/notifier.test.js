@@ -917,7 +917,7 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.constructor).to.equal(Object);
 
     expect(payload.data).to.include.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
-      'language', 'body', 'request', 'client', 'server', 'notifier', 'context']);
+      'language', 'body', 'request', 'client', 'server', 'notifier']);
 
     expect(payload.data.client).to.have.keys(['runtime_ms', 'timestamp', 'javascript']);
     expect(payload.data.client.javascript).to.have.keys(['browser', 'language', 'cookie_enabled', 'screen', 'plugins']);
@@ -980,17 +980,9 @@ describe("Notifier._buildPayload()", function() {
     done();
   });
 
-  it("should have a default context", function(done) {
+  it("should set the context", function(done) {
     var notifier = new Notifier();
-    var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world');
-
-    expect(payload.data.context).to.be.a('string');
-    done();
-  });
-
-  it("should override the default context", function(done) {
-    var notifier = new Notifier();
-    notifier.configure({context: 'test/action'});
+    notifier.configure({payload: {context: 'test/action'}});
     var payload = notifier._buildPayload(new Date(), 'debug', 'Hello world');
 
     expect(payload.data.context).to.be.a('string');
