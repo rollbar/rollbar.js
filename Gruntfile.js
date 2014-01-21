@@ -40,8 +40,8 @@ module.exports = function(grunt) {
           },
           sourceMappingURL: function(path) {
             // pkg.cdn set above initConfig() above
-            var prefix = 'https://' + pkg.cdn.host + '/static/js/';
-            return prefix + path.replace(/dist\//, '').replace(/.js$/, ".map");
+            var prefix = 'https://' + pkg.cdn.host + '/js/';
+            return prefix + 'v' + pkg.version + '/' + path.replace(/dist\//, '').replace(/.js$/, ".map");
           }
         },
         files: {
