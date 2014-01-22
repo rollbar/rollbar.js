@@ -87,6 +87,11 @@ module.exports = function(grunt) {
             to: '$1 = $2<%= pkg.defaults.reportLevel %>$4'
           },
           {
+            // default min uncaught error level
+            from: /(DEFAULT_UNCAUGHT_ERROR_LEVEL|defaultReportLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
+            to: '$1 = $2<%= pkg.defaults.uncaughtErrorLevel %>$4'
+          },
+          {
             // default rollbar.js CDN URL
             from: /(DEFAULT_ROLLBARJS_URL|defaultRollbarJsUrl) = (["']).*(["'])/g,
             to: '$1 = $2//<%= pkg.cdn.host %>/js/v<%= pkg.pinnedVersion %>/rollbar.min.js$3'

@@ -136,6 +136,11 @@ Default: ```"debug"```
   <dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
 
 Default: ```"warning"```
+
+  <dt>uncaightErrorLevel</dt>
+  <dd>The severity level used when uncaught errors are reported to Rollbar.
+
+Default: ```"warning"```
   </dd>
   <dl>
 

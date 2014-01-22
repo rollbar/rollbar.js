@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.0.0-beta6",
+  "version": "1.0.0-beta7",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -46,7 +46,8 @@
       "password_confirmation"
     ],
     "logLevel": "debug",
-    "reportLevel": "warning"
+    "reportLevel": "warning",
+    "uncaughtErrorLevel": "warning"
   },
   "plugins": {
     "jquery": {
