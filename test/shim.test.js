@@ -85,6 +85,25 @@ describe("window.Rollbar.uncaughtError", function() {
 
     done();
   });
+/*
+  it("should wrap addEventListener", function(done) {
+    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+
+    var div = document.getElementById('event-div');
+    div.addEventListener('click', function(e) {
+      var a = b;
+    }, false);
+
+    div.dispatchEvent(new Event('click'));
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    done();
+  });
+  */
 });
 
 

@@ -5,6 +5,7 @@ Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
 Notifier.DEFAULT_REPORT_LEVEL = 'warning';
+Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
 
 Notifier.LEVELS = {
   debug: 0,
@@ -39,6 +40,7 @@ function Notifier(parentNotifier) {
     checkIgnore: null, 
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
+    uncaughtErrorLevel: Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL,
     payload: {}
   };
 
@@ -506,8 +508,9 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
   }
 
   var plugins = this.options ? this.options.plugins : {};
-  if (plugins && plugins.jquery) {
-    return plugins.jquery.isAjax ? true : false;
+  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors &&
+        payload.body.message) {
+    return payload.body.jquery_ajax_error;
   }
 
   return false;
@@ -543,7 +546,7 @@ Notifier.prototype.critical = Notifier._generateLogFn('critical');
 // Adapted from tracekit.js
 Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err) {
   if (err && err.stack) {
-    this._log('error', message, err, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, err, null, null, true);
     return;
   }
 
@@ -552,7 +555,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
   // being an Object instead of a string.
   //
   if (url && url.stack) {
-    this._log('error', message, url, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, url, null, null, true);
     return;
   }
 
@@ -570,8 +573,8 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'useragent': navigator.userAgent
   };
 
-  var payload = this._buildPayload(new Date(), 'error', message, stack);
-  this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
+  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
+  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
 });
 
 

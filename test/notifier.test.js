@@ -240,7 +240,7 @@ describe("Notifier.uncaughtError()", function() {
     var args = call.args;
 
     expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('error');
+    expect(args[0]).to.equal('warning');
     expect(args[1]).to.equal('testing uncaught error');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
@@ -268,11 +268,12 @@ describe("Notifier.uncaughtError()", function() {
     expect(args[0]).to.be.an('object');
     expect(args[1]).to.equal(true);
     expect(args[2]).to.be.an('array');
-    expect(args[2].length).to.equal(5);
-    expect(args[2][0]).to.equal('testing uncaught error');
-    expect(args[2][1]).to.equal('http://foo.com/');
-    expect(args[2][2]).to.equal(33);
-    expect(args[2][3]).to.equal(21);
+    expect(args[2].length).to.equal(6);
+    expect(args[2][0]).to.equal('warning');
+    expect(args[2][1]).to.equal('testing uncaught error');
+    expect(args[2][2]).to.equal('http://foo.com/');
+    expect(args[2][3]).to.equal(33);
+    expect(args[2][4]).to.equal(21);
 
     done();
   });
@@ -295,7 +296,7 @@ describe("Notifier.uncaughtError()", function() {
     var args = call.args;
 
     expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('error');
+    expect(args[0]).to.equal('warning');
     expect(args[1]).to.equal('testing uncaught error event');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
@@ -436,7 +437,7 @@ describe("Notifier.uncaughtError()", function() {
     expect(test).to.not.throw(Error, '_log() is broken');
     expect(consoleLogStub.called).to.equal(true);
     expect(_logStub.called).to.equal(true);
-    expect(_logStub.getCall(0).args[0]).to.equal('error');
+    expect(_logStub.getCall(0).args[0]).to.equal('warning');
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
@@ -463,7 +464,7 @@ describe("Notifier.uncaughtError()", function() {
     expect(consoleLogStub.called).to.equal(true);
     expect(_stub.called).to.equal(true);
     expect(_stub.getCall(0).args.length).to.equal(3);
-    expect(_stub.getCall(0).args[2][0]).to.equal('this should actually cause an internal error');
+    expect(_stub.getCall(0).args[2][1]).to.equal('this should actually cause an internal error');
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
@@ -1398,4 +1399,24 @@ describe("Notifier._scrub()", function() {
     done();
   });
 
+});
+
+describe("Notifier._internalCheckIgnore()", function() {
+  it("should ignore items below reportLevel", function(done) {
+    var notifier = new Notifier();
+
+    notifier.options.reportLevel = 'warning';
+
+    var payload = notifier._buildPayload(new Date(), 'info', 'test');
+    var result = notifier._internalCheckIgnore(false, ['info'], payload);
+
+    expect(result).to.be.true;
+
+    payload = notifier._buildPayload(new Date(), 'warning', 'test');
+    result = notifier._internalCheckIgnore(false, ['warning'], payload);
+
+    expect(result).to.be.false;
+
+    done();
+  });
 });

@@ -33,11 +33,38 @@ Rollbar.init = function(window, config) {
       // Create the client and set the onerror handler
       var old = window.onerror;
       window.onerror = function() {
-        client.uncaughtError.apply(client, arguments); 
+        client.uncaughtError.apply(client, arguments);
         if (old) {
           old.apply(window, arguments);
         }
       };
+
+      var prototype;
+      var oldAddEventListener;
+      var oldRemoveEventListener;
+
+      // Adapted from https://github.com/bugsnag/bugsnag-js
+      ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+       'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
+       'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
+       'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
+       'XMLHttpRequestUpload'].map(function(global) {
+        if (window[global] && window[global].prototype) {
+          prototype = window[global].prototype;
+
+          if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+            oldAddEventListener = prototype.addEventListener;
+            prototype.addEventListener = function(event, callback, bubble) {
+              oldAddEventListener.call(this, event, _wrap(callback), bubble);
+            };
+
+            oldRemoveEventListener = prototype.removeEventListener;
+            prototype.removeEventListener = function(event, callback, bubble) {
+              oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
+            };
+          }
+        }
+      });
     }
 
     // Expose Rollbar globally
@@ -122,6 +149,21 @@ function stub(method) {
       }
     }
   });
+}
+
+function _wrap(f) {
+  if (!f._wrapped) {
+    f._wrapped = function () {
+      try {
+        func.apply(this, arguments);
+      } catch(e) {
+        Rollbar.log('error', null, e, null, null, true);
+        // Don't re-raise so that window.onerror isn't triggered
+      }
+    };
+  }
+
+  return func._wrapped;
 }
 
 function _wrapInternalErr(f, logger) {
