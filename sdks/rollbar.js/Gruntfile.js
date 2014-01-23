@@ -88,7 +88,7 @@ module.exports = function(grunt) {
           },
           {
             // default min uncaught error level
-            from: /(DEFAULT_UNCAUGHT_ERROR_LEVEL|defaultReportLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
+            from: /(DEFAULT_UNCAUGHT_ERROR_LEVEL|defaultUncaughtErrorLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
             to: '$1 = $2<%= pkg.defaults.uncaughtErrorLevel %>$4'
           },
           {

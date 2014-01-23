@@ -39,10 +39,6 @@ Rollbar.init = function(window, config) {
         }
       };
 
-      var prototype;
-      var oldAddEventListener;
-      var oldRemoveEventListener;
-
       // Adapted from https://github.com/bugsnag/bugsnag-js
       ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
        'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
@@ -50,19 +46,7 @@ Rollbar.init = function(window, config) {
        'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
        'XMLHttpRequestUpload'].map(function(global) {
         if (window[global] && window[global].prototype) {
-          prototype = window[global].prototype;
-
-          if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
-            oldAddEventListener = prototype.addEventListener;
-            prototype.addEventListener = function(event, callback, bubble) {
-              oldAddEventListener.call(this, event, _wrap(callback), bubble);
-            };
-
-            oldRemoveEventListener = prototype.removeEventListener;
-            prototype.removeEventListener = function(event, callback, bubble) {
-              oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
-            };
-          }
+          _extendListenerPrototype(client, window[global].prototype);
         }
       });
     }
@@ -128,6 +112,23 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   }, this.logger))();
 };
 
+Rollbar.prototype.wrap = function(f) {
+  var _this = this;
+
+  if (!f._wrapped) {
+    f._wrapped = function () {
+      try {
+        f.apply(this, arguments);
+      } catch(e) {
+        _this.uncaughtError(null, null, null, null, e);
+        // Don't re-raise so that window.onerror isn't triggered
+      }
+    };
+  }
+
+  return f._wrapped;
+};
+
 // Stub out rollbar.js methods
 function stub(method) {
   var R = Rollbar;
@@ -151,19 +152,18 @@ function stub(method) {
   });
 }
 
-function _wrap(f) {
-  if (!f._wrapped) {
-    f._wrapped = function () {
-      try {
-        func.apply(this, arguments);
-      } catch(e) {
-        Rollbar.log('error', null, e, null, null, true);
-        // Don't re-raise so that window.onerror isn't triggered
-      }
+function _extendListenerPrototype(client, prototype) {
+  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+    var oldAddEventListener = prototype.addEventListener;
+    prototype.addEventListener = function(event, callback, bubble) {
+      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+    };
+
+    var oldRemoveEventListener = prototype.removeEventListener;
+    prototype.removeEventListener = function(event, callback, bubble) {
+      oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
     };
   }
-
-  return func._wrapped;
 }
 
 function _wrapInternalErr(f, logger) {

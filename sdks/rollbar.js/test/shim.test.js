@@ -2,7 +2,7 @@ var expect = chai.expect;
 
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
-  captureUncaught: false    
+  captureUncaught: true
 };
 
 describe("window.Rollbar.init()", function() {
@@ -85,25 +85,34 @@ describe("window.Rollbar.uncaughtError", function() {
 
     done();
   });
-/*
+
   it("should wrap addEventListener", function(done) {
     var spy = sinon.spy(window.Rollbar, 'uncaughtError');
 
     var div = document.getElementById('event-div');
-    div.addEventListener('click', function(e) {
+    div.addEventListener('test', function(e) {
       var a = b;
     }, false);
 
-    div.dispatchEvent(new Event('click'));
+    var event;
+    if (typeof CustomEvent === 'undefined') {
+      event = document.createEvent('CustomEvent');
+      event.initCustomEvent('test', false, false, null);
+    } else {
+      event = new CustomEvent('test', {foo: 'bar'});
+    }
 
-    expect(spy.called).to.equal(true);
+    div.dispatchEvent(event);
+
+    expect(spy.calledOnce).to.equal(true);
 
     var call = spy.getCall(0);
     var args = call.args;
 
+    expect(args[4].constructor).to.equal(ReferenceError);
+
     done();
   });
-  */
 });
 
 
