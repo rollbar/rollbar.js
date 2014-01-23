@@ -344,3 +344,40 @@ describe("window.Rollbar.log()", function() {
     done();
   });
 });
+
+describe("window.Rollbar.uncaughtError()", function() {
+  it("should catch uncaught errors", function(done) {
+    window.onerror = function() {
+      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+    };
+
+    var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
+
+    setTimeout(function() {
+      var a = b;
+    }, 10);
+
+    setTimeout(function() {
+      try {
+        expect(spy.calledOnce).to.equal(true);
+
+        var call = spy.getCall(0);
+        var args = call.args;
+
+        var payload = args[0];
+
+        expect(payload).to.include.key('data');
+        expect(payload.data).to.include.key('body');
+        expect(payload.data.body).to.include.key('trace');
+        expect(payload.data.body.trace).to.include.key('exception');
+
+        // Uncaught flag
+        expect(args[1]).to.equal(true);
+
+        done();
+      } catch (e) {
+        done(e);
+      }
+    }, 20);
+  });
+});

@@ -1,6 +1,6 @@
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-beta6';
+Notifier.NOTIFIER_VERSION = '1.0.0-beta7';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -103,7 +103,7 @@ Notifier.prototype._getLogArgs = function(args) {
       message = arg;
     } else if (argT === 'function') {
       callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
-    } else if (argT === 'object') {
+    } else if (arg && argT === 'object') {
       if (arg.constructor.name === 'Date') {
         ts = arg;
       } else if (arg instanceof Error || arg.prototype === Error.prototype || arg.hasOwnProperty('stack')) {
@@ -510,7 +510,7 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
   var plugins = this.options ? this.options.plugins : {};
   if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors &&
         payload.body.message) {
-    return payload.body.jquery_ajax_error;
+    return payload.body.messagejquery_ajax_error;
   }
 
   return false;
@@ -600,6 +600,22 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
   return scopedNotifier;
 });
 
+Notifier.prototype.wrap = function(f) {
+  var _this = this;
+
+  if (!f._wrapped) {
+    f._wrapped = function () {
+      try {
+        f.apply(this, arguments);
+      } catch(e) {
+        _this.uncaughtError(null, null, null, null, e);
+        // Don't re-raise so that window.onerror isn't triggered
+      }
+    };
+  }
+
+  return f._wrapped;
+};
 
 /***** Misc *****/
 

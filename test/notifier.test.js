@@ -2,7 +2,7 @@ var expect = chai.expect;
 
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
-  captureUncaught: false    
+  captureUncaught: true
 };
 Rollbar.init(window, config);
 
@@ -1398,7 +1398,6 @@ describe("Notifier._scrub()", function() {
 
     done();
   });
-
 });
 
 describe("Notifier._internalCheckIgnore()", function() {
@@ -1416,6 +1415,72 @@ describe("Notifier._internalCheckIgnore()", function() {
     result = notifier._internalCheckIgnore(false, ['warning'], payload);
 
     expect(result).to.be.false;
+
+    done();
+  });
+});
+
+describe("Notifier.wrap()", function() {
+  it("should catch uncaught errors in event listeners and report", function(done) {
+    var notifier = new Notifier();
+
+    var spy = sinon.spy(notifier, 'uncaughtError');
+    notifier.wrap(function() {
+      var a = b;
+    })();
+
+    expect(spy.calledOnce).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args[4].constructor).to.equal(ReferenceError);
+
+    done();
+  });
+
+  it("should catch uncaught errors in user-supplied functions and report", function(done) {
+    var div = document.getElementById('event-div');
+    div.addEventListener('test', function(e) {
+      var a = b;
+    }, false);
+
+    var event;
+    if (typeof CustomEvent === 'undefined') {
+      event = document.createEvent('CustomEvent');
+      event.initCustomEvent('test', false, false, null);
+    } else {
+      event = new CustomEvent('test', {foo: 'bar'});
+    }
+
+    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+
+    div.dispatchEvent(event);
+
+    expect(spy.calledOnce).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args[4].constructor).to.equal(ReferenceError);
+
+    done();
+  });
+
+  it("should not double wrap functions", function(done) {
+    var notifier = new Notifier();
+
+    var func = sinon.spy();
+
+    var newFunc = notifier.wrap(func);
+    var sameFunc = notifier.wrap(func);
+
+    expect(func).to.not.equal(newFunc);
+    expect(newFunc).to.equal(sameFunc);
+
+    newFunc();
+
+    expect(func.calledOnce).to.equal(true);
 
     done();
   });
