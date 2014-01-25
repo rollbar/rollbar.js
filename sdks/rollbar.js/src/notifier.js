@@ -44,6 +44,7 @@ function Notifier(parentNotifier) {
     payload: {}
   };
 
+  this.lastError = null;
   this.plugins = {};
   this.parentNotifier = parentNotifier;
   this.logger = function() {
@@ -532,6 +533,15 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
 Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
   var stackInfo = err ? TK(err) : null;
   var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
+
+  if (err) {
+    if (err === this.lastError) {
+      return;
+    }
+
+    this.lastError = err;
+  }
+  
   this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
 };
 
@@ -603,15 +613,27 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
 Notifier.prototype.wrap = function(f) {
   var _this = this;
 
+  if (f._isWrap) {
+    return f;
+  }
+
   if (!f._wrapped) {
     f._wrapped = function () {
       try {
         f.apply(this, arguments);
       } catch(e) {
         _this.uncaughtError(null, null, null, null, e);
-        // Don't re-raise so that window.onerror isn't triggered
+        throw e;
       }
     };
+
+    f._wrapped._isWrap = true;
+
+    for (var prop in f) {
+      if (f.hasOwnProperty(prop)) {
+        f._wrapped[prop] = f[prop];
+      }
+    }
   }
 
   return f._wrapped;

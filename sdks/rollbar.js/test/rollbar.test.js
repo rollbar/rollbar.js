@@ -375,9 +375,48 @@ describe("window.Rollbar.uncaughtError()", function() {
         expect(args[1]).to.equal(true);
 
         done();
+
+        window.Rollbar._enqueuePayload.restore();
       } catch (e) {
+        window.Rollbar._enqueuePayload.restore();
         done(e);
       }
     }, 20);
+  });
+
+  it("should catch uncaught errors in event listeners and report", function(done) {
+    window.onerror = function() {
+      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+    };
+
+    var div = document.getElementById('event-div');
+    div.addEventListener('test', function(e) {
+      var a = b;
+    }, false);
+
+    var event;
+    if (typeof CustomEvent === 'undefined') {
+      event = document.createEvent('CustomEvent');
+      event.initCustomEvent('test', false, false, null);
+    } else {
+      event = new CustomEvent('test', {foo: 'bar'});
+    }
+
+    var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
+
+    div.dispatchEvent(event);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    var callerArgs = args[2];
+
+    expect(callerArgs[2].constructor).to.equal(ReferenceError);
+
+    window.Rollbar._enqueuePayload.restore();
+
+    done();
   });
 });
