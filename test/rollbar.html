@@ -11,6 +11,8 @@
     <div id="mesages"></div>
     <div id="fixtures"></div>
 
+    <div id="event-div"></div>
+
     <!-- jquery -->
     <script src="lib/jquery/jquery-1.8.3.min.js" type="text/javascript" charset="utf-8"></script>
 
@@ -50,7 +52,7 @@
     <script type="text/javascript" charset="utf-8">
       var config = {
         accessToken: '12c99de67a444c229fca100e0967486f',
-        captureUncaught: false
+        captureUncaught: true
       };
       var origRollbar = Rollbar.init(window, config);
 

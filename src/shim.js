@@ -115,15 +115,27 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
 Rollbar.prototype.wrap = function(f) {
   var _this = this;
 
+  if (f._isWrap) {
+    return f;
+  }
+
   if (!f._wrapped) {
     f._wrapped = function () {
       try {
         f.apply(this, arguments);
       } catch(e) {
         _this.uncaughtError(null, null, null, null, e);
-        // Don't re-raise so that window.onerror isn't triggered
+        throw e;
       }
     };
+
+    f._wrapped._isWrap = true;
+
+    for (var prop in f) {
+      if (f.hasOwnProperty(prop)) {
+        f._wrapped[prop] = f[prop];
+      }
+    }
   }
 
   return f._wrapped;

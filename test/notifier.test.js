@@ -1421,41 +1421,16 @@ describe("Notifier._internalCheckIgnore()", function() {
 });
 
 describe("Notifier.wrap()", function() {
-  it("should catch uncaught errors in event listeners and report", function(done) {
+  it("should catch uncaught errors in wrapped functions and report", function(done) {
     var notifier = new Notifier();
 
     var spy = sinon.spy(notifier, 'uncaughtError');
-    notifier.wrap(function() {
+
+    var wrapped = notifier.wrap(function() {
       var a = b;
-    })();
+    });
 
-    expect(spy.calledOnce).to.equal(true);
-
-    var call = spy.getCall(0);
-    var args = call.args;
-
-    expect(args[4].constructor).to.equal(ReferenceError);
-
-    done();
-  });
-
-  it("should catch uncaught errors in user-supplied functions and report", function(done) {
-    var div = document.getElementById('event-div');
-    div.addEventListener('test', function(e) {
-      var a = b;
-    }, false);
-
-    var event;
-    if (typeof CustomEvent === 'undefined') {
-      event = document.createEvent('CustomEvent');
-      event.initCustomEvent('test', false, false, null);
-    } else {
-      event = new CustomEvent('test', {foo: 'bar'});
-    }
-
-    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
-
-    div.dispatchEvent(event);
+    expect(wrapped).to.throw();
 
     expect(spy.calledOnce).to.equal(true);
 
@@ -1474,9 +1449,11 @@ describe("Notifier.wrap()", function() {
 
     var newFunc = notifier.wrap(func);
     var sameFunc = notifier.wrap(func);
+    var doubleWrapped = notifier.wrap(newFunc);
 
     expect(func).to.not.equal(newFunc);
     expect(newFunc).to.equal(sameFunc);
+    expect(newFunc).to.equal(doubleWrapped);
 
     newFunc();
 

@@ -87,6 +87,10 @@ describe("window.Rollbar.uncaughtError", function() {
   });
 
   it("should wrap addEventListener", function(done) {
+    window.onerror = function() {
+      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+    };
+
     var spy = sinon.spy(window.Rollbar, 'uncaughtError');
 
     var div = document.getElementById('event-div');
@@ -104,7 +108,7 @@ describe("window.Rollbar.uncaughtError", function() {
 
     div.dispatchEvent(event);
 
-    expect(spy.calledOnce).to.equal(true);
+    expect(spy.called).to.equal(true);
 
     var call = spy.getCall(0);
     var args = call.args;

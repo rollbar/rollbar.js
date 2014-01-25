@@ -137,7 +137,7 @@ Default: ```"debug"```
 
 Default: ```"warning"```
 
-  <dt>uncaightErrorLevel</dt>
+  <dt>uncaughtErrorLevel</dt>
   <dd>The severity level used when uncaught errors are reported to Rollbar.
 
 Default: ```"warning"```
