@@ -531,18 +531,21 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
  * - callback: Function to call once the item is reported to Rollbar
  */
 Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
-  var stackInfo = err ? TK(err) : null;
-  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
-
-  // Don't report the same error more than once
+  var stackInfo = null;
   if (err) {
+    // If we've already calculated the stack trace for the error, use it.
+    // This can happen for wrapped errors that don't have a "stack" property.
+    stackInfo = err._tkStackTrace ? err._tkStackTrace : TK(err);
+
+    // Don't report the same error more than once
     if (err === this.lastError) {
       return;
     }
 
     this.lastError = err;
   }
-  
+
+  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
   this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
 };
 
@@ -583,6 +586,9 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'stack': [location],
     'useragent': navigator.userAgent
   };
+  if (err) {
+    stack = err._tkStackTrace || TK(err);
+  }
 
   var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
   this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
@@ -625,6 +631,9 @@ Notifier.prototype.wrap = function(f) {
       try {
         f.apply(this, arguments);
       } catch(e) {
+        if (!e.stack) {
+          e._tkStackTrace = TK(e);
+        }
         window._rollbarWrappedError = e;
         throw e;
       }

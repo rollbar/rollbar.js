@@ -14,6 +14,18 @@ function Rollbar(parentShim) {
   }
 }
 
+function _rollbarWindowOnError(client, old, args) {
+  if (!args[4] && window._rollbarWrappedError) {
+    args[4] = window._rollbarWrappedError;
+    window._rollbarWrappedError = null;
+  }
+
+  client.uncaughtError.apply(client, args);
+  if (old) {
+    old.apply(window, arguments);
+  }
+}
+
 Rollbar.init = function(window, config) {
   var alias = config.globalAlias || 'Rollbar';
   if (typeof window[alias] === 'object') {
@@ -22,6 +34,7 @@ Rollbar.init = function(window, config) {
 
   // Expose the global shim queue
   window._rollbarShimQueue = [];
+  window._rollbarWrappedError = null;
 
   config = config || {};
 
@@ -33,12 +46,22 @@ Rollbar.init = function(window, config) {
     if (config.captureUncaught) {
       // Create the client and set the onerror handler
       var old = window.onerror;
+
       window.onerror = function() {
-        client.uncaughtError.apply(client, arguments); 
-        if (old) {
-          old.apply(window, arguments);
-        }
+        var args = Array.prototype.slice.call(arguments, 0);
+        _rollbarWindowOnError(client, old, args);
       };
+
+      // Adapted from https://github.com/bugsnag/bugsnag-js
+      ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+       'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
+       'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
+       'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
+       'XMLHttpRequestUpload'].map(function(global) {
+        if (window[global] && window[global].prototype) {
+          _extendListenerPrototype(client, window[global].prototype);
+        }
+      });
     }
 
     // Expose Rollbar globally
@@ -102,6 +125,35 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   }, this.logger))();
 };
 
+Rollbar.prototype.wrap = function(f) {
+  var _this = this;
+
+  if (f._isWrap) {
+    return f;
+  }
+
+  if (!f._wrapped) {
+    f._wrapped = function () {
+      try {
+        return f.apply(this, arguments);
+      } catch(e) {
+        window._rollbarWrappedError = e;
+        throw e;
+      }
+    };
+
+    f._wrapped._isWrap = true;
+
+    for (var prop in f) {
+      if (f.hasOwnProperty(prop)) {
+        f._wrapped[prop] = f[prop];
+      }
+    }
+  }
+
+  return f._wrapped;
+};
+
 // Stub out rollbar.js methods
 function stub(method) {
   var R = Rollbar;
@@ -123,6 +175,20 @@ function stub(method) {
       }
     }
   });
+}
+
+function _extendListenerPrototype(client, prototype) {
+  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+    var oldAddEventListener = prototype.addEventListener;
+    prototype.addEventListener = function(event, callback, bubble) {
+      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+    };
+
+    var oldRemoveEventListener = prototype.removeEventListener;
+    prototype.removeEventListener = function(event, callback, bubble) {
+      oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
+    };
+  }
 }
 
 function _wrapInternalErr(f, logger) {
