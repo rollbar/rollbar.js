@@ -534,6 +534,7 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
   var stackInfo = err ? TK(err) : null;
   var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
 
+  // Don't report the same error more than once
   if (err) {
     if (err === this.lastError) {
       return;
@@ -613,6 +614,8 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
 Notifier.prototype.wrap = function(f) {
   var _this = this;
 
+  // If the given function is already a wrapped function, just
+  // return it instead of wrapping twice
   if (f._isWrap) {
     return f;
   }
@@ -622,7 +625,7 @@ Notifier.prototype.wrap = function(f) {
       try {
         f.apply(this, arguments);
       } catch(e) {
-        _this.uncaughtError(null, null, null, null, e);
+        window._rollbarWrappedError = e;
         throw e;
       }
     };

@@ -88,7 +88,8 @@ describe("window.Rollbar.uncaughtError", function() {
 
   it("should wrap addEventListener", function(done) {
     window.onerror = function() {
-      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(window.Rollbar, null, args);
     };
 
     var spy = sinon.spy(window.Rollbar, 'uncaughtError');
@@ -108,14 +109,55 @@ describe("window.Rollbar.uncaughtError", function() {
 
     div.dispatchEvent(event);
 
-    expect(spy.called).to.equal(true);
+    expect(spy.calledOnce).to.equal(true);
 
     var call = spy.getCall(0);
     var args = call.args;
 
     expect(args[4].constructor).to.equal(ReferenceError);
 
+    window.Rollbar.uncaughtError.restore();
+
     done();
+  });
+});
+
+describe("_rollbarWindowOnError", function() {
+  it("should set window._rollbarWrappedError as the reported error", function() {
+    window.onerror = function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+
+      // error argument will be set by _rollbarWindowOnError
+      expect(args[4]).to.equal(undefined);
+      _rollbarWindowOnError(window.Rollbar, null, args);
+      expect(args[4]).to.not.equal(undefined);
+    };
+
+    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+
+    var wrappedFunc = window.Rollbar.wrap(function() {
+      var a = b;
+    });
+
+    // cause uncaught error to hit the above window.onerror
+    setTimeout(wrappedFunc, 10);
+
+    setTimeout(function() {
+      try {
+        expect(spy.calledOnce).to.equal(true);
+
+        var call = spy.getCall(0);
+        var args = call.args;
+
+        expect(args[4].constructor).to.equal(ReferenceError);
+
+        window.Rollbar.uncaughtError.restore();
+        done();
+      } catch(e) {
+        window.Rollbar.uncaughtError.restore();
+        done(e);
+      }
+    }, 20);
   });
 });
 

@@ -134,7 +134,7 @@ describe("Notifier.global()", function() {
     expect(call.args[0]).to.be.an('array');
     expect(call.args[0][0]).to.equal('Rollbar internal error:');
     expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].stack).to.contain('merge() is broken');
+    expect(call.args[0][1].message).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -207,7 +207,7 @@ describe("Notifier.configure()", function() {
     expect(call.args[0]).to.be.an('array');
     expect(call.args[0][0]).to.equal('Rollbar internal error:');
     expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].stack).to.contain('merge() is broken');
+    expect(call.args[0][1].message).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -443,7 +443,7 @@ describe("Notifier.uncaughtError()", function() {
     expect(call.args[0]).to.be.an('array');
     expect(call.args[0][0]).to.equal('Rollbar internal error:');
     expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].stack).to.contain('_log() is broken');
+    expect(call.args[0][1].message).to.contain('_log() is broken');
 
     _logStub.restore();
     consoleLogStub.restore();
@@ -470,7 +470,7 @@ describe("Notifier.uncaughtError()", function() {
     expect(call.args[0]).to.be.an('array');
     expect(call.args[0][0]).to.equal('Rollbar internal error:');
     expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].stack).to.contain('_enqueuePayload() is broken');
+    expect(call.args[0][1].message).to.contain('_enqueuePayload() is broken');
 
     _stub.restore();
     consoleLogStub.restore();
@@ -543,7 +543,7 @@ describe("Notifier.scope()", function() {
     expect(call.args[0]).to.be.an('array');
     expect(call.args[0][0]).to.equal('Rollbar internal error:');
     expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].stack).to.contain('merge() is broken');
+    expect(call.args[0][1].message).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -667,7 +667,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       expect(call.args[0]).to.be.an('array');
       expect(call.args[0][0]).to.equal('Rollbar internal error:');
       expect(call.args[0][1]).to.be.an('object');
-      expect(call.args[0][1].stack).to.contain('_log() is broken');
+      expect(call.args[0][1].message).to.contain('_log() is broken');
 
       _logStub.restore();
       consoleLogStub.restore();
@@ -727,7 +727,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       expect(call.args[0]).to.be.an('array');
       expect(call.args[0][0]).to.equal('Rollbar internal error:');
       expect(call.args[0][1]).to.be.an('object');
-      expect(call.args[0][1].stack).to.contain('user-supplied callback is broken');
+      expect(call.args[0][1].message).to.contain('user-supplied callback is broken');
 
       consoleLogStub.restore();
       server.restore();
@@ -1421,23 +1421,37 @@ describe("Notifier._internalCheckIgnore()", function() {
 });
 
 describe("Notifier.wrap()", function() {
-  it("should catch uncaught errors in wrapped functions and report", function(done) {
+  it("should catch uncaught errors in wrapped functions and save to window._rollbarWrappedError", function(done) {
     var notifier = new Notifier();
-
-    var spy = sinon.spy(notifier, 'uncaughtError');
 
     var wrapped = notifier.wrap(function() {
       var a = b;
     });
 
-    expect(wrapped).to.throw();
+    expect(window._rollbarWrappedError).to.equal(null);
 
-    expect(spy.calledOnce).to.equal(true);
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+    }
 
-    var call = spy.getCall(0);
-    var args = call.args;
+    done();
+  });
+  
+  it("should copy over function properties to the wrapped version", function(done) {
+    var notifier = new Notifier();
 
-    expect(args[4].constructor).to.equal(ReferenceError);
+    var func = function() {
+      var a = b;
+    };
+
+    func.foo = 'bar';
+
+    var wrapped = notifier.wrap(func);
+
+    expect(wrapped.foo).to.equal('bar');
 
     done();
   });

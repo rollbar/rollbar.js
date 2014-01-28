@@ -348,7 +348,8 @@ describe("window.Rollbar.log()", function() {
 describe("window.Rollbar.uncaughtError()", function() {
   it("should catch uncaught errors", function(done) {
     window.onerror = function() {
-      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(window.Rollbar, null, args);
     };
 
     var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
@@ -386,7 +387,8 @@ describe("window.Rollbar.uncaughtError()", function() {
 
   it("should catch uncaught errors in event listeners and report", function(done) {
     window.onerror = function() {
-      window.Rollbar.uncaughtError.apply(window.Rollbar, arguments);
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(window.Rollbar, null, args);
     };
 
     var div = document.getElementById('event-div');
@@ -406,7 +408,7 @@ describe("window.Rollbar.uncaughtError()", function() {
 
     div.dispatchEvent(event);
 
-    expect(spy.called).to.equal(true);
+    expect(spy.calledOnce).to.equal(true);
 
     var call = spy.getCall(0);
     var args = call.args;
