@@ -416,9 +416,9 @@ describe("window.Rollbar.uncaughtError()", function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    var callerArgs = args[2];
+    var payload = args[0];
 
-    expect(callerArgs[2].constructor).to.equal(ReferenceError);
+    expect(payload.data.body.trace.exception['class']).to.equal('ReferenceError');
 
     window.Rollbar._enqueuePayload.restore();
 

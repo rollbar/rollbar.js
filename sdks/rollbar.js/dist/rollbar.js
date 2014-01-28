@@ -1531,11 +1531,12 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-beta6';
+Notifier.NOTIFIER_VERSION = '1.0.0-beta7';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
 Notifier.DEFAULT_REPORT_LEVEL = 'warning';
+Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
 
 Notifier.LEVELS = {
   debug: 0,
@@ -1570,9 +1571,11 @@ function Notifier(parentNotifier) {
     checkIgnore: null, 
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
+    uncaughtErrorLevel: Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL,
     payload: {}
   };
 
+  this.lastError = null;
   this.plugins = {};
   this.parentNotifier = parentNotifier;
   this.logger = function() {
@@ -1632,7 +1635,7 @@ Notifier.prototype._getLogArgs = function(args) {
       message = arg;
     } else if (argT === 'function') {
       callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
-    } else if (argT === 'object') {
+    } else if (arg && argT === 'object') {
       if (arg.constructor.name === 'Date') {
         ts = arg;
       } else if (arg instanceof Error || arg.prototype === Error.prototype || arg.hasOwnProperty('stack')) {
@@ -2037,8 +2040,9 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
   }
 
   var plugins = this.options ? this.options.plugins : {};
-  if (plugins && plugins.jquery) {
-    return plugins.jquery.isAjax ? true : false;
+  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors &&
+        payload.body.message) {
+    return payload.body.messagejquery_ajax_error;
   }
 
   return false;
@@ -2058,7 +2062,20 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
  * - callback: Function to call once the item is reported to Rollbar
  */
 Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
-  var stackInfo = err ? TK(err) : null;
+  var stackInfo = null;
+  if (err) {
+    // If we've already calculated the stack trace for the error, use it.
+    // This can happen for wrapped errors that don't have a "stack" property.
+    stackInfo = err._tkStackTrace ? err._tkStackTrace : TK(err);
+
+    // Don't report the same error more than once
+    if (err === this.lastError) {
+      return;
+    }
+
+    this.lastError = err;
+  }
+
   var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
   this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
 };
@@ -2074,7 +2091,7 @@ Notifier.prototype.critical = Notifier._generateLogFn('critical');
 // Adapted from tracekit.js
 Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err) {
   if (err && err.stack) {
-    this._log('error', message, err, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, err, null, null, true);
     return;
   }
 
@@ -2083,7 +2100,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
   // being an Object instead of a string.
   //
   if (url && url.stack) {
-    this._log('error', message, url, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, url, null, null, true);
     return;
   }
 
@@ -2100,9 +2117,12 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'stack': [location],
     'useragent': navigator.userAgent
   };
+  if (err) {
+    stack = err._tkStackTrace || TK(err);
+  }
 
-  var payload = this._buildPayload(new Date(), 'error', message, stack);
-  this._enqueuePayload(payload, true, [message, url, lineNo, colNo, err]);
+  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
+  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
 });
 
 
@@ -2128,6 +2148,39 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
   return scopedNotifier;
 });
 
+Notifier.prototype.wrap = function(f) {
+  var _this = this;
+
+  // If the given function is already a wrapped function, just
+  // return it instead of wrapping twice
+  if (f._isWrap) {
+    return f;
+  }
+
+  if (!f._wrapped) {
+    f._wrapped = function () {
+      try {
+        f.apply(this, arguments);
+      } catch(e) {
+        if (!e.stack) {
+          e._tkStackTrace = TK(e);
+        }
+        window._rollbarWrappedError = e;
+        throw e;
+      }
+    };
+
+    f._wrapped._isWrap = true;
+
+    for (var prop in f) {
+      if (f.hasOwnProperty(prop)) {
+        f._wrapped[prop] = f[prop];
+      }
+    }
+  }
+
+  return f._wrapped;
+};
 
 /***** Misc *****/
 
