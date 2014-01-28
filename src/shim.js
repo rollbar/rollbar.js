@@ -134,7 +134,7 @@ Rollbar.prototype.wrap = function(f) {
   if (!f._wrapped) {
     f._wrapped = function () {
       try {
-        f.apply(this, arguments);
+        return f.apply(this, arguments);
       } catch(e) {
         window._rollbarWrappedError = e;
         throw e;
