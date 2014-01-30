@@ -338,7 +338,7 @@
 
   /*** END json2.js ***/
 
-  var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+  var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ \\.]*): *)?(Uncaught )?([a-zA-Z0-9-_$ \\.]*): *');
 
   var RollbarNotifier = {
     accessToken: null,
@@ -837,7 +837,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.9'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.10'}
         }
       };
 
