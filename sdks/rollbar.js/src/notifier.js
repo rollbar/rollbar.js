@@ -674,6 +674,6 @@ function _processPayload(url, payload, callback) {
     }
 
     // TODO(cory): parse resp as JSON
-    callback(null, resp);
+    return callback(null, resp);
   });
 }

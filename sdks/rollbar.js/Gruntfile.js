@@ -27,7 +27,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js', 'src/util.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js', 'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/shimload.js']
         }
       }
