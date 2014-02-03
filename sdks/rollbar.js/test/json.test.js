@@ -5,9 +5,9 @@ describe('RollbarJSON', function() {
     var JSON = {};
     setupCustomJSON(JSON);
 
-    var json = JSON.stringify({a: {b: 'c', d: 1}, e: true});
+    var json = JSON.stringify({a: {b: 'c', d: 1, e: [1, 2, 'a', 'b', true]}, f: true});
 
-    expect(json).to.equal('{"a":{"b":"c","d":1},"e":true}');
+    expect(json).to.equal('{"a":{"b":"c","d":1,"e":[1,2,"a","b",true]},"f":true}');
 
     done();
   });
