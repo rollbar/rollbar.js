@@ -4,7 +4,7 @@
 
 ## Quick start
 
-__Note__: This notifier is in beta. For a stable version see the [v0.10.9](https://github.com/rollbar/rollbar.js/blob/v0.10.9/README.md) release.
+__Note__: This notifier is in beta. For a stable version see the [v0.10.10](https://github.com/rollbar/rollbar.js/blob/v0.10.10/README.md) release.
 
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
