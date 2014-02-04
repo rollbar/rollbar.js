@@ -24,7 +24,7 @@ var XHR = {
     if (typeof payload !== 'object') {
       throw new Error('Expected an object to POST');
     }
-    payload = JSON.stringify(payload);
+    payload = RollbarJSON.stringify(payload);
     callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
     if (request) {
