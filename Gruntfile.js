@@ -38,6 +38,7 @@ module.exports = function(grunt) {
           sourceMap: function(path) {
             return path.replace(/.js$/, ".map");
           },
+          sourceMapPrefix: 1,
           sourceMappingURL: function(path) {
             // pkg.cdn set above initConfig() above
             var prefix = 'https://' + pkg.cdn.host + '/js/';
