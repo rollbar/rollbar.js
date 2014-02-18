@@ -12,7 +12,7 @@ describe('RollbarJSON', function() {
     done();
   });
 
-  it("should handle bad input", function(done) {
+  it("should handle bad stringify input", function(done) {
     var JSON = {};
     setupCustomJSON(JSON);
 
@@ -34,6 +34,44 @@ describe('RollbarJSON', function() {
 
     expect(JSON.stringify()).to.equal(undefined);
     expect(JSON.stringify(null)).to.equal('null');
+
+    done();
+  });
+
+  it("should parse a valid json string correctly", function(done) {
+    var JSON = {};
+    setupCustomJSON(JSON);
+
+    var jsonString = '{"a":{"b":"c","d":1,"e":[1,2,"a","b",true]},"f":true}';
+
+    var obj = JSON.parse(jsonString);
+
+    expect(obj).to.deep.equal({a: {b: 'c', d: 1, e: [1, 2, 'a', 'b', true]}, f: true});
+
+    done();
+  });
+
+  it("should throw errors for bad parse input", function(done) {
+    var JSON = {};
+    setupCustomJSON(JSON);
+
+    var badString = '{"a":{"b":"c","d":1,"e":[1,2,"a","b",true]},"f":true';
+
+    expect(function() {
+      JSON.parse(badString);
+    }).to.throw();
+
+    badString = '{"a":abc}';
+
+    expect(function() {
+      JSON.parse(badString);
+    }).to.throw();
+
+    badString = '{"abc"}';
+
+    expect(function() {
+      JSON.parse(badString);
+    }).to.throw();
 
     done();
   });
