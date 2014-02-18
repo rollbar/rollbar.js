@@ -37,7 +37,7 @@ var XHR = {
 
                 // TODO(cory): have the notifier log an internal error on non-200 response codes
                 if (request.status === 200) {
-                  callback(null, JSON.parse(request.responseText));
+                  callback(null, RollbarJSON.parse(request.responseText));
                 } else if (typeof(request.status) === "number" &&
                             request.status >= 400  && request.status < 600) {
                   // return valid http status codes
@@ -81,7 +81,7 @@ var XHR = {
             };
 
             var onload = function(args) {
-              callback(null, JSON.parse(request.responseText));
+              callback(null, RollbarJSON.parse(request.responseText));
             };
 
             request = new XDomainRequest();
