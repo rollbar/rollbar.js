@@ -48,9 +48,9 @@
   // report errors to Rollbar
   var origReady = jQuery.fn.ready;
   jQuery.fn.ready = function(fn) {
-    return origReady.call(this, function() {
+    return origReady.call(this, function($) {
       try {
-        fn();
+        fn($);
       } catch (e) {
         logError(e);
       }
