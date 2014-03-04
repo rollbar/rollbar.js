@@ -296,6 +296,13 @@ describe("window.Rollbar.log/debug/info/warn/warning/error/critical()", function
   });
 });
 
+describe("window.Rollbar.wrap()", function() {
+  it("should let non-functions pass through unchanged", function() {
+    var object = {};
+    expect(window.Rollbar.wrap(object)).to.be.equal(object);
+  });
+});
+
 describe("window.Rollbar.loadFull()", function() {
   var errArgs;
 

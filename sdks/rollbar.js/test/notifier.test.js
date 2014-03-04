@@ -1475,4 +1475,9 @@ describe("Notifier.wrap()", function() {
 
     done();
   });
+
+  it("should let non-functions pass through unchanged", function() {
+    var object = {};
+    expect(window.Rollbar.wrap(object)).to.be.equal(object);
+  });
 });
