@@ -620,6 +620,10 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
 Notifier.prototype.wrap = function(f) {
   var _this = this;
 
+  if (typeof f !== 'function') {
+    return f;
+  }
+
   // If the given function is already a wrapped function, just
   // return it instead of wrapping twice
   if (f._isWrap) {
