@@ -1,0 +1,10 @@
+{
+  "name": "rollbar.js",
+  "version": "1.0.0-beta9",
+  "dependencies": {},
+  "main": [
+    "dist/rollbar.js", 
+    "dist/rollbar.snippet.js",
+    "src/plugins/jquery.js"
+  ]
+}
