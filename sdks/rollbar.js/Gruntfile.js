@@ -119,7 +119,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    bumpup: 'package.json',
+    bumpup: ['package.json', 'bower.json'],
     tagrelease: {
       file: 'package.json',
       prefix: 'v',
