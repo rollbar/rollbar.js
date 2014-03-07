@@ -5,7 +5,7 @@
     return;
   }
   
-  var JQUERY_PLUGIN_VERSION = '0.0.6';
+  var JQUERY_PLUGIN_VERSION = '0.0.7';
 
   rb.configure({
     notifier: {

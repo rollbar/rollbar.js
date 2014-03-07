@@ -128,6 +128,10 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
 Rollbar.prototype.wrap = function(f) {
   var _this = this;
 
+  if (typeof f !== 'function') {
+    return f;
+  }
+
   if (f._isWrap) {
     return f;
   }
