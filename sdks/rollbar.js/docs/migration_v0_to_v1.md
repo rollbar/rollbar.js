@@ -181,11 +181,11 @@ try {
 }
 ```
 
-### Update the jQuery plugin
+## Update the jQuery plugin
 
 See the [jQuery plugin docs](https://rollbar.com/docs/notifier/rollbar.js/plugins).
 
-### Using in embedded browsers or extensions
+## Using in embedded browsers or extensions
 
 Similar to the v0 instructions, be sure to use "https" instead of a protocol-less URL in the snippet.
 
