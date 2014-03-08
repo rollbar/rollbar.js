@@ -1,10 +1,12 @@
 # Change Log
 
-**1.0.0-beta10**
+**1.0.0-rc.1**
 - Fix bug where we were attempting to wrap an object instead of a function.
   - https://github.com/rollbar/rollbar.js/pull/17
 - Fix bug in jQuery plugin that wasn't passing along the jQuery object.
   - https://github.com/rollbar/rollbar.js/pull/16
+- Added a migration guide for the v0 to v1 notifier
+  - https://github.com/rollbar/rollbar.js/blob/master/docs/migration_v0_to_v1.md
 
 **1.0.0-beta9**
 - Fix api response JSON parsing on older browsers
