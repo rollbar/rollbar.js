@@ -20,7 +20,7 @@ var XHR = {
     }
     return xmlhttp;
   },
-  post: function(url, payload, callback) {
+  post: function(url, accessToken, payload, callback) {
     if (typeof payload !== 'object') {
       throw new Error('Expected an object to POST');
     }
@@ -66,6 +66,7 @@ var XHR = {
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
           }
           request.onreadystatechange = onreadystatechange;
           request.send(payload);
