@@ -1,6 +1,6 @@
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-rc.1';
+Notifier.NOTIFIER_VERSION = '1.0.0-rc.2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -493,6 +493,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
 
   window._rollbarPayloadQueue.push({
     callback: callback,
+    accessToken: this.options.accessToken,
     endpointUrl: this._route('item/'),
     payload: payload
   });
@@ -697,7 +698,7 @@ Notifier.processPayloads = function() {
 function _payloadProcessorTimer() {
   var payloadObj;
   while ((payloadObj = window._rollbarPayloadQueue.pop())) {
-    _processPayload(payloadObj.endpointUrl, payloadObj.payload, payloadObj.callback);
+    _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
   }
   payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
 }
@@ -705,7 +706,7 @@ function _payloadProcessorTimer() {
 
 var rateLimitStartTime = new Date().getTime();
 var rateLimitCounter = 0;
-function _processPayload(url, payload, callback) {
+function _processPayload(url, accessToken, payload, callback) {
   callback = callback || function cb() {};
   var now = new Date().getTime();
   if (now - rateLimitStartTime >= 60000) {
@@ -725,7 +726,7 @@ function _processPayload(url, payload, callback) {
 
   // There's either no rate limit or we haven't met it yet so
   // go ahead and send it.
-  XHR.post(url, payload, function xhrCallback(err, resp) {
+  XHR.post(url, accessToken, payload, function xhrCallback(err, resp) {
     if (err) {
       return callback(err);
     }

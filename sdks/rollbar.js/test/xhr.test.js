@@ -9,21 +9,25 @@ describe('XHR', function() {
 
   it("should execute a simple post", function(done) {
     var url = 'http://localhost:3000/';
+    var accessToken = 'abc123';
     var payload = {};
 
-    XHR.post(url, payload, function(err, response) {
+    XHR.post(url, accessToken, payload, function(err, response) {
       expect(err).to.equal(null);
-      expect(response).to.deep.equal({message: 'It works!'});
+
+      // Make sure the access token header is received by the test server and sent back in the response
+      expect(response).to.deep.equal({accessToken: accessToken});
       done();
     });
   });
 
   it("should only accept an object to post", function(done) {
     var url = 'http://localhost:3000/';
+    var accessToken = 'abc123';
     var payload = '{}';
 
     function test() {
-      XHR.post(url, payload, function(err, response) {})
+      XHR.post(url, accessToken. payload, function(err, response) {})
     }
     expect(test).to.throw(Error);
 
