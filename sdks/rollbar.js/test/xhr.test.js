@@ -27,7 +27,7 @@ describe('XHR', function() {
     var payload = '{}';
 
     function test() {
-      XHR.post(url, accessToken. payload, function(err, response) {})
+      XHR.post(url, accessToken, payload, function(err, response) {})
     }
     expect(test).to.throw(Error);
 
