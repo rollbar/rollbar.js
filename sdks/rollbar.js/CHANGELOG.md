@@ -1,5 +1,8 @@
 # Change Log
 
+**1.0.0-rc.2**
+- Send access token as a request header in browsers that support XMLHttpRequest
+
 **1.0.0-rc.1**
 - Fix bug where we were attempting to wrap an object instead of a function.
   - https://github.com/rollbar/rollbar.js/pull/17
