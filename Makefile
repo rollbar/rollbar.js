@@ -2,11 +2,10 @@ TESTS = test/index.html
 REPORTER = dot
 
 build:
-	@./node_modules/.bin/grunt/grunt build
-	@./node_modules/.bin/uglifyjs src/plugins/jquery.js --output dist/plugins/jquery.min.js -m
+	@./node_modules/.bin/grunt
 
 test:
-	@grunt test
+	@./node_modules/.bin/grunt test
 	@echo ""
 
 .PHONY: test
