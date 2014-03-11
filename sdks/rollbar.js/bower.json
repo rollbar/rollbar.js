@@ -1,6 +1,6 @@
 {
-  "name": "rollbar.js",
-  "version": "1.0.0-rc.1",
+  "name": "rollbar",
+  "version": "1.0.0-rc.2",
   "dependencies": {},
   "main": [
     "dist/rollbar.js", 
