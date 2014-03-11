@@ -110,6 +110,16 @@ You can also find us in IRC: [#rollbar on chat.freenode.net](irc://chat.freenode
 
 For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rollbar.js/issues/new).
 
+## Developing
+
+To set up a development environment, you'll need Node.js and npm.
+
+1. `git submodule update --init`
+2. `npm install -D`
+3. `make`
+
+To run the tests, run `make test`
+
 ## Contributing
 
 1. [Fork it](https://github.com/rollbar/rollbar.js)
@@ -118,4 +128,3 @@ For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rol
 4. Push to the branch (```git push origin my-new-feature```)
 5. Create new Pull Request
 
-To set up a development environment, you'll need Node.js and npm. Run `npm install`, then `make test` to run the tests.
