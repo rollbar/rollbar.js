@@ -34,17 +34,6 @@ module.exports = function(grunt) {
     },
     uglify: {
       dist: {
-        options: {
-          sourceMap: function(path) {
-            return path.replace(/.js$/, ".map");
-          },
-          sourceMapPrefix: 1,
-          sourceMappingURL: function(path) {
-            // pkg.cdn set above initConfig() above
-            var prefix = 'https://' + pkg.cdn.host + '/js/';
-            return prefix + 'v' + pkg.version + '/' + path.replace(/dist\//, '').replace(/.js$/, ".map");
-          }
-        },
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
@@ -197,12 +186,8 @@ module.exports = function(grunt) {
     var rollbarMinJs = 'dist/rollbar.min.js';
     var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
 
-    var rollbarMinMap = 'dist/rollbar.min.map';
-    var releaseRollbarMinMap = 'release/rollbar-' + version + '.min.map';
-
     grunt.file.copy(rollbarJs, releaseRollbarJs);
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
-    grunt.file.copy(rollbarMinMap, releaseRollbarMinMap);
 
     grunt.task.run('tagrelease');
   });
