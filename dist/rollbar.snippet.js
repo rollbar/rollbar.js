@@ -53,15 +53,21 @@ Rollbar.init = function(window, config) {
       };
 
       // Adapted from https://github.com/bugsnag/bugsnag-js
-      ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+      var globals = ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
        'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
        'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
        'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
-       'XMLHttpRequestUpload'].map(function(global) {
+       'XMLHttpRequestUpload'];
+
+      var i;
+      var global;
+      for (i = 0; i < globals.length; ++i) {
+        global = globals[i];
+
         if (window[global] && window[global].prototype) {
           _extendListenerPrototype(client, window[global].prototype);
         }
-      });
+      }
     }
 
     // Expose Rollbar globally
