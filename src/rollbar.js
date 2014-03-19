@@ -837,7 +837,7 @@
             }
           },
           server: {},
-          notifier: {name: 'rollbar-browser-js', version: '0.10.10'}
+          notifier: {name: 'rollbar-browser-js', version: '0.10.11'}
         }
       };
 
