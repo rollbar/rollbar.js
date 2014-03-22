@@ -21,7 +21,7 @@ function _rollbarWindowOnError(client, old, args) {
 
   client.uncaughtError.apply(client, args);
   if (old) {
-    old.apply(window, arguments);
+    old.apply(window, args);
   }
 }
 
