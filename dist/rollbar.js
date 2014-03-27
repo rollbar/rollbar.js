@@ -1831,6 +1831,13 @@ Notifier.prototype._buildBody = function(message, stackInfo, custom) {
 
 
 Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+  if (!message) {
+    if (custom) {
+      message = RollbarJSON.stringify(custom);
+    } else {
+      message = '';
+    }
+  }
   var result = {
     body: message
   };
