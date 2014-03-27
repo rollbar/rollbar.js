@@ -613,6 +613,30 @@ describe("Notifier.log()", function() {
 
     done();
   });
+
+  it("should call the callback even if level was less than reportLevel", function(done) {
+    var notifier = new Notifier();
+    var callback = sinon.stub();
+
+    notifier.configure({reportLevel: 'error'});
+    notifier.debug('this will get ignored', callback);
+
+    expect(callback.calledOnce);
+
+    var call = callback.getCall(0);
+    var args = call.args;
+    expect(args).to.have.length(2);
+    expect(args[0]).to.equal(null);
+    expect(args[1]).to.be.an('object')
+    expect(args[1]).to.have.keys(['err', 'result']);
+    expect(args[1].err).to.equal(0);
+    expect(args[1].result).to.have.keys(['id', 'uuid', 'message']);
+    expect(args[1].result.id).to.equal(null);
+    expect(args[1].result.uuid).to.equal(null);
+    expect(args[1].result.message).to.contain('https://rollbar.com')  // more info at https://...
+
+    done();
+  });
 });
 
 
