@@ -30,6 +30,12 @@
     var url = ajaxSettings.url;
     var type = ajaxSettings.type;
 
+    // If status === 0 it means the user left the page before the ajax event finished
+    // or other uninteresting events.
+    if (!status) {
+      return;
+    }
+
     var err;
     if (thrownError && thrownError.hasOwnProperty('stack')) {
       err = thrownError;
