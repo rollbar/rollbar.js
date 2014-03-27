@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc.5",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -51,7 +51,7 @@
   },
   "plugins": {
     "jquery": {
-      "version": "0.0.7"
+      "version": "0.0.8"
     }
   }
 }
