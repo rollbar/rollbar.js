@@ -479,9 +479,23 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
+
+  var ignoredCallback = function() {
+    if (callback) {
+      // If the item was ignored call the callback anyway
+      var msg = 'This item was not sent to Rollbar because it was ignored. ' +
+                'This can happen if a custom checkIgnore() function was used ' +
+                'or if the item\'s level was less than the notifier\' reportLevel. ' +
+                'See https://rollbar.com/docs/notifier/rollbar.js/configuration for more details.';
+
+      callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
+    }
+  };
+
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
   if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+    ignoredCallback();
     return;
   }
 
@@ -490,6 +504,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     if (this.options.checkIgnore && 
         typeof this.options.checkIgnore === 'function' &&
         this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+      ignoredCallback();
       return;
     }
   } catch (e) {
