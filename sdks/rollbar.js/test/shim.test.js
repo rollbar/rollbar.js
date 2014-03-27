@@ -123,6 +123,22 @@ describe("window.Rollbar.uncaughtError", function() {
 
     done();
   });
+
+  it("should call the previous window.onerror with the correct args", function(done) {
+
+    var spy = sinon.stub();
+    _rollbarWindowOnError(window.Rollbar, spy, ['test message', 'http://localhost/foo']);
+
+    expect(spy.calledOnce).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+    expect(args).to.have.length(2);
+    expect(args[0]).to.equal('test message');
+    expect(args[1]).to.equal('http://localhost/foo');
+
+    done();
+  });
 });
 
 describe("_rollbarWindowOnError", function() {
