@@ -1070,6 +1070,22 @@ describe("Notifier._buildPayload()", function() {
     done();
   });
 
+  it("should set body.message.body to the stringified version of extra data when no message is provided", function(done) {
+    var notifier = new Notifier();
+    var custom = {
+      foo: 'bar'
+    };
+
+    var payload = notifier._buildPayload(new Date(), 'debug', undefined, null, custom);
+
+    expect(payload.data.body).to.have.key('message');
+    expect(payload.data.body.message).to.have.keys(['body', 'extra']);
+    expect(payload.data.body.message.extra).to.deep.equal(custom);
+    expect(payload.data.body.message.body).to.equal(JSON.stringify(custom));
+
+    done();
+  });
+
   it("should create a payload from an eval() error", function(done) {
     var err;
     try {
