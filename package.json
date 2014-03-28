@@ -46,7 +46,7 @@
       "password_confirmation"
     ],
     "logLevel": "debug",
-    "reportLevel": "warning",
+    "reportLevel": "debug",
     "uncaughtErrorLevel": "warning",
     "maxItems": 0,
     "itemsPerMin": 60
