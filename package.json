@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -47,7 +47,9 @@
     ],
     "logLevel": "debug",
     "reportLevel": "warning",
-    "uncaughtErrorLevel": "warning"
+    "uncaughtErrorLevel": "warning",
+    "maxItems": 0,
+    "itemsPerMin": 60
   },
   "plugins": {
     "jquery": {

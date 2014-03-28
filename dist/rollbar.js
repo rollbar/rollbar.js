@@ -1539,12 +1539,14 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-rc.5';
+Notifier.NOTIFIER_VERSION = '1.0.0-rc.6';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
 Notifier.DEFAULT_REPORT_LEVEL = 'warning';
 Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
+Notifier.DEFAULT_ITEMS_PER_MIN = 60;
+Notifier.DEFAULT_MAX_ITEMS = 0;
 
 Notifier.LEVELS = {
   debug: 0,
@@ -1564,8 +1566,13 @@ window._globalRollbarOptions = {
 };
 
 var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
+var _topLevelNotifier;
 
 function Notifier(parentNotifier) {
+  // Save the first notifier so we can use it to send system messages like
+  // when the rate limit is reached.
+  _topLevelNotifier = _topLevelNotifier || this;
+
   var protocol = window.location.protocol;
   if (protocol.indexOf('http') !== 0) {
     protocol = 'https:';
@@ -1575,7 +1582,8 @@ function Notifier(parentNotifier) {
     endpoint: endpoint,
     environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
-    itemsPerMinute: 60,
+    maxItems: Notifier.DEFAULT_MAX_ITEMS,
+    itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN,
     checkIgnore: null, 
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
@@ -2091,8 +2099,10 @@ Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, paylo
  * - custom: Object containing custom data to be sent along with
  *   the item
  * - callback: Function to call once the item is reported to Rollbar
+ * - isUncaught: True if this error originated from an uncaught exception handler
+ * - ignoreRateLimit: True if this item should be allowed despite rate limit checks
  */
-Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught) {
+Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
   var stackInfo = null;
   if (err) {
     // If we've already calculated the stack trace for the error, use it.
@@ -2108,6 +2118,9 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
   }
 
   var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
+  if (ignoreRateLimit) {
+    payload.ignoreRateLimit = true;
+  }
   this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
 };
 
@@ -2158,7 +2171,15 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
 
 
 Notifier.prototype.global = _wrapNotifierFn(function(options) {
+  options = options || {};
   Util.merge(window._globalRollbarOptions, options);
+  if (options.maxItems !== undefined) {
+    rateLimitCounter = 0;
+  }
+
+  if (options.itemsPerMinute !== undefined) {
+    rateLimitPerMinCounter = 0;
+  }
 });
 
 
@@ -2249,40 +2270,62 @@ function _guessErrorClass(errMsg) {
 /***** Payload processor *****/
 
 var payloadProcessorTimeout;
-Notifier.processPayloads = function() {
-  if (!payloadProcessorTimeout) {
-    _payloadProcessorTimer();
+Notifier.processPayloads = function(immediate) {
+  if (!payloadProcessorTimeout || immediate) {
+    _payloadProcessorTimer(immediate);
   }
 };
 
 
-function _payloadProcessorTimer() {
+function _payloadProcessorTimer(immediate) {
   var payloadObj;
-  while ((payloadObj = window._rollbarPayloadQueue.pop())) {
+  while ((payloadObj = window._rollbarPayloadQueue.shift())) {
     _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
   }
-  payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+  if (!immediate) {
+    payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+  }
 }
 
 
 var rateLimitStartTime = new Date().getTime();
 var rateLimitCounter = 0;
+var rateLimitPerMinCounter = 0;
 function _processPayload(url, accessToken, payload, callback) {
   callback = callback || function cb() {};
   var now = new Date().getTime();
   if (now - rateLimitStartTime >= 60000) {
     rateLimitStartTime = now;
-    rateLimitCounter = 0;
+    rateLimitPerMinCounter = 0;
   }
 
   // Check to see if we have a rate limit set or if
   // the rate limit has been met/exceeded.
+  var globalRateLimit = window._globalRollbarOptions.maxItems;
   var globalRateLimitPerMin = window._globalRollbarOptions.itemsPerMinute;
-  if (globalRateLimitPerMin !== undefined && rateLimitCounter >= globalRateLimitPerMin) {
+  var checkOverRateLimit = function() { return !payload.ignoreRateLimit && globalRateLimit >= 1 && rateLimitCounter >= globalRateLimit; };
+  var checkOverRateLimitPerMin = function() { return !payload.ignoreRateLimit && globalRateLimitPerMin >= 1 && rateLimitPerMinCounter >= globalRateLimitPerMin; };
+
+  if (checkOverRateLimit()) {
+    callback(new Error(globalRateLimit + ' max items reached'));
+    return;
+  } else if (checkOverRateLimitPerMin()) {
     callback(new Error(globalRateLimitPerMin + ' items per minute reached'));
     return;
   } else {
     rateLimitCounter++;
+    rateLimitPerMinCounter++;
+
+    // Check to see if we are just about to go over the rate limit. If so, notify the customer.
+    if (checkOverRateLimit()) {
+      _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
+          'maxItems has been hit. Future messages will be dropped', // message
+          null, // err
+          {maxItems: globalRateLimit}, // custom
+          null,  // callback
+          false, // isUncaught
+          true); // ignoreRateLimit
+    }
   }
 
   // There's either no rate limit or we haven't met it yet so
