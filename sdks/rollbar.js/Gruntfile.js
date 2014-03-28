@@ -86,6 +86,16 @@ module.exports = function(grunt) {
             // default rollbar.js CDN URL
             from: /(DEFAULT_ROLLBARJS_URL|defaultRollbarJsUrl) = (["']).*(["'])/g,
             to: '$1 = $2//<%= pkg.cdn.host %>/js/v<%= pkg.pinnedVersion %>/rollbar.min.js$3'
+          },
+          {
+            // default max items
+            from: /(DEFAULT_MAX_ITEMS) = ([0-9]+)/g,
+            to: '$1 = <%= pkg.defaults.maxItems %>'
+          },
+          {
+            // default items per min
+            from: /(DEFAULT_ITEMS_PER_MIN) = ([0-9]+)/g,
+            to: '$1 = <%= pkg.defaults.itemsPerMin %>'
           }
         ]
       }

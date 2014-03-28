@@ -141,8 +141,88 @@ describe("Notifier.global()", function() {
 
     return done();
   });
-});
 
+  it("should respect maxItems", function(done) {
+    var xhrPostStub = sinon.stub(XHR, 'post', function(url, accessToken, payload, cb) {
+      return cb(null);
+    });
+    var notifier = new Notifier();
+    notifier.global({maxItems: 2});
+
+    var doCheck = function() {
+      expect(xhrPostStub.called).to.equal(true);
+
+      // Called once for the first and again for the
+      // second message. The third error will not call XHR.post
+      // so the stub will not be called.
+      expect(xhrPostStub.callCount).to.equal(2);
+
+      var firstCall = xhrPostStub.getCall(0);
+      var lastCall = xhrPostStub.getCall(1);
+      var firstArgs = firstCall.args;
+      var lastArgs = lastCall.args;
+
+      expect(JSON.stringify(firstArgs[2])).to.contain('first error');
+      expect(JSON.stringify(lastArgs[2])).to.contain('second error');
+
+      xhrPostStub.restore();
+      window._rollbarPayloadQueue.length = 0;
+
+      return done();
+    };
+
+    notifier.error('first error');
+    notifier.error('second error');
+    notifier.error('third error', doCheck);
+    Notifier.processPayloads(true);
+  });
+
+  it("should enqueue a maxItems reched payload", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var notifier = new Notifier();
+    notifier.global({maxItems: 3});
+    notifier.error('first error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    notifier.error('second error');
+    expect(_rollbarPayloadQueue.length).to.equal(2);
+
+    notifier.error('third error');
+    expect(_rollbarPayloadQueue.length).to.equal(3);
+
+    var spy = sinon.stub(window._topLevelNotifier, '_log');
+    Notifier.processPayloads(true);
+
+    expect(spy.called).to.equal(true);
+    var call = spy.getCall(0);
+    var args = call.args;
+    expect(args[1]).to.contain('maxItems has been hit.');
+    expect(args[6]).to.equal(true);
+
+    spy.restore();
+
+    done();
+  });
+
+  it("should respect itemsPerMinute", function(done) {
+    var xhrPostStub = sinon.stub(XHR, 'post');
+    var notifier = new Notifier();
+    notifier.global({maxItems: 10, itemsPerMinute: 2}); // setting maxItems because we want to reset to rateLimitCounter var
+
+    notifier.error('first error');
+    notifier.error('second error');
+    notifier.error('third error');
+    Notifier.processPayloads(true);
+
+    expect(xhrPostStub.called).to.equal(true);
+    expect(xhrPostStub.callCount).to.equal(2);
+
+    xhrPostStub.restore();
+
+    return done();
+  });
+});
 
 
 
@@ -714,6 +794,8 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       var server = sinon.fakeServer.create();
       var _stub = sinon.stub().throws(new Error('user-supplied callback is broken'));
 
+      notifier.global({maxItems: 100, itemsPerMinute: 100});
+
       // report all items
       notifier.configure({reportLevel: 'debug'});
 
@@ -725,7 +807,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
           notifier[level]('fake request', _stub);
 
           expect(window._rollbarPayloadQueue.length).to.equal(1);
-          Notifier.processPayloads();
+          Notifier.processPayloads(true);
         } catch (e) {
           console.log(e);
           console.log(e.stack);
@@ -788,7 +870,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
         notifier[level]('fake request', stub);
 
         expect(window._rollbarPayloadQueue.length).to.equal(1);
-        Notifier.processPayloads();
+        Notifier.processPayloads(true);
       };
 
       // The error should not be propagated up the the caller of notifier.error()
