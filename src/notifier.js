@@ -787,6 +787,10 @@ function _processPayload(url, accessToken, payload, callback) {
           false, // isUncaught
           true); // ignoreRateLimit
     }
+    // remove this key since it's only used for internal notifier logic
+    if (payload.ignoreRateLimit) {
+      delete payload.ignoreRateLimit;
+    }
   }
 
   // There's either no rate limit or we haven't met it yet so
