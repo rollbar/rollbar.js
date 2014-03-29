@@ -777,7 +777,7 @@ function _processPayload(url, accessToken, payload, callback) {
     rateLimitCounter++;
     rateLimitPerMinCounter++;
 
-    // Check to see if we are just about to go over the rate limit. If so, notify the customer.
+    // Check to see if we have just reached the rate limit. If so, notify the customer.
     if (checkOverRateLimit()) {
       _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
           'maxItems has been hit. Future messages will be dropped', // message
