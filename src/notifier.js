@@ -1,6 +1,6 @@
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-rc.6';
+Notifier.NOTIFIER_VERSION = '1.0.0-rc.7';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -780,7 +780,7 @@ function _processPayload(url, accessToken, payload, callback) {
     // Check to see if we have just reached the rate limit. If so, notify the customer.
     if (checkOverRateLimit()) {
       _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
-          'maxItems has been hit. Future messages will be dropped', // message
+          'maxItems has been hit. Ignoring errors for the remainder of the current page load.', // message
           null, // err
           {maxItems: globalRateLimit}, // custom
           null,  // callback
