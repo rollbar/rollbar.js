@@ -25,7 +25,7 @@ Rollbar can be configured at 3 different levels -- global, notifier and scope. A
   - Affects all notifiers
   - Set by calling `global()` on any notifier
   - Merges/overwrites previous configuration
-  - Currently, the only supported option is `itemsPerMinute`
+  - Currently, the only supported options are `maxItems` and `itemsPerMinute`
 
 ### Notifier configuration - context and/or payload
 
@@ -104,6 +104,11 @@ Both global and context configuration have the following reserved key names that
   If you would like to remove this limit, set it to `undefined`.
 
 Default: ```60```
+  
+  <dt>maxItems</dt>
+  <dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```.
+
+Default: ```0``` (no limit)
   </dl>
 
 ### Context
