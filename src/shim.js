@@ -131,36 +131,42 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
 };
 
 Rollbar.prototype.wrap = function(f) {
-  var _this = this;
+  try {
+    var _this = this;
 
-  if (typeof f !== 'function') {
-    return f;
-  }
+    if (typeof f !== 'function') {
+      return f;
+    }
 
-  if (f._isWrap) {
-    return f;
-  }
+    if (f._isWrap) {
+      return f;
+    }
 
-  if (!f._wrapped) {
-    f._wrapped = function () {
-      try {
-        return f.apply(this, arguments);
-      } catch(e) {
-        window._rollbarWrappedError = e;
-        throw e;
-      }
-    };
+    if (!f._wrapped) {
+      f._wrapped = function () {
+        try {
+          return f.apply(this, arguments);
+        } catch(e) {
+          window._rollbarWrappedError = e;
+          throw e;
+        }
+      };
 
-    f._wrapped._isWrap = true;
+      f._wrapped._isWrap = true;
 
-    for (var prop in f) {
-      if (f.hasOwnProperty(prop)) {
-        f._wrapped[prop] = f[prop];
+      for (var prop in f) {
+        if (f.hasOwnProperty(prop)) {
+          f._wrapped[prop] = f[prop];
+        }
       }
     }
-  }
 
-  return f._wrapped;
+    return f._wrapped;
+  } catch (e) {
+    // Try-catch here is to work around issue where wrap() fails when used inside Selenium.
+    // Return the original function if the wrap fails.
+    return f;
+  }
 };
 
 // Stub out rollbar.js methods
