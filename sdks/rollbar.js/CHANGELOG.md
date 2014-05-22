@@ -1,5 +1,8 @@
 # Change Log
 
+**1.0.0-rc.8**
+- Fix bug that created/used a global variable.
+
 **1.0.0-rc.7**
 - Change default reportLevel to `debug`. Previously, calls to `Rollbar.info` and `Rollbar.debug` were filtered out under the default configuration; now they are let through.
 
