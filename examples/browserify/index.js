@@ -1,7 +1,7 @@
 var rollbar = require('../dist/rollbar.require.js');
 
 var rollbarConfig = {
-  accessToken: '...',
+  accessToken: 'POST_CLIENT_ACCESS_TOKEN',
   captureUncaught: true,
   payload: {
     environment: 'development',
