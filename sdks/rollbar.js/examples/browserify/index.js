@@ -1,4 +1,4 @@
-var rollbar = require('../dist/rollbar.require.js');
+var rollbar = require('../../dist/rollbar.require.min.js');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ACCESS_TOKEN',
