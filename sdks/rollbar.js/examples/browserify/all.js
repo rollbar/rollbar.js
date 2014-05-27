@@ -2420,7 +2420,7 @@ module.exports = globalNotifier;
 var rollbar = require('../dist/rollbar.require.js');
 
 var rollbarConfig = {
-  accessToken: '...',
+  accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true,
   payload: {
     environment: 'development',
