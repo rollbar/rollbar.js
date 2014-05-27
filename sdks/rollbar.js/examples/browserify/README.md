@@ -34,4 +34,4 @@ try {
 3. Open test.html in your browser and click the button
 4. Go to your project dashboard and see the error
 
-![Screenshot]('./examples/browserify/img/screenshot.png')
+![alt Screenshot]('//github.com/rollbar/rollbar.js/raw/browserify/img/screenshot.png' Screenshot)
