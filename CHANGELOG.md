@@ -1,5 +1,8 @@
 # Change Log
 
+**1.0.0-rc.9**
+- Fix bug that caused a wrapped async handler to break if there was no callback provided.
+
 **1.0.0-rc.8**
 - Fix bug that created/used a global variable.
 

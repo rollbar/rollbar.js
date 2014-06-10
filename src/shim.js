@@ -201,7 +201,7 @@ function _extendListenerPrototype(client, prototype) {
 
     var oldRemoveEventListener = prototype.removeEventListener;
     prototype.removeEventListener = function(event, callback, bubble) {
-      oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
+      oldRemoveEventListener.call(this, event, callback ? callback._wrapped : callback, bubble);
     };
   }
 }
