@@ -27,8 +27,11 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js', 'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
-          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/shimload.js']
+          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
+                                      'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.require.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
+                                              'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/required.js'],
+          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
         }
       }
     },
@@ -37,6 +40,7 @@ module.exports = function(grunt) {
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
+          'dist/<%= pkg.name %>.require.min.js': 'dist/<%= pkg.name %>.require.js',
           'dist/<%= pkg.name %>.shim.min.js': 'src/shim.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
