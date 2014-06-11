@@ -15,7 +15,6 @@ var rollbarConfig = {
 };
 var rollbar = require("expose?rollbar!./rollbar.require-v1.0.min.js"); // Use the expose-loader to expose the global
 rollbar.init(rollbarConfig);
-window.rollbar = rollbar;
 ```
 
 2. Report exceptions and messages in your code:
