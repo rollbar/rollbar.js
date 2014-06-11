@@ -32,7 +32,7 @@ try {
 ## To build and test the example
 1. Edit index.js and add your Rollbar `post_client_access_token`
    - Sign up for a free account [here](https://rollbar.com/signup/)
-2. ```browserify index.js > all.js```
+2. ```webpack index.js all.js```
 3. Open test.html in your browser and click the button
 4. Go to your project dashboard and see the error
 
