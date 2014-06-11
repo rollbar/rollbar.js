@@ -1,4 +1,3 @@
-(function(window, document){
 /*
     json2.js
     2013-05-26
@@ -1539,7 +1538,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-rc.8';
+Notifier.NOTIFIER_VERSION = '1.0.0-rc.10';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2414,4 +2413,3 @@ globalNotifier.init = function(config) {
 };
 
 module.exports = globalNotifier;
-})(window, document);

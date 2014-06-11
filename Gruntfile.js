@@ -21,17 +21,21 @@ module.exports = function(grunt) {
       files: ['Gruntfile.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
     },
     concat: {
-      options: {
-        banner: '(function(window, document){\n',
-        footer: '})(window, document);'
-      },
       dist: {
+        options: {
+          banner: '(function(window, document){\n',
+          footer: '})(window, document);'
+        },
         files: {
           'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
                                       'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
-          'dist/<%= pkg.name %>.require.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
-                                              'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/required.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
+        }
+      },
+      required: {
+        files: {
+          'dist/<%= pkg.name %>.require.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
+                                              'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/required.js']
         }
       }
     },
@@ -43,6 +47,11 @@ module.exports = function(grunt) {
           'dist/<%= pkg.name %>.require.min.js': 'dist/<%= pkg.name %>.require.js',
           'dist/<%= pkg.name %>.shim.min.js': 'src/shim.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
+        }
+      },
+      required: {
+        files: {
+          'dist/<%= pkg.name %>.require.min.js': 'dist/<%= pkg.name %>.require.js',
         }
       }
     },
