@@ -1,5 +1,8 @@
 # Change Log
 
+**1.0.0-rc.10**
+- Add support for using rollbar with Webpack/Browserify via `require("rollbar.require.min.js")` with examples.
+
 **1.0.0-rc.9**
 - Fix bug that caused a wrapped async handler to break if there was no callback provided.
 
