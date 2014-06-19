@@ -395,7 +395,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.frames[0].filename).to.equal('http://foo.com/');
 
@@ -411,7 +411,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.frames[0].filename).to.equal('(unknown)');
 
@@ -427,7 +427,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.frames[0].filename).to.equal('(unknown)');
 
@@ -443,7 +443,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.exception.message).to.equal('uncaught exception');
 
@@ -459,7 +459,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.frames[0].lineno).to.equal(null);
 
@@ -475,7 +475,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.exception['class']).to.equal('SyntaxError');
 
@@ -491,7 +491,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = spy.getCall(0);
     var args = call.args;
-    var payload = args[0]; 
+    var payload = args[0];
 
     expect(payload.data.body.trace.frames.length).to.equal(1);
 
@@ -883,7 +883,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       expect(stub.getCall(0).args.length).to.equal(1);
       expect(stub.getCall(0).args[0]).to.be.an('object');
       expect(stub.getCall(0).args[0].constructor.name).to.equal('Error');
-      
+
       // Shouldn't log internal errors for xhr request failures
       expect(consoleLogStub.called).to.equal(false);
 
@@ -1561,7 +1561,7 @@ describe("Notifier.wrap()", function() {
 
     done();
   });
-  
+
   it("should copy over function properties to the wrapped version", function(done) {
     var notifier = new Notifier();
 
@@ -1602,4 +1602,65 @@ describe("Notifier.wrap()", function() {
     var object = {};
     expect(window.Rollbar.wrap(object)).to.be.equal(object);
   });
+});
+
+/*
+ * Notifier._urlIsWhitelisted(payload)
+ */
+describe("Notifier._urlIsWhitelisted()", function() {
+
+  function buildPayloadWithFrame(frame){
+    return {
+      data: {
+        body: {
+          trace: {
+            frames: [frame]
+          }
+        }
+      }
+    };
+  }
+
+  function buildNotifierWithWhitelist(whitelist){
+    var notifier = new Notifier();
+    notifier.configure({ hostWhiteList: whitelist });
+    return notifier;
+  }
+
+  it("should return true with an empty config", function(done){
+    var notifier = new Notifier();
+    var payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
+    expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
+    done();
+  });
+
+  it("should return true with an empty payload", function(done){
+    var notifier = buildNotifierWithWhitelist(["example.com"]);
+    var payload = {};
+
+    expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
+    done();
+  });
+
+  it("should return true with an undefined payload filename", function(done){
+    var notifier = buildNotifierWithWhitelist(["example.com"]);
+    var payload = buildPayloadWithFrame({ filename: '(unknown)' });
+    expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
+    done();
+  });
+
+  it("should return true with a url matching the whitelist", function(done){
+    var notifier = buildNotifierWithWhitelist(["example.com"]);
+    var payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
+    expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
+    done();
+  });
+
+  it("should return false with a url not matching the whitelist",function(done){
+    var notifier = buildNotifierWithWhitelist(["example.com"]);
+    var payload = buildPayloadWithFrame({ filename: 'sample.com/js/somefile' });
+    expect(notifier._urlIsWhitelisted(payload)).to.equal(false);
+    done();
+  });
+
 });
