@@ -490,24 +490,24 @@ Notifier.prototype._urlIsWhitelisted = function(payload){
   try {
     var whitelist = this.options.hostWhiteList;
     var UNKNOWN_FILENAME = "(unknown)";
-    if ( whitelist && whitelist.length > 0) {
+    if (whitelist && whitelist.length > 0) {
       var trace = payload.data.body.trace;
 
-      if ( trace ) {
+      if (trace) {
         var frame, filename, i, frameLength;
         var j, url, listLength, urlRegex;
         listLength = whitelist.length;
         frameLength = trace.frames.length;
 
-        for (i=0; i < frameLength; i++ ) {
-          frame    = trace.frames[i];
+        for (i = 0; i < frameLength; i++) {
+          frame = trace.frames[i];
           filename = frame.filename;
-          if( typeof filename === "string" && filename != UNKNOWN_FILENAME ) {
-            for ( j=0; j < listLength; j++ ) {
-              url      = whitelist[j];
+          if(typeof filename === "string" && filename != UNKNOWN_FILENAME) {
+            for (j = 0; j < listLength; j++) {
+              url = whitelist[j];
               urlRegex = new RegExp(url);
 
-              if ( !urlRegex.exec(filename) ) {
+              if (!urlRegex.exec(filename)) {
                 return false;
               }
             }
@@ -558,7 +558,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
-  if( !this._urlIsWhitelisted(payload) ) {
+  if(!this._urlIsWhitelisted(payload)) {
     return;
   }
 
