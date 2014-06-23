@@ -33,9 +33,9 @@ If you're running Rollbar on an environment besides production, change the ```en
 ### Test your installation
 
 1. Navigate your browser to a page that has the above code installed
-2. Type the following code *into the address bar* (not the console) and press enter: ```javascript:testing_rollbar_123();```
+2. Type the following code into the console and press enter: ```window.onerror("TestRollbarError: testing window.onerror", window.location.href)```
 
-As long as you don't happen to have a function by that name, this will cause an uncaught error that will be reported to Rollbar. It should appear in the dashboard within a few seconds.
+This simulates an uncaught error. It should appear in the Rollbar dashboard within a few seconds.
 
 ## Usage
 
