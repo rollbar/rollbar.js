@@ -210,8 +210,16 @@ module.exports = function(grunt) {
     var rollbarMinJs = 'dist/rollbar.min.js';
     var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
 
+    var rollbarRequireJs = 'dist/rollbar.require.js';
+    var releaseRollbarRequireJs = 'release/rollbar-' + version + '.require.js';
+
+    var rollbarRequireMinJs = 'dist/rollbar.require.min.js';
+    var releaseRollbarRequireMinJs = 'release/rollbar-' + version + '.require.min.js';
+
     grunt.file.copy(rollbarJs, releaseRollbarJs);
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
+    grunt.file.copy(rollbarRequireJs, releaseRollbarRequireJs);
+    grunt.file.copy(rollbarRequireMinJs, releaseRollbarRequireMinJs);
 
     grunt.task.run('tagrelease');
   });
