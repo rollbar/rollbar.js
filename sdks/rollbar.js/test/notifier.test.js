@@ -1627,40 +1627,34 @@ describe("Notifier._urlIsWhitelisted()", function() {
     return notifier;
   }
 
-  it("should return true with an empty config", function(done){
+  it("should return true with an empty config", function(){
     var notifier = new Notifier();
     var payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
     expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
-    done();
   });
 
-  it("should return true with an empty payload", function(done){
+  it("should return true with an empty payload", function(){
     var notifier = buildNotifierWithWhitelist(["example.com"]);
     var payload = {};
-
     expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
-    done();
   });
 
-  it("should return true with an undefined payload filename", function(done){
+  it("should return true with an undefined payload filename", function(){
     var notifier = buildNotifierWithWhitelist(["example.com"]);
     var payload = buildPayloadWithFrame({ filename: '(unknown)' });
     expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
-    done();
   });
 
-  it("should return true with a url matching the whitelist", function(done){
+  it("should return true with a url matching the whitelist", function(){
     var notifier = buildNotifierWithWhitelist(["example.com"]);
     var payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
     expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
-    done();
   });
 
-  it("should return false with a url not matching the whitelist",function(done){
+  it("should return false with a url not matching the whitelist",function(){
     var notifier = buildNotifierWithWhitelist(["example.com"]);
     var payload = buildPayloadWithFrame({ filename: 'sample.com/js/somefile' });
     expect(notifier._urlIsWhitelisted(payload)).to.equal(false);
-    done();
   });
 
 });
