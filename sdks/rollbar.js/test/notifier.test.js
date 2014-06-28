@@ -1657,4 +1657,24 @@ describe("Notifier._urlIsWhitelisted()", function() {
     expect(notifier._urlIsWhitelisted(payload)).to.equal(false);
   });
 
+  it("should return pass the whitelist to child notifiers",function(){
+    var notifier = buildNotifierWithWhitelist(["example.com"]);
+    var child = notifier.scope();
+    var payload = buildPayloadWithFrame({ filename: 'sample.com/js/somefile' });
+    expect(child._urlIsWhitelisted(payload)).to.equal(false);
+  });
+
+  it("should respect multiple white-listed domains",function(){
+    var notifier = buildNotifierWithWhitelist(["example.com", "sample.com"]);
+    var child = notifier.scope();
+    var payload = buildPayloadWithFrame({ filename: 'sample.com/js/somefile' });
+    expect(child._urlIsWhitelisted(payload)).to.equal(true);
+
+    payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
+    expect(child._urlIsWhitelisted(payload)).to.equal(true);
+
+    payload = buildPayloadWithFrame({ filename: 'not-on-the-list.com/js/somefile' });
+    expect(child._urlIsWhitelisted(payload)).to.equal(false);
+  });
+
 });
