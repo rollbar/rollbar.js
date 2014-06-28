@@ -487,40 +487,39 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 };
 
 Notifier.prototype._urlIsWhitelisted = function(payload){
+  var UNKNOWN_FILENAME = "(unknown)";
+  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
+  var i, j;
+
   try {
-    var whitelist = this.options.hostWhiteList;
-    var UNKNOWN_FILENAME = "(unknown)";
-    if (whitelist && whitelist.length > 0) {
-      var trace = payload.data.body.trace;
+    whitelist = this.options.hostWhiteList;
+    trace = payload.data.body.trace;
 
-      if (trace) {
-        var frame, filename, i, frameLength;
-        var j, url, listLength, urlRegex;
-        listLength = whitelist.length;
-        frameLength = trace.frames.length;
+    if (!whitelist || whitelist.length === 0) { return true; }
+    if (!trace) { return true; }
 
-        for (i = 0; i < frameLength; i++) {
-          frame = trace.frames[i];
-          filename = frame.filename;
-          if(typeof filename === "string" && filename != UNKNOWN_FILENAME) {
-            for (j = 0; j < listLength; j++) {
-              url = whitelist[j];
-              urlRegex = new RegExp(url);
+    listLength = whitelist.length;
+    frameLength = trace.frames.length;
+    for (i = 0; i < frameLength; i++) {
+      frame = trace.frames[i];
+      filename = frame.filename;
+      if (typeof filename !== "string" || filename === UNKNOWN_FILENAME) { return true; }
+      for (j = 0; j < listLength; j++) {
+        url = whitelist[j];
+        urlRegex = new RegExp(url);
 
-              if (!urlRegex.exec(filename)) {
-                return false;
-              }
-            }
-          }
+        if (urlRegex.test(filename)){
+          return true;
         }
       }
     }
   } catch (e) {
     this.configure({hostWhiteList: null});
     this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+    return true;
   }
 
-  return true;
+  return false;
 };
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
