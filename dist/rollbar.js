@@ -1379,7 +1379,7 @@ var Util = {
         }
       }
     }
-    
+
     for (i = 0; i < keys.length; ++i) {
       k = keys[i];
       v = obj[k];
@@ -1584,7 +1584,7 @@ function Notifier(parentNotifier) {
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
     maxItems: Notifier.DEFAULT_MAX_ITEMS,
     itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN,
-    checkIgnore: null, 
+    checkIgnore: null,
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
     uncaughtErrorLevel: Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL,
@@ -1663,7 +1663,7 @@ Notifier.prototype._getLogArgs = function(args) {
   }
 
   // TODO(cory): somehow pass in timestamp too...
-  
+
   return {
     level: level,
     message: message,
@@ -1905,7 +1905,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
       }
 
       if (code) {
-        frame.code = code; 
+        frame.code = code;
       }
 
       if (pre || post) {
@@ -2025,6 +2025,40 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
   return ret;
 };
 
+Notifier.prototype._urlIsWhitelisted = function(payload){
+  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
+  var i, j;
+
+  try {
+    whitelist = this.options.hostWhiteList;
+    trace = payload.data.body.trace;
+
+    if (!whitelist || whitelist.length === 0) { return true; }
+    if (!trace) { return true; }
+
+    listLength = whitelist.length;
+    frameLength = trace.frames.length;
+    for (i = 0; i < frameLength; i++) {
+      frame = trace.frames[i];
+      filename = frame.filename;
+      if (typeof filename !== "string") { return true; }
+      for (j = 0; j < listLength; j++) {
+        url = whitelist[j];
+        urlRegex = new RegExp(url);
+
+        if (urlRegex.test(filename)){
+          return true;
+        }
+      }
+    }
+  } catch (e) {
+    this.configure({hostWhiteList: null});
+    this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+    return true;
+  }
+
+  return false;
+};
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
 
@@ -2049,7 +2083,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
 
   // Users can set their own ignore criteria using this.options.checkIgnore()
   try {
-    if (this.options.checkIgnore && 
+    if (this.options.checkIgnore &&
         typeof this.options.checkIgnore === 'function' &&
         this.options.checkIgnore(isUncaught, callerArgs, payload)) {
       ignoredCallback();
@@ -2059,6 +2093,10 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     // Disable the custom checkIgnore and report errors in the checkIgnore function
     this.configure({checkIgnore: null});
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+  }
+
+  if(!this._urlIsWhitelisted(payload)) {
+    return;
   }
 
   window._rollbarPayloadQueue.push({
@@ -2257,9 +2295,12 @@ function _wrapNotifierFn(fn, ctx) {
 
 var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
 function _guessErrorClass(errMsg) {
+  if (!errMsg) {
+    return ["Unknown error. There was no error message to display.", ""];
+  }
   var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
   var errClass = '(unknown)';
-  
+
   if (errClassMatch) {
     errClass = errClassMatch[errClassMatch.length - 1];
     errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
