@@ -2025,7 +2025,6 @@ Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
 };
 
 Notifier.prototype._urlIsWhitelisted = function(payload){
-  var UNKNOWN_FILENAME = "(unknown)";
   var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
   var i, j;
 
@@ -2041,7 +2040,7 @@ Notifier.prototype._urlIsWhitelisted = function(payload){
     for (i = 0; i < frameLength; i++) {
       frame = trace.frames[i];
       filename = frame.filename;
-      if (typeof filename !== "string" || filename === UNKNOWN_FILENAME) { return true; }
+      if (typeof filename !== "string") { return true; }
       for (j = 0; j < listLength; j++) {
         url = whitelist[j];
         urlRegex = new RegExp(url);

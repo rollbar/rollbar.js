@@ -1639,12 +1639,6 @@ describe("Notifier._urlIsWhitelisted()", function() {
     expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
   });
 
-  it("should return true with an undefined payload filename", function(){
-    var notifier = buildNotifierWithWhitelist(["example.com"]);
-    var payload = buildPayloadWithFrame({ filename: '(unknown)' });
-    expect(notifier._urlIsWhitelisted(payload)).to.equal(true);
-  });
-
   it("should return true with a url matching the whitelist", function(){
     var notifier = buildNotifierWithWhitelist(["example.com"]);
     var payload = buildPayloadWithFrame({ filename: 'example.com/js/somefile' });
