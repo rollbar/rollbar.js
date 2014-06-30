@@ -1,5 +1,8 @@
 # Change Log
 
+**1.0.0-rc.11**
+- Add support for whitelisting host names/domains, (pr#31).
+
 **1.0.0-rc.10**
 - Add support for using rollbar with Webpack/Browserify via `require("rollbar.require.min.js")` with examples.
 
