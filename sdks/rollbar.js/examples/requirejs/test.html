@@ -11,10 +11,6 @@
         }
       };
 
-      require.config({
-        baseUrl: "./",
-        waitSeconds: 3
-      });
       require(["../../dist/rollbar.amd.js"],
         function(rollbar) {
           // Note: clicking on the "Foo" button below before the Rollbar
