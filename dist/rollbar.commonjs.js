@@ -1,4 +1,4 @@
-/* rollbar.js for use with AMD loaders */
+/* rollbar.js for use with CommonJS loaders */
 /*
     json2.js
     2013-05-26
