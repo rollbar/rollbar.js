@@ -15,10 +15,6 @@ var rollbarConfig = {
 };
 
 // Require the Rollbar library
-require.config({
-  baseUrl: "./",
-  waitSeconds: 3
-});
 require(["rollbar.amd-v1.1.min.js"], function(rollbar) {
   rollbar.init(rollbarConfig);
 });
