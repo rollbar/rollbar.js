@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       },
       amd: {
         options: {
-          banner: '/* rollbar.js for use with CommonJS loaders */\ndefine(function(require, exports, module) {\n',
+          banner: '/* rollbar.js for use with AMD loaders */\ndefine(function(require, exports, module) {\n',
           footer: 'module.exports = globalNotifier;\n});'
         },
         files: {
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       },
       commonjs: {
         options: {
-          banner: '/* rollbar.js for use with AMD loaders */\n',
+          banner: '/* rollbar.js for use with CommonJS loaders */\n',
           footer: 'module.exports = globalNotifier'
         },
         files: {

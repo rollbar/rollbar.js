@@ -1,4 +1,4 @@
-/* rollbar.js for use with CommonJS loaders */
+/* rollbar.js for use with AMD loaders */
 define(function(require, exports, module) {
 /*
     json2.js
