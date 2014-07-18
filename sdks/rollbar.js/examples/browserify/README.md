@@ -3,9 +3,9 @@
 1. Require and initialize the Rollbar javascript module:
 
 ```js
-// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.0/rollbar.require.min.js and place in current directory
-// and rename to rollbar.require-v1.0.min.js
-var rollbar = require('./rollbar.require-v1.0.min.js');
+// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.commonjs.min.js and place in current directory
+// and rename to rollbar.commonjs-v1.1.min.js
+var rollbar = require('./rollbar.commonjs-v1.1.min.js');
 
 var rollbarConfig = {
   accessToken: '...',
