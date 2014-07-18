@@ -32,10 +32,24 @@ module.exports = function(grunt) {
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
         }
       },
-      required: {
+      amd: {
+        options: {
+          banner: '/* rollbar.js for use with CommonJS loaders */\ndefine(function(require, exports, module) {\n',
+          footer: 'module.exports = globalNotifier;\n});'
+        },
         files: {
-          'dist/<%= pkg.name %>.require.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
-                                              'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/required.js']
+          'dist/<%= pkg.name %>.amd.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
+                                                'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/globalnotifier.js']
+        }
+      },
+      commonjs: {
+        options: {
+          banner: '/* rollbar.js for use with AMD loaders */\n',
+          footer: 'module.exports = globalNotifier'
+        },
+        files: {
+          'dist/<%= pkg.name %>.commonjs.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
+                                               'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/globalnotifier.js']
         }
       }
     },
@@ -44,14 +58,20 @@ module.exports = function(grunt) {
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
-          'dist/<%= pkg.name %>.require.min.js': 'dist/<%= pkg.name %>.require.js',
+          'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
+          'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
           'dist/<%= pkg.name %>.shim.min.js': 'src/shim.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
       },
-      required: {
+      amd: {
         files: {
-          'dist/<%= pkg.name %>.require.min.js': 'dist/<%= pkg.name %>.require.js',
+          'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
+        }
+      },
+      commonjs: {
+        files: {
+          'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
         }
       }
     },
@@ -210,16 +230,24 @@ module.exports = function(grunt) {
     var rollbarMinJs = 'dist/rollbar.min.js';
     var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
 
-    var rollbarRequireJs = 'dist/rollbar.require.js';
-    var releaseRollbarRequireJs = 'release/rollbar-' + version + '.require.js';
+    var rollbarAmdJs = 'dist/rollbar.amd.js';
+    var releaseRollbarAmdJs = 'release/rollbar-' + version + '.amd.js';
 
-    var rollbarRequireMinJs = 'dist/rollbar.require.min.js';
-    var releaseRollbarRequireMinJs = 'release/rollbar-' + version + '.require.min.js';
+    var rollbarAmdMinJs = 'dist/rollbar.amd.min.js';
+    var releaseRollbarAmdMinJs = 'release/rollbar-' + version + '.amd.min.js';
+
+    var rollbarCommonJs = 'dist/rollbar.commonjs.js';
+    var releaseRollbarCommonJs = 'release/rollbar-' + version + '.commonjs.js';
+
+    var rollbarCommonMinJs = 'dist/rollbar.commonjs.min.js';
+    var releaseRollbarCommonMinJs = 'release/rollbar-' + version + '.commonjs.min.js';
 
     grunt.file.copy(rollbarJs, releaseRollbarJs);
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
-    grunt.file.copy(rollbarRequireJs, releaseRollbarRequireJs);
-    grunt.file.copy(rollbarRequireMinJs, releaseRollbarRequireMinJs);
+    grunt.file.copy(rollbarAmdJs, releaseRollbarAmdJs);
+    grunt.file.copy(rollbarAmdMinJs, releaseRollbarAmdMinJs);
+    grunt.file.copy(rollbarCommonJs, releaseRollbarCommonJs);
+    grunt.file.copy(rollbarCommonMinJs, releaseRollbarCommonMinJs);
 
     grunt.task.run('tagrelease');
   });

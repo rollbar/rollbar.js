@@ -4,8 +4,8 @@
 
 ```js
 
-// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.0/rollbar.require.min.js and place in current directory
-// and rename to rollbar.require-v1.0.min.js
+// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.commonjs.min.js and place in current directory
+// and rename to rollbar.commonjs-v1.1.min.js
 var rollbarConfig = {
   accessToken: '...',
   captureUncaught: true,
@@ -13,7 +13,7 @@ var rollbarConfig = {
     environment: 'development',
   }
 };
-var rollbar = require("expose?rollbar!./rollbar.require-v1.0.min.js"); // Use the expose-loader to expose the global
+var rollbar = require("expose?rollbar!./rollbar.commonjs-v1.1.min.js"); // Use the expose-loader to expose the global
 rollbar.init(rollbarConfig);
 ```
 
