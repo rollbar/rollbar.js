@@ -55,7 +55,7 @@ Rollbar.global({itemsPerMinute: 5});
 Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
     // ignore all uncaught errors and all 'debug' items
     return isUncaught === true || payload.data.level === 'debug';
-});
+}});
 
 // Set the environment, default log level and the context
 Rollbar.configure({logLevel: 'info', payload: {environment: 'staging', context: 'home#index'}});
