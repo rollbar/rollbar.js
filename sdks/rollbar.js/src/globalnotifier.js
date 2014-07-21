@@ -65,5 +65,3 @@ globalNotifier.init = function(config) {
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
 };
-
-module.exports = globalNotifier;
