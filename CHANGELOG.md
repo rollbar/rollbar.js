@@ -1,5 +1,8 @@
 # Change Log
 
+**1.1.0**
+- Add support for AMD JS loaders and refactor rollbar.require.js into rollbar.amd.js and rollbar.commonjs.js.
+
 **1.0.0-rc.11**
 - Add support for whitelisting host names/domains, (pr#31).
 
