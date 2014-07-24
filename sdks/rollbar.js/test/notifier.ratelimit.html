@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Rollbar Notifier Rate Limit Mocha Tests</title>
+    <link rel="stylesheet" href="lib/mocha/mocha.css"/>
+  </head>
+  <body>
+    <!-- Required for browser reporter -->
+    <div id="mocha"></div>
+    <div id="mesages"></div>
+    <div id="fixtures"></div>
+
+    <div id="event-div"></div>
+
+    <!-- mocha/chai/sinon -->
+    <script src="lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/chai/chai.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/sinon/sinon-1.7.3.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- initialize mocha -->
+    <script type="text/javascript" charset="utf-8">
+      mocha.ui('bdd');
+      mocha.reporter('html');
+      var expect = chai.expect;
+      var assert = chai.assert;
+    </script>
+
+    <!-- mock library setup -->
+    <script type="text/javascript" charset="utf-8">
+      beforeEach(function() {
+        this.sinon = sinon.sandbox.create();
+      });
+
+      afterEach(function() {
+        this.sinon.restore();
+      });
+    </script>
+
+    <!-- util source, needed for testing Notifier(notifier) -->
+    <script src="../src/util.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- tracekit source, needed for testing Notifier(notifier) -->
+    <script src="../vendor/TraceKit/src/trace.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- shim source, needed for testing Notifier(shim) -->
+    <script src="../src/shim.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- xhr source, needed for testing Notifier._log() callbacks -->
+    <script src="../src/xhr.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- JSON-js source -->
+    <script src="../vendor/JSON-js/json2.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- json source, needed for RollbarJSON -->
+    <script src="../src/json.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- notifier source -->
+    <script src="../src/notifier.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- notifier tests -->
+    <script src="./notifier.test.ratelimit.js" type="text/javascript" charset="utf-8"></script>
+
+    <script type="text/javascript" charset="utf-8">
+      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        if (window.mochaPhantomJS) {
+          mochaPhantomJS.run();
+        } else {
+          mocha.run();
+        }
+      }
+    </script>
+  </body>
+</html>
+

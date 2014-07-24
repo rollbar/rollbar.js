@@ -1,5 +1,8 @@
 # Change Log
 
+**1.1.1**
+- Fix bug with default rate limits. The defaults were not applied unless Rollbar.global() was called.
+
 **1.1.0**
 - Add support for AMD JS loaders and refactor rollbar.require.js into rollbar.amd.js and rollbar.commonjs.js.
 
