@@ -1538,7 +1538,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.0.0-rc.11';
+Notifier.NOTIFIER_VERSION = '1.0.1';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -1561,7 +1561,9 @@ window._rollbarPayloadQueue = [];
 
 // This contains global options for all Rollbar notifiers.
 window._globalRollbarOptions = {
-  startTime: (new Date()).getTime()
+  startTime: (new Date()).getTime(),
+  maxItems: Notifier.DEFAULT_MAX_ITEMS,
+  itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN
 };
 
 var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
@@ -1581,8 +1583,6 @@ function Notifier(parentNotifier) {
     endpoint: endpoint,
     environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
-    maxItems: Notifier.DEFAULT_MAX_ITEMS,
-    itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN,
     checkIgnore: null,
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
