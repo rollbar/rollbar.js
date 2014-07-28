@@ -1672,3 +1672,52 @@ describe("Notifier._urlIsWhitelisted()", function() {
   });
 
 });
+
+/*
+ * Notifier._messageIsIgnored(payload)
+ */
+describe("Notifier._messageIsIgnored()", function(){
+  function buildPayloadWithExceptionMessage(message){
+    return {
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: message
+            }
+          }
+        }
+      }
+    };
+  }
+
+  function buildNotifierWithIgnoredMessages(messages){
+    var notifier = new Notifier();
+    notifier.configure({ ignoredMessages: messages });
+    return notifier;
+  }
+
+  it("should return false with an empty config", function(){
+    var notifier = new Notifier();
+    var payload = buildPayloadWithExceptionMessage('');
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+
+  it("should return false with an empty payload", function(){
+    var notifier = buildNotifierWithIgnoredMessages(["Divided by 0! What did you do?!"]);
+    var payload = {};
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+
+  it("should return true with a message matching the ignored message", function(){
+    var notifier = buildNotifierWithIgnoredMessages(["Null is an abstract concept.", "Error: 0.1 + 0.2 is not what you think!"]);
+    var payload = buildPayloadWithExceptionMessage("Null is an abstract concept.");
+    expect(notifier._messageIsIgnored(payload)).to.equal(true);
+  });
+
+  it("should return false when a message does not match any ignored message", function(){
+    var notifier = buildNotifierWithIgnoredMessages(["Error: MySpace profile contains no animated gif.", "Warning: Github is down!"]);
+    var payload = buildPayloadWithExceptionMessage("Exception: Not all llamas are ugly.");
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+});
