@@ -29,13 +29,15 @@ var Util = {
           if (deep && copy && (copy.constructor == Object || (copyIsArray = (copy.constructor == Array)))) {
             if (copyIsArray) {
               copyIsArray = false;
-              clone = src && src.constructor == Array ? src : [];
+              // Overwrite the source with a copy of the array to merge in
+              clone = [];
             } else {
               clone = src && src.constructor == Object ? src : {};
             }
 
             // Never move original objects, clone them
             target[name] = Util.merge(clone, copy);
+
           // Don't bring in undefined values
           } else if (copy !== undefined) {
             target[name] = copy;

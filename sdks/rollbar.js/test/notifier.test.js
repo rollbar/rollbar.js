@@ -1720,4 +1720,22 @@ describe("Notifier._messageIsIgnored()", function(){
     var payload = buildPayloadWithExceptionMessage("Exception: Not all llamas are ugly.");
     expect(notifier._messageIsIgnored(payload)).to.equal(false);
   });
+
+  it("child notifiers should not ignore the parent's messages", function(){
+    var notifier = buildNotifierWithIgnoredMessages(["err1", "err2"]);
+    var child = notifier.scope();
+    var payload1 = buildPayloadWithExceptionMessage("err1");
+    var payload2 = buildPayloadWithExceptionMessage("err2");
+    var payload3 = buildPayloadWithExceptionMessage("err3");
+    expect(child._messageIsIgnored(payload1)).to.equal(true);
+    expect(child._messageIsIgnored(payload2)).to.equal(true);
+
+    var child2 = child.scope();
+    child2.configure({ignoredMessages: ['err3']});
+    expect(child2._messageIsIgnored(payload2)).to.equal(false);
+    expect(child2._messageIsIgnored(payload3)).to.equal(true);
+
+    expect(child._messageIsIgnored(payload3)).to.equal(false);
+    expect(child._messageIsIgnored(payload3)).to.equal(false);
+  });
 });
