@@ -1,5 +1,5 @@
 ## Upgrade Instructions
-- For [v1.1.x](#v1.0.x to v1.1.x)
+- For [v1.1.x](#v10x-to-v11x)
 
 # Change Log
 
