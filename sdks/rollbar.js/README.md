@@ -29,7 +29,7 @@ var _rollbarConfig = {
 <!-- EditableTextAreaEnd -->
 
 If you're running Rollbar on an environment besides production, change the ```environment``` value to something else (e.g. "staging"). See below for more configuration options.
-  
+
 ### Test your installation
 
 1. Navigate your browser to a page that has the above code installed
@@ -91,6 +91,25 @@ Rollbar.configure({
 Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
 ```
 
+## Ignoring specific exception messages
+
+If you want to ignore a specific exception message, say for a third-party browser plugin
+that is throwing errors, you can add the message to the `ignoredMessages` array,
+and Rollbar will ignore exceptions matching those messages.
+
+
+```js
+var _rollbarConfig = {
+  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  ignoredMessages: ["Can't find Clippy.bmp. The end is nigh."],
+  captureUncaught: true,
+  payload: {
+    environment: "production"
+  }
+};
+// init your rollbar like normal, or insert rollbar.js source snippet here
+```
+
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
@@ -127,5 +146,3 @@ To run the tests, run `make test`
 3. Commit your changes (```git commit -am 'Added some feature'```)
 4. Push to the branch (```git push origin my-new-feature```)
 5. Create new Pull Request
-
-

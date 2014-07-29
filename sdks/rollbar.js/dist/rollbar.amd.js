@@ -2061,6 +2061,35 @@ Notifier.prototype._urlIsWhitelisted = function(payload){
   return false;
 };
 
+Notifier.prototype._messageIsIgnored = function(payload){
+  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace;
+  try {
+    messageIsIgnored = false;
+    ignoredMessages = this.options.ignoredMessages;
+    trace = payload.data.body.trace;
+
+    if(!ignoredMessages || ignoredMessages.length === 0) { return false; }
+    if(!trace) { return false; }
+    exceptionMessage = trace.exception.message;
+
+    len = ignoredMessages.length;
+    for(i=0; i < len; i++) {
+      rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
+      messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
+      
+      if(messageIsIgnored){
+        break;
+      }
+    }
+  }
+  catch(e) {
+    this.configure({ignoredMessages: null});
+    this.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+  }
+
+  return messageIsIgnored;
+};
+
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
 
   var ignoredCallback = function() {
@@ -2097,6 +2126,10 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if(!this._urlIsWhitelisted(payload)) {
+    return;
+  }
+
+  if(this._messageIsIgnored(payload)){
     return;
   }
 
