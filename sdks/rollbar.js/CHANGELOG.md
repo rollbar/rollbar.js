@@ -1,3 +1,6 @@
+## Upgrade Instructions
+- For [v1.1.x](#v1.0.x to v1.1.x)
+
 # Change Log
 
 **1.1.2**
@@ -69,3 +72,9 @@
 - Fix some documentation bugs
 - Changes made to the snippet to put `environment` in the `payload` key.
 - Remove the default `context` value and associated logic around it being either a string or a function.
+
+## Upgrade Instructions
+
+### v1.0.x to v1.1.x
+1. Replace your rollbar snippet with the latest from the [rollbar.js quickstart docs](https://rollbar.com/docs/notifier/rollbar.js/) or from [the Github repo](https://github.com/rollbar/rollbar.js/blob/master/dist/rollbar.snippet.min.js).
+
