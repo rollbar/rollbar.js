@@ -249,7 +249,7 @@ module.exports = function(grunt) {
     grunt.file.copy(rollbarCommonJs, releaseRollbarCommonJs);
     grunt.file.copy(rollbarCommonMinJs, releaseRollbarCommonMinJs);
 
-    grunt.task.run('tagrelease');
+    //grunt.task.run('tagrelease');
   });
 };
 
