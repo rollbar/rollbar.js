@@ -17,6 +17,11 @@ var Util = {
       if ((options = arguments[i]) !== null) {
         // Extend the base object
         for (name in options) {
+          // IE8 will iterate over properties of objects like "indexOf"
+          if (!options.hasOwnProperty(name)) {
+            continue;
+          }
+
           src = target[name];
           copy = options[name];
 
