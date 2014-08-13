@@ -65,7 +65,7 @@ Rollbar.error(e, function(err, data) {
   if (err) {
     console.log("Error while reporting error to Rollbar: ", e);
   } else {
-    console.log("Error successfully reported to Rollbar. UUID:", data.uuid);
+    console.log("Error successfully reported to Rollbar. UUID:", data.result.uuid);
   }
 });
 ```
