@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.2.0**
+- Fixed a bug where stack traces were being reported to rollbar.com in the reverse order.
+
 **1.1.3**
 - Fixed a bug that was causing a stack overflow error in IE8, (#38).
 - Shaved off a few bytes from the snippet's size.
