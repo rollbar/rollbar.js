@@ -2075,7 +2075,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-      
+
       if(messageIsIgnored){
         break;
       }
@@ -2091,6 +2091,13 @@ Notifier.prototype._messageIsIgnored = function(payload){
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
 
+  var payloadToSend = {
+    callback: callback,
+    accessToken: this.options.accessToken,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  };
+
   var ignoredCallback = function() {
     if (callback) {
       // If the item was ignored call the callback anyway
@@ -2102,6 +2109,11 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
       callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
     }
   };
+
+  if(this.options.logFunction){
+    this.options.logFunction.call(payloadToSend);
+    return;
+  }
 
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
@@ -2132,12 +2144,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     return;
   }
 
-  window._rollbarPayloadQueue.push({
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  });
+  window._rollbarPayloadQueue.push(payloadToSend);
 };
 
 
