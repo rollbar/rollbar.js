@@ -28,6 +28,19 @@ describe('Util', function() {
     done();
   });
 
+  it("should replace arrays", function(done) {
+    var object1 = {a: 'b', c: [1, 2, 3]};
+    var object2 = {c: ['a']};
+
+    var result = Util.merge(object1, object2);
+
+    expect(result).to.have.keys(['a', 'c']);
+    expect(result.a).to.equal('b');
+    expect(result.c).to.deep.equal(['a']);
+
+    done();
+  });
+
   it("should deep copy an object properly", function(done) {
     var object = {a: 'b', c: {d: 1}, l: [1, 2, {f: 'g'}]};
     var copy = Util.copy(object);

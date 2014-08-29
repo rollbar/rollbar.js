@@ -1,4 +1,5 @@
-(function(window, document){
+/* rollbar.js for use with AMD loaders */
+define(function(require, exports, module) {
 /*
     json2.js
     2013-05-26
@@ -1262,11 +1263,6 @@ var Util = {
       if ((options = arguments[i]) !== null) {
         // Extend the base object
         for (name in options) {
-          // IE8 will iterate over properties of objects like "indexOf"
-          if (!options.hasOwnProperty(name)) {
-            continue;
-          }
-
           src = target[name];
           copy = options[name];
 
@@ -1546,7 +1542,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.3';
+Notifier.NOTIFIER_VERSION = '1.1.2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2082,7 +2078,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-
+      
       if(messageIsIgnored){
         break;
       }
@@ -2098,13 +2094,6 @@ Notifier.prototype._messageIsIgnored = function(payload){
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
 
-  var payloadToSend = {
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  };
-
   var ignoredCallback = function() {
     if (callback) {
       // If the item was ignored call the callback anyway
@@ -2116,20 +2105,6 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
       callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
     }
   };
-
-  if(this.options.logToConsole){
-    var log = function (){
-      return (window.console && console.log) ? console.log(arguments) : null;
-    };
-    if(log){
-      this.options.logFunction = log;
-    }    
-  }
-
-  if(this.options.logFunction){
-    this.options.logFunction.call(payloadToSend);
-    return;
-  }
 
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
@@ -2160,7 +2135,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     return;
   }
 
-  window._rollbarPayloadQueue.push(payloadToSend);
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    accessToken: this.options.accessToken,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
 };
 
 
@@ -2442,14 +2422,72 @@ function _processPayload(url, accessToken, payload, callback) {
   });
 }
 
-if (!window._rollbarInitialized) {
-  var config = window._rollbarConfig || {};
-  var alias = config.globalAlias || 'Rollbar';
-  var shim = window[alias];
-  var fullRollbar = new Notifier(shim);
-  fullRollbar._processShimQueue(window._rollbarShimQueue || []);
-  window[alias] = fullRollbar;
-  window._rollbarInitialized = true;
-  Notifier.processPayloads();
+// Create the global notifier
+var globalNotifier = new Notifier();
+
+// Stub out the wrapped error which is set 
+window._rollbarWrappedError = null;
+
+// Global window.onerror handler
+function _rollbarWindowOnError(client, old, args) {
+  if (!args[4] && window._rollbarWrappedError) {
+    args[4] = window._rollbarWrappedError;
+    window._rollbarWrappedError = null;
+  }
+
+  globalNotifier.uncaughtError.apply(globalNotifier, args);
+  if (old) {
+    old.apply(window, args);
+  }
 }
-})(window, document);
+
+function _extendListenerPrototype(client, prototype) {
+  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+    var oldAddEventListener = prototype.addEventListener;
+    prototype.addEventListener = function(event, callback, bubble) {
+      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+    };
+
+    var oldRemoveEventListener = prototype.removeEventListener;
+    prototype.removeEventListener = function(event, callback, bubble) {
+      oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
+    };
+  }
+}
+
+// Add an init() method to do the same things that the shim would do
+globalNotifier.init = function(config) {
+  this.configure(config); 
+
+  if (config.captureUncaught) {
+    // Set the global onerror handler
+    var old = window.onerror;
+
+    window.onerror = function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(globalNotifier, old, args);
+    };
+
+    // Adapted from https://github.com/bugsnag/bugsnag-js
+    var globals = ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+     'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
+     'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
+     'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
+     'XMLHttpRequestUpload'];
+
+    var i;
+    var global;
+    for (i = 0; i < globals.length; ++i) {
+      global = globals[i];
+
+      if (window[global] && window[global].prototype) {
+        _extendListenerPrototype(this, window[global].prototype);
+      }
+    }
+  }
+
+  // Finally, start processing payloads using the global notifier
+  Notifier.processPayloads();
+};
+module.exports = globalNotifier;
+});

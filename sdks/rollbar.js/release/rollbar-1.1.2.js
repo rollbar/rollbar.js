@@ -1262,11 +1262,6 @@ var Util = {
       if ((options = arguments[i]) !== null) {
         // Extend the base object
         for (name in options) {
-          // IE8 will iterate over properties of objects like "indexOf"
-          if (!options.hasOwnProperty(name)) {
-            continue;
-          }
-
           src = target[name];
           copy = options[name];
 
@@ -1546,7 +1541,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.3';
+Notifier.NOTIFIER_VERSION = '1.1.2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2082,7 +2077,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-
+      
       if(messageIsIgnored){
         break;
       }
@@ -2098,13 +2093,6 @@ Notifier.prototype._messageIsIgnored = function(payload){
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
 
-  var payloadToSend = {
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  };
-
   var ignoredCallback = function() {
     if (callback) {
       // If the item was ignored call the callback anyway
@@ -2116,20 +2104,6 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
       callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
     }
   };
-
-  if(this.options.logToConsole){
-    var log = function (){
-      return (window.console && console.log) ? console.log(arguments) : null;
-    };
-    if(log){
-      this.options.logFunction = log;
-    }    
-  }
-
-  if(this.options.logFunction){
-    this.options.logFunction.call(payloadToSend);
-    return;
-  }
 
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
@@ -2160,7 +2134,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     return;
   }
 
-  window._rollbarPayloadQueue.push(payloadToSend);
+  window._rollbarPayloadQueue.push({
+    callback: callback,
+    accessToken: this.options.accessToken,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  });
 };
 
 
