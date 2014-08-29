@@ -1262,6 +1262,11 @@ var Util = {
       if ((options = arguments[i]) !== null) {
         // Extend the base object
         for (name in options) {
+          // IE8 will iterate over properties of objects like "indexOf"
+          if (!options.hasOwnProperty(name)) {
+            continue;
+          }
+
           src = target[name];
           copy = options[name];
 
@@ -1274,13 +1279,15 @@ var Util = {
           if (deep && copy && (copy.constructor == Object || (copyIsArray = (copy.constructor == Array)))) {
             if (copyIsArray) {
               copyIsArray = false;
-              clone = src && src.constructor == Array ? src : [];
+              // Overwrite the source with a copy of the array to merge in
+              clone = [];
             } else {
               clone = src && src.constructor == Object ? src : {};
             }
 
             // Never move original objects, clone them
             target[name] = Util.merge(clone, copy);
+
           // Don't bring in undefined values
           } else if (copy !== undefined) {
             target[name] = copy;
@@ -1539,7 +1546,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.1';
+Notifier.NOTIFIER_VERSION = '1.1.3';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';

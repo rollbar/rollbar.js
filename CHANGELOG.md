@@ -1,7 +1,20 @@
+## Upgrade Instructions
+- For [v1.1.x](#v10x-to-v11x)
+
 # Change Log
 
+**1.1.3**
+- Fixed a bug that was causing a stack overflow error in IE8, (#38).
+- Shaved off a few bytes from the snippet's size.
+
+**1.1.2**
+- Fixed a bug that was causing `Rollbar.configure()` to incorrectly handle overwriting array configuration.
+- Added in support for a `ignoredMessages` configuration option, (pr#35).
+- Fixed a bug that was causing some `EventListener` objects to not be unbound, (pr#33).
+- Updated the snippet with fixes.
+
 **1.1.1**
-- Fix bug with default rate limits. The defaults were not applied unless Rollbar.global() was called.
+- Fixed a bug with default rate limits. The defaults were not applied unless Rollbar.global() was called.
 
 **1.1.0**
 - Add support for AMD JS loaders and refactor rollbar.require.js into rollbar.amd.js and rollbar.commonjs.js.
@@ -13,16 +26,16 @@
 - Add support for using rollbar with Webpack/Browserify via `require("rollbar.require.min.js")` with examples.
 
 **1.0.0-rc.9**
-- Fix bug that caused a wrapped async handler to break if there was no callback provided.
+- Fixed a bug that caused a wrapped async handler to break if there was no callback provided.
 
 **1.0.0-rc.8**
-- Fix bug that created/used a global variable.
+- Fixed a bug that created/used a global variable.
 
 **1.0.0-rc.7**
 - Change default reportLevel to `debug`. Previously, calls to `Rollbar.info` and `Rollbar.debug` were filtered out under the default configuration; now they are let through.
 
 **1.0.0-rc.6**
-- Fix bug where items were sent in reverse order when queued
+- Fixed a bug where items were sent in reverse order when queued
 - Add `maxItems` global option. If defined, at most this many items per pageview will be sent. Default `0`, meaning "no limit".
 
 **1.0.0-rc.5**
@@ -63,3 +76,9 @@
 - Fix some documentation bugs
 - Changes made to the snippet to put `environment` in the `payload` key.
 - Remove the default `context` value and associated logic around it being either a string or a function.
+
+## Upgrade Instructions
+
+### v1.0.x to v1.1.x
+1. Replace your rollbar snippet with the latest from the [rollbar.js quickstart docs](https://rollbar.com/docs/notifier/rollbar.js/) or from [the Github repo](https://github.com/rollbar/rollbar.js/blob/master/dist/rollbar.snippet.min.js).
+
