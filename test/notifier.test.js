@@ -1734,13 +1734,13 @@ describe("Notifier._messageIsIgnored()", function(){
 
   it("ignores a null log function", function(){
     var notifier = buildNotifierWithLogFunction(null);
-    var fn = function(){notifier._enqueuePayload({}, false, {}, null)};
+    var fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
     expect(fn).to.not.throw(Error);
   });
 
   it("ignores an undefined log function", function(){
     var notifier = buildNotifierWithLogFunction();
-    var fn = function(){notifier._enqueuePayload({}, false, {}, null)};
+    var fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
     expect(fn).to.not.throw(Error);
   });
 
@@ -1750,5 +1750,27 @@ describe("Notifier._messageIsIgnored()", function(){
     expect(logFunc.called).to.be.undefined;
     notifier._enqueuePayload({}, false, {}, null)
     expect(logFunc.called).to.equal(true);
+  });
+
+  it("calls console.log if options.logToConsole is true", function(){
+    var notifier = new Notifier();
+    notifier.configure({ logToConsole : true });
+    window.console._log = window.console.log || function(){};
+    window.console.log  = function(){
+      window.console.log.called = true;
+      window.console._log(arguments);
+    };
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.called).to.equal(true);
+  });
+
+  it("does not call console.log if console.log is null", function(){
+    var notifier = new Notifier();
+    var fn;
+    notifier.configure({ logToConsole : true });
+    window.console._log = window.console.log || function(){};
+    window.console.log  = null;
+    fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
+    expect(fn).to.not.throw(Error);
   });
  });
