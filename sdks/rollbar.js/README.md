@@ -110,6 +110,38 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
+## Log to console.log, instead of sending payload to rollbar
+
+```javascript
+var _rollbarConfig = {
+  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  logToConsole: true, // Will send to window.console.log if that function is defined by the browser
+  captureUncaught: true,
+  payload: {
+    environment: "production"
+  }
+};
+// init your rollbar like normal, or insert rollbar.js source snippet here
+```
+
+## Log to a custom function, instead of sending payload to rollbar
+
+```javascript
+var fn = function(payloadObj){
+ // your code here
+ // payloadObj has the following properties: callback, accessToken, endpointUrl, payload 
+};
+var _rollbarConfig = {
+  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  logFunction: fn, // Will send to fn
+  captureUncaught: true,
+  payload: {
+    environment: "production"
+  }
+};
+// init your rollbar like normal, or insert rollbar.js source snippet here
+```
+
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
