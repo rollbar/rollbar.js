@@ -1721,3 +1721,34 @@ describe("Notifier._messageIsIgnored()", function(){
     expect(notifier._messageIsIgnored(payload)).to.equal(false);
   });
 });
+
+/*
+ * Notifier._logToFunction
+ */
+ describe("Notifier._logToFunction()", function(){
+   function buildNotifierWithLogFunction(cb){
+     var notifier = new Notifier();
+     notifier.configure({ logFunction : cb });
+     return notifier;
+   }
+
+  it("ignores a null log function", function(){
+    var notifier = buildNotifierWithLogFunction(null);
+    var fn = function(){notifier._enqueuePayload({}, false, {}, null)};
+    expect(fn).to.not.throw(Error);
+  });
+
+  it("ignores an undefined log function", function(){
+    var notifier = buildNotifierWithLogFunction();
+    var fn = function(){notifier._enqueuePayload({}, false, {}, null)};
+    expect(fn).to.not.throw(Error);
+  });
+
+  it("calls the given log function", function(){
+    var logFunc = function(){ logFunc.called = true; };
+    var notifier = buildNotifierWithLogFunction(logFunc);
+    expect(logFunc.called).to.be.undefined;
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(logFunc.called).to.equal(true);
+  });
+ });
