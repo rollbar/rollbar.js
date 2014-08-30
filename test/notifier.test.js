@@ -1772,14 +1772,16 @@ describe("Notifier._messageIsIgnored()", function(){
 
   it("calls console.log if options.logToConsole is true", function(){
     var notifier = new Notifier();
+    var originalLog = window.console.log;
     notifier.configure({ logToConsole : true });
-    window.console._log = window.console.log || function(){};
+    window.console._log = originalLog || function(){};
     window.console.log  = function(){
       window.console.log.called = true;
       window.console._log(arguments);
     };
     notifier._enqueuePayload({}, false, {}, null)
     expect(window.console.log.called).to.equal(true);
+    window.console = originalLog;
   });
 
   it("does not call console.log if console.log is null", function(){

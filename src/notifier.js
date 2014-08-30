@@ -575,13 +575,11 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     var log = function (){
       return (window.console && console.log) ? console.log(arguments) : null;
     };
-    if (log) {
-      this.options.logFunction = log;
-    }
+    this.options.logFunction = log;
   }
 
-  if (this.options.logFunction) {
-    this.options.logFunction.call(payloadToSend);
+  if (typeof(this.options.logFunction) === "function") {
+    this.options.logFunction(payloadToSend);
     return;
   }
 
