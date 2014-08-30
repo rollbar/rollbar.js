@@ -2117,16 +2117,16 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     }
   };
 
-  if( this.options.logToConsole ) {
+  if (this.options.logToConsole) {
     var log = function (){
       return (window.console && console.log) ? console.log(arguments) : null;
     };
-    if( log ) {
+    if (log) {
       this.options.logFunction = log;
     }
   }
 
-  if( this.options.logFunction ) {
+  if (this.options.logFunction) {
     this.options.logFunction.call(payloadToSend);
     return;
   }
@@ -2152,11 +2152,11 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
-  if(!this._urlIsWhitelisted(payload)) {
+  if (!this._urlIsWhitelisted(payload)) {
     return;
   }
 
-  if(this._messageIsIgnored(payload)){
+  if (this._messageIsIgnored(payload)) {
     return;
   }
 
