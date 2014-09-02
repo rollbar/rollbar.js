@@ -1547,7 +1547,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.3';
+Notifier.NOTIFIER_VERSION = '1.1.4';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -1589,6 +1589,7 @@ function Notifier(parentNotifier) {
   }
   var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
+    enabled: true,
     endpoint: endpoint,
     environment: 'production',
     scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
@@ -2140,12 +2141,14 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     return;
   }
 
-  window._rollbarPayloadQueue.push({
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  });
+  if (!!this.options.enabled) {
+    window._rollbarPayloadQueue.push({
+      callback: callback,
+      accessToken: this.options.accessToken,
+      endpointUrl: this._route('item/'),
+      payload: payload
+    });
+  }
 };
 
 
