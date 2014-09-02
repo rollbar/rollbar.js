@@ -97,7 +97,7 @@ If you don't want to send data to Rollbar, just set the `enabled` flag to `false
 
 ```js
 Rollbar.error("This will be reported to Rollbar");
-Rollbar.configure({enabled: false})
+Rollbar.configure({enabled: false});
 Rollbar.error("This will *not* be reported to Rollbar");
 ```
 
