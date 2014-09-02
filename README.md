@@ -91,6 +91,16 @@ Rollbar.configure({
 Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
 ```
 
+## Disable reporting to rollbar.com
+
+If you don't want to send data to Rollbar, just set the `enabled` flag to `false` for each notifier instance.
+
+```js
+Rollbar.error("This will be reported to Rollbar");
+Rollbar.configure({enabled: false})
+Rollbar.error("This will *not* be reported to Rollbar");
+```
+
 ## Ignoring specific exception messages
 
 If you want to ignore a specific exception message, say for a third-party browser plugin
