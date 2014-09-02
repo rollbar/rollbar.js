@@ -246,6 +246,37 @@ describe("Notifier.configure()", function() {
     done();
   });
 
+  it("should respect the enabled flag", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var notifier = new Notifier();
+    notifier.configure({enabled: false});
+    var child = notifier.scope();
+
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(0);
+
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(0);
+
+    notifier.configure({enabled: true});
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    notifier.error('third error');
+    expect(_rollbarPayloadQueue.length).to.equal(2);
+
+    child.configure({enabled: true});
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(3);
+
+    window._rollbarPayloadQueue.length = 0;
+    done();
+  });
+
   it("should overwrite previous options", function(done) {
     var notifier = new Notifier();
     notifier.configure({foo: 'bar', bar: 'foo'});

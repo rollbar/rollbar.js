@@ -115,6 +115,13 @@ Default: ```0``` (no limit)
 
   <dl>
 
+  <dt>enabled</dt>
+  <dd>If set to ```false```, no data will be sent to Rollbar for this notifier.
+  Note: callbacks for errors will not be called if this is set to ```false```.
+
+Default: ```true```
+  </dd>
+
   <dt>checkIgnore</dt>
   <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
 

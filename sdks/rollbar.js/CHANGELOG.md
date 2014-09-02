@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.4**
+- Added the `enabled` flag to determine when we should enqueue payloads to be sent, (#28).
+
 **1.1.3**
 - Fixed a bug that was causing a stack overflow error in IE8, (#38).
 - Shaved off a few bytes from the snippet's size.
