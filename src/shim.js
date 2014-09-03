@@ -135,12 +135,10 @@ Rollbar.prototype.wrap = function(f, context) {
   try {
     var _this = this;
     var ctxFn;
-    if (context) {
-      if (typeof context === 'function') {
-        ctxFn = context;
-      } else {
-        ctxFn = function() { return context; };
-      }
+    if (typeof context === 'function') {
+      ctxFn = context;
+    } else {
+      ctxFn = function() { return context || {}; };
     }
 
     if (typeof f !== 'function') {
@@ -156,9 +154,9 @@ Rollbar.prototype.wrap = function(f, context) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
-          if (ctxFn) {
-            e._rollbarContext = ctxFn();
-          }
+          e._rollbarContext = ctxFn();
+          e._rollbarContext._wrappedSource = f.toString();
+
           window._rollbarWrappedError = e;
           throw e;
         }
