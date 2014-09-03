@@ -422,6 +422,7 @@ describe("Notifier.uncaughtError()", function() {
     expect(args[1]).to.equal('testing uncaught error');
     expect(args[2]).to.equal(err);
     expect(args[3].custom).to.equal('value');
+    expect(args[3]._wrappedSource).to.contain('bar();');
 
     done();
   });

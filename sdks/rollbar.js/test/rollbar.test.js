@@ -419,6 +419,7 @@ describe("window.Rollbar.uncaughtError()", function() {
     var payload = args[0];
 
     expect(payload.data.body.trace.exception['class']).to.equal('ReferenceError');
+    expect(payload.data.body.trace.extra._wrappedSource).to.contain('var a = b;');
 
     window.Rollbar._enqueuePayload.restore();
 
