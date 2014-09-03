@@ -1546,7 +1546,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.4';
+Notifier.NOTIFIER_VERSION = '1.1.5';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2215,9 +2215,10 @@ Notifier.prototype.error = Notifier._generateLogFn('error');
 Notifier.prototype.critical = Notifier._generateLogFn('critical');
 
 // Adapted from tracekit.js
-Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err) {
+Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err, context) {
+  context = context || null;
   if (err && err.stack) {
-    this._log(this.options.uncaughtErrorLevel, message, err, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, err, context, null, true);
     return;
   }
 
@@ -2226,7 +2227,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
   // being an Object instead of a string.
   //
   if (url && url.stack) {
-    this._log(this.options.uncaughtErrorLevel, message, url, null, null, true);
+    this._log(this.options.uncaughtErrorLevel, message, url, context, null, true);
     return;
   }
 
@@ -2282,8 +2283,16 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
   return scopedNotifier;
 });
 
-Notifier.prototype.wrap = function(f) {
+Notifier.prototype.wrap = function(f, context) {
   var _this = this;
+  var ctxFn;
+  if (context) {
+    if (typeof context === 'function') {
+      ctxFn = context;
+    } else {
+      ctxFn = function() { return context; };
+    }
+  }
 
   if (typeof f !== 'function') {
     return f;
@@ -2302,6 +2311,9 @@ Notifier.prototype.wrap = function(f) {
       } catch(e) {
         if (!e.stack) {
           e._tkStackTrace = TK(e);
+        }
+        if (ctxFn) {
+          e._rollbarContext = ctxFn();
         }
         window._rollbarWrappedError = e;
         throw e;
