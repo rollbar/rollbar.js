@@ -15,7 +15,7 @@ function Rollbar(parentShim) {
 }
 
 function _rollbarWindowOnError(client, old, args) {
-  if (window._rollbarWindowOnError) {
+  if (window._rollbarWrappedError) {
     if (!args[4]) {
       args[4] = window._rollbarWrappedError;
     }
