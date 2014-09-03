@@ -1547,7 +1547,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.5';
+Notifier.NOTIFIER_VERSION = '1.1.6';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2296,12 +2296,10 @@ Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
 Notifier.prototype.wrap = function(f, context) {
   var _this = this;
   var ctxFn;
-  if (context) {
-    if (typeof context === 'function') {
-      ctxFn = context;
-    } else {
-      ctxFn = function() { return context; };
-    }
+  if (typeof context === 'function') {
+    ctxFn = context;
+  } else {
+    ctxFn = function() { return context || {}; };
   }
 
   if (typeof f !== 'function') {
@@ -2322,9 +2320,9 @@ Notifier.prototype.wrap = function(f, context) {
         if (!e.stack) {
           e._tkStackTrace = TK(e);
         }
-        if (ctxFn) {
-          e._rollbarContext = ctxFn();
-        }
+        e._rollbarContext = ctxFn();
+        e._rollbarContext._wrappedSource = f.toString();
+
         window._rollbarWrappedError = e;
         throw e;
       }
