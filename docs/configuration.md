@@ -133,7 +133,13 @@ Default: ```null```
 var transformer = function(payload) {
   payload.data.fingerprint = 'my custom fingerprint';
 };
-notifier.condifure({transform: transformer});
+Rollbar.configure({transform: transformer});
+
+// OR
+
+var _rollbarConfig = {
+  transform: transformer
+};
 ```
 
   <dt>checkIgnore</dt>
