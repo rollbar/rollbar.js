@@ -122,6 +122,20 @@ Default: ```0``` (no limit)
 Default: ```true```
   </dd>
 
+  <dt>transform</dt>
+  <dd>Optional function to modify the payload before sending to Rollbar.
+
+Default: ```null```
+  </dd>
+
+```E.g.
+// Set a custom fingerprint
+var transformer = function(payload) {
+  payload.data.fingerprint = 'my custom fingerprint';
+};
+notifier.condifure({transform: transformer});
+```
+
   <dt>checkIgnore</dt>
   <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
 
