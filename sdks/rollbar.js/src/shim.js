@@ -14,8 +14,13 @@ function Rollbar(parentShim) {
 }
 
 function _rollbarWindowOnError(client, old, args) {
-  if (!args[4] && window._rollbarWrappedError) {
-    args[4] = window._rollbarWrappedError;
+  if (window._rollbarWindowOnError) {
+    if (!args[4]) {
+      args[4] = window._rollbarWrappedError;
+    }
+    if (!args[5]) {
+      args[5] = window._rollbarWrappedError._rollbarContext;
+    }
     window._rollbarWrappedError = null;
   }
 
@@ -126,9 +131,17 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   }, this.logger))();
 };
 
-Rollbar.prototype.wrap = function(f) {
+Rollbar.prototype.wrap = function(f, context) {
   try {
     var _this = this;
+    var ctxFn;
+    if (context) {
+      if (typeof context === 'function') {
+        ctxFn = context;
+      } else {
+        ctxFn = function() { return context; };
+      }
+    }
 
     if (typeof f !== 'function') {
       return f;
@@ -143,6 +156,9 @@ Rollbar.prototype.wrap = function(f) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
+          if (ctxFn) {
+            e._rollbarContext = ctxFn();
+          }
           window._rollbarWrappedError = e;
           throw e;
         }

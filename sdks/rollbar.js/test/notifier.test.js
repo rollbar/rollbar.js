@@ -361,6 +361,36 @@ describe("Notifier.uncaughtError()", function() {
     done();
   });
 
+  it("should enqueue a payload with the custom data from a wrapped function error", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_log');
+
+    var foo = notifier.wrap(function() {
+      bar();
+    }, {custom: 'value'});
+
+    var err;
+    try {
+      foo();
+    } catch (e) {
+      err = e;
+    }
+    notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21, err, err._rollbarContext);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.equal(6);
+    expect(args[0]).to.equal('warning');
+    expect(args[1]).to.equal('testing uncaught error');
+    expect(args[2]).to.equal(err);
+    expect(args[3].custom).to.equal('value');
+
+    done();
+  });
+
   it("should enqueue a payload with an error if an error object was not provided", function(done) {
     var notifier = new Notifier();
     var _logSpy = sinon.spy(notifier, '_log');
@@ -1580,8 +1610,7 @@ describe("Notifier.wrap()", function() {
     var wrapped = notifier.wrap(function() {
       var a = b;
     });
-
-    expect(window._rollbarWrappedError).to.equal(null);
+    window._rollbarWrappedError = null;
 
     try {
       wrapped();
@@ -1605,6 +1634,27 @@ describe("Notifier.wrap()", function() {
     var wrapped = notifier.wrap(func);
 
     expect(wrapped.foo).to.equal('bar');
+
+    done();
+  });
+
+  it("should set window._rollbarWrappedError._rollbarContext", function(done) {
+    var notifier = new Notifier();
+
+    var wrapped = notifier.wrap(function() {
+      var a = b;
+    }, {custom: 'context'});
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext.custom).to.equal('context');
+    }
 
     done();
   });
