@@ -3,6 +3,10 @@
 
 # Change Log
 
+**1.1.5**
+- Added a `context` parameter to `Rollbar.wrap()`, (#26).
+- Added a `transform` option to allow the user to read/modify the payload before we send it to Rollbar, (#41 #43).
+
 **1.1.4**
 - Added the `enabled` flag to determine when we should enqueue payloads to be sent, (#28).
 

@@ -2140,6 +2140,15 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     return;
   }
 
+  try {
+    if (typeof this.options.transform === 'function') {
+      this.options.transform(payload);
+    }
+  } catch (e) {
+    this.configure({transform: null});
+    this.error('Error while calling custom transform() function. Removing custom transform().', e);
+  }
+
   if (!!this.options.enabled) {
     window._rollbarPayloadQueue.push({
       callback: callback,

@@ -325,6 +325,41 @@ describe("Notifier.configure()", function() {
 
     return done();
   });
+
+  it("should call the transform function", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var transformer = function(payload) {
+      payload.customKey = '12345asdf';
+    };
+
+    var notifier = new Notifier();
+    notifier.configure({transform: transformer});
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    expect(_rollbarPayloadQueue[0].payload.customKey).to.equal('12345asdf');
+
+    window._rollbarPayloadQueue.length = 0;
+    done();
+  });
+
+  it("should log an error if the transform function throws an exception", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var notifier = new Notifier();
+    var transformer = function(payload) {
+      foo();
+    };
+    notifier.configure({transform: transformer});
+    notifier.error('test error');
+
+    // The error should not be propagated up the the caller of notifier.error()
+    expect(window._rollbarPayloadQueue.length).to.equal(2);
+    window._rollbarPayloadQueue.length = 0;
+
+    return done();
+  });
 });
 
 
