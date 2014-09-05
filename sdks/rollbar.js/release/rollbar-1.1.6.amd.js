@@ -1,4 +1,5 @@
-(function(window, document){
+/* rollbar.js for use with AMD loaders */
+define(function(require, exports, module) {
 /*
     json2.js
     2013-05-26
@@ -2083,7 +2084,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-
+      
       if(messageIsIgnored){
         break;
       }
@@ -2098,13 +2099,6 @@ Notifier.prototype._messageIsIgnored = function(payload){
 };
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
-
-  var payloadToSend = {
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  };
 
   var ignoredCallback = function() {
     if (callback) {
@@ -2139,23 +2133,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
-  if (!this._urlIsWhitelisted(payload)) {
+  if(!this._urlIsWhitelisted(payload)) {
     return;
   }
 
-  if (this._messageIsIgnored(payload)) {
+  if(this._messageIsIgnored(payload)){
     return;
-  }
-
-  if (this.options.verbose) {
-    if (window.console && typeof(window.console.log) === "function") {
-      // TODO: write message first, then output params.
-      window.console.log(payloadToSend);
-    }
-  }
-
-  if (typeof(this.options.logFunction) === "function") {
-    this.options.logFunction(payloadToSend);
   }
 
   try {
@@ -2168,7 +2151,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if (!!this.options.enabled) {
-    window._rollbarPayloadQueue.push(payloadToSend);
+    window._rollbarPayloadQueue.push({
+      callback: callback,
+      accessToken: this.options.accessToken,
+      endpointUrl: this._route('item/'),
+      payload: payload
+    });
   }
 };
 
@@ -2461,14 +2449,72 @@ function _processPayload(url, accessToken, payload, callback) {
   });
 }
 
-if (!window._rollbarInitialized) {
-  var config = window._rollbarConfig || {};
-  var alias = config.globalAlias || 'Rollbar';
-  var shim = window[alias];
-  var fullRollbar = new Notifier(shim);
-  fullRollbar._processShimQueue(window._rollbarShimQueue || []);
-  window[alias] = fullRollbar;
-  window._rollbarInitialized = true;
-  Notifier.processPayloads();
+// Create the global notifier
+var globalNotifier = new Notifier();
+
+// Stub out the wrapped error which is set 
+window._rollbarWrappedError = null;
+
+// Global window.onerror handler
+function _rollbarWindowOnError(client, old, args) {
+  if (!args[4] && window._rollbarWrappedError) {
+    args[4] = window._rollbarWrappedError;
+    window._rollbarWrappedError = null;
+  }
+
+  globalNotifier.uncaughtError.apply(globalNotifier, args);
+  if (old) {
+    old.apply(window, args);
+  }
 }
-})(window, document);
+
+function _extendListenerPrototype(client, prototype) {
+  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+    var oldAddEventListener = prototype.addEventListener;
+    prototype.addEventListener = function(event, callback, bubble) {
+      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+    };
+
+    var oldRemoveEventListener = prototype.removeEventListener;
+    prototype.removeEventListener = function(event, callback, bubble) {
+      oldRemoveEventListener.call(this, event, callback._wrapped || callback, bubble);
+    };
+  }
+}
+
+// Add an init() method to do the same things that the shim would do
+globalNotifier.init = function(config) {
+  this.configure(config); 
+
+  if (config.captureUncaught) {
+    // Set the global onerror handler
+    var old = window.onerror;
+
+    window.onerror = function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(globalNotifier, old, args);
+    };
+
+    // Adapted from https://github.com/bugsnag/bugsnag-js
+    var globals = ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+     'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
+     'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
+     'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
+     'XMLHttpRequestUpload'];
+
+    var i;
+    var global;
+    for (i = 0; i < globals.length; ++i) {
+      global = globals[i];
+
+      if (window[global] && window[global].prototype) {
+        _extendListenerPrototype(this, window[global].prototype);
+      }
+    }
+  }
+
+  // Finally, start processing payloads using the global notifier
+  Notifier.processPayloads();
+};
+module.exports = globalNotifier;
+});

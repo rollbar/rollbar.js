@@ -3,6 +3,16 @@
 
 # Change Log
 
+**1.1.6**
+- Added a `_wrappedSource` key to exceptions caught by the `wrap()` method to record the source of the wrapped function.
+
+**1.1.5**
+- Added a `context` parameter to `Rollbar.wrap()`, (#26).
+- Added a `transform` option to allow the user to read/modify the payload before we send it to Rollbar, (#41 #43).
+
+**1.1.4**
+- Added the `enabled` flag to determine when we should enqueue payloads to be sent, (#28).
+
 **1.1.3**
 - Fixed a bug that was causing a stack overflow error in IE8, (#38).
 - Shaved off a few bytes from the snippet's size.
