@@ -571,18 +571,6 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     }
   };
 
-  if (this.options.logToConsole) {
-    var log = function (){
-      return (window.console && console.log) ? console.log(arguments) : null;
-    };
-    this.options.logFunction = log;
-  }
-
-  if (typeof(this.options.logFunction) === "function") {
-    this.options.logFunction(payloadToSend);
-    return;
-  }
-
   // Internal checkIgnore will check the level against the minimum
   // report level from this.options
   if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
@@ -609,6 +597,21 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if (this._messageIsIgnored(payload)) {
+    return;
+  }
+
+  if (this.options.verbose) {
+    if (window.console && typeof(window.console.log) === "function") {
+      // TODO: write message first, then output params.
+      window.console.log(payloadToSend);
+    }
+  }
+
+  if (typeof(this.options.logFunction) === "function") {
+    this.options.logFunction(payloadToSend);
+  }
+
+  if (typeof(this.options.enabled) !== "undefined" && !this.options.enabled) {
     return;
   }
 
