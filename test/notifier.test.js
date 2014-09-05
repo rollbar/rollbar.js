@@ -246,6 +246,58 @@ describe("Notifier.configure()", function() {
     done();
   });
 
+  it("should respect the enabled flag", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var notifier = new Notifier();
+    notifier.configure({enabled: false});
+    var child = notifier.scope();
+
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(0);
+
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(0);
+
+    notifier.configure({enabled: true});
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    notifier.error('third error');
+    expect(_rollbarPayloadQueue.length).to.equal(2);
+
+    child.configure({enabled: true});
+    child.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(3);
+
+    window._rollbarPayloadQueue.length = 0;
+    done();
+  });
+
+  it("should respect the verbose flag", function(){
+    var notifier = new Notifier();
+    notifier.configure({ verbose : true });
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.calledOnce);
+    window.console.log.restore();
+
+    notifier.configure({ verbose : false });
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.notCalled);
+    window.console.log.restore();
+
+    notifier.configure({});
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.notCalled);
+    window.console.log.restore();
+  });
+
   it("should overwrite previous options", function(done) {
     var notifier = new Notifier();
     notifier.configure({foo: 'bar', bar: 'foo'});
@@ -294,6 +346,41 @@ describe("Notifier.configure()", function() {
 
     return done();
   });
+
+  it("should call the transform function", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var transformer = function(payload) {
+      payload.customKey = '12345asdf';
+    };
+
+    var notifier = new Notifier();
+    notifier.configure({transform: transformer});
+    notifier.error('error');
+    expect(_rollbarPayloadQueue.length).to.equal(1);
+
+    expect(_rollbarPayloadQueue[0].payload.customKey).to.equal('12345asdf');
+
+    window._rollbarPayloadQueue.length = 0;
+    done();
+  });
+
+  it("should log an error if the transform function throws an exception", function(done) {
+    window._rollbarPayloadQueue.length = 0;
+
+    var notifier = new Notifier();
+    var transformer = function(payload) {
+      foo();
+    };
+    notifier.configure({transform: transformer});
+    notifier.error('test error');
+
+    // The error should not be propagated up the the caller of notifier.error()
+    expect(window._rollbarPayloadQueue.length).to.equal(2);
+    window._rollbarPayloadQueue.length = 0;
+
+    return done();
+  });
 });
 
 
@@ -326,6 +413,37 @@ describe("Notifier.uncaughtError()", function() {
     expect(args[3]).to.equal(null);
     expect(args[4]).to.equal(null);
     expect(args[5]).to.equal(true);
+
+    done();
+  });
+
+  it("should enqueue a payload with the custom data from a wrapped function error", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_log');
+
+    var foo = notifier.wrap(function() {
+      bar();
+    }, {custom: 'value'});
+
+    var err;
+    try {
+      foo();
+    } catch (e) {
+      err = e;
+    }
+    notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21, err, err._rollbarContext);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.equal(6);
+    expect(args[0]).to.equal('warning');
+    expect(args[1]).to.equal('testing uncaught error');
+    expect(args[2]).to.equal(err);
+    expect(args[3].custom).to.equal('value');
+    expect(args[3]._wrappedSource).to.contain('bar();');
 
     done();
   });
@@ -1549,8 +1667,7 @@ describe("Notifier.wrap()", function() {
     var wrapped = notifier.wrap(function() {
       var a = b;
     });
-
-    expect(window._rollbarWrappedError).to.equal(null);
+    window._rollbarWrappedError = null;
 
     try {
       wrapped();
@@ -1574,6 +1691,27 @@ describe("Notifier.wrap()", function() {
     var wrapped = notifier.wrap(func);
 
     expect(wrapped.foo).to.equal('bar');
+
+    done();
+  });
+
+  it("should set window._rollbarWrappedError._rollbarContext", function(done) {
+    var notifier = new Notifier();
+
+    var wrapped = notifier.wrap(function() {
+      var a = b;
+    }, {custom: 'context'});
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext.custom).to.equal('context');
+    }
 
     done();
   });
@@ -1781,62 +1919,5 @@ describe("Notifier._messageIsIgnored()", function(){
     expect(fn).to.not.throw(Error);
 
     window.console.log = originalConsoleLog;
-  });
- });
-
-/*
- * Notifier option 'verbose'
- */
-describe("Notifier option 'verbose'", function(){
-  it("calls console.log if options.verbose is true", function(){
-    var notifier = new Notifier();
-    notifier.configure({ verbose : true });
-    sinon.spy(window.console, "log");
-    notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.calledOnce);
-    window.console.log.restore();
-  });
-
-  it("does not log to console.log of options.verbose is false", function(){
-    var notifier = new Notifier();
-    notifier.configure({ verbose : false });
-    sinon.spy(window.console, "log");
-    notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.notCalled);
-    window.console.log.restore();
-  });
-
-  it("does not log to console.log if options.verbose is undefined", function(){
-    var notifier = new Notifier();
-    notifier.configure({});
-    sinon.spy(window.console, "log");
-    notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.notCalled);
-    window.console.log.restore();
-  });
-});
-
-/*
- * Notifier option 'enabled'
- */
- describe("Notifier option 'enabled'", function(){
-  it("does not add to payload queue when enabled is false", function(){
-    var notifier       = new Notifier();
-    var originalLength = window._rollbarPayloadQueue.length;
-    notifier.configure({ enabled : false });
-
-    notifier._enqueuePayload({}, false, {}, null)
-
-    expect(window._rollbarPayloadQueue.length).to.equal(originalLength);
-  });
-
-  it("adds to payload queue when enabled is true", function(){
-    var notifier       = new Notifier();
-    var originalLength = window._rollbarPayloadQueue.length;
-    notifier.configure({ enabled : true });
-
-    notifier._enqueuePayload({}, false, {}, null)
-
-    expect(window._rollbarPayloadQueue.length).to.be.above(originalLength);
   });
  });

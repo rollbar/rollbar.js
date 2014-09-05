@@ -2083,7 +2083,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-
+      
       if(messageIsIgnored){
         break;
       }
@@ -2098,13 +2098,6 @@ Notifier.prototype._messageIsIgnored = function(payload){
 };
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
-
-  var payloadToSend = {
-    callback: callback,
-    accessToken: this.options.accessToken,
-    endpointUrl: this._route('item/'),
-    payload: payload
-  };
 
   var ignoredCallback = function() {
     if (callback) {
@@ -2139,23 +2132,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
-  if (!this._urlIsWhitelisted(payload)) {
+  if(!this._urlIsWhitelisted(payload)) {
     return;
   }
 
-  if (this._messageIsIgnored(payload)) {
+  if(this._messageIsIgnored(payload)){
     return;
-  }
-
-  if (this.options.verbose) {
-    if (window.console && typeof(window.console.log) === "function") {
-      // TODO: write message first, then output params.
-      window.console.log(payloadToSend);
-    }
-  }
-
-  if (typeof(this.options.logFunction) === "function") {
-    this.options.logFunction(payloadToSend);
   }
 
   try {
@@ -2168,7 +2150,12 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if (!!this.options.enabled) {
-    window._rollbarPayloadQueue.push(payloadToSend);
+    window._rollbarPayloadQueue.push({
+      callback: callback,
+      accessToken: this.options.accessToken,
+      endpointUrl: this._route('item/'),
+      payload: payload
+    });
   }
 };
 
