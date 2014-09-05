@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.7**
+- Added `verbose` and `logFunction` options, (pr#42).
+
 **1.1.6**
 - Added a `_wrappedSource` key to exceptions caught by the `wrap()` method to record the source of the wrapped function.
 
