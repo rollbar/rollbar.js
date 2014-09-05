@@ -132,7 +132,7 @@ describe("Notifier.global()", function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar internal error:');
+    expect(call.args[0][0]).to.equal('Rollbar:');
     expect(call.args[0][1]).to.be.an('object');
     expect(call.args[0][1].message).to.contain('merge() is broken');
 
@@ -337,7 +337,7 @@ describe("Notifier.configure()", function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar internal error:');
+    expect(call.args[0][0]).to.equal('Rollbar:');
     expect(call.args[0][1]).to.be.an('object');
     expect(call.args[0][1].message).to.contain('merge() is broken');
 
@@ -639,7 +639,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar internal error:');
+    expect(call.args[0][0]).to.equal('Rollbar:');
     expect(call.args[0][1]).to.be.an('object');
     expect(call.args[0][1].message).to.contain('_log() is broken');
 
@@ -666,7 +666,7 @@ describe("Notifier.uncaughtError()", function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar internal error:');
+    expect(call.args[0][0]).to.equal('Rollbar:');
     expect(call.args[0][1]).to.be.an('object');
     expect(call.args[0][1].message).to.contain('_enqueuePayload() is broken');
 
@@ -739,7 +739,7 @@ describe("Notifier.scope()", function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar internal error:');
+    expect(call.args[0][0]).to.equal('Rollbar:');
     expect(call.args[0][1]).to.be.an('object');
     expect(call.args[0][1].message).to.contain('merge() is broken');
 
@@ -887,7 +887,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
 
       var call = consoleLogStub.getCall(0);
       expect(call.args[0]).to.be.an('array');
-      expect(call.args[0][0]).to.equal('Rollbar internal error:');
+      expect(call.args[0][0]).to.equal('Rollbar:');
       expect(call.args[0][1]).to.be.an('object');
       expect(call.args[0][1].message).to.contain('_log() is broken');
 
@@ -949,7 +949,7 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
 
       var call = consoleLogStub.getCall(0);
       expect(call.args[0]).to.be.an('array');
-      expect(call.args[0][0]).to.equal('Rollbar internal error:');
+      expect(call.args[0][0]).to.equal('Rollbar:');
       expect(call.args[0][1]).to.be.an('object');
       expect(call.args[0][1].message).to.contain('user-supplied callback is broken');
 

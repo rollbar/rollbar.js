@@ -57,8 +57,8 @@ function Notifier(parentNotifier) {
   this.plugins = {};
   this.parentNotifier = parentNotifier;
   this.logger = function() {
-    if (window.console && window.console.log) {
-      var args = ['Rollbar internal error:'].concat(Array.prototype.slice.call(arguments, 0));
+    if (window.console && typeof window.console.log === 'function') {
+      var args = ['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0));
       window.console.log(args);
     }
   };
@@ -602,20 +602,18 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if (this.options.verbose) {
-    if (window.console && typeof(window.console.log) === "function") {
-      if (payload.data && payload.data.body && payload.data.body.trace) {
-        var trace = payload.data.body.trace;
-        var exceptionMessage = trace.exception.message;
-        window.console.log(exceptionMessage);
-      }
-
-      // FIXME: Some browsers do not output objects as json to the console, and
-      // instead write [object Object], so let's write the message first to ensure that is logged.
-      window.console.log(payloadToSend);
+    if (payload.data && payload.data.body && payload.data.body.trace) {
+      var trace = payload.data.body.trace;
+      var exceptionMessage = trace.exception.message;
+      this.logger(exceptionMessage);
     }
+
+    // FIXME: Some browsers do not output objects as json to the console, and
+    // instead write [object Object], so let's write the message first to ensure that is logged.
+    this.logger('Sending payload -', payloadToSend);
   }
 
-  if (typeof(this.options.logFunction) === "function") {
+  if (typeof this.options.logFunction === "function") {
     this.options.logFunction(payloadToSend);
   }
 
