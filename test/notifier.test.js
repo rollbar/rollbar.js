@@ -277,6 +277,27 @@ describe("Notifier.configure()", function() {
     done();
   });
 
+  it("should respect the verbose flag", function(){
+    var notifier = new Notifier();
+    var consoleSpy = sinon.stub(window.console, "log");
+
+    notifier.configure({ verbose : true });
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(consoleSpy.calledOnce);
+    consoleSpy.reset();
+
+    notifier.configure({ verbose : false });
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(consoleSpy.notCalled);
+    consoleSpy.reset();
+
+    notifier.configure({});
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(consoleSpy.notCalled);
+
+    consoleSpy.restore();
+  });
+
   it("should overwrite previous options", function(done) {
     var notifier = new Notifier();
     notifier.configure({foo: 'bar', bar: 'foo'});
@@ -1856,3 +1877,34 @@ describe("Notifier._messageIsIgnored()", function(){
     expect(child._messageIsIgnored(payload3)).to.equal(false);
   });
 });
+
+/*
+ * Notifier._logToFunction
+ */
+ describe("Notifier._logToFunction()", function(){
+   function buildNotifierWithLogFunction(cb){
+     var notifier = new Notifier();
+     notifier.configure({ logFunction : cb });
+     return notifier;
+   }
+
+  it("ignores a null log function", function(){
+    var notifier = buildNotifierWithLogFunction(null);
+    var fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
+    expect(fn).to.not.throw(Error);
+  });
+
+  it("ignores an undefined log function", function(){
+    var notifier = buildNotifierWithLogFunction();
+    var fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
+    expect(fn).to.not.throw(Error);
+  });
+
+  it("calls the given log function", function(){
+    var logFunc = function(){ logFunc.called = true; };
+    var notifier = buildNotifierWithLogFunction(logFunc);
+    expect(logFunc.called).to.be.undefined;
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(logFunc.called).to.equal(true);
+  });
+ });

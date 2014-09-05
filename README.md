@@ -120,6 +120,23 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
+## Verbose option
+
+If you would like to see what is being sent to Rollbar in your console, use the
+`verbose` option.
+
+```js
+var _rollbarConfig = {
+  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  verbose: true, // This will now log to console.log, as well as Rollbar  
+  captureUncaught: true,
+  payload: {
+    environment: "production"
+  }
+};
+// init your rollbar like normal, or insert rollbar.js source snippet here
+```
+
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
