@@ -1770,27 +1770,73 @@ describe("Notifier._messageIsIgnored()", function(){
     expect(logFunc.called).to.equal(true);
   });
 
-  it("calls console.log if options.logToConsole is true", function(){
-    var notifier = new Notifier();
-    var originalLog = window.console.log;
-    notifier.configure({ logToConsole : true });
-    window.console._log = originalLog || function(){};
-    window.console.log  = function(){
-      window.console.log.called = true;
-      window.console._log(arguments);
-    };
-    notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.called).to.equal(true);
-    window.console = originalLog;
-  });
-
   it("does not call console.log if console.log is null", function(){
     var notifier = new Notifier();
     var fn;
-    notifier.configure({ logToConsole : true });
-    window.console._log = window.console.log || function(){};
-    window.console.log  = null;
+    var originalConsoleLog = window.console.log;
+    window.console.log = null;
+
+    notifier.configure({ verbose : true });
     fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
     expect(fn).to.not.throw(Error);
+
+    window.console.log = originalConsoleLog;
+  });
+ });
+
+/*
+ * Notifier option 'verbose'
+ */
+describe("Notifier option 'verbose'", function(){
+  it("calls console.log if options.verbose is true", function(){
+    var notifier = new Notifier();
+    notifier.configure({ verbose : true });
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.calledOnce);
+    window.console.log.restore();
+  });
+
+  it("does not log to console.log of options.verbose is false", function(){
+    var notifier = new Notifier();
+    notifier.configure({ verbose : false });
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.notCalled);
+    window.console.log.restore();
+  });
+
+  it("does not log to console.log if options.verbose is undefined", function(){
+    var notifier = new Notifier();
+    notifier.configure({});
+    sinon.spy(window.console, "log");
+    notifier._enqueuePayload({}, false, {}, null)
+    expect(window.console.log.notCalled);
+    window.console.log.restore();
+  });
+});
+
+/*
+ * Notifier option 'enabled'
+ */
+ describe("Notifier option 'enabled'", function(){
+  it("does not add to payload queue when enabled is false", function(){
+    var notifier       = new Notifier();
+    var originalLength = window._rollbarPayloadQueue.length;
+    notifier.configure({ enabled : false });
+
+    notifier._enqueuePayload({}, false, {}, null)
+
+    expect(window._rollbarPayloadQueue.length).to.equal(originalLength);
+  });
+
+  it("adds to payload queue when enabled is true", function(){
+    var notifier       = new Notifier();
+    var originalLength = window._rollbarPayloadQueue.length;
+    notifier.configure({ enabled : true });
+
+    notifier._enqueuePayload({}, false, {}, null)
+
+    expect(window._rollbarPayloadQueue.length).to.be.above(originalLength);
   });
  });

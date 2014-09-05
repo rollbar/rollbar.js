@@ -110,12 +110,15 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
-## Log to console.log, instead of sending payload to rollbar
+## Verbose option
 
-```javascript
+If you would like to see what is being sent to Rollbar in your console, use the
+`verbose` option.
+
+```js
 var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
-  logToConsole: true, // Will send to window.console.log if that function is defined by the browser
+  verbose: true, // This will now log to console.log, as well as Rollbar  
   captureUncaught: true,
   payload: {
     environment: "production"
@@ -124,16 +127,18 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
-## Log to a custom function, instead of sending payload to rollbar
+## Disable logging to Rollbar over the network
 
-```javascript
-var fn = function(payloadObj){
- // your code here
- // payloadObj has the following properties: callback, accessToken, endpointUrl, payload 
-};
+If you do not want your messages to be sent to Rollbar's network, for debugging
+purposes perhaps, you can disable that by setting the `enabled` option to false. You
+should then set the `verbose` option to `true` to see your messages in your browser's
+console logs.
+
+```js
 var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
-  logFunction: fn, // Will send to fn
+  enabled: false, // Will not send Rollbar.js messages to Rollbar's network
+  verbose: true, // Recommended when enabled is set to 'false', but not required
   captureUncaught: true,
   payload: {
     environment: "production"
