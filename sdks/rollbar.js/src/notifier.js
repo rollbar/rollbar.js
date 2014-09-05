@@ -537,7 +537,7 @@ Notifier.prototype._messageIsIgnored = function(payload){
     for(i=0; i < len; i++) {
       rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-      
+
       if(messageIsIgnored){
         break;
       }
@@ -552,6 +552,13 @@ Notifier.prototype._messageIsIgnored = function(payload){
 };
 
 Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
+
+  var payloadToSend = {
+    callback: callback,
+    accessToken: this.options.accessToken,
+    endpointUrl: this._route('item/'),
+    payload: payload
+  };
 
   var ignoredCallback = function() {
     if (callback) {
@@ -586,12 +593,30 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
     this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
-  if(!this._urlIsWhitelisted(payload)) {
+  if (!this._urlIsWhitelisted(payload)) {
     return;
   }
 
-  if(this._messageIsIgnored(payload)){
+  if (this._messageIsIgnored(payload)) {
     return;
+  }
+
+  if (this.options.verbose) {
+    if (window.console && typeof(window.console.log) === "function") {
+      if (payload.data && payload.data.body && payload.data.body.trace) {
+        var trace = payload.data.body.trace;
+        var exceptionMessage = trace.exception.message;
+        window.console.log(exceptionMessage);
+      }
+
+      // FIXME: Some browsers do not output objects as json to the console, and
+      // instead write [object Object], so let's write the message first to ensure that is logged.
+      window.console.log(payloadToSend);
+    }
+  }
+
+  if (typeof(this.options.logFunction) === "function") {
+    this.options.logFunction(payloadToSend);
   }
 
   try {
@@ -604,12 +629,7 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
   }
 
   if (!!this.options.enabled) {
-    window._rollbarPayloadQueue.push({
-      callback: callback,
-      accessToken: this.options.accessToken,
-      endpointUrl: this._route('item/'),
-      payload: payload
-    });
+    window._rollbarPayloadQueue.push(payloadToSend);
   }
 };
 
