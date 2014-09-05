@@ -2149,7 +2149,14 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
 
   if (this.options.verbose) {
     if (window.console && typeof(window.console.log) === "function") {
-      // TODO: write message first, then output params.
+      if (payload.data && payload.data.body && payload.data.body.trace) {
+        var trace = payload.data.body.trace;
+        var exceptionMessage = trace.exception.message;
+        window.console.log(exceptionMessage);
+      }
+
+      // FIXME: Some browsers do not output objects as json to the console, and
+      // instead write [object Object], so let's write the message first to ensure that is logged.
       window.console.log(payloadToSend);
     }
   }
