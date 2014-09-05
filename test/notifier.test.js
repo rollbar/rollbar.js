@@ -279,23 +279,23 @@ describe("Notifier.configure()", function() {
 
   it("should respect the verbose flag", function(){
     var notifier = new Notifier();
+    var consoleSpy = sinon.stub(window.console, "log");
+
     notifier.configure({ verbose : true });
-    sinon.spy(window.console, "log");
     notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.calledOnce);
-    window.console.log.restore();
+    expect(consoleSpy.calledOnce);
+    consoleSpy.reset();
 
     notifier.configure({ verbose : false });
-    sinon.spy(window.console, "log");
     notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.notCalled);
-    window.console.log.restore();
+    expect(consoleSpy.notCalled);
+    consoleSpy.reset();
 
     notifier.configure({});
-    sinon.spy(window.console, "log");
     notifier._enqueuePayload({}, false, {}, null)
-    expect(window.console.log.notCalled);
-    window.console.log.restore();
+    expect(consoleSpy.notCalled);
+
+    consoleSpy.restore();
   });
 
   it("should overwrite previous options", function(done) {
