@@ -1907,17 +1907,4 @@ describe("Notifier._messageIsIgnored()", function(){
     notifier._enqueuePayload({}, false, {}, null)
     expect(logFunc.called).to.equal(true);
   });
-
-  it("does not call console.log if console.log is null", function(){
-    var notifier = new Notifier();
-    var fn;
-    var originalConsoleLog = window.console.log;
-    window.console.log = null;
-
-    notifier.configure({ verbose : true });
-    fn = function(){ notifier._enqueuePayload({}, false, {}, null); };
-    expect(fn).to.not.throw(Error);
-
-    window.console.log = originalConsoleLog;
-  });
  });
