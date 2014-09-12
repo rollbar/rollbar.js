@@ -77,7 +77,7 @@ Rollbar.init = function(window, config) {
   }, client.logger))();
 };
 
-Rollbar.prototype.loadFull = function(window, document, immediate, config) {
+Rollbar.prototype.loadFull = function(window, document, immediate, config, callback) {
   var self = this;
   // Create the main rollbar script loader
   var loader = _wrapInternalErr(function() {
@@ -93,6 +93,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
   }, this.logger);
 
   var handleLoadErr = _wrapInternalErr(function() {
+    var err;
     if (window._rollbarPayloadQueue === undefined) {
       // rollbar.js did not load correctly, call any queued callbacks
       // with an error.
@@ -100,7 +101,8 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
       var cb;
       var args;
       var i;
-      var err = new Error('rollbar.js did not load');
+
+      err = new Error('rollbar.js did not load');
 
       // Go through each of the shim objects. If one of their args
       // was a function, treat it as the callback and call it with
@@ -115,6 +117,9 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config) {
           }
         }
       }
+    }
+    if (typeof callback === 'function') {
+      callback(err);
     }
   }, this.logger);
 

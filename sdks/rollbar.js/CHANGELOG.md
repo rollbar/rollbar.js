@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.8**
+- Added a callback function to `loadFull()` to support Segment.io's plugin model.
+
 **1.1.7**
 - Added `verbose` and `logFunction` options, (pr#42).
 
