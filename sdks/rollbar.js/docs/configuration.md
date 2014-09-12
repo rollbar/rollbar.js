@@ -126,21 +126,22 @@ Default: ```true```
   <dd>Optional function to modify the payload before sending to Rollbar.
 
 Default: ```null```
-  </dd>
 
-```E.g.
+```javascript
+// For example:
 // Set a custom fingerprint
 var transformer = function(payload) {
   payload.data.fingerprint = 'my custom fingerprint';
 };
+
 Rollbar.configure({transform: transformer});
-
 // OR
-
 var _rollbarConfig = {
+  // ...
   transform: transformer
 };
 ```
+  </dd>
 
   <dt>checkIgnore</dt>
   <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
