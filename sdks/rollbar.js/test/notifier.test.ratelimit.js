@@ -16,7 +16,7 @@ describe("Notifier default rate limits", function() {
     var xhrPostStub = sinon.stub(XHR, 'post');
     var notifier = new Notifier();
 
-    for (var i = 0; i < Notifier.DEFAULT_ITEMS_PER_MIN + 1; ++i) {
+    for (var i = 0; i < Notifier.DEFAULT_ITEMS_PER_MIN + 100; ++i) {
       notifier.error('test');
     }
     Notifier.processPayloads(true);
