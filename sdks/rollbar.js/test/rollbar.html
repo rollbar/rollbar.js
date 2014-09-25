@@ -56,12 +56,10 @@
       };
       var origRollbar = Rollbar.init(window, config);
 
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-        if (window.mochaPhantomJS) {
-          mochaPhantomJS.run();
-        } else {
-          mocha.run();
-        }
+      if (window.mochaPhantomJS) {
+        mochaPhantomJS.run();
+      } else {
+        mocha.run();
       }
     </script>
   </body>

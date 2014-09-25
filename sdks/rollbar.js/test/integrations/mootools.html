@@ -37,7 +37,7 @@
 
     <!-- Include mootools before rollbar -->
     <!-- v1.2.4 has a bug where it doesn't serialize {a:[{b:1}]} correctly -->
-    <script src="./mootools-1.2.4.min.js"></script>
+    <!--<script src="./mootools-1.2.4.min.js" type="text/javascript" charset="utf-8"></script>-->
 
     <!-- JSON-js source -->
     <script src="../../vendor/JSON-js/json2.js" type="text/javascript" charset="utf-8"></script>
@@ -49,14 +49,11 @@
     <script src="./mootools.test.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-        if (window.mochaPhantomJS) {
-          mochaPhantomJS.run();
-        } else {
-          mocha.run();
-        }
+      if (window.mochaPhantomJS) {
+        mochaPhantomJS.run();
+      } else {
+        mocha.run();
       }
     </script>
   </body>
 </html>
-
