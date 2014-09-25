@@ -1429,18 +1429,7 @@ var Util = {
 };
 
 var RollbarJSON = {};
-var testData = {a:[{b:1}]};
-try {
-  var serialized = JSON.stringify(testData);
-  if (serialized !== '{"a":[{"b":1}]}') {
-    setupCustomJSON(RollbarJSON);
-  } else {
-    RollbarJSON.stringify = JSON.stringify;
-    RollbarJSON.parse = JSON.parse;
-  }
-} catch (e) {
-  setupCustomJSON(RollbarJSON);
-}
+setupCustomJSON(RollbarJSON);
 
 var XHR = {
   XMLHttpFactories: [
@@ -1547,7 +1536,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.8';
+Notifier.NOTIFIER_VERSION = '1.1.9';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
