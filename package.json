@@ -6,11 +6,11 @@
     "url": "http://github.com/rollbar/rollbar.js"
   },
   "devDependencies": {
-    "mocha": "~1.14.0",
+    "mocha": "^1.21.4",
+    "phantomjs": "^1.9.10",
     "uglify-js": "~2.4.3",
     "jshint": "~2.3.0",
     "chai": "~1.8.1",
-    "phantomjs": "~1.9.2-2",
     "sinon": "~1.7.3",
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.7.2",
@@ -23,12 +23,15 @@
     "grunt-express": "~1.2.1",
     "grunt-text-replace": "~0.3.10",
     "semver": "~2.2.1",
-    "mocha-phantomjs": "~3.3.0",
+    "mocha-phantomjs": "^3.5.0",
     "grunt-cli": "~0.1.11",
     "grunt-tagrelease": "~0.3.0",
     "grunt-bumpup": "~0.5.0",
     "grunt-contrib-copy": "~0.5.0",
-    "grunt-saucelabs": "~4.1.2"
+    "grunt-saucelabs": "~4.1.2",
+    "grunt-blanket-mocha": "^0.4.1",
+    "grunt-mocha": "^0.4.11",
+    "grunt-mocha-cov": "^0.3.0"
   },
   "scripts": {
     "test": "make test"
