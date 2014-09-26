@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Rollbar Mocha Tests</title>
-    <link rel="stylesheet" href="lib/mocha/mocha.css"/>
+    <link rel="stylesheet" href="../lib/mocha/mocha.css"/>
   </head>
   <body>
     <!-- Required for browser reporter -->
@@ -11,18 +11,10 @@
     <div id="mesages"></div>
     <div id="fixtures"></div>
 
-    <div id="event-div"></div>
-
-    <!-- jquery -->
-    <script src="lib/jquery/jquery-1.8.3.min.js" type="text/javascript" charset="utf-8"></script>
-
-    <!-- jquery-mockjax -->
-    <script src="lib/jquery-mockjax/jquery-mockjax-1.5.3.js" type="text/javascript" charset="utf-8"></script>
-
     <!-- mocha/chai/sinon -->
-    <script src="lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/chai/chai.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/sinon/sinon-1.7.3.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../lib/chai/chai.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../lib/sinon/sinon-1.7.3.js" type="text/javascript" charset="utf-8"></script>
 
     <!-- initialize mocha -->
     <script type="text/javascript" charset="utf-8">
@@ -43,19 +35,20 @@
       });
     </script>
 
+    <!-- Include mootools before rollbar -->
+    <!-- v1.2.4 has a bug where it doesn't serialize {a:[{b:1}]} correctly -->
+    <!--<script src="./mootools-1.2.4.min.js" type="text/javascript" charset="utf-8"></script>-->
+
+    <!-- JSON-js source -->
+    <script src="../../vendor/JSON-js/json2.js" type="text/javascript" charset="utf-8"></script>
+
     <!-- sources -->
-    <script src="../src/shim.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../../src/json.js" type="text/javascript" charset="utf-8"></script>
 
     <!-- tests -->
-    <script src="./rollbar.test.js"></script>
+    <script src="./mootools.test.js"></script>
 
     <script type="text/javascript" charset="utf-8">
-      var config = {
-        accessToken: '12c99de67a444c229fca100e0967486f',
-        captureUncaught: true
-      };
-      var origRollbar = Rollbar.init(window, config);
-
       if (window.mochaPhantomJS) {
         mochaPhantomJS.run();
       } else {

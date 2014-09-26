@@ -62,12 +62,10 @@
     <script src="./notifier.test.js" type="text/javascript" charset="utf-8"></script>
 
     <script type="text/javascript" charset="utf-8">
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-        if (window.mochaPhantomJS) {
-          mochaPhantomJS.run();
-        } else {
-          mocha.run();
-        }
+      if (window.mochaPhantomJS) {
+        mochaPhantomJS.run();
+      } else {
+        mocha.run();
       }
     </script>
   </body>
