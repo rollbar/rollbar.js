@@ -8,7 +8,7 @@ describe('XHR', function() {
   });
 
   it("should execute a simple post", function(done) {
-    var url = 'http://localhost:3000/';
+    var url = 'http://localhost:3000/api';
     var accessToken = 'abc123';
     var payload = {};
 
@@ -22,7 +22,7 @@ describe('XHR', function() {
   });
 
   it("should only accept an object to post", function(done) {
-    var url = 'http://localhost:3000/';
+    var url = 'http://localhost:3000/api';
     var accessToken = 'abc123';
     var payload = '{}';
 

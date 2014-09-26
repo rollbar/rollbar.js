@@ -133,22 +133,38 @@ module.exports = function(grunt) {
         ]
       }
     },
-    mocha: {
+    mocha_phantomjs: {
       test: {
-        src: ['test/**/*.html'],
         options: {
           '--web-security' : false,
           '--local-to-remote-url-access' : true,
           run: true,
           log: true,
-          reporter: 'Spec'
+          urls: ['http://localhost:3000/test/components.html',
+                 'http://localhost:3000/test/notifier.html',
+                 'http://localhost:3000/test/notifier.ratelimit.html',
+                 'http://localhost:3000/test/rollbar.html',
+                 'http://localhost:3000/test/shim.html',
+                 'http://localhost:3000/test/shimalias.html',
+                 'http://localhost:3000/test/integrations/mootools.html']
         }
       }
     },
+    /* Serves up responses to requests from the notifier */
     express: {
-      dist: {
+      test: {
         options: {
-          server: './test/express'
+          server: './test/express',
+          port: 3000
+        }
+      }
+    },
+    /* Serves up the static test .html files */
+    connect: {
+      test: {
+        options: {
+          base: '.',
+          port: 3000
         }
       }
     },
@@ -158,25 +174,13 @@ module.exports = function(grunt) {
       prefix: 'v',
       commit: false
     },
-    watch: {
-      files: ['<%= jshint.files %>'],
-      tasks: ['jshint', 'concat', 'uglify']
-    },
-    connect: {
-      server: {
-        options: {
-          base: '.',
-          port: 9999
-        }
-      }
-    },
     'saucelabs-mocha': {
       all: {
         options: {
-          urls: ['http://127.0.0.1:9999/test/rollbar.html'],
-                 //'http://127.0.0.1:9999/test/shim.html',
-                 //'http://127.0.0.1:9999/test/notifier.html',
-                 //'http://127.0.0.1:9999/test/components.html'],
+          urls: ['http://localhost:3000/test/rollbar.html'],
+                 //'http://localhost:3000/test/shim.html',
+                 //'http://localhost:3000/test/notifier.html',
+                 //'http://localhost:3000/test/components.html'],
           tunnelTimeout: 5,
           build: process.env.TRAVIS_JOB_ID,
           concurrency: 3,
@@ -189,32 +193,38 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-mocha-phantomjs');
+  grunt.loadNpmTasks('grunt-express');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-mocha');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-express');
-  grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-bumpup');
   grunt.loadNpmTasks('grunt-tagrelease');
-  grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-saucelabs');
 
   grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  var testjobs = ['express', 'connect'];
+  var testjobs = ['express'];
   if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined'){
     testjobs.push('saucelabs-mocha');
   } else {
-    testjobs.push('mocha');
+    testjobs.push('mocha_phantomjs');
   }
   grunt.registerTask('test', testjobs);
 
-  grunt.registerTask('default', function() {
-    grunt.task.run('build');
+  // This will allow you to run "grunt test-debug" and then open your
+  // browser to http://localhost:3000/test/XXX.html to run tests.
+  grunt.registerTask('test-browser', function() {
+    console.log('Open your browser to http://localhost:3000/test/rollbar.html');
+    grunt.task.run('express');
+    grunt.task.run('express-keepalive');
   });
+
+  grunt.registerTask('default', ['build']);
 
   grunt.registerTask('bumpversion', function(type) {
     type = type ? type : 'patch';

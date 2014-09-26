@@ -1080,7 +1080,7 @@ describe("Notifier._log()", function() {
 describe("Notifier._route()", function() {
   it("should route using the default endpoint", function(done) {
     var notifier = new Notifier();
-    expect(notifier._route('test')).to.equal('https://api.rollbar.com/api/1/test');
+    expect(notifier._route('test')).include('//api.rollbar.com/api/1/test');
 
     notifier.configure({endpoint: 'http://test.com/'});
     expect(notifier._route('test')).to.equal('http://test.com/test');
