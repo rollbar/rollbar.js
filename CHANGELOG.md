@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.10**
+- Pulls in the latest JSON-js changes that do not call `.toJSON()` if the method exists already. This was breaking because MooTools v1.2.4 sets `.toJSON()` to use a broken JSON stringify implementation.
+
 **1.1.9**
 - Always use the custom JSON implementation since some users are initializing a library that will overwrite a working `JSON.stringify()` with a broken one after Rollbar has checked for `JSON.stringify()` correctness.
 
