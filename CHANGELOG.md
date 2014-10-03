@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.11**
+- Fixes a bug where wrapped functions were crashing when a `null` callback was given to `removeEventListener()`, (pr#50).
+
 **1.1.10**
 - Pulls in the latest JSON-js changes that do not call `.toJSON()` if the method exists already. This was breaking because MooTools v1.2.4 sets `.toJSON()` to use a broken JSON stringify implementation.
 
