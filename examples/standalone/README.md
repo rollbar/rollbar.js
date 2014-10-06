@@ -17,6 +17,7 @@ You'll want to include this at the top of your page in the `head` tag in order f
         }
       };
     </script>
+  ```
 
 2. Include the Rollbar snippet and initialize
   
