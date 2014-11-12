@@ -116,7 +116,10 @@ Notifier.prototype._getLogArgs = function(args) {
     } else if (arg && argT === 'object') {
       if (arg.constructor.name === 'Date') {
         ts = arg;
-      } else if (arg instanceof Error || arg.prototype === Error.prototype || arg.hasOwnProperty('stack')) {
+      } else if (arg instanceof Error ||
+          arg.prototype === Error.prototype ||
+          arg.hasOwnProperty('stack') ||
+          arg instanceof DOMException) {
         err = arg;
       } else {
         custom = arg;
