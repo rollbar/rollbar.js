@@ -417,6 +417,34 @@ describe("Notifier.uncaughtError()", function() {
     done();
   });
 
+  it("should enqueue a payload with the provided DOMException", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload');
+
+    var err;
+    try {
+      // Will throw a DOMException
+      document.querySelectorAll('div:foo');
+    } catch (e) {
+      err = e;
+    }
+    notifier.uncaughtError('testing uncaught DOMException', 'http://foo.com/', 33, 21, err);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.be.at.least(3);
+    expect(args[0]).to.be.an('object');
+    expect(args[1]).to.equal(true);
+    expect(args[2]).to.be.an('array');
+    expect(args[2].length).to.be.at.least(3);
+    expect(args[2][1]).to.equal('testing uncaught DOMException');
+
+    done();
+  });
+
   it("should enqueue a payload with the custom data from a wrapped function error", function(done) {
     var notifier = new Notifier();
     var spy = sinon.spy(notifier, '_log');
@@ -808,6 +836,34 @@ describe("Notifier.log()", function() {
     expect(err).to.be.equal(e);
     expect(custom).to.be.equal(obj);
     expect(callback).to.be.a('function');
+
+    done();
+  });
+
+  it("should pass the DOMException to the _log method", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, "_log");
+
+    var e;
+    try {
+      // Will throw a DOMException
+      document.querySelectorAll('div:foo');
+    } catch (e2) {
+      e = e2;
+    }
+
+    notifier.log('custom DOMException message', e);
+
+    expect(spy.called).to.be.true;
+
+    var call = spy.getCall(0);
+    var level = call.args[0];
+    var message = call.args[1];
+    var err = call.args[2];
+
+    expect(level).to.be.equal('debug');
+    expect(message).to.be.equal('custom DOMException message');
+    expect(err).to.be.equal(e);
 
     done();
   });
