@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.12**
+- Fixes a bug where `DOMException` objects were not recognized as error objects. (#55).
+
 **1.1.11**
 - Fixes a bug where wrapped functions were crashing when a `null` callback was given to `removeEventListener()`, (pr#50).
 
