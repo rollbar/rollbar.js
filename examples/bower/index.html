@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <script>
+      _rollbarConfig = {
+        accessToken: "ACCESS_TOKEN",
+        captureUncaught: true,
+        payload: {
+          environment: "test"
+        }
+      };
+    </script>
+    <script src="./bower_components/rollbar/dist/rollbar.snippet.min.js"></script>
+  </head>
+  <body>
+    <button onclick="breakme()">Break me</button>
+  </body>
+</html>
