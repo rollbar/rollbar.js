@@ -2,8 +2,22 @@
   "name": "rollbar",
   "dependencies": {},
   "main": [
-    "dist/rollbar.js", 
+    "dist/rollbar.js",
     "dist/rollbar.snippet.js",
     "src/plugins/jquery.js"
+  ],
+  "ignore": [
+    "docs",
+    "examples",
+    "release",
+    "test",
+    "tasks",
+    ".gitignore",
+    ".gitmodules",
+    ".travis.yml",
+    "Gruntfile.js",
+    "Makefile",
+    "travis.yml",
+    "package.json"
   ]
 }
