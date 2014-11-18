@@ -39,7 +39,7 @@ bower install rollbar --save
   <script src="bower_components/rollbar/dist/rollbar.snippet.min.js"></script>
 ```
 
-Rollbar is not monitoring your page for all unhandled exceptions and is available via the global `window.Rollbar` object.
+Rollbar is now monitoring your page for all unhandled exceptions and is available via the global `window.Rollbar` object.
 
 ```js
 // Put this anywhere in your app
