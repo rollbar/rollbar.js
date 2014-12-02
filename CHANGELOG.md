@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.13**
+- Add `responseText` and `statusText` to the data reported by the jQuery ajax plugin, (pr#61).
+
 **1.1.12**
 - Fixes a bug where `DOMException` objects were not recognized as error objects. (#55).
 

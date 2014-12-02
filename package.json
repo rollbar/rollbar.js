@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -25,6 +25,7 @@
     "grunt-saucelabs": "~4.1.2",
     "grunt-tagrelease": "~0.3.0",
     "grunt-text-replace": "~0.3.10",
+    "time-grunt": "^1.0.0",
     "jshint": "~2.3.0",
     "mocha": "^1.21.4",
     "mocha-phantomjs": "^3.5.0",
