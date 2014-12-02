@@ -146,7 +146,8 @@ module.exports = function(grunt) {
                  'http://localhost:3000/test/rollbar.html',
                  'http://localhost:3000/test/shim.html',
                  'http://localhost:3000/test/shimalias.html',
-                 'http://localhost:3000/test/integrations/mootools.html']
+                 'http://localhost:3000/test/integrations/mootools.html',
+                 'http://localhost:3000/test/plugins/jquery.html']
         }
       }
     },
