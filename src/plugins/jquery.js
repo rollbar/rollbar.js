@@ -1,10 +1,10 @@
 (function(jQuery, window, document) {
-  
+
   var rb = window.Rollbar;
   if (!rb) {
     return;
   }
-  
+
   var JQUERY_PLUGIN_VERSION = '0.0.8';
 
   rb.configure({
@@ -16,7 +16,7 @@
       }
     }
   });
-  
+
   var logError = function(e) {
     rb.error(e);
     if (window.console) {
@@ -40,16 +40,19 @@
     if (thrownError && thrownError.hasOwnProperty('stack')) {
       err = thrownError;
     }
-    
+
     var extra = {
       status: status,
       url: url,
       type: type,
-      isAjax: true
+      isAjax: true,
+      data: ajaxSettings.data,
+      jqXHR_responseText: jqXHR.responseText,
+      jqXHR_statusText: jqXHR.statusText
     };
     rb.warning('jQuery ajax error for ' + type, extra, err);
   });
-  
+
   // Wraps functions passed into jQuery's ready() with try/catch to
   // report errors to Rollbar
   var origReady = jQuery.fn.ready;
@@ -62,7 +65,7 @@
       }
     });
   };
-  
+
   // Modified from the code removed from Tracekit in this commit
   // https://github.com/occ/TraceKit/commit/0d39401
   var _oldEventAdd = jQuery.event.add;
@@ -77,7 +80,7 @@
         }
       };
     };
-    
+
     if (handler.handler) {
       _handler = handler.handler;
       handler.handler = wrap(handler.handler);
@@ -85,7 +88,7 @@
       _handler = handler;
       handler = wrap(handler);
     }
-    
+
     // If the handler we are attaching doesn’t have the same guid as
     // the original, it will never be removed when someone tries to
     // unbind the original function later. Technically as a result of
