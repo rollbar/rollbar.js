@@ -4,6 +4,8 @@ module.exports = function(grunt) {
   var pkg = grunt.file.readJSON('package.json');
   var semVer = semver.parse(pkg.version);
 
+  require('time-grunt')(grunt);
+
   // Get the minimum minor version to put into the CDN URL
   semVer.patch = 0;
   semVer.prerelease = [];
