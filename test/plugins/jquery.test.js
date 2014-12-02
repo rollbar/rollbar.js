@@ -41,21 +41,24 @@ it("should call the second attached callback", function() {
 });    
 
 
-it("should collect method and url for ajax errors", function(done) {
+it("should collect ajax fields", function(done) {
   this.timeout(1000);
 
   var url = 'asdf';
   var method = 'PUT';
     
-  var oldShimQueue = window.RollbarShimQueue;
+  var oldQueue = window._rollbarPayloadQueue;
   var mock = [];
-  window.RollbarShimQueue = mock;
+  window._rollbarPayloadQueue = mock;
 
+  var responseText = 'Unknown error';
+  var statusText = 'Oops';
   $.mockjax({
     url: url,
     type: method,
-    status: 200,
-    responseText: '{"err":0}'
+    status: 500,
+    statusText: statusText,
+    responseText: responseText
   });
 
   $.ajax({url: url, type: method});
@@ -63,11 +66,15 @@ it("should collect method and url for ajax errors", function(done) {
   $.mockjaxClear();
 
   setTimeout(function() {
-    expect(mock[0].msg).to.equal('jQuery ajax error for ' + method + ' ' + url);
-    expect(mock[0].jquery_url).to.equal(url);
-    expect(mock[0].jquery_type).to.equal(method);
-  
-    window._rollbar = oldRollbar;
+    var body = mock[0].payload.data.body;
+    expect(body.message.body).to.equal('jQuery ajax error for ' + method);
+    expect(body.message.extra.url).to.equal(url);
+    expect(body.message.extra.type).to.equal(method);
+    expect(body.message.extra.status).to.equal(500);
+    expect(body.message.extra.jqXHR_statusText).to.equal(statusText);
+    expect(body.message.extra.jqXHR_responseText).to.equal(responseText);
+
+    window._rollbarPayloadQueue = oldQueue;
 
     done();
   }, 500);
