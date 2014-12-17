@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.1.14**
+- Fix a bug in IE8 where DOMException was being used even though it's not defined, (#62).
+
 **1.1.13**
 - Add `responseText` and `statusText` to the data reported by the jQuery ajax plugin, (pr#61).
 
