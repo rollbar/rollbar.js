@@ -1528,7 +1528,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.13';
+Notifier.NOTIFIER_VERSION = '1.1.14';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -1647,7 +1647,7 @@ Notifier.prototype._getLogArgs = function(args) {
       } else if (arg instanceof Error ||
           arg.prototype === Error.prototype ||
           arg.hasOwnProperty('stack') ||
-          arg instanceof DOMException) {
+          (typeof DOMException !== "undefined" && arg instanceof DOMException)) {
         err = arg;
       } else {
         custom = arg;
