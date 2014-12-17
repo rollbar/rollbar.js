@@ -119,7 +119,7 @@ Notifier.prototype._getLogArgs = function(args) {
       } else if (arg instanceof Error ||
           arg.prototype === Error.prototype ||
           arg.hasOwnProperty('stack') ||
-          arg instanceof DOMException) {
+          (typeof DOMException !== "undefined" && arg instanceof DOMException)) {
         err = arg;
       } else {
         custom = arg;
