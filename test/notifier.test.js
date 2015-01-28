@@ -1754,6 +1754,7 @@ describe("Notifier.wrap()", function() {
   it("should set window._rollbarWrappedError._rollbarContext", function(done) {
     var notifier = new Notifier();
 
+    // Wrap with a context
     var wrapped = notifier.wrap(function() {
       var a = b;
     }, {custom: 'context'});
@@ -1767,6 +1768,56 @@ describe("Notifier.wrap()", function() {
       expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
       expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
       expect(window._rollbarWrappedError._rollbarContext.custom).to.equal('context');
+      expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
+    }
+
+    // Wrap without a context
+    wrapped = notifier.wrap(function() {
+      var a = b;
+    });
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
+    }
+
+    // Wrap with a context function that returns an Object
+    wrapped = notifier.wrap(function() {
+      var a = b;
+    }, function() {return {custom: 'context_from_function'}});
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext.custom).to.equal('context_from_function');
+      expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
+    }
+
+    // Wrap with a context function that returns undefined
+    wrapped = notifier.wrap(function() {
+      var a = b;
+    }, function() { var a = 1; a+= 1; });
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(ReferenceError);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
     }
 
     done();

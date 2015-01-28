@@ -789,12 +789,12 @@ Notifier.prototype.wrap = function(f, context) {
   if (!f._wrapped) {
     f._wrapped = function () {
       try {
-        f.apply(this, arguments);
+        return f.apply(this, arguments);
       } catch(e) {
         if (!e.stack) {
           e._tkStackTrace = TK(e);
         }
-        e._rollbarContext = ctxFn();
+        e._rollbarContext = ctxFn() || {};
         e._rollbarContext._wrappedSource = f.toString();
 
         window._rollbarWrappedError = e;
