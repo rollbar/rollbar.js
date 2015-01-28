@@ -159,7 +159,7 @@ Rollbar.prototype.wrap = function(f, context) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
-          e._rollbarContext = ctxFn();
+          e._rollbarContext = ctxFn() || {};
           e._rollbarContext._wrappedSource = f.toString();
 
           window._rollbarWrappedError = e;
