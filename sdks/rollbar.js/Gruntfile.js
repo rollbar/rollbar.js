@@ -37,7 +37,7 @@ module.exports = function(grunt) {
       amd: {
         options: {
           banner: '/* rollbar.js for use with AMD loaders */\ndefine(function(require, exports, module) {\n',
-          footer: 'module.exports = globalNotifier;\n});'
+          footer: 'module.exports = wrapper;\n});'
         },
         files: {
           'dist/<%= pkg.name %>.amd.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
@@ -47,7 +47,7 @@ module.exports = function(grunt) {
       commonjs: {
         options: {
           banner: '/* rollbar.js for use with CommonJS loaders */\n',
-          footer: 'module.exports = globalNotifier'
+          footer: 'module.exports = wrapper;'
         },
         files: {
           'dist/<%= pkg.name %>.commonjs.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
