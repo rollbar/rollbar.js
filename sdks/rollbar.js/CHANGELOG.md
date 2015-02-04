@@ -3,6 +3,12 @@
 
 # Change Log
 
+**1.1.16**
+- Optimized the AMD build to not create a Notifier instance until the `init()` method is called.
+
+**1.1.15**
+- Fix a bug where custom context functions that returned `undefined` were causing `Rollbar.wrap()` to throw an error.
+
 **1.1.14**
 - Fix a bug in IE8 where DOMException was being used even though it's not defined, (#62).
 
