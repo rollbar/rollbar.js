@@ -1,6 +1,3 @@
-// Create the global notifier
-var globalNotifier = new Notifier();
-
 // Stub out the wrapped error which is set 
 window._rollbarWrappedError = null;
 
@@ -11,7 +8,7 @@ function _rollbarWindowOnError(client, old, args) {
     window._rollbarWrappedError = null;
   }
 
-  globalNotifier.uncaughtError.apply(globalNotifier, args);
+  client.uncaughtError.apply(client, args);
   if (old) {
     old.apply(window, args);
   }
@@ -32,8 +29,10 @@ function _extendListenerPrototype(client, prototype) {
 }
 
 // Add an init() method to do the same things that the shim would do
-globalNotifier.init = function(config) {
-  this.configure(config); 
+var wrapper = {};
+wrapper.init = function(config) {
+  var notifier = new Notifier();
+  notifier.configure(config); 
 
   if (config.captureUncaught) {
     // Set the global onerror handler
@@ -41,7 +40,7 @@ globalNotifier.init = function(config) {
 
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(globalNotifier, old, args);
+      _rollbarWindowOnError(notifier, old, args);
     };
 
     // Adapted from https://github.com/bugsnag/bugsnag-js
