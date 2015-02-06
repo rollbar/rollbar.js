@@ -63,4 +63,5 @@ wrapper.init = function(config) {
 
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
+  return notifier;
 };

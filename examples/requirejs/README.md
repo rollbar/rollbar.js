@@ -4,8 +4,8 @@
 
   ```js
   
-  // Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.amd.min.js and place in current directory
-  // and rename to rollbar.amd-v1.1.min.js
+  // Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.2/rollbar.amd.min.js and place in current directory
+  // and rename to rollbar.amd-v1.2.min.js
   var rollbarConfig = {
     accessToken: '...',
     captureUncaught: true,
@@ -15,8 +15,9 @@
   };
   
   // Require the Rollbar library
-  require(["rollbar.amd-v1.1.min.js"], function(rollbar) {
-    rollbar.init(rollbarConfig);
+  require(["rollbar.amd-v1.2.min.js"], function(Rollbar) {
+    var rollbar = Rollbar.init(rollbarConfig);
+    rollbar.info('Hello world');
   });
   ```
 

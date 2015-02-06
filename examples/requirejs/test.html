@@ -12,11 +12,12 @@
       };
 
       require(["../../dist/rollbar.amd.js"],
-        function(rollbar) {
+        function(Rollbar) {
           // Note: clicking on the "Foo" button below before the Rollbar
           // module is loaded and initialized will not Report the
           // exception to Rollbar.
-          rollbar.init(rollbarConfig);
+          var rollbar = Rollbar.init(rollbarConfig);
+          rollbar.info('Hello world');
         }
       );
     </script>

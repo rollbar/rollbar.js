@@ -1,4 +1,5 @@
-/* rollbar.js for use with CommonJS loaders */
+/* rollbar.js for use with AMD loaders */
+define(function(require, exports, module) {
 /*
     json2.js
     2013-05-26
@@ -1528,9 +1529,9 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.1.16';
+Notifier.NOTIFIER_VERSION = '1.2.0';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
-Notifier.DEFAULT_SCRUB_FIELDS = ["passwd","password","secret","confirm_password","password_confirmation"];
+Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
 Notifier.DEFAULT_REPORT_LEVEL = 'debug';
 Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
@@ -2516,5 +2517,7 @@ wrapper.init = function(config) {
 
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
+  return notifier;
 };
 module.exports = wrapper;
+});

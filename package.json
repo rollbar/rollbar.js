@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "1.1.16",
+  "version": "1.2.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -43,11 +43,20 @@
   "defaults": {
     "endpoint": "api.rollbar.com/api/1/",
     "scrubFields": [
+      "pw",
+      "pass",
       "passwd",
       "password",
       "secret",
       "confirm_password",
-      "password_confirmation"
+      "confirmPassword",
+      "password_confirmation",
+      "passwordConfirmation",
+      "access_token",
+      "accessToken",
+      "secret_key",
+      "secretKey",
+      "secretToken"
     ],
     "logLevel": "debug",
     "reportLevel": "debug",
