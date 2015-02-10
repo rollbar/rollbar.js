@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.2.1**
+- Fixed bug where the global notifier not being used to atch event listener exceptions. (pr#70)
+
 **1.2.0**
 - Fixed AMD build to now return the notifier instance from the `init()` method.
 
