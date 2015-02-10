@@ -2510,7 +2510,7 @@ wrapper.init = function(config) {
       global = globals[i];
 
       if (window[global] && window[global].prototype) {
-        _extendListenerPrototype(this, window[global].prototype);
+        _extendListenerPrototype(notifier, window[global].prototype);
       }
     }
   }
