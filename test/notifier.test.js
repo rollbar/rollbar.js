@@ -1544,6 +1544,26 @@ describe("Notifier._buildPayload()", function() {
 
     done();
   });
+
+  it("uses raw parsing when any other strategy works", function() {
+    var notifier = new Notifier();
+    var err;
+
+    try {
+      a = b;
+    } catch(e) {
+      err = e;
+    }
+
+    err.stack = 'foo';
+
+    tkErr = TK(err);
+    payload = notifier._buildPayload(new Date(), 'error', 'reference err', tkErr);
+    frames = payload.data.body.trace.frames;
+
+    expect(frames.length).to.equal(1);
+    expect(payload.data.body.trace.frames[0].method).to.equal('foo');
+  });
 });
 
 
