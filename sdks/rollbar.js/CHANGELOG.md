@@ -9,7 +9,7 @@
 **1.2.0**
 - Fixed AMD build to now return the notifier instance from the `init()` method.
 
-**1.1.16 - EDIT: This version has been removed due to a bug found which backward compatibility.**
+**1.1.16 - EDIT: This version has been removed due to finding a bug that broke backward compatibility.**
 - Optimized the AMD build to not create a Notifier instance until the `init()` method is called.
 
 **1.1.15**
