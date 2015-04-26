@@ -631,6 +631,8 @@ Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, c
 
   if (!!this.options.enabled) {
     window._rollbarPayloadQueue.push(payloadToSend);
+
+    _notifyPayloadAvailable();
   }
 };
 
@@ -850,19 +852,38 @@ function _guessErrorClass(errMsg) {
 
 var payloadProcessorTimeout;
 Notifier.processPayloads = function(immediate) {
-  if (!payloadProcessorTimeout || immediate) {
-    _payloadProcessorTimer(immediate);
+  if (immediate) {
+    _deferredPayloadProcess();
+  }
+  else if (!payloadProcessorTimeout)
+  {
+    _notifyPayloadAvailable();
   }
 };
 
-
-function _payloadProcessorTimer(immediate) {
-  var payloadObj;
-  while ((payloadObj = window._rollbarPayloadQueue.shift())) {
-    _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
+function _notifyPayloadAvailable() {
+  if (!payloadProcessorTimeout)
+  {
+    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
   }
-  if (!immediate) {
-    payloadProcessorTimeout = setTimeout(_payloadProcessorTimer, 1000);
+}
+
+function _deferredPayloadProcess() {
+  var payloadObj;
+
+  try
+  {
+    while ((payloadObj = window._rollbarPayloadQueue.shift())) {
+      _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
+    }
+  }
+  catch (err)
+  {
+    throw err;
+  }
+  finally
+  {
+    payloadProcessorTimeout = undefined;
   }
 }
 
