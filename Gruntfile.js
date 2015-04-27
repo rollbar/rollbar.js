@@ -61,6 +61,7 @@ module.exports = function(grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
+          'dist/<%= pkg.name %>.nojson.min.js': 'dist/<%= pkg.name %>.nojson.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
           'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
           'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
