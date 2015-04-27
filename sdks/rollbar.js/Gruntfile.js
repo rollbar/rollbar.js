@@ -31,6 +31,8 @@ module.exports = function(grunt) {
         files: {
           'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
                                       'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.nojson.js': ['vendor/TraceKit/src/trace.js',
+                                             'src/util.js', 'src/nojson.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
         }
       },
