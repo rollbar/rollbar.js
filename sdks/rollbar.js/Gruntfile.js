@@ -245,6 +245,12 @@ module.exports = function(grunt) {
 
     var rollbarMinJs = 'dist/rollbar.min.js';
     var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
+    
+    var rollbarNojsonJs = 'dist/rollbar.nojson.js';
+    var releaseRollbarNojsonJs = 'release/rollbar-' + version + '.nojson.js';
+
+    var rollbarNojsonMinJs = 'dist/rollbar.nojson.min.js';
+    var releaseRollbarNojsonMinJs = 'release/rollbar-' + version + '.nojson.min.js';
 
     var rollbarAmdJs = 'dist/rollbar.amd.js';
     var releaseRollbarAmdJs = 'release/rollbar-' + version + '.amd.js';
@@ -260,6 +266,8 @@ module.exports = function(grunt) {
 
     grunt.file.copy(rollbarJs, releaseRollbarJs);
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
+    grunt.file.copy(rollbarNojsonJs, releaseRollbarNojsonJs);
+    grunt.file.copy(rollbarNojsonMinJs, releaseRollbarNojsonMinJs);
     grunt.file.copy(rollbarAmdJs, releaseRollbarAmdJs);
     grunt.file.copy(rollbarAmdMinJs, releaseRollbarAmdMinJs);
     grunt.file.copy(rollbarCommonJs, releaseRollbarCommonJs);
