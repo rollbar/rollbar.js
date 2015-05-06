@@ -31,6 +31,8 @@ module.exports = function(grunt) {
         files: {
           'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
                                       'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
+          'dist/<%= pkg.name %>.nojson.js': ['vendor/TraceKit/src/trace.js',
+                                             'src/util.js', 'src/nojson.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
           'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
         }
       },
@@ -59,6 +61,7 @@ module.exports = function(grunt) {
       dist: {
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
+          'dist/<%= pkg.name %>.nojson.min.js': 'dist/<%= pkg.name %>.nojson.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
           'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
           'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
@@ -242,6 +245,12 @@ module.exports = function(grunt) {
 
     var rollbarMinJs = 'dist/rollbar.min.js';
     var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
+    
+    var rollbarNojsonJs = 'dist/rollbar.nojson.js';
+    var releaseRollbarNojsonJs = 'release/rollbar-' + version + '.nojson.js';
+
+    var rollbarNojsonMinJs = 'dist/rollbar.nojson.min.js';
+    var releaseRollbarNojsonMinJs = 'release/rollbar-' + version + '.nojson.min.js';
 
     var rollbarAmdJs = 'dist/rollbar.amd.js';
     var releaseRollbarAmdJs = 'release/rollbar-' + version + '.amd.js';
@@ -257,6 +266,8 @@ module.exports = function(grunt) {
 
     grunt.file.copy(rollbarJs, releaseRollbarJs);
     grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
+    grunt.file.copy(rollbarNojsonJs, releaseRollbarNojsonJs);
+    grunt.file.copy(rollbarNojsonMinJs, releaseRollbarNojsonMinJs);
     grunt.file.copy(rollbarAmdJs, releaseRollbarAmdJs);
     grunt.file.copy(rollbarAmdMinJs, releaseRollbarAmdMinJs);
     grunt.file.copy(rollbarCommonJs, releaseRollbarCommonJs);
