@@ -1,5 +1,12 @@
+var notifier = require('./notifier');
+
+var Notifier = notifier.Notifier;
 // Stub out the wrapped error which is set 
 window._rollbarWrappedError = null;
+
+function init(JSON) {
+  notifier.init(JSON);
+}
 
 // Global window.onerror handler
 function _rollbarWindowOnError(client, old, args) {
@@ -64,4 +71,10 @@ wrapper.init = function(config) {
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
   return notifier;
+};
+
+
+module.exports = {
+  wrapper: wrapper,
+  init: init
 };
