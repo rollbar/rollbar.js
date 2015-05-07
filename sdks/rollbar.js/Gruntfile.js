@@ -1,4 +1,6 @@
 var semver = require('semver');
+var webpack = require('webpack');
+var webpackConfig = require('./webpack.config.js');
 
 module.exports = function(grunt) {
   var pkg = grunt.file.readJSON('package.json');
@@ -13,6 +15,9 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: pkg,
+    webpack: {
+      options: webpackConfig
+    },
     jshint: {
       options: {
         globals: {
@@ -210,6 +215,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-bumpup');
   grunt.loadNpmTasks('grunt-tagrelease');
   grunt.loadNpmTasks('grunt-saucelabs');
+  grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
   grunt.registerTask('release', ['build', 'copyrelease']);

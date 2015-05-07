@@ -1,3 +1,14 @@
+require("script!../vendor/TraceKit/src/trace.js");
+var Util = require('./util');
+var xhr = require('./xhr');
+
+var XHR = xhr.XHR;
+var RollbarJSON = null;
+
+function init(JSON) {
+  RollbarJSON = JSON;
+  xhr.init(JSON);
+}
 
 // Updated by the build process to match package.json
 Notifier.NOTIFIER_VERSION = '1.2.2';
@@ -922,3 +933,8 @@ function _processPayload(url, accessToken, payload, callback) {
     return callback(null, resp);
   });
 }
+
+module.exports = {
+  Notifier: Notifier,
+  init: init
+};
