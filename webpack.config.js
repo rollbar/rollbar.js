@@ -1,6 +1,7 @@
 module.exports = {
   entry: {
-    rollbar: './src/bundles/rollbar.js'
+    rollbar: './src/bundles/rollbar.js',
+    'rollbar.nojson': './src/bundles/rollbar.nojson.js'
   },
   output: {
     path: './dist/bundles/',
