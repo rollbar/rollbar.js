@@ -1,5 +1,5 @@
 node_modules
 bower_components
 .idea
-dist/bundles
+dist/bundles/*.js
 
