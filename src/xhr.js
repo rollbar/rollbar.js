@@ -1,3 +1,9 @@
+var RollbarJSON = null;
+
+function init(JSON) {
+  RollbarJSON = JSON;
+}
+
 var XHR = {
   XMLHttpFactories: [
       function () {return new XMLHttpRequest();},
@@ -99,4 +105,9 @@ var XHR = {
       }
     }
   }
+};
+
+module.exports = {
+  XHR: XHR,
+  init: init
 };
