@@ -1,16 +1,22 @@
 var globalnotifier = require('../globalnotifier');
 
-function initJSON() {
-  // This adds the script to this context. We need it since this library
-  // is not a CommonJs or AMD module.
-  require("script!../../vendor/JSON-js/json2.js");
+function setupJSON() {
+  var JSONObject = JSON;
 
-  var customJSON = {};
-  setupCustomJSON(customJSON);
+  if (__USE_JSON__) {
+    // This adds the script to this context. We need it since this library
+    // is not a CommonJs or AMD module.
+    require("script!../../vendor/JSON-js/json2.js");
 
-  globalnotifier.init(customJSON);
+    var customJSON = {};
+    setupCustomJSON(customJSON);
+
+    JSONObject = customJSON;
+  }
+
+  globalnotifier.setupJSON(JSONObject);
 }
 
-initJSON();
+setupJSON();
 
 module.exports = globalnotifier.wrapper;

@@ -4,8 +4,8 @@ var Notifier = notifier.Notifier;
 // Stub out the wrapped error which is set 
 window._rollbarWrappedError = null;
 
-function init(JSON) {
-  notifier.init(JSON);
+function setupJSON(JSON) {
+  notifier.setupJSON(JSON);
 }
 
 // Global window.onerror handler
@@ -76,5 +76,5 @@ wrapper.init = function(config) {
 
 module.exports = {
   wrapper: wrapper,
-  init: init
+  setupJSON: setupJSON
 };
