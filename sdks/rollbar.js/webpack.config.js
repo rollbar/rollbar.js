@@ -1,6 +1,6 @@
 var webpack = require('webpack');
 
-var outputPath = './dist/bundles/';
+var outputPath = './dist/';
 
 var jsonDefines = {
   __USE_JSON__: true

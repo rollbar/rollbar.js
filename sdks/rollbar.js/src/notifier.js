@@ -1,4 +1,4 @@
-require("script!../vendor/TraceKit/src/trace.js");
+require("script!../vendor/trace.min.js");
 var Util = require('./util');
 var xhr = require('./xhr');
 
