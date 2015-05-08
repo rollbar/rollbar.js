@@ -36,21 +36,16 @@ module.exports = function(grunt) {
         files: {
           'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
           'dist/<%= pkg.name %>.nojson.min.js': 'dist/<%= pkg.name %>.nojson.js',
-          'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
-          'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
-          'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
+          'dist/<%= pkg.name %>.umd.min.js': 'dist/<%= pkg.name %>.umd.js',
+          'dist/<%= pkg.name %>.umd.nojson.min.js': 'dist/<%= pkg.name %>.umd.nojson.js',
           'dist/<%= pkg.name %>.shim.min.js': 'src/shim.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
       },
-      amd: {
+      prewebpack: {
         files: {
-          'dist/<%= pkg.name %>.amd.min.js': 'dist/<%= pkg.name %>.amd.js',
-        }
-      },
-      commonjs: {
-        files: {
-          'dist/<%= pkg.name %>.commonjs.min.js': 'dist/<%= pkg.name %>.commonjs.js',
+          'vendor/json2.min.js': 'vendor/JSON-js/json2.js',
+          'vendor/trace.min.js': 'vendor/TraceKit/src/trace.js'
         }
       }
     },
@@ -186,7 +181,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', ['replace', 'jshint', 'concat', 'uglify']);
+  grunt.registerTask('build', ['replace', 'jshint', 'uglify:prewebpack', 'webpack', 'uglify:dist']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   var testjobs = ['express'];
