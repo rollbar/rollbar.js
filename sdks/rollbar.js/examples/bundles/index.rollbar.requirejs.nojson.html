@@ -11,7 +11,7 @@
         }
       };
 
-      require(["../rollbar.umd.js"],
+      require(["../../dist/rollbar.umd.nojson.js"],
         function(Rollbar) {
           var rollbar = Rollbar.init(rollbarConfig);
           rollbar.info('Hello world');

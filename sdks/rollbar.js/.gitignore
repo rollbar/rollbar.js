@@ -3,4 +3,3 @@ bower_components
 .idea
 dist/bundles/*.js
 vendor/*.min.js
-
