@@ -1,6 +1,10 @@
+var xhr = require('../src/xhr');
+var XHR = xhr.XHR;
 var expect = chai.expect;
 
 describe('XHR', function() {
+  xhr.setupJSON(JSON);
+
   it("should get an XMLHttp object", function(done) {
     var request = XHR.createXMLHTTPObject();
     expect(request).to.not.equal(false);

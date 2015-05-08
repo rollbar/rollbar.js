@@ -49,6 +49,20 @@ module.exports = [
     },
     plugins: [new webpack.DefinePlugin(NoJsonDefines)],
     failOnError: true
+  },
+  {
+    name: 'tests',
+    entry: {
+      util: './test/bundles/util.js',
+      json: './test/bundles/json.js',
+      xhr: './test/bundles/xhr.js',
+      notifier: './test/bundles/notifier.js',
+      'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
+    },
+    output: {
+      path: 'test/',
+      filename: '[name].bundle.js',
+    }
   }
 ];
 

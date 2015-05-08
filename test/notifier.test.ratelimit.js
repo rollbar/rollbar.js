@@ -1,3 +1,8 @@
+var Rollbar = require('../src/shim.js');
+var notifiersrc = require('../src/notifier');
+var xhr = require('../src/xhr');
+var XHR = xhr.XHR;
+var Notifier = notifiersrc.Notifier;
 var expect = chai.expect;
 
 var config = {
