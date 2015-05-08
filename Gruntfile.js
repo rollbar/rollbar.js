@@ -38,7 +38,7 @@ module.exports = function(grunt) {
           'dist/<%= pkg.name %>.nojson.min.js': 'dist/<%= pkg.name %>.nojson.js',
           'dist/<%= pkg.name %>.umd.min.js': 'dist/<%= pkg.name %>.umd.js',
           'dist/<%= pkg.name %>.umd.nojson.min.js': 'dist/<%= pkg.name %>.umd.nojson.js',
-          'dist/<%= pkg.name %>.shim.min.js': 'src/shim.js',
+          'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
           'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
         }
       },

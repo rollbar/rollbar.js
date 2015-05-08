@@ -11,16 +11,17 @@ var NoJsonDefines = {
 };
 
 module.exports = [
-  // {
-  //   name: 'snippet',
-  //   entry: {
-  //     'rollbar.snippet': './src/bundles/rollbar.snippet.js'
-  //   },
-  //   output: {
-  //     path: outputPath
-  //   },
-  //   failOnError: true
-  // },
+  {
+    name: 'snippet',
+    entry: {
+      'rollbar.snippet': './src/bundles/rollbar.snippet.js'
+    },
+    output: {
+      path: outputPath,
+      filename: '[name].js'
+    },
+    failOnError: true
+  },
   {
     entry: {
       rollbar: './src/bundles/rollbar.js',
