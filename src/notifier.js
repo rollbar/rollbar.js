@@ -5,9 +5,9 @@ var xhr = require('./xhr');
 var XHR = xhr.XHR;
 var RollbarJSON = null;
 
-function init(JSON) {
+function setupJSON(JSON) {
   RollbarJSON = JSON;
-  xhr.init(JSON);
+  xhr.setupJSON(JSON);
 }
 
 // Updated by the build process to match package.json
@@ -936,5 +936,5 @@ function _processPayload(url, accessToken, payload, callback) {
 
 module.exports = {
   Notifier: Notifier,
-  init: init
+  setupJSON: setupJSON
 };

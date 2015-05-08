@@ -1,6 +1,6 @@
 var RollbarJSON = null;
 
-function init(JSON) {
+function setupJSON(JSON) {
   RollbarJSON = JSON;
 }
 
@@ -109,5 +109,5 @@ var XHR = {
 
 module.exports = {
   XHR: XHR,
-  init: init
+  setupJSON: setupJSON
 };

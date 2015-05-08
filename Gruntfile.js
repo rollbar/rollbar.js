@@ -16,7 +16,11 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: pkg,
     webpack: {
-      options: webpackConfig
+      options: webpackConfig,
+      "build-dev": {
+        devtool: "sourcemap",
+        debug: true
+      }
     },
     jshint: {
       options: {
@@ -26,41 +30,6 @@ module.exports = function(grunt) {
         }
       },
       files: ['Gruntfile.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
-    },
-    concat: {
-      dist: {
-        options: {
-          banner: '(function(window, document){\n',
-          footer: '})(window, document);'
-        },
-        files: {
-          'dist/<%= pkg.name %>.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
-                                      'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
-          'dist/<%= pkg.name %>.nojson.js': ['vendor/TraceKit/src/trace.js',
-                                             'src/util.js', 'src/nojson.js', 'src/xhr.js', 'src/notifier.js', 'src/init.js'],
-          'dist/<%= pkg.name %>.snippet.js': ['src/shim.js', 'src/loadfull.js', 'src/shimload.js']
-        }
-      },
-      amd: {
-        options: {
-          banner: '/* rollbar.js for use with AMD loaders */\ndefine(function(require, exports, module) {\n',
-          footer: 'module.exports = wrapper;\n});'
-        },
-        files: {
-          'dist/<%= pkg.name %>.amd.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
-                                                'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/globalnotifier.js']
-        }
-      },
-      commonjs: {
-        options: {
-          banner: '/* rollbar.js for use with CommonJS loaders */\n',
-          footer: 'module.exports = wrapper;'
-        },
-        files: {
-          'dist/<%= pkg.name %>.commonjs.js': ['vendor/JSON-js/json2.js', 'vendor/TraceKit/src/trace.js',
-                                               'src/util.js', 'src/json.js', 'src/xhr.js', 'src/notifier.js', 'src/globalnotifier.js']
-        }
-      }
     },
     uglify: {
       dist: {

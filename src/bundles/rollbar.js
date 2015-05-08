@@ -1,18 +1,23 @@
 var notifier = require('../notifier');
 var Notifier = notifier.Notifier;
 
-function initJSON() {
-  // This adds the script to this context. We need it since this library
-  // is not a CommonJs or AMD module.
-  require("script!../../vendor/JSON-js/json2.js");
+function setupJSON() {
+  var JSONObject = JSON;
 
-  var customJSON = {};
-  setupCustomJSON(customJSON);
+  if (__USE_JSON__) {
+    // This adds the script to this context. We need it since this library
+    // is not a CommonJs or AMD module.
+    require("script!../../vendor/JSON-js/json2.js");
 
-  notifier.init(customJSON);
+    var customJSON = {};
+    setupCustomJSON(customJSON);
+    JSONObject = customJSON;
+  }
+
+  notifier.setupJSON(JSONObject);
 }
 
-initJSON();
+setupJSON();
 
 if (!window._rollbarInitialized) {
   var config = window._rollbarConfig || {};
