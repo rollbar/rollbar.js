@@ -1,11 +1,17 @@
-var expect = chai.expect;
+require("script!../vendor/trace.min.js");
 
+var expect = chai.expect;
+var Rollbar = require('../src/shim.js');
+var notifiersrc = require('../src/notifier');
+var Notifier = notifiersrc.Notifier;
+var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
 };
-Rollbar.init(window, config);
 
+notifiersrc.setupJSON(JSON);
+Rollbar.init(window, config);
 
 /***** Misc setup tests *****/
 

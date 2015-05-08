@@ -114,14 +114,17 @@ module.exports = function(grunt) {
           '--local-to-remote-url-access' : true,
           run: true,
           log: true,
-          urls: ['http://localhost:3000/test/components.html',
+          urls: ['http://localhost:3000/test/util.html',
+                 'http://localhost:3000/test/json.html',
+                 'http://localhost:3000/test/xhr.html',
                  'http://localhost:3000/test/notifier.html',
                  'http://localhost:3000/test/notifier.ratelimit.html',
                  'http://localhost:3000/test/rollbar.html',
                  'http://localhost:3000/test/shim.html',
                  'http://localhost:3000/test/shimalias.html',
                  'http://localhost:3000/test/integrations/mootools.html',
-                 'http://localhost:3000/test/plugins/jquery.html']
+                 'http://localhost:3000/test/plugins/jquery.html'
+                ]
         }
       }
     },
