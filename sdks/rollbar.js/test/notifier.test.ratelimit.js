@@ -1,4 +1,4 @@
-var Rollbar = require('../src/shim.js');
+var Rollbar = require('../src/shim.js').Rollbar;
 var notifiersrc = require('../src/notifier');
 var xhr = require('../src/xhr');
 var XHR = xhr.XHR;
