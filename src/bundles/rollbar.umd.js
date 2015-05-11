@@ -18,5 +18,6 @@ function setupJSON() {
 }
 
 setupJSON();
+window.Rollbar = globalnotifier.wrapper;
 
 module.exports = globalnotifier.wrapper;
