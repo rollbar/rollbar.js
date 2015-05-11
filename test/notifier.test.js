@@ -1,7 +1,7 @@
 require("script!../vendor/trace.min.js");
 
 var expect = chai.expect;
-var Rollbar = require('../src/shim.js');
+var Rollbar = require('../src/shim').Rollbar;
 var Util = require('../src/util.js');
 var XHR = require('../src/xhr.js').XHR;
 var notifiersrc = require('../src/notifier');
