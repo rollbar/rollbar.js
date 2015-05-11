@@ -6,7 +6,7 @@ var jsonDefines = {
   __USE_JSON__: true
 };
 
-var NoJsonDefines = {
+var noJsonDefines = {
   __USE_JSON__: false
 };
 
@@ -25,13 +25,10 @@ module.exports = [
   {
     entry: {
       rollbar: './src/bundles/rollbar.js',
-      'rollbar.umd': './src/bundles/rollbar.umd.js'
     },
     output: {
-      library: 'Rollbar',
       path: outputPath,
       filename: '[name].js',
-      libraryTarget: 'umd'
     },
     plugins: [new webpack.DefinePlugin(jsonDefines)],
     failOnError: true
@@ -39,6 +36,16 @@ module.exports = [
   {
     entry: {
       rollbar: './src/bundles/rollbar.js',
+    },
+    output: {
+      path: outputPath,
+      filename: '[name].js',
+    },
+    plugins: [new webpack.DefinePlugin(noJsonDefines)],
+    failOnError: true
+  },
+  {
+    entry: {
       'rollbar.umd': './src/bundles/rollbar.umd.js'
     },
     output: {
@@ -47,7 +54,20 @@ module.exports = [
       filename: '[name].nojson.js',
       libraryTarget: 'umd'
     },
-    plugins: [new webpack.DefinePlugin(NoJsonDefines)],
+    plugins: [new webpack.DefinePlugin(noJsonDefines)],
+    failOnError: true
+  },
+  {
+    entry: {
+      'rollbar.umd': './src/bundles/rollbar.umd.js'
+    },
+    output: {
+      library: 'Rollbar',
+      path: outputPath,
+      filename: '[name].nojson.js',
+      libraryTarget: 'umd'
+    },
+    plugins: [new webpack.DefinePlugin(noJsonDefines)],
     failOnError: true
   },
   {
@@ -58,6 +78,9 @@ module.exports = [
       xhr: './test/bundles/xhr.js',
       notifier: './test/bundles/notifier.js',
       'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
+      'rollbar': './test/bundles/rollbar.js',
+      'shim': './test/bundles/shim.js',
+      'shimalias': './test/bundles/shimalias.js',
     },
     output: {
       path: 'test/',

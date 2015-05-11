@@ -1,4 +1,26 @@
 var expect = chai.expect;
+window.Rollbar = require('../src/shim').Rollbar;
+
+
+/* Note (@jon): this is a copy from src/shim.js. It's not part
+ * of the public interface for shim module.
+ */
+function _rollbarWindowOnError(client, old, args) {
+  if (window._rollbarWrappedError) {
+    if (!args[4]) {
+      args[4] = window._rollbarWrappedError;
+    }
+    if (!args[5]) {
+      args[5] = window._rollbarWrappedError._rollbarContext;
+    }
+    window._rollbarWrappedError = null;
+  }
+
+  client.uncaughtError.apply(client, args);
+  if (old) {
+    old.apply(window, args);
+  }
+}
 
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',

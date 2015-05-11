@@ -42,6 +42,10 @@ window._globalRollbarOptions = {
 var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 var _topLevelNotifier;
 
+function topLevelNotifier() {
+  return _topLevelNotifier;
+}
+
 function Notifier(parentNotifier) {
   // Save the first notifier so we can use it to send system messages like
   // when the rate limit is reached.
@@ -936,5 +940,6 @@ function _processPayload(url, accessToken, payload, callback) {
 
 module.exports = {
   Notifier: Notifier,
-  setupJSON: setupJSON
+  setupJSON: setupJSON,
+  topLevelNotifier: topLevelNotifier
 };

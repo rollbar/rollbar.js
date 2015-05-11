@@ -237,4 +237,7 @@ for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
 
-module.exports = Rollbar;
+module.exports = {
+  Rollbar: Rollbar,
+  _rollbarWindowOnError: _rollbarWindowOnError
+};

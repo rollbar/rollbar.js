@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Rollbar = __webpack_require__(1);
+	var Rollbar = __webpack_require__(1).Rollbar;
 	
 	var defaultRollbarJsUrl = '//d37gvrvc0wt4s1.cloudfront.net/js/v1.2/rollbar.min.js';
 	_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
@@ -298,7 +298,10 @@
 	  Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 	}
 	
-	module.exports = Rollbar;
+	module.exports = {
+	  Rollbar: Rollbar,
+	  _rollbarWindowOnError: _rollbarWindowOnError
+	};
 
 
 /***/ }
