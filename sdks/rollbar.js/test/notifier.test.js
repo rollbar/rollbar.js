@@ -2,6 +2,8 @@ require("script!../vendor/trace.min.js");
 
 var expect = chai.expect;
 var Rollbar = require('../src/shim.js');
+var Util = require('../src/util.js');
+var XHR = require('../src/xhr.js').XHR;
 var notifiersrc = require('../src/notifier');
 var Notifier = notifiersrc.Notifier;
 var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
@@ -197,7 +199,8 @@ describe("Notifier.global()", function() {
     notifier.error('third error');
     expect(_rollbarPayloadQueue.length).to.equal(3);
 
-    var spy = sinon.stub(window._topLevelNotifier, '_log');
+    var topLevelNotifier = notifiersrc.topLevelNotifier()
+    var spy = sinon.stub(topLevelNotifier, '_log');
     Notifier.processPayloads(true);
 
     expect(spy.called).to.equal(true);

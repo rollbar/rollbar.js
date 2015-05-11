@@ -6,6 +6,8 @@ var config = {
   globalAlias: 'testingRollbar'
 };
 
+window.Rollbar = require('../src/shim').Rollbar;
+
 describe("window.Rollbar.init()", function() {
   it("should create a shim with the correct alias", function(done) {
     Rollbar.init(window, config);

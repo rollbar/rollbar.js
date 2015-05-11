@@ -1,14 +1,4 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define(factory);
-	else if(typeof exports === 'object')
-		exports["Rollbar"] = factory();
-	else
-		root["Rollbar"] = factory();
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
+/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -60,10 +50,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function setupJSON() {
 	  var JSONObject = JSON;
 	
-	  if (true) {
+	  if (false) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    __webpack_require__(3);
+	    require("script!../../vendor/json2.min.js");
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -79,10 +69,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var config = window._rollbarConfig || {};
 	  var alias = config.globalAlias || 'Rollbar';
 	  var shim = window[alias];
+	
 	  var fullRollbar = new Notifier(shim);
 	
 	  fullRollbar._processShimQueue(window._rollbarShimQueue || []);
 	  window._rollbarInitialized = true;
+	  window[alias] = fullRollbar;
 	
 	  Notifier.processPayloads();
 	}
@@ -95,8 +87,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(4);
-	var Util = __webpack_require__(5);
-	var xhr = __webpack_require__(6);
+	var Util = __webpack_require__(2);
+	var xhr = __webpack_require__(3);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -137,6 +129,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 	var _topLevelNotifier;
+	
+	function topLevelNotifier() {
+	  return _topLevelNotifier;
+	}
 	
 	function Notifier(parentNotifier) {
 	  // Save the first notifier so we can use it to send system messages like
@@ -1032,25 +1028,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = {
 	  Notifier: Notifier,
-	  setupJSON: setupJSON
+	  setupJSON: setupJSON,
+	  topLevelNotifier: topLevelNotifier
 	};
 
 
 /***/ },
-/* 2 */,
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(7)(__webpack_require__(8)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/jon/rollbar/rollbar.js/vendor/json2.min.js")
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(7)(__webpack_require__(9)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/jon/rollbar/rollbar.js/vendor/trace.min.js")
-
-/***/ },
-/* 5 */
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Util = {
@@ -1241,7 +1225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var RollbarJSON = null;
@@ -1360,7 +1344,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(5)(__webpack_require__(6)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/jon/rollbar/rollbar.js/vendor/trace.min.js")
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -1375,19 +1365,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = "var setupCustomJSON=function(JSON){function f(a){return 10>a?\"0\"+a:a}function quote(a){return escapable.lastIndex=0,escapable.test(a)?'\"'+a.replace(escapable,function(a){var b=meta[a];return\"string\"==typeof b?b:\"\\\\u\"+(\"0000\"+a.charCodeAt(0).toString(16)).slice(-4)})+'\"':'\"'+a+'\"'}function str(a,b){var c,d,e,f,g,h=gap,i=b[a];switch(\"function\"==typeof rep&&(i=rep.call(b,a,i)),typeof i){case\"string\":return quote(i);case\"number\":return isFinite(i)?String(i):\"null\";case\"boolean\":case\"null\":return String(i);case\"object\":if(!i)return\"null\";if(gap+=indent,g=[],\"[object Array]\"===Object.prototype.toString.apply(i)){for(f=i.length,c=0;f>c;c+=1)g[c]=str(c,i)||\"null\";return e=0===g.length?\"[]\":gap?\"[\\n\"+gap+g.join(\",\\n\"+gap)+\"\\n\"+h+\"]\":\"[\"+g.join(\",\")+\"]\",gap=h,e}if(rep&&\"object\"==typeof rep)for(f=rep.length,c=0;f>c;c+=1)\"string\"==typeof rep[c]&&(d=rep[c],e=str(d,i),e&&g.push(quote(d)+(gap?\": \":\":\")+e));else for(d in i)Object.prototype.hasOwnProperty.call(i,d)&&(e=str(d,i),e&&g.push(quote(d)+(gap?\": \":\":\")+e));return e=0===g.length?\"{}\":gap?\"{\\n\"+gap+g.join(\",\\n\"+gap)+\"\\n\"+h+\"}\":\"{\"+g.join(\",\")+\"}\",gap=h,e}}\"function\"!=typeof Date.prototype.toJSON&&(Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+\"-\"+f(this.getUTCMonth()+1)+\"-\"+f(this.getUTCDate())+\"T\"+f(this.getUTCHours())+\":\"+f(this.getUTCMinutes())+\":\"+f(this.getUTCSeconds())+\"Z\":null},String.prototype.toJSON=Number.prototype.toJSON=Boolean.prototype.toJSON=function(){return this.valueOf()});var cx=/[\\u0000\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,escapable=/[\\\\\\\"\\x00-\\x1f\\x7f-\\x9f\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,gap,indent,meta={\"\\b\":\"\\\\b\",\"\t\":\"\\\\t\",\"\\n\":\"\\\\n\",\"\\f\":\"\\\\f\",\"\\r\":\"\\\\r\",'\"':'\\\\\"',\"\\\\\":\"\\\\\\\\\"},rep;\"function\"!=typeof JSON.stringify&&(JSON.stringify=function(a,b,c){var d;if(gap=\"\",indent=\"\",\"number\"==typeof c)for(d=0;c>d;d+=1)indent+=\" \";else\"string\"==typeof c&&(indent=c);if(rep=b,b&&\"function\"!=typeof b&&(\"object\"!=typeof b||\"number\"!=typeof b.length))throw new Error(\"JSON.stringify\");return str(\"\",{\"\":a})}),\"function\"!=typeof JSON.parse&&(JSON.parse=function(text,reviver){function walk(a,b){var c,d,e=a[b];if(e&&\"object\"==typeof e)for(c in e)Object.prototype.hasOwnProperty.call(e,c)&&(d=walk(e,c),void 0!==d?e[c]=d:delete e[c]);return reviver.call(a,b,e)}var j;if(text=String(text),cx.lastIndex=0,cx.test(text)&&(text=text.replace(cx,function(a){return\"\\\\u\"+(\"0000\"+a.charCodeAt(0).toString(16)).slice(-4)})),/^[\\],:{}\\s]*$/.test(text.replace(/\\\\(?:[\"\\\\\\/bfnrt]|u[0-9a-fA-F]{4})/g,\"@\").replace(/\"[^\"\\\\\\n\\r]*\"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?/g,\"]\").replace(/(?:^|:|,)(?:\\s*\\[)+/g,\"\")))return j=eval(\"(\"+text+\")\"),\"function\"==typeof reviver?walk({\"\":j},\"\"):j;throw new SyntaxError(\"JSON.parse\")})};"
-
-/***/ },
-/* 9 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = "function _isUndefined(a){return\"undefined\"==typeof a}function computeStackTraceWrapper(a){function b(a){if(!t)return\"\";try{var b=function(){try{return new window.XMLHttpRequest}catch(a){return new window.ActiveXObject(\"Microsoft.XMLHTTP\")}},c=b();return c.open(\"GET\",a,!1),c.send(\"\"),c.responseText}catch(d){return\"\"}}function c(a){if(!s.hasOwnProperty(a)){var c=\"\";-1!==a.indexOf(document.domain)&&(c=b(a)),s[a]=c?c.split(\"\\n\"):[]}return s[a]}function d(a,b){var d,e=/function ([^(]*)\\(([^)]*)\\)/,f=/['\"]?([0-9A-Za-z$_]+)['\"]?\\s*[:=]\\s*(function|eval|new Function)/,g=\"\",h=10,i=c(a);if(!i.length)return UNKNOWN_FUNCTION;for(var j=0;h>j;++j)if(g=i[b-j]+g,!_isUndefined(g)){if(d=f.exec(g))return d[1];if(d=e.exec(g))return d[1]}return UNKNOWN_FUNCTION}function e(a,b){var d=c(a);if(!d.length)return null;var e=[],f=Math.floor(u/2),g=f+u%2,h=Math.max(0,b-f-1),i=Math.min(d.length,b+g-1);b-=1;for(var j=h;i>j;++j)_isUndefined(d[j])||e.push(d[j]);return e.length>0?e:null}function f(a){return a.replace(/[\\-\\[\\]{}()*+?.,\\\\\\^$|#]/g,\"\\\\$&\")}function g(a){return f(a).replace(\"<\",\"(?:<|&lt;)\").replace(\">\",\"(?:>|&gt;)\").replace(\"&\",\"(?:&|&amp;)\").replace('\"','(?:\"|&quot;)').replace(/\\s+/g,\"\\\\s+\")}function h(a,b){for(var d,e,f=0,g=b.length;g>f;++f)if((d=c(b[f])).length&&(d=d.join(\"\\n\"),e=a.exec(d)))return{url:b[f],line:d.substring(0,e.index).split(\"\\n\").length,column:e.index-d.lastIndexOf(\"\\n\",e.index)-1};return null}function i(a,b,d){var e,g=c(b),h=new RegExp(\"\\\\b\"+f(a)+\"\\\\b\");return d-=1,g&&g.length>d&&(e=h.exec(g[d]))?e.index:null}function j(a){for(var b,c,d,e,i=[window.location.href],j=document.getElementsByTagName(\"script\"),k=\"\"+a,l=/^function(?:\\s+([\\w$]+))?\\s*\\(([\\w\\s,]*)\\)\\s*\\{\\s*(\\S[\\s\\S]*\\S)\\s*\\}\\s*$/,m=/^function on([\\w$]+)\\s*\\(event\\)\\s*\\{\\s*(\\S[\\s\\S]*\\S)\\s*\\}\\s*$/,n=0;n<j.length;++n){var o=j[n];o.src&&i.push(o.src)}if(d=l.exec(k)){var p=d[1]?\"\\\\s+\"+d[1]:\"\",q=d[2].split(\",\").join(\"\\\\s*,\\\\s*\");b=f(d[3]).replace(/;$/,\";?\"),c=new RegExp(\"function\"+p+\"\\\\s*\\\\(\\\\s*\"+q+\"\\\\s*\\\\)\\\\s*{\\\\s*\"+b+\"\\\\s*}\")}else c=new RegExp(f(k).replace(/\\s+/g,\"\\\\s+\"));if(e=h(c,i))return e;if(d=m.exec(k)){var r=d[1];if(b=g(d[2]),c=new RegExp(\"on\"+r+\"=[\\\\'\\\"]\\\\s*\"+b+\"\\\\s*[\\\\'\\\"]\",\"i\"),e=h(c,i[0]))return e;if(c=new RegExp(b),e=h(c,i))return e}return null}function k(a){if(!a.stack)return null;for(var b,c,f=/^\\s*at (?:((?:\\[object object\\])?\\S+(?: \\[as \\S+\\])?) )?\\(?((?:file|http|https):.*?):(\\d+)(?::(\\d+))?\\)?\\s*$/i,g=/^\\s*(\\S*)(?:\\((.*?)\\))?@((?:file|http|https).*?):(\\d+)(?::(\\d+))?\\s*$/i,h=a.stack.split(\"\\n\"),j=[],k=/^(.*) is undefined$/.exec(a.message),l=0,m=h.length;m>l;++l){if(b=g.exec(h[l]))c={url:b[3],func:b[1]||UNKNOWN_FUNCTION,args:b[2]?b[2].split(\",\"):\"\",line:+b[4],column:b[5]?+b[5]:null};else{if(!(b=f.exec(h[l])))continue;c={url:b[2],func:b[1]||UNKNOWN_FUNCTION,line:+b[3],column:b[4]?+b[4]:null}}!c.func&&c.line&&(c.func=d(c.url,c.line)),c.line&&(c.context=e(c.url,c.line)),j.push(c)}return j[0]&&j[0].line&&!j[0].column&&k&&(j[0].column=i(k[1],j[0].url,j[0].line)),j.length?{mode:\"stack\",name:a.name,message:a.message,url:document.location.href,stack:j,useragent:navigator.userAgent}:null}function l(a){for(var b,c=a.stacktrace,f=/ line (\\d+), column (\\d+) in (?:<anonymous function: ([^>]+)>|([^\\)]+))\\((.*)\\) in (.*):\\s*$/i,g=c.split(\"\\n\"),h=[],i=0,j=g.length;j>i;i+=2)if(b=f.exec(g[i])){var k={line:+b[1],column:+b[2],func:b[3]||b[4],args:b[5]?b[5].split(\",\"):[],url:b[6]};if(!k.func&&k.line&&(k.func=d(k.url,k.line)),k.line)try{k.context=e(k.url,k.line)}catch(l){}k.context||(k.context=[g[i+1]]),h.push(k)}return h.length?{mode:\"stacktrace\",name:a.name,message:a.message,url:document.location.href,stack:h,useragent:navigator.userAgent}:null}function m(a){var b=a.message.split(\"\\n\");if(b.length<4)return null;var f,i,j,k,l=/^\\s*Line (\\d+) of linked script ((?:file|http|https)\\S+)(?:: in function (\\S+))?\\s*$/i,m=/^\\s*Line (\\d+) of inline#(\\d+) script in ((?:file|http|https)\\S+)(?:: in function (\\S+))?\\s*$/i,n=/^\\s*Line (\\d+) of function script\\s*$/i,o=[],p=document.getElementsByTagName(\"script\"),q=[];for(i in p)p.hasOwnProperty(i)&&!p[i].src&&q.push(p[i]);for(i=2,j=b.length;j>i;i+=2){var r=null;if(f=l.exec(b[i]))r={url:f[2],func:f[3],line:+f[1]};else if(f=m.exec(b[i])){r={url:f[3],func:f[4]};var s=+f[1],t=q[f[2]-1];if(t&&(k=c(r.url))){k=k.join(\"\\n\");var u=k.indexOf(t.innerText);u>=0&&(r.line=s+k.substring(0,u).split(\"\\n\").length)}}else if(f=n.exec(b[i])){var v=window.location.href.replace(/#.*$/,\"\"),w=f[1],x=new RegExp(g(b[i+1]));k=h(x,[v]),r={url:v,line:k?k.line:w,func:\"\"}}if(r){r.func||(r.func=d(r.url,r.line));var y=e(r.url,r.line),z=y?y[Math.floor(y.length/2)]:null;r.context=y&&z.replace(/^\\s*/,\"\")===b[i+1].replace(/^\\s*/,\"\")?y:[b[i+1]],o.push(r)}}return o.length?{mode:\"multiline\",name:a.name,message:b[0],url:document.location.href,stack:o,useragent:navigator.userAgent}:null}function n(a,b,c,f){var g={url:b,line:c};if(g.url&&g.line){a.incomplete=!1,g.func||(g.func=d(g.url,g.line)),g.context||(g.context=e(g.url,g.line));var h=/ '([^']+)' /.exec(f);if(h&&(g.column=i(h[1],g.url,g.line)),a.stack.length>0&&a.stack[0].url===g.url){if(a.stack[0].line===g.line)return!1;if(!a.stack[0].line&&a.stack[0].func===g.func)return a.stack[0].line=g.line,a.stack[0].context=g.context,!1}return a.stack.unshift(g),a.partial=!0,!0}return a.incomplete=!0,!1}function o(a,b){for(var c,e,f,g=/function\\s+([_$a-zA-Z\\xA0-\\uFFFF][_$a-zA-Z0-9\\xA0-\\uFFFF]*)?\\s*\\(/i,h=[],k={},l=!1,m=o.caller;m&&!l;m=m.caller)if(m!==p&&m!==v){if(e={url:null,func:UNKNOWN_FUNCTION,line:null,column:null},m.name?e.func=m.name:(c=g.exec(m.toString()))&&(e.func=c[1]),f=j(m)){e.url=f.url,e.line=f.line,e.func===UNKNOWN_FUNCTION&&(e.func=d(e.url,e.line));var q=/ '([^']+)' /.exec(a.message||a.description);q&&(e.column=i(q[1],f.url,f.line))}k[\"\"+m]?l=!0:k[\"\"+m]=!0,h.push(e)}b&&h.splice(0,b);var r={mode:\"callers\",name:a.name,message:a.message,url:document.location.href,stack:h,useragent:navigator.userAgent};return n(r,a.sourceURL||a.fileName,a.line||a.lineNumber,a.message||a.description),r}function p(a,b){var c=null;b=null==b?0:+b;try{if(c=l(a))return c}catch(d){if(r)throw d}try{if(c=k(a))return c}catch(d){if(r)throw d}try{if(c=m(a))return c}catch(d){if(r)throw d}try{if(c=o(a,b+1))return c}catch(d){if(r)throw d}return{mode:\"failed\"}}function q(a){a=(null==a?0:+a)+1;try{throw new Error}catch(b){return p(b,a+1)}}var r=!1,s={},t=a.remoteFetching,u=a.linesOfContext,v=a.tracekitReport;return p.augmentStackTraceWithInitialElement=n,p.guessFunctionName=d,p.gatherContext=e,p.ofCaller=q,p}var UNKNOWN_FUNCTION=\"?\";"
 
 /***/ }
-/******/ ])
-});
-;
+/******/ ]);
 //# sourceMappingURL=rollbar.js.map
