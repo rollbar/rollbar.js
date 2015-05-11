@@ -187,7 +187,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', ['replace', 'jshint', 'uglify:prewebpack', 'webpack', 'uglify:dist']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  var testjobs = ['express'];
+  var testjobs = ['webpack', 'express'];
   if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined'){
     testjobs.push('saucelabs-mocha');
   } else {
