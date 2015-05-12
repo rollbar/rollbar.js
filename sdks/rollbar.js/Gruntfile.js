@@ -34,8 +34,6 @@ module.exports = function(grunt) {
     uglify: {
       dist: {
         files: {
-          'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
-          'dist/<%= pkg.name %>.nojson.min.js': 'dist/<%= pkg.name %>.nojson.js',
           'dist/<%= pkg.name %>.umd.min.js': 'dist/<%= pkg.name %>.umd.js',
           'dist/<%= pkg.name %>.umd.nojson.min.js': 'dist/<%= pkg.name %>.umd.nojson.js',
           'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
