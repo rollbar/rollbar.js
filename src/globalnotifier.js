@@ -37,9 +37,9 @@ function _extendListenerPrototype(client, prototype) {
 
 // Add an init() method to do the same things that the shim would do
 var wrapper = {};
-wrapper.init = function(config) {
-  var notifier = new Notifier();
-  notifier.configure(config); 
+wrapper.init = function(config, parent) {
+  var notifier = new Notifier(parent);
+  notifier.configure(config);
 
   if (config.captureUncaught) {
     // Set the global onerror handler
@@ -68,6 +68,7 @@ wrapper.init = function(config) {
     }
   }
 
+  window.Rollbar = notifier;
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
   return notifier;

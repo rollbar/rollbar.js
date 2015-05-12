@@ -1,6 +1,7 @@
+var snippetCallback = require('../src/snippet_callback');
 var expect = chai.expect;
-window.Rollbar = require('../src/shim').Rollbar;
 
+window.Rollbar = require('../src/shim').Rollbar;
 
 /* Note (@jon): this is a copy from src/shim.js. It's not part
  * of the public interface for shim module.
@@ -356,14 +357,14 @@ describe("window.Rollbar.loadFull()", function() {
   };
 
   it("should set window.Rollbar to a Notifier", function(done) {
-
     var origShim = window.Rollbar;
 
     // setup some stuff for subsequent tests
     preFullLoad(origShim);
+    var callback = snippetCallback(origShim, config);
 
     // Brings in the full rollbar.js file into the DOM
-    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
+    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback);
 
     // Wait before checking window.Rollbar
     function test() {

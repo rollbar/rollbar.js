@@ -2,6 +2,24 @@ var semver = require('semver');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.config.js');
 
+var testFiles;
+
+if (process.env.TEST) {
+  testFiles= ['http://localhost:3000/' + process.env.TEST];
+} else {
+  testFiles = ['http://localhost:3000/test/util.html',
+               'http://localhost:3000/test/json.html',
+               'http://localhost:3000/test/xhr.html',
+               'http://localhost:3000/test/notifier.html',
+               'http://localhost:3000/test/notifier.ratelimit.html',
+               'http://localhost:3000/test/rollbar.html',
+               'http://localhost:3000/test/shim.html',
+               'http://localhost:3000/test/shimalias.html',
+               'http://localhost:3000/test/integrations/mootools.html',
+               'http://localhost:3000/test/plugins/jquery.html'
+              ];
+}
+
 module.exports = function(grunt) {
   var pkg = grunt.file.readJSON('package.json');
   var semVer = semver.parse(pkg.version);
@@ -112,17 +130,7 @@ module.exports = function(grunt) {
           '--local-to-remote-url-access' : true,
           run: true,
           log: true,
-          urls: ['http://localhost:3000/test/util.html',
-                 'http://localhost:3000/test/json.html',
-                 'http://localhost:3000/test/xhr.html',
-                 'http://localhost:3000/test/notifier.html',
-                 'http://localhost:3000/test/notifier.ratelimit.html',
-                 'http://localhost:3000/test/rollbar.html',
-                 'http://localhost:3000/test/shim.html',
-                 'http://localhost:3000/test/shimalias.html',
-                 'http://localhost:3000/test/integrations/mootools.html',
-                 'http://localhost:3000/test/plugins/jquery.html'
-                ]
+          urls: testFiles
         }
       }
     },

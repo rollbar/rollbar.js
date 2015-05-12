@@ -28,9 +28,8 @@ module.exports = [
       'rollbar.umd': './src/bundles/rollbar.umd.js'
     },
     output: {
-      library: 'Rollbar',
       path: outputPath,
-      filename: '[name].nojson.js',
+      filename: '[name].js',
       libraryTarget: 'umd'
     },
     plugins: [new webpack.DefinePlugin(noJsonDefines)],
@@ -41,7 +40,6 @@ module.exports = [
       'rollbar.umd': './src/bundles/rollbar.umd.js'
     },
     output: {
-      library: 'Rollbar',
       path: outputPath,
       filename: '[name].nojson.js',
       libraryTarget: 'umd'

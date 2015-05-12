@@ -1,6 +1,7 @@
-var expect = chai.expect;
-
 var shim = require('../src/shim.js');
+var snippetCallback = require('../src/snippet_callback');
+
+var expect = chai.expect;
 var Rollbar = shim.Rollbar;
 
 var config = {
@@ -13,7 +14,8 @@ var origRollbar = Rollbar.init(window, config);
 describe("Script load", function() {
   describe("Shim", function() {
     it("should be connected to window.Rollbar", function(done) {
-      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
+      var callback = snippetCallback(origRollbar, config);
+      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback);
 
       function test() {
         if (origRollbar.notifier !== null) {
