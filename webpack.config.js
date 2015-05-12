@@ -20,27 +20,6 @@ module.exports = [
       path: outputPath,
       filename: '[name].js'
     },
-    failOnError: true
-  },
-  {
-    entry: {
-      rollbar: './src/bundles/rollbar.js',
-    },
-    output: {
-      path: outputPath,
-      filename: '[name].js',
-    },
-    plugins: [new webpack.DefinePlugin(jsonDefines)],
-    failOnError: true
-  },
-  {
-    entry: {
-      rollbar: './src/bundles/rollbar.js',
-    },
-    output: {
-      path: outputPath,
-      filename: '[name].js',
-    },
     plugins: [new webpack.DefinePlugin(noJsonDefines)],
     failOnError: true
   },
