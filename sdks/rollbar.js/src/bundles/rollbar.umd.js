@@ -1,4 +1,5 @@
 var globalnotifier = require('../globalnotifier');
+var notifier = require('../notifier');
 
 function setupJSON() {
   var JSONObject = JSON;
@@ -18,6 +19,10 @@ function setupJSON() {
 }
 
 setupJSON();
+
 window.Rollbar = globalnotifier.wrapper;
+
+// We need to expose Notifier for the snippet
+window.RollbarNotifier = notifier.Notifier;
 
 module.exports = globalnotifier.wrapper;
