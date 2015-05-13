@@ -1,4 +1,3 @@
-var semver = require('semver');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.config.js');
 
@@ -22,14 +21,7 @@ if (process.env.TEST) {
 
 module.exports = function(grunt) {
   var pkg = grunt.file.readJSON('package.json');
-  var semVer = semver.parse(pkg.version);
-
   require('time-grunt')(grunt);
-
-  // Get the minimum minor version to put into the CDN URL
-  semVer.patch = 0;
-  semVer.prerelease = [];
-  pkg.pinnedVersion = semVer.major + '.' + semVer.minor;
 
   grunt.initConfig({
     pkg: pkg,
@@ -63,64 +55,6 @@ module.exports = function(grunt) {
           'vendor/json2.min.js': 'vendor/JSON-js/json2.js',
           'vendor/trace.min.js': 'vendor/TraceKit/src/trace.js'
         }
-      }
-    },
-    replace: {
-      js: {
-        src: ['src/**/*.js'],
-        overwrite: true,
-        replacements: [
-          {
-            // package version
-            from: /(NOTIFIER_VERSION|notifierVersion) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
-            to: '$1 = $2<%= pkg.version %>$3'
-          },
-          {
-            // jquery plugin version
-            from: /(JQUERY_PLUGIN_VERSION|jqueryPluginVersion) = (["'])[0-9_\.a-zA-Z-]+(["'])/g,
-            to: '$1 = $2<%= pkg.plugins.jquery.version %>$3'
-          },
-          {
-            // default scrub fields
-            from: /(DEFAULT_SCRUB_FIELDS|defaultScrubFields) = \[.+\]/g,
-            to: '$1 = <%= JSON.stringify(pkg.defaults.scrubFields) %>'
-          },
-          {
-            // default endpoint
-            from: /(DEFAULT_ENDPOINT|defaultEndpoint) = (["'])[0-9_\.a-zA-Z:\/]+(["'])/g,
-            to: '$1 = $2<%= pkg.defaults.endpoint %>$3'
-          },
-          {
-            // default log level
-            from: /(DEFAULT_LOG_LEVEL|defaultLogLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
-            to: '$1 = $2<%= pkg.defaults.logLevel %>$4'
-          },
-          {
-            // default min report level
-            from: /(DEFAULT_REPORT_LEVEL|defaultReportLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
-            to: '$1 = $2<%= pkg.defaults.reportLevel %>$4'
-          },
-          {
-            // default min uncaught error level
-            from: /(DEFAULT_UNCAUGHT_ERROR_LEVEL|defaultUncaughtErrorLevel) = (["'])(debug|info|warning|error|critical)(["'])/g,
-            to: '$1 = $2<%= pkg.defaults.uncaughtErrorLevel %>$4'
-          },
-          {
-            // default rollbar.js CDN URL
-            from: /(DEFAULT_ROLLBARJS_URL|defaultRollbarJsUrl) = (["']).*(["'])/g,
-            to: '$1 = $2//<%= pkg.cdn.host %>/js/v<%= pkg.pinnedVersion %>/rollbar.min.js$3'
-          },
-          {
-            // default max items
-            from: /(DEFAULT_MAX_ITEMS) = ([0-9]+)/g,
-            to: '$1 = <%= pkg.defaults.maxItems %>'
-          },
-          {
-            // default items per min
-            from: /(DEFAULT_ITEMS_PER_MIN) = ([0-9]+)/g,
-            to: '$1 = <%= pkg.defaults.itemsPerMin %>'
-          }
-        ]
       }
     },
     mocha_phantomjs: {
@@ -181,7 +115,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-express');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -190,7 +123,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', ['replace', 'jshint', 'uglify:prewebpack', 'webpack', 'uglify:dist']);
+  grunt.registerTask('build', ['jshint', 'uglify:prewebpack', 'webpack', 'uglify:dist']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   var testjobs = ['uglify:prewebpack', 'webpack', 'express'];

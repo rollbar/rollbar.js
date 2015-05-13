@@ -11,14 +11,14 @@ function setupJSON(JSON) {
 }
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.2.2';
-Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
-Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
-Notifier.DEFAULT_LOG_LEVEL = 'debug';
-Notifier.DEFAULT_REPORT_LEVEL = 'debug';
-Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
-Notifier.DEFAULT_ITEMS_PER_MIN = 60;
-Notifier.DEFAULT_MAX_ITEMS = 0;
+Notifier.NOTIFIER_VERSION = __NOTIFIER_VERSION__;
+Notifier.DEFAULT_ENDPOINT = __DEFAULT_ENDPOINT__;
+Notifier.DEFAULT_SCRUB_FIELDS = __DEFAULT_SCRUB_FIELDS__;
+Notifier.DEFAULT_LOG_LEVEL = __DEFAULT_LOG_LEVEL__;
+Notifier.DEFAULT_REPORT_LEVEL = __DEFAULT_REPORT_LEVEL__;
+Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = __DEFAULT_UNCAUGHT_ERROR_LEVEL;
+Notifier.DEFAULT_ITEMS_PER_MIN = __DEFAULT_ITEMS_PER_MIN__;
+Notifier.DEFAULT_MAX_ITEMS = __DEFAULT_MAX_ITEMS__;
 
 Notifier.LEVELS = {
   debug: 0,

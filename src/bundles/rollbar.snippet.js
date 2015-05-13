@@ -1,7 +1,7 @@
 var RollbarShim = require('../shim').Rollbar;
 var snippetCallback = require('../snippet_callback');
 
-var defaultRollbarJsUrl = '//d37gvrvc0wt4s1.cloudfront.net/js/v1.2/rollbar.min.js';
+var defaultRollbarJsUrl = __DEFAULT_ROLLBARJS_URL__;
 _rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
 
 var shim = RollbarShim.init(window, _rollbarConfig);
