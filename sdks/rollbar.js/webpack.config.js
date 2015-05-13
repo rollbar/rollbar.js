@@ -1,6 +1,31 @@
 var webpack = require('webpack');
+var semver = require('semver');
+var pkg = require('./package.json');
+
+var semVer = semver.parse(pkg.version);
+
+// Get the minimum minor version to put into the CDN URL
+semVer.patch = 0;
+semVer.prerelease = [];
+pkg.pinnedVersion = semVer.major + '.' + semVer.minor;
 
 var outputPath = './dist/';
+
+var defaults = {
+  __NOTIFIER_VERSION__: JSON.stringify(pkg.version),
+  __JQUERY_PLUGIN_VERSION__: JSON.stringify(pkg.plugins.jquery.version),
+  __DEFAULT_SCRUB_FIELDS__: JSON.stringify(pkg.defaults.scrubFields),
+  __DEFAULT_ENDPOINT__: JSON.stringify(pkg.defaults.endpoint),
+  __DEFAULT_LOG_LEVEL__: JSON.stringify(pkg.defaults.logLevel),
+  __DEFAULT_REPORT_LEVEL__: JSON.stringify(pkg.defaults.reportLevel),
+  __DEFAULT_UNCAUGHT_ERROR_LEVEL: JSON.stringify(pkg.defaults.uncaughtErrorLevel),
+  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('//' + pkg.cdn.host + '.js/v' + pkg.pinnedVersion + '/rollbar.umd.min.js'),
+  __DEFAULT_MAX_ITEMS__: pkg.defaults.maxItems,
+  __DEFAULT_ITEMS_PER_MIN__: pkg.defaults.itemsPerMin
+};
+
+var defaultsPlugin = new webpack.DefinePlugin(defaults);
+var uglifyPlugin = new webpack.optimize.UglifyJsPlugin();
 
 var jsonDefines = {
   __USE_JSON__: true
@@ -20,7 +45,7 @@ module.exports = [
       path: outputPath,
       filename: '[name].js'
     },
-    plugins: [new webpack.DefinePlugin(noJsonDefines)],
+    plugins: [defaultsPlugin, uglifyPlugin],
     failOnError: true
   },
   {
@@ -32,7 +57,7 @@ module.exports = [
       filename: '[name].js',
       libraryTarget: 'umd'
     },
-    plugins: [new webpack.DefinePlugin(noJsonDefines)],
+    plugins: [defaultsPlugin, new webpack.DefinePlugin(noJsonDefines)],
     failOnError: true
   },
   {
@@ -44,7 +69,7 @@ module.exports = [
       filename: '[name].nojson.js',
       libraryTarget: 'umd'
     },
-    plugins: [new webpack.DefinePlugin(noJsonDefines)],
+    plugins: [defaultsPlugin, new webpack.DefinePlugin(jsonDefines)],
     failOnError: true
   },
   {
