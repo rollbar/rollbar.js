@@ -3,10 +3,10 @@
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
 		define(factory);
-	else if(typeof exports === 'object')
-		exports["Rollbar"] = factory();
-	else
-		root["Rollbar"] = factory();
+	else {
+		var a = factory();
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -55,6 +55,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var globalnotifier = __webpack_require__(1);
+	var notifier = __webpack_require__(2);
 	
 	function setupJSON() {
 	  var JSONObject = JSON;
@@ -74,7 +75,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	setupJSON();
+	
 	window.Rollbar = globalnotifier.wrapper;
+	
+	// We need to expose Notifier for the snippet
+	window.RollbarNotifier = notifier.Notifier;
 	
 	module.exports = globalnotifier.wrapper;
 
@@ -122,9 +127,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Add an init() method to do the same things that the shim would do
 	var wrapper = {};
-	wrapper.init = function(config) {
-	  var notifier = new Notifier();
-	  notifier.configure(config); 
+	wrapper.init = function(config, parent) {
+	  var notifier = new Notifier(parent);
+	  notifier.configure(config);
 	
 	  if (config.captureUncaught) {
 	    // Set the global onerror handler
@@ -153,6 +158,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 	
+	  window.Rollbar = notifier;
 	  // Finally, start processing payloads using the global notifier
 	  Notifier.processPayloads();
 	  return notifier;
@@ -182,14 +188,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = '1.2.2';
-	Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
-	Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
-	Notifier.DEFAULT_LOG_LEVEL = 'debug';
-	Notifier.DEFAULT_REPORT_LEVEL = 'debug';
-	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
-	Notifier.DEFAULT_ITEMS_PER_MIN = 60;
-	Notifier.DEFAULT_MAX_ITEMS = 0;
+	Notifier.NOTIFIER_VERSION = ("1.2.2");
+	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
+	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
+	Notifier.DEFAULT_LOG_LEVEL = ("debug");
+	Notifier.DEFAULT_REPORT_LEVEL = ("debug");
+	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = ("warning");
+	Notifier.DEFAULT_ITEMS_PER_MIN = (60);
+	Notifier.DEFAULT_MAX_ITEMS = (0);
 	
 	Notifier.LEVELS = {
 	  debug: 0,
