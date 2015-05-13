@@ -42,14 +42,6 @@ module.exports = function(grunt) {
       files: ['Gruntfile.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
     },
     uglify: {
-      dist: {
-        files: {
-          'dist/<%= pkg.name %>.umd.min.js': 'dist/<%= pkg.name %>.umd.js',
-          'dist/<%= pkg.name %>.umd.nojson.min.js': 'dist/<%= pkg.name %>.umd.nojson.js',
-          'dist/<%= pkg.name %>.snippet.min.js': 'dist/<%= pkg.name %>.snippet.js',
-          'dist/plugins/jquery.min.js': 'src/plugins/jquery.js'
-        }
-      },
       prewebpack: {
         files: {
           'vendor/json2.min.js': 'vendor/JSON-js/json2.js',
@@ -123,7 +115,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', ['jshint', 'uglify:prewebpack', 'webpack', 'uglify:dist']);
+  grunt.registerTask('build', ['jshint', 'uglify:prewebpack', 'webpack']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   var testjobs = ['uglify:prewebpack', 'webpack', 'express'];

@@ -1,3 +1,4 @@
+var extend = require('util')._extend;
 var webpack = require('webpack');
 var semver = require('semver');
 var pkg = require('./package.json');
@@ -10,6 +11,14 @@ semVer.prerelease = [];
 pkg.pinnedVersion = semVer.major + '.' + semVer.minor;
 
 var outputPath = './dist/';
+
+var jsonDefines = {
+  __USE_JSON__: true
+};
+
+var noJsonDefines = {
+  __USE_JSON__: false
+};
 
 var defaults = {
   __NOTIFIER_VERSION__: JSON.stringify(pkg.version),
@@ -26,68 +35,72 @@ var defaults = {
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new webpack.optimize.UglifyJsPlugin();
+var useJsonPlugin = new webpack.DefinePlugin(jsonDefines);
+var notUseJsonPlugin = new webpack.DefinePlugin(noJsonDefines);
 
-var jsonDefines = {
-  __USE_JSON__: true
+var snippetConfig = {
+  name: 'snippet',
+  entry: {
+    'rollbar.snippet': './src/bundles/rollbar.snippet.js'
+  },
+  output: {
+    path: outputPath,
+    filename: '[name].js'
+  },
+  plugins: [defaultsPlugin, uglifyPlugin],
+  failOnError: true
 };
 
-var noJsonDefines = {
-  __USE_JSON__: false
-};
-
-module.exports = [
-  {
-    name: 'snippet',
-    entry: {
-      'rollbar.snippet': './src/bundles/rollbar.snippet.js'
-    },
-    output: {
-      path: outputPath,
-      filename: '[name].js'
-    },
-    plugins: [defaultsPlugin, uglifyPlugin],
-    failOnError: true
+var testsConfig = {
+  name: 'tests',
+  entry: {
+    util: './test/bundles/util.js',
+    json: './test/bundles/json.js',
+    xhr: './test/bundles/xhr.js',
+    notifier: './test/bundles/notifier.js',
+    'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
+    'rollbar': './test/bundles/rollbar.js',
+    'shim': './test/bundles/shim.js',
+    'shimalias': './test/bundles/shimalias.js',
   },
-  {
-    entry: {
-      'rollbar.umd': './src/bundles/rollbar.umd.js'
-    },
-    output: {
-      path: outputPath,
-      filename: '[name].js',
-      libraryTarget: 'umd'
-    },
-    plugins: [defaultsPlugin, new webpack.DefinePlugin(noJsonDefines)],
-    failOnError: true
-  },
-  {
-    entry: {
-      'rollbar.umd': './src/bundles/rollbar.umd.js'
-    },
-    output: {
-      path: outputPath,
-      filename: '[name].nojson.js',
-      libraryTarget: 'umd'
-    },
-    plugins: [defaultsPlugin, new webpack.DefinePlugin(jsonDefines)],
-    failOnError: true
-  },
-  {
-    name: 'tests',
-    entry: {
-      util: './test/bundles/util.js',
-      json: './test/bundles/json.js',
-      xhr: './test/bundles/xhr.js',
-      notifier: './test/bundles/notifier.js',
-      'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
-      'rollbar': './test/bundles/rollbar.js',
-      'shim': './test/bundles/shim.js',
-      'shimalias': './test/bundles/shimalias.js',
-    },
-    output: {
-      path: 'test/',
-      filename: '[name].bundle.js',
-    }
+  output: {
+    path: 'test/',
+    filename: '[name].bundle.js',
   }
-];
+};
+
+var UMDConfigBase = {
+  entry: {
+    'rollbar.umd': './src/bundles/rollbar.umd.js'
+  },
+  output: {
+    path: outputPath,
+    libraryTarget: 'umd'
+  },
+  failOnError: true
+};
+
+var config = [];
+config.push(snippetConfig);
+config.push(testsConfig);
+
+function addUMDToConfig(webpackConfig, filename, extraPlugins) {
+  var basePlugins = [defaultsPlugin];
+  var UMDConfig = extend({}, UMDConfigBase);
+
+  plugins = basePlugins.concat(extraPlugins);
+  UMDConfig.plugins = plugins;
+
+  UMDConfig.output = extend({filename: filename}, UMDConfig.output);
+
+  webpackConfig.push(UMDConfig);
+}
+
+// JSON
+addUMDToConfig(config, '[name].js', [useJsonPlugin]);
+addUMDToConfig(config, '[name].min.js', [useJsonPlugin, uglifyPlugin]);
+addUMDToConfig(config, '[name].nojson.js', [notUseJsonPlugin]);
+addUMDToConfig(config, '[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
+
+module.exports = config;
 
