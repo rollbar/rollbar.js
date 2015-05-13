@@ -96,7 +96,6 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
   webpackConfig.push(UMDConfig);
 }
 
-// JSON
 addUMDToConfig(config, '[name].js', [useJsonPlugin]);
 addUMDToConfig(config, '[name].min.js', [useJsonPlugin, uglifyPlugin]);
 addUMDToConfig(config, '[name].nojson.js', [notUseJsonPlugin]);
