@@ -1,4 +1,4 @@
-require("script!../vendor/trace.min.js");
+var parser = require('./parser');
 var Util = require('./util');
 var xhr = require('./xhr');
 
@@ -39,7 +39,6 @@ window._globalRollbarOptions = {
   itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN
 };
 
-var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 var _topLevelNotifier;
 
 function topLevelNotifier() {
@@ -688,7 +687,7 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
   if (err) {
     // If we've already calculated the stack trace for the error, use it.
     // This can happen for wrapped errors that don't have a "stack" property.
-    stackInfo = err._tkStackTrace ? err._tkStackTrace : TK(err);
+    stackInfo = err._tkStackTrace ? err._tkStackTrace : parser.parse(err);
 
     // Don't report the same error more than once
     if (err === this.lastError) {
@@ -734,8 +733,8 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'url': url || '',
     'line': lineNo
   };
-  location.func = TK.guessFunctionName(location.url, location.line);
-  location.context = TK.gatherContext(location.url, location.line);
+  location.func = parser.guessFunctionName(location.url, location.line);
+  location.context = parser.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
     'message': message || 'uncaught exception',
@@ -744,7 +743,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'useragent': navigator.userAgent
   };
   if (err) {
-    stack = err._tkStackTrace || TK(err);
+    stack = err._tkStackTrace || parser.parse(err);
   }
 
   var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
@@ -807,7 +806,7 @@ Notifier.prototype.wrap = function(f, context) {
         return f.apply(this, arguments);
       } catch(e) {
         if (!e.stack) {
-          e._tkStackTrace = TK(e);
+          e._tkStackTrace = parser.parse(e);
         }
         e._rollbarContext = ctxFn() || {};
         e._rollbarContext._wrappedSource = f.toString();

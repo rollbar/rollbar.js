@@ -1,12 +1,10 @@
-require("script!../vendor/trace.min.js");
-
+var parser = require('../src/parser');
 var expect = chai.expect;
 var Rollbar = require('../src/shim').Rollbar;
 var Util = require('../src/util.js');
 var XHR = require('../src/xhr.js').XHR;
 var notifiersrc = require('../src/notifier');
 var Notifier = notifiersrc.Notifier;
-var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
@@ -1324,7 +1322,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', null, TK(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', null, parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1349,7 +1347,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', message, TK(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', message, parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1384,7 +1382,7 @@ describe("Notifier._buildPayload()", function() {
     }
 
     var notifier = new Notifier();
-    var payload = notifier._buildPayload(new Date(), 'error', 'message here', TK(err));
+    var payload = notifier._buildPayload(new Date(), 'error', 'message here', parser.parse(err));
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception']);
