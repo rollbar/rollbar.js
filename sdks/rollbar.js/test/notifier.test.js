@@ -1,4 +1,4 @@
-var parser = require('../src/parser');
+var error_parser = require('../src/error_parser');
 var expect = chai.expect;
 var Rollbar = require('../src/shim').Rollbar;
 var Util = require('../src/util.js');
@@ -1322,7 +1322,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', null, parser.parse(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', null, error_parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1347,7 +1347,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', message, parser.parse(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', message, error_parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1382,7 +1382,7 @@ describe("Notifier._buildPayload()", function() {
     }
 
     var notifier = new Notifier();
-    var payload = notifier._buildPayload(new Date(), 'error', 'message here', parser.parse(err));
+    var payload = notifier._buildPayload(new Date(), 'error', 'message here', error_parser.parse(err));
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception']);

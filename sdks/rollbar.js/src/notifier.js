@@ -1,4 +1,4 @@
-var parser = require('./parser');
+var error_parser = require('./error_parser');
 var Util = require('./util');
 var xhr = require('./xhr');
 
@@ -687,7 +687,7 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
   if (err) {
     // If we've already calculated the stack trace for the error, use it.
     // This can happen for wrapped errors that don't have a "stack" property.
-    stackInfo = err._tkStackTrace ? err._tkStackTrace : parser.parse(err);
+    stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
 
     // Don't report the same error more than once
     if (err === this.lastError) {
@@ -733,8 +733,8 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'url': url || '',
     'line': lineNo
   };
-  location.func = parser.guessFunctionName(location.url, location.line);
-  location.context = parser.gatherContext(location.url, location.line);
+  location.func = error_parser.guessFunctionName(location.url, location.line);
+  location.context = error_parser.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
     'message': message || 'uncaught exception',
@@ -743,7 +743,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'useragent': navigator.userAgent
   };
   if (err) {
-    stack = err._tkStackTrace || parser.parse(err);
+    stack = err._savedStackTrace || error_parser.parse(err);
   }
 
   var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
@@ -806,7 +806,7 @@ Notifier.prototype.wrap = function(f, context) {
         return f.apply(this, arguments);
       } catch(e) {
         if (!e.stack) {
-          e._tkStackTrace = parser.parse(e);
+          e._savedStackTrace = error_parser.parse(e);
         }
         e._rollbarContext = ctxFn() || {};
         e._rollbarContext._wrappedSource = f.toString();

@@ -29,7 +29,13 @@ function Frame(stackFrame) {
 
 function Stack(e) {
   function getStack() {
-    var parserStack = ErrorStackParser.parse(e);
+    var parseStack = [];
+
+    try {
+      parserStack = ErrorStackParser.parse(e);
+    } catch(e) {
+      parseStack = [];
+    }
 
     var stack = [];
 
