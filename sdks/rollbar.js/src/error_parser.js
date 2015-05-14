@@ -29,12 +29,12 @@ function Frame(stackFrame) {
 
 function Stack(e) {
   function getStack() {
-    var parseStack = [];
+    var parserStack = [];
 
     try {
       parserStack = ErrorStackParser.parse(e);
     } catch(e) {
-      parseStack = [];
+      parserStack = [];
     }
 
     var stack = [];
