@@ -25,4 +25,10 @@ window.Rollbar = globalnotifier.wrapper;
 // We need to expose Notifier for the snippet
 window.RollbarNotifier = notifier.Notifier;
 
+var config = window._rollbarConfig;
+
+if (config) {
+  globalnotifier.wrapper.init(config);
+}
+
 module.exports = globalnotifier.wrapper;
