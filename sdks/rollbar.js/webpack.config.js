@@ -63,6 +63,7 @@ var testsConfig = {
     'shim': './test/bundles/shim.js',
     'shimalias': './test/bundles/shimalias.js',
   },
+  plugins: [defaultsPlugin],
   output: {
     path: 'test/',
     filename: '[name].bundle.js',
