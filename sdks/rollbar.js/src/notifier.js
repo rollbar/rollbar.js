@@ -308,7 +308,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
 
 Notifier.prototype._buildBody = function(message, stackInfo, custom) {
   var body;
-  if (stackInfo && stackInfo.mode !== 'failed') {
+  if (stackInfo) {
     body = this._buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
     body = this._buildPayloadBodyMessage(message, custom);

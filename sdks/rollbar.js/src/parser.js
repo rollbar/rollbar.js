@@ -1,5 +1,16 @@
 var ErrorStackParser = require('error-stack-parser');
 
+var UNKNOWN_FUNCTION = '?';
+
+
+function guessFunctionName(url, line) {
+  return UNKNOWN_FUNCTION;
+}
+
+function gatherContext(url, line) {
+  return null;
+}
+
 function Frame(stackFrame) {
   var data = {};
 
@@ -11,31 +22,18 @@ function Frame(stackFrame) {
   data.column = stackFrame.columnNumber;
   data.args = stackFrame.args;
 
-  data.context = []; // TODO
+  data.context = gatherContext(data.url, data.line);
 
   return data;
 };
 
 function Stack(e) {
-  function getMessage() {
-
-    return 'message';
-  }
-
-  function getName() {
-    return 'name';
-  }
-
-  function getMode() {
-    return 'mode'
-  }
-
   function getStack() {
     var parserStack = ErrorStackParser.parse(e);
 
     var stack = [];
 
-    for (var i = 0; i < parserStack.length - 1; i++) {
+    for (var i = 0; i < parserStack.length; i++) {
       stack.push(new Frame(parserStack[i]));
     }
 
@@ -44,23 +42,13 @@ function Stack(e) {
 
   return {
     stack: getStack(),
-    message: getMessage(),
-    name: getName(),
-    mode: getMode()
+    message: e.message,
+    name: e.name
   };
 };
 
-
 function parse(e) {
   return new Stack(e);
-}
-
-function guessFunctionName(url, line) {
-  return '';
-}
-
-function gatherContext(url, line) {
-  return [];
 }
 
 module.exports = {
