@@ -8,6 +8,7 @@
   "devDependencies": {
     "chai": "~1.8.1",
     "express": "~3.4.7",
+    "error-stack-parser": "1.2.0",
     "grunt": "~0.4.2",
     "grunt-blanket-mocha": "^0.4.1",
     "grunt-bumpup": "~0.5.0",
