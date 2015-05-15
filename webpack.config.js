@@ -56,6 +56,7 @@ var testsConfig = {
   entry: {
     util: './test/bundles/util.js',
     json: './test/bundles/json.js',
+    error_parser: './test/bundles/error_parser.js',
     xhr: './test/bundles/xhr.js',
     notifier: './test/bundles/notifier.js',
     'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
