@@ -76,10 +76,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	setupJSON();
 	
-	window.Rollbar = globalnotifier.wrapper;
+	var config = window._rollbarConfig;
+	var alias = config && config.globalAlias || 'Rollbar';
+	var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
 	
-	// We need to expose Notifier for the snippet
-	window.RollbarNotifier = notifier.Notifier;
+	/* We must not initialize the full notifier here if the
+	 * shim is loaded, snippet_callback will do that for us
+	 */
+	if (!shimRunning && config) {
+	  globalnotifier.wrapper.init(config);
+	} else {
+	  window.Rollbar = globalnotifier.wrapper;
+	  // We need to expose Notifier for the snippet
+	  window.RollbarNotifier = notifier.Notifier;
+	}
 	
 	module.exports = globalnotifier.wrapper;
 
@@ -175,7 +185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(4);
+	var error_parser = __webpack_require__(4);
 	var Util = __webpack_require__(5);
 	var xhr = __webpack_require__(6);
 	
@@ -216,7 +226,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN
 	};
 	
-	var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 	var _topLevelNotifier;
 	
 	function topLevelNotifier() {
@@ -486,7 +495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Notifier.prototype._buildBody = function(message, stackInfo, custom) {
 	  var body;
-	  if (stackInfo && stackInfo.mode !== 'failed') {
+	  if (stackInfo) {
 	    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
 	  } else {
 	    body = this._buildPayloadBodyMessage(message, custom);
@@ -865,7 +874,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (err) {
 	    // If we've already calculated the stack trace for the error, use it.
 	    // This can happen for wrapped errors that don't have a "stack" property.
-	    stackInfo = err._tkStackTrace ? err._tkStackTrace : TK(err);
+	    stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
 	
 	    // Don't report the same error more than once
 	    if (err === this.lastError) {
@@ -911,8 +920,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    'url': url || '',
 	    'line': lineNo
 	  };
-	  location.func = TK.guessFunctionName(location.url, location.line);
-	  location.context = TK.gatherContext(location.url, location.line);
+	  location.func = error_parser.guessFunctionName(location.url, location.line);
+	  location.context = error_parser.gatherContext(location.url, location.line);
 	  var stack = {
 	    'mode': 'onerror',
 	    'message': message || 'uncaught exception',
@@ -921,7 +930,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    'useragent': navigator.userAgent
 	  };
 	  if (err) {
-	    stack = err._tkStackTrace || TK(err);
+	    stack = err._savedStackTrace || error_parser.parse(err);
 	  }
 	
 	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
@@ -984,7 +993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return f.apply(this, arguments);
 	      } catch(e) {
 	        if (!e.stack) {
-	          e._tkStackTrace = TK(e);
+	          e._savedStackTrace = error_parser.parse(e);
 	        }
 	        e._rollbarContext = ctxFn() || {};
 	        e._rollbarContext._wrappedSource = f.toString();
@@ -1132,7 +1141,71 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(7)(__webpack_require__(9)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/jon/rollbar/rollbar.js/vendor/trace.min.js")
+	var ErrorStackParser = __webpack_require__(9);
+	
+	var UNKNOWN_FUNCTION = '?';
+	
+	
+	function guessFunctionName(url, line) {
+	  return UNKNOWN_FUNCTION;
+	}
+	
+	function gatherContext(url, line) {
+	  return null;
+	}
+	
+	function Frame(stackFrame) {
+	  var data = {};
+	
+	  data._stackFrame = stackFrame;
+	
+	  data.url = stackFrame.fileName;
+	  data.line = stackFrame.lineNumber;
+	  data.func = stackFrame.functionName;
+	  data.column = stackFrame.columnNumber;
+	  data.args = stackFrame.args;
+	
+	  data.context = gatherContext(data.url, data.line);
+	
+	  return data;
+	};
+	
+	function Stack(e) {
+	  function getStack() {
+	    var parserStack = [];
+	
+	    try {
+	      parserStack = ErrorStackParser.parse(e);
+	    } catch(e) {
+	      parserStack = [];
+	    }
+	
+	    var stack = [];
+	
+	    for (var i = 0; i < parserStack.length; i++) {
+	      stack.push(new Frame(parserStack[i]));
+	    }
+	
+	    return stack;
+	  }
+	
+	  return {
+	    stack: getStack(),
+	    message: e.message,
+	    name: e.name
+	  };
+	};
+	
+	function parse(e) {
+	  return new Stack(e);
+	}
+	
+	module.exports = {
+	  guessFunctionName: guessFunctionName,
+	  gatherContext: gatherContext,
+	  parse: parse
+	};
+
 
 /***/ },
 /* 5 */
@@ -1469,7 +1542,248 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = "function _isUndefined(a){return\"undefined\"==typeof a}function computeStackTraceWrapper(a){function b(a){if(!t)return\"\";try{var b=function(){try{return new window.XMLHttpRequest}catch(a){return new window.ActiveXObject(\"Microsoft.XMLHTTP\")}},c=b();return c.open(\"GET\",a,!1),c.send(\"\"),c.responseText}catch(d){return\"\"}}function c(a){if(!s.hasOwnProperty(a)){var c=\"\";-1!==a.indexOf(document.domain)&&(c=b(a)),s[a]=c?c.split(\"\\n\"):[]}return s[a]}function d(a,b){var d,e=/function ([^(]*)\\(([^)]*)\\)/,f=/['\"]?([0-9A-Za-z$_]+)['\"]?\\s*[:=]\\s*(function|eval|new Function)/,g=\"\",h=10,i=c(a);if(!i.length)return UNKNOWN_FUNCTION;for(var j=0;h>j;++j)if(g=i[b-j]+g,!_isUndefined(g)){if(d=f.exec(g))return d[1];if(d=e.exec(g))return d[1]}return UNKNOWN_FUNCTION}function e(a,b){var d=c(a);if(!d.length)return null;var e=[],f=Math.floor(u/2),g=f+u%2,h=Math.max(0,b-f-1),i=Math.min(d.length,b+g-1);b-=1;for(var j=h;i>j;++j)_isUndefined(d[j])||e.push(d[j]);return e.length>0?e:null}function f(a){return a.replace(/[\\-\\[\\]{}()*+?.,\\\\\\^$|#]/g,\"\\\\$&\")}function g(a){return f(a).replace(\"<\",\"(?:<|&lt;)\").replace(\">\",\"(?:>|&gt;)\").replace(\"&\",\"(?:&|&amp;)\").replace('\"','(?:\"|&quot;)').replace(/\\s+/g,\"\\\\s+\")}function h(a,b){for(var d,e,f=0,g=b.length;g>f;++f)if((d=c(b[f])).length&&(d=d.join(\"\\n\"),e=a.exec(d)))return{url:b[f],line:d.substring(0,e.index).split(\"\\n\").length,column:e.index-d.lastIndexOf(\"\\n\",e.index)-1};return null}function i(a,b,d){var e,g=c(b),h=new RegExp(\"\\\\b\"+f(a)+\"\\\\b\");return d-=1,g&&g.length>d&&(e=h.exec(g[d]))?e.index:null}function j(a){for(var b,c,d,e,i=[window.location.href],j=document.getElementsByTagName(\"script\"),k=\"\"+a,l=/^function(?:\\s+([\\w$]+))?\\s*\\(([\\w\\s,]*)\\)\\s*\\{\\s*(\\S[\\s\\S]*\\S)\\s*\\}\\s*$/,m=/^function on([\\w$]+)\\s*\\(event\\)\\s*\\{\\s*(\\S[\\s\\S]*\\S)\\s*\\}\\s*$/,n=0;n<j.length;++n){var o=j[n];o.src&&i.push(o.src)}if(d=l.exec(k)){var p=d[1]?\"\\\\s+\"+d[1]:\"\",q=d[2].split(\",\").join(\"\\\\s*,\\\\s*\");b=f(d[3]).replace(/;$/,\";?\"),c=new RegExp(\"function\"+p+\"\\\\s*\\\\(\\\\s*\"+q+\"\\\\s*\\\\)\\\\s*{\\\\s*\"+b+\"\\\\s*}\")}else c=new RegExp(f(k).replace(/\\s+/g,\"\\\\s+\"));if(e=h(c,i))return e;if(d=m.exec(k)){var r=d[1];if(b=g(d[2]),c=new RegExp(\"on\"+r+\"=[\\\\'\\\"]\\\\s*\"+b+\"\\\\s*[\\\\'\\\"]\",\"i\"),e=h(c,i[0]))return e;if(c=new RegExp(b),e=h(c,i))return e}return null}function k(a){if(!a.stack)return null;for(var b,c,f=/^\\s*at (?:((?:\\[object object\\])?\\S+(?: \\[as \\S+\\])?) )?\\(?((?:file|http|https):.*?):(\\d+)(?::(\\d+))?\\)?\\s*$/i,g=/^\\s*(\\S*)(?:\\((.*?)\\))?@((?:file|http|https).*?):(\\d+)(?::(\\d+))?\\s*$/i,h=a.stack.split(\"\\n\"),j=[],k=/^(.*) is undefined$/.exec(a.message),l=0,m=h.length;m>l;++l){if(b=g.exec(h[l]))c={url:b[3],func:b[1]||UNKNOWN_FUNCTION,args:b[2]?b[2].split(\",\"):\"\",line:+b[4],column:b[5]?+b[5]:null};else{if(!(b=f.exec(h[l])))continue;c={url:b[2],func:b[1]||UNKNOWN_FUNCTION,line:+b[3],column:b[4]?+b[4]:null}}!c.func&&c.line&&(c.func=d(c.url,c.line)),c.line&&(c.context=e(c.url,c.line)),j.push(c)}return j[0]&&j[0].line&&!j[0].column&&k&&(j[0].column=i(k[1],j[0].url,j[0].line)),j.length?{mode:\"stack\",name:a.name,message:a.message,url:document.location.href,stack:j,useragent:navigator.userAgent}:null}function l(a){for(var b,c=a.stacktrace,f=/ line (\\d+), column (\\d+) in (?:<anonymous function: ([^>]+)>|([^\\)]+))\\((.*)\\) in (.*):\\s*$/i,g=c.split(\"\\n\"),h=[],i=0,j=g.length;j>i;i+=2)if(b=f.exec(g[i])){var k={line:+b[1],column:+b[2],func:b[3]||b[4],args:b[5]?b[5].split(\",\"):[],url:b[6]};if(!k.func&&k.line&&(k.func=d(k.url,k.line)),k.line)try{k.context=e(k.url,k.line)}catch(l){}k.context||(k.context=[g[i+1]]),h.push(k)}return h.length?{mode:\"stacktrace\",name:a.name,message:a.message,url:document.location.href,stack:h,useragent:navigator.userAgent}:null}function m(a){var b=a.message.split(\"\\n\");if(b.length<4)return null;var f,i,j,k,l=/^\\s*Line (\\d+) of linked script ((?:file|http|https)\\S+)(?:: in function (\\S+))?\\s*$/i,m=/^\\s*Line (\\d+) of inline#(\\d+) script in ((?:file|http|https)\\S+)(?:: in function (\\S+))?\\s*$/i,n=/^\\s*Line (\\d+) of function script\\s*$/i,o=[],p=document.getElementsByTagName(\"script\"),q=[];for(i in p)p.hasOwnProperty(i)&&!p[i].src&&q.push(p[i]);for(i=2,j=b.length;j>i;i+=2){var r=null;if(f=l.exec(b[i]))r={url:f[2],func:f[3],line:+f[1]};else if(f=m.exec(b[i])){r={url:f[3],func:f[4]};var s=+f[1],t=q[f[2]-1];if(t&&(k=c(r.url))){k=k.join(\"\\n\");var u=k.indexOf(t.innerText);u>=0&&(r.line=s+k.substring(0,u).split(\"\\n\").length)}}else if(f=n.exec(b[i])){var v=window.location.href.replace(/#.*$/,\"\"),w=f[1],x=new RegExp(g(b[i+1]));k=h(x,[v]),r={url:v,line:k?k.line:w,func:\"\"}}if(r){r.func||(r.func=d(r.url,r.line));var y=e(r.url,r.line),z=y?y[Math.floor(y.length/2)]:null;r.context=y&&z.replace(/^\\s*/,\"\")===b[i+1].replace(/^\\s*/,\"\")?y:[b[i+1]],o.push(r)}}return o.length?{mode:\"multiline\",name:a.name,message:b[0],url:document.location.href,stack:o,useragent:navigator.userAgent}:null}function n(a,b,c,f){var g={url:b,line:c};if(g.url&&g.line){a.incomplete=!1,g.func||(g.func=d(g.url,g.line)),g.context||(g.context=e(g.url,g.line));var h=/ '([^']+)' /.exec(f);if(h&&(g.column=i(h[1],g.url,g.line)),a.stack.length>0&&a.stack[0].url===g.url){if(a.stack[0].line===g.line)return!1;if(!a.stack[0].line&&a.stack[0].func===g.func)return a.stack[0].line=g.line,a.stack[0].context=g.context,!1}return a.stack.unshift(g),a.partial=!0,!0}return a.incomplete=!0,!1}function o(a,b){for(var c,e,f,g=/function\\s+([_$a-zA-Z\\xA0-\\uFFFF][_$a-zA-Z0-9\\xA0-\\uFFFF]*)?\\s*\\(/i,h=[],k={},l=!1,m=o.caller;m&&!l;m=m.caller)if(m!==p&&m!==v){if(e={url:null,func:UNKNOWN_FUNCTION,line:null,column:null},m.name?e.func=m.name:(c=g.exec(m.toString()))&&(e.func=c[1]),f=j(m)){e.url=f.url,e.line=f.line,e.func===UNKNOWN_FUNCTION&&(e.func=d(e.url,e.line));var q=/ '([^']+)' /.exec(a.message||a.description);q&&(e.column=i(q[1],f.url,f.line))}k[\"\"+m]?l=!0:k[\"\"+m]=!0,h.push(e)}b&&h.splice(0,b);var r={mode:\"callers\",name:a.name,message:a.message,url:document.location.href,stack:h,useragent:navigator.userAgent};return n(r,a.sourceURL||a.fileName,a.line||a.lineNumber,a.message||a.description),r}function p(a,b){var c=null;b=null==b?0:+b;try{if(c=l(a))return c}catch(d){if(r)throw d}try{if(c=k(a))return c}catch(d){if(r)throw d}try{if(c=m(a))return c}catch(d){if(r)throw d}try{if(c=o(a,b+1))return c}catch(d){if(r)throw d}return{mode:\"failed\"}}function q(a){a=(null==a?0:+a)+1;try{throw new Error}catch(b){return p(b,a+1)}}var r=!1,s={},t=a.remoteFetching,u=a.linesOfContext,v=a.tracekitReport;return p.augmentStackTraceWithInitialElement=n,p.guessFunctionName=d,p.gatherContext=e,p.ofCaller=q,p}var UNKNOWN_FUNCTION=\"?\";"
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+	    'use strict';
+	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	    if (true) {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(10)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else if (typeof exports === 'object') {
+	        module.exports = factory(require('stackframe'));
+	    } else {
+	        root.ErrorStackParser = factory(root.StackFrame);
+	    }
+	}(this, function ErrorStackParser(StackFrame) {
+	    'use strict';
+	
+	    var FIREFOX_SAFARI_STACK_REGEXP = /\S+\:\d+/;
+	    var CHROME_IE_STACK_REGEXP = /\s+at /;
+	
+	    return {
+	        /**
+	         * Given an Error object, extract the most information from it.
+	         * @param error {Error}
+	         * @return Array[StackFrame]
+	         */
+	        parse: function ErrorStackParser$$parse(error) {
+	            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
+	                return this.parseOpera(error);
+	            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
+	                return this.parseV8OrIE(error);
+	            } else if (error.stack && error.stack.match(FIREFOX_SAFARI_STACK_REGEXP)) {
+	                return this.parseFFOrSafari(error);
+	            } else {
+	                throw new Error('Cannot parse given Error object');
+	            }
+	        },
+	
+	        /**
+	         * Separate line and column numbers from a URL-like string.
+	         * @param urlLike String
+	         * @return Array[String]
+	         */
+	        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
+	            // Fail-fast but return locations like "(native)"
+	            if (urlLike.indexOf(':') === -1) {
+	                return [urlLike];
+	            }
+	
+	            var locationParts = urlLike.replace(/[\(\)\s]/g, '').split(':');
+	            var lastNumber = locationParts.pop();
+	            var possibleNumber = locationParts[locationParts.length - 1];
+	            if (!isNaN(parseFloat(possibleNumber)) && isFinite(possibleNumber)) {
+	                var lineNumber = locationParts.pop();
+	                return [locationParts.join(':'), lineNumber, lastNumber];
+	            } else {
+	                return [locationParts.join(':'), lastNumber, undefined];
+	            }
+	        },
+	
+	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
+	            return error.stack.split('\n').slice(1).map(function (line) {
+	                var tokens = line.replace(/^\s+/, '').split(/\s+/).slice(1);
+	                var locationParts = this.extractLocation(tokens.pop());
+	                var functionName = (!tokens[0] || tokens[0] === 'Anonymous') ? undefined : tokens[0];
+	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
+	            }, this);
+	        },
+	
+	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
+	            return error.stack.split('\n').filter(function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP);
+	            }, this).map(function (line) {
+	                var tokens = line.split('@');
+	                var locationParts = this.extractLocation(tokens.pop());
+	                var functionName = tokens.shift() || undefined;
+	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
+	            }, this);
+	        },
+	
+	        parseOpera: function ErrorStackParser$$parseOpera(e) {
+	            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
+	                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
+	                return this.parseOpera9(e);
+	            } else if (!e.stack) {
+	                return this.parseOpera10(e);
+	            } else {
+	                return this.parseOpera11(e);
+	            }
+	        },
+	
+	        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
+	            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
+	            var lines = e.message.split('\n');
+	            var result = [];
+	
+	            for (var i = 2, len = lines.length; i < len; i += 2) {
+	                var match = lineRE.exec(lines[i]);
+	                if (match) {
+	                    result.push(new StackFrame(undefined, undefined, match[2], match[1]));
+	                }
+	            }
+	
+	            return result;
+	        },
+	
+	        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
+	            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
+	            var lines = e.stacktrace.split('\n');
+	            var result = [];
+	
+	            for (var i = 0, len = lines.length; i < len; i += 2) {
+	                var match = lineRE.exec(lines[i]);
+	                if (match) {
+	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1]));
+	                }
+	            }
+	
+	            return result;
+	        },
+	
+	        // Opera 10.65+ Error.stack very similar to FF/Safari
+	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
+	            return error.stack.split('\n').filter(function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) &&
+	                    !line.match(/^Error created at/);
+	            }, this).map(function (line) {
+	                var tokens = line.split('@');
+	                var locationParts = this.extractLocation(tokens.pop());
+	                var functionCall = (tokens.shift() || '');
+	                var functionName = functionCall
+	                        .replace(/<anonymous function(: (\w+))?>/, '$2')
+	                        .replace(/\([^\)]*\)/g, '') || undefined;
+	                var argsRaw;
+	                if (functionCall.match(/\(([^\)]*)\)/)) {
+	                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
+	                }
+	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
+	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2]);
+	            }, this);
+	        }
+	    };
+	}));
+	
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+	    'use strict';
+	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	    if (true) {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else if (typeof exports === 'object') {
+	        module.exports = factory();
+	    } else {
+	        root.StackFrame = factory();
+	    }
+	}(this, function () {
+	    'use strict';
+	    function _isNumber(n) {
+	        return !isNaN(parseFloat(n)) && isFinite(n);
+	    }
+	
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
+	        if (functionName !== undefined) {
+	            this.setFunctionName(functionName);
+	        }
+	        if (args !== undefined) {
+	            this.setArgs(args);
+	        }
+	        if (fileName !== undefined) {
+	            this.setFileName(fileName);
+	        }
+	        if (lineNumber !== undefined) {
+	            this.setLineNumber(lineNumber);
+	        }
+	        if (columnNumber !== undefined) {
+	            this.setColumnNumber(columnNumber);
+	        }
+	    }
+	
+	    StackFrame.prototype = {
+	        getFunctionName: function () {
+	            return this.functionName;
+	        },
+	        setFunctionName: function (v) {
+	            this.functionName = String(v);
+	        },
+	
+	        getArgs: function () {
+	            return this.args;
+	        },
+	        setArgs: function (v) {
+	            if (Object.prototype.toString.call(v) !== '[object Array]') {
+	                throw new TypeError('Args must be an Array');
+	            }
+	            this.args = v;
+	        },
+	
+	        // NOTE: Property name may be misleading as it includes the path,
+	        // but it somewhat mirrors V8's JavaScriptStackTraceApi
+	        // https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi and Gecko's
+	        // http://mxr.mozilla.org/mozilla-central/source/xpcom/base/nsIException.idl#14
+	        getFileName: function () {
+	            return this.fileName;
+	        },
+	        setFileName: function (v) {
+	            this.fileName = String(v);
+	        },
+	
+	        getLineNumber: function () {
+	            return this.lineNumber;
+	        },
+	        setLineNumber: function (v) {
+	            if (!_isNumber(v)) {
+	                throw new TypeError('Line Number must be a Number');
+	            }
+	            this.lineNumber = Number(v);
+	        },
+	
+	        getColumnNumber: function () {
+	            return this.columnNumber;
+	        },
+	        setColumnNumber: function (v) {
+	            if (!_isNumber(v)) {
+	                throw new TypeError('Column Number must be a Number');
+	            }
+	            this.columnNumber = Number(v);
+	        },
+	
+	        toString: function() {
+	            var functionName = this.getFunctionName() || '{anonymous}';
+	            var args = '(' + (this.getArgs() || []).join(',') + ')';
+	            var fileName = this.getFileName() ? ('@' + this.getFileName()) : '';
+	            var lineNumber = _isNumber(this.getLineNumber()) ? (':' + this.getLineNumber()) : '';
+	            var columnNumber = _isNumber(this.getColumnNumber()) ? (':' + this.getColumnNumber()) : '';
+	            return functionName + args + fileName + lineNumber + columnNumber;
+	        }
+	    };
+	
+	    return StackFrame;
+	}));
+
 
 /***/ }
 /******/ ])
