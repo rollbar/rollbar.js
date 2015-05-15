@@ -60,5 +60,7 @@ function parse(e) {
 module.exports = {
   guessFunctionName: guessFunctionName,
   gatherContext: gatherContext,
-  parse: parse
+  parse: parse,
+  Stack: Stack,
+  Frame: Frame
 };
