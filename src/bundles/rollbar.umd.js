@@ -20,15 +20,19 @@ function setupJSON() {
 
 setupJSON();
 
-window.Rollbar = globalnotifier.wrapper;
-
-// We need to expose Notifier for the snippet
-window.RollbarNotifier = notifier.Notifier;
-
 var config = window._rollbarConfig;
+var alias = config && config.globalAlias || 'Rollbar';
+var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
 
-if (config) {
+/* We must not initialize the full notifier here if the
+ * shim is loaded, snippet_callback will do that for us
+ */
+if (!shimRunning && config) {
   globalnotifier.wrapper.init(config);
+} else {
+  window.Rollbar = globalnotifier.wrapper;
+  // We need to expose Notifier for the snippet
+  window.RollbarNotifier = notifier.Notifier;
 }
 
 module.exports = globalnotifier.wrapper;
