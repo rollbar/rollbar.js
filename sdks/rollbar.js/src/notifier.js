@@ -403,6 +403,10 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
 
       trace.frames.push(frame);
     }
+
+    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
+    trace.frames.reverse();
+
     if (custom) {
       trace.extra = Util.copy(custom);
     }
