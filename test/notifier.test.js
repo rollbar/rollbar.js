@@ -1,11 +1,17 @@
+var error_parser = require('../src/error_parser');
 var expect = chai.expect;
-
+var Rollbar = require('../src/shim').Rollbar;
+var Util = require('../src/util.js');
+var XHR = require('../src/xhr.js').XHR;
+var notifiersrc = require('../src/notifier');
+var Notifier = notifiersrc.Notifier;
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
 };
-Rollbar.init(window, config);
 
+notifiersrc.setupJSON(JSON);
+Rollbar.init(window, config);
 
 /***** Misc setup tests *****/
 
@@ -191,7 +197,8 @@ describe("Notifier.global()", function() {
     notifier.error('third error');
     expect(_rollbarPayloadQueue.length).to.equal(3);
 
-    var spy = sinon.stub(window._topLevelNotifier, '_log');
+    var topLevelNotifier = notifiersrc.topLevelNotifier()
+    var spy = sinon.stub(topLevelNotifier, '_log');
     Notifier.processPayloads(true);
 
     expect(spy.called).to.equal(true);
@@ -1219,7 +1226,7 @@ describe("Notifier._buildPayload()", function() {
     } catch (e) {
       err = e
     }
-    payload = notifier._buildPayload(new Date(), 'error', 'reference err', err);
+    payload = notifier._buildPayload(new Date(), 'error', 'reference err', error_parser.parse(err));
 
     expect(payload.data.body.trace).to.be.an('object');
     expect(payload.data.body.trace.exception).to.be.an('object');
@@ -1227,6 +1234,38 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.data.body.trace.exception.message).to.be.a('string');
     expect(payload.data.body.trace.exception.description).to.equal('reference err');
     expect(payload.data.body.trace.frames).to.be.an('array');
+
+    done();
+  });
+
+  it("should have the most recent frame last", function(done) {
+    var notifier = new Notifier();
+
+    function first() {
+      second();
+    }
+
+    function second() {
+      last();
+    }
+
+    function last() {
+      nonExistant(); 
+    }
+
+    var err;
+    try {
+      first();
+    } catch (e) {
+      err = e
+    }
+    var payload = notifier._buildPayload(new Date(), 'error', 'frame order test', error_parser.parse(err));
+    expect(payload.data.body.trace.frames).to.be.an('array');
+
+    var numFrames = payload.data.body.trace.frames.length;
+    expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
+    expect(payload.data.body.trace.frames[numFrames - 2].method).to.equal('second');
+    expect(payload.data.body.trace.frames[numFrames - 1].method).to.equal('last');
 
     done();
   });
@@ -1315,7 +1354,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', null, TK(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', null, error_parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1340,7 +1379,7 @@ describe("Notifier._buildPayload()", function() {
       bar: 'foo'
     };
 
-    var payload = notifier._buildPayload(new Date(), 'debug', message, TK(err), custom);
+    var payload = notifier._buildPayload(new Date(), 'debug', message, error_parser.parse(err), custom);
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
@@ -1375,7 +1414,7 @@ describe("Notifier._buildPayload()", function() {
     }
 
     var notifier = new Notifier();
-    var payload = notifier._buildPayload(new Date(), 'error', 'message here', TK(err));
+    var payload = notifier._buildPayload(new Date(), 'error', 'message here', error_parser.parse(err));
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception']);

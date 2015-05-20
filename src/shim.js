@@ -5,7 +5,7 @@ function Rollbar(parentShim) {
   this.notifier = null;
   this.parentShim = parentShim;
   this.logger = function() {};
-  
+
   if (window.console) {
     if (window.console.shimId === undefined) {
       this.logger = window.console.log;
@@ -236,3 +236,8 @@ var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,scop
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
+
+module.exports = {
+  Rollbar: Rollbar,
+  _rollbarWindowOnError: _rollbarWindowOnError
+};

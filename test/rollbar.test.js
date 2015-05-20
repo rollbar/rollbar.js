@@ -1,9 +1,21 @@
+var shim = require('../src/shim.js');
+var snippetCallback = require('../src/snippet_callback');
+
 var expect = chai.expect;
+var Rollbar = shim.Rollbar;
+
+var config = {
+  accessToken: '12c99de67a444c229fca100e0967486f',
+  captureUncaught: true
+};
+
+var origRollbar = Rollbar.init(window, config);
 
 describe("Script load", function() {
   describe("Shim", function() {
     it("should be connected to window.Rollbar", function(done) {
-      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'});
+      var callback = snippetCallback(origRollbar, config);
+      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback);
 
       function test() {
         if (origRollbar.notifier !== null) {
@@ -349,7 +361,7 @@ describe("window.Rollbar.uncaughtError()", function() {
   it("should catch uncaught errors", function(done) {
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(window.Rollbar, null, args);
+      shim._rollbarWindowOnError(window.Rollbar, null, args);
     };
 
     var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
@@ -394,7 +406,7 @@ describe("window.Rollbar.uncaughtError()", function() {
 
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(window.Rollbar, null, args);
+      shim._rollbarWindowOnError(window.Rollbar, null, args);
     };
 
     var div = document.getElementById('event-div');
