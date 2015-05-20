@@ -1,3 +1,4 @@
+var Util = require('../src/util.js');
 var expect = chai.expect;
 
 describe('Util', function() {

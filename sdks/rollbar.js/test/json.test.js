@@ -1,3 +1,5 @@
+require('script!../vendor/JSON-js/json2.js');
+
 var expect = chai.expect;
 
 describe('RollbarJSON', function() {

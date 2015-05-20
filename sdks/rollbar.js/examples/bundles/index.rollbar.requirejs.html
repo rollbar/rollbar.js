@@ -1,0 +1,25 @@
+<html>
+  <body>
+    <script src="functions.js"></script>
+    <script src="http://requirejs.org/docs/release/2.1.14/minified/require.js"></script>
+    <script>
+
+      var rollbarConfig = {
+        accessToken: '5372f0cf52a8485780f6648bd5dd6708',
+        captureUncaught: true,
+        payload: {
+          environment: 'development',
+        }
+      };
+
+      require(["../../dist/rollbar.umd.js"],
+        function(Rollbar) {
+          var rollbar = Rollbar.init(rollbarConfig);
+          rollbar.info('Hello world');
+        }
+      );
+    </script>
+    <button onclick="foo();">Foo</button>
+    <button onclick="functionC();">Bar</button>
+  </body>
+</html>
