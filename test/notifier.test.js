@@ -1226,7 +1226,7 @@ describe("Notifier._buildPayload()", function() {
     } catch (e) {
       err = e
     }
-    payload = notifier._buildPayload(new Date(), 'error', 'reference err', err);
+    payload = notifier._buildPayload(new Date(), 'error', 'reference err', error_parser.parse(err));
 
     expect(payload.data.body.trace).to.be.an('object');
     expect(payload.data.body.trace.exception).to.be.an('object');
@@ -1234,6 +1234,38 @@ describe("Notifier._buildPayload()", function() {
     expect(payload.data.body.trace.exception.message).to.be.a('string');
     expect(payload.data.body.trace.exception.description).to.equal('reference err');
     expect(payload.data.body.trace.frames).to.be.an('array');
+
+    done();
+  });
+
+  it("should have the most recent frame last", function(done) {
+    var notifier = new Notifier();
+
+    function first() {
+      second();
+    }
+
+    function second() {
+      last();
+    }
+
+    function last() {
+      nonExistant(); 
+    }
+
+    var err;
+    try {
+      first();
+    } catch (e) {
+      err = e
+    }
+    var payload = notifier._buildPayload(new Date(), 'error', 'frame order test', error_parser.parse(err));
+    expect(payload.data.body.trace.frames).to.be.an('array');
+
+    var numFrames = payload.data.body.trace.frames.length;
+    expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
+    expect(payload.data.body.trace.frames[numFrames - 2].method).to.equal('second');
+    expect(payload.data.body.trace.frames[numFrames - 1].method).to.equal('last');
 
     done();
   });
