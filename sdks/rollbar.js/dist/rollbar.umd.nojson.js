@@ -590,6 +590,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	      trace.frames.push(frame);
 	    }
+	
+	    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
+	    trace.frames.reverse();
+	
 	    if (custom) {
 	      trace.extra = Util.copy(custom);
 	    }
@@ -1197,7 +1201,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 	  guessFunctionName: guessFunctionName,
 	  gatherContext: gatherContext,
-	  parse: parse
+	  parse: parse,
+	  Stack: Stack,
+	  Frame: Frame
 	};
 
 
