@@ -143,41 +143,18 @@ module.exports = function(grunt) {
 
   grunt.registerTask('copyrelease', function() {
     var version = pkg.version;
+    var builds = ['umd', 'umd.nojson'];
 
-    var rollbarJs = 'dist/rollbar.js';
-    var releaseRollbarJs = 'release/rollbar-' + version + '.js';
+    builds.forEach(function (buildName) {
+      var js = 'dist/rollbar.' + buildName + '.js';
+      var minJs = 'dist/rollbar.' + buildName + '.min.js';
 
-    var rollbarMinJs = 'dist/rollbar.min.js';
-    var releaseRollbarMinJs = 'release/rollbar-' + version + '.min.js';
-    
-    var rollbarNojsonJs = 'dist/rollbar.nojson.js';
-    var releaseRollbarNojsonJs = 'release/rollbar-' + version + '.nojson.js';
+      var releaseJs = 'release/rollbar.' + buildName + '-' + version + '.js';
+      var releaseMinJs = 'release/rollbar.' + buildName + '-' + version + '.min.js';
 
-    var rollbarNojsonMinJs = 'dist/rollbar.nojson.min.js';
-    var releaseRollbarNojsonMinJs = 'release/rollbar-' + version + '.nojson.min.js';
-
-    var rollbarAmdJs = 'dist/rollbar.amd.js';
-    var releaseRollbarAmdJs = 'release/rollbar-' + version + '.amd.js';
-
-    var rollbarAmdMinJs = 'dist/rollbar.amd.min.js';
-    var releaseRollbarAmdMinJs = 'release/rollbar-' + version + '.amd.min.js';
-
-    var rollbarCommonJs = 'dist/rollbar.commonjs.js';
-    var releaseRollbarCommonJs = 'release/rollbar-' + version + '.commonjs.js';
-
-    var rollbarCommonMinJs = 'dist/rollbar.commonjs.min.js';
-    var releaseRollbarCommonMinJs = 'release/rollbar-' + version + '.commonjs.min.js';
-
-    grunt.file.copy(rollbarJs, releaseRollbarJs);
-    grunt.file.copy(rollbarMinJs, releaseRollbarMinJs);
-    grunt.file.copy(rollbarNojsonJs, releaseRollbarNojsonJs);
-    grunt.file.copy(rollbarNojsonMinJs, releaseRollbarNojsonMinJs);
-    grunt.file.copy(rollbarAmdJs, releaseRollbarAmdJs);
-    grunt.file.copy(rollbarAmdMinJs, releaseRollbarAmdMinJs);
-    grunt.file.copy(rollbarCommonJs, releaseRollbarCommonJs);
-    grunt.file.copy(rollbarCommonMinJs, releaseRollbarCommonMinJs);
-
-    //grunt.task.run('tagrelease');
+      grunt.file.copy(js, releaseJs);
+      grunt.file.copy(minJs, releaseMinJs);
+    });
   });
 };
 
