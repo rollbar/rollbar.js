@@ -1,5 +1,4 @@
-/* rollbar.js for use with AMD loaders */
-define(function(require, exports, module) {
+/* rollbar.js for use with CommonJS loaders */
 /*
     json2.js
     2013-05-26
@@ -1421,6 +1420,8 @@ var Util = {
   }
 };
 
+// Use the vendored JSON implementation.
+// Recommended for applications that contain other, possibly-broken JSON implementations
 var RollbarJSON = {};
 setupCustomJSON(RollbarJSON);
 
@@ -1529,7 +1530,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.2.1';
+Notifier.NOTIFIER_VERSION = '1.2.2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2520,4 +2521,3 @@ wrapper.init = function(config) {
   return notifier;
 };
 module.exports = wrapper;
-});

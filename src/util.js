@@ -181,3 +181,5 @@ var Util = {
     return uuid;
   }
 };
+
+module.exports = Util;

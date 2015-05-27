@@ -1,13 +1,24 @@
+var error_parser = require('./error_parser');
+var Util = require('./util');
+var xhr = require('./xhr');
+
+var XHR = xhr.XHR;
+var RollbarJSON = null;
+
+function setupJSON(JSON) {
+  RollbarJSON = JSON;
+  xhr.setupJSON(JSON);
+}
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.2.1';
-Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
-Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
-Notifier.DEFAULT_LOG_LEVEL = 'debug';
-Notifier.DEFAULT_REPORT_LEVEL = 'debug';
-Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = 'warning';
-Notifier.DEFAULT_ITEMS_PER_MIN = 60;
-Notifier.DEFAULT_MAX_ITEMS = 0;
+Notifier.NOTIFIER_VERSION = __NOTIFIER_VERSION__;
+Notifier.DEFAULT_ENDPOINT = __DEFAULT_ENDPOINT__;
+Notifier.DEFAULT_SCRUB_FIELDS = __DEFAULT_SCRUB_FIELDS__;
+Notifier.DEFAULT_LOG_LEVEL = __DEFAULT_LOG_LEVEL__;
+Notifier.DEFAULT_REPORT_LEVEL = __DEFAULT_REPORT_LEVEL__;
+Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = __DEFAULT_UNCAUGHT_ERROR_LEVEL;
+Notifier.DEFAULT_ITEMS_PER_MIN = __DEFAULT_ITEMS_PER_MIN__;
+Notifier.DEFAULT_MAX_ITEMS = __DEFAULT_MAX_ITEMS__;
 
 Notifier.LEVELS = {
   debug: 0,
@@ -28,8 +39,11 @@ window._globalRollbarOptions = {
   itemsPerMinute: Notifier.DEFAULT_ITEMS_PER_MIN
 };
 
-var TK = computeStackTraceWrapper({remoteFetching: false, linesOfContext: 3});
 var _topLevelNotifier;
+
+function topLevelNotifier() {
+  return _topLevelNotifier;
+}
 
 function Notifier(parentNotifier) {
   // Save the first notifier so we can use it to send system messages like
@@ -294,7 +308,7 @@ Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custo
 
 Notifier.prototype._buildBody = function(message, stackInfo, custom) {
   var body;
-  if (stackInfo && stackInfo.mode !== 'failed') {
+  if (stackInfo) {
     body = this._buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
     body = this._buildPayloadBodyMessage(message, custom);
@@ -389,6 +403,10 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
 
       trace.frames.push(frame);
     }
+
+    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
+    trace.frames.reverse();
+
     if (custom) {
       trace.extra = Util.copy(custom);
     }
@@ -675,7 +693,7 @@ Notifier.prototype._log = function(level, message, err, custom, callback, isUnca
   if (err) {
     // If we've already calculated the stack trace for the error, use it.
     // This can happen for wrapped errors that don't have a "stack" property.
-    stackInfo = err._tkStackTrace ? err._tkStackTrace : TK(err);
+    stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
 
     // Don't report the same error more than once
     if (err === this.lastError) {
@@ -721,8 +739,8 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'url': url || '',
     'line': lineNo
   };
-  location.func = TK.guessFunctionName(location.url, location.line);
-  location.context = TK.gatherContext(location.url, location.line);
+  location.func = error_parser.guessFunctionName(location.url, location.line);
+  location.context = error_parser.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
     'message': message || 'uncaught exception',
@@ -731,7 +749,7 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
     'useragent': navigator.userAgent
   };
   if (err) {
-    stack = err._tkStackTrace || TK(err);
+    stack = err._savedStackTrace || error_parser.parse(err);
   }
 
   var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
@@ -794,7 +812,7 @@ Notifier.prototype.wrap = function(f, context) {
         return f.apply(this, arguments);
       } catch(e) {
         if (!e.stack) {
-          e._tkStackTrace = TK(e);
+          e._savedStackTrace = error_parser.parse(e);
         }
         e._rollbarContext = ctxFn() || {};
         e._rollbarContext._wrappedSource = f.toString();
@@ -942,4 +960,12 @@ function _processPayload(url, accessToken, payload, callback) {
     // TODO(cory): parse resp as JSON
     return callback(null, resp);
   });
+
 }
+
+module.exports = {
+  Notifier: Notifier,
+  setupJSON: setupJSON,
+  topLevelNotifier: topLevelNotifier
+};
+

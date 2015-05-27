@@ -1,4 +1,5 @@
-(function(window, document){
+/* rollbar.js for use with AMD loaders */
+define(function(require, exports, module) {
 /*
     json2.js
     2013-05-26
@@ -1420,6 +1421,8 @@ var Util = {
   }
 };
 
+// Use the vendored JSON implementation.
+// Recommended for applications that contain other, possibly-broken JSON implementations
 var RollbarJSON = {};
 setupCustomJSON(RollbarJSON);
 
@@ -1528,7 +1531,7 @@ var XHR = {
 
 
 // Updated by the build process to match package.json
-Notifier.NOTIFIER_VERSION = '1.2.1';
+Notifier.NOTIFIER_VERSION = '1.2.2';
 Notifier.DEFAULT_ENDPOINT = 'api.rollbar.com/api/1/';
 Notifier.DEFAULT_SCRUB_FIELDS = ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"];
 Notifier.DEFAULT_LOG_LEVEL = 'debug';
@@ -2451,14 +2454,72 @@ function _processPayload(url, accessToken, payload, callback) {
   });
 }
 
-if (!window._rollbarInitialized) {
-  var config = window._rollbarConfig || {};
-  var alias = config.globalAlias || 'Rollbar';
-  var shim = window[alias];
-  var fullRollbar = new Notifier(shim);
-  fullRollbar._processShimQueue(window._rollbarShimQueue || []);
-  window[alias] = fullRollbar;
-  window._rollbarInitialized = true;
-  Notifier.processPayloads();
+// Stub out the wrapped error which is set 
+window._rollbarWrappedError = null;
+
+// Global window.onerror handler
+function _rollbarWindowOnError(client, old, args) {
+  if (!args[4] && window._rollbarWrappedError) {
+    args[4] = window._rollbarWrappedError;
+    window._rollbarWrappedError = null;
+  }
+
+  client.uncaughtError.apply(client, args);
+  if (old) {
+    old.apply(window, args);
+  }
 }
-})(window, document);
+
+function _extendListenerPrototype(client, prototype) {
+  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+    var oldAddEventListener = prototype.addEventListener;
+    prototype.addEventListener = function(event, callback, bubble) {
+      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+    };
+
+    var oldRemoveEventListener = prototype.removeEventListener;
+    prototype.removeEventListener = function(event, callback, bubble) {
+      oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
+    };
+  }
+}
+
+// Add an init() method to do the same things that the shim would do
+var wrapper = {};
+wrapper.init = function(config) {
+  var notifier = new Notifier();
+  notifier.configure(config); 
+
+  if (config.captureUncaught) {
+    // Set the global onerror handler
+    var old = window.onerror;
+
+    window.onerror = function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+      _rollbarWindowOnError(notifier, old, args);
+    };
+
+    // Adapted from https://github.com/bugsnag/bugsnag-js
+    var globals = ['EventTarget', 'Window', 'Node', 'ApplicationCache', 'AudioTrackList', 'ChannelMergerNode', 'CryptoOperation', 'EventSource',
+     'FileReader', 'HTMLUnknownElement', 'IDBDatabase', 'IDBRequest', 'IDBTransaction', 'KeyOperation', 'MediaController',
+     'MessagePort', 'ModalWindow', 'Notification', 'SVGElementInstance', 'Screen', 'TextTrack', 'TextTrackCue',
+     'TextTrackList', 'WebSocket', 'WebSocketWorker', 'Worker', 'XMLHttpRequest', 'XMLHttpRequestEventTarget',
+     'XMLHttpRequestUpload'];
+
+    var i;
+    var global;
+    for (i = 0; i < globals.length; ++i) {
+      global = globals[i];
+
+      if (window[global] && window[global].prototype) {
+        _extendListenerPrototype(notifier, window[global].prototype);
+      }
+    }
+  }
+
+  // Finally, start processing payloads using the global notifier
+  Notifier.processPayloads();
+  return notifier;
+};
+module.exports = wrapper;
+});
