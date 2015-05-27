@@ -51,10 +51,16 @@
     </script>
 
     <!-- sources -->
-    <script src="../../dist/rollbar.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../../dist/rollbar.umd.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+      window.Rollbar = Rollbar.init(_rollbarConfig);
+    </script>
 
     <!-- tracekit source, needed for testing Notifier(notifier) -->
     <script src="../../vendor/TraceKit/src/trace.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- plugin source -->
+    <script src="../../dist/plugins/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 
     <!-- tests -->
     <script src="./jquery.test.js"></script>
@@ -66,8 +72,5 @@
         mocha.run();
       }
     </script>
-
-    <!-- plugin source -->
-    <script src="../../src/plugins/jquery.js" type="text/javascript" charset="utf-8"></script>
   </body>
 </html>

@@ -3,6 +3,9 @@
 
 # Change Log
 
+**1.2.2**
+- Added `nojson` distribution, for use on sites with a Content Security Policy that disallows `unsafe-eval`. (The standard distributions ship with a built-in JSON implementation, since external libraries, such as MooTools, sometimes break the brower's built-in JSON.) If you know that the built-in JSON is not being modified in your application, or you are disallowing `unsafe-eval`, use this distribution.
+
 **1.2.1**
 - Fixed bug where the global notifier not being used to atch event listener exceptions. (pr#70)
 
