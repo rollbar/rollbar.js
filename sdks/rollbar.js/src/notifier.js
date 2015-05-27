@@ -889,18 +889,11 @@ function _notifyPayloadAvailable() {
 function _deferredPayloadProcess() {
   var payloadObj;
 
-  try
-  {
+  try {
     while ((payloadObj = window._rollbarPayloadQueue.shift())) {
       _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
     }
-  }
-  catch (err)
-  {
-    throw err;
-  }
-  finally
-  {
+  } finally {
     payloadProcessorTimeout = undefined;
   }
 }
