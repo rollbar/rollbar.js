@@ -872,10 +872,11 @@ var payloadProcessorTimeout;
 Notifier.processPayloads = function(immediate) {
   if (immediate) {
     _deferredPayloadProcess();
+
+    return;
   }
-  else if (!payloadProcessorTimeout) {
-    _notifyPayloadAvailable();
-  }
+
+  _notifyPayloadAvailable();
 };
 
 function _notifyPayloadAvailable() {
