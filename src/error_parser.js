@@ -27,12 +27,12 @@ function Frame(stackFrame) {
   return data;
 };
 
-function Stack(e) {
+function Stack(exception) {
   function getStack() {
     var parserStack = [];
 
     try {
-      parserStack = ErrorStackParser.parse(e);
+      parserStack = ErrorStackParser.parse(exception);
     } catch(e) {
       parserStack = [];
     }
@@ -48,8 +48,8 @@ function Stack(e) {
 
   return {
     stack: getStack(),
-    message: e.message,
-    name: e.name
+    message: exception.message,
+    name: exception.name
   };
 };
 
