@@ -759,7 +759,9 @@ Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo
 
 Notifier.prototype.global = _wrapNotifierFn(function(options) {
   options = options || {};
+
   Util.merge(window._globalRollbarOptions, options);
+
   if (options.maxItems !== undefined) {
     rateLimitCounter = 0;
   }
@@ -775,6 +777,7 @@ Notifier.prototype.configure = _wrapNotifierFn(function(options) {
 
   // Make a copy of the options object for this notifier
   Util.merge(this.options, options);
+  this.global(options);
 });
 
 /*

@@ -253,6 +253,18 @@ describe("Notifier.configure()", function() {
     done();
   });
 
+  it("populates window._globalRollbarOptions when passed rating options", function() {
+    var notifier = new Notifier();
+
+    notifier.configure({
+      maxItems: 100,
+      itemsPerMinute: 10
+    });
+
+    expect(window._globalRollbarOptions.maxItems).to.equal(100);
+    expect(window._globalRollbarOptions.itemsPerMinute).to.equal(10);
+  });
+
   it("should respect the enabled flag", function(done) {
     window._rollbarPayloadQueue.length = 0;
 
