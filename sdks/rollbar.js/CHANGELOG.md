@@ -3,6 +3,22 @@
 
 # Change Log
 
+**v1.3.0-alpha.4**
+- Update CHANGELOG.md.
+
+**v1.3.0-alpha.3**
+- Remove repeated timer to send enqueued payloads.
+- Change argument name in Stack() to fix uglify bug.
+- Change __DEFAULT_ROLLBARJS_URL__ to use https.
+- Set window._globalRollbarOptions when calling .configure().
+
+**v1.3.0-alpha.2**
+- Update missing dist/ files.
+
+**v1.3.0-alpha.1**
+- Build the library using webpack.
+- Replace tracekit and use error-stack-parser.
+
 **1.2.2**
 - Added `nojson` distribution, for use on sites with a Content Security Policy that disallows `unsafe-eval`. (The standard distributions ship with a built-in JSON implementation, since external libraries, such as MooTools, sometimes break the brower's built-in JSON.) If you know that the built-in JSON is not being modified in your application, or you are disallowing `unsafe-eval`, use this distribution.
 
