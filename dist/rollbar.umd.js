@@ -198,7 +198,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.3.0-alpha.3");
+	Notifier.NOTIFIER_VERSION = ("1.3.0-alpha.5");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -1157,7 +1157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(7)(__webpack_require__(8)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/jon/rollbar/rollbar.js/vendor/json2.min.js")
+	__webpack_require__(7)(__webpack_require__(8)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/brian/www/rollbar.js/vendor/json2.min.js")
 
 /***/ },
 /* 4 */
