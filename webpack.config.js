@@ -34,7 +34,12 @@ var defaults = {
 };
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
-var uglifyPlugin = new webpack.optimize.UglifyJsPlugin();
+var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
+  // We've had some reports of the sourceMappingURL comment causing problems in Firefox.
+  // The uglifyjs plugin doesn't provide a way to generate the source map without generating
+  // that comment, so until we can resolve that, let's just not generate the source map.
+  sourceMap: false
+});
 var useJsonPlugin = new webpack.DefinePlugin(jsonDefines);
 var notUseJsonPlugin = new webpack.DefinePlugin(noJsonDefines);
 
