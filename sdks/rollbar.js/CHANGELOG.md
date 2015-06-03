@@ -5,6 +5,7 @@
 
 **v1.3.0-alpha.5**
 - Fix rollbar.umd.min.js URL in the snippet
+- Remove sourceMappingURL comment due to browser bug concerns
 
 **v1.3.0-alpha.4**
 - Update CHANGELOG.md.
