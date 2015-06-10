@@ -2,7 +2,7 @@
   "name": "rollbar",
   "dependencies": {},
   "main": [
-    "dist/rollbar.js",
+    "dist/rollbar.umd.js",
     "dist/rollbar.snippet.js",
     "src/plugins/jquery.js"
   ],
