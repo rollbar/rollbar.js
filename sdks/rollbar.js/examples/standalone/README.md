@@ -10,7 +10,7 @@ You'll want to include this at the top of your page in the `head` tag in order f
   
     <script>
       var _rollbarConfig = {
-        accessToken: "...",
+        accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
         captureUncaught: true,
         payload: {
           environment: "production"

@@ -33,7 +33,7 @@
 
 ## Test the example
 
-1. Edit test.html and add your Rollbar `post_client_access_token`
+1. Edit test.html and add your Rollbar `POST_CLIENT_ITEM_ACCESS_TOKEN`
    - Sign up for a free account [here](https://rollbar.com/signup/)
 2. Open test.html in your browser and click the button
 3. Go to your project dashboard and see the error
