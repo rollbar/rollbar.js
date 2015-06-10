@@ -135,7 +135,7 @@ describe("window.Rollbar.configure()", function() {
 
     it("should not allow ReferenceErrors", function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
         return isReferenceErr;
       }
 
@@ -164,7 +164,7 @@ describe("window.Rollbar.configure()", function() {
 
     it("should only allow ReferenceErrors", function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
         return !isReferenceErr;
       }
 
