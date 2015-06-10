@@ -2,7 +2,7 @@ var globalnotifier = require('../globalnotifier');
 var notifier = require('../notifier');
 
 function setupJSON() {
-  var JSONObject = JSON;
+  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
 
   if (__USE_JSON__) {
     // This adds the script to this context. We need it since this library
