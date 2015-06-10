@@ -3,6 +3,9 @@
 
 # Change Log
 
+**v1.3.0-rc.1**
+- Added polyfills for IE8+ and now using a forked version of error-stack-parser
+
 **v1.3.0-alpha.5**
 - Fix rollbar.umd.min.js URL in the snippet
 - Remove sourceMappingURL comment due to browser bug concerns
