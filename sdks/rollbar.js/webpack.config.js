@@ -78,7 +78,7 @@ var testsConfig = {
 
 var UMDConfigBase = {
   entry: {
-    'rollbar.umd': './src/bundles/rollbar.umd.js'
+    'rollbar.umd': ['./vendor/polyfills.js', './src/bundles/rollbar.umd.js']
   },
   output: {
     path: outputPath,
