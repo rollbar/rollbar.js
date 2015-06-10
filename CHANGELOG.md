@@ -3,8 +3,11 @@
 
 # Change Log
 
+**v1.3.0-rc.2**
+- - Fix main values in bower.json.
+
 **v1.3.0-rc.1**
-- Added polyfills for IE8+ and now using a forked version of error-stack-parser
+- Fixes for IE8+
 
 **v1.3.0-alpha.5**
 - Fix rollbar.umd.min.js URL in the snippet
