@@ -1,4 +1,4 @@
-var rollbar = require('../../dist/rollbar.commonjs.min.js');
+var rollbar = require('../../dist/rollbar.umd.min.js');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
