@@ -1,4 +1,5 @@
 var expect = chai.expect;
+var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
 
 describe('RollbarJSON', function() {
   it("should correctly serialize JSON that breaks in MooTools", function(done) {
