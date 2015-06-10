@@ -54,8 +54,70 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var globalnotifier = __webpack_require__(1);
-	var notifier = __webpack_require__(2);
+	__webpack_require__(1);
+	module.exports = __webpack_require__(2);
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// ES5 Polyfills
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+	if (!Array.prototype.map) {
+	    Array.prototype.map = function(callback, thisArg) {
+	        var O = Object(this);
+	        var len = O.length >>> 0;
+	        var T;
+	        if (arguments.length > 1) {
+	            T = thisArg;
+	        }
+	
+	        var A = new Array(len);
+	        var k = 0;
+	
+	        while (k < len) {
+	            var kValue, mappedValue;
+	            if (k in O) {
+	                kValue = O[k];
+	                mappedValue = callback.call(T, kValue, k, O);
+	                A[k] = mappedValue;
+	            }
+	            k++;
+	        }
+	
+	        return A;
+	    };
+	}
+	
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+	if (!Array.prototype.filter) {
+	    Array.prototype.filter = function(callback/*, thisArg*/) {
+	        var t = Object(this);
+	        var len = t.length >>> 0;
+	
+	        var res = [];
+	        var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+	        for (var i = 0; i < len; i++) {
+	            if (i in t) {
+	                var val = t[i];
+	                if (callback.call(thisArg, val, i, t)) {
+	                    res.push(val);
+	                }
+	            }
+	        }
+	
+	        return res;
+	    };
+	}
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var globalnotifier = __webpack_require__(3);
+	var notifier = __webpack_require__(4);
 	
 	function setupJSON() {
 	  var JSONObject = JSON;
@@ -95,10 +157,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 1 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var notifier = __webpack_require__(2);
+	var notifier = __webpack_require__(4);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set 
@@ -182,12 +244,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 2 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error_parser = __webpack_require__(3);
-	var Util = __webpack_require__(4);
-	var xhr = __webpack_require__(5);
+	var error_parser = __webpack_require__(5);
+	var Util = __webpack_require__(6);
+	var xhr = __webpack_require__(7);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -1154,10 +1216,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ErrorStackParser = __webpack_require__(6);
+	var ErrorStackParser = __webpack_require__(8);
 	
 	var UNKNOWN_FUNCTION = '?';
 	
@@ -1226,7 +1288,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Util = {
@@ -1417,7 +1479,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var RollbarJSON = null;
@@ -1536,14 +1598,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(9)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -1682,7 +1744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {

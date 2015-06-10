@@ -5,11 +5,9 @@
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
   },
-  "dependencies": {
-    "error-stack-parser": "1.2.0"
-  },
   "devDependencies": {
     "chai": "~1.8.1",
+    "error-stack-parser": "git://github.com/rollbar/error-stack-parser.git",
     "express": "~3.4.7",
     "grunt": "~0.4.2",
     "grunt-blanket-mocha": "^0.4.1",
@@ -28,15 +26,15 @@
     "grunt-saucelabs": "~4.1.2",
     "grunt-tagrelease": "~0.3.0",
     "grunt-webpack": "1.0.8",
-    "time-grunt": "^1.0.0",
     "jshint": "~2.3.0",
     "mocha": "^1.21.4",
     "mocha-phantomjs": "^3.5.0",
     "phantomjs": "^1.9.10",
-    "semver": "~2.2.1",
-    "stackframe": "0.2.2",
     "script-loader": "0.6.1",
+    "semver": "~2.2.1",
     "sinon": "~1.7.3",
+    "stackframe": "^0.2.2",
+    "time-grunt": "^1.0.0",
     "uglify-js": "~2.4.3",
     "webpack": "1.8.11"
   },

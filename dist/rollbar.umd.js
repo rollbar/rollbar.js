@@ -54,8 +54,70 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var globalnotifier = __webpack_require__(1);
-	var notifier = __webpack_require__(2);
+	__webpack_require__(1);
+	module.exports = __webpack_require__(2);
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// ES5 Polyfills
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+	if (!Array.prototype.map) {
+	    Array.prototype.map = function(callback, thisArg) {
+	        var O = Object(this);
+	        var len = O.length >>> 0;
+	        var T;
+	        if (arguments.length > 1) {
+	            T = thisArg;
+	        }
+	
+	        var A = new Array(len);
+	        var k = 0;
+	
+	        while (k < len) {
+	            var kValue, mappedValue;
+	            if (k in O) {
+	                kValue = O[k];
+	                mappedValue = callback.call(T, kValue, k, O);
+	                A[k] = mappedValue;
+	            }
+	            k++;
+	        }
+	
+	        return A;
+	    };
+	}
+	
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+	if (!Array.prototype.filter) {
+	    Array.prototype.filter = function(callback/*, thisArg*/) {
+	        var t = Object(this);
+	        var len = t.length >>> 0;
+	
+	        var res = [];
+	        var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+	        for (var i = 0; i < len; i++) {
+	            if (i in t) {
+	                var val = t[i];
+	                if (callback.call(thisArg, val, i, t)) {
+	                    res.push(val);
+	                }
+	            }
+	        }
+	
+	        return res;
+	    };
+	}
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var globalnotifier = __webpack_require__(3);
+	var notifier = __webpack_require__(4);
 	
 	function setupJSON() {
 	  var JSONObject = JSON;
@@ -63,7 +125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (true) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    __webpack_require__(3);
+	    __webpack_require__(5);
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -95,10 +157,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 1 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var notifier = __webpack_require__(2);
+	var notifier = __webpack_require__(4);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set 
@@ -182,12 +244,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 2 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error_parser = __webpack_require__(4);
-	var Util = __webpack_require__(5);
-	var xhr = __webpack_require__(6);
+	var error_parser = __webpack_require__(6);
+	var Util = __webpack_require__(7);
+	var xhr = __webpack_require__(8);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -1154,16 +1216,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(7)(__webpack_require__(8)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///home/brian/www/rollbar.js/vendor/json2.min.js")
+	__webpack_require__(9)(__webpack_require__(10)+"\n\n// SCRIPT-LOADER FOOTER\n//# sourceURL=script:///Users/coryvirok/Development/rollbar.js/vendor/json2.min.js")
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ErrorStackParser = __webpack_require__(9);
+	var ErrorStackParser = __webpack_require__(11);
 	
 	var UNKNOWN_FUNCTION = '?';
 	
@@ -1232,7 +1294,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Util = {
@@ -1423,7 +1485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var RollbarJSON = null;
@@ -1542,7 +1604,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -1557,20 +1619,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = "var setupCustomJSON=function(JSON){function f(a){return 10>a?\"0\"+a:a}function quote(a){return escapable.lastIndex=0,escapable.test(a)?'\"'+a.replace(escapable,function(a){var b=meta[a];return\"string\"==typeof b?b:\"\\\\u\"+(\"0000\"+a.charCodeAt(0).toString(16)).slice(-4)})+'\"':'\"'+a+'\"'}function str(a,b){var c,d,e,f,g,h=gap,i=b[a];switch(\"function\"==typeof rep&&(i=rep.call(b,a,i)),typeof i){case\"string\":return quote(i);case\"number\":return isFinite(i)?String(i):\"null\";case\"boolean\":case\"null\":return String(i);case\"object\":if(!i)return\"null\";if(gap+=indent,g=[],\"[object Array]\"===Object.prototype.toString.apply(i)){for(f=i.length,c=0;f>c;c+=1)g[c]=str(c,i)||\"null\";return e=0===g.length?\"[]\":gap?\"[\\n\"+gap+g.join(\",\\n\"+gap)+\"\\n\"+h+\"]\":\"[\"+g.join(\",\")+\"]\",gap=h,e}if(rep&&\"object\"==typeof rep)for(f=rep.length,c=0;f>c;c+=1)\"string\"==typeof rep[c]&&(d=rep[c],e=str(d,i),e&&g.push(quote(d)+(gap?\": \":\":\")+e));else for(d in i)Object.prototype.hasOwnProperty.call(i,d)&&(e=str(d,i),e&&g.push(quote(d)+(gap?\": \":\":\")+e));return e=0===g.length?\"{}\":gap?\"{\\n\"+gap+g.join(\",\\n\"+gap)+\"\\n\"+h+\"}\":\"{\"+g.join(\",\")+\"}\",gap=h,e}}\"function\"!=typeof Date.prototype.toJSON&&(Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+\"-\"+f(this.getUTCMonth()+1)+\"-\"+f(this.getUTCDate())+\"T\"+f(this.getUTCHours())+\":\"+f(this.getUTCMinutes())+\":\"+f(this.getUTCSeconds())+\"Z\":null},String.prototype.toJSON=Number.prototype.toJSON=Boolean.prototype.toJSON=function(){return this.valueOf()});var cx=/[\\u0000\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,escapable=/[\\\\\\\"\\x00-\\x1f\\x7f-\\x9f\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,gap,indent,meta={\"\\b\":\"\\\\b\",\"\t\":\"\\\\t\",\"\\n\":\"\\\\n\",\"\\f\":\"\\\\f\",\"\\r\":\"\\\\r\",'\"':'\\\\\"',\"\\\\\":\"\\\\\\\\\"},rep;\"function\"!=typeof JSON.stringify&&(JSON.stringify=function(a,b,c){var d;if(gap=\"\",indent=\"\",\"number\"==typeof c)for(d=0;c>d;d+=1)indent+=\" \";else\"string\"==typeof c&&(indent=c);if(rep=b,b&&\"function\"!=typeof b&&(\"object\"!=typeof b||\"number\"!=typeof b.length))throw new Error(\"JSON.stringify\");return str(\"\",{\"\":a})}),\"function\"!=typeof JSON.parse&&(JSON.parse=function(text,reviver){function walk(a,b){var c,d,e=a[b];if(e&&\"object\"==typeof e)for(c in e)Object.prototype.hasOwnProperty.call(e,c)&&(d=walk(e,c),void 0!==d?e[c]=d:delete e[c]);return reviver.call(a,b,e)}var j;if(text=String(text),cx.lastIndex=0,cx.test(text)&&(text=text.replace(cx,function(a){return\"\\\\u\"+(\"0000\"+a.charCodeAt(0).toString(16)).slice(-4)})),/^[\\],:{}\\s]*$/.test(text.replace(/\\\\(?:[\"\\\\\\/bfnrt]|u[0-9a-fA-F]{4})/g,\"@\").replace(/\"[^\"\\\\\\n\\r]*\"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?/g,\"]\").replace(/(?:^|:|,)(?:\\s*\\[)+/g,\"\")))return j=eval(\"(\"+text+\")\"),\"function\"==typeof reviver?walk({\"\":j},\"\"):j;throw new SyntaxError(\"JSON.parse\")})};"
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(10)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(12)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -1709,7 +1771,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
