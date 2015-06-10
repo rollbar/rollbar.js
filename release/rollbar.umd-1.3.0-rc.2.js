@@ -54,15 +54,88 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(1);
+	__webpack_require__(1);
+	module.exports = __webpack_require__(2);
 
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var globalnotifier = __webpack_require__(2);
-	var notifier = __webpack_require__(3);
+	// ES5 Polyfills
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+	if (!Array.prototype.map) {
+	  Array.prototype.map = function(callback, thisArg) {
+	    var O = Object(this);
+	    var len = O.length >>> 0;
+	    var T;
+	    if (arguments.length > 1) {
+	      T = thisArg;
+	    }
+	
+	    var A = new Array(len);
+	    var k = 0;
+	
+	    while (k < len) {
+	      var kValue, mappedValue;
+	      if (k in O) {
+	        kValue = O[k];
+	        mappedValue = callback.call(T, kValue, k, O);
+	        A[k] = mappedValue;
+	      }
+	      k++;
+	    }
+	
+	    return A;
+	  };
+	}
+	
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+	if (!Array.prototype.filter) {
+	  Array.prototype.filter = function(callback/*, thisArg*/) {
+	    var t = Object(this);
+	    var len = t.length >>> 0;
+	
+	    var res = [];
+	    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+	    for (var i = 0; i < len; i++) {
+	      if (i in t) {
+	        var val = t[i];
+	        if (callback.call(thisArg, val, i, t)) {
+	          res.push(val);
+	        }
+	      }
+	    }
+	
+	    return res;
+	  };
+	}
+	
+	if (!Object.create) {
+	  Object.create = function(o, properties) {
+	    if (typeof o !== 'object' && typeof o !== 'function') throw new TypeError('Object prototype may only be an Object: ' + o);
+	    else if (o === null) throw new Error("This browser's implementation of Object.create is a shim and doesn't support 'null' as the first argument.");
+	
+	    if (typeof properties != 'undefined') throw new Error("This browser's implementation of Object.create is a shim and doesn't support a second argument.");
+	
+	    function F() {}
+	    F.prototype = o;
+	
+	    return new F();
+	  };
+	}
+	
+	if (typeof JSON === 'undefined') {
+	  JSON = {};
+	}
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var globalnotifier = __webpack_require__(3);
+	var notifier = __webpack_require__(4);
 	
 	function setupJSON() {
 	  var JSONObject = JSON;
@@ -70,7 +143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (true) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    var setupCustomJSON = __webpack_require__(4);
+	    var setupCustomJSON = __webpack_require__(5);
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -102,10 +175,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var notifier = __webpack_require__(3);
+	var notifier = __webpack_require__(4);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set 
@@ -189,12 +262,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error_parser = __webpack_require__(5);
-	var Util = __webpack_require__(6);
-	var xhr = __webpack_require__(7);
+	var error_parser = __webpack_require__(6);
+	var Util = __webpack_require__(7);
+	var xhr = __webpack_require__(8);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -1161,7 +1234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -1638,10 +1711,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ErrorStackParser = __webpack_require__(8);
+	var ErrorStackParser = __webpack_require__(9);
 	
 	var UNKNOWN_FUNCTION = '?';
 	
@@ -1710,7 +1783,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Util = {
@@ -1901,7 +1974,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var RollbarJSON = null;
@@ -2020,14 +2093,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(9)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(10)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -2038,42 +2111,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var FIREFOX_SAFARI_STACK_REGEXP = /\S+\:\d+/;
 	    var CHROME_IE_STACK_REGEXP = /\s+at /;
-	    var map, filter;
-	
-	    if (Array.prototype.map) {
-	        map = function (arr, fn) {
-	            return arr.map(fn);
-	        };
-	    } else {
-	        map = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	
-	            for (i = 0; i < len; ++i) {
-	                ret.push(fn(arr[i]));
-	            }
-	            return ret;
-	        };
-	    }
-	
-	    if (Array.prototype.filter) {
-	        filter = function (arr, fn) {
-	            return arr.filter(fn);
-	        };
-	    } else {
-	        filter = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	            for (i = 0; i < len; ++i) {
-	                if (fn(arr[i])) {
-	                    ret.push(arr[i]);
-	                }
-	            }
-	            return ret;
-	        };
-	    }
 	
 	    return {
 	        /**
@@ -2116,28 +2153,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	
 	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(error.stack.split('\n').slice(1), function (line) {
+	            return error.stack.split('\n').slice(1).map(function (line) {
 	                var tokens = line.replace(/^\s+/, '').split(/\s+/).slice(1);
-	                var locationParts = extractLocation(tokens.pop());
+	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionName = (!tokens[0] || tokens[0] === 'Anonymous') ? undefined : tokens[0];
 	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	            }, this);
 	        },
 	
 	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
+	            return error.stack.split('\n').filter(function (line) {
 	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
+	            }, this).map(function (line) {
 	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
+	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionName = tokens.shift() || undefined;
 	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	            }, this);
 	        },
 	
 	        parseOpera: function ErrorStackParser$$parseOpera(e) {
@@ -2183,13 +2215,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        // Opera 10.65+ Error.stack very similar to FF/Safari
 	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
+	            return error.stack.split('\n').filter(function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) &&
+	                    !line.match(/^Error created at/);
+	            }, this).map(function (line) {
 	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
+	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionCall = (tokens.shift() || '');
 	                var functionName = functionCall
 	                        .replace(/<anonymous function(: (\w+))?>/, '$2')
@@ -2200,8 +2231,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
 	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	            }, this);
 	        }
 	    };
 	}));
@@ -2209,7 +2239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
