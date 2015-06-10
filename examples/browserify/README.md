@@ -3,12 +3,13 @@
 1. Require and initialize the Rollbar javascript module:
 
 ```js
-// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.commonjs.min.js and place in current directory
-// and rename to rollbar.commonjs-v1.1.min.js
-var rollbar = require('./rollbar.commonjs-v1.1.min.js');
+// Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.3/rollbar.umd.nojson.min.js and place in current directory
+
+// The code below is a example of use on your browserify bundles.
+var rollbar = require('./rollbar.umd.nojson.min.js');
 
 var rollbarConfig = {
-  accessToken: '...',
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   captureUncaught: true,
   payload: {
     environment: 'development',
