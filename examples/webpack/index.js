@@ -5,5 +5,6 @@ var rollbarConfig = {
     environment: 'development',
   }
 };
-var rollbar = require("expose?rollbar!../../dist/rollbar.commonjs.min.js"); // Use the expose-loader to expose the global
+
+var rollbar = require("../../dist/rollbar.umd.min.js");
 rollbar.init(rollbarConfig);
