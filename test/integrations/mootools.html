@@ -11,49 +11,9 @@
     <div id="mesages"></div>
     <div id="fixtures"></div>
 
-    <!-- mocha/chai/sinon -->
-    <script src="../lib/mocha/mocha.js" type="text/javascript" charset="utf-8"></script>
-    <script src="../lib/chai/chai.js" type="text/javascript" charset="utf-8"></script>
-    <script src="../lib/sinon/sinon-1.7.3.js" type="text/javascript" charset="utf-8"></script>
+    <div id="event-div"></div>
 
-    <!-- initialize mocha -->
-    <script type="text/javascript" charset="utf-8">
-      mocha.ui('bdd');
-      mocha.reporter('html');
-      var expect = chai.expect;
-      var assert = chai.assert;
-    </script>
+    <script src="../mootools.bundle.js" type="text/javascript" charset="utf-8"></script>
 
-    <!-- mock library setup -->
-    <script type="text/javascript" charset="utf-8">
-      beforeEach(function() {
-        this.sinon = sinon.sandbox.create();
-      });
-
-      afterEach(function() {
-        this.sinon.restore();
-      });
-    </script>
-
-    <!-- Include mootools before rollbar -->
-    <!-- v1.2.4 has a bug where it doesn't serialize {a:[{b:1}]} correctly -->
-    <!--<script src="./mootools-1.2.4.min.js" type="text/javascript" charset="utf-8"></script>-->
-
-    <!-- JSON-js source -->
-    <script src="../../vendor/JSON-js/json2.js" type="text/javascript" charset="utf-8"></script>
-
-    <!-- sources -->
-    <script src="../../src/json.js" type="text/javascript" charset="utf-8"></script>
-
-    <!-- tests -->
-    <script src="./mootools.test.js"></script>
-
-    <script type="text/javascript" charset="utf-8">
-      if (window.mochaPhantomJS) {
-        mochaPhantomJS.run();
-      } else {
-        mocha.run();
-      }
-    </script>
   </body>
 </html>

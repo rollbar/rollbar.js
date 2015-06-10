@@ -1,4 +1,4 @@
-require('script!../vendor/JSON-js/json2.js');
+var setupCustomJSON = require('../vendor/JSON-js/json2.js');
 
 var expect = chai.expect;
 
@@ -38,10 +38,6 @@ describe('RollbarJSON', function() {
 
     expect(function() {
       JSON.stringify(window);
-    }).to.throw(RangeError);
-
-    expect(function() {
-      JSON.stringify(document.querySelector('#mocha'));
     }).to.throw(RangeError);
 
     expect(JSON.stringify()).to.equal(undefined);

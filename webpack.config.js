@@ -65,9 +65,10 @@ var testsConfig = {
     xhr: './test/bundles/xhr.js',
     notifier: './test/bundles/notifier.js',
     'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
-    'rollbar': './test/bundles/rollbar.js',
-    'shim': './test/bundles/shim.js',
-    'shimalias': './test/bundles/shimalias.js',
+    rollbar: './test/bundles/rollbar.js',
+    shim: './test/bundles/shim.js',
+    shimalias: './test/bundles/shimalias.js',
+    mootools: './test/bundles/mootools.js',
   },
   plugins: [defaultsPlugin],
   output: {
