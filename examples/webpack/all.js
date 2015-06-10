@@ -45,7 +45,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var rollbarConfig = {
-	  accessToken: '5372f0cf52a8485780f6648bd5dd6708',
+	  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
 	  captureUncaught: true,
 	  payload: {
 	    environment: 'development',
