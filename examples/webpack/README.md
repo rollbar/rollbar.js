@@ -7,14 +7,14 @@
 // Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.commonjs.min.js and place in current directory
 // and rename to rollbar.commonjs-v1.1.min.js
 var rollbarConfig = {
-  accessToken: '...',
+  accessToken: 'POST_CLIENT_ACCESS_TOKEN',
   captureUncaught: true,
   payload: {
     environment: 'development',
   }
 };
-var rollbar = require("expose?rollbar!./rollbar.commonjs-v1.1.min.js"); // Use the expose-loader to expose the global
-rollbar.init(rollbarConfig);
+var Rollbar = require("./rollbar.commonjs-v1.1.min.js");
+Rollbar.init(rollbarConfig);
 ```
 
 2. Report exceptions and messages in your code:
@@ -22,14 +22,14 @@ rollbar.init(rollbarConfig);
 ```js
 try {
   foo();
-  rollbar.debug('foo() called');
+  Rollbar.debug('foo() called');
 } catch (e) {
-  rollbar.error('Problem calling foo()', e);
+  Rollbar.error('Problem calling foo()', e);
 }
 ```
 
 ## To build and test the example
-1. Edit index.js and add your Rollbar `post_client_access_token`
+1. Edit index.js and add your Rollbar `POST_CLIENT_ACCESS_TOKEN`
    - Sign up for a free account [here](https://rollbar.com/signup/)
 2. ```webpack index.js all.js```
 3. Open test.html in your browser and click the button
