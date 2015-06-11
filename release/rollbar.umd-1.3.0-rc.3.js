@@ -65,7 +65,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var notifier = __webpack_require__(3);
 	
 	function setupJSON() {
-	  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
+	  var JSONObject = JSON;
 	
 	  if (true) {
 	    // This adds the script to this context. We need it since this library
@@ -205,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.3.0-rc.4");
+	Notifier.NOTIFIER_VERSION = ("1.3.0-rc.3");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
