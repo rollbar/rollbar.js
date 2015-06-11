@@ -6,15 +6,15 @@
 
 // Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.3/rollbar.umd.nojson.min.js and place in current directory
 var rollbarConfig = {
-  accessToken: '...',
+  accessToken: 'POST_CLIENT_ACCESS_TOKEN',
   captureUncaught: true,
   payload: {
     environment: 'development',
   }
 };
 
-var rollbar = require('./rollbar.umd.nojson.min.js");
-rollbar.init(rollbarConfig);
+var Rollbar = require('./rollbar.umd.nojson.min.js");
+Rollbar.init(rollbarConfig);
 ```
 
 2. Report exceptions and messages in your code:
@@ -22,14 +22,14 @@ rollbar.init(rollbarConfig);
 ```js
 try {
   foo();
-  rollbar.debug('foo() called');
+  Rollbar.debug('foo() called');
 } catch (e) {
-  rollbar.error('Problem calling foo()', e);
+  Rollbar.error('Problem calling foo()', e);
 }
 ```
 
 ## To build and test the example
-1. Edit index.js and add your Rollbar `POST_CLIENT_ITEM_ACCESS_TOKEN`
+1. Edit index.js and add your Rollbar `POST_CLIENT_ACCESS_TOKEN`
    - Sign up for a free account [here](https://rollbar.com/signup/)
 2. ```webpack index.js all.js```
 3. Open test.html in your browser and click the button
