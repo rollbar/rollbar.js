@@ -1,3 +1,5 @@
+"use strict";
+
 var ErrorStackParser = require('error-stack-parser');
 
 var UNKNOWN_FUNCTION = '?';
@@ -25,7 +27,7 @@ function Frame(stackFrame) {
   data.context = gatherContext(data.url, data.line);
 
   return data;
-};
+}
 
 function Stack(exception) {
   function getStack() {
@@ -51,7 +53,7 @@ function Stack(exception) {
     message: exception.message,
     name: exception.name
   };
-};
+}
 
 function parse(e) {
   return new Stack(e);
