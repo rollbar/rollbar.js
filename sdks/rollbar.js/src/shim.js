@@ -1,3 +1,5 @@
+"use strict";
+
 var _shimCounter = 0;
 
 function Rollbar(parentShim) {
@@ -44,7 +46,7 @@ Rollbar.init = function(window, config) {
 
   var client = new Rollbar();
 
-  return (_wrapInternalErr(function() {
+  return _wrapInternalErr(function() {
     client.configure(config);
 
     if (config.captureUncaught) {
@@ -73,7 +75,7 @@ Rollbar.init = function(window, config) {
     // Expose Rollbar globally
     window[alias] = client;
     return client;
-  }, client.logger))();
+  }, client.logger)();
 };
 
 Rollbar.prototype.loadFull = function(window, document, immediate, config, callback) {
@@ -122,7 +124,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
     }
   }, this.logger);
 
-  (_wrapInternalErr(function() {
+  _wrapInternalErr(function() {
     if (immediate) {
       loader();
     } else {
@@ -133,12 +135,11 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
         window.attachEvent("onload", loader);
       }
     }
-  }, this.logger))();
+  }, this.logger)();
 };
 
 Rollbar.prototype.wrap = function(f, context) {
   try {
-    var _this = this;
     var ctxFn;
     if (typeof context === 'function') {
       ctxFn = context;
@@ -222,7 +223,7 @@ function _extendListenerPrototype(client, prototype) {
 }
 
 function _wrapInternalErr(f, logger) {
-  logger = logger || this.logger;
+  logger = logger || window.console.log || function () {};
   return function() {
     try {
       return f.apply(this, arguments);

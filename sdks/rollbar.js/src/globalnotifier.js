@@ -1,3 +1,5 @@
+"use strict";
+
 var notifier = require('./notifier');
 
 var Notifier = notifier.Notifier;

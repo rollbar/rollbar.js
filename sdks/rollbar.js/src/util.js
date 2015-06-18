@@ -1,3 +1,5 @@
+"use strict";
+
 var Util = {
   // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
   merge: function() {
@@ -31,13 +33,13 @@ var Util = {
           }
 
           // Recurse if we're merging plain objects or arrays
-          if (deep && copy && (copy.constructor == Object || (copyIsArray = (copy.constructor == Array)))) {
+          if (deep && copy && (copy.constructor === Object || (copyIsArray = (copy.constructor === Array)))) {
             if (copyIsArray) {
               copyIsArray = false;
               // Overwrite the source with a copy of the array to merge in
               clone = [];
             } else {
-              clone = src && src.constructor == Object ? src : {};
+              clone = src && src.constructor === Object ? src : {};
             }
 
             // Never move original objects, clone them
@@ -58,9 +60,9 @@ var Util = {
   copy: function(obj) {
     var dest;
     if (typeof obj === 'object') {
-      if (obj.constructor == Object) {
+      if (obj.constructor === Object) {
         dest = {};
-      } else if (obj.constructor == Array) {
+      } else if (obj.constructor === Array) {
         dest = [];
       }
     }
@@ -174,9 +176,9 @@ var Util = {
   uuid4: function() {
     var d = new Date().getTime();
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = (d + Math.random()*16)%16 | 0;
-      d = Math.floor(d/16);
-      return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+      var r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
     });
     return uuid;
   }
