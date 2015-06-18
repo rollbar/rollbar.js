@@ -1,3 +1,8 @@
+/* globals __USE_JSON__ */
+/* globals JSON */
+
+"use strict";
+
 var globalnotifier = require('../globalnotifier');
 var notifier = require('../notifier');
 

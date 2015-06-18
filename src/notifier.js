@@ -1,3 +1,15 @@
+/* globals __NOTIFIER_VERSION__ */
+/* globals __DEFAULT_ENDPOINT__ */
+/* globals __DEFAULT_SCRUB_FIELDS__ */
+/* globals __DEFAULT_LOG_LEVEL__ */
+/* globals __DEFAULT_REPORT_LEVEL__ */
+/* globals __DEFAULT_UNCAUGHT_ERROR_LEVEL */
+/* globals __DEFAULT_ITEMS_PER_MIN__ */
+/* globals __DEFAULT_MAX_ITEMS__ */
+/* globals DOMException */
+
+"use strict";
+
 var error_parser = require('./error_parser');
 var Util = require('./util');
 var xhr = require('./xhr');
@@ -420,7 +432,7 @@ Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, cus
 
 Notifier.prototype._getBrowserPlugins = function() {
   if (!this._browserPlugins) {
-    var navPlugins = (window.navigator.plugins || []);
+    var navPlugins = window.navigator.plugins || [];
     var cur;
     var numPlugins = navPlugins.length;
     var plugins = [];
@@ -450,7 +462,7 @@ Notifier.prototype._scrub = function(obj) {
 
   function paramScrubber(v) {
     var i;
-    if (typeof(v) === 'string') {
+    if (typeof v === 'string') {
       for (i = 0; i < queryRes.length; ++i) {
         v = v.replace(queryRes[i], redactQueryParam);
       }

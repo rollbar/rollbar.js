@@ -1,3 +1,7 @@
+/* globals ActiveXObject */
+
+"use strict";
+
 var RollbarJSON = null;
 
 function setupJSON(JSON) {
@@ -44,7 +48,7 @@ var XHR = {
                 // TODO(cory): have the notifier log an internal error on non-200 response codes
                 if (request.status === 200) {
                   callback(null, RollbarJSON.parse(request.responseText));
-                } else if (typeof(request.status) === "number" &&
+                } else if (typeof request.status === "number" &&
                             request.status >= 400  && request.status < 600) {
                   // return valid http status codes
                   callback(new Error(request.status.toString()));

@@ -1,8 +1,9 @@
+"use strict";
+
 module.exports = function(shim, _config) {
   return function(err) {
     if (err) {
       // do something?
-
       return;
     }
 
@@ -22,5 +23,5 @@ module.exports = function(shim, _config) {
 
       Notifier.processPayloads();
     }
-  }
-}
+  };
+};
