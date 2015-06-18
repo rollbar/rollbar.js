@@ -4,8 +4,7 @@
 
 ```js
 
-// Download //d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.commonjs.min.js and place in current directory
-// and rename to rollbar.commonjs-v1.1.min.js
+// Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.3/rollbar.umd.nojson.min.js and place in current directory
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ACCESS_TOKEN',
   captureUncaught: true,
@@ -13,7 +12,8 @@ var rollbarConfig = {
     environment: 'development',
   }
 };
-var Rollbar = require("./rollbar.commonjs-v1.1.min.js");
+
+var Rollbar = require('./rollbar.umd.nojson.min.js");
 Rollbar.init(rollbarConfig);
 ```
 
@@ -35,4 +35,4 @@ try {
 3. Open test.html in your browser and click the button
 4. Go to your project dashboard and see the error
 
-![Screenshot](https://github.com/rollbar/rollbar.js/raw/browserify/examples/browserify/img/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/rollbar/rollbar.js/master/examples/browserify/img/screenshot.png)

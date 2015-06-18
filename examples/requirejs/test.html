@@ -1,8 +1,8 @@
 <html>
   <body>
+    <script src="../functions.js"></script>
     <script src="http://requirejs.org/docs/release/2.1.14/minified/require.js"></script>
     <script>
-
       var rollbarConfig = {
         accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
         captureUncaught: true,
@@ -11,16 +11,18 @@
         }
       };
 
-      require(["../../dist/rollbar.amd.js"],
-        function(Rollbar) {
+      require(["../../dist/rollbar.umd.js"],
           // Note: clicking on the "Foo" button below before the Rollbar
           // module is loaded and initialized will not Report the
           // exception to Rollbar.
+        function(Rollbar) {
           var rollbar = Rollbar.init(rollbarConfig);
+
           rollbar.info('Hello world');
         }
       );
     </script>
     <button onclick="foo();">Foo</button>
+    <button onclick="functionC();">Bar</button>
   </body>
 </html>
