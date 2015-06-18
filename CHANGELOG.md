@@ -3,8 +3,17 @@
 
 # Change Log
 
+**v1.3.0**
+- Add more strict JSHint options and fix errors/warnings.
+
+**v1.3.0-rc.4**
+- Fixes IE8 bug where JSON was not defined.
+
+**v1.3.0-rc.3**
+- Remove polyfill.
+
 **v1.3.0-rc.2**
-- - Fix main values in bower.json.
+- Fix main values in bower.json.
 
 **v1.3.0-rc.1**
 - Fixes for IE8+
