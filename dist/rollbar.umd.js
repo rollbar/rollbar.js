@@ -61,6 +61,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* globals __USE_JSON__ */
+	/* globals JSON */
+	
+	"use strict";
+	
 	var globalnotifier = __webpack_require__(2);
 	var notifier = __webpack_require__(3);
 	
@@ -105,6 +110,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	
 	var notifier = __webpack_require__(3);
 	
 	var Notifier = notifier.Notifier;
@@ -192,6 +199,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* globals __NOTIFIER_VERSION__ */
+	/* globals __DEFAULT_ENDPOINT__ */
+	/* globals __DEFAULT_SCRUB_FIELDS__ */
+	/* globals __DEFAULT_LOG_LEVEL__ */
+	/* globals __DEFAULT_REPORT_LEVEL__ */
+	/* globals __DEFAULT_UNCAUGHT_ERROR_LEVEL */
+	/* globals __DEFAULT_ITEMS_PER_MIN__ */
+	/* globals __DEFAULT_MAX_ITEMS__ */
+	/* globals DOMException */
+	
+	"use strict";
+	
 	var error_parser = __webpack_require__(5);
 	var Util = __webpack_require__(6);
 	var xhr = __webpack_require__(7);
@@ -614,7 +633,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Notifier.prototype._getBrowserPlugins = function() {
 	  if (!this._browserPlugins) {
-	    var navPlugins = (window.navigator.plugins || []);
+	    var navPlugins = window.navigator.plugins || [];
 	    var cur;
 	    var numPlugins = navPlugins.length;
 	    var plugins = [];
@@ -644,7 +663,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  function paramScrubber(v) {
 	    var i;
-	    if (typeof(v) === 'string') {
+	    if (typeof v === 'string') {
 	      for (i = 0; i < queryRes.length; ++i) {
 	        v = v.replace(queryRes[i], redactQueryParam);
 	      }
@@ -1641,6 +1660,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	
 	var ErrorStackParser = __webpack_require__(8);
 	
 	var UNKNOWN_FUNCTION = '?';
@@ -1668,7 +1689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  data.context = gatherContext(data.url, data.line);
 	
 	  return data;
-	};
+	}
 	
 	function Stack(exception) {
 	  function getStack() {
@@ -1694,7 +1715,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    message: exception.message,
 	    name: exception.name
 	  };
-	};
+	}
 	
 	function parse(e) {
 	  return new Stack(e);
@@ -1713,6 +1734,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	
 	var Util = {
 	  // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
 	  merge: function() {
@@ -1746,13 +1769,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	
 	          // Recurse if we're merging plain objects or arrays
-	          if (deep && copy && (copy.constructor == Object || (copyIsArray = (copy.constructor == Array)))) {
+	          if (deep && copy && (copy.constructor === Object || (copyIsArray = (copy.constructor === Array)))) {
 	            if (copyIsArray) {
 	              copyIsArray = false;
 	              // Overwrite the source with a copy of the array to merge in
 	              clone = [];
 	            } else {
-	              clone = src && src.constructor == Object ? src : {};
+	              clone = src && src.constructor === Object ? src : {};
 	            }
 	
 	            // Never move original objects, clone them
@@ -1773,9 +1796,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  copy: function(obj) {
 	    var dest;
 	    if (typeof obj === 'object') {
-	      if (obj.constructor == Object) {
+	      if (obj.constructor === Object) {
 	        dest = {};
-	      } else if (obj.constructor == Array) {
+	      } else if (obj.constructor === Array) {
 	        dest = [];
 	      }
 	    }
@@ -1889,9 +1912,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  uuid4: function() {
 	    var d = new Date().getTime();
 	    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	      var r = (d + Math.random()*16)%16 | 0;
-	      d = Math.floor(d/16);
-	      return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+	      var r = (d + Math.random() * 16) % 16 | 0;
+	      d = Math.floor(d / 16);
+	      return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
 	    });
 	    return uuid;
 	  }
@@ -1904,6 +1927,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* globals ActiveXObject */
+	
+	"use strict";
+	
 	var RollbarJSON = null;
 	
 	function setupJSON(JSON) {
@@ -1950,7 +1977,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // TODO(cory): have the notifier log an internal error on non-200 response codes
 	                if (request.status === 200) {
 	                  callback(null, RollbarJSON.parse(request.responseText));
-	                } else if (typeof(request.status) === "number" &&
+	                } else if (typeof request.status === "number" &&
 	                            request.status >= 400  && request.status < 600) {
 	                  // return valid http status codes
 	                  callback(new Error(request.status.toString()));

@@ -1,4 +1,7 @@
-var webpack = require('webpack');
+/* jshint node: true */
+
+"use strict";
+
 var webpackConfig = require('./webpack.config.js');
 
 var testFiles;
@@ -36,10 +39,38 @@ module.exports = function(grunt) {
       options: {
         globals: {
           console: true,
-          window: true
-        }
+          window: true,
+          require: true,
+          module: true
+        },
+        browser: true,
+        curly: true,
+        eqeqeq: true,
+        es3: true,
+        forin: true,
+        freeze: true,
+        futurehostile: true,
+        globalstrict: true,
+        noarg: true,
+        nocomma: true,
+        nonbsp: true,
+        nonew: true,
+        strict: true,
+        undef: true
       },
-      files: ['Gruntfile.js', 'src/notifier.js', 'src/util.js', 'src/xhr.js', 'src/init.js', 'src/shim.js', 'src/shimload.js']
+      files: [
+        'Gruntfile.js',
+        'src/error_parser.js',
+        'src/globalnotifier.js',
+        'src/notifier.js',
+        'src/shim.js',
+        'src/snippet_callback.js',
+        'src/util.js',
+        'src/xhr.js',
+        'src/shimload.js',
+        'src/bundles/rollbar.snippet.js',
+        'src/bundles/rollbar.umd.js'
+      ]
     },
     uglify: {
       prewebpack: {
