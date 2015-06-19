@@ -93,7 +93,7 @@ Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}
 
 ## UMD
 
-From version 1.3.0, rollbar.js is also distributed using UMD (check `rollbar.umd.*.js` files in ([releases](https://github.com/rollbar/rollbar.js/release)), so you can load the library using AMD or CommonJS styles. Also you can load the library using a `<script>` tag. You can find examples of use in [examples](https://github.com/rollbar/rollbar.js/examples).
+From version 1.3.0, rollbar.js is also distributed using UMD (check `rollbar.umd.*.js` files in ([releases](https://github.com/rollbar/rollbar.js/releases)), so you can load the library using AMD or CommonJS styles. Also you can load the library using a `<script>` tag. You can find examples of use in [examples](https://github.com/rollbar/rollbar.js/examples).
 
 ## Disable reporting to rollbar.com
 
