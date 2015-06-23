@@ -7,6 +7,7 @@ function Rollbar(parentShim) {
   this.notifier = null;
   this.parentShim = parentShim;
   this.logger = function() {};
+  this.oldOnError = null;
 
   if (window.console) {
     if (window.console.shimId === undefined) {
@@ -51,11 +52,11 @@ Rollbar.init = function(window, config) {
 
     if (config.captureUncaught) {
       // Create the client and set the onerror handler
-      var old = window.onerror;
+      client.oldOnError = window.onerror;
 
       window.onerror = function() {
         var args = Array.prototype.slice.call(arguments, 0);
-        _rollbarWindowOnError(client, old, args);
+        _rollbarWindowOnError(client, client.oldOnError, args);
       };
 
       // Adapted from https://github.com/bugsnag/bugsnag-js

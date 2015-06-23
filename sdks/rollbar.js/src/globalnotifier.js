@@ -45,11 +45,19 @@ wrapper.init = function(config, parent) {
 
   if (config.captureUncaught) {
     // Set the global onerror handler
-    var old = window.onerror;
+    var oldOnError;
+
+    // If the parent, probably a shim, stores a oldOnError, use that so we don't
+    // send reports twice.
+    if (parent && typeof parent.oldOnError !== 'undefined') {
+      oldOnError = parent.oldOnError;
+    } else {
+      oldOnError = window.onerror;
+    }
 
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(notifier, old, args);
+      _rollbarWindowOnError(notifier, oldOnError, args);
     };
 
     // Adapted from https://github.com/bugsnag/bugsnag-js
