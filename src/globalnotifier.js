@@ -49,8 +49,8 @@ wrapper.init = function(config, parent) {
 
     // If the parent, probably a shim, stores a oldOnError, use that so we don't
     // send reports twice.
-    if (parent && typeof parent.oldOnError !== 'undefined') {
-      oldOnError = parent.oldOnError;
+    if (parent && typeof parent._rollbarOldOnError !== 'undefined') {
+      oldOnError = parent._rollbarOldOnError;
     } else {
       oldOnError = window.onerror;
     }
