@@ -3,8 +3,9 @@
 
 # Change Log
 
-**v1.3.1**
+**v1.4.0**
 - Fix a bug, (introduced in v1.3) that caused Rollbar to generate an error when used with RequireJS.
+  - Customers should copy and paste the new snippet into their code.
 
 **v1.3.0**
 - Add more strict JSHint options and fix errors/warnings.
