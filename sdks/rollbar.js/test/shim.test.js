@@ -169,6 +169,8 @@ describe("_rollbarWindowOnError", function() {
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
 
+      expect(window._rollbarWrappedError).to.not.equal(undefined);
+      expect(window._rollbarWrappedError.toString()).to.contain('b is not defined');
       expect(args[4]).to.not.equal(undefined);
       _rollbarWindowOnError(window.Rollbar, null, args);
     };
