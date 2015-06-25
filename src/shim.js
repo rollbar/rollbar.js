@@ -1,3 +1,5 @@
+/* globals define */
+
 "use strict";
 
 var _shimCounter = 0;
