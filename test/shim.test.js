@@ -166,18 +166,18 @@ describe("window.Rollbar.uncaughtError", function() {
 
 describe("_rollbarWindowOnError", function() {
   it("should set window._rollbarWrappedError as the reported error", function(done) {
+    var client = window.Rollbar;
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
 
       expect(window._rollbarWrappedError).to.not.equal(undefined);
-      expect(window._rollbarWrappedError.toString()).to.contain('b is not defined');
-      expect(args[4]).to.not.equal(undefined);
-      _rollbarWindowOnError(window.Rollbar, null, args);
+      expect(window._rollbarWrappedError).to.be.an.instanceof(Error);
+      _rollbarWindowOnError(client, null, args);
     };
 
-    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+    var spy = sinon.spy(client, 'uncaughtError');
 
-    var wrappedFunc = window.Rollbar.wrap(function() {
+    var wrappedFunc = client.wrap(function() {
       var a = b;
     });
 
