@@ -142,7 +142,7 @@ describe("window.Rollbar.uncaughtError", function() {
 
     expect(args[4].constructor).to.equal(ReferenceError);
 
-    window.Rollbar.uncaughtError.restore();
+    spy.restore();
 
     done();
   });
