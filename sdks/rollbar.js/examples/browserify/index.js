@@ -7,5 +7,7 @@ var rollbarConfig = {
     environment: 'development',
   }
 };
-rollbar.init(rollbarConfig);
-window.rollbar = rollbar;
+
+rollbarNotifier = rollbar.init(rollbarConfig);
+
+window.rollbar = rollbarNotifier;
