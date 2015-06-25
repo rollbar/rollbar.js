@@ -2,11 +2,11 @@
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
-		define(factory);
-	else {
-		var a = factory();
-		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
-	}
+		define("rollbar", factory);
+	else if(typeof exports === 'object')
+		exports["rollbar"] = factory();
+	else
+		root["rollbar"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -157,11 +157,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  if (config.captureUncaught) {
 	    // Set the global onerror handler
-	    var old = window.onerror;
+	    var oldOnError;
+	
+	    // If the parent, probably a shim, stores a oldOnError, use that so we don't
+	    // send reports twice.
+	    if (parent && typeof parent._rollbarOldOnError !== 'undefined') {
+	      oldOnError = parent._rollbarOldOnError;
+	    } else {
+	      oldOnError = window.onerror;
+	    }
 	
 	    window.onerror = function() {
 	      var args = Array.prototype.slice.call(arguments, 0);
-	      _rollbarWindowOnError(notifier, old, args);
+	      _rollbarWindowOnError(notifier, oldOnError, args);
 	    };
 	
 	    // Adapted from https://github.com/bugsnag/bugsnag-js
@@ -212,8 +220,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	"use strict";
 	
 	var error_parser = __webpack_require__(4);
-	var Util = __webpack_require__(5);
-	var xhr = __webpack_require__(6);
+	var Util = __webpack_require__(7);
+	var xhr = __webpack_require__(8);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -1185,7 +1193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
-	var ErrorStackParser = __webpack_require__(7);
+	var ErrorStackParser = __webpack_require__(5);
 	
 	var UNKNOWN_FUNCTION = '?';
 	
@@ -1256,6 +1264,296 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+	    'use strict';
+	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	    if (true) {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else if (typeof exports === 'object') {
+	        module.exports = factory(require('stackframe'));
+	    } else {
+	        root.ErrorStackParser = factory(root.StackFrame);
+	    }
+	}(this, function ErrorStackParser(StackFrame) {
+	    'use strict';
+	
+	    var FIREFOX_SAFARI_STACK_REGEXP = /\S+\:\d+/;
+	    var CHROME_IE_STACK_REGEXP = /\s+at /;
+	    var map, filter;
+	
+	    if (Array.prototype.map) {
+	        map = function (arr, fn) {
+	            return arr.map(fn);
+	        };
+	    } else {
+	        map = function (arr, fn) {
+	            var i;
+	            var len = arr.length;
+	            var ret = [];
+	
+	            for (i = 0; i < len; ++i) {
+	                ret.push(fn(arr[i]));
+	            }
+	            return ret;
+	        };
+	    }
+	
+	    if (Array.prototype.filter) {
+	        filter = function (arr, fn) {
+	            return arr.filter(fn);
+	        };
+	    } else {
+	        filter = function (arr, fn) {
+	            var i;
+	            var len = arr.length;
+	            var ret = [];
+	            for (i = 0; i < len; ++i) {
+	                if (fn(arr[i])) {
+	                    ret.push(arr[i]);
+	                }
+	            }
+	            return ret;
+	        };
+	    }
+	
+	    return {
+	        /**
+	         * Given an Error object, extract the most information from it.
+	         * @param error {Error}
+	         * @return Array[StackFrame]
+	         */
+	        parse: function ErrorStackParser$$parse(error) {
+	            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
+	                return this.parseOpera(error);
+	            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
+	                return this.parseV8OrIE(error);
+	            } else if (error.stack && error.stack.match(FIREFOX_SAFARI_STACK_REGEXP)) {
+	                return this.parseFFOrSafari(error);
+	            } else {
+	                throw new Error('Cannot parse given Error object');
+	            }
+	        },
+	
+	        /**
+	         * Separate line and column numbers from a URL-like string.
+	         * @param urlLike String
+	         * @return Array[String]
+	         */
+	        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
+	            // Fail-fast but return locations like "(native)"
+	            if (urlLike.indexOf(':') === -1) {
+	                return [urlLike];
+	            }
+	
+	            var locationParts = urlLike.replace(/[\(\)\s]/g, '').split(':');
+	            var lastNumber = locationParts.pop();
+	            var possibleNumber = locationParts[locationParts.length - 1];
+	            if (!isNaN(parseFloat(possibleNumber)) && isFinite(possibleNumber)) {
+	                var lineNumber = locationParts.pop();
+	                return [locationParts.join(':'), lineNumber, lastNumber];
+	            } else {
+	                return [locationParts.join(':'), lastNumber, undefined];
+	            }
+	        },
+	
+	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
+	            var extractLocation = this.extractLocation;
+	            var mapped = map(error.stack.split('\n').slice(1), function (line) {
+	                var tokens = line.replace(/^\s+/, '').split(/\s+/).slice(1);
+	                var locationParts = extractLocation(tokens.pop());
+	                var functionName = (!tokens[0] || tokens[0] === 'Anonymous') ? undefined : tokens[0];
+	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
+	            });
+	            return mapped;
+	        },
+	
+	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
+	            var filtered = filter(error.stack.split('\n'), function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP);
+	            });
+	            var extractLocation = this.extractLocation;
+	            var mapped = map(filtered, function (line) {
+	                var tokens = line.split('@');
+	                var locationParts = extractLocation(tokens.pop());
+	                var functionName = tokens.shift() || undefined;
+	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
+	            });
+	            return mapped;
+	        },
+	
+	        parseOpera: function ErrorStackParser$$parseOpera(e) {
+	            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
+	                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
+	                return this.parseOpera9(e);
+	            } else if (!e.stack) {
+	                return this.parseOpera10(e);
+	            } else {
+	                return this.parseOpera11(e);
+	            }
+	        },
+	
+	        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
+	            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
+	            var lines = e.message.split('\n');
+	            var result = [];
+	
+	            for (var i = 2, len = lines.length; i < len; i += 2) {
+	                var match = lineRE.exec(lines[i]);
+	                if (match) {
+	                    result.push(new StackFrame(undefined, undefined, match[2], match[1]));
+	                }
+	            }
+	
+	            return result;
+	        },
+	
+	        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
+	            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
+	            var lines = e.stacktrace.split('\n');
+	            var result = [];
+	
+	            for (var i = 0, len = lines.length; i < len; i += 2) {
+	                var match = lineRE.exec(lines[i]);
+	                if (match) {
+	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1]));
+	                }
+	            }
+	
+	            return result;
+	        },
+	
+	        // Opera 10.65+ Error.stack very similar to FF/Safari
+	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
+	            var filtered = filter(error.stack.split('\n'), function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
+	            });
+	            var extractLocation = this.extractLocation;
+	            var mapped = map(filtered, function (line) {
+	                var tokens = line.split('@');
+	                var locationParts = extractLocation(tokens.pop());
+	                var functionCall = (tokens.shift() || '');
+	                var functionName = functionCall
+	                        .replace(/<anonymous function(: (\w+))?>/, '$2')
+	                        .replace(/\([^\)]*\)/g, '') || undefined;
+	                var argsRaw;
+	                if (functionCall.match(/\(([^\)]*)\)/)) {
+	                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
+	                }
+	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
+	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2]);
+	            });
+	            return mapped;
+	        }
+	    };
+	}));
+	
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+	    'use strict';
+	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	    if (true) {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else if (typeof exports === 'object') {
+	        module.exports = factory();
+	    } else {
+	        root.StackFrame = factory();
+	    }
+	}(this, function () {
+	    'use strict';
+	    function _isNumber(n) {
+	        return !isNaN(parseFloat(n)) && isFinite(n);
+	    }
+	
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
+	        if (functionName !== undefined) {
+	            this.setFunctionName(functionName);
+	        }
+	        if (args !== undefined) {
+	            this.setArgs(args);
+	        }
+	        if (fileName !== undefined) {
+	            this.setFileName(fileName);
+	        }
+	        if (lineNumber !== undefined) {
+	            this.setLineNumber(lineNumber);
+	        }
+	        if (columnNumber !== undefined) {
+	            this.setColumnNumber(columnNumber);
+	        }
+	    }
+	
+	    StackFrame.prototype = {
+	        getFunctionName: function () {
+	            return this.functionName;
+	        },
+	        setFunctionName: function (v) {
+	            this.functionName = String(v);
+	        },
+	
+	        getArgs: function () {
+	            return this.args;
+	        },
+	        setArgs: function (v) {
+	            if (Object.prototype.toString.call(v) !== '[object Array]') {
+	                throw new TypeError('Args must be an Array');
+	            }
+	            this.args = v;
+	        },
+	
+	        // NOTE: Property name may be misleading as it includes the path,
+	        // but it somewhat mirrors V8's JavaScriptStackTraceApi
+	        // https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi and Gecko's
+	        // http://mxr.mozilla.org/mozilla-central/source/xpcom/base/nsIException.idl#14
+	        getFileName: function () {
+	            return this.fileName;
+	        },
+	        setFileName: function (v) {
+	            this.fileName = String(v);
+	        },
+	
+	        getLineNumber: function () {
+	            return this.lineNumber;
+	        },
+	        setLineNumber: function (v) {
+	            if (!_isNumber(v)) {
+	                throw new TypeError('Line Number must be a Number');
+	            }
+	            this.lineNumber = Number(v);
+	        },
+	
+	        getColumnNumber: function () {
+	            return this.columnNumber;
+	        },
+	        setColumnNumber: function (v) {
+	            if (!_isNumber(v)) {
+	                throw new TypeError('Column Number must be a Number');
+	            }
+	            this.columnNumber = Number(v);
+	        },
+	
+	        toString: function() {
+	            var functionName = this.getFunctionName() || '{anonymous}';
+	            var args = '(' + (this.getArgs() || []).join(',') + ')';
+	            var fileName = this.getFileName() ? ('@' + this.getFileName()) : '';
+	            var lineNumber = _isNumber(this.getLineNumber()) ? (':' + this.getLineNumber()) : '';
+	            var columnNumber = _isNumber(this.getColumnNumber()) ? (':' + this.getColumnNumber()) : '';
+	            return functionName + args + fileName + lineNumber + columnNumber;
+	        }
+	    };
+	
+	    return StackFrame;
+	}));
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
 
 	"use strict";
 	
@@ -1447,8 +1745,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/* 8 */
+/***/ function(module, exports) {
 
 	/* globals ActiveXObject */
 	
@@ -1567,296 +1865,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  XHR: XHR,
 	  setupJSON: setupJSON
 	};
-
-
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-	    'use strict';
-	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(8)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	    } else if (typeof exports === 'object') {
-	        module.exports = factory(require('stackframe'));
-	    } else {
-	        root.ErrorStackParser = factory(root.StackFrame);
-	    }
-	}(this, function ErrorStackParser(StackFrame) {
-	    'use strict';
-	
-	    var FIREFOX_SAFARI_STACK_REGEXP = /\S+\:\d+/;
-	    var CHROME_IE_STACK_REGEXP = /\s+at /;
-	    var map, filter;
-	
-	    if (Array.prototype.map) {
-	        map = function (arr, fn) {
-	            return arr.map(fn);
-	        };
-	    } else {
-	        map = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	
-	            for (i = 0; i < len; ++i) {
-	                ret.push(fn(arr[i]));
-	            }
-	            return ret;
-	        };
-	    }
-	
-	    if (Array.prototype.filter) {
-	        filter = function (arr, fn) {
-	            return arr.filter(fn);
-	        };
-	    } else {
-	        filter = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	            for (i = 0; i < len; ++i) {
-	                if (fn(arr[i])) {
-	                    ret.push(arr[i]);
-	                }
-	            }
-	            return ret;
-	        };
-	    }
-	
-	    return {
-	        /**
-	         * Given an Error object, extract the most information from it.
-	         * @param error {Error}
-	         * @return Array[StackFrame]
-	         */
-	        parse: function ErrorStackParser$$parse(error) {
-	            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
-	                return this.parseOpera(error);
-	            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
-	                return this.parseV8OrIE(error);
-	            } else if (error.stack && error.stack.match(FIREFOX_SAFARI_STACK_REGEXP)) {
-	                return this.parseFFOrSafari(error);
-	            } else {
-	                throw new Error('Cannot parse given Error object');
-	            }
-	        },
-	
-	        /**
-	         * Separate line and column numbers from a URL-like string.
-	         * @param urlLike String
-	         * @return Array[String]
-	         */
-	        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
-	            // Fail-fast but return locations like "(native)"
-	            if (urlLike.indexOf(':') === -1) {
-	                return [urlLike];
-	            }
-	
-	            var locationParts = urlLike.replace(/[\(\)\s]/g, '').split(':');
-	            var lastNumber = locationParts.pop();
-	            var possibleNumber = locationParts[locationParts.length - 1];
-	            if (!isNaN(parseFloat(possibleNumber)) && isFinite(possibleNumber)) {
-	                var lineNumber = locationParts.pop();
-	                return [locationParts.join(':'), lineNumber, lastNumber];
-	            } else {
-	                return [locationParts.join(':'), lastNumber, undefined];
-	            }
-	        },
-	
-	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(error.stack.split('\n').slice(1), function (line) {
-	                var tokens = line.replace(/^\s+/, '').split(/\s+/).slice(1);
-	                var locationParts = extractLocation(tokens.pop());
-	                var functionName = (!tokens[0] || tokens[0] === 'Anonymous') ? undefined : tokens[0];
-	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
-	        },
-	
-	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
-	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
-	                var functionName = tokens.shift() || undefined;
-	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
-	        },
-	
-	        parseOpera: function ErrorStackParser$$parseOpera(e) {
-	            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
-	                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
-	                return this.parseOpera9(e);
-	            } else if (!e.stack) {
-	                return this.parseOpera10(e);
-	            } else {
-	                return this.parseOpera11(e);
-	            }
-	        },
-	
-	        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
-	            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
-	            var lines = e.message.split('\n');
-	            var result = [];
-	
-	            for (var i = 2, len = lines.length; i < len; i += 2) {
-	                var match = lineRE.exec(lines[i]);
-	                if (match) {
-	                    result.push(new StackFrame(undefined, undefined, match[2], match[1]));
-	                }
-	            }
-	
-	            return result;
-	        },
-	
-	        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
-	            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
-	            var lines = e.stacktrace.split('\n');
-	            var result = [];
-	
-	            for (var i = 0, len = lines.length; i < len; i += 2) {
-	                var match = lineRE.exec(lines[i]);
-	                if (match) {
-	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1]));
-	                }
-	            }
-	
-	            return result;
-	        },
-	
-	        // Opera 10.65+ Error.stack very similar to FF/Safari
-	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
-	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
-	                var functionCall = (tokens.shift() || '');
-	                var functionName = functionCall
-	                        .replace(/<anonymous function(: (\w+))?>/, '$2')
-	                        .replace(/\([^\)]*\)/g, '') || undefined;
-	                var argsRaw;
-	                if (functionCall.match(/\(([^\)]*)\)/)) {
-	                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
-	                }
-	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
-	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
-	        }
-	    };
-	}));
-	
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-	    'use strict';
-	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	    } else if (typeof exports === 'object') {
-	        module.exports = factory();
-	    } else {
-	        root.StackFrame = factory();
-	    }
-	}(this, function () {
-	    'use strict';
-	    function _isNumber(n) {
-	        return !isNaN(parseFloat(n)) && isFinite(n);
-	    }
-	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
-	        if (functionName !== undefined) {
-	            this.setFunctionName(functionName);
-	        }
-	        if (args !== undefined) {
-	            this.setArgs(args);
-	        }
-	        if (fileName !== undefined) {
-	            this.setFileName(fileName);
-	        }
-	        if (lineNumber !== undefined) {
-	            this.setLineNumber(lineNumber);
-	        }
-	        if (columnNumber !== undefined) {
-	            this.setColumnNumber(columnNumber);
-	        }
-	    }
-	
-	    StackFrame.prototype = {
-	        getFunctionName: function () {
-	            return this.functionName;
-	        },
-	        setFunctionName: function (v) {
-	            this.functionName = String(v);
-	        },
-	
-	        getArgs: function () {
-	            return this.args;
-	        },
-	        setArgs: function (v) {
-	            if (Object.prototype.toString.call(v) !== '[object Array]') {
-	                throw new TypeError('Args must be an Array');
-	            }
-	            this.args = v;
-	        },
-	
-	        // NOTE: Property name may be misleading as it includes the path,
-	        // but it somewhat mirrors V8's JavaScriptStackTraceApi
-	        // https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi and Gecko's
-	        // http://mxr.mozilla.org/mozilla-central/source/xpcom/base/nsIException.idl#14
-	        getFileName: function () {
-	            return this.fileName;
-	        },
-	        setFileName: function (v) {
-	            this.fileName = String(v);
-	        },
-	
-	        getLineNumber: function () {
-	            return this.lineNumber;
-	        },
-	        setLineNumber: function (v) {
-	            if (!_isNumber(v)) {
-	                throw new TypeError('Line Number must be a Number');
-	            }
-	            this.lineNumber = Number(v);
-	        },
-	
-	        getColumnNumber: function () {
-	            return this.columnNumber;
-	        },
-	        setColumnNumber: function (v) {
-	            if (!_isNumber(v)) {
-	                throw new TypeError('Column Number must be a Number');
-	            }
-	            this.columnNumber = Number(v);
-	        },
-	
-	        toString: function() {
-	            var functionName = this.getFunctionName() || '{anonymous}';
-	            var args = '(' + (this.getArgs() || []).join(',') + ')';
-	            var fileName = this.getFileName() ? ('@' + this.getFileName()) : '';
-	            var lineNumber = _isNumber(this.getLineNumber()) ? (':' + this.getLineNumber()) : '';
-	            var columnNumber = _isNumber(this.getColumnNumber()) ? (':' + this.getColumnNumber()) : '';
-	            return functionName + args + fileName + lineNumber + columnNumber;
-	        }
-	    };
-	
-	    return StackFrame;
-	}));
 
 
 /***/ }

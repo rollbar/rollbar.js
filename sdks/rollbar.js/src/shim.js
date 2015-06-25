@@ -10,7 +10,7 @@ function Rollbar(parentShim) {
   this._rollbarOldOnError = null;
 
   if (window.console) {
-    if (window.console.shimId === undefined) {
+    if (typeof window.console.log === 'function') {
       this.logger = window.console.log;
     }
   }
