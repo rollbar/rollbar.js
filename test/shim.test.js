@@ -142,7 +142,7 @@ describe("window.Rollbar.uncaughtError", function() {
 
     expect(args[4].constructor).to.equal(ReferenceError);
 
-    window.Rollbar.uncaughtError.restore();
+    spy.restore();
 
     done();
   });
@@ -165,19 +165,19 @@ describe("window.Rollbar.uncaughtError", function() {
 });
 
 describe("_rollbarWindowOnError", function() {
-  it("should set window._rollbarWrappedError as the reported error", function() {
+  it("should set window._rollbarWrappedError as the reported error", function(done) {
+    var client = window.Rollbar;
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
 
-      // error argument will be set by _rollbarWindowOnError
-      expect(args[4]).to.equal(undefined);
-      _rollbarWindowOnError(window.Rollbar, null, args);
-      expect(args[4]).to.not.equal(undefined);
+      expect(window._rollbarWrappedError).to.not.equal(undefined);
+      expect(window._rollbarWrappedError).to.be.an.instanceof(Error);
+      _rollbarWindowOnError(client, null, args);
     };
 
-    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+    var spy = sinon.spy(client, 'uncaughtError');
 
-    var wrappedFunc = window.Rollbar.wrap(function() {
+    var wrappedFunc = client.wrap(function() {
       var a = b;
     });
 
@@ -193,10 +193,10 @@ describe("_rollbarWindowOnError", function() {
 
         expect(args[4].constructor).to.equal(ReferenceError);
 
-        window.Rollbar.uncaughtError.restore();
+        spy.restore();
         done();
       } catch(e) {
-        window.Rollbar.uncaughtError.restore();
+        spy.restore();
         done(e);
       }
     }, 20);

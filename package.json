@@ -29,6 +29,7 @@
     "jshint": "~2.3.0",
     "mocha": "^1.21.4",
     "mocha-phantomjs": "^3.5.0",
+    "node-libs-browser": "^0.5.2",
     "phantomjs": "^1.9.10",
     "script-loader": "0.6.1",
     "semver": "~2.2.1",
@@ -36,7 +37,7 @@
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
     "uglify-js": "~2.4.3",
-    "webpack": "1.8.11"
+    "webpack": "git+https://github.com/rollbar/webpack.git"
   },
   "scripts": {
     "test": "make test"
