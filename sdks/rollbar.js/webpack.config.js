@@ -53,7 +53,10 @@ var snippetConfig = {
     filename: '[name].js'
   },
   plugins: [defaultsPlugin, uglifyPlugin],
-  failOnError: true
+  failOnError: true,
+  module: {
+    noParse: [/src\/shim\.js/]
+  }
 };
 
 var testsConfig = {
@@ -74,6 +77,9 @@ var testsConfig = {
   output: {
     path: 'test/',
     filename: '[name].bundle.js',
+  },
+  module: {
+    noParse: [/src\/shim\.js/]
   }
 };
 
@@ -83,7 +89,8 @@ var UMDConfigBase = {
   },
   output: {
     path: outputPath,
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
+    library: 'rollbar'
   },
   failOnError: true
 };

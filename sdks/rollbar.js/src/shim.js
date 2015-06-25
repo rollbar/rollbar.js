@@ -10,7 +10,7 @@ function Rollbar(parentShim) {
   this._rollbarOldOnError = null;
 
   if (window.console) {
-    if (window.console.shimId === undefined) {
+    if (typeof window.console.log === 'function') {
       this.logger = window.console.log;
     }
   }
@@ -79,6 +79,37 @@ Rollbar.init = function(window, config) {
   }, client.logger)();
 };
 
+Rollbar.prototype.startProcessing = function (client, callback) {
+  var err;
+  if (window._rollbarPayloadQueue === undefined) {
+    // rollbar.js did not load correctly, call any queued callbacks
+    // with an error.
+    var obj;
+    var cb;
+    var args;
+    var i;
+
+    err = new Error('rollbar.js did not load');
+
+    // Go through each of the shim objects. If one of their args
+    // was a function, treat it as the callback and call it with
+    // err as the first arg.
+    while ((obj = window._rollbarShimQueue.shift())) {
+      args = obj.args;
+      for (i = 0; i < args.length; ++i) {
+        cb = args[i];
+        if (typeof cb === 'function') {
+          cb(err);
+          break;
+        }
+      }
+    }
+  }
+  if (typeof callback === 'function') {
+    callback(err);
+  }
+};
+
 Rollbar.prototype.loadFull = function(window, document, immediate, config, callback) {
   var self = this;
   // Create the main rollbar script loader
@@ -95,33 +126,12 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
   }, this.logger);
 
   var handleLoadErr = _wrapInternalErr(function() {
-    var err;
-    if (window._rollbarPayloadQueue === undefined) {
-      // rollbar.js did not load correctly, call any queued callbacks
-      // with an error.
-      var obj;
-      var cb;
-      var args;
-      var i;
-
-      err = new Error('rollbar.js did not load');
-
-      // Go through each of the shim objects. If one of their args
-      // was a function, treat it as the callback and call it with
-      // err as the first arg.
-      while ((obj = window._rollbarShimQueue.shift())) {
-        args = obj.args;
-        for (i = 0; i < args.length; ++i) {
-          cb = args[i];
-          if (typeof cb === 'function') {
-            cb(err);
-            break;
-          }
-        }
-      }
-    }
-    if (typeof callback === 'function') {
-      callback(err);
+    if (typeof define === 'function' && define.amd) {
+      require(['rollbar'], function (mod) {
+        self.startProcessing(mod, callback);
+      });
+    } else {
+      self.startProcessing(window.Rollbar, callback);
     }
   }, this.logger);
 
