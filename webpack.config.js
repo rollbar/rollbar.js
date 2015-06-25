@@ -83,7 +83,8 @@ var UMDConfigBase = {
   },
   output: {
     path: outputPath,
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
+    library: 'rollbar'
   },
   failOnError: true
 };
