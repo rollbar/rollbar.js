@@ -2348,4 +2348,3 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-//# sourceMappingURL=rollbar.umd.js.map

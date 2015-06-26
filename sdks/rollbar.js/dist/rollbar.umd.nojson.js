@@ -1871,4 +1871,3 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-//# sourceMappingURL=rollbar.umd.nojson.js.map
