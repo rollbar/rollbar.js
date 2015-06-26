@@ -35,7 +35,7 @@ describe("window.Rollbar.loadFull()", function() {
     var shim = window.testingRollbar;
     var callback = snippetCallback(shim, config);
 
-    shim.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback)
+    shim.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback)
 
     function test() {
       if (window.testingRollbar.constructor.name === 'Notifier') {
