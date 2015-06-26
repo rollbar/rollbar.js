@@ -28,7 +28,7 @@ var defaults = {
   __DEFAULT_LOG_LEVEL__: JSON.stringify(pkg.defaults.logLevel),
   __DEFAULT_REPORT_LEVEL__: JSON.stringify(pkg.defaults.reportLevel),
   __DEFAULT_UNCAUGHT_ERROR_LEVEL: JSON.stringify(pkg.defaults.uncaughtErrorLevel),
-  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('https://' + pkg.cdn.host + '/js/v' + pkg.pinnedVersion + '/rollbar.umd.min.js'),
+  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('https://' + pkg.cdn.host + '/js/v' + pkg.pinnedVersion + '/rollbar.min.js'),
   __DEFAULT_MAX_ITEMS__: pkg.defaults.maxItems,
   __DEFAULT_ITEMS_PER_MIN__: pkg.defaults.itemsPerMin
 };
@@ -52,11 +52,21 @@ var snippetConfig = {
     path: outputPath,
     filename: '[name].js'
   },
+  plugins: [defaultsPlugin],//, uglifyPlugin],
+  failOnError: true,
+};
+
+var pluginConfig = {
+  name: 'plugins',
+  entry: {
+    'jquery': './src/plugins/jquery.js'
+  },
+  output: {
+    path: outputPath + '/plugins/',
+    filename: '[name].min.js'
+  },
   plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
-  module: {
-    noParse: [/src\/shim\.js/]
-  }
 };
 
 var testsConfig = {
@@ -83,21 +93,41 @@ var testsConfig = {
   }
 };
 
+var vanillaConfigBase = {
+  entry: {
+    'rollbar': './src/bundles/rollbar.js'
+  },
+  output: {
+    path: outputPath
+  },
+  plugins: [defaultsPlugin],//, uglifyPlugin],
+  failOnError: true,
+};
+
 var UMDConfigBase = {
   entry: {
-    'rollbar.umd': ['./src/bundles/rollbar.umd.js']
+    'rollbar.umd': ['./src/bundles/rollbar.js']
   },
   output: {
     path: outputPath,
-    libraryTarget: 'umd',
-    library: 'rollbar'
+    libraryTarget: 'umd'
   },
   failOnError: true
 };
 
-var config = [];
-config.push(snippetConfig);
-config.push(testsConfig);
+var config = [snippetConfig, pluginConfig, testsConfig];
+
+function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
+  var basePlugins = [defaultsPlugin];
+  var vanillaConfig = extend({}, vanillaConfigBase);
+
+  plugins = basePlugins.concat(extraPlugins);
+  vanillaConfig.plugins = plugins;
+
+  vanillaConfig.output = extend({filename: filename}, vanillaConfig.output);
+
+  webpackConfig.push(vanillaConfig);
+}
 
 function addUMDToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
@@ -111,10 +141,15 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
   webpackConfig.push(UMDConfig);
 }
 
-addUMDToConfig(config, '[name].js', [useJsonPlugin]);
-addUMDToConfig(config, '[name].min.js', [useJsonPlugin, uglifyPlugin]);
-addUMDToConfig(config, '[name].nojson.js', [notUseJsonPlugin]);
-addUMDToConfig(config, '[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
+function generateBuildConfig(name, plugins) {
+  addVanillaToConfig(config, name, plugins);
+  addUMDToConfig(config, name, plugins);
+}
+
+generateBuildConfig('[name].js', [useJsonPlugin]);
+generateBuildConfig('[name].min.js', [useJsonPlugin, uglifyPlugin]);
+generateBuildConfig('[name].nojson.js', [notUseJsonPlugin]);
+generateBuildConfig('[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
 
 module.exports = config;
 
