@@ -1,1 +1,351 @@
-!function(r){function o(n){if(t[n])return t[n].exports;var e=t[n]={exports:{},id:n,loaded:!1};return r[n].call(e.exports,e,e.exports,o),e.loaded=!0,e.exports}var t={};return o.m=r,o.c=t,o.p="",o(0)}([function(r,o,t){"use strict";var n=t(1).Rollbar,e=t(2),i="https://d37gvrvc0wt4s1.cloudfront.net/js/v1.4/rollbar.umd.min.js";_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||i;var a=n.init(window,_rollbarConfig),l=e(a,_rollbarConfig);a.loadFull(window,document,!1,_rollbarConfig,l)},function(r,o){"use strict";function t(r){this.shimId=++l,this.notifier=null,this.parentShim=r,this.logger=function(){},this._rollbarOldOnError=null,window.console&&"function"==typeof window.console.log&&(this.logger=window.console.log)}function n(r,o,t){window._rollbarWrappedError&&(t[4]||(t[4]=window._rollbarWrappedError),t[5]||(t[5]=window._rollbarWrappedError._rollbarContext),window._rollbarWrappedError=null),r.uncaughtError.apply(r,t),o&&o.apply(window,t)}function e(r){var o=t;return a(function(){if(this.notifier)return this.notifier[r].apply(this.notifier,arguments);var t=this,n="scope"===r;n&&(t=new o(this));var e=Array.prototype.slice.call(arguments,0),i={shim:t,method:r,args:e,ts:new Date};return window._rollbarShimQueue.push(i),n?t:void 0})}function i(r,o){if(o.hasOwnProperty&&o.hasOwnProperty("addEventListener")){var t=o.addEventListener;o.addEventListener=function(o,n,e){t.call(this,o,r.wrap(n),e)};var n=o.removeEventListener;o.removeEventListener=function(r,o,t){n.call(this,r,o&&o._wrapped?o._wrapped:o,t)}}}function a(r,o){return o=o||window.console.log||function(){},function(){try{return r.apply(this,arguments)}catch(t){o("Rollbar internal error:",t)}}}var l=0;t.init=function(r,o){var e=o.globalAlias||"Rollbar";if("object"==typeof r[e])return r[e];r._rollbarShimQueue=[],r._rollbarWrappedError=null,o=o||{};var l=new t;return a(function(){if(l.configure(o),o.captureUncaught){l._rollbarOldOnError=r.onerror,r.onerror=function(){var r=Array.prototype.slice.call(arguments,0);n(l,l._rollbarOldOnError,r)};var t,a,s="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(t=0;t<s.length;++t)a=s[t],r[a]&&r[a].prototype&&i(l,r[a].prototype)}return r[e]=l,l},l.logger)()},t.prototype.startProcessing=function(r,o){var t;if(void 0===window._rollbarPayloadQueue){var n,e,i,a;for(t=new Error("rollbar.js did not load");n=window._rollbarShimQueue.shift();)for(i=n.args,a=0;a<i.length;++a)if(e=i[a],"function"==typeof e){e(t);break}}"function"==typeof o&&o(t)},t.prototype.loadFull=function(r,o,t,n,e){var i=this,l=a(function(){var r=o.createElement("script"),e=o.getElementsByTagName("script")[0];r.src=n.rollbarJsUrl,r.async=!t,r.onload=s,e.parentNode.insertBefore(r,e)},this.logger),s=a(function(){"function"==typeof define&&define.amd?require(["rollbar"],function(r){i.startProcessing(r,e)}):i.startProcessing(r.Rollbar,e)},this.logger);a(function(){t?l():r.addEventListener?r.addEventListener("load",l,!1):r.attachEvent("onload",l)},this.logger)()},t.prototype.wrap=function(r,o){try{var t;if(t="function"==typeof o?o:function(){return o||{}},"function"!=typeof r)return r;if(r._isWrap)return r;if(!r._wrapped){r._wrapped=function(){try{return r.apply(this,arguments)}catch(o){throw o._rollbarContext=t()||{},o._rollbarContext._wrappedSource=r.toString(),window._rollbarWrappedError=o,o}},r._wrapped._isWrap=!0;for(var n in r)r.hasOwnProperty(n)&&(r._wrapped[n]=r[n])}return r._wrapped}catch(e){return r}};for(var s="log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError".split(","),u=0;u<s.length;++u)t.prototype[s[u]]=e(s[u]);r.exports={Rollbar:t,_rollbarWindowOnError:n}},function(r,o){"use strict";r.exports=function(r,o){return function(t){if(!t&&!window._rollbarInitialized){var n=window.RollbarNotifier,e=o||{},i=e.globalAlias||"Rollbar",a=window.Rollbar.init(e,r);a._processShimQueue(window._rollbarShimQueue||[]),window[i]=a,window._rollbarInitialized=!0,n.processPayloads()}}}}]);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+/******/
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* globals __DEFAULT_ROLLBARJS_URL__ */
+	/* globals _rollbarConfig */
+	
+	"use strict";
+	
+	var RollbarShim = __webpack_require__(1).Rollbar;
+	var snippetCallback = __webpack_require__(2);
+	
+	var defaultRollbarJsUrl = ("https://d37gvrvc0wt4s1.cloudfront.net/js/v1.4/rollbar.min.js");
+	_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
+	
+	var shim = RollbarShim.init(window, _rollbarConfig);
+	var callback = snippetCallback(shim, _rollbarConfig);
+	
+	shim.loadFull(window, document, false, _rollbarConfig, callback);
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _shimCounter = 0;
+	
+	function Rollbar(parentShim) {
+	  this.shimId = ++_shimCounter;
+	  this.notifier = null;
+	  this.parentShim = parentShim;
+	  this.logger = function() {};
+	  this._rollbarOldOnError = null;
+	
+	  if (window.console) {
+	    if (typeof window.console.log === 'function') {
+	      this.logger = window.console.log;
+	    }
+	  }
+	}
+	
+	function _rollbarWindowOnError(client, old, args) {
+	  if (window._rollbarWrappedError) {
+	    if (!args[4]) {
+	      args[4] = window._rollbarWrappedError;
+	    }
+	    if (!args[5]) {
+	      args[5] = window._rollbarWrappedError._rollbarContext;
+	    }
+	    window._rollbarWrappedError = null;
+	  }
+	
+	  client.uncaughtError.apply(client, args);
+	  if (old) {
+	    old.apply(window, args);
+	  }
+	}
+	
+	Rollbar.init = function(window, config) {
+	  var alias = config.globalAlias || 'Rollbar';
+	  if (typeof window[alias] === 'object') {
+	    return window[alias];
+	  }
+	
+	  // Expose the global shim queue
+	  window._rollbarShimQueue = [];
+	  window._rollbarWrappedError = null;
+	
+	  config = config || {};
+	
+	  var client = new Rollbar();
+	
+	  return _wrapInternalErr(function() {
+	    client.configure(config);
+	
+	    if (config.captureUncaught) {
+	      // Create the client and set the onerror handler
+	      client._rollbarOldOnError = window.onerror;
+	
+	      window.onerror = function() {
+	        var args = Array.prototype.slice.call(arguments, 0);
+	        _rollbarWindowOnError(client, client._rollbarOldOnError, args);
+	      };
+	
+	      // Adapted from https://github.com/bugsnag/bugsnag-js
+	      var globals = "EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");
+	
+	      var i;
+	      var global;
+	      for (i = 0; i < globals.length; ++i) {
+	        global = globals[i];
+	
+	        if (window[global] && window[global].prototype) {
+	          _extendListenerPrototype(client, window[global].prototype);
+	        }
+	      }
+	    }
+	
+	    // Expose Rollbar globally
+	    window[alias] = client;
+	    return client;
+	  }, client.logger)();
+	};
+	
+	
+	Rollbar.prototype.loadFull = function(window, document, immediate, config, callback) {
+	  var self = this;
+	  // Create the main rollbar script loader
+	  var loader = _wrapInternalErr(function() {
+	    var s = document.createElement("script");
+	    var f = document.getElementsByTagName("script")[0];
+	    s.src = config.rollbarJsUrl;
+	    s.async = !immediate;
+	
+	    // NOTE(cory): this may not work for some versions of IE
+	    s.onload = handleLoadErr;
+	
+	    f.parentNode.insertBefore(s, f);
+	  }, this.logger);
+	
+	  var handleLoadErr = _wrapInternalErr(function() {
+	    var err;
+	    if (window._rollbarPayloadQueue === undefined) {
+	      // rollbar.js did not load correctly, call any queued callbacks
+	      // with an error.
+	      var obj;
+	      var cb;
+	      var args;
+	      var i;
+	
+	      err = new Error('rollbar.js did not load');
+	
+	      // Go through each of the shim objects. If one of their args
+	      // was a function, treat it as the callback and call it with
+	      // err as the first arg.
+	      while ((obj = window._rollbarShimQueue.shift())) {
+	        args = obj.args;
+	        for (i = 0; i < args.length; ++i) {
+	          cb = args[i];
+	          if (typeof cb === 'function') {
+	            cb(err);
+	            break;
+	          }
+	        }
+	      }
+	    }
+	    if (typeof callback === 'function') {
+	      callback(err);
+	    }
+	  }, this.logger);
+	
+	  _wrapInternalErr(function() {
+	    if (immediate) {
+	      loader();
+	    } else {
+	      // Have the window load up the script ASAP
+	      if (window.addEventListener) {
+	        window.addEventListener("load", loader, false);
+	      } else { 
+	        window.attachEvent("onload", loader);
+	      }
+	    }
+	  }, this.logger)();
+	};
+	
+	Rollbar.prototype.wrap = function(f, context) {
+	  try {
+	    var ctxFn;
+	    if (typeof context === 'function') {
+	      ctxFn = context;
+	    } else {
+	      ctxFn = function() { return context || {}; };
+	    }
+	
+	    if (typeof f !== 'function') {
+	      return f;
+	    }
+	
+	    if (f._isWrap) {
+	      return f;
+	    }
+	
+	    if (!f._wrapped) {
+	      f._wrapped = function () {
+	        try {
+	          return f.apply(this, arguments);
+	        } catch(e) {
+	          e._rollbarContext = ctxFn() || {};
+	          e._rollbarContext._wrappedSource = f.toString();
+	
+	          window._rollbarWrappedError = e;
+	          throw e;
+	        }
+	      };
+	
+	      f._wrapped._isWrap = true;
+	
+	      for (var prop in f) {
+	        if (f.hasOwnProperty(prop)) {
+	          f._wrapped[prop] = f[prop];
+	        }
+	      }
+	    }
+	
+	    return f._wrapped;
+	  } catch (e) {
+	    // Try-catch here is to work around issue where wrap() fails when used inside Selenium.
+	    // Return the original function if the wrap fails.
+	    return f;
+	  }
+	};
+	
+	// Stub out rollbar.js methods
+	function stub(method) {
+	  var R = Rollbar;
+	  return _wrapInternalErr(function() {
+	    if (this.notifier) {
+	      return this.notifier[method].apply(this.notifier, arguments);
+	    } else {
+	      var shim = this;
+	      var isScope = method === 'scope';
+	      if (isScope) {
+	        shim = new R(this);
+	      }
+	      var args = Array.prototype.slice.call(arguments, 0);
+	      var data = {shim: shim, method: method, args: args, ts: new Date()};
+	      window._rollbarShimQueue.push(data);
+	
+	      if (isScope) {
+	        return shim;
+	      }
+	    }
+	  });
+	}
+	
+	function _extendListenerPrototype(client, prototype) {
+	  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
+	    var oldAddEventListener = prototype.addEventListener;
+	    prototype.addEventListener = function(event, callback, bubble) {
+	      oldAddEventListener.call(this, event, client.wrap(callback), bubble);
+	    };
+	
+	    var oldRemoveEventListener = prototype.removeEventListener;
+	    prototype.removeEventListener = function(event, callback, bubble) {
+	      oldRemoveEventListener.call(this, event, (callback && callback._wrapped) ? callback._wrapped : callback, bubble);
+	    };
+	  }
+	}
+	
+	function _wrapInternalErr(f, logger) {
+	  logger = logger || window.console.log || function () {};
+	  return function() {
+	    try {
+	      return f.apply(this, arguments);
+	    } catch (e) {
+	      logger('Rollbar internal error:', e);
+	    }
+	  };
+	}
+	
+	var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
+	for (var i = 0; i < _methods.length; ++i) {
+	  Rollbar.prototype[_methods[i]] = stub(_methods[i]);
+	}
+	
+	module.exports = {
+	  Rollbar: Rollbar,
+	  _rollbarWindowOnError: _rollbarWindowOnError
+	};
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	module.exports = function(shim, _config) {
+	  return function(err) {
+	    if (err) {
+	      // do something?
+	      return;
+	    }
+	
+	    if (!window._rollbarInitialized) {
+	      var Notifier = window.RollbarNotifier; // This is exposed by UMD bundle.
+	      var config = _config || {};
+	      var alias = config.globalAlias || 'Rollbar';
+	
+	      // At this time window.Rollbar is globalnotifier.wrapper
+	      var fullRollbar = window.Rollbar.init(config, shim);
+	
+	      fullRollbar._processShimQueue(window._rollbarShimQueue || []);
+	
+	      window[alias] = fullRollbar;
+	
+	      window._rollbarInitialized = true;
+	
+	      Notifier.processPayloads();
+	    }
+	  };
+	};
+
+
+/***/ }
+/******/ ]);
+//# sourceMappingURL=rollbar.snippet.js.map

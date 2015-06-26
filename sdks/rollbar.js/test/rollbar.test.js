@@ -15,7 +15,7 @@ describe("Script load", function() {
   describe("Shim", function() {
     it("should be connected to window.Rollbar", function(done) {
       var callback = snippetCallback(origRollbar, config);
-      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback);
+      origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
 
       function test() {
         if (origRollbar.notifier !== null) {

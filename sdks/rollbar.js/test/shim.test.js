@@ -364,7 +364,7 @@ describe("window.Rollbar.loadFull()", function() {
     var callback = snippetCallback(origShim, config);
 
     // Brings in the full rollbar.js file into the DOM
-    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.umd.js'}, callback);
+    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
 
     // Wait before checking window.Rollbar
     function test() {

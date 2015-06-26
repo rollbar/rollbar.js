@@ -37,7 +37,7 @@
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
     "uglify-js": "~2.4.3",
-    "webpack": "git+https://github.com/rollbar/webpack.git"
+    "webpack": "^1.9.12"
   },
   "scripts": {
     "test": "make test"
