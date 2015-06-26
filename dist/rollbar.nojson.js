@@ -1852,4 +1852,3 @@
 
 /***/ }
 /******/ ]);
-//# sourceMappingURL=rollbar.nojson.js.map

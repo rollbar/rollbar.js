@@ -38,7 +38,8 @@ var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   // We've had some reports of the sourceMappingURL comment causing problems in Firefox.
   // The uglifyjs plugin doesn't provide a way to generate the source map without generating
   // that comment, so until we can resolve that, let's just not generate the source map.
-  sourceMap: false
+  sourceMap: false,
+  minimize: true
 });
 var useJsonPlugin = new webpack.DefinePlugin(jsonDefines);
 var notUseJsonPlugin = new webpack.DefinePlugin(noJsonDefines);
@@ -52,7 +53,7 @@ var snippetConfig = {
     path: outputPath,
     filename: '[name].js'
   },
-  plugins: [defaultsPlugin],//, uglifyPlugin],
+  plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
 };
 
@@ -72,24 +73,21 @@ var pluginConfig = {
 var testsConfig = {
   name: 'tests',
   entry: {
-    util: './test/bundles/util.js',
-    json: './test/bundles/json.js',
     error_parser: './test/bundles/error_parser.js',
-    xhr: './test/bundles/xhr.js',
+    json: './test/bundles/json.js',
+    mootools: './test/bundles/mootools.js',
     notifier: './test/bundles/notifier.js',
     'notifier-ratelimit': './test/bundles/notifier.ratelimit.js',
     rollbar: './test/bundles/rollbar.js',
     shim: './test/bundles/shim.js',
     shimalias: './test/bundles/shimalias.js',
-    mootools: './test/bundles/mootools.js',
+    util: './test/bundles/util.js',
+    xhr: './test/bundles/xhr.js',
   },
   plugins: [defaultsPlugin],
   output: {
     path: 'test/',
     filename: '[name].bundle.js',
-  },
-  module: {
-    noParse: [/src\/shim\.js/]
   }
 };
 
@@ -100,8 +98,9 @@ var vanillaConfigBase = {
   output: {
     path: outputPath
   },
-  plugins: [defaultsPlugin],//, uglifyPlugin],
+  plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
+  devtool: 'hidden-source-map'
 };
 
 var UMDConfigBase = {
@@ -112,7 +111,8 @@ var UMDConfigBase = {
     path: outputPath,
     libraryTarget: 'umd'
   },
-  failOnError: true
+  failOnError: true,
+  devtool: 'hidden-source-map'
 };
 
 var config = [snippetConfig, pluginConfig, testsConfig];

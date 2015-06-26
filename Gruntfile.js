@@ -18,7 +18,8 @@ if (process.env.TEST) {
                'http://localhost:3000/test/shim.html',
                'http://localhost:3000/test/shimalias.html',
                'http://localhost:3000/test/integrations/mootools.html',
-               'http://localhost:3000/test/plugins/jquery.html'
+               'http://localhost:3000/test/plugins/jquery.html',
+               'http://localhost:3000/test/integrations/requirejs.html'
               ];
 }
 
@@ -30,10 +31,7 @@ module.exports = function(grunt) {
     pkg: pkg,
     webpack: {
       options: webpackConfig,
-      "build-dev": {
-        devtool: "sourcemap",
-        debug: true
-      }
+      build: {}
     },
     jshint: {
       options: {
@@ -69,16 +67,8 @@ module.exports = function(grunt) {
         'src/xhr.js',
         'src/shimload.js',
         'src/bundles/rollbar.snippet.js',
-        'src/bundles/rollbar.umd.js'
+        'src/bundles/rollbar.js'
       ]
-    },
-    uglify: {
-      prewebpack: {
-        files: {
-          'vendor/json2.min.js': 'vendor/JSON-js/json2.js',
-          'vendor/trace.min.js': 'vendor/TraceKit/src/trace.js'
-        }
-      }
     },
     mocha_phantomjs: {
       test: {
@@ -140,16 +130,15 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-bumpup');
   grunt.loadNpmTasks('grunt-tagrelease');
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', ['jshint', 'uglify:prewebpack', 'webpack']);
+  grunt.registerTask('build', ['jshint', 'webpack']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  var testjobs = ['uglify:prewebpack', 'webpack', 'express'];
+  var testjobs = ['webpack', 'express'];
   if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined'){
     testjobs.push('saucelabs-mocha');
   } else {
