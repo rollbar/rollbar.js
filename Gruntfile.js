@@ -163,14 +163,14 @@ module.exports = function(grunt) {
 
   grunt.registerTask('copyrelease', function() {
     var version = pkg.version;
-    var builds = ['umd', 'umd.nojson'];
+    var builds = ['', '.nojson', '.umd', '.umd.nojson'];
 
     builds.forEach(function (buildName) {
-      var js = 'dist/rollbar.' + buildName + '.js';
-      var minJs = 'dist/rollbar.' + buildName + '.min.js';
+      var js = 'dist/rollbar' + buildName + '.js';
+      var minJs = 'dist/rollbar' + buildName + '.min.js';
 
-      var releaseJs = 'release/rollbar.' + buildName + '-' + version + '.js';
-      var releaseMinJs = 'release/rollbar.' + buildName + '-' + version + '.min.js';
+      var releaseJs = 'release/rollbar' + buildName + '-' + version + '.js';
+      var releaseMinJs = 'release/rollbar' + buildName + '-' + version + '.min.js';
 
       grunt.file.copy(js, releaseJs);
       grunt.file.copy(minJs, releaseMinJs);

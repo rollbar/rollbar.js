@@ -3,6 +3,10 @@
 
 # Change Log
 
+**v1.4.1**
+- Fixed a bug that would load the wrong AMD module if a custom "rollbar" module was already defined.
+  - Customers should copy and paste the new snippet into their code.
+
 **v1.4.0**
 - Fix a bug, (introduced in v1.3) that caused Rollbar to generate an error when used with RequireJS.
   - Customers should copy and paste the new snippet into their code.
