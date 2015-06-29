@@ -137,10 +137,9 @@ describe("Notifier.global()", function() {
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar:');
-    expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].message).to.contain('merge() is broken');
+    expect(call.args[0]).to.be.a('string');
+    expect(call.args[0]).to.contain('Rollbar:');
+    expect(call.args[0]).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -355,10 +354,9 @@ describe("Notifier.configure()", function() {
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar:');
-    expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].message).to.contain('merge() is broken');
+    expect(call.args[0]).to.be.a('string');
+    expect(call.args[0]).to.contain('Rollbar:');
+    expect(call.args[0]).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -685,10 +683,9 @@ describe("Notifier.uncaughtError()", function() {
     expect(_logStub.getCall(0).args[0]).to.equal('warning');
 
     var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar:');
-    expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].message).to.contain('_log() is broken');
+    expect(call.args[0]).to.be.a('string');
+    expect(call.args[0]).to.contain('Rollbar:');
+    expect(call.args[0]).to.contain('_log() is broken');
 
     _logStub.restore();
     consoleLogStub.restore();
@@ -712,10 +709,9 @@ describe("Notifier.uncaughtError()", function() {
     expect(_stub.getCall(0).args[2][1]).to.equal('this should actually cause an internal error');
 
     var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar:');
-    expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].message).to.contain('_enqueuePayload() is broken');
+    expect(call.args[0]).to.be.a('string');
+    expect(call.args[0]).to.contain('Rollbar:');
+    expect(call.args[0]).to.contain('_enqueuePayload() is broken');
 
     _stub.restore();
     consoleLogStub.restore();
@@ -785,10 +781,9 @@ describe("Notifier.scope()", function() {
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.an('array');
-    expect(call.args[0][0]).to.equal('Rollbar:');
-    expect(call.args[0][1]).to.be.an('object');
-    expect(call.args[0][1].message).to.contain('merge() is broken');
+    expect(call.args[0]).to.be.a('string');
+    expect(call.args[0]).to.contain('Rollbar:');
+    expect(call.args[0]).to.contain('merge() is broken');
 
     _utilMergeStub.restore();
     consoleLogStub.restore();
@@ -961,10 +956,9 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       expect(_logStub.getCall(0).args[0]).to.equal(level === 'warn' ? 'warning' : level);
 
       var call = consoleLogStub.getCall(0);
-      expect(call.args[0]).to.be.an('array');
-      expect(call.args[0][0]).to.equal('Rollbar:');
-      expect(call.args[0][1]).to.be.an('object');
-      expect(call.args[0][1].message).to.contain('_log() is broken');
+      expect(call.args[0]).to.be.a('string');
+      expect(call.args[0]).to.contain('Rollbar:');
+      expect(call.args[0]).to.contain('_log() is broken');
 
       _logStub.restore();
       consoleLogStub.restore();
@@ -1023,10 +1017,9 @@ describe("Notifier.debug/warn/warning/error/critical()", function() {
       expect(_stub.getCall(0).args[1]).to.deep.equal({});
 
       var call = consoleLogStub.getCall(0);
-      expect(call.args[0]).to.be.an('array');
-      expect(call.args[0][0]).to.equal('Rollbar:');
-      expect(call.args[0][1]).to.be.an('object');
-      expect(call.args[0][1].message).to.contain('user-supplied callback is broken');
+      expect(call.args[0]).to.be.a('string');
+      expect(call.args[0]).to.contain('Rollbar:');
+      expect(call.args[0]).to.contain('user-supplied callback is broken');
 
       consoleLogStub.restore();
       server.restore();
