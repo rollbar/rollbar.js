@@ -4,8 +4,6 @@
 
 ## Quick start
 
-__Note__: This is the v1 version of the notifier. See the [migration guide](https://rollbar.com/docs/notifier/rollbar.js/migration_v0_to_v1) for instructions on how to upgrade your code to use the latest version of the Rollbar javascript notifier.
-
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
 <!-- RemoveNextIfProject -->
