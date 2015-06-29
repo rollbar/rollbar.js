@@ -3,6 +3,9 @@
 
 # Change Log
 
+**v1.4.2**
+- Fixed a bug that occurred in FF when Rollbar logged an internal error or if verbose mode was turned on. (pr#105)
+
 **v1.4.1**
 - Fixed a bug that would load the wrong AMD module if a custom "rollbar" module was already defined.
   - Customers should copy and paste the new snippet into their code.
