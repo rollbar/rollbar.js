@@ -2,18 +2,20 @@
 
 var _shimCounter = 0;
 
+function _logger() {
+  var console = window.console;
+  if (console && typeof console.log === 'function') {
+    console.log.apply(console, arguments);
+  }
+}
+
+
 function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
   this.notifier = null;
   this.parentShim = parentShim;
-  this.logger = function() {};
+  this.logger = _logger;
   this._rollbarOldOnError = null;
-
-  if (window.console) {
-    if (typeof window.console.log === 'function') {
-      this.logger = window.console.log;
-    }
-  }
 }
 
 function _rollbarWindowOnError(client, old, args) {
@@ -225,7 +227,7 @@ function _extendListenerPrototype(client, prototype) {
 }
 
 function _wrapInternalErr(f, logger) {
-  logger = logger || window.console.log || function () {};
+  logger = logger || _logger;
   return function() {
     try {
       return f.apply(this, arguments);
