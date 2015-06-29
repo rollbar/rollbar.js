@@ -275,9 +275,10 @@
 	  this.plugins = {};
 	  this.parentNotifier = parentNotifier;
 	  this.logger = function() {
-	    if (window.console && typeof window.console.log === 'function') {
-	      var args = ['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0));
-	      window.console.log(args);
+	    var console = window.console;
+	    if (console && typeof console.log === 'function') {
+	      var message = (['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0))).join(' ');
+	      console.log.apply(console, [message]);
 	    }
 	  };
 	
