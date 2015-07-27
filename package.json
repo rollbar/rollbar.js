@@ -30,7 +30,7 @@
     "mocha": "^1.21.4",
     "mocha-phantomjs": "^3.5.0",
     "node-libs-browser": "^0.5.2",
-    "phantomjs": "^1.9.10",
+    "phantomjs": "^1.9.7-15",
     "script-loader": "0.6.1",
     "semver": "~2.2.1",
     "sinon": "~1.7.3",
