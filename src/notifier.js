@@ -62,11 +62,7 @@ function Notifier(parentNotifier) {
   // when the rate limit is reached.
   _topLevelNotifier = _topLevelNotifier || this;
 
-  var protocol = window.location.protocol;
-  if (protocol.indexOf('http') !== 0) {
-    protocol = 'https:';
-  }
-  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
+  var endpoint = 'https://' + Notifier.DEFAULT_ENDPOINT;
   this.options = {
     enabled: true,
     endpoint: endpoint,
