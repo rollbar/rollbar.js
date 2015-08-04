@@ -431,7 +431,13 @@ describe("window.Rollbar.uncaughtError()", function() {
     var payload = args[0];
 
     expect(payload.data.body.trace.exception['class']).to.equal('ReferenceError');
-    expect(payload.data.body.trace.extra._wrappedSource).to.contain('var a = b;');
+
+    // Only check for wraped source code for > IE 8
+    // NOTE: Just hacking this together for now
+    var lameIECheck = navigator.userAgent.toLowerCase();
+    if (lameIECheck.indexOf('msie 8') === -1 && lameIECheck.indexOf('msie 9') === -1) {
+      expect(payload.data.body.trace.extra._wrappedSource).to.contain('var a = b;');
+    }
 
     window.Rollbar._enqueuePayload.restore();
 
