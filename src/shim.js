@@ -83,21 +83,7 @@ Rollbar.init = function(window, config) {
 
 
 Rollbar.prototype.loadFull = function(window, document, immediate, config, callback) {
-  var self = this;
-  // Create the main rollbar script loader
-  var loader = _wrapInternalErr(function() {
-    var s = document.createElement("script");
-    var f = document.getElementsByTagName("script")[0];
-    s.src = config.rollbarJsUrl;
-    s.async = !immediate;
-
-    // NOTE(cory): this may not work for some versions of IE
-    s.onload = handleLoadErr;
-
-    f.parentNode.insertBefore(s, f);
-  }, this.logger);
-
-  var handleLoadErr = _wrapInternalErr(function() {
+  var onload = function () {
     var err;
     if (window._rollbarPayloadQueue === undefined) {
       // rollbar.js did not load correctly, call any queued callbacks
@@ -126,21 +112,20 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
     if (typeof callback === 'function') {
       callback(err);
     }
-  }, this.logger);
+  };
 
-  _wrapInternalErr(function() {
-    if (immediate) {
-      loader();
-    } else {
-      // Have the window load up the script ASAP
-      if (window.addEventListener) {
-        window.addEventListener("load", loader, false);
-      } else { 
-        window.attachEvent("onload", loader);
-      }
-    }
-  }, this.logger)();
+  // Load the full rollbar.js source
+  var s = document.createElement("script");
+  var f = document.getElementsByTagName("script")[0];
+  s.src = config.rollbarJsUrl;
+  s.async = !immediate;
+
+  // NOTE(cory): this may not work for some versions of IE
+  s.onload = _wrapInternalErr(onload, this.logger);
+
+  f.parentNode.insertBefore(s, f);
 };
+
 
 Rollbar.prototype.wrap = function(f, context) {
   try {
