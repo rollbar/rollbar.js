@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.4.4**
+- Remove the `window.onload` event handler from the snippet and just create the script tag for the full rollbar.js source directly. (pr#120)
+
 **v1.4.3**
 - Fixed a bug that would cause the notifier to crash when run in a Selenium test. (pr#117)
 - Force the notifier to always use HTTPS when communicating with api.rollbar.com. (pr#116)
