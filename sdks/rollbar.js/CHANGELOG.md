@@ -1,7 +1,8 @@
-## Upgrade Instructions
-- For [v1.1.x](#v10x-to-v11x)
-
 # Change Log
+
+**v1.4.3**
+- Fixed a bug that would cause the notifier to crash when run in a Selenium test. (pr#117)
+- Force the notifier to always use HTTPS when communicating with api.rollbar.com. (pr#116)
 
 **v1.4.2**
 - Fixed a bug that occurred in FF when Rollbar logged an internal error or if verbose mode was turned on. (pr#105)

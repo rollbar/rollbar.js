@@ -215,7 +215,7 @@
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.4.2");
+	Notifier.NOTIFIER_VERSION = ("1.4.3");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -254,11 +254,7 @@
 	  // when the rate limit is reached.
 	  _topLevelNotifier = _topLevelNotifier || this;
 	
-	  var protocol = window.location.protocol;
-	  if (protocol.indexOf('http') !== 0) {
-	    protocol = 'https:';
-	  }
-	  var endpoint = protocol + '//' + Notifier.DEFAULT_ENDPOINT;
+	  var endpoint = 'https://' + Notifier.DEFAULT_ENDPOINT;
 	  this.options = {
 	    enabled: true,
 	    endpoint: endpoint,
@@ -996,50 +992,56 @@
 	});
 	
 	Notifier.prototype.wrap = function(f, context) {
-	  var _this = this;
-	  var ctxFn;
-	  if (typeof context === 'function') {
-	    ctxFn = context;
-	  } else {
-	    ctxFn = function() { return context || {}; };
-	  }
+	  try {
+	    var _this = this;
+	    var ctxFn;
+	    if (typeof context === 'function') {
+	      ctxFn = context;
+	    } else {
+	      ctxFn = function() { return context || {}; };
+	    }
 	
-	  if (typeof f !== 'function') {
-	    return f;
-	  }
+	    if (typeof f !== 'function') {
+	      return f;
+	    }
 	
-	  // If the given function is already a wrapped function, just
-	  // return it instead of wrapping twice
-	  if (f._isWrap) {
-	    return f;
-	  }
+	    // If the given function is already a wrapped function, just
+	    // return it instead of wrapping twice
+	    if (f._isWrap) {
+	      return f;
+	    }
 	
-	  if (!f._wrapped) {
-	    f._wrapped = function () {
-	      try {
-	        return f.apply(this, arguments);
-	      } catch(e) {
-	        if (!e.stack) {
-	          e._savedStackTrace = error_parser.parse(e);
+	    if (!f._wrapped) {
+	      f._wrapped = function () {
+	        try {
+	          return f.apply(this, arguments);
+	        } catch(e) {
+	          if (!e.stack) {
+	            e._savedStackTrace = error_parser.parse(e);
+	          }
+	          e._rollbarContext = ctxFn() || {};
+	          e._rollbarContext._wrappedSource = f.toString();
+	
+	          window._rollbarWrappedError = e;
+	          throw e;
 	        }
-	        e._rollbarContext = ctxFn() || {};
-	        e._rollbarContext._wrappedSource = f.toString();
+	      };
 	
-	        window._rollbarWrappedError = e;
-	        throw e;
-	      }
-	    };
+	      f._wrapped._isWrap = true;
 	
-	    f._wrapped._isWrap = true;
-	
-	    for (var prop in f) {
-	      if (f.hasOwnProperty(prop)) {
-	        f._wrapped[prop] = f[prop];
+	      for (var prop in f) {
+	        if (f.hasOwnProperty(prop)) {
+	          f._wrapped[prop] = f[prop];
+	        }
 	      }
 	    }
-	  }
 	
-	  return f._wrapped;
+	    return f._wrapped;
+	  } catch (e) {
+	    // Try-catch here is to work around issue where wrap() fails when used inside Selenium.
+	    // Return the original function if the wrap fails.
+	    return f;
+	  }
 	};
 	
 	/***** Misc *****/
