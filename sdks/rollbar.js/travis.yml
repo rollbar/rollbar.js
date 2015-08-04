@@ -2,3 +2,10 @@ language: node_js
 node_js:
   before_script:
     - npm install -g grunt-cli
+addons:
+  sauce_connect:
+    username: coryvirok
+    access_key:
+      secure: "e90PJ5c7W8W79pCPusG7pKFLEjsuZyIRfYiroaN4WpsBE8LLQm/yj6Vx06A2z/EQAfr9mwh25DD7YUEUxy1kkOwM1SWeh13ovJEujIzpG+wfEPj9hja2hlZS0Pltz12Cv0be3Mc/7UZVPSQA+t/5iI+xwzXz8uyeOip0fzoOkZ8="
+
+sudo: false
