@@ -1,6 +1,7 @@
 "use strict";
 
 var notifier = require('./notifier');
+var Util = require('./util');
 
 var Notifier = notifier.Notifier;
 // Stub out the wrapped error which is set 
@@ -49,7 +50,7 @@ wrapper.init = function(config, parent) {
 
     // If the parent, probably a shim, stores a oldOnError, use that so we don't
     // send reports twice.
-    if (parent && typeof parent._rollbarOldOnError !== 'undefined') {
+    if (parent && Util.isType(parent._rollbarOldOnError, 'function')) {
       oldOnError = parent._rollbarOldOnError;
     } else {
       oldOnError = window.onerror;

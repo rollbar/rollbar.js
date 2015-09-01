@@ -67,7 +67,7 @@ it("should collect ajax fields", function(done) {
 
   setTimeout(function() {
     var body = mock[0].payload.data.body;
-    expect(body.message.body).to.equal('jQuery ajax error for ' + method);
+    expect(body.message.body).to.equal(statusText);
     expect(body.message.extra.url).to.equal(url);
     expect(body.message.extra.type).to.equal(method);
     expect(body.message.extra.status).to.equal(500);

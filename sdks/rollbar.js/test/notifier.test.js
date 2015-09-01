@@ -434,6 +434,34 @@ describe("Notifier.uncaughtError()", function() {
     done();
   });
 
+  it("should enqueue a payload when a string is thrown", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_enqueuePayload');
+
+    var err;
+    try {
+      throw "Please don't throw strings..."
+    } catch (e) {
+      err = e;
+    }
+    notifier.uncaughtError('testing uncaught error', 'http://foo.com/', 33, 21, err);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var args = call.args;
+
+    expect(args.length).to.be.at.least(3);
+    expect(args[0]).to.be.an('object');
+    expect(args[1]).to.equal(true);
+    expect(args[2]).to.be.an('array');
+    expect(args[2].length).to.be.at.least(6);
+    expect(args[2][1]).to.equal("testing uncaught error");
+    expect(args[2][5]).to.equal("Please don't throw strings...");
+
+    done();
+  });
+
   it("should enqueue a payload with the provided DOMException", function(done) {
     var notifier = new Notifier();
     var spy = sinon.spy(notifier, '_enqueuePayload');
@@ -850,6 +878,35 @@ describe("Notifier.log()", function() {
     expect(err).to.be.equal(e);
     expect(custom).to.be.equal(obj);
     expect(callback).to.be.a('function');
+
+    done();
+  });
+
+  it("should handle a thrown string", function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, "_log");
+
+    var e;
+    try {
+      throw 'Please stop throwing strings';
+    } catch (e2) {
+      e = e2;
+    }
+
+    notifier.log('custom', e);
+
+    expect(spy.called).to.be.true;
+
+    var call = spy.getCall(0);
+    var level = call.args[0];
+    var message = call.args[1];
+    var err = call.args[2];
+    var custom = call.args[3];
+
+    expect(level).to.be.equal('debug');
+    expect(message).to.be.equal('custom');
+    expect(!!err).to.be.equal(false);
+    expect(custom.extraArgs[0]).to.be.equal(e);
 
     done();
   });

@@ -2,6 +2,8 @@
 
 "use strict";
 
+var Util = require('./util');
+
 var RollbarJSON = null;
 
 function setupJSON(JSON) {
@@ -31,7 +33,7 @@ var XHR = {
     return xmlhttp;
   },
   post: function(url, accessToken, payload, callback) {
-    if (typeof payload !== 'object') {
+    if (!Util.isType(payload, 'object')) {
       throw new Error('Expected an object to POST');
     }
     payload = RollbarJSON.stringify(payload);
@@ -48,10 +50,10 @@ var XHR = {
                 // TODO(cory): have the notifier log an internal error on non-200 response codes
                 if (request.status === 200) {
                   callback(null, RollbarJSON.parse(request.responseText));
-                } else if (typeof request.status === "number" &&
+                } else if (Util.isType(request.status, 'number') &&
                             request.status >= 400  && request.status < 600) {
                   // return valid http status codes
-                  callback(new Error(request.status.toString()));
+                  callback(new Error(String(request.status)));
                 } else {
                   // IE will return a status 12000+ on some sort of connection failure,
                   // so we return a blank error
@@ -64,7 +66,7 @@ var XHR = {
               //request members if there is a network error
               //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
               var exc;
-              if (typeof ex === 'object' && ex.stack) {
+              if (ex && ex.stack) {
                 exc = ex;
               } else {
                 exc = new Error(ex);

@@ -118,11 +118,11 @@ describe('Util', function() {
   it("should handle incorrect input to parseUri", function(done) {
     expect(function() {
       Util.parseUri()
-    }).to.throw('Util.parseUri() received invalid input');
+    }).to.throw('received invalid input');
 
     expect(function() {
       Util.parseUri(2)
-    }).to.throw('Util.parseUri() received invalid input');
+    }).to.throw('received invalid input');
 
     done();
   });
@@ -142,11 +142,11 @@ describe('Util', function() {
   it("should handle incorrect input to sanitizeUrl", function(done) {
     expect(function() {
       Util.sanitizeUrl()
-    }).to.throw('Util.sanitizeUrl() received invalid input');
+    }).to.throw('received invalid input');
 
     expect(function() {
       Util.sanitizeUrl(2)
-    }).to.throw('Util.sanitizeUrl() received invalid input');
+    }).to.throw('received invalid input');
 
     done();
   });
