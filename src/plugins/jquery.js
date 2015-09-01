@@ -40,11 +40,6 @@
       return;
     }
 
-    var err;
-    if (thrownError && thrownError.hasOwnProperty('stack')) {
-      err = thrownError;
-    }
-
     var extra = {
       status: status,
       url: url,
@@ -54,7 +49,8 @@
       jqXHR_responseText: jqXHR.responseText,
       jqXHR_statusText: jqXHR.statusText
     };
-    rb.warning('jQuery ajax error for ' + type, extra, err);
+    var msg = thrownError ? thrownError : 'jQuery ajax error for ' + type;
+    rb.warning(msg, extra);
   });
 
   // Wraps functions passed into jQuery's ready() with try/catch to
