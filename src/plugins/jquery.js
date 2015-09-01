@@ -20,7 +20,11 @@
   var logError = function(e) {
     rb.error(e);
     if (window.console) {
-      window.console.log(e.message + ' [reported to Rollbar]');
+      var msg = '[reported to Rollbar]';
+      if (rb.options && !rb.options.enabled) {
+        msg = '[Rollbar not enabled]';
+      }
+      window.console.log(e.message + ' ' + msg);
     }
   };
 
