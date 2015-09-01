@@ -13,8 +13,7 @@ var rollbarConfig = {
   }
 };
 
-var Rollbar = require('./rollbar.umd.nojson.min.js");
-Rollbar.init(rollbarConfig);
+var Rollbar = require('./rollbar.umd.nojson.min.js").init(rollbarConfig);
 ```
 
 2. Report exceptions and messages in your code:
