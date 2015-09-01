@@ -6,5 +6,4 @@ var rollbarConfig = {
   }
 };
 
-var Rollbar = require('../../dist/rollbar.umd.min.js');
-Rollbar.init(rollbarConfig);
+var Rollbar = require('../../dist/rollbar.umd.min.js').init(rollbarConfig);
