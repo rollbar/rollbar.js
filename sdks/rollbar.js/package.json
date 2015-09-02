@@ -5,6 +5,7 @@
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
   },
+  "browser": "dist/rollbar.umd.nojson.min.js",
   "devDependencies": {
     "babel-eslint": "^4.1.1",
     "chai": "~1.8.1",
