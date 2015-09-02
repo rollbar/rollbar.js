@@ -1,5 +1,12 @@
 # Change Log
 
+**v1.5.0**
+- Published rollbar.js to npmjs.com as rollbar-browser. (pr#127)
+- Fixes a bug where thrown non-error objects were not properly handled. (pr#125)
+- Fixes a bug that was logging an incorrect message when the notifier was disabled. (pr#124)
+- Changes were made to the reported message for jQuery AJAX errors. This will cause some existing errors to have a different fingerprint and show up as new errors.
+- Lots of code cleanup and smaller minified file size.
+
 **v1.4.4**
 - Remove the `window.onload` event handler from the snippet and just create the script tag for the full rollbar.js source directly. (pr#120)
 
