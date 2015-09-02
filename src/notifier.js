@@ -8,9 +8,8 @@
 /* globals __DEFAULT_MAX_ITEMS__ */
 /* globals DOMException */
 
-"use strict";
 
-var error_parser = require('./error_parser');
+var errorParser = require('./error_parser');
 var Util = require('./util');
 var xhr = require('./xhr');
 
@@ -21,6 +20,30 @@ function setupJSON(JSON) {
   RollbarJSON = JSON;
   xhr.setupJSON(JSON);
 }
+
+
+function _wrapNotifierFn(fn, ctx) {
+  return function() {
+    var self = ctx || this;
+    try {
+      return fn.apply(self, arguments);
+    } catch (e) {
+      if (self) {
+        self.logger(e);
+      }
+    }
+  };
+}
+
+
+var payloadProcessorTimeout;
+function _notifyPayloadAvailable() {
+  if (!payloadProcessorTimeout) {
+    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
+  }
+}
+
+
 
 // Updated by the build process to match package.json
 Notifier.NOTIFIER_VERSION = __NOTIFIER_VERSION__;
@@ -114,7 +137,6 @@ var NotifierPrototype = Notifier.prototype;
  */
 NotifierPrototype._getLogArgs = function(args) {
   var level = this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL;
-  var ts;
   var message;
   var err;
   var custom;
@@ -145,7 +167,7 @@ NotifierPrototype._getLogArgs = function(args) {
       extraArgs.push(arg);
     } else if (argT === 'error' ||
                arg.stack ||
-               (typeof DOMException !== "undefined" && arg instanceof DOMException)) {
+               (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
       if (err) {
         extraArgs.push(arg);
       } else {
@@ -282,7 +304,7 @@ NotifierPrototype._buildPayload = function(ts, level, message, stackInfo, custom
     request: {
       url: window.location.href,
       query_string: window.location.search,
-      user_ip: "$remote_ip"
+      user_ip: '$remote_ip'
     },
     client: {
       runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
@@ -360,8 +382,11 @@ NotifierPrototype._getBrowserPlugins = function() {
  *    their values normalized as well.
  */
 NotifierPrototype._scrub = function(obj) {
-  function redactQueryParam(match, paramPart, dummy1,
-      dummy2, dummy3, valPart, offset, string) {
+  var scrubFields = this.options.scrubFields;
+  var paramRes = this._getScrubFieldRegexs(scrubFields);
+  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
+
+  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
     return paramPart + Util.redact(valPart);
   }
 
@@ -394,10 +419,6 @@ NotifierPrototype._scrub = function(obj) {
       return tmpV;
     }
   }
-
-  var scrubFields = this.options.scrubFields;
-  var paramRes = this._getScrubFieldRegexs(scrubFields);
-  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
 
   Util.traverse(obj, scrubber);
   return obj;
@@ -471,22 +492,22 @@ NotifierPrototype._messageIsIgnored = function(payload){
     ignoredMessages = this.options.ignoredMessages;
     trace = payload.data.body.trace;
 
-    if(!ignoredMessages || ignoredMessages.length === 0) {
+    if (!ignoredMessages || ignoredMessages.length === 0) {
       return false;
     }
 
-    if(!trace) {
+    if (!trace) {
       return false;
     }
 
     exceptionMessage = trace.exception.message;
 
     len = ignoredMessages.length;
-    for(i = 0; i < len; i++) {
-      rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
+    for (i = 0; i < len; i++) {
+      rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
       messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
 
-      if(messageIsIgnored){
+      if (messageIsIgnored) {
         break;
       }
     }
@@ -573,7 +594,7 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
     this.error('Error while calling custom transform() function. Removing custom transform().', e);
   }
 
-  if (!!this.options.enabled) {
+  if (this.options.enabled) {
     window._rollbarPayloadQueue.push(payloadToSend);
 
     _notifyPayloadAvailable();
@@ -628,7 +649,7 @@ NotifierPrototype._log = function(level, message, err, custom, callback, isUncau
     } else {
       // If we've already calculated the stack trace for the error, use it.
       // This can happen for wrapped errors that don't have a "stack" property.
-      stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
+      stackInfo = err._savedStackTrace ? err._savedStackTrace : errorParser.parse(err);
 
       // Don't report the same error more than once
       if (err === this.lastError) {
@@ -675,8 +696,8 @@ NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo,
     'url': url || '',
     'line': lineNo
   };
-  location.func = error_parser.guessFunctionName(location.url, location.line);
-  location.context = error_parser.gatherContext(location.url, location.line);
+  location.func = errorParser.guessFunctionName(location.url, location.line);
+  location.context = errorParser.gatherContext(location.url, location.line);
   var stack = {
     'mode': 'onerror',
     'message': err ? String(err) : (message || 'uncaught exception'),
@@ -750,7 +771,7 @@ NotifierPrototype.wrap = function(f, context) {
           return f.apply(this, arguments);
         } catch(e) {
           if (!e.stack) {
-            e._savedStackTrace = error_parser.parse(e);
+            e._savedStackTrace = errorParser.parse(e);
           }
           e._rollbarContext = ctxFn() || {};
           e._rollbarContext._wrappedSource = f.toString();
@@ -812,7 +833,7 @@ function _buildPayloadBodyMessage(message, custom) {
 
 
 function _buildPayloadBodyTrace(description, stackInfo, custom) {
-  var guess = _guessErrorClass(stackInfo.message);
+  var guess = errorParser.guessErrorClass(stackInfo.message);
   var className = stackInfo.name || guess[0];
   var message = guess[1];
   var trace = {
@@ -834,7 +855,7 @@ function _buildPayloadBodyTrace(description, stackInfo, custom) {
     var pre;
     var post;
     var contextLength;
-    var i, j, mid;
+    var i, mid;
 
     trace.frames = [];
     for (i = 0; i < stackInfo.stack.length; ++i) {
@@ -890,41 +911,9 @@ function _buildPayloadBodyTrace(description, stackInfo, custom) {
 }
 
 
-function _wrapNotifierFn(fn, ctx) {
-  return function() {
-    var self = ctx || this;
-    try {
-      return fn.apply(self, arguments);
-    } catch (e) {
-      if (self) {
-        self.logger(e);
-      }
-    }
-  };
-}
-
-
-var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
-function _guessErrorClass(errMsg) {
-  if (!errMsg) {
-    return ["Unknown error. There was no error message to display.", ""];
-  }
-  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
-  var errClass = '(unknown)';
-
-  if (errClassMatch) {
-    errClass = errClassMatch[errClassMatch.length - 1];
-    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
-    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
-  }
-  return [errClass, errMsg];
-}
-
-
 /***** Payload processor *****/
 
 
-var payloadProcessorTimeout;
 Notifier.processPayloads = function(immediate) {
   if (immediate) {
     _deferredPayloadProcess();
@@ -934,13 +923,6 @@ Notifier.processPayloads = function(immediate) {
 
   _notifyPayloadAvailable();
 };
-
-
-function _notifyPayloadAvailable() {
-  if (!payloadProcessorTimeout) {
-    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
-  }
-}
 
 
 function _deferredPayloadProcess() {

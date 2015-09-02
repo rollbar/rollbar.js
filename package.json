@@ -8,6 +8,8 @@
   "devDependencies": {
     "chai": "~1.8.1",
     "error-stack-parser": "git://github.com/rollbar/error-stack-parser.git",
+    "eslint": "^0.23.0",
+    "eslint-loader": "^0.14.0",
     "express": "~3.4.7",
     "grunt": "~0.4.2",
     "grunt-blanket-mocha": "^0.4.1",
@@ -32,6 +34,7 @@
     "node-libs-browser": "^0.5.2",
     "phantomjs": "1.9.7-15",
     "script-loader": "0.6.1",
+    "strict-loader": "^0.1.2",
     "semver": "~2.2.1",
     "sinon": "~1.7.3",
     "stackframe": "^0.2.2",

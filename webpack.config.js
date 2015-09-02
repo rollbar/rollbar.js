@@ -1,6 +1,8 @@
 var extend = require('util')._extend;
-var webpack = require('webpack');
+var path = require('path');
 var semver = require('semver');
+var webpack = require('webpack');
+
 var pkg = require('./package.json');
 
 var semVer = semver.parse(pkg.version);
@@ -55,6 +57,15 @@ var snippetConfig = {
   },
   plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "strict!eslint",
+        exclude: [/node_modules/, /vendor/]
+      }
+    ],
+  }
 };
 
 var pluginConfig = {
@@ -68,6 +79,15 @@ var pluginConfig = {
   },
   plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "strict!eslint",
+        exclude: [/node_modules/, /vendor/]
+      }
+    ],
+  }
 };
 
 var testsConfig = {
@@ -88,10 +108,22 @@ var testsConfig = {
   output: {
     path: 'test/',
     filename: '[name].bundle.js',
+  },
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "strict!eslint",
+        exclude: [/node_modules/, /vendor/, /lib/]
+      }
+    ],
   }
 };
 
 var vanillaConfigBase = {
+  eslint: {
+    configFile: path.resolve(__dirname, ".eslintrc")
+  },
   entry: {
     'rollbar': './src/bundles/rollbar.js'
   },
@@ -100,10 +132,22 @@ var vanillaConfigBase = {
   },
   plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
-  devtool: 'hidden-source-map'
+  devtool: 'hidden-source-map',
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "strict!eslint",
+        exclude: [/node_modules/, /vendor/]
+      }
+    ],
+  }
 };
 
 var UMDConfigBase = {
+  eslint: {
+    configFile: path.resolve(__dirname, ".eslintrc")
+  },
   entry: {
     'rollbar.umd': ['./src/bundles/rollbar.js']
   },
@@ -112,7 +156,16 @@ var UMDConfigBase = {
     libraryTarget: 'umd'
   },
   failOnError: true,
-  devtool: 'hidden-source-map'
+  devtool: 'hidden-source-map',
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: "strict!eslint",
+        exclude: [/node_modules/, /vendor/]
+      }
+    ],
+  }
 };
 
 var config = [snippetConfig, pluginConfig, testsConfig];

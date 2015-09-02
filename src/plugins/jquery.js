@@ -1,3 +1,7 @@
+/* globals jQuery */
+/* globals __JQUERY_PLUGIN_VERSION__ */
+
+
 (function(jQuery, window, document) {
 
   var rb = window.Rollbar;

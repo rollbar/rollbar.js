@@ -1,20 +1,29 @@
+/* globals chai */
+/* globals describe */
+/* globals it */
+/* globals sinon */
+
+
 var shim = require('../src/shim.js');
 var snippetCallback = require('../src/snippet_callback');
 
 var expect = chai.expect;
 var Rollbar = shim.Rollbar;
 
-var config = {
+
+var rollbarConfig = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
 };
 
-var origRollbar = Rollbar.init(window, config);
 
-describe("Script load", function() {
-  describe("Shim", function() {
-    it("should be connected to window.Rollbar", function(done) {
-      var callback = snippetCallback(origRollbar, config);
+var origRollbar = Rollbar.init(window, rollbarConfig);
+
+
+describe('Script load', function() {
+  describe('Shim', function() {
+    it('should be connected to window.Rollbar', function(done) {
+      var callback = snippetCallback(origRollbar, rollbarConfig);
       origRollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
 
       function test() {
@@ -28,7 +37,7 @@ describe("Script load", function() {
       test();
     });
 
-    it("should configure window.Rollbar via shim.configure()", function(done) {
+    it('should configure window.Rollbar via shim.configure()', function(done) {
 
       var spy = sinon.spy(window.Rollbar, 'configure');
       var config = {test: 'config'};
@@ -45,7 +54,7 @@ describe("Script load", function() {
       done();
     });
 
-    it("should create a child scope of window.Rollbar via shim.scope()", function(done) {
+    it('should create a child scope of window.Rollbar via shim.scope()', function(done) {
 
       var scope = origRollbar.scope({more: 'config'});
       expect(scope.parentNotifier).to.equal(window.Rollbar);
@@ -57,7 +66,6 @@ describe("Script load", function() {
     it("should call the shim's log method", function(done) {
       // Change origRollbar.log to something else then call window.Rollbar.log()
       // and verify it works. (then reset origRollbar._log.)
-      
       var spy = sinon.spy(origRollbar, 'log');
 
       window.Rollbar.log('testing');
@@ -66,7 +74,7 @@ describe("Script load", function() {
       done();
     });
 
-    it("should create a payload when calling shim.error()", function(done) {
+    it('should create a payload when calling shim.error()', function(done) {
       var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
       var err;
 
@@ -96,10 +104,9 @@ describe("Script load", function() {
 });
 
 
-describe("window.Rollbar.configure()", function() {
-  describe("window.Rollbar.checkIgnore()", function() {
-    it("should be called with the correct arguments", function(done) {
-      
+describe('window.Rollbar.configure()', function() {
+  describe('window.Rollbar.checkIgnore()', function() {
+    it('should be called with the correct arguments', function(done) {
       // ignore everything
       var spy = sinon.stub().returns(true);
       var notifier = window.Rollbar.scope();
@@ -116,7 +123,7 @@ describe("window.Rollbar.configure()", function() {
       notifier.error('error msg', err, extra);
 
       expect(spy.called).to.equal(true);
-      
+
       var call = spy.getCall(0);
       var args = call.args;
 
@@ -133,9 +140,9 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
-    it("should not allow ReferenceErrors", function(done) {
+    it('should not allow ReferenceErrors', function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
         return isReferenceErr;
       }
 
@@ -147,7 +154,9 @@ describe("window.Rollbar.configure()", function() {
 
       var refErr;
       try {
+        /* eslint-disable no-undef */
         poop();
+        /* eslint-enable no-undef */
       } catch (e) {
         refErr = e;
       }
@@ -162,9 +171,9 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
-    it("should only allow ReferenceErrors", function(done) {
+    it('should only allow ReferenceErrors', function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
         return !isReferenceErr;
       }
 
@@ -177,7 +186,7 @@ describe("window.Rollbar.configure()", function() {
       var err;
       var a;
       try {
-        a['asdf'] = "hello";
+        a.asdf = 'hello';
       } catch (e) {
         err = e;
       }
@@ -186,20 +195,23 @@ describe("window.Rollbar.configure()", function() {
 
       var refErr;
       try {
+        /* eslint-disable no-undef */
         poop();
+        /* eslint-enable no-undef */
       } catch (e) {
         refErr = e;
       }
 
       notifier.error(refErr);
       expect(spy.called).to.equal(true);
+      expect(window._rollbarPayloadQueue.length).to.equal(beforePayloadLength);
 
       window._rollbarPayloadQueue.push.restore();
 
       done();
     });
 
-    it("should be available for child scopes", function(done) {
+    it('should be available for child scopes', function(done) {
       // ignore everything
       var spy = sinon.stub().returns(true);
       var notifier = window.Rollbar.scope();
@@ -213,7 +225,7 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
-    it("should not be overwritten by child scopes", function(done) {
+    it('should not be overwritten by child scopes', function(done) {
       // ignore everything
       var spy = sinon.stub().returns(true);
       var notifier = window.Rollbar.scope();
@@ -230,7 +242,7 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
-    it("should be disabled if custom checkIgnore() throws an error", function(done) {
+    it('should be disabled if custom checkIgnore() throws an error', function(done) {
       var notifier = window.Rollbar.scope();
       var spy = sinon.stub().throws(new Error('intentional'));
       var prev = notifier.options.checkIgnore;
@@ -251,8 +263,8 @@ describe("window.Rollbar.configure()", function() {
     });
   });
 
-  describe("Reconfigure", function() {
-    it("should not change child scopes", function(done) {
+  describe('Reconfigure', function() {
+    it('should not change child scopes', function(done) {
 
       var child = window.Rollbar.scope();
       window.Rollbar.configure({itemsPerMinute: 333});
@@ -264,8 +276,8 @@ describe("window.Rollbar.configure()", function() {
     });
   });
 
-  describe("window.Rollbar.log()", function() {
-    it("should respect default level", function(done) {
+  describe('window.Rollbar.log()', function() {
+    it('should respect default level', function(done) {
 
       var spy = sinon.spy(window.Rollbar, '_log');
       window.Rollbar.configure({logLevel: 'critical'});
@@ -277,7 +289,7 @@ describe("window.Rollbar.configure()", function() {
       done();
     });
 
-    it("should pass along custom fingerprint", function(done) {
+    it('should pass along custom fingerprint', function(done) {
 
       var fingerprint = 'XXXYYYZZZ';
       var notifier = window.Rollbar.scope({fingerprint: fingerprint});
@@ -294,8 +306,8 @@ describe("window.Rollbar.configure()", function() {
 });
 
 
-describe("window.Rollbar.log()", function() {
-  it("should create a valid payload and put onto window._rollbarPayloadQueue", function(done) {
+describe('window.Rollbar.log()', function() {
+  it('should create a valid payload and put onto window._rollbarPayloadQueue', function(done) {
     var pushSpy = sinon.spy(window._rollbarPayloadQueue, 'push');
 
     window.Rollbar.error('hello world');
@@ -323,7 +335,7 @@ describe("window.Rollbar.log()", function() {
     done();
   });
 
-  it("should put payloads into window._rollbarPayloadQueue in order", function(done) {
+  it('should put payloads into window._rollbarPayloadQueue in order', function(done) {
     var pushSpy = sinon.spy(window._rollbarPayloadQueue, 'push');
     var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
 
@@ -333,7 +345,7 @@ describe("window.Rollbar.log()", function() {
 
     expect(spy.called).to.equal(true);
     expect(pushSpy.called).to.equal(true);
-    
+
     var call1 = spy.getCall(0);
     var call2 = spy.getCall(1);
     var call3 = spy.getCall(2);
@@ -357,8 +369,8 @@ describe("window.Rollbar.log()", function() {
   });
 });
 
-describe("window.Rollbar.uncaughtError()", function() {
-  it("should catch uncaught errors", function(done) {
+describe('window.Rollbar.uncaughtError()', function() {
+  it('should catch uncaught errors', function(done) {
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
       shim._rollbarWindowOnError(window.Rollbar, null, args);
@@ -367,7 +379,9 @@ describe("window.Rollbar.uncaughtError()", function() {
     var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
 
     setTimeout(function() {
+      /* eslint-disable no-undef, no-unused-vars */
       var a = b;
+      /* eslint-enable no-undef, no-unused-vars */
     }, 10);
 
     setTimeout(function() {
@@ -397,7 +411,7 @@ describe("window.Rollbar.uncaughtError()", function() {
     }, 20);
   });
 
-  it("should catch uncaught errors in event listeners and report", function(done) {
+  it('should catch uncaught errors in event listeners and report', function(done) {
     // Bypass on firefox for now due to automated event
     // firing and window.onerror not working together
     if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
@@ -410,13 +424,15 @@ describe("window.Rollbar.uncaughtError()", function() {
     };
 
     var div = document.getElementById('event-div');
-    div.addEventListener('click', function(e) {
+    div.addEventListener('click', function() {
+      /* eslint-disable no-undef, no-unused-vars */
       var a = b;
+      /* eslint-enable no-undef, no-unused-vars */
     }, false);
 
-    var event = document.createEvent("MouseEvent");
+    var event = document.createEvent('MouseEvent');
 
-    event.initMouseEvent("click", true, true, window, null,
+    event.initMouseEvent('click', true, true, window, null,
             0, 0, 0, 0, false, false, false, false, 0, null);
 
     var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
@@ -430,7 +446,7 @@ describe("window.Rollbar.uncaughtError()", function() {
 
     var payload = args[0];
 
-    expect(payload.data.body.trace.exception['class']).to.equal('ReferenceError');
+    expect(payload.data.body.trace.exception.class).to.equal('ReferenceError');
 
     // Only check for wraped source code for > IE 8
     // NOTE: Just hacking this together for now

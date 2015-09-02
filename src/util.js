@@ -1,8 +1,45 @@
-"use strict";
+var parseUriOptions = {
+  strictMode: false,
+    key: [
+    'source',
+    'protocol',
+    'authority',
+    'userInfo',
+    'user',
+    'password',
+    'host',
+    'port',
+    'relative',
+    'path',
+    'directory',
+    'file',
+    'query',
+    'anchor'
+  ],
+    q: {
+    name: 'queryKey',
+      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+  },
+  parser: {
+    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+  }
+};
+
+
+function typeName(obj) {
+  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+}
+
+
+function isType(obj, name) {
+  return typeName(obj) === name;
+}
+
 
 // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
 function merge() {
-  var options, name, src, copy, copyIsArray, clone,
+  var options, name, src, targetCopy, copyIsArray, clone,
     target = arguments[0] || {},
     i = 1,
     length = arguments.length,
@@ -25,15 +62,15 @@ function merge() {
         }
 
         src = target[name];
-        copy = options[name];
+        targetCopy = options[name];
 
         // Prevent never-ending loop
-        if (target === copy) {
+        if (target === targetCopy) {
           continue;
         }
 
         // Recurse if we're merging plain objects or arrays
-        if (deep && copy && (isType(copy, 'object') || (copyIsArray = (isType(copy, 'array'))))) {
+        if (deep && targetCopy && (isType(targetCopy, 'object') || (copyIsArray = (isType(targetCopy, 'array'))))) {
           if (copyIsArray) {
             copyIsArray = false;
             // Overwrite the source with a copy of the array to merge in
@@ -43,11 +80,11 @@ function merge() {
           }
 
           // Never move original objects, clone them
-          target[name] = Util.merge(clone, copy);
+          target[name] = merge(clone, targetCopy);
 
           // Don't bring in undefined values
-        } else if (copy !== undefined) {
-          target[name] = copy;
+        } else if (targetCopy !== undefined) {
+          target[name] = targetCopy;
         }
       }
     }
@@ -57,26 +94,28 @@ function merge() {
   return target;
 }
 
+
 function copy(obj) {
   var dest, tName = typeName(obj);
   dest = {object: {}, array: []}[tName];
 
-  Util.merge(dest, obj);
+  merge(dest, obj);
   return dest;
 }
 
+
 function parseUri(str) {
   if (!isType(str, 'string')) {
-    throw new Error('Util.parseUri() received invalid input');
+    throw new Error('received invalid input');
   }
 
-  var o = Util.parseUriOptions;
-  var m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
+  var o = parseUriOptions;
+  var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
   var uri = {};
   var i = 14;
 
   while (i--) {
-    uri[o.key[i]] = m[i] || "";
+    uri[o.key[i]] = m[i] || '';
   }
 
   uri[o.q.name] = {};
@@ -89,8 +128,9 @@ function parseUri(str) {
   return uri;
 }
 
+
 function sanitizeUrl(url) {
-  var baseUrlParts = Util.parseUri(url);
+  var baseUrlParts = parseUri(url);
   // remove a trailing # if there is no anchor
   if (baseUrlParts.anchor === '') {
     baseUrlParts.source = baseUrlParts.source.replace('#', '');
@@ -99,6 +139,7 @@ function sanitizeUrl(url) {
   url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
   return url;
 }
+
 
 function traverse(obj, func) {
   var k;
@@ -126,7 +167,7 @@ function traverse(obj, func) {
     isObj = isType(v, 'object');
     isArray = isType(v, 'array');
     if (isObj || isArray) {
-      obj[k] = Util.traverse(v, func);
+      obj[k] = traverse(v, func);
     } else {
       obj[k] = func(k, v);
     }
@@ -135,10 +176,12 @@ function traverse(obj, func) {
   return obj;
 }
 
+
 function redact(val) {
   val = String(val);
   return new Array(val.length + 1).join('*');
 }
+
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
@@ -151,37 +194,19 @@ function uuid4() {
   return uuid;
 }
 
-function typeName(obj) {
-  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
-}
-
-function isType(obj, name) {
-  return typeName(obj) === name;
-}
 
 var Util = {
-  parseUriOptions: {
-    strictMode: false,
-    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-    q:   {
-      name:   "queryKey",
-      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-    },
-    parser: {
-      strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-      loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-    }
-  },
-
-  merge: merge,
   copy: copy,
+  isType: isType,
+  merge: merge,
   parseUri: parseUri,
+  parseUriOptions: parseUriOptions,
+  redact: redact,
   sanitizeUrl: sanitizeUrl,
   traverse: traverse,
-  redact: redact,
-  uuid4: uuid4,
   typeName: typeName,
-  isType: isType
+  uuid4: uuid4
 };
+
 
 module.exports = Util;

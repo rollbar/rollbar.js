@@ -1,17 +1,23 @@
+/* globals chai */
+/* globals describe */
+/* globals it */
+
+
+var expect = chai.expect;
 var xhr = require('../src/xhr');
 var XHR = xhr.XHR;
-var expect = chai.expect;
+
 
 describe('XHR', function() {
   xhr.setupJSON(JSON);
 
-  it("should get an XMLHttp object", function(done) {
+  it('should get an XMLHttp object', function(done) {
     var request = XHR.createXMLHTTPObject();
     expect(request).to.not.equal(false);
     done();
   });
 
-  it("should execute a simple post", function(done) {
+  it('should execute a simple post', function(done) {
     var url = 'http://localhost:3000/api';
     var accessToken = 'abc123';
     var payload = {};
@@ -25,13 +31,13 @@ describe('XHR', function() {
     });
   });
 
-  it("should only accept an object to post", function(done) {
+  it('should only accept an object to post', function(done) {
     var url = 'http://localhost:3000/api';
     var accessToken = 'abc123';
     var payload = '{}';
 
     function test() {
-      XHR.post(url, accessToken, payload, function(err, response) {})
+      XHR.post(url, accessToken, payload, function() {});
     }
     expect(test).to.throw(Error);
 

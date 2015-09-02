@@ -1,23 +1,29 @@
+/* globals chai */
+/* globals describe */
+/* globals it */
+/* globals sinon */
+
 var Rollbar = require('../src/shim.js').Rollbar;
-var notifiersrc = require('../src/notifier');
-var xhr = require('../src/xhr');
-var XHR = xhr.XHR;
-var Notifier = notifiersrc.Notifier;
+var Notifier = require('../src/notifier').Notifier;
+var XHR = require('../src/xhr').XHR;
+
 var expect = chai.expect;
+
 
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
 };
+
+
 Rollbar.init(window, config);
 
 
 /*
  * Notifier default rate limits
  */
-
-describe("Notifier default rate limits", function() {
-  it("should respect itemsPerMinute defaults", function(done) {
+describe('Notifier default rate limits', function() {
+  it('should respect itemsPerMinute defaults', function(done) {
     var xhrPostStub = sinon.stub(XHR, 'post');
     var notifier = new Notifier();
 

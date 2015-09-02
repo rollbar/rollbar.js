@@ -1,5 +1,3 @@
-"use strict";
-
 module.exports = function(shim, _config) {
   return function(err) {
     if (err) {

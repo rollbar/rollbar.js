@@ -1,8 +1,13 @@
+/* globals chai */
+/* globals describe */
+/* globals it */
+
+
 var Util = require('../src/util.js');
 var expect = chai.expect;
 
 describe('Util', function() {
-  it("should merge two objects properly", function(done) {
+  it('should merge two objects properly', function(done) {
     var object1 = {a: 'b', c: {d: 1}, l: [1, 2, 3]};
     var object2 = {e: 'f', c: {h: 'i'}, g: {h: 1}};
 
@@ -29,7 +34,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should replace arrays", function(done) {
+  it('should replace arrays', function(done) {
     var object1 = {a: 'b', c: [1, 2, 3]};
     var object2 = {c: ['a']};
 
@@ -42,7 +47,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should deep copy an object properly", function(done) {
+  it('should deep copy an object properly', function(done) {
     var object = {a: 'b', c: {d: 1}, l: [1, 2, {f: 'g'}]};
     var copy = Util.copy(object);
 
@@ -56,9 +61,9 @@ describe('Util', function() {
     // Make sure objects within arrays are deep copied
     expect(object.l[2]).to.not.equal(copy.l[2]);
 
-    object.l[2]['f'] = 'h';
-    expect(object.l[2]['f']).to.equal('h');
-    expect(copy.l[2]['f']).to.equal('g');
+    object.l[2].f = 'h';
+    expect(object.l[2].f).to.equal('h');
+    expect(copy.l[2].f).to.equal('g');
 
     object.l.push('a');
     // Make sure changes to a nested object/array in the source does not affect the copy
@@ -67,7 +72,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should deep copy an array properly", function(done) {
+  it('should deep copy an array properly', function(done) {
     var array = [{a: 'b'}, {c: {d: 'e'}}, 2, [{m: 'n'}, 2]];
     var copy = Util.copy(array);
 
@@ -78,7 +83,7 @@ describe('Util', function() {
     array[2] = 3;
     expect(copy[2]).to.equal(2);
 
-    array[0]['a'] = {o: 3};
+    array[0].a = {o: 3};
     expect(array).to.not.deep.equal(copy);
 
     // Make sure objects within arrays are deep copied
@@ -91,7 +96,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should parse a URI properly", function(done) {
+  it('should parse a URI properly', function(done) {
     var uri = 'http://usr:pwd@www.test.com:81/dir/dir.2/index.htm?q1=0&&test1&test2=value#top';
 
     var parsed = Util.parseUri(uri);
@@ -115,19 +120,19 @@ describe('Util', function() {
     done();
   });
 
-  it("should handle incorrect input to parseUri", function(done) {
+  it('should handle incorrect input to parseUri', function(done) {
     expect(function() {
-      Util.parseUri()
+      Util.parseUri();
     }).to.throw('received invalid input');
 
     expect(function() {
-      Util.parseUri(2)
+      Util.parseUri(2);
     }).to.throw('received invalid input');
 
     done();
   });
 
-  it("should sanitize a URL properly", function(done) {
+  it('should sanitize a URL properly', function(done) {
     var url = 'http://usr:pwd@www.test.com:81/dir/dir.2/index.htm?q1=0&&test1&test2=value#top';
     var sanitized = Util.sanitizeUrl(url);
     expect(sanitized).to.equal('http://usr:pwd@www.test.com:81/dir/dir.2/index.htm#top');
@@ -139,19 +144,19 @@ describe('Util', function() {
     done();
   });
 
-  it("should handle incorrect input to sanitizeUrl", function(done) {
+  it('should handle incorrect input to sanitizeUrl', function(done) {
     expect(function() {
-      Util.sanitizeUrl()
+      Util.sanitizeUrl();
     }).to.throw('received invalid input');
 
     expect(function() {
-      Util.sanitizeUrl(2)
+      Util.sanitizeUrl(2);
     }).to.throw('received invalid input');
 
     done();
   });
 
-  it("should traverse all keys of an object", function(done) {
+  it('should traverse all keys of an object', function(done) {
     var obj = {
       a: 'a',
       b: 'b',
@@ -169,7 +174,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should traverse all keys of a nested object", function(done) {
+  it('should traverse all keys of a nested object', function(done) {
     var obj = {
       a: 'a',
       b: 'b',
@@ -197,7 +202,7 @@ describe('Util', function() {
     done();
   });
 
-  it("should redact strings", function(done) {
+  it('should redact strings', function(done) {
     expect(Util.redact('asdf')).to.equal('****');
     expect(Util.redact('')).to.equal('');
     expect(Util.redact(' ')).to.equal('*');
@@ -207,12 +212,11 @@ describe('Util', function() {
     expect(Util.redact('asdf\nasdf')).to.equal('*********');
     expect(Util.redact('√')).to.equal('*');
     expect(Util.redact(String('hello'))).to.equal('*****');
-    expect(Util.redact(new String('hello'))).to.equal('*****');
 
     done();
   });
 
-  it("should redact ints", function(done) {
+  it('should redact ints', function(done) {
     expect(Util.redact(1)).to.equal('*');
     expect(Util.redact(100)).to.equal('***');
     expect(Util.redact(0)).to.equal('*');
@@ -220,12 +224,11 @@ describe('Util', function() {
     expect(Util.redact(NaN)).to.equal('***');
     expect(Util.redact(parseInt('33'))).to.equal('**');
     expect(Util.redact(Number(33))).to.equal('**');
-    expect(Util.redact(new Number(33))).to.equal('**');
 
     done();
   });
 
-  it("should redact arrays", function(done) {
+  it('should redact arrays', function(done) {
     expect(Util.redact([1, 2, 3])).to.equal('*****');
     expect(Util.redact([])).to.equal('');
     expect(Util.redact(new Array(5))).to.equal('****');
@@ -233,14 +236,13 @@ describe('Util', function() {
     done();
   });
 
-  it("should redact objects", function(done) {
-    // {} -> "[object Object]" -> "***************"
-    var redactedObj = "***************";
+  it('should redact objects', function(done) {
+    // {} -> '[object Object]' -> '***************'
+    var redactedObj = '***************';
     expect(Util.redact({})).to.equal(redactedObj);
-    expect(Util.redact({1:2})).to.equal(redactedObj);
-    expect(Util.redact({1:[3, 2, 1]})).to.equal(redactedObj);
-    expect(Util.redact({hello:[3, 2, 1]})).to.equal(redactedObj);
-    expect(Util.redact(new Object())).to.equal(redactedObj);
+    expect(Util.redact({1: 2})).to.equal(redactedObj);
+    expect(Util.redact({1: [3, 2, 1]})).to.equal(redactedObj);
+    expect(Util.redact({hello: [3, 2, 1]})).to.equal(redactedObj);
 
     // null is an object, (typeof null === 'object')... how silly is that?
     expect(Util.redact(null)).to.equal('****');

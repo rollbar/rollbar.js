@@ -11,6 +11,20 @@
     <div id="mesages"></div>
     <div id="fixtures"></div>
 
+    <script>
+      var x;
+      try {
+        try {
+          throw new Error('halp');
+        } catch (e2) {
+          throw e2;
+        }
+      } catch (e) {
+        x = e;
+      }
+    </script>
+
     <script src="./json.bundle.js"></script>
+
   </body>
 </html>
