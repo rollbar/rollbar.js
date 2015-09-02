@@ -128,14 +128,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-express');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-bumpup');
   grunt.loadNpmTasks('grunt-tagrelease');
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', ['jshint', 'webpack']);
+  grunt.registerTask('build', ['webpack']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   var testjobs = ['webpack', 'express'];

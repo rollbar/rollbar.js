@@ -1,7 +1,5 @@
 /* globals ActiveXObject */
 
-"use strict";
-
 var Util = require('./util');
 
 var RollbarJSON = null;
@@ -12,10 +10,18 @@ function setupJSON(JSON) {
 
 var XHR = {
   XMLHttpFactories: [
-      function () {return new XMLHttpRequest();},
-      function () {return new ActiveXObject("Msxml2.XMLHTTP");},
-      function () {return new ActiveXObject("Msxml3.XMLHTTP");},
-      function () {return new ActiveXObject("Microsoft.XMLHTTP");}
+      function () {
+        return new XMLHttpRequest();
+      },
+      function () {
+        return new ActiveXObject('Msxml2.XMLHTTP');
+      },
+      function () {
+        return new ActiveXObject('Msxml3.XMLHTTP');
+      },
+      function () {
+        return new ActiveXObject('Microsoft.XMLHTTP');
+      }
   ],
   createXMLHTTPObject: function() {
     var xmlhttp = false;
@@ -23,12 +29,14 @@ var XHR = {
     var i;
     var numFactories = factories.length;
     for (i = 0; i < numFactories; i++) {
+      /* eslint-disable no-empty */
       try {
         xmlhttp = factories[i]();
         break;
       } catch (e) {
         // pass
       }
+      /* eslint-enable no-empty */
     }
     return xmlhttp;
   },
@@ -42,7 +50,7 @@ var XHR = {
     if (request) {
       try {
         try {
-          var onreadystatechange = function(args) {
+          var onreadystatechange = function() {
             try {
               if (onreadystatechange && request.readyState === 4) {
                 onreadystatechange = undefined;
@@ -51,7 +59,7 @@ var XHR = {
                 if (request.status === 200) {
                   callback(null, RollbarJSON.parse(request.responseText));
                 } else if (Util.isType(request.status, 'number') &&
-                            request.status >= 400  && request.status < 600) {
+                            request.status >= 400 && request.status < 600) {
                   // return valid http status codes
                   callback(new Error(String(request.status)));
                 } else {
@@ -84,16 +92,16 @@ var XHR = {
           request.send(payload);
         } catch (e1) {
           // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
-          if (typeof XDomainRequest !== "undefined") {
-            var ontimeout = function(args) {
+          if (typeof XDomainRequest !== 'undefined') {
+            var ontimeout = function() {
               callback(new Error());
             };
 
-            var onerror = function(args) {
+            var onerror = function() {
               callback(new Error());
             };
 
-            var onload = function(args) {
+            var onload = function() {
               callback(null, RollbarJSON.parse(request.responseText));
             };
 

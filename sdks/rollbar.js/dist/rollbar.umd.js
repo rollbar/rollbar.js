@@ -61,13 +61,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* globals __USE_JSON__ */
-	/* globals JSON */
+	'use strict';
 	
-	"use strict";
+	/* globals __USE_JSON__ */
+	
 	
 	var globalnotifier = __webpack_require__(2);
 	var notifier = __webpack_require__(3);
+	
 	
 	function setupJSON() {
 	  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
@@ -86,11 +87,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  globalnotifier.setupJSON(JSONObject);
 	}
 	
+	
 	setupJSON();
+	
 	
 	var config = window._rollbarConfig;
 	var alias = config && config.globalAlias || 'Rollbar';
 	var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
+	
 	
 	/* We must not initialize the full notifier here if the
 	 * shim is loaded, snippet_callback will do that for us
@@ -110,18 +114,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	var notifier = __webpack_require__(3);
 	var Util = __webpack_require__(7);
 	
 	var Notifier = notifier.Notifier;
-	// Stub out the wrapped error which is set 
+	// Stub out the wrapped error which is set
 	window._rollbarWrappedError = null;
 	
-	function setupJSON(JSON) {
-	  notifier.setupJSON(JSON);
-	}
 	
 	// Global window.onerror handler
 	function _rollbarWindowOnError(client, old, args) {
@@ -135,6 +136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    old.apply(window, args);
 	  }
 	}
+	
 	
 	function _extendListenerPrototype(client, prototype) {
 	  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
@@ -150,11 +152,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 	
+	
 	// Add an init() method to do the same things that the shim would do
 	var wrapper = {};
 	wrapper.init = function(config, parent) {
-	  var notifier = new Notifier(parent);
-	  notifier.configure(config);
+	  var client = new Notifier(parent);
+	  client.configure(config);
 	
 	  if (config.captureUncaught) {
 	    // Set the global onerror handler
@@ -170,7 +173,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    window.onerror = function() {
 	      var args = Array.prototype.slice.call(arguments, 0);
-	      _rollbarWindowOnError(notifier, oldOnError, args);
+	      _rollbarWindowOnError(client, oldOnError, args);
 	    };
 	
 	    // Adapted from https://github.com/bugsnag/bugsnag-js
@@ -186,21 +189,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	      global = globals[i];
 	
 	      if (window[global] && window[global].prototype) {
-	        _extendListenerPrototype(notifier, window[global].prototype);
+	        _extendListenerPrototype(client, window[global].prototype);
 	      }
 	    }
 	  }
 	
-	  window.Rollbar = notifier;
+	  window.Rollbar = client;
 	  // Finally, start processing payloads using the global notifier
 	  Notifier.processPayloads();
-	  return notifier;
+	  return client;
 	};
 	
 	
 	module.exports = {
 	  wrapper: wrapper,
-	  setupJSON: setupJSON
+	  setupJSON: notifier.setupJSON
 	};
 
 
@@ -208,6 +211,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
 	/* globals __NOTIFIER_VERSION__ */
 	/* globals __DEFAULT_ENDPOINT__ */
 	/* globals __DEFAULT_SCRUB_FIELDS__ */
@@ -218,9 +223,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* globals __DEFAULT_MAX_ITEMS__ */
 	/* globals DOMException */
 	
-	"use strict";
 	
-	var error_parser = __webpack_require__(4);
+	var errorParser = __webpack_require__(4);
 	var Util = __webpack_require__(7);
 	var xhr = __webpack_require__(8);
 	
@@ -231,6 +235,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	  RollbarJSON = JSON;
 	  xhr.setupJSON(JSON);
 	}
+	
+	
+	function _wrapNotifierFn(fn, ctx) {
+	  return function() {
+	    var self = ctx || this;
+	    try {
+	      return fn.apply(self, arguments);
+	    } catch (e) {
+	      if (self) {
+	        self.logger(e);
+	      }
+	    }
+	  };
+	}
+	
+	
+	var payloadProcessorTimeout;
+	function _notifyPayloadAvailable() {
+	  if (!payloadProcessorTimeout) {
+	    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
+	  }
+	}
+	
+	
 	
 	// Updated by the build process to match package.json
 	Notifier.NOTIFIER_VERSION = ("1.4.4");
@@ -324,7 +352,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	NotifierPrototype._getLogArgs = function(args) {
 	  var level = this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL;
-	  var ts;
 	  var message;
 	  var err;
 	  var custom;
@@ -355,7 +382,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      extraArgs.push(arg);
 	    } else if (argT === 'error' ||
 	               arg.stack ||
-	               (typeof DOMException !== "undefined" && arg instanceof DOMException)) {
+	               (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
 	      if (err) {
 	        extraArgs.push(arg);
 	      } else {
@@ -492,7 +519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    request: {
 	      url: window.location.href,
 	      query_string: window.location.search,
-	      user_ip: "$remote_ip"
+	      user_ip: '$remote_ip'
 	    },
 	    client: {
 	      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
@@ -570,8 +597,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *    their values normalized as well.
 	 */
 	NotifierPrototype._scrub = function(obj) {
-	  function redactQueryParam(match, paramPart, dummy1,
-	      dummy2, dummy3, valPart, offset, string) {
+	  var scrubFields = this.options.scrubFields;
+	  var paramRes = this._getScrubFieldRegexs(scrubFields);
+	  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
+	
+	  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
 	    return paramPart + Util.redact(valPart);
 	  }
 	
@@ -604,10 +634,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return tmpV;
 	    }
 	  }
-	
-	  var scrubFields = this.options.scrubFields;
-	  var paramRes = this._getScrubFieldRegexs(scrubFields);
-	  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
 	
 	  Util.traverse(obj, scrubber);
 	  return obj;
@@ -681,22 +707,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ignoredMessages = this.options.ignoredMessages;
 	    trace = payload.data.body.trace;
 	
-	    if(!ignoredMessages || ignoredMessages.length === 0) {
+	    if (!ignoredMessages || ignoredMessages.length === 0) {
 	      return false;
 	    }
 	
-	    if(!trace) {
+	    if (!trace) {
 	      return false;
 	    }
 	
 	    exceptionMessage = trace.exception.message;
 	
 	    len = ignoredMessages.length;
-	    for(i = 0; i < len; i++) {
-	      rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
+	    for (i = 0; i < len; i++) {
+	      rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
 	      messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
 	
-	      if(messageIsIgnored){
+	      if (messageIsIgnored) {
 	        break;
 	      }
 	    }
@@ -783,7 +809,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.error('Error while calling custom transform() function. Removing custom transform().', e);
 	  }
 	
-	  if (!!this.options.enabled) {
+	  if (this.options.enabled) {
 	    window._rollbarPayloadQueue.push(payloadToSend);
 	
 	    _notifyPayloadAvailable();
@@ -838,7 +864,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	      // If we've already calculated the stack trace for the error, use it.
 	      // This can happen for wrapped errors that don't have a "stack" property.
-	      stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
+	      stackInfo = err._savedStackTrace ? err._savedStackTrace : errorParser.parse(err);
 	
 	      // Don't report the same error more than once
 	      if (err === this.lastError) {
@@ -885,8 +911,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    'url': url || '',
 	    'line': lineNo
 	  };
-	  location.func = error_parser.guessFunctionName(location.url, location.line);
-	  location.context = error_parser.gatherContext(location.url, location.line);
+	  location.func = errorParser.guessFunctionName(location.url, location.line);
+	  location.context = errorParser.gatherContext(location.url, location.line);
 	  var stack = {
 	    'mode': 'onerror',
 	    'message': err ? String(err) : (message || 'uncaught exception'),
@@ -960,7 +986,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return f.apply(this, arguments);
 	        } catch(e) {
 	          if (!e.stack) {
-	            e._savedStackTrace = error_parser.parse(e);
+	            e._savedStackTrace = errorParser.parse(e);
 	          }
 	          e._rollbarContext = ctxFn() || {};
 	          e._rollbarContext._wrappedSource = f.toString();
@@ -1022,7 +1048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	function _buildPayloadBodyTrace(description, stackInfo, custom) {
-	  var guess = _guessErrorClass(stackInfo.message);
+	  var guess = errorParser.guessErrorClass(stackInfo.message);
 	  var className = stackInfo.name || guess[0];
 	  var message = guess[1];
 	  var trace = {
@@ -1044,7 +1070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var pre;
 	    var post;
 	    var contextLength;
-	    var i, j, mid;
+	    var i, mid;
 	
 	    trace.frames = [];
 	    for (i = 0; i < stackInfo.stack.length; ++i) {
@@ -1100,41 +1126,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	
-	function _wrapNotifierFn(fn, ctx) {
-	  return function() {
-	    var self = ctx || this;
-	    try {
-	      return fn.apply(self, arguments);
-	    } catch (e) {
-	      if (self) {
-	        self.logger(e);
-	      }
-	    }
-	  };
-	}
-	
-	
-	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
-	function _guessErrorClass(errMsg) {
-	  if (!errMsg) {
-	    return ["Unknown error. There was no error message to display.", ""];
-	  }
-	  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
-	  var errClass = '(unknown)';
-	
-	  if (errClassMatch) {
-	    errClass = errClassMatch[errClassMatch.length - 1];
-	    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
-	    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
-	  }
-	  return [errClass, errMsg];
-	}
-	
-	
 	/***** Payload processor *****/
 	
 	
-	var payloadProcessorTimeout;
 	Notifier.processPayloads = function(immediate) {
 	  if (immediate) {
 	    _deferredPayloadProcess();
@@ -1144,13 +1138,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  _notifyPayloadAvailable();
 	};
-	
-	
-	function _notifyPayloadAvailable() {
-	  if (!payloadProcessorTimeout) {
-	    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
-	  }
-	}
 	
 	
 	function _deferredPayloadProcess() {
@@ -1236,20 +1223,22 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	var ErrorStackParser = __webpack_require__(5);
 	
 	var UNKNOWN_FUNCTION = '?';
+	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
 	
-	
-	function guessFunctionName(url, line) {
+	function guessFunctionName() {
 	  return UNKNOWN_FUNCTION;
 	}
 	
-	function gatherContext(url, line) {
+	
+	function gatherContext() {
 	  return null;
 	}
+	
 	
 	function Frame(stackFrame) {
 	  var data = {};
@@ -1266,6 +1255,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  return data;
 	}
+	
 	
 	function Stack(exception) {
 	  function getStack() {
@@ -1293,12 +1283,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	}
 	
+	
 	function parse(e) {
 	  return new Stack(e);
 	}
 	
+	
+	function guessErrorClass(errMsg) {
+	  if (!errMsg) {
+	    return ['Unknown error. There was no error message to display.', ''];
+	  }
+	  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+	  var errClass = '(unknown)';
+	
+	  if (errClassMatch) {
+	    errClass = errClassMatch[errClassMatch.length - 1];
+	    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+	    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+	  }
+	  return [errClass, errMsg];
+	}
+	
+	
 	module.exports = {
 	  guessFunctionName: guessFunctionName,
+	  guessErrorClass: guessErrorClass,
 	  gatherContext: gatherContext,
 	  parse: parse,
 	  Stack: Stack,
@@ -1600,11 +1609,50 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
+	
+	var parseUriOptions = {
+	  strictMode: false,
+	    key: [
+	    'source',
+	    'protocol',
+	    'authority',
+	    'userInfo',
+	    'user',
+	    'password',
+	    'host',
+	    'port',
+	    'relative',
+	    'path',
+	    'directory',
+	    'file',
+	    'query',
+	    'anchor'
+	  ],
+	    q: {
+	    name: 'queryKey',
+	      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+	  },
+	  parser: {
+	    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+	      loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+	  }
+	};
+	
+	
+	function typeName(obj) {
+	  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+	}
+	
+	
+	function isType(obj, name) {
+	  return typeName(obj) === name;
+	}
+	
 	
 	// modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
 	function merge() {
-	  var options, name, src, copy, copyIsArray, clone,
+	  var options, name, src, targetCopy, copyIsArray, clone,
 	    target = arguments[0] || {},
 	    i = 1,
 	    length = arguments.length,
@@ -1627,15 +1675,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        src = target[name];
-	        copy = options[name];
+	        targetCopy = options[name];
 	
 	        // Prevent never-ending loop
-	        if (target === copy) {
+	        if (target === targetCopy) {
 	          continue;
 	        }
 	
 	        // Recurse if we're merging plain objects or arrays
-	        if (deep && copy && (isType(copy, 'object') || (copyIsArray = (isType(copy, 'array'))))) {
+	        if (deep && targetCopy && (isType(targetCopy, 'object') || (copyIsArray = (isType(targetCopy, 'array'))))) {
 	          if (copyIsArray) {
 	            copyIsArray = false;
 	            // Overwrite the source with a copy of the array to merge in
@@ -1645,11 +1693,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	
 	          // Never move original objects, clone them
-	          target[name] = Util.merge(clone, copy);
+	          target[name] = merge(clone, targetCopy);
 	
 	          // Don't bring in undefined values
-	        } else if (copy !== undefined) {
-	          target[name] = copy;
+	        } else if (targetCopy !== undefined) {
+	          target[name] = targetCopy;
 	        }
 	      }
 	    }
@@ -1659,26 +1707,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return target;
 	}
 	
+	
 	function copy(obj) {
 	  var dest, tName = typeName(obj);
 	  dest = {object: {}, array: []}[tName];
 	
-	  Util.merge(dest, obj);
+	  merge(dest, obj);
 	  return dest;
 	}
 	
+	
 	function parseUri(str) {
 	  if (!isType(str, 'string')) {
-	    throw new Error('Util.parseUri() received invalid input');
+	    throw new Error('received invalid input');
 	  }
 	
-	  var o = Util.parseUriOptions;
-	  var m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
+	  var o = parseUriOptions;
+	  var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
 	  var uri = {};
 	  var i = 14;
 	
 	  while (i--) {
-	    uri[o.key[i]] = m[i] || "";
+	    uri[o.key[i]] = m[i] || '';
 	  }
 	
 	  uri[o.q.name] = {};
@@ -1691,8 +1741,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return uri;
 	}
 	
+	
 	function sanitizeUrl(url) {
-	  var baseUrlParts = Util.parseUri(url);
+	  var baseUrlParts = parseUri(url);
 	  // remove a trailing # if there is no anchor
 	  if (baseUrlParts.anchor === '') {
 	    baseUrlParts.source = baseUrlParts.source.replace('#', '');
@@ -1701,6 +1752,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
 	  return url;
 	}
+	
 	
 	function traverse(obj, func) {
 	  var k;
@@ -1728,7 +1780,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    isObj = isType(v, 'object');
 	    isArray = isType(v, 'array');
 	    if (isObj || isArray) {
-	      obj[k] = Util.traverse(v, func);
+	      obj[k] = traverse(v, func);
 	    } else {
 	      obj[k] = func(k, v);
 	    }
@@ -1737,10 +1789,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return obj;
 	}
 	
+	
 	function redact(val) {
 	  val = String(val);
 	  return new Array(val.length + 1).join('*');
 	}
+	
 	
 	// from http://stackoverflow.com/a/8809472/1138191
 	function uuid4() {
@@ -1753,38 +1807,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return uuid;
 	}
 	
-	function typeName(obj) {
-	  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
-	}
-	
-	function isType(obj, name) {
-	  return typeName(obj) === name;
-	}
 	
 	var Util = {
-	  parseUriOptions: {
-	    strictMode: false,
-	    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-	    q:   {
-	      name:   "queryKey",
-	      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-	    },
-	    parser: {
-	      strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-	      loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-	    }
-	  },
-	
-	  merge: merge,
 	  copy: copy,
+	  isType: isType,
+	  merge: merge,
 	  parseUri: parseUri,
+	  parseUriOptions: parseUriOptions,
+	  redact: redact,
 	  sanitizeUrl: sanitizeUrl,
 	  traverse: traverse,
-	  redact: redact,
-	  uuid4: uuid4,
 	  typeName: typeName,
-	  isType: isType
+	  uuid4: uuid4
 	};
+	
 	
 	module.exports = Util;
 
@@ -1793,9 +1829,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* globals ActiveXObject */
+	'use strict';
 	
-	"use strict";
+	/* globals ActiveXObject */
 	
 	var Util = __webpack_require__(7);
 	
@@ -1807,10 +1843,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var XHR = {
 	  XMLHttpFactories: [
-	      function () {return new XMLHttpRequest();},
-	      function () {return new ActiveXObject("Msxml2.XMLHTTP");},
-	      function () {return new ActiveXObject("Msxml3.XMLHTTP");},
-	      function () {return new ActiveXObject("Microsoft.XMLHTTP");}
+	      function () {
+	        return new XMLHttpRequest();
+	      },
+	      function () {
+	        return new ActiveXObject('Msxml2.XMLHTTP');
+	      },
+	      function () {
+	        return new ActiveXObject('Msxml3.XMLHTTP');
+	      },
+	      function () {
+	        return new ActiveXObject('Microsoft.XMLHTTP');
+	      }
 	  ],
 	  createXMLHTTPObject: function() {
 	    var xmlhttp = false;
@@ -1818,12 +1862,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var i;
 	    var numFactories = factories.length;
 	    for (i = 0; i < numFactories; i++) {
+	      /* eslint-disable no-empty */
 	      try {
 	        xmlhttp = factories[i]();
 	        break;
 	      } catch (e) {
 	        // pass
 	      }
+	      /* eslint-enable no-empty */
 	    }
 	    return xmlhttp;
 	  },
@@ -1837,7 +1883,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (request) {
 	      try {
 	        try {
-	          var onreadystatechange = function(args) {
+	          var onreadystatechange = function() {
 	            try {
 	              if (onreadystatechange && request.readyState === 4) {
 	                onreadystatechange = undefined;
@@ -1846,7 +1892,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (request.status === 200) {
 	                  callback(null, RollbarJSON.parse(request.responseText));
 	                } else if (Util.isType(request.status, 'number') &&
-	                            request.status >= 400  && request.status < 600) {
+	                            request.status >= 400 && request.status < 600) {
 	                  // return valid http status codes
 	                  callback(new Error(String(request.status)));
 	                } else {
@@ -1879,16 +1925,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	          request.send(payload);
 	        } catch (e1) {
 	          // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
-	          if (typeof XDomainRequest !== "undefined") {
-	            var ontimeout = function(args) {
+	          if (typeof XDomainRequest !== 'undefined') {
+	            var ontimeout = function() {
 	              callback(new Error());
 	            };
 	
-	            var onerror = function(args) {
+	            var onerror = function() {
 	              callback(new Error());
 	            };
 	
-	            var onload = function(args) {
+	            var onload = function() {
 	              callback(null, RollbarJSON.parse(request.responseText));
 	            };
 	

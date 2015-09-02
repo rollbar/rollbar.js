@@ -1,7 +1,15 @@
+/* globals chai */
+/* globals describe */
+/* globals it */
+/* globals sinon */
+
+
 var snippetCallback = require('../src/snippet_callback');
 var expect = chai.expect;
 
+
 window.Rollbar = require('../src/shim').Rollbar;
+
 
 /* Note (@jon): this is a copy from src/shim.js. It's not part
  * of the public interface for shim module.
@@ -23,20 +31,22 @@ function _rollbarWindowOnError(client, old, args) {
   }
 }
 
+
 var config = {
   accessToken: '12c99de67a444c229fca100e0967486f',
   captureUncaught: true
 };
 
-describe("window.Rollbar.init()", function() {
 
-  it("should set window.Rollbar to the shim", function(done) {
-    // window.Rollbar will be exposed as a function since shim has 
+describe('window.Rollbar.init()', function() {
+
+  it('should set window.Rollbar to the shim', function(done) {
+    // window.Rollbar will be exposed as a function since shim has
     // it as a top-level function.
     // var Rollbar = function() {...}
     expect(window.Rollbar).to.be.a('function');
 
-    Rollbar.init(window, config);
+    window.Rollbar.init(window, config);
 
     expect(window.Rollbar).to.be.an('object');
     expect(window._rollbarShimQueue).to.be.an('array');
@@ -44,7 +54,7 @@ describe("window.Rollbar.init()", function() {
     done();
   });
 
-  it("should create a shim with the expected properties", function(done) {
+  it('should create a shim with the expected properties', function(done) {
     expect(window.Rollbar).to.have.property('shimId', 1);
     expect(window.Rollbar).to.have.property('notifier', null);
     expect(window.Rollbar).to.have.ownProperty('parentShim');
@@ -52,12 +62,12 @@ describe("window.Rollbar.init()", function() {
     done();
   });
 
-  it("should create the global _rollbarShimQueue", function(done) {
+  it('should create the global _rollbarShimQueue', function(done) {
     expect(window._rollbarShimQueue).to.be.an('array');
     done();
   });
 
-  it("should push initial configure onto _rollbarShimQueue", function(done) {
+  it('should push initial configure onto _rollbarShimQueue', function(done) {
     expect(window._rollbarShimQueue).to.have.length(1);
 
     // Make sure the object has the expected keys
@@ -86,12 +96,14 @@ describe("window.Rollbar.init()", function() {
 });
 
 
-describe("window.Rollbar.uncaughtError", function() {
-  it("should report all args", function(done) {
+describe('window.Rollbar.uncaughtError', function() {
+  it('should report all args', function(done) {
     var err;
     try {
       // Simulate an uncaught error by wrapping this in a try/catch
+      /* eslint-disable no-undef */
       foo();
+      /* eslint-enable no-undef */
     } catch (e) {
       err = e;
       window.Rollbar.uncaughtError('test message where foo is undefined', 'test_file.js', 33, 22, err);
@@ -109,13 +121,13 @@ describe("window.Rollbar.uncaughtError", function() {
     done();
   });
 
-  it("should wrap addEventListener", function(done) {
+  it('should wrap addEventListener', function(done) {
     // Bypass on firefox for now due to automated event
     // firing and window.onerror not working together
     if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
       return done();
     }
-    
+
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
       _rollbarWindowOnError(window.Rollbar, null, args);
@@ -124,13 +136,15 @@ describe("window.Rollbar.uncaughtError", function() {
     var spy = sinon.spy(window.Rollbar, 'uncaughtError');
 
     var div = document.getElementById('event-div');
-    div.addEventListener('click', function(e) {
+    div.addEventListener('click', function() {
+      /* eslint-disable no-undef, no-unused-vars */
       var a = b;
+      /* eslint-enable no-undef, no-unused-vars */
     }, false);
 
-    var event = document.createEvent("MouseEvent");
+    var event = document.createEvent('MouseEvent');
 
-    event.initMouseEvent("click", true, true, window, null,
+    event.initMouseEvent('click', true, true, window, null,
             0, 0, 0, 0, false, false, false, false, 0, null);
 
     div.dispatchEvent(event);
@@ -147,7 +161,7 @@ describe("window.Rollbar.uncaughtError", function() {
     done();
   });
 
-  it("should call the previous window.onerror with the correct args", function(done) {
+  it('should call the previous window.onerror with the correct args', function(done) {
 
     var spy = sinon.stub();
     _rollbarWindowOnError(window.Rollbar, spy, ['test message', 'http://localhost/foo']);
@@ -164,8 +178,8 @@ describe("window.Rollbar.uncaughtError", function() {
   });
 });
 
-describe("_rollbarWindowOnError", function() {
-  it("should set window._rollbarWrappedError as the reported error", function(done) {
+describe('_rollbarWindowOnError', function() {
+  it('should set window._rollbarWrappedError as the reported error', function(done) {
     var client = window.Rollbar;
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
@@ -178,7 +192,9 @@ describe("_rollbarWindowOnError", function() {
     var spy = sinon.spy(client, 'uncaughtError');
 
     var wrappedFunc = client.wrap(function() {
+      /* eslint-disable no-undef, no-unused-vars */
       var a = b;
+      /* eslint-enable no-undef, no-unused-vars */
     });
 
     // cause uncaught error to hit the above window.onerror
@@ -204,13 +220,13 @@ describe("_rollbarWindowOnError", function() {
 });
 
 
-describe("window.Rollbar.global()", function() {
-  it("should not return anything", function(done) {
+describe('window.Rollbar.global()', function() {
+  it('should not return anything', function(done) {
     expect(window.Rollbar.global()).to.equal(undefined);
     done();
   });
 
-  it("should should pass all arguments to the _rollbarShimQueue", function(done) {
+  it('should should pass all arguments to the _rollbarShimQueue', function(done) {
     var preLen = window._rollbarShimQueue.length;
     var options = {hello: 'world'};
     window.Rollbar.global(options, 33);
@@ -228,13 +244,13 @@ describe("window.Rollbar.global()", function() {
   });
 });
 
-describe("window.Rollbar.configure()", function() {
-  it("should not return anything", function(done) {
+describe('window.Rollbar.configure()', function() {
+  it('should not return anything', function(done) {
     expect(window.Rollbar.configure()).to.equal(undefined);
     done();
   });
 
-  it("should should pass all arguments to the _rollbarShimQueue", function(done) {
+  it('should should pass all arguments to the _rollbarShimQueue', function(done) {
     var preLen = window._rollbarShimQueue.length;
     var options = {hello: 'world'};
     window.Rollbar.configure(options, 33);
@@ -253,9 +269,9 @@ describe("window.Rollbar.configure()", function() {
 });
 
 
-describe("window.Rollbar.scope()", function() {
+describe('window.Rollbar.scope()', function() {
 
-  it("should return a new shim", function(done) {
+  it('should return a new shim', function(done) {
     var newScope = window.Rollbar.scope();
 
     expect(newScope).to.be.an('object');
@@ -288,7 +304,7 @@ describe("window.Rollbar.scope()", function() {
     done();
   });
 
-  it("should increment the shimId on each call", function(done) {
+  it('should increment the shimId on each call', function(done) {
     var newScope = window.Rollbar.scope();
     expect(newScope.shimId).is.above(window.Rollbar.shimId);
 
@@ -301,8 +317,8 @@ describe("window.Rollbar.scope()", function() {
 });
 
 
-describe("window.Rollbar.log/debug/info/warn/warning/error/critical()", function() {
-  it("should add a log message to _rollbarShimQueue", function(done) {
+describe('window.Rollbar.log/debug/info/warn/warning/error/critical()', function() {
+  it('should add a log message to _rollbarShimQueue', function(done) {
     var check = function(method, message) {
       var obj = window._rollbarShimQueue[window._rollbarShimQueue.length - 1];
       expect(obj.method).to.equal(method);
@@ -318,7 +334,7 @@ describe("window.Rollbar.log/debug/info/warn/warning/error/critical()", function
     window.Rollbar.info('hello info world');
     check('info', 'hello info world');
 
-    // Special case for "warn" since it's an alias for "warning"
+    // Special case for 'warn' since it's an alias for 'warning'
     window.Rollbar.warn('hello warn world');
     check('warn', 'hello warn world');
 
@@ -335,14 +351,14 @@ describe("window.Rollbar.log/debug/info/warn/warning/error/critical()", function
   });
 });
 
-describe("window.Rollbar.wrap()", function() {
-  it("should let non-functions pass through unchanged", function() {
+describe('window.Rollbar.wrap()', function() {
+  it('should let non-functions pass through unchanged', function() {
     var object = {};
     expect(window.Rollbar.wrap(object)).to.be.equal(object);
   });
 });
 
-describe("window.Rollbar.loadFull()", function() {
+describe('window.Rollbar.loadFull()', function() {
   var errArgs;
 
   var preFullLoad = function(origShim) {
@@ -356,7 +372,7 @@ describe("window.Rollbar.loadFull()", function() {
     scoped.error('testing error callback', errCallback);
   };
 
-  it("should set window.Rollbar to a Notifier", function(done) {
+  it('should set window.Rollbar to a Notifier', function(done) {
     var origShim = window.Rollbar;
 
     // setup some stuff for subsequent tests
@@ -364,7 +380,7 @@ describe("window.Rollbar.loadFull()", function() {
     var callback = snippetCallback(origShim, config);
 
     // Brings in the full rollbar.js file into the DOM
-    Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
+    window.Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
 
     // Wait before checking window.Rollbar
     function test() {
@@ -389,7 +405,7 @@ describe("window.Rollbar.loadFull()", function() {
     test();
   });
 
-  it("should call the error callback", function(done) {
+  it('should call the error callback', function(done) {
     // Wait for the Rollbar.loadFull() to complete and call
     // the callback
     function test() {
