@@ -3,10 +3,8 @@
 1. Require and initialize the Rollbar javascript module:
 
 ```js
-// Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.3/rollbar.umd.nojson.min.js and place in current directory
-
-// The code below is a example of use on your browserify bundles.
-var rollbar = require('./rollbar.umd.nojson.min.js');
+// npm install --save rollbar-browser
+var rollbar = require('rollbar-browser');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
@@ -15,8 +13,8 @@ var rollbarConfig = {
     environment: 'development',
   }
 };
-rollbar.init(rollbarConfig);
-window.rollbar = rollbar;
+var Rollbar = rollbar.init(rollbarConfig);
+window.Rollbar = Rollbar;
 ```
 
 2. Report exceptions and messages in your code:
@@ -24,9 +22,9 @@ window.rollbar = rollbar;
 ```js
 try {
   foo();
-  rollbar.debug('foo() called');
+  Rollbar.debug('foo() called');
 } catch (e) {
-  rollbar.error('Problem calling foo()', e);
+  Rollbar.error('Problem calling foo()', e);
 }
 ```
 

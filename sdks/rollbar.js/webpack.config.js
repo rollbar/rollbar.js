@@ -93,6 +93,7 @@ var pluginConfig = {
 var testsConfig = {
   name: 'tests',
   entry: {
+    browserify: './test/bundles/browserify.js',
     error_parser: './test/bundles/error_parser.js',
     json: './test/bundles/json.js',
     mootools: './test/bundles/mootools.js',
@@ -114,7 +115,7 @@ var testsConfig = {
       {
         test: /\.js$/,
         loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/, /lib/]
+        exclude: [/node_modules/, /vendor/, /lib/, /dist/]
       }
     ],
   }
