@@ -1,10 +1,9 @@
 /* globals __USE_JSON__ */
-/* globals JSON */
 
-"use strict";
 
 var globalnotifier = require('../globalnotifier');
 var notifier = require('../notifier');
+
 
 function setupJSON() {
   var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
@@ -12,7 +11,7 @@ function setupJSON() {
   if (__USE_JSON__) {
     // This adds the script to this context. We need it since this library
     // is not a CommonJs or AMD module.
-    var setupCustomJSON = require("../../vendor/JSON-js/json2.js");
+    var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
 
     var customJSON = {};
     setupCustomJSON(customJSON);
@@ -23,11 +22,14 @@ function setupJSON() {
   globalnotifier.setupJSON(JSONObject);
 }
 
+
 setupJSON();
+
 
 var config = window._rollbarConfig;
 var alias = config && config.globalAlias || 'Rollbar';
 var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
+
 
 /* We must not initialize the full notifier here if the
  * shim is loaded, snippet_callback will do that for us

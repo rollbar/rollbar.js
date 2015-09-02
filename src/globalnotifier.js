@@ -1,14 +1,10 @@
-"use strict";
-
 var notifier = require('./notifier');
+var Util = require('./util');
 
 var Notifier = notifier.Notifier;
-// Stub out the wrapped error which is set 
+// Stub out the wrapped error which is set
 window._rollbarWrappedError = null;
 
-function setupJSON(JSON) {
-  notifier.setupJSON(JSON);
-}
 
 // Global window.onerror handler
 function _rollbarWindowOnError(client, old, args) {
@@ -22,6 +18,7 @@ function _rollbarWindowOnError(client, old, args) {
     old.apply(window, args);
   }
 }
+
 
 function _extendListenerPrototype(client, prototype) {
   if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
@@ -37,11 +34,12 @@ function _extendListenerPrototype(client, prototype) {
   }
 }
 
+
 // Add an init() method to do the same things that the shim would do
 var wrapper = {};
 wrapper.init = function(config, parent) {
-  var notifier = new Notifier(parent);
-  notifier.configure(config);
+  var client = new Notifier(parent);
+  client.configure(config);
 
   if (config.captureUncaught) {
     // Set the global onerror handler
@@ -49,7 +47,7 @@ wrapper.init = function(config, parent) {
 
     // If the parent, probably a shim, stores a oldOnError, use that so we don't
     // send reports twice.
-    if (parent && typeof parent._rollbarOldOnError !== 'undefined') {
+    if (parent && Util.isType(parent._rollbarOldOnError, 'function')) {
       oldOnError = parent._rollbarOldOnError;
     } else {
       oldOnError = window.onerror;
@@ -57,7 +55,7 @@ wrapper.init = function(config, parent) {
 
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(notifier, oldOnError, args);
+      _rollbarWindowOnError(client, oldOnError, args);
     };
 
     // Adapted from https://github.com/bugsnag/bugsnag-js
@@ -73,19 +71,19 @@ wrapper.init = function(config, parent) {
       global = globals[i];
 
       if (window[global] && window[global].prototype) {
-        _extendListenerPrototype(notifier, window[global].prototype);
+        _extendListenerPrototype(client, window[global].prototype);
       }
     }
   }
 
-  window.Rollbar = notifier;
+  window.Rollbar = client;
   // Finally, start processing payloads using the global notifier
   Notifier.processPayloads();
-  return notifier;
+  return client;
 };
 
 
 module.exports = {
   wrapper: wrapper,
-  setupJSON: setupJSON
+  setupJSON: notifier.setupJSON
 };

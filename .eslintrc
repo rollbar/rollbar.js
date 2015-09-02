@@ -1,0 +1,20 @@
+{
+  "parser": "babel-eslint",
+  "ecmafeatures": {
+    "modules": true
+  },
+  "env": {
+    // I write for browser
+    "browser": true,
+    // in CommonJS
+    "node": true
+  },
+  "plugins": [
+  ],
+  "rules": {
+    "strict": 0,
+    "camelcase": [2, {"properties": "never"}],
+    "quotes": [2, "single", "avoid-escape"],
+    "no-underscore-dangle": 0
+  }
+}

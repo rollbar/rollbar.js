@@ -44,13 +44,14 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* globals __USE_JSON__ */
-	/* globals JSON */
+	'use strict';
 	
-	"use strict";
+	/* globals __USE_JSON__ */
+	
 	
 	var globalnotifier = __webpack_require__(1);
 	var notifier = __webpack_require__(2);
+	
 	
 	function setupJSON() {
 	  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
@@ -58,7 +59,7 @@
 	  if (false) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    var setupCustomJSON = require("../../vendor/JSON-js/json2.js");
+	    var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -69,11 +70,14 @@
 	  globalnotifier.setupJSON(JSONObject);
 	}
 	
+	
 	setupJSON();
+	
 	
 	var config = window._rollbarConfig;
 	var alias = config && config.globalAlias || 'Rollbar';
 	var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
+	
 	
 	/* We must not initialize the full notifier here if the
 	 * shim is loaded, snippet_callback will do that for us
@@ -93,17 +97,15 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	var notifier = __webpack_require__(2);
+	var Util = __webpack_require__(6);
 	
 	var Notifier = notifier.Notifier;
-	// Stub out the wrapped error which is set 
+	// Stub out the wrapped error which is set
 	window._rollbarWrappedError = null;
 	
-	function setupJSON(JSON) {
-	  notifier.setupJSON(JSON);
-	}
 	
 	// Global window.onerror handler
 	function _rollbarWindowOnError(client, old, args) {
@@ -117,6 +119,7 @@
 	    old.apply(window, args);
 	  }
 	}
+	
 	
 	function _extendListenerPrototype(client, prototype) {
 	  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
@@ -132,11 +135,12 @@
 	  }
 	}
 	
+	
 	// Add an init() method to do the same things that the shim would do
 	var wrapper = {};
 	wrapper.init = function(config, parent) {
-	  var notifier = new Notifier(parent);
-	  notifier.configure(config);
+	  var client = new Notifier(parent);
+	  client.configure(config);
 	
 	  if (config.captureUncaught) {
 	    // Set the global onerror handler
@@ -144,7 +148,7 @@
 	
 	    // If the parent, probably a shim, stores a oldOnError, use that so we don't
 	    // send reports twice.
-	    if (parent && typeof parent._rollbarOldOnError !== 'undefined') {
+	    if (parent && Util.isType(parent._rollbarOldOnError, 'function')) {
 	      oldOnError = parent._rollbarOldOnError;
 	    } else {
 	      oldOnError = window.onerror;
@@ -152,7 +156,7 @@
 	
 	    window.onerror = function() {
 	      var args = Array.prototype.slice.call(arguments, 0);
-	      _rollbarWindowOnError(notifier, oldOnError, args);
+	      _rollbarWindowOnError(client, oldOnError, args);
 	    };
 	
 	    // Adapted from https://github.com/bugsnag/bugsnag-js
@@ -168,21 +172,21 @@
 	      global = globals[i];
 	
 	      if (window[global] && window[global].prototype) {
-	        _extendListenerPrototype(notifier, window[global].prototype);
+	        _extendListenerPrototype(client, window[global].prototype);
 	      }
 	    }
 	  }
 	
-	  window.Rollbar = notifier;
+	  window.Rollbar = client;
 	  // Finally, start processing payloads using the global notifier
 	  Notifier.processPayloads();
-	  return notifier;
+	  return client;
 	};
 	
 	
 	module.exports = {
 	  wrapper: wrapper,
-	  setupJSON: setupJSON
+	  setupJSON: notifier.setupJSON
 	};
 
 
@@ -190,6 +194,8 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
 	/* globals __NOTIFIER_VERSION__ */
 	/* globals __DEFAULT_ENDPOINT__ */
 	/* globals __DEFAULT_SCRUB_FIELDS__ */
@@ -200,9 +206,8 @@
 	/* globals __DEFAULT_MAX_ITEMS__ */
 	/* globals DOMException */
 	
-	"use strict";
 	
-	var error_parser = __webpack_require__(3);
+	var errorParser = __webpack_require__(3);
 	var Util = __webpack_require__(6);
 	var xhr = __webpack_require__(7);
 	
@@ -213,6 +218,30 @@
 	  RollbarJSON = JSON;
 	  xhr.setupJSON(JSON);
 	}
+	
+	
+	function _wrapNotifierFn(fn, ctx) {
+	  return function() {
+	    var self = ctx || this;
+	    try {
+	      return fn.apply(self, arguments);
+	    } catch (e) {
+	      if (self) {
+	        self.logger(e);
+	      }
+	    }
+	  };
+	}
+	
+	
+	var payloadProcessorTimeout;
+	function _notifyPayloadAvailable() {
+	  if (!payloadProcessorTimeout) {
+	    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
+	  }
+	}
+	
+	
 	
 	// Updated by the build process to match package.json
 	Notifier.NOTIFIER_VERSION = ("1.4.4");
@@ -272,7 +301,7 @@
 	  this.parentNotifier = parentNotifier;
 	  this.logger = function() {
 	    var console = window.console;
-	    if (console && typeof console.log === 'function') {
+	    if (console && Util.isType(console.log, 'function')) {
 	      var message = (['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0))).join(' ');
 	      console.log.apply(console, [message]);
 	    }
@@ -293,14 +322,7 @@
 	}
 	
 	
-	Notifier._generateLogFn = function(level) {
-	  return _wrapNotifierFn(function _logFn() {
-	    var args = this._getLogArgs(arguments);
-	
-	    return this._log(level || args.level || this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL,
-	        args.message, args.err, args.custom, args.callback);
-	  });
-	};
+	var NotifierPrototype = Notifier.prototype;
 	
 	
 	/*
@@ -311,35 +333,52 @@
 	 *  custom: Object
 	 * }
 	 */
-	Notifier.prototype._getLogArgs = function(args) {
+	NotifierPrototype._getLogArgs = function(args) {
 	  var level = this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL;
-	  var ts;
 	  var message;
 	  var err;
 	  var custom;
 	  var callback;
-	
 	  var argT;
 	  var arg;
+	  var extraArgs = [];
+	
 	  for (var i = 0; i < args.length; ++i) {
 	    arg = args[i];
-	    argT = typeof arg;
+	
+	    argT = Util.typeName(arg);
 	    if (argT === 'string') {
-	      message = arg;
+	      if (message) {
+	        extraArgs.push(arg);
+	      } else {
+	        message = arg;
+	      }
 	    } else if (argT === 'function') {
 	      callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
-	    } else if (arg && argT === 'object') {
-	      if (arg.constructor.name === 'Date') {
-	        ts = arg;
-	      } else if (arg instanceof Error ||
-	          arg.prototype === Error.prototype ||
-	          arg.hasOwnProperty('stack') ||
-	          (typeof DOMException !== "undefined" && arg instanceof DOMException)) {
-	        err = arg;
+	    } else if (argT === 'object') {
+	      if (custom) {
+	        extraArgs.push(arg);
 	      } else {
 	        custom = arg;
 	      }
+	    } else if (argT === 'date') {
+	      extraArgs.push(arg);
+	    } else if (argT === 'error' ||
+	               arg.stack ||
+	               (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+	      if (err) {
+	        extraArgs.push(arg);
+	      } else {
+	        err = arg;
+	      }
 	    }
+	  }
+	
+	  // Save any of the extra arguments passed into the log function
+	  // into `extraArgs` so they they show up in the payload.
+	  if (extraArgs.length) {
+	    custom = custom || {};
+	    custom.extraArgs = extraArgs;
 	  }
 	
 	  // TODO(cory): somehow pass in timestamp too...
@@ -354,7 +393,7 @@
 	};
 	
 	
-	Notifier.prototype._route = function(path) {
+	NotifierPrototype._route = function(path) {
 	  var endpoint = this.options.endpoint;
 	
 	  var endpointTrailingSlash = /\/$/.test(endpoint);
@@ -378,11 +417,9 @@
 	 *
 	 * {shim: Rollbar, method: 'info', args: ['hello world', exc], ts: Date}
 	 */
-	Notifier.prototype._processShimQueue = function(shimQueue) {
-	  // implement me
+	NotifierPrototype._processShimQueue = function(shimQueue) {
 	  var shim;
 	  var obj;
-	  var tmp;
 	  var method;
 	  var args;
 	  var shimToNotifier = {};
@@ -424,7 +461,7 @@
 	      shimToNotifier[shim.shimId] = notifier;
 	    }
 	
-	    if (notifier[method] && typeof notifier[method] === 'function') {
+	    if (notifier[method] && Util.isType(notifier[method], 'function')) {
 	      notifier[method].apply(notifier, args);
 	    }
 	  }
@@ -435,7 +472,7 @@
 	 * Builds and returns an Object that will be enqueued onto the
 	 * window._rollbarPayloadQueue array to be sent to Rollbar.
 	 */
-	Notifier.prototype._buildPayload = function(ts, level, message, stackInfo, custom) {
+	NotifierPrototype._buildPayload = function(ts, level, message, stackInfo, custom) {
 	  var accessToken = this.options.accessToken;
 	
 	  // NOTE(cory): DEPRECATED
@@ -465,7 +502,7 @@
 	    request: {
 	      url: window.location.href,
 	      query_string: window.location.search,
-	      user_ip: "$remote_ip"
+	      user_ip: '$remote_ip'
 	    },
 	    client: {
 	      runtime_ms: ts.getTime() - window._globalRollbarOptions.startTime,
@@ -507,18 +544,471 @@
 	};
 	
 	
-	Notifier.prototype._buildBody = function(message, stackInfo, custom) {
+	NotifierPrototype._buildBody = function(message, stackInfo, custom) {
 	  var body;
 	  if (stackInfo) {
-	    body = this._buildPayloadBodyTrace(message, stackInfo, custom);
+	    body = _buildPayloadBodyTrace(message, stackInfo, custom);
 	  } else {
-	    body = this._buildPayloadBodyMessage(message, custom);
+	    body = _buildPayloadBodyMessage(message, custom);
 	  }
 	  return body;
 	};
 	
 	
-	Notifier.prototype._buildPayloadBodyMessage = function(message, custom) {
+	NotifierPrototype._getBrowserPlugins = function() {
+	  if (!this._browserPlugins) {
+	    var navPlugins = window.navigator.plugins || [];
+	    var cur;
+	    var numPlugins = navPlugins.length;
+	    var plugins = [];
+	    var i;
+	    for (i = 0; i < numPlugins; ++i) {
+	      cur = navPlugins[i];
+	      plugins.push({name: cur.name, description: cur.description});
+	    }
+	    this._browserPlugins = plugins;
+	  }
+	  return this._browserPlugins;
+	};
+	
+	
+	/*
+	 * Does an in-place modification of obj such that:
+	 * 1. All keys that match the notifier's options.scrubFields
+	 *    list will be normalized into all '*'
+	 * 2. Any query string params that match the same criteria will have
+	 *    their values normalized as well.
+	 */
+	NotifierPrototype._scrub = function(obj) {
+	  var scrubFields = this.options.scrubFields;
+	  var paramRes = this._getScrubFieldRegexs(scrubFields);
+	  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
+	
+	  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
+	    return paramPart + Util.redact(valPart);
+	  }
+	
+	  function paramScrubber(v) {
+	    var i;
+	    if (Util.isType(v, 'string')) {
+	      for (i = 0; i < queryRes.length; ++i) {
+	        v = v.replace(queryRes[i], redactQueryParam);
+	      }
+	    }
+	    return v;
+	  }
+	
+	  function valScrubber(k, v) {
+	    var i;
+	    for (i = 0; i < paramRes.length; ++i) {
+	      if (paramRes[i].test(k)) {
+	        v = Util.redact(v);
+	        break;
+	      }
+	    }
+	    return v;
+	  }
+	
+	  function scrubber(k, v) {
+	    var tmpV = valScrubber(k, v);
+	    if (tmpV === v) {
+	      return paramScrubber(tmpV);
+	    } else {
+	      return tmpV;
+	    }
+	  }
+	
+	  Util.traverse(obj, scrubber);
+	  return obj;
+	};
+	
+	
+	NotifierPrototype._getScrubFieldRegexs = function(scrubFields) {
+	  var ret = [];
+	  var pat;
+	  for (var i = 0; i < scrubFields.length; ++i) {
+	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+	    ret.push(new RegExp(pat, 'i'));
+	  }
+	  return ret;
+	};
+	
+	
+	NotifierPrototype._getScrubQueryParamRegexs = function(scrubFields) {
+	  var ret = [];
+	  var pat;
+	  for (var i = 0; i < scrubFields.length; ++i) {
+	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+	    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+	  }
+	  return ret;
+	};
+	
+	NotifierPrototype._urlIsWhitelisted = function(payload){
+	  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
+	  var i, j;
+	
+	  try {
+	    whitelist = this.options.hostWhiteList;
+	    trace = payload.data.body.trace;
+	
+	    if (!whitelist || whitelist.length === 0) { return true; }
+	    if (!trace) { return true; }
+	
+	    listLength = whitelist.length;
+	    frameLength = trace.frames.length;
+	    for (i = 0; i < frameLength; i++) {
+	      frame = trace.frames[i];
+	      filename = frame.filename;
+	
+	      if (!Util.isType(filename, 'string')) {
+	        return true;
+	      }
+	
+	      for (j = 0; j < listLength; j++) {
+	        url = whitelist[j];
+	        urlRegex = new RegExp(url);
+	
+	        if (urlRegex.test(filename)){
+	          return true;
+	        }
+	      }
+	    }
+	  } catch (e) {
+	    this.configure({hostWhiteList: null});
+	    this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+	    return true;
+	  }
+	
+	  return false;
+	};
+	
+	NotifierPrototype._messageIsIgnored = function(payload){
+	  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace;
+	  try {
+	    messageIsIgnored = false;
+	    ignoredMessages = this.options.ignoredMessages;
+	    trace = payload.data.body.trace;
+	
+	    if (!ignoredMessages || ignoredMessages.length === 0) {
+	      return false;
+	    }
+	
+	    if (!trace) {
+	      return false;
+	    }
+	
+	    exceptionMessage = trace.exception.message;
+	
+	    len = ignoredMessages.length;
+	    for (i = 0; i < len; i++) {
+	      rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
+	      messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
+	
+	      if (messageIsIgnored) {
+	        break;
+	      }
+	    }
+	  }
+	  catch(e) {
+	    this.configure({ignoredMessages: null});
+	    this.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+	  }
+	
+	  return messageIsIgnored;
+	};
+	
+	NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
+	
+	  var payloadToSend = {
+	    callback: callback,
+	    accessToken: this.options.accessToken,
+	    endpointUrl: this._route('item/'),
+	    payload: payload
+	  };
+	
+	  var ignoredCallback = function() {
+	    if (callback) {
+	      // If the item was ignored call the callback anyway
+	      var msg = 'This item was not sent to Rollbar because it was ignored. ' +
+	                'This can happen if a custom checkIgnore() function was used ' +
+	                'or if the item\'s level was less than the notifier\' reportLevel. ' +
+	                'See https://rollbar.com/docs/notifier/rollbar.js/configuration for more details.';
+	
+	      callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
+	    }
+	  };
+	
+	  // Internal checkIgnore will check the level against the minimum
+	  // report level from this.options
+	  if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
+	    ignoredCallback();
+	    return;
+	  }
+	
+	  // Users can set their own ignore criteria using this.options.checkIgnore()
+	  try {
+	    if (Util.isType(this.options.checkIgnore, 'function') &&
+	        this.options.checkIgnore(isUncaught, callerArgs, payload)) {
+	      ignoredCallback();
+	      return;
+	    }
+	  } catch (e) {
+	    // Disable the custom checkIgnore and report errors in the checkIgnore function
+	    this.configure({checkIgnore: null});
+	    this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+	  }
+	
+	  if (!this._urlIsWhitelisted(payload)) {
+	    return;
+	  }
+	
+	  if (this._messageIsIgnored(payload)) {
+	    return;
+	  }
+	
+	  if (this.options.verbose) {
+	    if (payload.data && payload.data.body && payload.data.body.trace) {
+	      var trace = payload.data.body.trace;
+	      var exceptionMessage = trace.exception.message;
+	      this.logger(exceptionMessage);
+	    }
+	
+	    // FIXME: Some browsers do not output objects as json to the console, and
+	    // instead write [object Object], so let's write the message first to ensure that is logged.
+	    this.logger('Sending payload -', payloadToSend);
+	  }
+	
+	  if (Util.isType(this.options.logFunction, 'function')) {
+	    this.options.logFunction(payloadToSend);
+	  }
+	
+	  try {
+	    if (Util.isType(this.options.transform, 'function')) {
+	      this.options.transform(payload);
+	    }
+	  } catch (e) {
+	    this.configure({transform: null});
+	    this.error('Error while calling custom transform() function. Removing custom transform().', e);
+	  }
+	
+	  if (this.options.enabled) {
+	    window._rollbarPayloadQueue.push(payloadToSend);
+	
+	    _notifyPayloadAvailable();
+	  }
+	};
+	
+	
+	NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
+	  var level = callerArgs[0];
+	  var levelVal = Notifier.LEVELS[level] || 0;
+	  var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
+	
+	  if (levelVal < reportLevel) {
+	    return true;
+	  }
+	
+	  var plugins = this.options ? this.options.plugins : {};
+	  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors) {
+	    try {
+	      // The jQuery plugin adds in this key. Return true if it exists since
+	      // we are ignoring ajax errors via the plugin config.
+	      return !!(payload.body.message.extra.isAjax);
+	    } catch (e) {
+	      return false;
+	    }
+	  }
+	
+	  return false;
+	};
+	
+	
+	/*
+	 * Logs stuff to Rollbar using the default
+	 * logging level.
+	 *
+	 * Can be called with the following, (order doesn't matter but type does):
+	 * - message: String
+	 * - err: Error object, must have a .stack property or it will be
+	 *   treated as custom data
+	 * - custom: Object containing custom data to be sent along with
+	 *   the item
+	 * - callback: Function to call once the item is reported to Rollbar
+	 * - isUncaught: True if this error originated from an uncaught exception handler
+	 * - ignoreRateLimit: True if this item should be allowed despite rate limit checks
+	 */
+	NotifierPrototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
+	  var stackInfo = null;
+	  if (err) {
+	    if (!err.stack) {
+	      message = String(err);
+	      err = null;
+	    } else {
+	      // If we've already calculated the stack trace for the error, use it.
+	      // This can happen for wrapped errors that don't have a "stack" property.
+	      stackInfo = err._savedStackTrace ? err._savedStackTrace : errorParser.parse(err);
+	
+	      // Don't report the same error more than once
+	      if (err === this.lastError) {
+	        return;
+	      }
+	
+	      this.lastError = err;
+	    }
+	  }
+	
+	  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
+	  if (ignoreRateLimit) {
+	    payload.ignoreRateLimit = true;
+	  }
+	  this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
+	};
+	
+	NotifierPrototype.log = _generateLogFn();
+	NotifierPrototype.debug = _generateLogFn('debug');
+	NotifierPrototype.info = _generateLogFn('info');
+	NotifierPrototype.warn = _generateLogFn('warning'); // for console.warn() compatibility
+	NotifierPrototype.warning = _generateLogFn('warning');
+	NotifierPrototype.error = _generateLogFn('error');
+	NotifierPrototype.critical = _generateLogFn('critical');
+	
+	// Adapted from tracekit.js
+	NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err, context) {
+	  context = context || null;
+	  if (err && err.stack) {
+	    this._log(this.options.uncaughtErrorLevel, message, err, context, null, true);
+	    return;
+	  }
+	
+	  // NOTE(cory): sometimes users will trigger an "error" event
+	  // on the window object directly which will result in errMsg
+	  // being an Object instead of a string.
+	  //
+	  if (url && url.stack) {
+	    this._log(this.options.uncaughtErrorLevel, message, url, context, null, true);
+	    return;
+	  }
+	
+	  var location = {
+	    'url': url || '',
+	    'line': lineNo
+	  };
+	  location.func = errorParser.guessFunctionName(location.url, location.line);
+	  location.context = errorParser.gatherContext(location.url, location.line);
+	  var stack = {
+	    'mode': 'onerror',
+	    'message': err ? String(err) : (message || 'uncaught exception'),
+	    'url': document.location.href,
+	    'stack': [location],
+	    'useragent': navigator.userAgent
+	  };
+	
+	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
+	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
+	});
+	
+	
+	NotifierPrototype.global = _wrapNotifierFn(function(options) {
+	  options = options || {};
+	
+	  Util.merge(window._globalRollbarOptions, options);
+	
+	  if (options.maxItems !== undefined) {
+	    rateLimitCounter = 0;
+	  }
+	
+	  if (options.itemsPerMinute !== undefined) {
+	    rateLimitPerMinCounter = 0;
+	  }
+	});
+	
+	
+	NotifierPrototype.configure = _wrapNotifierFn(function(options) {
+	  // TODO(cory): only allow non-payload keys that we understand
+	
+	  // Make a copy of the options object for this notifier
+	  Util.merge(this.options, options);
+	  this.global(options);
+	});
+	
+	/*
+	 * Create a new Notifier instance which has the same options
+	 * as the current notifier + options to override them.
+	 */
+	NotifierPrototype.scope = _wrapNotifierFn(function(payloadOptions) {
+	  var scopedNotifier = new Notifier(this);
+	  Util.merge(scopedNotifier.options.payload, payloadOptions);
+	  return scopedNotifier;
+	});
+	
+	NotifierPrototype.wrap = function(f, context) {
+	  try {
+	    var ctxFn;
+	    if (Util.isType(context, 'function')) {
+	      ctxFn = context;
+	    } else {
+	      ctxFn = function() {
+	        return context || {};
+	      };
+	    }
+	
+	    if (!Util.isType(f, 'function')) {
+	      return f;
+	    }
+	
+	    // If the given function is already a wrapped function, just
+	    // return it instead of wrapping twice
+	    if (f._isWrap) {
+	      return f;
+	    }
+	
+	    if (!f._wrapped) {
+	      f._wrapped = function () {
+	        try {
+	          return f.apply(this, arguments);
+	        } catch(e) {
+	          if (!e.stack) {
+	            e._savedStackTrace = errorParser.parse(e);
+	          }
+	          e._rollbarContext = ctxFn() || {};
+	          e._rollbarContext._wrappedSource = f.toString();
+	
+	          window._rollbarWrappedError = e;
+	          throw e;
+	        }
+	      };
+	
+	      f._wrapped._isWrap = true;
+	
+	      for (var prop in f) {
+	        if (f.hasOwnProperty(prop)) {
+	          f._wrapped[prop] = f[prop];
+	        }
+	      }
+	    }
+	
+	    return f._wrapped;
+	  } catch (e) {
+	    // Try-catch here is to work around issue where wrap() fails when used inside Selenium.
+	    // Return the original function if the wrap fails.
+	    return f;
+	  }
+	};
+	
+	/***** Misc *****/
+	
+	function _generateLogFn(level) {
+	  return _wrapNotifierFn(function _logFn() {
+	    var args = this._getLogArgs(arguments);
+	
+	    return this._log(level || args.level || this.options.logLevel || Notifier.DEFAULT_LOG_LEVEL,
+	      args.message, args.err, args.custom, args.callback);
+	  });
+	}
+	
+	
+	function _buildPayloadBodyMessage(message, custom) {
 	  if (!message) {
 	    if (custom) {
 	      message = RollbarJSON.stringify(custom);
@@ -537,11 +1027,11 @@
 	  return {
 	    message: result
 	  };
-	};
+	}
 	
 	
-	Notifier.prototype._buildPayloadBodyTrace = function(description, stackInfo, custom) {
-	  var guess = _guessErrorClass(stackInfo.message);
+	function _buildPayloadBodyTrace(description, stackInfo, custom) {
+	  var guess = errorParser.guessErrorClass(stackInfo.message);
 	  var className = stackInfo.name || guess[0];
 	  var message = guess[1];
 	  var trace = {
@@ -563,7 +1053,7 @@
 	    var pre;
 	    var post;
 	    var contextLength;
-	    var i, j, mid;
+	    var i, mid;
 	
 	    trace.frames = [];
 	    for (i = 0; i < stackInfo.stack.length; ++i) {
@@ -614,471 +1104,14 @@
 	    return {trace: trace};
 	  } else {
 	    // no frames - not useful as a trace. just report as a message.
-	    return this._buildPayloadBodyMessage(className + ': ' + message, custom);
+	    return _buildPayloadBodyMessage(className + ': ' + message, custom);
 	  }
-	};
-	
-	
-	Notifier.prototype._getBrowserPlugins = function() {
-	  if (!this._browserPlugins) {
-	    var navPlugins = window.navigator.plugins || [];
-	    var cur;
-	    var numPlugins = navPlugins.length;
-	    var plugins = [];
-	    var i;
-	    for (i = 0; i < numPlugins; ++i) {
-	      cur = navPlugins[i];
-	      plugins.push({name: cur.name, description: cur.description});
-	    }
-	    this._browserPlugins = plugins;
-	  }
-	  return this._browserPlugins;
-	};
-	
-	
-	/*
-	 * Does an in-place modification of obj such that:
-	 * 1. All keys that match the notifier's options.scrubFields
-	 *    list will be normalized into all '*'
-	 * 2. Any query string params that match the same criteria will have
-	 *    their values normalized as well.
-	 */
-	Notifier.prototype._scrub = function(obj) {
-	  function redactQueryParam(match, paramPart, dummy1,
-	      dummy2, dummy3, valPart, offset, string) {
-	    return paramPart + Util.redact(valPart);
-	  }
-	
-	  function paramScrubber(v) {
-	    var i;
-	    if (typeof v === 'string') {
-	      for (i = 0; i < queryRes.length; ++i) {
-	        v = v.replace(queryRes[i], redactQueryParam);
-	      }
-	    }
-	    return v;
-	  }
-	
-	  function valScrubber(k, v) {
-	    var i;
-	    for (i = 0; i < paramRes.length; ++i) {
-	      if (paramRes[i].test(k)) {
-	        v = Util.redact(v);
-	        break;
-	      }
-	    }
-	    return v;
-	  }
-	
-	  function scrubber(k, v) {
-	    var tmpV = valScrubber(k, v);
-	    if (tmpV === v) {
-	      return paramScrubber(tmpV);
-	    } else {
-	      return tmpV;
-	    }
-	  }
-	
-	  var scrubFields = this.options.scrubFields;
-	  var paramRes = this._getScrubFieldRegexs(scrubFields);
-	  var queryRes = this._getScrubQueryParamRegexs(scrubFields);
-	
-	  Util.traverse(obj, scrubber);
-	  return obj;
-	};
-	
-	
-	Notifier.prototype._getScrubFieldRegexs = function(scrubFields) {
-	  var ret = [];
-	  var pat;
-	  for (var i = 0; i < scrubFields.length; ++i) {
-	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-	    ret.push(new RegExp(pat, 'i'));
-	  }
-	  return ret;
-	};
-	
-	
-	Notifier.prototype._getScrubQueryParamRegexs = function(scrubFields) {
-	  var ret = [];
-	  var pat;
-	  for (var i = 0; i < scrubFields.length; ++i) {
-	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-	    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-	  }
-	  return ret;
-	};
-	
-	Notifier.prototype._urlIsWhitelisted = function(payload){
-	  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
-	  var i, j;
-	
-	  try {
-	    whitelist = this.options.hostWhiteList;
-	    trace = payload.data.body.trace;
-	
-	    if (!whitelist || whitelist.length === 0) { return true; }
-	    if (!trace) { return true; }
-	
-	    listLength = whitelist.length;
-	    frameLength = trace.frames.length;
-	    for (i = 0; i < frameLength; i++) {
-	      frame = trace.frames[i];
-	      filename = frame.filename;
-	      if (typeof filename !== "string") { return true; }
-	      for (j = 0; j < listLength; j++) {
-	        url = whitelist[j];
-	        urlRegex = new RegExp(url);
-	
-	        if (urlRegex.test(filename)){
-	          return true;
-	        }
-	      }
-	    }
-	  } catch (e) {
-	    this.configure({hostWhiteList: null});
-	    this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
-	    return true;
-	  }
-	
-	  return false;
-	};
-	
-	Notifier.prototype._messageIsIgnored = function(payload){
-	  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace;
-	  try {
-	    messageIsIgnored = false;
-	    ignoredMessages = this.options.ignoredMessages;
-	    trace = payload.data.body.trace;
-	
-	    if(!ignoredMessages || ignoredMessages.length === 0) { return false; }
-	    if(!trace) { return false; }
-	    exceptionMessage = trace.exception.message;
-	
-	    len = ignoredMessages.length;
-	    for(i=0; i < len; i++) {
-	      rIgnoredMessage = new RegExp(ignoredMessages[i], "gi");
-	      messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-	
-	      if(messageIsIgnored){
-	        break;
-	      }
-	    }
-	  }
-	  catch(e) {
-	    this.configure({ignoredMessages: null});
-	    this.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
-	  }
-	
-	  return messageIsIgnored;
-	};
-	
-	Notifier.prototype._enqueuePayload = function(payload, isUncaught, callerArgs, callback) {
-	
-	  var payloadToSend = {
-	    callback: callback,
-	    accessToken: this.options.accessToken,
-	    endpointUrl: this._route('item/'),
-	    payload: payload
-	  };
-	
-	  var ignoredCallback = function() {
-	    if (callback) {
-	      // If the item was ignored call the callback anyway
-	      var msg = 'This item was not sent to Rollbar because it was ignored. ' +
-	                'This can happen if a custom checkIgnore() function was used ' +
-	                'or if the item\'s level was less than the notifier\' reportLevel. ' +
-	                'See https://rollbar.com/docs/notifier/rollbar.js/configuration for more details.';
-	
-	      callback(null, {err: 0, result: {id: null, uuid: null, message: msg}});
-	    }
-	  };
-	
-	  // Internal checkIgnore will check the level against the minimum
-	  // report level from this.options
-	  if (this._internalCheckIgnore(isUncaught, callerArgs, payload)) {
-	    ignoredCallback();
-	    return;
-	  }
-	
-	  // Users can set their own ignore criteria using this.options.checkIgnore()
-	  try {
-	    if (this.options.checkIgnore &&
-	        typeof this.options.checkIgnore === 'function' &&
-	        this.options.checkIgnore(isUncaught, callerArgs, payload)) {
-	      ignoredCallback();
-	      return;
-	    }
-	  } catch (e) {
-	    // Disable the custom checkIgnore and report errors in the checkIgnore function
-	    this.configure({checkIgnore: null});
-	    this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
-	  }
-	
-	  if (!this._urlIsWhitelisted(payload)) {
-	    return;
-	  }
-	
-	  if (this._messageIsIgnored(payload)) {
-	    return;
-	  }
-	
-	  if (this.options.verbose) {
-	    if (payload.data && payload.data.body && payload.data.body.trace) {
-	      var trace = payload.data.body.trace;
-	      var exceptionMessage = trace.exception.message;
-	      this.logger(exceptionMessage);
-	    }
-	
-	    // FIXME: Some browsers do not output objects as json to the console, and
-	    // instead write [object Object], so let's write the message first to ensure that is logged.
-	    this.logger('Sending payload -', payloadToSend);
-	  }
-	
-	  if (typeof this.options.logFunction === "function") {
-	    this.options.logFunction(payloadToSend);
-	  }
-	
-	  try {
-	    if (typeof this.options.transform === 'function') {
-	      this.options.transform(payload);
-	    }
-	  } catch (e) {
-	    this.configure({transform: null});
-	    this.error('Error while calling custom transform() function. Removing custom transform().', e);
-	  }
-	
-	  if (!!this.options.enabled) {
-	    window._rollbarPayloadQueue.push(payloadToSend);
-	
-	    _notifyPayloadAvailable();
-	  }
-	};
-	
-	
-	Notifier.prototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
-	  var level = callerArgs[0];
-	  var levelVal = Notifier.LEVELS[level] || 0;
-	  var reportLevel = Notifier.LEVELS[this.options.reportLevel] || 0;
-	
-	  if (levelVal < reportLevel) {
-	    return true;
-	  }
-	
-	  var plugins = this.options ? this.options.plugins : {};
-	  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors &&
-	        payload.body.message) {
-	    return payload.body.messagejquery_ajax_error;
-	  }
-	
-	  return false;
-	};
-	
-	
-	/*
-	 * Logs stuff to Rollbar using the default
-	 * logging level.
-	 *
-	 * Can be called with the following, (order doesn't matter but type does):
-	 * - message: String
-	 * - err: Error object, must have a .stack property or it will be
-	 *   treated as custom data
-	 * - custom: Object containing custom data to be sent along with
-	 *   the item
-	 * - callback: Function to call once the item is reported to Rollbar
-	 * - isUncaught: True if this error originated from an uncaught exception handler
-	 * - ignoreRateLimit: True if this item should be allowed despite rate limit checks
-	 */
-	Notifier.prototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
-	  var stackInfo = null;
-	  if (err) {
-	    // If we've already calculated the stack trace for the error, use it.
-	    // This can happen for wrapped errors that don't have a "stack" property.
-	    stackInfo = err._savedStackTrace ? err._savedStackTrace : error_parser.parse(err);
-	
-	    // Don't report the same error more than once
-	    if (err === this.lastError) {
-	      return;
-	    }
-	
-	    this.lastError = err;
-	  }
-	
-	  var payload = this._buildPayload(new Date(), level, message, stackInfo, custom);
-	  if (ignoreRateLimit) {
-	    payload.ignoreRateLimit = true;
-	  }
-	  this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
-	};
-	
-	Notifier.prototype.log = Notifier._generateLogFn();
-	Notifier.prototype.debug = Notifier._generateLogFn('debug');
-	Notifier.prototype.info = Notifier._generateLogFn('info');
-	Notifier.prototype.warn = Notifier._generateLogFn('warning'); // for console.warn() compatibility
-	Notifier.prototype.warning = Notifier._generateLogFn('warning');
-	Notifier.prototype.error = Notifier._generateLogFn('error');
-	Notifier.prototype.critical = Notifier._generateLogFn('critical');
-	
-	// Adapted from tracekit.js
-	Notifier.prototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err, context) {
-	  context = context || null;
-	  if (err && err.stack) {
-	    this._log(this.options.uncaughtErrorLevel, message, err, context, null, true);
-	    return;
-	  }
-	
-	  // NOTE(cory): sometimes users will trigger an "error" event
-	  // on the window object directly which will result in errMsg
-	  // being an Object instead of a string.
-	  //
-	  if (url && url.stack) {
-	    this._log(this.options.uncaughtErrorLevel, message, url, context, null, true);
-	    return;
-	  }
-	
-	  var location = {
-	    'url': url || '',
-	    'line': lineNo
-	  };
-	  location.func = error_parser.guessFunctionName(location.url, location.line);
-	  location.context = error_parser.gatherContext(location.url, location.line);
-	  var stack = {
-	    'mode': 'onerror',
-	    'message': message || 'uncaught exception',
-	    'url': document.location.href,
-	    'stack': [location],
-	    'useragent': navigator.userAgent
-	  };
-	  if (err) {
-	    stack = err._savedStackTrace || error_parser.parse(err);
-	  }
-	
-	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
-	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
-	});
-	
-	
-	Notifier.prototype.global = _wrapNotifierFn(function(options) {
-	  options = options || {};
-	
-	  Util.merge(window._globalRollbarOptions, options);
-	
-	  if (options.maxItems !== undefined) {
-	    rateLimitCounter = 0;
-	  }
-	
-	  if (options.itemsPerMinute !== undefined) {
-	    rateLimitPerMinCounter = 0;
-	  }
-	});
-	
-	
-	Notifier.prototype.configure = _wrapNotifierFn(function(options) {
-	  // TODO(cory): only allow non-payload keys that we understand
-	
-	  // Make a copy of the options object for this notifier
-	  Util.merge(this.options, options);
-	  this.global(options);
-	});
-	
-	/*
-	 * Create a new Notifier instance which has the same options
-	 * as the current notifier + options to override them.
-	 */
-	Notifier.prototype.scope = _wrapNotifierFn(function(payloadOptions) {
-	  var scopedNotifier = new Notifier(this);
-	  Util.merge(scopedNotifier.options.payload, payloadOptions);
-	  return scopedNotifier;
-	});
-	
-	Notifier.prototype.wrap = function(f, context) {
-	  try {
-	    var _this = this;
-	    var ctxFn;
-	    if (typeof context === 'function') {
-	      ctxFn = context;
-	    } else {
-	      ctxFn = function() { return context || {}; };
-	    }
-	
-	    if (typeof f !== 'function') {
-	      return f;
-	    }
-	
-	    // If the given function is already a wrapped function, just
-	    // return it instead of wrapping twice
-	    if (f._isWrap) {
-	      return f;
-	    }
-	
-	    if (!f._wrapped) {
-	      f._wrapped = function () {
-	        try {
-	          return f.apply(this, arguments);
-	        } catch(e) {
-	          if (!e.stack) {
-	            e._savedStackTrace = error_parser.parse(e);
-	          }
-	          e._rollbarContext = ctxFn() || {};
-	          e._rollbarContext._wrappedSource = f.toString();
-	
-	          window._rollbarWrappedError = e;
-	          throw e;
-	        }
-	      };
-	
-	      f._wrapped._isWrap = true;
-	
-	      for (var prop in f) {
-	        if (f.hasOwnProperty(prop)) {
-	          f._wrapped[prop] = f[prop];
-	        }
-	      }
-	    }
-	
-	    return f._wrapped;
-	  } catch (e) {
-	    // Try-catch here is to work around issue where wrap() fails when used inside Selenium.
-	    // Return the original function if the wrap fails.
-	    return f;
-	  }
-	};
-	
-	/***** Misc *****/
-	
-	function _wrapNotifierFn(fn, ctx) {
-	  return function() {
-	    var self = ctx || this;
-	    try {
-	      return fn.apply(self, arguments);
-	    } catch (e) {
-	      if (self) {
-	        self.logger(e);
-	      }
-	    }
-	  };
 	}
 	
-	
-	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
-	function _guessErrorClass(errMsg) {
-	  if (!errMsg) {
-	    return ["Unknown error. There was no error message to display.", ""];
-	  }
-	  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
-	  var errClass = '(unknown)';
-	
-	  if (errClassMatch) {
-	    errClass = errClassMatch[errClassMatch.length - 1];
-	    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
-	    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
-	  }
-	  return [errClass, errMsg];
-	}
 	
 	/***** Payload processor *****/
 	
-	var payloadProcessorTimeout;
+	
 	Notifier.processPayloads = function(immediate) {
 	  if (immediate) {
 	    _deferredPayloadProcess();
@@ -1089,11 +1122,6 @@
 	  _notifyPayloadAvailable();
 	};
 	
-	function _notifyPayloadAvailable() {
-	  if (!payloadProcessorTimeout) {
-	    payloadProcessorTimeout = setTimeout(_deferredPayloadProcess, 1000);
-	  }
-	}
 	
 	function _deferredPayloadProcess() {
 	  var payloadObj;
@@ -1165,6 +1193,7 @@
 	
 	}
 	
+	
 	module.exports = {
 	  Notifier: Notifier,
 	  setupJSON: setupJSON,
@@ -1177,20 +1206,22 @@
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	var ErrorStackParser = __webpack_require__(4);
 	
 	var UNKNOWN_FUNCTION = '?';
+	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
 	
-	
-	function guessFunctionName(url, line) {
+	function guessFunctionName() {
 	  return UNKNOWN_FUNCTION;
 	}
 	
-	function gatherContext(url, line) {
+	
+	function gatherContext() {
 	  return null;
 	}
+	
 	
 	function Frame(stackFrame) {
 	  var data = {};
@@ -1207,6 +1238,7 @@
 	
 	  return data;
 	}
+	
 	
 	function Stack(exception) {
 	  function getStack() {
@@ -1234,12 +1266,31 @@
 	  };
 	}
 	
+	
 	function parse(e) {
 	  return new Stack(e);
 	}
 	
+	
+	function guessErrorClass(errMsg) {
+	  if (!errMsg) {
+	    return ['Unknown error. There was no error message to display.', ''];
+	  }
+	  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+	  var errClass = '(unknown)';
+	
+	  if (errClassMatch) {
+	    errClass = errClassMatch[errClassMatch.length - 1];
+	    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+	    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+	  }
+	  return [errClass, errMsg];
+	}
+	
+	
 	module.exports = {
 	  guessFunctionName: guessFunctionName,
+	  guessErrorClass: guessErrorClass,
 	  gatherContext: gatherContext,
 	  parse: parse,
 	  Stack: Stack,
@@ -1541,202 +1592,231 @@
 /* 6 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 	
-	var Util = {
-	  // modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
-	  merge: function() {
-	    var options, name, src, copy, copyIsArray, clone,
-	      target = arguments[0] || {},
-	      i = 1,
-	      length = arguments.length,
-	      deep = true;
-	
-	    // Handle case when target is a string or something (possible in deep copy)
-	    if (typeof target !== "object" && typeof target !== 'function') {
-	      target = {};
-	    }
-	
-	    for (; i < length; i++) {
-	      // Only deal with non-null/undefined values
-	      if ((options = arguments[i]) !== null) {
-	        // Extend the base object
-	        for (name in options) {
-	          // IE8 will iterate over properties of objects like "indexOf"
-	          if (!options.hasOwnProperty(name)) {
-	            continue;
-	          }
-	
-	          src = target[name];
-	          copy = options[name];
-	
-	          // Prevent never-ending loop
-	          if (target === copy) {
-	            continue;
-	          }
-	
-	          // Recurse if we're merging plain objects or arrays
-	          if (deep && copy && (copy.constructor === Object || (copyIsArray = (copy.constructor === Array)))) {
-	            if (copyIsArray) {
-	              copyIsArray = false;
-	              // Overwrite the source with a copy of the array to merge in
-	              clone = [];
-	            } else {
-	              clone = src && src.constructor === Object ? src : {};
-	            }
-	
-	            // Never move original objects, clone them
-	            target[name] = Util.merge(clone, copy);
-	
-	          // Don't bring in undefined values
-	          } else if (copy !== undefined) {
-	            target[name] = copy;
-	          }
-	        }
-	      }
-	    }
-	
-	    // Return the modified object
-	    return target;
-	  },
-	
-	  copy: function(obj) {
-	    var dest;
-	    if (typeof obj === 'object') {
-	      if (obj.constructor === Object) {
-	        dest = {};
-	      } else if (obj.constructor === Array) {
-	        dest = [];
-	      }
-	    }
-	
-	    Util.merge(dest, obj);
-	    return dest;
-	  },
-	
-	  parseUriOptions: {
-	    strictMode: false,
-	    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-	    q:   {
-	      name:   "queryKey",
+	var parseUriOptions = {
+	  strictMode: false,
+	    key: [
+	    'source',
+	    'protocol',
+	    'authority',
+	    'userInfo',
+	    'user',
+	    'password',
+	    'host',
+	    'port',
+	    'relative',
+	    'path',
+	    'directory',
+	    'file',
+	    'query',
+	    'anchor'
+	  ],
+	    q: {
+	    name: 'queryKey',
 	      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-	    },
-	    parser: {
-	      strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-	      loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-	    }
 	  },
-	
-	  parseUri: function(str) {
-	    if (!str || (typeof str !== 'string' && !(str instanceof String))) {
-	      throw new Error('Util.parseUri() received invalid input');
-	    }
-	
-	    var o = Util.parseUriOptions;
-	    var m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
-	    var uri = {};
-	    var i = 14;
-	
-	    while (i--) {
-	      uri[o.key[i]] = m[i] || "";
-	    }
-	
-	    uri[o.q.name] = {};
-	    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-	      if ($1) {
-	        uri[o.q.name][$1] = $2;
-	      }
-	    });
-	
-	    return uri;
-	  },
-	
-	  sanitizeUrl: function(url) {
-	    if (!url || (typeof url !== 'string' && !(url instanceof String))) {
-	      throw new Error('Util.sanitizeUrl() received invalid input');
-	    }
-	
-	    var baseUrlParts = Util.parseUri(url);
-	    // remove a trailing # if there is no anchor
-	    if (baseUrlParts.anchor === '') {
-	      baseUrlParts.source = baseUrlParts.source.replace('#', '');
-	    }
-	
-	    url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
-	    return url;
-	  },
-	
-	  traverse: function(obj, func) {
-	    var k;
-	    var v;
-	    var i;
-	    var isObj = typeof obj === 'object';
-	    var keys = [];
-	
-	    if (isObj) {
-	      if (obj.constructor === Object) {
-	        for (k in obj) {
-	          if (obj.hasOwnProperty(k)) {
-	            keys.push(k);
-	          }
-	        }
-	      } else if (obj.constructor === Array) {
-	        for (i = 0; i < obj.length; ++i) {
-	          keys.push(i);
-	        }
-	      }
-	    }
-	
-	    for (i = 0; i < keys.length; ++i) {
-	      k = keys[i];
-	      v = obj[k];
-	      isObj = typeof v === 'object';
-	      if (isObj) {
-	        if (v === null) {
-	          obj[k] = func(k, v);
-	        } else if (v.constructor === Object) {
-	          obj[k] = Util.traverse(v, func);
-	        } else if (v.constructor === Array) {
-	          obj[k] = Util.traverse(v, func);
-	        } else {
-	          obj[k] = func(k, v);
-	        }
-	      } else {
-	        obj[k] = func(k, v);
-	      }
-	    }
-	
-	    return obj;
-	
-	  },
-	
-	  redact: function(val) {
-	    val = String(val);
-	    return new Array(val.length + 1).join('*');
-	  },
-	
-	  // from http://stackoverflow.com/a/8809472/1138191
-	  uuid4: function() {
-	    var d = new Date().getTime();
-	    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	      var r = (d + Math.random() * 16) % 16 | 0;
-	      d = Math.floor(d / 16);
-	      return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
-	    });
-	    return uuid;
+	  parser: {
+	    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+	      loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
 	  }
 	};
+	
+	
+	function typeName(obj) {
+	  return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+	}
+	
+	
+	function isType(obj, name) {
+	  return typeName(obj) === name;
+	}
+	
+	
+	// modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
+	function merge() {
+	  var options, name, src, targetCopy, copyIsArray, clone,
+	    target = arguments[0] || {},
+	    i = 1,
+	    length = arguments.length,
+	    deep = true,
+	    targetType = typeName(target);
+	
+	  // Handle case when target is a string or something (possible in deep copy)
+	  if (targetType !== 'object' && targetType !== 'array' && targetType !== 'function') {
+	    target = {};
+	  }
+	
+	  for (; i < length; i++) {
+	    // Only deal with non-null/undefined values
+	    if ((options = arguments[i]) !== null) {
+	      // Extend the base object
+	      for (name in options) {
+	        // IE8 will iterate over properties of objects like "indexOf"
+	        if (!options.hasOwnProperty(name)) {
+	          continue;
+	        }
+	
+	        src = target[name];
+	        targetCopy = options[name];
+	
+	        // Prevent never-ending loop
+	        if (target === targetCopy) {
+	          continue;
+	        }
+	
+	        // Recurse if we're merging plain objects or arrays
+	        if (deep && targetCopy && (isType(targetCopy, 'object') || (copyIsArray = (isType(targetCopy, 'array'))))) {
+	          if (copyIsArray) {
+	            copyIsArray = false;
+	            // Overwrite the source with a copy of the array to merge in
+	            clone = [];
+	          } else {
+	            clone = src && isType(src, 'object') ? src : {};
+	          }
+	
+	          // Never move original objects, clone them
+	          target[name] = merge(clone, targetCopy);
+	
+	          // Don't bring in undefined values
+	        } else if (targetCopy !== undefined) {
+	          target[name] = targetCopy;
+	        }
+	      }
+	    }
+	  }
+	
+	  // Return the modified object
+	  return target;
+	}
+	
+	
+	function copy(obj) {
+	  var dest, tName = typeName(obj);
+	  dest = {object: {}, array: []}[tName];
+	
+	  merge(dest, obj);
+	  return dest;
+	}
+	
+	
+	function parseUri(str) {
+	  if (!isType(str, 'string')) {
+	    throw new Error('received invalid input');
+	  }
+	
+	  var o = parseUriOptions;
+	  var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
+	  var uri = {};
+	  var i = 14;
+	
+	  while (i--) {
+	    uri[o.key[i]] = m[i] || '';
+	  }
+	
+	  uri[o.q.name] = {};
+	  uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+	    if ($1) {
+	      uri[o.q.name][$1] = $2;
+	    }
+	  });
+	
+	  return uri;
+	}
+	
+	
+	function sanitizeUrl(url) {
+	  var baseUrlParts = parseUri(url);
+	  // remove a trailing # if there is no anchor
+	  if (baseUrlParts.anchor === '') {
+	    baseUrlParts.source = baseUrlParts.source.replace('#', '');
+	  }
+	
+	  url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
+	  return url;
+	}
+	
+	
+	function traverse(obj, func) {
+	  var k;
+	  var v;
+	  var i;
+	  var isObj = isType(obj, 'object');
+	  var isArray = isType(obj, 'array');
+	  var keys = [];
+	
+	  if (isObj) {
+	    for (k in obj) {
+	      if (obj.hasOwnProperty(k)) {
+	        keys.push(k);
+	      }
+	    }
+	  } else if (isArray) {
+	    for (i = 0; i < obj.length; ++i) {
+	      keys.push(i);
+	    }
+	  }
+	
+	  for (i = 0; i < keys.length; ++i) {
+	    k = keys[i];
+	    v = obj[k];
+	    isObj = isType(v, 'object');
+	    isArray = isType(v, 'array');
+	    if (isObj || isArray) {
+	      obj[k] = traverse(v, func);
+	    } else {
+	      obj[k] = func(k, v);
+	    }
+	  }
+	
+	  return obj;
+	}
+	
+	
+	function redact(val) {
+	  val = String(val);
+	  return new Array(val.length + 1).join('*');
+	}
+	
+	
+	// from http://stackoverflow.com/a/8809472/1138191
+	function uuid4() {
+	  var d = new Date().getTime();
+	  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	    var r = (d + Math.random() * 16) % 16 | 0;
+	    d = Math.floor(d / 16);
+	    return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+	  });
+	  return uuid;
+	}
+	
+	
+	var Util = {
+	  copy: copy,
+	  isType: isType,
+	  merge: merge,
+	  parseUri: parseUri,
+	  parseUriOptions: parseUriOptions,
+	  redact: redact,
+	  sanitizeUrl: sanitizeUrl,
+	  traverse: traverse,
+	  typeName: typeName,
+	  uuid4: uuid4
+	};
+	
 	
 	module.exports = Util;
 
 
 /***/ },
 /* 7 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
 	/* globals ActiveXObject */
 	
-	"use strict";
+	var Util = __webpack_require__(6);
 	
 	var RollbarJSON = null;
 	
@@ -1746,10 +1826,18 @@
 	
 	var XHR = {
 	  XMLHttpFactories: [
-	      function () {return new XMLHttpRequest();},
-	      function () {return new ActiveXObject("Msxml2.XMLHTTP");},
-	      function () {return new ActiveXObject("Msxml3.XMLHTTP");},
-	      function () {return new ActiveXObject("Microsoft.XMLHTTP");}
+	      function () {
+	        return new XMLHttpRequest();
+	      },
+	      function () {
+	        return new ActiveXObject('Msxml2.XMLHTTP');
+	      },
+	      function () {
+	        return new ActiveXObject('Msxml3.XMLHTTP');
+	      },
+	      function () {
+	        return new ActiveXObject('Microsoft.XMLHTTP');
+	      }
 	  ],
 	  createXMLHTTPObject: function() {
 	    var xmlhttp = false;
@@ -1757,17 +1845,19 @@
 	    var i;
 	    var numFactories = factories.length;
 	    for (i = 0; i < numFactories; i++) {
+	      /* eslint-disable no-empty */
 	      try {
 	        xmlhttp = factories[i]();
 	        break;
 	      } catch (e) {
 	        // pass
 	      }
+	      /* eslint-enable no-empty */
 	    }
 	    return xmlhttp;
 	  },
 	  post: function(url, accessToken, payload, callback) {
-	    if (typeof payload !== 'object') {
+	    if (!Util.isType(payload, 'object')) {
 	      throw new Error('Expected an object to POST');
 	    }
 	    payload = RollbarJSON.stringify(payload);
@@ -1776,7 +1866,7 @@
 	    if (request) {
 	      try {
 	        try {
-	          var onreadystatechange = function(args) {
+	          var onreadystatechange = function() {
 	            try {
 	              if (onreadystatechange && request.readyState === 4) {
 	                onreadystatechange = undefined;
@@ -1784,10 +1874,10 @@
 	                // TODO(cory): have the notifier log an internal error on non-200 response codes
 	                if (request.status === 200) {
 	                  callback(null, RollbarJSON.parse(request.responseText));
-	                } else if (typeof request.status === "number" &&
-	                            request.status >= 400  && request.status < 600) {
+	                } else if (Util.isType(request.status, 'number') &&
+	                            request.status >= 400 && request.status < 600) {
 	                  // return valid http status codes
-	                  callback(new Error(request.status.toString()));
+	                  callback(new Error(String(request.status)));
 	                } else {
 	                  // IE will return a status 12000+ on some sort of connection failure,
 	                  // so we return a blank error
@@ -1800,7 +1890,7 @@
 	              //request members if there is a network error
 	              //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
 	              var exc;
-	              if (typeof ex === 'object' && ex.stack) {
+	              if (ex && ex.stack) {
 	                exc = ex;
 	              } else {
 	                exc = new Error(ex);
@@ -1818,16 +1908,16 @@
 	          request.send(payload);
 	        } catch (e1) {
 	          // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
-	          if (typeof XDomainRequest !== "undefined") {
-	            var ontimeout = function(args) {
+	          if (typeof XDomainRequest !== 'undefined') {
+	            var ontimeout = function() {
 	              callback(new Error());
 	            };
 	
-	            var onerror = function(args) {
+	            var onerror = function() {
 	              callback(new Error());
 	            };
 	
-	            var onload = function(args) {
+	            var onload = function() {
 	              callback(null, RollbarJSON.parse(request.responseText));
 	            };
 	

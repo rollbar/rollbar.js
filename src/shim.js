@@ -1,5 +1,3 @@
-"use strict";
-
 var _shimCounter = 0;
 
 function _logger() {
@@ -10,13 +8,17 @@ function _logger() {
 }
 
 
-function Rollbar(parentShim) {
-  this.shimId = ++_shimCounter;
-  this.notifier = null;
-  this.parentShim = parentShim;
-  this.logger = _logger;
-  this._rollbarOldOnError = null;
+function _wrapInternalErr(f, logger) {
+  logger = logger || _logger;
+  return function() {
+    try {
+      return f.apply(this, arguments);
+    } catch (e) {
+      logger('Rollbar internal error:', e);
+    }
+  };
 }
+
 
 function _rollbarWindowOnError(client, old, args) {
   if (window._rollbarWrappedError) {
@@ -34,6 +36,16 @@ function _rollbarWindowOnError(client, old, args) {
     old.apply(window, args);
   }
 }
+
+
+function Rollbar(parentShim) {
+  this.shimId = ++_shimCounter;
+  this.notifier = null;
+  this.parentShim = parentShim;
+  this.logger = _logger;
+  this._rollbarOldOnError = null;
+}
+
 
 Rollbar.init = function(window, config) {
   var alias = config.globalAlias || 'Rollbar';
@@ -62,7 +74,7 @@ Rollbar.init = function(window, config) {
       };
 
       // Adapted from https://github.com/bugsnag/bugsnag-js
-      var globals = "EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");
+      var globals = 'EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload'.split(',');
 
       var i;
       var global;
@@ -115,8 +127,8 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
   };
 
   // Load the full rollbar.js source
-  var s = document.createElement("script");
-  var f = document.getElementsByTagName("script")[0];
+  var s = document.createElement('script');
+  var f = document.getElementsByTagName('script')[0];
   s.src = config.rollbarJsUrl;
   s.async = !immediate;
 
@@ -197,6 +209,7 @@ function stub(method) {
   });
 }
 
+
 function _extendListenerPrototype(client, prototype) {
   if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
     var oldAddEventListener = prototype.addEventListener;
@@ -211,21 +224,12 @@ function _extendListenerPrototype(client, prototype) {
   }
 }
 
-function _wrapInternalErr(f, logger) {
-  logger = logger || _logger;
-  return function() {
-    try {
-      return f.apply(this, arguments);
-    } catch (e) {
-      logger('Rollbar internal error:', e);
-    }
-  };
-}
 
 var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
+
 
 module.exports = {
   Rollbar: Rollbar,

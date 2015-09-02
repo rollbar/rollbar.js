@@ -1,17 +1,17 @@
-"use strict";
-
 var ErrorStackParser = require('error-stack-parser');
 
 var UNKNOWN_FUNCTION = '?';
+var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
 
-
-function guessFunctionName(url, line) {
+function guessFunctionName() {
   return UNKNOWN_FUNCTION;
 }
 
-function gatherContext(url, line) {
+
+function gatherContext() {
   return null;
 }
+
 
 function Frame(stackFrame) {
   var data = {};
@@ -28,6 +28,7 @@ function Frame(stackFrame) {
 
   return data;
 }
+
 
 function Stack(exception) {
   function getStack() {
@@ -55,12 +56,31 @@ function Stack(exception) {
   };
 }
 
+
 function parse(e) {
   return new Stack(e);
 }
 
+
+function guessErrorClass(errMsg) {
+  if (!errMsg) {
+    return ['Unknown error. There was no error message to display.', ''];
+  }
+  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+  var errClass = '(unknown)';
+
+  if (errClassMatch) {
+    errClass = errClassMatch[errClassMatch.length - 1];
+    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+  }
+  return [errClass, errMsg];
+}
+
+
 module.exports = {
   guessFunctionName: guessFunctionName,
+  guessErrorClass: guessErrorClass,
   gatherContext: gatherContext,
   parse: parse,
   Stack: Stack,
