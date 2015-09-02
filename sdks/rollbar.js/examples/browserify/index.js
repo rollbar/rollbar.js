@@ -1,4 +1,4 @@
-var rollbar = require('../../dist/rollbar.umd.min.js');
+var rollbar = require('rollbar-browser');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
@@ -8,6 +8,6 @@ var rollbarConfig = {
   }
 };
 
-rollbarNotifier = rollbar.init(rollbarConfig);
+var Rollbar = rollbar.init(rollbarConfig);
 
-window.rollbar = rollbarNotifier;
+window.Rollbar = Rollbar;
