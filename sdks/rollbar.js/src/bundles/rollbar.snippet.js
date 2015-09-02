@@ -1,8 +1,6 @@
 /* globals __DEFAULT_ROLLBARJS_URL__ */
 /* globals _rollbarConfig */
 
-"use strict";
-
 var RollbarShim = require('../shim').Rollbar;
 var snippetCallback = require('../snippet_callback');
 
