@@ -89,9 +89,9 @@ Rollbar.configure({
 Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
 ```
 
-## UMD
+## UMD / Browserify / Requirejs / Webpack
 
-From version 1.3.0, rollbar.js is also distributed using UMD (check `rollbar.umd.*.js` files in ([releases](https://github.com/rollbar/rollbar.js/tree/v1.3.0/release)), so you can load the library using AMD or CommonJS styles. Also you can load the library using a `<script>` tag. You can find examples of use in [examples](https://github.com/rollbar/rollbar.js/tree/v1.3.0/examples).
+rollbar.js is also distributed using UMD, so you can use it with browserify, requirejs, webpack, or anything else that uses AMD or CommonJS modules. See the [examples](https://github.com/rollbar/rollbar.js/tree/master/examples) for details.
 
 ## Disable reporting to rollbar.com
 
