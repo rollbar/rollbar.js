@@ -40,8 +40,7 @@
     "stackframe": "^0.2.2",
     "strict-loader": "^0.1.2",
     "time-grunt": "^1.0.0",
-    "uglify-js": "~2.4.3",
-    "webpack": "^1.9.12"
+    "webpack": "^1.12.1"
   },
   "scripts": {
     "test": "make test"
