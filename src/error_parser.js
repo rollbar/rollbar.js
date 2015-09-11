@@ -8,21 +8,8 @@ function guessFunctionName() {
 }
 
 
-function gatherContext(url, line, col) {
-  if (line && url == window.location.href) {
-    col = col || 0;
-    try {
-      var serializer = new XMLSerializer();
-      var source = serializer.serializeToString(window.document);
-      var sourceLines = source.split('\n');
-      var sourceLine = sourceLines[line];
-      var sourceSnippet = sourceLine.substring(col, Math.min(sourceLine.length, col + 50));
-      return [sourceSnippet];
-    } catch (e) {
-      //pass
-      console.error(e);
-    }
-  }
+function gatherContext() {
+  return null;
 }
 
 
@@ -37,7 +24,7 @@ function Frame(stackFrame) {
   data.column = stackFrame.columnNumber;
   data.args = stackFrame.args;
 
-  data.context = gatherContext(data.url, data.line, data.column);
+  data.context = gatherContext(data.url, data.line);
 
   return data;
 }
