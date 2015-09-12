@@ -1,11 +1,14 @@
+var mockjax = require('jquery-mockjax');
+$.mockjax = mockjax;
+
 var expect = chai.expect;
 
-it("should call the second attached callback", function() {
+it('should call the second attached callback', function() {
   // Variable to store result;
   var result;
 
   // Create an element
-  var $div = $("<div></div>");
+  var $div = $('<div></div>');
 
   // Create a callback function creator
   var result = [];
@@ -41,7 +44,7 @@ it("should call the second attached callback", function() {
 });    
 
 
-it("should collect ajax fields", function(done) {
+it('should collect ajax fields', function(done) {
   this.timeout(1000);
 
   var url = 'asdf';
