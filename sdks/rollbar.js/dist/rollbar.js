@@ -1888,6 +1888,7 @@
 	              }
 	            } catch (ex) {
 	              //jquery source mentions firefox may error out while accessing the
+
 	              //request members if there is a network error
 	              //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
 	              var exc;

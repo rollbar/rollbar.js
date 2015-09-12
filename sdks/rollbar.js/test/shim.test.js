@@ -39,6 +39,10 @@ var config = {
 
 
 describe('window.Rollbar.init()', function() {
+  // Create a div to use in the tests
+  var eventDiv = window.document.createElement('div');
+  eventDiv.setAttribute('id', 'event-div');
+  window.document.body.appendChild(eventDiv);
 
   it('should set window.Rollbar to the shim', function(done) {
     // window.Rollbar will be exposed as a function since shim has
@@ -380,7 +384,7 @@ describe('window.Rollbar.loadFull()', function() {
     var callback = snippetCallback(origShim, config);
 
     // Brings in the full rollbar.js file into the DOM
-    window.Rollbar.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
+    window.Rollbar.loadFull(window, document, true, {rollbarJsUrl: 'dist/rollbar.js'}, callback);
 
     // Wait before checking window.Rollbar
     function test() {
