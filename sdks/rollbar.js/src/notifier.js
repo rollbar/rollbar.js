@@ -643,10 +643,7 @@ NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payloa
 NotifierPrototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
   var stackInfo = null;
   if (err) {
-    if (!err.stack) {
-      message = String(err);
-      err = null;
-    } else {
+    try {
       // If we've already calculated the stack trace for the error, use it.
       // This can happen for wrapped errors that don't have a "stack" property.
       stackInfo = err._savedStackTrace ? err._savedStackTrace : errorParser.parse(err);
@@ -657,6 +654,10 @@ NotifierPrototype._log = function(level, message, err, custom, callback, isUncau
       }
 
       this.lastError = err;
+    } catch (e) {
+      // err is not something we can parse so let's just send it along as a string
+      message = String(err);
+      err = null;
     }
   }
 
