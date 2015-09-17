@@ -858,10 +858,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	NotifierPrototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
 	  var stackInfo = null;
 	  if (err) {
-	    if (!err.stack) {
-	      message = String(err);
-	      err = null;
-	    } else {
+	    try {
 	      // If we've already calculated the stack trace for the error, use it.
 	      // This can happen for wrapped errors that don't have a "stack" property.
 	      stackInfo = err._savedStackTrace ? err._savedStackTrace : errorParser.parse(err);
@@ -872,6 +869,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	
 	      this.lastError = err;
+	    } catch (e) {
+	      // err is not something we can parse so let's just send it along as a string
+	      message = String(err);
+	      err = null;
 	    }
 	  }
 	
@@ -1926,12 +1927,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } catch (e1) {
 	          // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
 	          if (typeof XDomainRequest !== 'undefined') {
+	
+	            // Assume we are in a really old browser which has a bunch of limitations:
+	            // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+	
+	            // If the current page is http, try and send over http
+	            if (window.location.href.substring(0, 5) === 'http:' && url.substring(0, 5) === 'https') {
+	              url = 'http' + url.substring(5);
+	            }
+	
 	            var ontimeout = function() {
-	              callback(new Error());
+	              callback(new Error('Request timed out'));
 	            };
 	
 	            var onerror = function() {
-	              callback(new Error());
+	              callback(new Error('Error during request'));
 	            };
 	
 	            var onload = function() {

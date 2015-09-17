@@ -93,12 +93,21 @@ var XHR = {
         } catch (e1) {
           // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
           if (typeof XDomainRequest !== 'undefined') {
+
+            // Assume we are in a really old browser which has a bunch of limitations:
+            // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+
+            // If the current page is http, try and send over http
+            if (window.location.href.substring(0, 5) === 'http:' && url.substring(0, 5) === 'https') {
+              url = 'http' + url.substring(5);
+            }
+
             var ontimeout = function() {
-              callback(new Error());
+              callback(new Error('Request timed out'));
             };
 
             var onerror = function() {
-              callback(new Error());
+              callback(new Error('Error during request'));
             };
 
             var onload = function() {

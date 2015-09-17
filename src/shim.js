@@ -127,15 +127,30 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
   };
 
   // Load the full rollbar.js source
+  var done = false;
   var s = document.createElement('script');
   var f = document.getElementsByTagName('script')[0];
+  var parentNode = f.parentNode;
+
   s.src = config.rollbarJsUrl;
   s.async = !immediate;
 
-  // NOTE(cory): this may not work for some versions of IE
-  s.onload = _wrapInternalErr(onload, this.logger);
+  // From http://stackoverflow.com/questions/4845762/onload-handler-for-script-tag-in-internet-explorer
+  s.onload = s.onreadystatechange = _wrapInternalErr(function() {
+    if (!done && (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete')) {
+      s.onload = s.onreadystatechange = null;
+      try {
+        parentNode.removeChild(s);
+      } catch (e) {
+        // pass
+      }
+      done = true;
 
-  f.parentNode.insertBefore(s, f);
+      onload();
+    }
+  }, this.logger);
+
+  parentNode.insertBefore(s, f);
 };
 
 
