@@ -1,10 +1,10 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
 
 var Util = require('../src/util.js');
-var expect = chai.expect;
+
 
 describe('Util', function() {
   it('should merge two objects properly', function(done) {
@@ -21,7 +21,7 @@ describe('Util', function() {
     expect(result.c.h).to.equal('i');
     expect(result.g).to.have.keys(['h']);
     expect(result.g.h).to.equal(1);
-    expect(result.l).to.deep.equal([1, 2, 3]);
+    expect(result.l).to.eql([1, 2, 3]);
 
     // We correctly merged *into* object1
     expect(result).to.equal(object1);
@@ -42,7 +42,7 @@ describe('Util', function() {
 
     expect(result).to.have.keys(['a', 'c']);
     expect(result.a).to.equal('b');
-    expect(result.c).to.deep.equal(['a']);
+    expect(result.c).to.eql(['a']);
 
     done();
   });
@@ -52,11 +52,11 @@ describe('Util', function() {
     var copy = Util.copy(object);
 
     expect(object).to.not.equal(copy);
-    expect(object).to.deep.equal(copy);
+    expect(object).to.eql(copy);
 
     object.c = {p: 2};
     // Make sure changes to the source does not affect the copy
-    expect(object).to.not.deep.equal(copy);
+    expect(object).to.not.eql(copy);
 
     // Make sure objects within arrays are deep copied
     expect(object.l[2]).to.not.equal(copy.l[2]);
@@ -77,14 +77,14 @@ describe('Util', function() {
     var copy = Util.copy(array);
 
     expect(array).to.not.equal(copy);
-    expect(array).to.deep.equal(copy);
+    expect(array).to.eql(copy);
 
     // Make sure changes to the source does not affect the copy
     array[2] = 3;
     expect(copy[2]).to.equal(2);
 
     array[0].a = {o: 3};
-    expect(array).to.not.deep.equal(copy);
+    expect(array).to.not.eql(copy);
 
     // Make sure objects within arrays are deep copied
     expect(array[3][0]).to.not.equal(copy[3][0]);
@@ -123,11 +123,11 @@ describe('Util', function() {
   it('should handle incorrect input to parseUri', function(done) {
     expect(function() {
       Util.parseUri();
-    }).to.throw('received invalid input');
+    }).to.throwException(/received invalid input/);
 
     expect(function() {
       Util.parseUri(2);
-    }).to.throw('received invalid input');
+    }).to.throwException(/received invalid input/);
 
     done();
   });
@@ -147,21 +147,21 @@ describe('Util', function() {
   it('should handle incorrect input to sanitizeUrl', function(done) {
     expect(function() {
       Util.sanitizeUrl();
-    }).to.throw('received invalid input');
+    }).to.throwException(/received invalid input/);
 
     expect(function() {
       Util.sanitizeUrl(2);
-    }).to.throw('received invalid input');
+    }).to.throwException(/received invalid input/);
 
     done();
   });
 
   it('should traverse all keys of an object', function(done) {
+
     var obj = {
       a: 'a',
       b: 'b',
-      2: 2,
-      null: null
+      2: 2
     };
 
     var visited = {};
@@ -169,7 +169,7 @@ describe('Util', function() {
       visited[k] = v;
       return v;
     });
-    expect(obj).to.deep.equal(visited);
+    expect(obj).to.eql(visited);
 
     done();
   });
@@ -179,25 +179,27 @@ describe('Util', function() {
       a: 'a',
       b: 'b',
       2: 'c',
-      null: {
-        1: 'd',
-        2: 'e',
-        asdf: ['f', {cruel: 'g'}, [1, 2, 3], undefined, null]
-      },
       c: [],
       d: {}
     };
+    obj[''] = {
+      1: 'd',
+      2: 'e',
+      asdf: ['f', {cruel: 'g'}, [1, 2, 3]]
+    };
 
-    var visited = [];
+    var visited = {};
+    var numVisited = 0;
     Util.traverse(obj, function(k, v) {
-      visited.push(v);
+      visited[v] = true;
+      numVisited++;
       return v;
     });
-    expect(visited).to.have.length(12);
+    expect(numVisited).to.equal(10);
 
     // Don't expect [] and {} since those don't have anything to
     // traverse over
-    expect(['a', 'b', 'c', 'd', 'e', 'f', 'g', 1, 2, 3, undefined, null]).to.include.members(visited);
+    expect(visited).to.only.have.keys(['a', 'b', 'c', 'd', 'e', 'f', 'g', '1', '2', '3']);
 
     done();
   });

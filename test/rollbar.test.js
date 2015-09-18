@@ -1,4 +1,4 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 /* globals sinon */
@@ -7,7 +7,6 @@
 var shim = require('../src/shim.js');
 var snippetCallback = require('../src/snippet_callback');
 
-var expect = chai.expect;
 var Rollbar = shim.Rollbar;
 
 
@@ -21,6 +20,11 @@ var origRollbar = Rollbar.init(window, rollbarConfig);
 
 
 describe('Script load', function() {
+  // Create a div to use in the tests
+  var eventDiv = window.document.createElement('div');
+  eventDiv.setAttribute('id', 'event-div');
+  window.document.body.appendChild(eventDiv);
+
   describe('Shim', function() {
     it('should be connected to window.Rollbar', function(done) {
       var callback = snippetCallback(origRollbar, rollbarConfig);
@@ -142,7 +146,7 @@ describe('window.Rollbar.configure()', function() {
 
     it('should not allow ReferenceErrors', function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
         return isReferenceErr;
       }
 
@@ -154,9 +158,7 @@ describe('window.Rollbar.configure()', function() {
 
       var refErr;
       try {
-        /* eslint-disable no-undef */
-        poop();
-        /* eslint-enable no-undef */
+        throw new ReferenceError();
       } catch (e) {
         refErr = e;
       }
@@ -173,7 +175,7 @@ describe('window.Rollbar.configure()', function() {
 
     it('should only allow ReferenceErrors', function(done) {
       function checkIgnore(isUncaught, args, payload) {
-        var isReferenceErr = payload.data.body.trace.exception.class.toLowerCase().indexOf('reference') >= 0;
+        var isReferenceErr = payload.data.body.trace.exception['class'].toLowerCase().indexOf('reference') >= 0;
         return !isReferenceErr;
       }
 
@@ -195,9 +197,7 @@ describe('window.Rollbar.configure()', function() {
 
       var refErr;
       try {
-        /* eslint-disable no-undef */
-        poop();
-        /* eslint-enable no-undef */
+        throw new ReferenceError();
       } catch (e) {
         refErr = e;
       }
@@ -269,7 +269,7 @@ describe('window.Rollbar.configure()', function() {
       var child = window.Rollbar.scope();
       window.Rollbar.configure({itemsPerMinute: 333});
 
-      expect(child.options).to.not.deep.equal(window.Rollbar.options);
+      expect(child.options).to.not.eql(window.Rollbar.options);
       expect(window.Rollbar.options.itemsPerMinute).to.equal(333);
 
       done();
@@ -411,52 +411,51 @@ describe('window.Rollbar.uncaughtError()', function() {
     }, 20);
   });
 
-  it('should catch uncaught errors in event listeners and report', function(done) {
-    // Bypass on firefox for now due to automated event
-    // firing and window.onerror not working together
-    if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-      return done();
-    }
 
-    window.onerror = function() {
-      var args = Array.prototype.slice.call(arguments, 0);
-      shim._rollbarWindowOnError(window.Rollbar, null, args);
-    };
+  if (document.addEventListener) {
+    it('should catch uncaught errors in event listeners and report', function (done) {
+      // Bypass on firefox for now due to automated event
+      // firing and window.onerror not working together
+      if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+        return done();
+      }
 
-    var div = document.getElementById('event-div');
-    div.addEventListener('click', function() {
-      /* eslint-disable no-undef, no-unused-vars */
-      var a = b;
-      /* eslint-enable no-undef, no-unused-vars */
-    }, false);
+      var div = document.getElementById('event-div');
 
-    var event = document.createEvent('MouseEvent');
+      var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
 
-    event.initMouseEvent('click', true, true, window, null,
-            0, 0, 0, 0, false, false, false, false, 0, null);
+      window.onerror = function () {
+        var args = Array.prototype.slice.call(arguments, 0);
+        try {
+          shim._rollbarWindowOnError(window.Rollbar, null, args);
+        } catch (e) {
+          console.log('Expected an error and got one', e);
+        }
 
-    var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
+        expect(spy.calledOnce).to.equal(true);
 
-    div.dispatchEvent(event);
+        var call = spy.getCall(0);
+        var args = call.args;
 
-    expect(spy.calledOnce).to.equal(true);
+        var payload = args[0];
 
-    var call = spy.getCall(0);
-    var args = call.args;
+        expect(payload.data.body.trace.exception['class']).to.equal('ReferenceError');
 
-    var payload = args[0];
+        expect(payload.data.body.trace.extra._wrappedSource).to.contain("var a = 'hello';");
 
-    expect(payload.data.body.trace.exception.class).to.equal('ReferenceError');
+        window.Rollbar._enqueuePayload.restore();
 
-    // Only check for wraped source code for > IE 8
-    // NOTE: Just hacking this together for now
-    var lameIECheck = navigator.userAgent.toLowerCase();
-    if (lameIECheck.indexOf('msie 8') === -1 && lameIECheck.indexOf('msie 9') === -1) {
-      expect(payload.data.body.trace.extra._wrappedSource).to.contain('var a = b;');
-    }
+        done();
+      };
 
-    window.Rollbar._enqueuePayload.restore();
-
-    done();
-  });
+      setTimeout(function () {
+        div.addEventListener('click', function () {
+          var a = 'hello';
+          throw new ReferenceError();
+        });
+        $(div).click();
+      }, 10);
+    });
+  }
 });
+

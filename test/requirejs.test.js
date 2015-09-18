@@ -1,16 +1,18 @@
-var expect = chai.expect;
+window._rollbarConfig = {
+  accessToken: 'XXX',
+  rollbarJsUrl: '/dist/rollbar.js'
+};
+
 
 describe('Include Rollbar via requirejs', function() {
   it('should load a valid Rollbar notifier even with a predefined rollbar module', function(done) {
-
-    var custom = define('rollbar', {
+    define('rollbar', {
       foo: 'bar'
     });
 
     require.config({
       paths: {
-        rollbar: './foo',
-        rollbar2: '../../dist/rollbar.umd'
+        rollbar2: 'dist/rollbar.umd'
       }
     });
 
@@ -19,8 +21,8 @@ describe('Include Rollbar via requirejs', function() {
     });
 
     require(['rollbar2'], function (mod) {
-      window.Rollbar.init({});
-      expect(window.Rollbar).to.be.an('Object');
+      mod.init({});
+      expect(window.Rollbar).to.be.an('object');
       expect(window.Rollbar).to.have.property('configure');
       done();
     })

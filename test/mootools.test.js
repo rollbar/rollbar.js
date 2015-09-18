@@ -1,10 +1,10 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
+require('mootools');
 
-var expect = chai.expect;
-var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
+var setupCustomJSON = require('../vendor/JSON-js/json2.js');
 
 
 describe('RollbarJSON', function() {
