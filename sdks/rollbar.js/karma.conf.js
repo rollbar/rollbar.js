@@ -1,58 +1,81 @@
-// Include the webpack config we use to build the tests.
-// We export an array of webpack configurations from
-// webpack.config.js so we only want the one for tests
-// which is the 3rd element in the array.
-//
-var webpackConfig = require('./webpack.config.js')[2];
-webpackConfig.devtool = 'inline-source-map';
-delete webpackConfig.entry;
-delete webpackConfig.output;
+var path = require('path');
+var webpack = require('webpack');
+var defaults = require('./defaults');
+var browserStackBrowsers = require('./browserstack.browsers');
+
+var defaultsPlugin = new webpack.DefinePlugin(defaults);
+
+var allBrowsers = browserStackBrowsers.filter('bs_all');
+var allBrowsersByBrowser = {};
+allBrowsers.forEach(function(browser) {
+  allBrowsersByBrowser[browser._alias] = browser;
+});
+
 
 module.exports = function (config) {
   config.set({
-    browsers: ['Chrome'],
+    browsers: ['PhantomJS'],
 
-    // karma only needs to know about the test bundle
-    files: [
-      // Files that the tests will load
-      {
-        pattern: 'dist/rollbar.js',
-        included: false,
-        served: true,
-        watched: false
-      },
+    // The Travis environment has these specified.
+    // To run BrowserStack tests locally, specify the environment variables:
+    //  BROWSER_STACK_USERNAME, BROWSER_STACK_ACCESS_KEY
+    browserStack: {
+      username: null,
+      accessKey: null
+    },
 
-      'test/*.test.js',
-    ],
+    client: {
+      captureConsole: true
+    },
 
-    frameworks: ['chai', 'mocha', 'sinon', 'jquery-1.8.3'],
+    // Used for testing on BrowserStack
+    customLaunchers: allBrowsersByBrowser,
 
-    plugins: [
-      'karma-chai',
-      'karma-chrome-launcher',
-      'karma-jquery',
-      'karma-mocha',
-      'karma-mocha-reporter',
-      'karma-phantomjs-launcher',
-      'karma-sinon',
-      'karma-sourcemap-loader',
-      'karma-webpack',
-    ],
+    // Files are specified in the grunt-karma configuration in Gruntfile.js
+    //files: []
+
+    frameworks: ['mocha', 'expect', 'sinon', 'jquery-1.9.0'],
+
+    logLevel: 'INFO',
 
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
-      'test/*.test.js': ['webpack', 'sourcemap']
+      'test/!(requirejs).test.js': ['webpack']
     },
 
     proxies: {
       '/dist/rollbar.js': '/base/dist/rollbar.js'
     },
 
-    reporters: ['mocha'],
+    reporters: ['progress'],
 
-    singleRun: false,
+    singleRun: true,
 
-    webpack: webpackConfig,
+    // Use "polling" and JSONP for older browsers
+    transports: ['polling'],
+    forceJSONP: true,
+
+    webpack: {
+      eslint: {
+        configFile: path.resolve(__dirname, ".eslintrc")
+      },
+      plugins: [defaultsPlugin],
+      module: {
+        preLoaders: [
+          {
+            test: /\.js$/,
+            loader: "strict!eslint",
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/]
+          }
+        ],
+        loaders: [
+          {
+            test: /(mootootls|requirejs)\.js$/,
+            loader: 'script'
+          }
+        ]
+      }
+    },
 
     webpackMiddleware: {
       noInfo: true

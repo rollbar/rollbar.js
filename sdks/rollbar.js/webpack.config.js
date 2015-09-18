@@ -4,6 +4,7 @@ var semver = require('semver');
 var webpack = require('webpack');
 
 var pkg = require('./package.json');
+var defaults = require('./defaults');
 
 var semVer = semver.parse(pkg.version);
 
@@ -20,19 +21,6 @@ var jsonDefines = {
 
 var noJsonDefines = {
   __USE_JSON__: false
-};
-
-var defaults = {
-  __NOTIFIER_VERSION__: JSON.stringify(pkg.version),
-  __JQUERY_PLUGIN_VERSION__: JSON.stringify(pkg.plugins.jquery.version),
-  __DEFAULT_SCRUB_FIELDS__: JSON.stringify(pkg.defaults.scrubFields),
-  __DEFAULT_ENDPOINT__: JSON.stringify(pkg.defaults.endpoint),
-  __DEFAULT_LOG_LEVEL__: JSON.stringify(pkg.defaults.logLevel),
-  __DEFAULT_REPORT_LEVEL__: JSON.stringify(pkg.defaults.reportLevel),
-  __DEFAULT_UNCAUGHT_ERROR_LEVEL: JSON.stringify(pkg.defaults.uncaughtErrorLevel),
-  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('https://' + pkg.cdn.host + '/js/v' + pkg.pinnedVersion + '/rollbar.min.js'),
-  __DEFAULT_MAX_ITEMS__: pkg.defaults.maxItems,
-  __DEFAULT_ITEMS_PER_MIN__: pkg.defaults.itemsPerMin
 };
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
@@ -55,7 +43,8 @@ var snippetConfig = {
     path: outputPath,
     filename: '[name].js'
   },
-  plugins: [defaultsPlugin, uglifyPlugin],
+  //plugins: [defaultsPlugin, uglifyPlugin],
+  plugins: [defaultsPlugin],
   failOnError: true,
   module: {
     preLoaders: [
@@ -93,17 +82,17 @@ var pluginConfig = {
 var testsConfig = {
   name: 'tests',
   entry: {
-    browserify: 'test/bundles/browserify.js',
-    error_parser: 'test/bundles/error_parser.js',
-    json: 'test/bundles/json.js',
-    mootools: 'test/bundles/mootools.js',
-    notifier: 'test/bundles/notifier.js',
-    'notifier-ratelimit': 'test/bundles/notifier.ratelimit.js',
-    rollbar: 'test/bundles/rollbar.js',
-    shim: 'test/bundles/shim.js',
-    shimalias: 'test/bundles/shimalias.js',
-    util: 'test/bundles/util.js',
-    xhr: 'test/bundles/xhr.js',
+    browserify: './test/browserify.test.js',
+    error_parser: './test/error_parser.test.js',
+    json: './test/json.test.js',
+    mootools: './test/mootools.test.js',
+    notifier: './test/notifier.test.js',
+    'notifier-ratelimit': './test/notifier.ratelimit.test.js',
+    rollbar: './test/rollbar.test.js',
+    shim: './test/shim.test.js',
+    shimalias: './test/shimalias.test.js',
+    util: './test/util.test.js',
+    xhr: './test/xhr.test.js',
   },
   plugins: [defaultsPlugin],
   output: {
@@ -169,11 +158,12 @@ var UMDConfigBase = {
   }
 };
 
-var config = [snippetConfig, pluginConfig, testsConfig];
+var config = [snippetConfig, pluginConfig];
 
 function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
   var vanillaConfig = extend({}, vanillaConfigBase);
+  vanillaConfig.name = filename;
 
   plugins = basePlugins.concat(extraPlugins);
   vanillaConfig.plugins = plugins;

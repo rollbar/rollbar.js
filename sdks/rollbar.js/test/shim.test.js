@@ -1,11 +1,10 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 /* globals sinon */
 
 
 var snippetCallback = require('../src/snippet_callback');
-var expect = chai.expect;
 
 
 window.Rollbar = require('../src/shim').Rollbar;
@@ -61,8 +60,8 @@ describe('window.Rollbar.init()', function() {
   it('should create a shim with the expected properties', function(done) {
     expect(window.Rollbar).to.have.property('shimId', 1);
     expect(window.Rollbar).to.have.property('notifier', null);
-    expect(window.Rollbar).to.have.ownProperty('parentShim');
-    expect(window.Rollbar.parentShim).to.be.equal(undefined);
+    expect(window.Rollbar).to.have.property('parentShim');
+    expect(window.Rollbar.parentShim).to.equal(undefined);
     done();
   });
 
@@ -80,14 +79,14 @@ describe('window.Rollbar.init()', function() {
 
     // Make sure the object's shim value is valid
     expect(window._rollbarShimQueue[0].shim).to.be.an('object');
-    expect(window._rollbarShimQueue[0].shim).to.be.equal(window.Rollbar);
+    expect(window._rollbarShimQueue[0].shim).to.be(window.Rollbar);
 
     // Make sure the object's method value is correct
     expect(window._rollbarShimQueue[0].method).to.equal('configure');
 
     // Make sure the object's ts value is valid
-    expect(window._rollbarShimQueue[0].ts).to.be.an.instanceOf(Date);
-    expect(window._rollbarShimQueue[0].ts.getTime()).to.be.at.most(new Date().getTime());
+    expect(window._rollbarShimQueue[0].ts).to.be.a(Date);
+    expect(window._rollbarShimQueue[0].ts.getTime()).to.be.lessThan(new Date().getTime());
 
     // Make sure the object's arguments are correct
     expect(window._rollbarShimQueue[0].args).to.have.property(0);
@@ -125,45 +124,46 @@ describe('window.Rollbar.uncaughtError', function() {
     done();
   });
 
-  it('should wrap addEventListener', function(done) {
-    // Bypass on firefox for now due to automated event
-    // firing and window.onerror not working together
-    if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-      return done();
-    }
 
-    window.onerror = function() {
-      var args = Array.prototype.slice.call(arguments, 0);
-      _rollbarWindowOnError(window.Rollbar, null, args);
-    };
+  var div = document.getElementById('event-div');
+  if (div.addEventListener) {
+    it('should wrap addEventListener', function (done) {
+      // Bypass on firefox for now due to automated event
+      // firing and window.onerror not working together
+      if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+        return done();
+      }
 
-    var spy = sinon.spy(window.Rollbar, 'uncaughtError');
+      window.onerror = function () {
+        var args = Array.prototype.slice.call(arguments, 0);
+        _rollbarWindowOnError(window.Rollbar, null, args);
+      };
 
-    var div = document.getElementById('event-div');
-    div.addEventListener('click', function() {
-      /* eslint-disable no-undef, no-unused-vars */
-      var a = b;
-      /* eslint-enable no-undef, no-unused-vars */
-    }, false);
+      var spy = sinon.spy(window.Rollbar, 'uncaughtError');
 
-    var event = document.createEvent('MouseEvent');
+      div.addEventListener('click', function () {
+        throw new ReferenceError();
+      }, false);
 
-    event.initMouseEvent('click', true, true, window, null,
-            0, 0, 0, 0, false, false, false, false, 0, null);
+      var event = document.createEvent('MouseEvent');
 
-    div.dispatchEvent(event);
+      event.initMouseEvent('click', true, true, window, null,
+        0, 0, 0, 0, false, false, false, false, 0, null);
 
-    expect(spy.calledOnce).to.equal(true);
+      div.dispatchEvent(event);
 
-    var call = spy.getCall(0);
-    var args = call.args;
+      expect(spy.calledOnce).to.equal(true);
 
-    expect(args[4].constructor).to.equal(ReferenceError);
+      var call = spy.getCall(0);
+      var args = call.args;
 
-    spy.restore();
+      expect(args[4]).be.a(ReferenceError);
 
-    done();
-  });
+      spy.restore();
+
+      done();
+    });
+  }
 
   it('should call the previous window.onerror with the correct args', function(done) {
 
@@ -183,43 +183,26 @@ describe('window.Rollbar.uncaughtError', function() {
 });
 
 describe('_rollbarWindowOnError', function() {
+
   it('should set window._rollbarWrappedError as the reported error', function(done) {
+
     var client = window.Rollbar;
+
     window.onerror = function() {
       var args = Array.prototype.slice.call(arguments, 0);
 
       expect(window._rollbarWrappedError).to.not.equal(undefined);
-      expect(window._rollbarWrappedError).to.be.an.instanceof(Error);
-      _rollbarWindowOnError(client, null, args);
+      expect(window._rollbarWrappedError).to.be.a(ReferenceError);
+
+      done();
     };
 
-    var spy = sinon.spy(client, 'uncaughtError');
-
-    var wrappedFunc = client.wrap(function() {
-      /* eslint-disable no-undef, no-unused-vars */
-      var a = b;
-      /* eslint-enable no-undef, no-unused-vars */
+    var wrappedFunc = window.Rollbar.wrap(function() {
+      throw new ReferenceError();
     });
 
     // cause uncaught error to hit the above window.onerror
     setTimeout(wrappedFunc, 10);
-
-    setTimeout(function() {
-      try {
-        expect(spy.calledOnce).to.equal(true);
-
-        var call = spy.getCall(0);
-        var args = call.args;
-
-        expect(args[4].constructor).to.equal(ReferenceError);
-
-        spy.restore();
-        done();
-      } catch(e) {
-        spy.restore();
-        done(e);
-      }
-    }, 20);
   });
 });
 
@@ -279,42 +262,44 @@ describe('window.Rollbar.scope()', function() {
     var newScope = window.Rollbar.scope();
 
     expect(newScope).to.be.an('object');
-    expect(newScope).to.not.equal(window.Rollbar);
+    expect(newScope).to.not.be(window.Rollbar);
 
-    var props = {
-      log: 'function',
-      debug: 'function',
-      info: 'function',
-      warn: 'function',
-      warning: 'function',
-      error: 'function',
-      critical: 'function',
-      uncaughtError: 'function',
-      configure: 'function',
-      scope: 'function',
-      shimId: 'number',
-      notifier: 'null',
-      parentShim: 'object'
-    };
+    var props = [
+      ['log', 'function'],
+      ['debug', 'function'],
+      ['info', 'function'],
+      ['warn', 'function'],
+      ['warning', 'function'],
+      ['error', 'function'],
+      ['critical', 'function'],
+      ['uncaughtError', 'function'],
+      ['configure', 'function'],
+      ['scope', 'function'],
+      ['shimId', 'number'],
+      ['parentShim', 'object']
+    ];
 
-    for (var prop in props) {
-      expect(newScope).to.have.property(prop).that.is.a(props[prop]);
+    for (var i = 0; i < props.length; ++i) {
+      var prop = props[i];
+      expect(newScope).to.have.property(prop[0]);
+      expect(newScope[prop[0]]).to.be.a(prop[1]);
     }
+    expect(newScope.notifier).to.be(null);
 
     expect(newScope.shimId).to.be.above(window.Rollbar.shimId);
-    expect(newScope.parentShim).to.equal(window.Rollbar);
-    expect(newScope.log).to.equal(window.Rollbar.log);
+    expect(newScope.parentShim).to.be(window.Rollbar);
+    expect(newScope.log).to.be(window.Rollbar.log);
 
     done();
   });
 
   it('should increment the shimId on each call', function(done) {
     var newScope = window.Rollbar.scope();
-    expect(newScope.shimId).is.above(window.Rollbar.shimId);
+    expect(newScope.shimId).to.be.above(window.Rollbar.shimId);
 
     var prevScope = newScope;
     newScope = newScope.scope();
-    expect(newScope.shimId).is.above(prevScope.shimId);
+    expect(newScope.shimId).to.be.above(prevScope.shimId);
 
     done();
   });
@@ -388,18 +373,18 @@ describe('window.Rollbar.loadFull()', function() {
 
     // Wait before checking window.Rollbar
     function test() {
-      if (window.Rollbar && window.Rollbar.constructor.name === 'Notifier') {
+      if (window.Rollbar && window.Rollbar.shimId === undefined) {
         expect(window.Rollbar).to.be.an('object');
         expect(window.Rollbar).to.not.equal(origShim);
-        expect(window.Rollbar.constructor.name).to.equal('Notifier');
-        expect(window.Rollbar.parentNotifier).to.be.equal(origShim);
+        expect(window.Rollbar).to.have.property('scope');
+        expect(window.Rollbar.parentNotifier).to.be(origShim);
 
-        expect(origShim.notifier).to.be.equal(window.Rollbar);
+        expect(origShim.notifier).to.be(window.Rollbar);
 
         var shimQueueSize = window._rollbarShimQueue.length;
 
         origShim.log('hello world');
-        expect(window._rollbarShimQueue.length).is.equal(shimQueueSize);
+        expect(window._rollbarShimQueue.length).to.equal(shimQueueSize);
 
         done();
       } else {

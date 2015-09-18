@@ -1,167 +1,91 @@
-/* jshint node: true */
+'use strict';
 
-"use strict";
-
+var glob = require('glob');
+var path = require('path');
+var pkg = require('./package.json');
 var webpackConfig = require('./webpack.config.js');
+var browserStackBrowsers = require('./browserstack.browsers');
 
-var testFiles;
 
-if (process.env.TEST) {
-  testFiles= ['http://localhost:3000/' + process.env.TEST];
-} else {
-  testFiles = ['http://localhost:3000/test/util.html',
-               'http://localhost:3000/test/json.html',
-               'http://localhost:3000/test/xhr.html',
-               'http://localhost:3000/test/notifier.html',
-               'http://localhost:3000/test/notifier.ratelimit.html',
-               'http://localhost:3000/test/rollbar.html',
-               'http://localhost:3000/test/shim.html',
-               'http://localhost:3000/test/shimalias.html',
-               'http://localhost:3000/test/integrations/mootools.html',
-               'http://localhost:3000/test/integrations/browserify.html',
-               'http://localhost:3000/test/plugins/jquery.html',
-               'http://localhost:3000/test/integrations/requirejs.html'
-              ];
+function findTests() {
+  var files = glob.sync('test/**/*.test.js');
+  var mapping = {};
+
+  files.forEach(function(file) {
+    var testName = path.basename(file, '.test.js');
+    mapping[testName] = file;
+  });
+
+  return mapping;
 }
 
+
+function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
+  var config = {
+    options: {
+      configFile: './karma.conf.js',
+      singleRun: singleRun,
+      files: [
+        // Files that the tests will load
+        {
+          pattern: 'dist/**/*.js',
+          included: false,
+          served: true,
+          watched: false
+        },
+        {
+          pattern: 'src/**/*.js',
+          included: false,
+          served: true,
+          watched: false
+        }
+      ]
+    }
+  };
+
+  if (browsers && browsers.length) {
+    config.options.browsers = browsers;
+  }
+
+  if (reporters && reporters.length) {
+    config.options.reporters = reporters;
+  }
+
+  for (var testName in tests) {
+    var testFile = tests[testName];
+    var testConfig = config[testName] = {};
+
+    // Special case for testing requirejs integration.
+    // Include the requirejs module as a framework so
+    // Karma will inclue it in the web page.
+    if (testName === 'requirejs') {
+      testConfig.files = [
+        {src: './test/requirejs-loader.js'},
+        {src: './test/requirejs.test.js', included: false},
+        {src: './dist/rollbar.umd.js', included: false}
+      ];
+      // NOTE: requirejs should go first in case the subsequent libraries
+      // check for the existence of `define()`
+      testConfig.frameworks = ['requirejs', 'expect', 'mocha'];
+    } else {
+      testConfig.files = [{src: [testFile]}];
+    }
+
+    // Special config for BrowserStack IE tests
+    if (testName.slice(0, 3) === 'bs' && testName.indexOf('ie_') >= 0) {
+      // Long timeout since IE 6/7/8 is slow
+      testConfig.captureTimeout = 60000 * 10;
+    }
+  }
+
+  return config;
+}
+
+
 module.exports = function(grunt) {
-  var pkg = grunt.file.readJSON('package.json');
   require('time-grunt')(grunt);
 
-  grunt.initConfig({
-    pkg: pkg,
-    webpack: {
-      options: webpackConfig,
-      build: {}
-    },
-    jshint: {
-      options: {
-        globals: {
-          console: true,
-          window: true,
-          require: true,
-          module: true
-        },
-        browser: true,
-        curly: true,
-        eqeqeq: true,
-        es3: true,
-        forin: true,
-        freeze: true,
-        futurehostile: true,
-        globalstrict: true,
-        noarg: true,
-        nocomma: true,
-        nonbsp: true,
-        nonew: true,
-        strict: true,
-        undef: true
-      },
-      files: [
-        'Gruntfile.js',
-        'src/error_parser.js',
-        'src/globalnotifier.js',
-        'src/notifier.js',
-        'src/shim.js',
-        'src/snippet_callback.js',
-        'src/util.js',
-        'src/xhr.js',
-        'src/shimload.js',
-        'src/bundles/rollbar.snippet.js',
-        'src/bundles/rollbar.js'
-      ]
-    },
-    mocha_phantomjs: {
-      test: {
-        options: {
-          '--web-security' : false,
-          '--local-to-remote-url-access' : true,
-          run: true,
-          log: true,
-          urls: testFiles
-        }
-      }
-    },
-    /* Serves up responses to requests from the notifier */
-    express: {
-      test: {
-        options: {
-          server: './test/express',
-          port: 3000
-        }
-      }
-    },
-    /* Serves up the static test .html files */
-    connect: {
-      test: {
-        options: {
-          base: '.',
-          port: 3000
-        }
-      }
-    },
-    bumpup: ['package.json', 'bower.json'],
-    tagrelease: {
-      file: 'package.json',
-      prefix: 'v',
-      commit: false
-    },
-    'saucelabs-mocha': {
-      all: {
-        options: {
-          urls: ['http://localhost:3000/test/rollbar.html'],
-                 //'http://localhost:3000/test/shim.html',
-                 //'http://localhost:3000/test/notifier.html',
-                 //'http://localhost:3000/test/components.html'],
-          tunnelTimeout: 5,
-          build: process.env.TRAVIS_JOB_ID,
-          concurrency: 3,
-          browsers: browsers,
-          testname: "mocha tests",
-          username: process.env.SAUCE_USERNAME,
-          key: process.env.SAUCE_ACCESS_KEY
-        }
-      }
-    }
-  });
-
-  grunt.loadNpmTasks('grunt-mocha-phantomjs');
-  grunt.loadNpmTasks('grunt-express');
-  grunt.loadNpmTasks('grunt-contrib-connect');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-bumpup');
-  grunt.loadNpmTasks('grunt-tagrelease');
-  grunt.loadNpmTasks('grunt-saucelabs');
-  grunt.loadNpmTasks('grunt-webpack');
-
-  grunt.registerTask('build', ['webpack']);
-  grunt.registerTask('release', ['build', 'copyrelease']);
-
-  var testjobs = ['webpack', 'express'];
-  if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined'){
-    testjobs.push('saucelabs-mocha');
-  } else {
-    testjobs.push('mocha_phantomjs');
-  }
-  grunt.registerTask('test', testjobs);
-
-  // This will allow you to run "grunt test-debug" and then open your
-  // browser to http://localhost:3000/test/XXX.html to run tests.
-  grunt.registerTask('test-browser', function() {
-    console.log('Open your browser to http://localhost:3000/test/rollbar.html');
-    grunt.task.run('express');
-    grunt.task.run('express-keepalive');
-  });
-
-  grunt.registerTask('default', ['build']);
-
-  grunt.registerTask('bumpversion', function(type) {
-    type = type ? type : 'patch';
-    grunt.task.run('bumpup:' + type);
-  });
-
-  grunt.registerTask('copyrelease', function() {
+  function createRelease() {
     var version = pkg.version;
     var builds = ['', '.nojson', '.umd', '.umd.nojson'];
 
@@ -175,43 +99,77 @@ module.exports = function(grunt) {
       grunt.file.copy(js, releaseJs);
       grunt.file.copy(minJs, releaseMinJs);
     });
+  }
+
+  var tests = findTests();
+  var browsers = grunt.option('browsers');
+  if (browsers) {
+    browsers = browsers.split(',');
+
+    var expandedBrowserNames = [];
+    var browserStackAliases = [];
+    var nonBrowserStackAliases = [];
+    browsers.forEach(function(browserName) {
+      if (browserName.slice(0, 3) === 'bs_') {
+        browserStackAliases.push(browserName);
+      } else {
+        nonBrowserStackAliases.push(browserName);
+      }
+    });
+
+    var expandedBrowsers = browserStackBrowsers.filter.apply(null, browserStackAliases);
+    var expandedBrowserNames = [];
+    expandedBrowsers.forEach(function(browser) {
+      expandedBrowserNames.push(browser._alias);
+    });
+    browsers = nonBrowserStackAliases.concat(expandedBrowserNames);
+  }
+
+  var singleRun = grunt.option('singleRun');
+  if (singleRun === undefined) {
+    singleRun = true;
+  }
+
+  var reporters = grunt.option('reporters');
+  if (reporters !== undefined) {
+    reporters = reporters.split(',');
+  }
+
+  grunt.loadNpmTasks('grunt-express');
+  grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-webpack');
+
+  grunt.initConfig({
+    pkg: pkg,
+    webpack: webpackConfig,
+    karma: buildGruntKarmaConfig(singleRun, browsers, tests, reporters),
+
+    // Serves up responses to requests from the tests
+    express: {
+      defaults: {
+        options: {
+          server: './test/express',
+          port: 3000
+        }
+      }
+    },
+
+    // Stores a reference to all of the tests for the
+    // "test" multi task below to iterate over
+    //test: tests,
+
+    // TODO: Upload assets to CDN
+  });
+
+  grunt.registerTask('build', ['webpack']);
+  grunt.registerTask('default', ['build']);
+  grunt.registerTask('test', ['express', 'karma']);
+  grunt.registerTask('release', ['build', createRelease]);
+
+  grunt.registerTask('test', function(target) {
+    var karmaTask = 'karma' + (target ? ':' + target : '');
+    var tasks = ['express', karmaTask];
+    grunt.task.run.apply(grunt.task, tasks);
   });
 };
-
-
-var browsers = [
-  {
-    browserName: 'firefox',
-    version: '19',
-    platform: 'XP'
-  },
-  {
-    browserName: 'chrome',
-    platform: 'XP'
-  },
-  {
-    browserName: 'chrome',
-    platform: 'linux'
-  },
-  {
-    browserName: 'internet explorer',
-    platform: 'WIN8',
-    version: '10'
-  },
-  {
-    browserName: 'internet explorer',
-    platform: 'VISTA',
-    version: '9'
-  },
-  {
-    browserName: 'internet explorer',
-    platform: 'XP',
-    version: '8'
-  },
-  {
-    browserName: 'opera',
-    platform: 'Windows 2008',
-    version: '12'
-  }
-];
 
