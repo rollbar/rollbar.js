@@ -2,22 +2,20 @@
   "name": "rollbar",
   "dependencies": {},
   "main": [
-    "dist/rollbar.umd.js",
-    "dist/rollbar.snippet.js",
-    "src/plugins/jquery.js"
+    "dist/rollbar.umd.js"
   ],
   "ignore": [
     "docs",
     "examples",
     "release",
     "test",
-    "tasks",
     ".gitignore",
     ".gitmodules",
     ".travis.yml",
     "Gruntfile.js",
     "Makefile",
     "travis.yml",
-    "package.json"
+    "package.json",
+    "webpack.config.js"
   ]
 }

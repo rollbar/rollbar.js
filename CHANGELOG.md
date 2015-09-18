@@ -1,4 +1,7 @@
-#n Change Log
+# Change Log
+
+**v1.6.1**
+- Updated bower.json to contain only a single .js entry. (issue#126)
 
 **v1.6.0**
 - Fixed a bug that caused IE 8 to not properly initialize `window.Rollbar`. (pr#129)
