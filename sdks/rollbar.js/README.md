@@ -148,7 +148,7 @@ If you minify your JavaScript in production, you'll want to configure source map
 - [Configuration reference](https://rollbar.com/docs/notifier/rollbar.js/configuration)
 - [API reference](https://rollbar.com/docs/notifier/rollbar.js/api)
 - [Plugins](https://rollbar.com/docs/notifier/rollbar.js/plugins)
-- [Examples](https://github.com/rollbar/rollbar.js/examples)
+- [Examples](https://github.com/rollbar/rollbar.js/tree/master/examples)
 - [FAQ](https://rollbar.com/docs/notifier/rollbar.js/faq)
 
 ## Help / Support
