@@ -38,6 +38,9 @@ module.exports = function (config) {
 
     logLevel: 'INFO',
 
+    // Default is 1000 but we can run into rate limit issues so bump it up to 10k
+    pollingTimeout: 10000,
+
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
       'test/!(requirejs).test.js': ['webpack']
