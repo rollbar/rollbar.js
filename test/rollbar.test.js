@@ -423,8 +423,11 @@ describe('window.Rollbar.uncaughtError()', function() {
       var div = document.getElementById('event-div');
 
       var spy = sinon.spy(window.Rollbar, '_enqueuePayload');
+      var oldOnError = (function() { return window.onerror; })();
 
       window.onerror = function () {
+        window.onerror = oldOnError;
+
         var args = Array.prototype.slice.call(arguments, 0);
         try {
           shim._rollbarWindowOnError(window.Rollbar, null, args);
@@ -449,11 +452,13 @@ describe('window.Rollbar.uncaughtError()', function() {
       };
 
       setTimeout(function () {
-        div.addEventListener('click', function () {
+        document.addEventListener('click', function () {
           var a = 'hello';
           throw new ReferenceError();
         });
-        $(div).click();
+        var event = document.createEvent('Event');
+        event.initEvent('click', true, true);
+        div.dispatchEvent(event);
       }, 10);
     });
   }
