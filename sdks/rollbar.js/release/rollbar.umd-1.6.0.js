@@ -1,4 +1,14 @@
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else {
+		var a = factory();
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -44,13 +54,20 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	module.exports = __webpack_require__(1);
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	/* globals __USE_JSON__ */
 	
 	
-	var globalnotifier = __webpack_require__(1);
-	var notifier = __webpack_require__(2);
+	var globalnotifier = __webpack_require__(2);
+	var notifier = __webpack_require__(3);
 	
 	
 	function setupJSON() {
@@ -59,7 +76,7 @@
 	  if (true) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    var setupCustomJSON = __webpack_require__(8);
+	    var setupCustomJSON = __webpack_require__(9);
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -94,13 +111,13 @@
 
 
 /***/ },
-/* 1 */
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var notifier = __webpack_require__(2);
-	var Util = __webpack_require__(6);
+	var notifier = __webpack_require__(3);
+	var Util = __webpack_require__(7);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set
@@ -191,7 +208,7 @@
 
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -207,9 +224,9 @@
 	/* globals DOMException */
 	
 	
-	var errorParser = __webpack_require__(3);
-	var Util = __webpack_require__(6);
-	var xhr = __webpack_require__(7);
+	var errorParser = __webpack_require__(4);
+	var Util = __webpack_require__(7);
+	var xhr = __webpack_require__(8);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -244,7 +261,7 @@
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.6.1");
+	Notifier.NOTIFIER_VERSION = ("1.6.0");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -263,7 +280,7 @@
 	
 	// This is the global queue where all notifiers will put their
 	// payloads to be sent to Rollbar.
-	window._rollbarPayloadQueue = window._rollbarPayloadQueue || [];
+	window._rollbarPayloadQueue = [];
 	
 	// This contains global options for all Rollbar notifiers.
 	window._globalRollbarOptions = {
@@ -1204,12 +1221,12 @@
 
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(4);
+	var ErrorStackParser = __webpack_require__(5);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -1300,14 +1317,14 @@
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(5)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -1489,7 +1506,7 @@
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -1590,7 +1607,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1810,14 +1827,14 @@
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals ActiveXObject */
 	
-	var Util = __webpack_require__(6);
+	var Util = __webpack_require__(7);
 	
 	var RollbarJSON = null;
 	
@@ -1954,7 +1971,7 @@
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	/*
@@ -2431,4 +2448,6 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])
+});
+;

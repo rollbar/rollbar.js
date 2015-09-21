@@ -244,7 +244,7 @@
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.5.0");
+	Notifier.NOTIFIER_VERSION = ("1.6.1");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");

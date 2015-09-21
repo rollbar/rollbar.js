@@ -244,7 +244,7 @@
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.6.1");
+	Notifier.NOTIFIER_VERSION = ("1.6.0");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -263,7 +263,7 @@
 	
 	// This is the global queue where all notifiers will put their
 	// payloads to be sent to Rollbar.
-	window._rollbarPayloadQueue = window._rollbarPayloadQueue || [];
+	window._rollbarPayloadQueue = [];
 	
 	// This contains global options for all Rollbar notifiers.
 	window._globalRollbarOptions = {

@@ -1,5 +1,13 @@
 # Change Log
 
+**v1.6.1**
+- Updated bower.json to contain only a single .js entry. (issue#126)
+
+**v1.6.0**
+- Fixed a bug that caused IE 8 to not properly initialize `window.Rollbar`. (pr#129)
+  - Fixed the `XDomainRequest` code to work properly in IE 8.
+  - Updated error parsing to provide more useful information for IE 8 errors
+
 **v1.5.0**
 - Published rollbar.js to npmjs.com as rollbar-browser. (pr#127)
 - Fixes a bug where thrown non-error objects were not properly handled. (pr#125)
