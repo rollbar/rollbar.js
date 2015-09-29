@@ -175,6 +175,9 @@ Default: ```"warning"```
 
 Default: ```"warning"```
   </dd>
+  
+  <dt>hostWhiteList</dt>
+  <dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.</dd>
   <dl>
 
 ### Payload
