@@ -986,6 +986,45 @@ describe('Notifier.log()', function() {
 
     done();
   });
+
+  it('should call _log with the provided custom Error subclass', function(done) {
+    var notifier = new Notifier();
+    var spy = sinon.spy(notifier, '_log');
+
+    function SpecificError(message) {
+      var tmp = Error.apply(this, arguments);
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, SpecificError);
+      }
+      this.message = message
+      Error.call(this);
+    }
+    SpecificError.prototype = Object.create(Error.prototype);
+    SpecificError.prototype.constructor = SpecificError;
+
+    var err;
+    try {
+      throw new SpecificError('Error stack to Rollbar')
+    } catch (e) {
+      err = e;
+    }
+
+    notifier.log('My awesome error subclass', err, {custom: 'data'});
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var level = call.args[0];
+    var message = call.args[1];
+    var err = call.args[2];
+    var custom = call.args[3];
+
+    expect(message).to.be.equal('My awesome error subclass');
+    expect(err.stack).to.be.a('string');
+    expect(custom.custom).to.equal('data');
+
+    done();
+  });
 });
 
 
