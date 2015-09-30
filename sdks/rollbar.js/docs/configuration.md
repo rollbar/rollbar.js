@@ -114,12 +114,43 @@ Default: ```0``` (no limit)
 ### Context
 
   <dl>
+  
+  <dt>checkIgnore</dt>
+  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
+
+Default: ```null```
+
+- isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
+- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
+- payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
+  </dd>
 
   <dt>enabled</dt>
   <dd>If set to ```false```, no data will be sent to Rollbar for this notifier.
   Note: callbacks for errors will not be called if this is set to ```false```.
 
 Default: ```true```
+  </dd>
+  
+  <dt>hostWhiteList</dt>
+  <dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.</dd>
+  
+  <dt>logLevel</dt>
+  <dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+
+Default: ```"debug"```
+  </dd>
+
+  <dt>reportLevel</dt>
+  <dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
+
+Default: ```"warning"```
+  </dd>
+  
+  <dt>scrubFields</dt>
+  <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
+
+Default: ```["passwd", "password", "secret", "confirm_password", "password_confirmation"]```
   </dd>
 
   <dt>transform</dt>
@@ -143,41 +174,11 @@ var _rollbarConfig = {
 ```
   </dd>
 
-  <dt>checkIgnore</dt>
-  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
-
-Default: ```null```
-
-- isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
-- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
-- payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
-  </dd>
-
-  <dt>scrubFields</dt>
-  <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
-
-Default: ```["passwd", "password", "secret", "confirm_password", "password_confirmation"]```
-  </dd>
-
-  <dt>logLevel</dt>
-  <dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
-
-Default: ```"debug"```
-  </dd>
-
-  <dt>reportLevel</dt>
-  <dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
-
-Default: ```"warning"```
-
   <dt>uncaughtErrorLevel</dt>
   <dd>The severity level used when uncaught errors are reported to Rollbar.
 
-Default: ```"warning"```
+Default: ```"error"```
   </dd>
-  
-  <dt>hostWhiteList</dt>
-  <dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.</dd>
   <dl>
 
 ### Payload
