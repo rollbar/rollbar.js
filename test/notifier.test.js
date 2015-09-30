@@ -438,7 +438,7 @@ describe('Notifier.uncaughtError()', function() {
     var args = call.args;
 
     expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('warning');
+    expect(args[0]).to.equal('error');
     expect(args[1]).to.equal('testing uncaught error');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
@@ -528,7 +528,7 @@ describe('Notifier.uncaughtError()', function() {
     var args = call.args;
 
     expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('warning');
+    expect(args[0]).to.equal('error');
     expect(args[1]).to.equal('testing uncaught error');
     expect(args[2]).to.equal(err);
     expect(args[3].custom).to.equal('value');
@@ -556,7 +556,7 @@ describe('Notifier.uncaughtError()', function() {
     expect(args[1]).to.equal(true);
     expect(args[2]).to.be.an('array');
     expect(args[2].length).to.equal(6);
-    expect(args[2][0]).to.equal('warning');
+    expect(args[2][0]).to.equal('error');
     expect(args[2][1]).to.equal('testing uncaught error');
     expect(args[2][2]).to.equal('http://foo.com/');
     expect(args[2][3]).to.equal(33);
@@ -583,7 +583,7 @@ describe('Notifier.uncaughtError()', function() {
     var args = call.args;
 
     expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('warning');
+    expect(args[0]).to.equal('error');
     expect(args[1]).to.equal('testing uncaught error event');
     expect(args[2]).to.equal(err);
     expect(args[3]).to.equal(null);
@@ -726,7 +726,7 @@ describe('Notifier.uncaughtError()', function() {
     expect(test).to.not.throw(Error, '_log() is broken');
     expect(consoleLogStub.called).to.equal(true);
     expect(_logStub.called).to.equal(true);
-    expect(_logStub.getCall(0).args[0]).to.equal('warning');
+    expect(_logStub.getCall(0).args[0]).to.equal('error');
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.a('string');
