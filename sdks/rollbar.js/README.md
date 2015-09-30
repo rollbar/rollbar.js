@@ -139,6 +139,23 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
+## Asynchronous option
+
+By default, the snippet loads the full Rollbar source asynchronously. With this enabled, the browser will
+continue evaluating the page after the snippet without waiting for the rollbar.min.js source to download.
+You can override this behavior to be synchronous. This will cause the browser to download and evaluate
+the full rollbar source before evaluating the rest of the page.
+
+More information can be found here: http://www.w3schools.com/tags/att_script_async.asp
+
+```js
+var _rollbarConfig = {
+  ...
+  async: false,
+  ...
+};
+```
+
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
