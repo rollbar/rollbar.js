@@ -1,6 +1,6 @@
 {
   "name": "rollbar-browser",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -68,7 +68,7 @@
     ],
     "logLevel": "debug",
     "reportLevel": "debug",
-    "uncaughtErrorLevel": "warning",
+    "uncaughtErrorLevel": "error",
     "maxItems": 0,
     "itemsPerMin": 60
   },
