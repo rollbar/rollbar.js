@@ -2,6 +2,8 @@
 
 "use strict";
 
+var fs = require('fs');
+
 var webpackConfig = require('./webpack.config.js');
 
 var testFiles;
@@ -122,6 +124,40 @@ module.exports = function(grunt) {
           key: process.env.SAUCE_ACCESS_KEY
         }
       }
+    },
+    replace: {
+      snippets: {
+        src: ['*.md', 'test/**/*.html', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
+        overwrite: true,
+        replacements: [
+          // Main rollbar snippet
+          {
+            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+([^\n\r]+)[\n\r]+(.*// End Rollbar Snippet)', 'm'),
+            to: function(match, index, fullText, captures) {
+              var snippet = fs.readFileSync('dist/rollbar.snippet.js');
+              captures[1] = snippet;
+              return captures.join('\n');
+            }
+          },
+          // jQuery rollbar plugin snippet
+          {
+            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+([^\n\r]+)[\n\r]+(.*// End Rollbar jQuery Snippet)', 'm'),
+            to: function(match, index, fullText, captures) {
+              var snippet = fs.readFileSync('dist/plugins/jquery.min.js');
+              captures[1] = snippet;
+              return captures.join('\n');
+            }
+          },
+          // README travis link
+          {
+            from: new RegExp('(https://api\.travis-ci\.org/rollbar/rollbar\.js\.png\\?branch=v)([0-9.]+)'),
+            to: function(match, index, fullText, captures) {
+              captures[1] = pkg.version;
+              return captures.join('');
+            }
+          }
+        ]
+      }
     }
   });
 
@@ -134,8 +170,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-tagrelease');
   grunt.loadNpmTasks('grunt-saucelabs');
   grunt.loadNpmTasks('grunt-webpack');
+  grunt.loadNpmTasks('grunt-text-replace');
 
-  grunt.registerTask('build', ['webpack']);
+  grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   var testjobs = ['webpack', 'express'];
