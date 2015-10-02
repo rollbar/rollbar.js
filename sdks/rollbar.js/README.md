@@ -141,12 +141,9 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
-## Asynchronous option
+## Synchronous option
 
-By default, the snippet loads the full Rollbar source asynchronously. With this enabled, the browser will
-continue evaluating the page after the snippet without waiting for the rollbar.min.js source to download.
-You can override this behavior to be synchronous. This will cause the browser to download and evaluate
-the full rollbar source before evaluating the rest of the page.
+By default, the snippet loads the full Rollbar source **asynchronously**. You can disable this which will cause the browser to download and evaluate the full rollbar source before evaluating the rest of the page.
 
 More information can be found here: http://www.w3schools.com/tags/att_script_async.asp
 
@@ -161,6 +158,40 @@ var _rollbarConfig = {
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
+
+## iOS 9 Webviews
+
+iOS 9 webviews will currently not work properly with the rollbar.js snippet above. 
+
+Starting with iOS 9, webviews will only allow connections to HTTPS hosts whose certificates are are signed using SHA256+ and whose key is either 2048+ bit RSA or 256+ ECC. Many CDNs, including Cloudfront, do not meet these specifications. More info [here](https://developer.apple.com/library/prerelease/ios/technotes/App-Transport-Security-Technote/index.html).
+
+You have a couple of options to fix this behavior:
+
+- Update your app's Info.plist file to not enforce Forward Secrecy for the Rollbar cloudfront domain:
+```xml
+  <key>NSAppTransportSecurity</key> 
+  <dict> 
+    <key>NSExceptionDomains</key> 
+    <dict> 
+      <key>d37gvrvc0wt4s1.cloudfront.net</key> 
+      <dict> 
+        <key>NSExceptionRequiresForwardSecrecy</key> 
+          <false/> 
+        <key>NSIncludesSubdomains</key> 
+          <true/> 
+      </dict> 
+    </dict> 
+  </dict>
+```
+- Update your rollbar.js snippet to use cdn.rollbar.com
+  - This will fix iOS 9 webviews but will cause rollbar.js to not work properly for IE6 and IE8 users
+```js
+  var _rollbarConfig = {
+    accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+    // ... other configuration
+    rollbarJsUrl: "https://cdn.rollbar.com/js/v1.7/rollbar.min.js"
+  };
+```
 
 ## Next steps
 
