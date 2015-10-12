@@ -70,7 +70,7 @@
   "scripts": {
     "build": "./node_modules/.bin/grunt",
     "test": "./node_modules/.bin/grunt test",
-    "test_ci": "./node_modules/.bin/grunt test --browsers=bs_ie_latest"
+    "test_ci": "./node_modules/.bin/grunt test"
   },
   "cdn": {
     "host": "d37gvrvc0wt4s1.cloudfront.net"
