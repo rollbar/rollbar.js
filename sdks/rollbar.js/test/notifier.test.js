@@ -1226,7 +1226,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       expect(stub.called).to.equal(true);
       expect(stub.getCall(0).args.length).to.equal(1);
       expect(stub.getCall(0).args[0]).to.be.an('object');
-      expect(stub.getCall(0).args[0].constructor.name).to.equal('Error');
+      expect(Util.typeName(stub.getCall(0).args[0])).to.equal('error');
 
       // Shouldn't log internal errors for xhr request failures
       expect(consoleLogStub.called).to.equal(false);
