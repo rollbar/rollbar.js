@@ -52,13 +52,12 @@
 	var RollbarShim = __webpack_require__(1).Rollbar;
 	var snippetCallback = __webpack_require__(2);
 
-	var defaultRollbarJsUrl = ("https://d37gvrvc0wt4s1.cloudfront.net/js/vundefined/rollbar.min.js");
-	_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
+	_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || ("https://d37gvrvc0wt4s1.cloudfront.net/js/vundefined/rollbar.min.js");
 
 	var shim = RollbarShim.init(window, _rollbarConfig);
 	var callback = snippetCallback(shim, _rollbarConfig);
 
-	shim.loadFull(window, document, false, _rollbarConfig, callback);
+	shim.loadFull(window, document, !_rollbarConfig.async, _rollbarConfig, callback);
 
 
 /***/ },

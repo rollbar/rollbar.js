@@ -1,5 +1,13 @@
 # Change Log
 
+**v1.7.0**
+- Fixed a bug that was not recognizing custom Error subclasses as valid errors. (pr#142)
+- Added documentation for the `hostWhiteList` option. (pr#138)
+- Changed the default uncaught error level to "error" instead of "warning".
+  - This will cause all new uncaught errors to send out email notifications with the default Rollbar notification settings.
+- Added a new configuration option, "async" which controls whether or not the full rollbar.min.js source is loaded up
+  asynchronously. This option is set to `true` by default.
+
 **v1.6.1**
 - Updated bower.json to contain only a single .js entry. (issue#126)
 

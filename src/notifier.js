@@ -157,12 +157,6 @@ NotifierPrototype._getLogArgs = function(args) {
       }
     } else if (argT === 'function') {
       callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
-    } else if (argT === 'object') {
-      if (custom) {
-        extraArgs.push(arg);
-      } else {
-        custom = arg;
-      }
     } else if (argT === 'date') {
       extraArgs.push(arg);
     } else if (argT === 'error' ||
@@ -172,6 +166,12 @@ NotifierPrototype._getLogArgs = function(args) {
         extraArgs.push(arg);
       } else {
         err = arg;
+      }
+    } else if (argT === 'object') {
+      if (custom) {
+        extraArgs.push(arg);
+      } else {
+        custom = arg;
       }
     }
   }

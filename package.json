@@ -1,6 +1,6 @@
  {
   "name": "rollbar-browser",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -35,6 +35,7 @@
     "grunt-mocha-cov": "^0.3.0",
     "grunt-saucelabs": "~4.1.2",
     "grunt-tagrelease": "~0.3.0",
+    "grunt-text-replace": "^0.4.0",
     "grunt-webpack": "^1.0.11",
     "jasmine-core": "^2.3.4",
     "jquery-mockjax": "^2.0.1",
@@ -94,7 +95,7 @@
     ],
     "logLevel": "debug",
     "reportLevel": "debug",
-    "uncaughtErrorLevel": "warning",
+    "uncaughtErrorLevel": "error",
     "maxItems": 0,
     "itemsPerMin": 60
   },
