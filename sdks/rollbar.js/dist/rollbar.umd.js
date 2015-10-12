@@ -261,12 +261,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.6.1");
+	Notifier.NOTIFIER_VERSION = ("1.7.0");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
 	Notifier.DEFAULT_REPORT_LEVEL = ("debug");
-	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = ("warning");
+	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = ("error");
 	Notifier.DEFAULT_ITEMS_PER_MIN = (60);
 	Notifier.DEFAULT_MAX_ITEMS = (0);
 	
@@ -372,12 +372,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    } else if (argT === 'function') {
 	      callback = _wrapNotifierFn(arg, this);  // wrap the callback in a try/catch block
-	    } else if (argT === 'object') {
-	      if (custom) {
-	        extraArgs.push(arg);
-	      } else {
-	        custom = arg;
-	      }
 	    } else if (argT === 'date') {
 	      extraArgs.push(arg);
 	    } else if (argT === 'error' ||
@@ -387,6 +381,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        extraArgs.push(arg);
 	      } else {
 	        err = arg;
+	      }
+	    } else if (argT === 'object') {
+	      if (custom) {
+	        extraArgs.push(arg);
+	      } else {
+	        custom = arg;
 	      }
 	    }
 	  }
