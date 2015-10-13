@@ -1,17 +1,7 @@
 var extend = require('util')._extend;
 var path = require('path');
-var semver = require('semver');
 var webpack = require('webpack');
-
-var pkg = require('./package.json');
 var defaults = require('./defaults');
-
-var semVer = semver.parse(pkg.version);
-
-// Get the minimum minor version to put into the CDN URL
-semVer.patch = 0;
-semVer.prerelease = [];
-pkg.pinnedVersion = semVer.major + '.' + semVer.minor;
 
 var outputPath = './dist/';
 
