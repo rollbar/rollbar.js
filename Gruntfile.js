@@ -87,28 +87,11 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
 module.exports = function(grunt) {
   require('time-grunt')(grunt);
 
-  function createRelease() {
-    var version = pkg.version;
-    var builds = ['', '.nojson', '.umd', '.umd.nojson'];
-
-    builds.forEach(function (buildName) {
-      var js = 'dist/rollbar' + buildName + '.js';
-      var minJs = 'dist/rollbar' + buildName + '.min.js';
-
-      var releaseJs = 'release/rollbar' + buildName + '-' + version + '.js';
-      var releaseMinJs = 'release/rollbar' + buildName + '-' + version + '.min.js';
-
-      grunt.file.copy(js, releaseJs);
-      grunt.file.copy(minJs, releaseMinJs);
-    });
-  }
-
   var tests = findTests();
   var browsers = grunt.option('browsers');
   if (browsers) {
     browsers = browsers.split(',');
 
-    var expandedBrowserNames = [];
     var browserStackAliases = [];
     var nonBrowserStackAliases = [];
     browsers.forEach(function(browserName) {
@@ -199,12 +182,29 @@ module.exports = function(grunt) {
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
   grunt.registerTask('test', ['express', 'karma']);
-  grunt.registerTask('release', ['build', createRelease]);
+  grunt.registerTask('release', ['build', 'copyrelease']);
 
   grunt.registerTask('test', function(target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
     var tasks = ['express', karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
+
+  grunt.registerTask('copyrelease', function createRelease() {
+    var version = pkg.version;
+    var builds = ['', '.nojson', '.umd', '.umd.nojson'];
+
+    builds.forEach(function (buildName) {
+      var js = 'dist/rollbar' + buildName + '.js';
+      var minJs = 'dist/rollbar' + buildName + '.min.js';
+
+      var releaseJs = 'release/rollbar' + buildName + '-' + version + '.js';
+      var releaseMinJs = 'release/rollbar' + buildName + '-' + version + '.min.js';
+
+      grunt.file.copy(js, releaseJs);
+      grunt.file.copy(minJs, releaseMinJs);
+    });
+  });
+
 };
 

@@ -799,6 +799,12 @@ NotifierPrototype.wrap = function(f, context) {
   }
 };
 
+
+NotifierPrototype.loadFull = function() {
+  this.logger('Unexpected Rollbar.loadFull() called on a Notifier instance');
+};
+
+
 /***** Misc *****/
 
 function _generateLogFn(level) {
