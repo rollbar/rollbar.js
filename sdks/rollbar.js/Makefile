@@ -2,10 +2,15 @@ TESTS = test/index.html
 REPORTER = dot
 
 build:
-	@./node_modules/.bin/grunt
-
-test:
-	@./node_modules/.bin/grunt test
+	@npm run build
 	@echo ""
 
-.PHONY: test
+test:
+	@npm run test
+	@echo ""
+
+test_ci:
+	@npm run test_ci
+	@echo ""
+
+.PHONY: test test_ci

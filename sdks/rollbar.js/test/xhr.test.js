@@ -1,9 +1,8 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
 
-var expect = chai.expect;
 var xhr = require('../src/xhr');
 var XHR = xhr.XHR;
 
@@ -22,11 +21,12 @@ describe('XHR', function() {
     var accessToken = 'abc123';
     var payload = {};
 
+    debugger;
     XHR.post(url, accessToken, payload, function(err, response) {
       expect(err).to.equal(null);
 
       // Make sure the access token header is received by the test server and sent back in the response
-      expect(response).to.deep.equal({accessToken: accessToken});
+      expect(response).to.eql({accessToken: accessToken});
       done();
     });
   });
@@ -39,7 +39,7 @@ describe('XHR', function() {
     function test() {
       XHR.post(url, accessToken, payload, function() {});
     }
-    expect(test).to.throw(Error);
+    expect(test).to.throwError();
 
     done();
   });

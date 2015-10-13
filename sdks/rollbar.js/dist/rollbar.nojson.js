@@ -263,7 +263,7 @@
 	
 	// This is the global queue where all notifiers will put their
 	// payloads to be sent to Rollbar.
-	window._rollbarPayloadQueue = [];
+	window._rollbarPayloadQueue = window._rollbarPayloadQueue || [];
 	
 	// This contains global options for all Rollbar notifiers.
 	window._globalRollbarOptions = {

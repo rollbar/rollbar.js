@@ -14,7 +14,8 @@ app.post('/api', function(req, res) {
     accessToken: accessToken
   };
 
-  res.send(JSON.stringify(response));
+  res.header('Access-Control-Allow-Origin', '*');
+  res.json(response);
 });
 
 app.use('/', express.static(__dirname + '/../'));
