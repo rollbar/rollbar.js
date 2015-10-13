@@ -5,6 +5,7 @@
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
   },
+  "license": "MIT",
   "main": "dist/rollbar.umd.nojson.min.js",
   "devDependencies": {
     "babel-core": "^5.8.24",
