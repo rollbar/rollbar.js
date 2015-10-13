@@ -43,8 +43,7 @@ var snippetConfig = {
     path: outputPath,
     filename: '[name].js'
   },
-  //plugins: [defaultsPlugin, uglifyPlugin],
-  plugins: [defaultsPlugin],
+  plugins: [defaultsPlugin, uglifyPlugin],
   failOnError: true,
   module: {
     preLoaders: [
