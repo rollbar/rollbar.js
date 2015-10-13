@@ -1,10 +1,9 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 /* globals sinon */
 
 var errorParser = require('../src/error_parser');
-var expect = chai.expect;
 var Rollbar = require('../src/shim').Rollbar;
 var Util = require('../src/util.js');
 var XHR = require('../src/xhr.js').XHR;
@@ -143,7 +142,11 @@ describe('Notifier.global()', function() {
     };
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(test).to.not.throw(Error, 'merge() is broken');
+    try {
+      notifier.global({itemsPerMinute: 55});
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
@@ -256,7 +259,15 @@ describe('Notifier.configure()', function() {
 
     Util.merge(originalOptions, config);
 
-    expect(notifier.options).to.deep.equal(originalOptions);
+    expect(notifier.options).to.have.property('foo');
+    expect(notifier.options).to.have.property('a');
+    expect(notifier.options).to.have.property('d');
+    expect(notifier.options.foo).to.equal('bar');
+    expect(notifier.options.a).to.have.property('b');
+    expect(notifier.options.a).to.have.property('array');
+    expect(notifier.options.a.array).to.eql(['a', 'b']);
+    expect(notifier.options.d).to.eql([1, 2, 3]);
+
     expect(notifier.options).to.not.equal(config);
 
     done();
@@ -346,7 +357,7 @@ describe('Notifier.configure()', function() {
 
     expect(notifier.options).to.have.property('payload');
     expect(notifier.options.payload).to.have.property('server');
-    expect(notifier.options.payload.server).to.have.property('host').to.equal('web1');
+    expect(notifier.options.payload.server).to.have.property('host', 'web1');
 
     done();
   });
@@ -357,12 +368,13 @@ describe('Notifier.configure()', function() {
     var _utilMergeStub = sinon.stub(Util, 'merge', function() {
       throw new Error('merge() is broken');
     });
-    var test = function() {
-      notifier.configure({test: 'data'});
-    };
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(test).to.not.throw(Error, 'merge() is broken');
+    try {
+      notifier.configure({test: 'data'});
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
@@ -465,11 +477,11 @@ describe('Notifier.uncaughtError()', function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.be.at.least(3);
+    expect(args.length).to.be.above(2);
     expect(args[0]).to.be.an('object');
     expect(args[1]).to.equal(true);
     expect(args[2]).to.be.an('array');
-    expect(args[2].length).to.be.at.least(6);
+    expect(args[2].length).to.be.above(5);
     expect(args[2][1]).to.equal('testing uncaught error');
     expect(args[2][5]).to.equal("Please don't throw strings...");
 
@@ -494,11 +506,11 @@ describe('Notifier.uncaughtError()', function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.be.at.least(3);
+    expect(args.length).to.be.above(2);
     expect(args[0]).to.be.an('object');
     expect(args[1]).to.equal(true);
     expect(args[2]).to.be.an('array');
-    expect(args[2].length).to.be.at.least(3);
+    expect(args[2].length).to.be.above(2);
     expect(args[2][1]).to.equal('testing uncaught DOMException');
 
     done();
@@ -723,7 +735,11 @@ describe('Notifier.uncaughtError()', function() {
     };
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(test).to.not.throw(Error, '_log() is broken');
+    try {
+      test();
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
     expect(consoleLogStub.called).to.equal(true);
     expect(_logStub.called).to.equal(true);
     expect(_logStub.getCall(0).args[0]).to.equal('error');
@@ -750,7 +766,11 @@ describe('Notifier.uncaughtError()', function() {
     };
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(test).to.not.throw(Error, '_enqueuePayload() is broken');
+    try {
+      test();
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
     expect(consoleLogStub.called).to.equal(true);
     expect(_stub.called).to.equal(true);
     expect(_stub.getCall(0).args.length).to.equal(3);
@@ -782,7 +802,7 @@ describe('Notifier.scope()', function() {
     expect(x).to.not.equal(notifier);
     expect(x.constructor).to.equal(Notifier);
     expect(x.parentNotifier).to.equal(notifier);
-    expect(x.options.payload).to.deep.equal({});
+    expect(x.options.payload).to.eql({});
 
     done();
   });
@@ -827,7 +847,11 @@ describe('Notifier.scope()', function() {
     };
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(test).to.not.throw(Error, 'merge() is broken');
+    try {
+      test();
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
     expect(consoleLogStub.called).to.equal(true);
 
     var call = consoleLogStub.getCall(0);
@@ -1072,7 +1096,11 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       };
 
       // The error should not be propagated up the the caller of notifier.error()
-      expect(test).to.not.throw(Error);
+      try {
+        test();
+      } catch (e) {
+        expect(false).to.equal(true);
+      }
       expect(consoleLogStub.called).to.equal(true);
       expect(_logStub.called).to.equal(true);
       expect(_logStub.getCall(0).args[0]).to.equal(level === 'warn' ? 'warning' : level);
@@ -1125,7 +1153,11 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       };
 
       // The error should not be propagated up the the caller of notifier.error()
-      expect(test).to.not.throw(Error);
+      try {
+        test();
+      } catch (e) {
+        expect(false).to.equal(true);
+      }
 
       // have the fake server send a fake response
       server.respond();
@@ -1136,7 +1168,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       // Check to make sure the callback received the right arguments
       expect(_stub.getCall(0).args.length).to.equal(2);
       expect(_stub.getCall(0).args[0]).to.equal(null);
-      expect(_stub.getCall(0).args[1]).to.deep.equal({});
+      expect(_stub.getCall(0).args[1]).to.eql({});
 
       var call = consoleLogStub.getCall(0);
       expect(call.args[0]).to.be.a('string');
@@ -1182,7 +1214,11 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       };
 
       // The error should not be propagated up the the caller of notifier.error()
-      expect(test).to.not.throw(Error);
+      try {
+        test();
+      } catch (e) {
+        expect(false).to.equal(true);
+      }
 
       // have the fake server send a fake response
       server.respond();
@@ -1190,7 +1226,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       expect(stub.called).to.equal(true);
       expect(stub.getCall(0).args.length).to.equal(1);
       expect(stub.getCall(0).args[0]).to.be.an('object');
-      expect(stub.getCall(0).args[0].constructor.name).to.equal('Error');
+      expect(Util.typeName(stub.getCall(0).args[0])).to.equal('error');
 
       // Shouldn't log internal errors for xhr request failures
       expect(consoleLogStub.called).to.equal(false);
@@ -1254,9 +1290,8 @@ describe('Notifier._log()', function() {
 
     var payload = window._rollbarPayloadQueue[afterSize - 1];
     expect(payload).to.be.an('object');
-    expect(payload).to.have.property('callback').to.equal(cb);
-    expect(payload).to.have.property('endpointUrl').to.be.a('string');
-    expect(payload.endpointUrl).to.equal('http://foo.com/item/');
+    expect(payload).to.have.property('callback', cb);
+    expect(payload).to.have.property('endpointUrl', 'http://foo.com/item/');
     expect(payload.payload).to.be.an('object');
     done();
   });
@@ -1270,7 +1305,7 @@ describe('Notifier._log()', function() {
 describe('Notifier._route()', function() {
   it('should route using the default endpoint', function(done) {
     var notifier = new Notifier();
-    expect(notifier._route('test')).include('//api.rollbar.com/api/1/test');
+    expect(notifier._route('test')).contain('//api.rollbar.com/api/1/test');
 
     notifier.configure({endpoint: 'http://test.com/'});
     expect(notifier._route('test')).to.equal('http://test.com/test');
@@ -1331,7 +1366,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.constructor).to.equal(Object);
 
-    expect(payload.data).to.include.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
+    expect(payload.data).to.have.keys(['environment', 'endpoint', 'uuid', 'level', 'platform', 'framework',
       'language', 'body', 'request', 'client', 'server', 'notifier']);
 
     expect(payload.data.client).to.have.keys(['runtime_ms', 'timestamp', 'javascript']);
@@ -1418,7 +1453,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.data).to.have.property('test');
     expect(payload.data.test.a).to.equal('b');
-    expect(payload.data.test.c).to.deep.equal(['d', 'e']);
+    expect(payload.data.test.c).to.eql(['d', 'e']);
 
     // Make sure changing the payload doesn't affect the notifier
     payload.data.test.c.push('f');
@@ -1465,7 +1500,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.data.body).to.have.key('message');
     expect(payload.data.body.message).to.have.keys(['body', 'extra']);
-    expect(payload.data.body.message.extra).to.deep.equal(custom);
+    expect(payload.data.body.message.extra).to.eql(custom);
 
     done();
   });
@@ -1491,7 +1526,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
-    expect(payload.data.body.trace.extra).to.deep.equal(custom);
+    expect(payload.data.body.trace.extra).to.eql(custom);
 
     done();
   });
@@ -1518,7 +1553,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.data.body).to.have.key('trace');
     expect(payload.data.body.trace).to.have.keys(['frames', 'exception', 'extra']);
-    expect(payload.data.body.trace.extra).to.deep.equal(custom);
+    expect(payload.data.body.trace.extra).to.eql(custom);
     expect(payload.data.body.trace.exception.description).to.equal(message);
 
     done();
@@ -1534,7 +1569,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload.data.body).to.have.key('message');
     expect(payload.data.body.message).to.have.keys(['body', 'extra']);
-    expect(payload.data.body.message.extra).to.deep.equal(custom);
+    expect(payload.data.body.message.extra).to.eql(custom);
     expect(payload.data.body.message.body).to.equal(JSON.stringify(custom));
 
     done();
@@ -1589,7 +1624,7 @@ describe('Notifier._buildPayload()', function() {
     var payload = x._buildPayload(new Date(), 'debug', 'Hello world');
 
     expect(payload.data.body).to.have.key('message');
-    expect(payload.data.body.message).to.deep.equal({
+    expect(payload.data.body.message).to.eql({
       body: 'Hello world'
     });
 
@@ -1608,7 +1643,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(payload1).to.not.equal(payload2);
     expect(payload1.data.body.message.extra).to.not.equal(payload2.data.body.message.extra);
-    expect(payload1.data.body.message.extra).to.deep.equal(payload2.data.body.message.extra);
+    expect(payload1.data.body.message.extra).to.eql(payload2.data.body.message.extra);
 
     payload1.data.body.message.newKey = 'newValue';
 
@@ -1640,9 +1675,12 @@ describe('Notifier._buildPayload()', function() {
   it('should error if level is not valid', function(done) {
     var notifier = new Notifier();
 
-    expect(function() {
+    try {
       notifier._buildPayload(new Date(), 'eror', 'Hello world');
-    }).to.throw('Invalid level');
+      expect(false).to.equal(true);
+    } catch (e) {
+      expect(e.message).to.equal('Invalid level');
+    }
 
     done();
   });
@@ -1650,9 +1688,12 @@ describe('Notifier._buildPayload()', function() {
   it('should error if missing message && err && custom', function(done) {
     var notifier = new Notifier();
 
-    expect(function() {
+    try {
       notifier._buildPayload(new Date(), 'error');
-    }).to.throw('No message, stack info or custom data');
+      expect(false).to.equal(true);
+    } catch (e) {
+      expect(e.message).to.equal('No message, stack info or custom data');
+    }
 
     done();
   });
@@ -1675,7 +1716,7 @@ describe('Notifier._buildPayload()', function() {
     var scrubbedPayload = call.args[0];
 
     expect(payload.data).to.equal(scrubbedPayload);
-    expect(payload.data).to.deep.equal(scrubbedPayload);
+    expect(payload.data).to.eql(scrubbedPayload);
 
     expect(payload.data.body.message.extra.password).to.equal('******');
     expect(payload.data.body.message.extra.visible).to.equal('visible');
@@ -1702,7 +1743,7 @@ describe('Notifier._buildPayload()', function() {
     var scrubbedPayload = call.args[0];
 
     expect(payload.data).to.equal(scrubbedPayload);
-    expect(payload.data).to.deep.equal(scrubbedPayload);
+    expect(payload.data).to.eql(scrubbedPayload);
 
     expect(payload.access_token).to.equal('access token');
     expect(payload.data.body.message.extra.access_token).to.equal('******');
@@ -1746,7 +1787,7 @@ describe('Notifier._scrub()', function() {
 
     notifier._scrub(payload);
 
-    expect(payload).to.deep.equal({
+    expect(payload).to.eql({
       passwd: '******',
       password: '********',
       secret: '******',
@@ -1783,7 +1824,7 @@ describe('Notifier._scrub()', function() {
 
     notifier._scrub(payload);
 
-    expect(payload).to.deep.equal({
+    expect(payload).to.eql({
       visible: 'visible',
       hidden: '******',
       custom: {
@@ -1815,7 +1856,7 @@ describe('Notifier._scrub()', function() {
 
     notifier._scrub(payload);
 
-    expect(payload).to.deep.equal({
+    expect(payload).to.eql({
       url: 'http://foo.com/?password=******',
       other_url: 'http://foo.com/?passwd=******&visible=visible',
       extra: {
@@ -1856,13 +1897,13 @@ describe('Notifier._scrub()', function() {
     notifier1._scrub(payload1);
     notifier2._scrub(payload2);
 
-    expect(payload1).to.deep.equal({
+    expect(payload1).to.eql({
       visible: 'visible',
       notifier1: '******',
       notifier2: 'visible'
     });
 
-    expect(payload2).to.deep.equal({
+    expect(payload2).to.eql({
       visible: 'visible',
       notifier1: 'visible',
       notifier2: '******'
@@ -2190,7 +2231,11 @@ describe('Notifier._logToFunction()', function() {
     var fn = function() {
       notifier._enqueuePayload({}, false, {}, null);
     };
-    expect(fn).to.not.throw(Error);
+    try {
+      fn();
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
   });
 
   it('ignores an undefined log function', function() {
@@ -2198,7 +2243,11 @@ describe('Notifier._logToFunction()', function() {
     var fn = function() {
       notifier._enqueuePayload({}, false, {}, null);
     };
-    expect(fn).to.not.throw(Error);
+    try {
+      fn();
+    } catch (e) {
+      expect(false).to.equal(true);
+    }
   });
 
   it('calls the given log function', function() {

@@ -1,11 +1,9 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
 
 var snippetCallback = require('../src/snippet_callback');
-
-var expect = chai.expect;
 
 
 var config = {
@@ -45,9 +43,9 @@ describe('window.Rollbar.loadFull()', function () {
     shim.loadFull(window, document, true, {rollbarJsUrl: '../dist/rollbar.js'}, callback);
 
     function test() {
-      if (window.testingRollbar.constructor.name === 'Notifier') {
-        expect(window.testingRollbar.constructor.name).to.equal('Notifier');
-        expect(window.Rollbar).to.equal(window.testingRollbar);
+      if (window.testingRollbar.shimId === undefined) {
+        expect(window.testingRollbar).to.have.property('scope');
+        expect(window.Rollbar).to.be(window.testingRollbar);
 
         done();
       } else {

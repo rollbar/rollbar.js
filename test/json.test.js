@@ -1,11 +1,9 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
 
 var setupCustomJSON = require('../vendor/JSON-js/json2.js');
-
-var expect = chai.expect;
 
 describe('RollbarJSON', function() {
   it('should generate json string successfully using custom stringify', function(done) {
@@ -30,6 +28,10 @@ describe('RollbarJSON', function() {
   });
 
   it('should handle bad stringify input', function(done) {
+    // Set a long timeout since some browsers, (ahem: Firefox) take a while to throw
+    // the "Too much recursion" error while serializing a self-referencing object.
+    this.timeout(600000);
+
     var _JSON = {};
     setupCustomJSON(_JSON);
 
@@ -39,11 +41,11 @@ describe('RollbarJSON', function() {
     // Make sure circular references are caught
     expect(function() {
       _JSON.stringify(object);
-    }).to.throw(RangeError);
+    }).to.throwError();
 
     expect(function() {
       _JSON.stringify(window);
-    }).to.throw(RangeError);
+    }).to.throwError();
 
     expect(_JSON.stringify()).to.equal(undefined);
     expect(_JSON.stringify(null)).to.equal('null');
@@ -59,7 +61,7 @@ describe('RollbarJSON', function() {
 
     var obj = _JSON.parse(jsonString);
 
-    expect(obj).to.deep.equal({a: {b: 'c', d: 1, e: [1, 2, 'a', 'b', true]}, f: true});
+    expect(obj).to.eql({a: {b: 'c', d: 1, e: [1, 2, 'a', 'b', true]}, f: true});
 
     done();
   });
@@ -72,19 +74,19 @@ describe('RollbarJSON', function() {
 
     expect(function() {
       _JSON.parse(badString);
-    }).to.throw();
+    }).to.throwError();
 
     badString = '{"a":abc}';
 
     expect(function() {
       _JSON.parse(badString);
-    }).to.throw();
+    }).to.throwError();
 
     badString = '{"abc"}';
 
     expect(function() {
       _JSON.parse(badString);
-    }).to.throw();
+    }).to.throwError();
 
     done();
   });

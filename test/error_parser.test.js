@@ -1,8 +1,7 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 
-var expect = chai.expect;
 var errorParser = require('../src/error_parser');
 var StackFrame = require('stackframe');
 
@@ -16,7 +15,7 @@ describe('Stack', function() {
     expect(stack.name).to.equal('MyError');
 
     var stackArray = stack.stack;
-    expect(stackArray.constructor.name).to.equal('Array');
+    expect(stackArray).to.be.an('array');
   });
 });
 

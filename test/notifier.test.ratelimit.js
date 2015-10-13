@@ -1,13 +1,12 @@
-/* globals chai */
+/* globals expect */
 /* globals describe */
 /* globals it */
 /* globals sinon */
 
-var Rollbar = require('../src/shim.js').Rollbar;
+var Rollbar = require('../src/shim.js');
+Rollbar = Rollbar.Rollbar;
 var Notifier = require('../src/notifier').Notifier;
 var XHR = require('../src/xhr').XHR;
-
-var expect = chai.expect;
 
 
 var config = {
