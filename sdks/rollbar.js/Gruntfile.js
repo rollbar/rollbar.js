@@ -126,6 +126,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-text-replace');
 
 
+  var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
+  var rollbarjQuerySnippet = fs.readFileSync('dist/plugins/jquery.min.js');
+
   grunt.initConfig({
     pkg: pkg,
     webpack: webpackConfig,
@@ -148,19 +151,17 @@ module.exports = function(grunt) {
         replacements: [
           // Main rollbar snippet
           {
-            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+([^\n\r]+)[\n\r]+(.*// End Rollbar Snippet)', 'm'),
+            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)', 'm'),
             to: function(match, index, fullText, captures) {
-              var snippet = fs.readFileSync('dist/rollbar.snippet.js');
-              captures[1] = snippet;
+              captures[1] = rollbarJsSnippet;
               return captures.join('\n');
             }
           },
           // jQuery rollbar plugin snippet
           {
-            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+([^\n\r]+)[\n\r]+(.*// End Rollbar jQuery Snippet)', 'm'),
+            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)', 'm'),
             to: function(match, index, fullText, captures) {
-              var snippet = fs.readFileSync('dist/plugins/jquery.min.js');
-              captures[1] = snippet;
+              captures[1] = rollbarjQuerySnippet;
               return captures.join('\n');
             }
           },
