@@ -1,5 +1,9 @@
 # Change Log
 
+**v1.7.1**
+- Integrated karma tests. (pr#130)
+- Added warning message for common issue with `loadFull()`
+
 **v1.7.0**
 - Fixed a bug that was not recognizing custom Error subclasses as valid errors. (pr#142)
 - Added documentation for the `hostWhiteList` option. (pr#138)
