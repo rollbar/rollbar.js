@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.7.2**
+- Bumped version so that NPM lists 1.7.2 as the latest, (was pointing to 1.6.0) (issue#148)
+
 **v1.7.1**
 - Integrated karma tests. (pr#130)
 - Added warning message for common issue with `loadFull()`
