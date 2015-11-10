@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.7.3**
+- Added a named AMD module to the list of build targets. (pr#151)
+
 **v1.7.2**
 - Bumped version so that NPM lists 1.7.2 as the latest, (was pointing to 1.6.0) (issue#148)
 

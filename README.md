@@ -1,4 +1,4 @@
-# Rollbar notifier for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v1.7.2)](https://travis-ci.org/rollbar/rollbar.js)
+# Rollbar notifier for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v1.7.3)](https://travis-ci.org/rollbar/rollbar.js)
 
 <!-- Sub:[TOC] -->
 
