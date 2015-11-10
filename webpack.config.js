@@ -147,6 +147,15 @@ var UMDConfigBase = {
   }
 };
 
+var namedAMDConfigBase = extend({}, UMDConfigBase);
+namedAMDConfigBase.entry = {
+  'rollbar.named-amd': namedAMDConfigBase.entry['rollbar.umd']
+};
+namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output)
+namedAMDConfigBase.output.library = 'rollbar';
+namedAMDConfigBase.output.libraryTarget = 'amd';
+
+
 var config = [snippetConfig, pluginConfig];
 
 function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
@@ -174,9 +183,24 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
   webpackConfig.push(UMDConfig);
 }
 
+
+function addNamedAMDToConfig(webpackConfig, filename, extraPlugins) {
+  var basePlugins = [defaultsPlugin];
+  var AMDConfig = extend({}, namedAMDConfigBase);
+
+  plugins = basePlugins.concat(extraPlugins);
+  AMDConfig.plugins = plugins;
+
+  AMDConfig.output = extend({filename: filename}, AMDConfig.output);
+
+  webpackConfig.push(AMDConfig);
+}
+
+
 function generateBuildConfig(name, plugins) {
   addVanillaToConfig(config, name, plugins);
   addUMDToConfig(config, name, plugins);
+  addNamedAMDToConfig(config, name, plugins);
 }
 
 generateBuildConfig('[name].js', [useJsonPlugin]);
@@ -185,4 +209,3 @@ generateBuildConfig('[name].nojson.js', [notUseJsonPlugin]);
 generateBuildConfig('[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
 
 module.exports = config;
-
