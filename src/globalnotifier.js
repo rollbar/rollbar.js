@@ -45,11 +45,13 @@ wrapper.init = function(config, parent) {
     // Set the global onerror handler
     var oldOnError;
 
-    // If the parent, probably a shim, stores a oldOnError, use that so we don't
-    // send reports twice.
+    // If the parent, probably a shim, stores an oldOnError function, use that one
     if (parent && Util.isType(parent._rollbarOldOnError, 'function')) {
       oldOnError = parent._rollbarOldOnError;
-    } else {
+    }
+    // If window.onerror doesn't belongs to our shim then we save it. This avoids
+    // using the shim onerror and send reports twice.
+    else if (!window.onerror.belongsToShim) {
       oldOnError = window.onerror;
     }
 
