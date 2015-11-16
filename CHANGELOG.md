@@ -1,5 +1,10 @@
 # Change Log
 
+**v1.7.4**
+- Don't save shim's onerror when we are building globalnotifier. 
+  This fixes tests using window.onerror on a browser console
+- Fix Default endpoint on docs/configuration.md
+
 **v1.7.3**
 - Added a named AMD module to the list of build targets. (pr#151)
 
