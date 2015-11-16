@@ -37,6 +37,17 @@ function _rollbarWindowOnError(client, old, args) {
   }
 }
 
+function _buildOnErrorFn(client) {
+  var fn = function() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    _rollbarWindowOnError(client, client._rollbarOldOnError, args);
+  };
+
+  fn.belongsToShim = true;
+
+  return fn;
+}
+
 
 function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
@@ -45,6 +56,7 @@ function Rollbar(parentShim) {
   this.logger = _logger;
   this._rollbarOldOnError = null;
 }
+
 
 
 Rollbar.init = function(window, config) {
@@ -68,10 +80,7 @@ Rollbar.init = function(window, config) {
       // Create the client and set the onerror handler
       client._rollbarOldOnError = window.onerror;
 
-      window.onerror = function() {
-        var args = Array.prototype.slice.call(arguments, 0);
-        _rollbarWindowOnError(client, client._rollbarOldOnError, args);
-      };
+      window.onerror = _buildOnErrorFn(client);
 
       // Adapted from https://github.com/bugsnag/bugsnag-js
       var globals = 'EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload'.split(',');
