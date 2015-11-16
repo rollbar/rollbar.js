@@ -183,7 +183,7 @@ Default: ```"error"```
   <dt>endpoint</dt>
   <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
 
-Default: ```'api.rollbar.com/api/1/'```
+Default: ```'https://api.rollbar.com/api/1/'```
   </dd>
   <dl>
 
