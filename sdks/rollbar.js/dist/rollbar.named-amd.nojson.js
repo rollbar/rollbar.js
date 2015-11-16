@@ -153,11 +153,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    // Set the global onerror handler
 	    var oldOnError;
 	
-	    // If the parent, probably a shim, stores a oldOnError, use that so we don't
-	    // send reports twice.
+	    // If the parent, probably a shim, stores an oldOnError function, use that one
 	    if (parent && Util.isType(parent._rollbarOldOnError, 'function')) {
 	      oldOnError = parent._rollbarOldOnError;
-	    } else {
+	    }
+	    // If window.onerror doesn't belongs to our shim then we save it. This avoids
+	    // using the shim onerror and send reports twice.
+	    else if (!window.onerror.belongsToShim) {
 	      oldOnError = window.onerror;
 	    }
 	
@@ -251,7 +253,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.7.3");
+	Notifier.NOTIFIER_VERSION = ("1.7.4");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
