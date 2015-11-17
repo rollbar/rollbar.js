@@ -51,7 +51,7 @@ wrapper.init = function(config, parent) {
     }
     // If window.onerror doesn't belongs to our shim then we save it. This avoids
     // using the shim onerror and send reports twice.
-    else if (!window.onerror.belongsToShim) {
+    else if (window.onerror && !window.onerror.belongsToShim) {
       oldOnError = window.onerror;
     }
 
