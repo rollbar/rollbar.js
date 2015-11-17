@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.7.5**
+- Fix bug when checking window.onerror.belongsToShim.
+
 **v1.7.4**
 - Don't save shim's onerror when we are building globalnotifier. 
   This fixes tests using window.onerror on a browser console
