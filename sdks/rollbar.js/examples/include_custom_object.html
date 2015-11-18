@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <script>
+      var _rollbarConfig = {
+        accessToken: "12c99de67a444c229fca100e0967486f",
+        captureUncaught: true,
+        payload: {
+          environment: "example-include-custom-object"
+        }
+      };
+
+      // set the transform function
+      _rollbarConfig.transform = function(payload) {
+        // we receive the full payload object and can modify it.
+        // after this function returns, the payload object will
+        // be sent to the Rollbar API.
+
+        // as an example, let's include the current value of window.myvariable
+        // as custom data in the payload.
+
+        // ensure payload.data.custom is set
+        payload.data.custom = payload.data.custom || {};
+
+        // add our data
+        payload.data.custom.myvariable = window.myvariable;
+
+        // no need to return anything (return value is unused)
+      }
+      
+    </script>
+    <!-- in this example we include the UMD distribution; the following can also be replaced with the standard snippet. -->
+    <script src="../dist/rollbar.umd.js"></script>
+  </head>
+  <body>
+    <button onclick="window.myvariable = 42; Rollbar.info('test from include_custom_object.html');">Send test message, myvariable = 42</button>
+    <br><br>
+    <button onclick="window.myvariable = {foo: 'bar'}; Rollbar.info('test from include_custom_object.html');">Send test message, myvariable = {foo: 'bar'}</button>
+    <br><br>
+    See results: <a href="https://rollbar.com/Rollbar/rollbar.js/items/420/?item_page=0&#instances">rollbar/rollbar.js#420</a>
+
+  </body>
+</html>
