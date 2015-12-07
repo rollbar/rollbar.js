@@ -17,13 +17,9 @@ If you use jQuery 1.7 and up, you can include a plugin script that will instrume
 The plugin will also automatically report any AJAX errors using jQuery's `ajaxError()` handler. You can disable this functionality by configuring the Rollbar notifier with the following:
 ```javascript
 window.Rollbar.configure({
-  payload: {
-    notifier: {
-      plugins: {
-        jquery: {
-          ignoreAjaxErrors: true
-        }
-      }
+  plugins: {
+    jquery: {
+      ignoreAjaxErrors: true
     }
   }
 });
