@@ -141,6 +141,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
   var f = document.getElementsByTagName('script')[0];
   var parentNode = f.parentNode;
 
+  s.crossOrigin = '';
   s.src = config.rollbarJsUrl;
   s.async = !immediate;
 
