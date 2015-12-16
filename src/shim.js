@@ -1,20 +1,15 @@
 var _shimCounter = 0;
 
-function _logger() {
-  var console = window.console;
-  if (console && typeof console.log === 'function') {
-    console.log.apply(console, arguments);
-  }
-}
-
-
-function _wrapInternalErr(f, logger) {
-  logger = logger || _logger;
+function _wrapInternalErr(f) {
   return function() {
     try {
       return f.apply(this, arguments);
     } catch (e) {
-      logger('Rollbar internal error:', e);
+      try {
+        console.error('[Rollbar]: Internal error', e);
+      } catch (e2) {
+        // Ignore
+      }
     }
   };
 }
@@ -53,7 +48,6 @@ function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
   this.notifier = null;
   this.parentShim = parentShim;
-  this.logger = _logger;
   this._rollbarOldOnError = null;
 }
 
@@ -99,7 +93,7 @@ Rollbar.init = function(window, config) {
     // Expose Rollbar globally
     window[alias] = client;
     return client;
-  }, client.logger)();
+  })();
 };
 
 
@@ -158,7 +152,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
 
       onload();
     }
-  }, this.logger);
+  });
 
   parentNode.insertBefore(s, f);
 };

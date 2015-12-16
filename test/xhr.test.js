@@ -21,7 +21,6 @@ describe('XHR', function() {
     var accessToken = 'abc123';
     var payload = {};
 
-    debugger;
     XHR.post(url, accessToken, payload, function(err, response) {
       expect(err).to.equal(null);
 
