@@ -872,8 +872,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	      this.lastError = err;
 	    } catch (e) {
+	      this.error('Error while parsing the error object.', e);
 	      // err is not something we can parse so let's just send it along as a string
-	      message = String(err);
+	      message = err.message || err.description || message || String(err);
 	      err = null;
 	    }
 	  }
