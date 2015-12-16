@@ -607,7 +607,7 @@ NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payloa
     try {
       // The jQuery plugin adds in this key. Return true if it exists since
       // we are ignoring ajax errors via the plugin config.
-      return !!(payload.body.message.extra.isAjax);
+      return !!(payload.data.body.message.extra.isAjax);
     } catch (e) {
       return false;
     }
