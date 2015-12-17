@@ -1,3 +1,12 @@
+/**
+ * Build and test rollbar.js
+ *
+ * Test with browserstack:
+ *   $> BROWSER_STACK_USERNAME=username BROWSER_STACK_ACCESS_KEY=12345asdf grunt test --browsers=bs_ie_latest
+ *
+ */
+
+
 'use strict';
 
 var glob = require('glob');

@@ -9,6 +9,8 @@
 /* globals DOMException */
 
 
+var extend = require('extend');
+
 var errorParser = require('./error_parser');
 var Util = require('./util');
 var xhr = require('./xhr');
@@ -21,16 +23,13 @@ function setupJSON(JSON) {
   xhr.setupJSON(JSON);
 }
 
-
 function _wrapNotifierFn(fn, ctx) {
   return function() {
     var self = ctx || this;
     try {
       return fn.apply(self, arguments);
     } catch (e) {
-      if (self) {
-        self.logger(e);
-      }
+      console.error('[Rollbar]:', e);
     }
   };
 }
@@ -90,7 +89,7 @@ function Notifier(parentNotifier) {
     enabled: true,
     endpoint: endpoint,
     environment: 'production',
-    scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+    scrubFields: extend([], Notifier.DEFAULT_SCRUB_FIELDS),
     checkIgnore: null,
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
@@ -101,13 +100,6 @@ function Notifier(parentNotifier) {
   this.lastError = null;
   this.plugins = {};
   this.parentNotifier = parentNotifier;
-  this.logger = function() {
-    var console = window.console;
-    if (console && Util.isType(console.log, 'function')) {
-      var message = (['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0))).join(' ');
-      console.log.apply(console, [message]);
-    }
-  };
 
   if (parentNotifier) {
     // If the parent notifier has the shimId
@@ -117,7 +109,6 @@ function Notifier(parentNotifier) {
       // Notifier instance.
       parentNotifier.notifier = this;
     } else {
-      this.logger = parentNotifier.logger;
       this.configure(parentNotifier.options);
     }
   }
@@ -160,7 +151,7 @@ NotifierPrototype._getLogArgs = function(args) {
     } else if (argT === 'date') {
       extraArgs.push(arg);
     } else if (argT === 'error' ||
-               arg.stack ||
+               arg instanceof Error ||
                (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
       if (err) {
         extraArgs.push(arg);
@@ -281,7 +272,7 @@ NotifierPrototype._buildPayload = function(ts, level, message, stackInfo, custom
   // Pass in {payload: {environment: 'production'}} instead of just {environment: 'production'}
   var environment = this.options.environment;
 
-  var notifierOptions = Util.copy(this.options.payload);
+  var notifierOptions = extend(true, {}, this.options.payload);
   var uuid = Util.uuid4();
 
   if (Notifier.LEVELS[level] === undefined) {
@@ -335,7 +326,7 @@ NotifierPrototype._buildPayload = function(ts, level, message, stackInfo, custom
   // data.
   var payload = {
     access_token: accessToken,
-    data: Util.merge(payloadData, notifierOptions)
+    data: extend(true, payloadData, notifierOptions)
   };
 
   // Only scrub the data section since we never want to scrub "access_token"
@@ -452,7 +443,7 @@ NotifierPrototype._urlIsWhitelisted = function(payload){
 
   try {
     whitelist = this.options.hostWhiteList;
-    trace = payload.data.body.trace;
+    trace = payload && payload.data && payload.data.body && payload.data.body.trace;
 
     if (!whitelist || whitelist.length === 0) { return true; }
     if (!trace) { return true; }
@@ -478,7 +469,7 @@ NotifierPrototype._urlIsWhitelisted = function(payload){
     }
   } catch (e) {
     this.configure({hostWhiteList: null});
-    this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+    console.error("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
     return true;
   }
 
@@ -490,7 +481,7 @@ NotifierPrototype._messageIsIgnored = function(payload){
   try {
     messageIsIgnored = false;
     ignoredMessages = this.options.ignoredMessages;
-    trace = payload.data.body.trace;
+    trace = payload && payload.data && payload.data.body && payload.data.body.trace;
 
     if (!ignoredMessages || ignoredMessages.length === 0) {
       return false;
@@ -514,7 +505,7 @@ NotifierPrototype._messageIsIgnored = function(payload){
   }
   catch(e) {
     this.configure({ignoredMessages: null});
-    this.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+    console.error("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
   }
 
   return messageIsIgnored;
@@ -558,7 +549,7 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
   } catch (e) {
     // Disable the custom checkIgnore and report errors in the checkIgnore function
     this.configure({checkIgnore: null});
-    this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+    console.error('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
   if (!this._urlIsWhitelisted(payload)) {
@@ -573,12 +564,12 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
     if (payload.data && payload.data.body && payload.data.body.trace) {
       var trace = payload.data.body.trace;
       var exceptionMessage = trace.exception.message;
-      this.logger(exceptionMessage);
+      console.error('[Rollbar]: ', exceptionMessage);
     }
 
     // FIXME: Some browsers do not output objects as json to the console, and
     // instead write [object Object], so let's write the message first to ensure that is logged.
-    this.logger('Sending payload -', payloadToSend);
+    console.info('[Rollbar]: ', payloadToSend);
   }
 
   if (Util.isType(this.options.logFunction, 'function')) {
@@ -591,7 +582,7 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
     }
   } catch (e) {
     this.configure({transform: null});
-    this.error('Error while calling custom transform() function. Removing custom transform().', e);
+    console.error('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
   }
 
   if (this.options.enabled) {
@@ -655,7 +646,7 @@ NotifierPrototype._log = function(level, message, err, custom, callback, isUncau
 
       this.lastError = err;
     } catch (e) {
-      this.error('Error while parsing the error object.', e);
+      console.error('[Rollbar]: Error while parsing the error object.', e);
       // err is not something we can parse so let's just send it along as a string
       message = err.message || err.description || message || String(err);
       err = null;
@@ -680,7 +671,7 @@ NotifierPrototype.critical = _generateLogFn('critical');
 // Adapted from tracekit.js
 NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err, context) {
   context = context || null;
-  if (err && err.stack) {
+  if (err && Util.isType(err, 'error')) {
     this._log(this.options.uncaughtErrorLevel, message, err, context, null, true);
     return;
   }
@@ -689,7 +680,7 @@ NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo,
   // on the window object directly which will result in errMsg
   // being an Object instead of a string.
   //
-  if (url && url.stack) {
+  if (url && Util.isType(url, 'error')) {
     this._log(this.options.uncaughtErrorLevel, message, url, context, null, true);
     return;
   }
@@ -708,15 +699,22 @@ NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo,
     'useragent': navigator.userAgent
   };
 
-  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
-  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
+  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel,
+    message, stack, context);
+  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel,
+    message, url, lineNo, colNo, err]);
 });
 
 
 NotifierPrototype.global = _wrapNotifierFn(function(options) {
   options = options || {};
+  var knownOptions = {
+    startTime: options.startTime,
+    maxItems: options.maxItems,
+    itemsPerMinute: options.itemsPerMinute
+  };
 
-  Util.merge(window._globalRollbarOptions, options);
+  extend(true, window._globalRollbarOptions, knownOptions);
 
   if (options.maxItems !== undefined) {
     rateLimitCounter = 0;
@@ -732,8 +730,9 @@ NotifierPrototype.configure = _wrapNotifierFn(function(options) {
   // TODO(cory): only allow non-payload keys that we understand
 
   // Make a copy of the options object for this notifier
-  Util.merge(this.options, options);
-  this.global(options);
+  var newOptionsCopy = extend(true, {}, options);
+  extend(false, this.options, newOptionsCopy);
+  this.global(newOptionsCopy);
 });
 
 /*
@@ -742,7 +741,7 @@ NotifierPrototype.configure = _wrapNotifierFn(function(options) {
  */
 NotifierPrototype.scope = _wrapNotifierFn(function(payloadOptions) {
   var scopedNotifier = new Notifier(this);
-  Util.merge(scopedNotifier.options.payload, payloadOptions);
+  extend(true, scopedNotifier.options.payload, payloadOptions);
   return scopedNotifier;
 });
 
@@ -802,7 +801,7 @@ NotifierPrototype.wrap = function(f, context) {
 
 
 NotifierPrototype.loadFull = function() {
-  this.logger('Unexpected Rollbar.loadFull() called on a Notifier instance');
+  console.error('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
 };
 
 
@@ -831,7 +830,7 @@ function _buildPayloadBodyMessage(message, custom) {
   };
 
   if (custom) {
-    result.extra = Util.copy(custom);
+    result.extra = extend(true, {}, custom);
   }
 
   return {
@@ -909,7 +908,7 @@ function _buildPayloadBodyTrace(description, stackInfo, custom) {
     trace.frames.reverse();
 
     if (custom) {
-      trace.extra = Util.copy(custom);
+      trace.extra = extend(true, {}, custom);
     }
     return {trace: trace};
   } else {
