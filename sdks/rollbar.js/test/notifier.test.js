@@ -3,6 +3,8 @@
 /* globals it */
 /* globals sinon */
 
+var extend = require('extend');
+
 var errorParser = require('../src/error_parser');
 var Rollbar = require('../src/shim').Rollbar;
 var Util = require('../src/util.js');
@@ -111,53 +113,20 @@ describe('Notifier(notifier)', function() {
 describe('Notifier.global()', function() {
   it('should save options to window._globalRollbarOptions', function(done) {
     var notifier = new Notifier();
-    notifier.global({foo: 'bar'});
-    expect(window._globalRollbarOptions.foo).to.equal('bar');
+    notifier.global({maxItems: 12345});
+    expect(window._globalRollbarOptions.maxItems).to.equal(12345);
 
     done();
   });
 
   it('should overwrite previous options via global()', function(done) {
     var notifier = new Notifier();
-    notifier.global({foo: 'bar', bar: 'foo'});
-    notifier.global({foo: 'baz'});
+    notifier.global({maxItems: 333});
+    notifier.global({maxItems: 444});
 
-    expect(window._globalRollbarOptions).to.have.property('foo');
-    expect(window._globalRollbarOptions).to.have.property('bar');
-
-    expect(window._globalRollbarOptions.foo).to.equal('baz');
-    expect(window._globalRollbarOptions.bar).to.equal('foo');
+    expect(window._globalRollbarOptions.maxItems).to.equal(444);
 
     done();
-  });
-
-  it('should log an internal error if Util.merge function throws an exception', function(done) {
-    var consoleLogStub = sinon.stub(window.console, 'log');
-    var notifier = new Notifier();
-    var _utilMergeStub = sinon.stub(Util, 'merge', function() {
-      throw new Error('merge() is broken');
-    });
-    var test = function() {
-      notifier.global({itemsPerMinute: 55});
-    };
-
-    // The error should not be propagated up the the caller of notifier.error()
-    try {
-      notifier.global({itemsPerMinute: 55});
-    } catch (e) {
-      expect(false).to.equal(true);
-    }
-    expect(consoleLogStub.called).to.equal(true);
-
-    var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.a('string');
-    expect(call.args[0]).to.contain('Rollbar:');
-    expect(call.args[0]).to.contain('merge() is broken');
-
-    _utilMergeStub.restore();
-    consoleLogStub.restore();
-
-    return done();
   });
 
   it('should respect maxItems', function(done) {
@@ -195,7 +164,7 @@ describe('Notifier.global()', function() {
     Notifier.processPayloads(true);
   });
 
-  it('should enqueue a maxItems reched payload', function(done) {
+  it('should enqueue a maxItems reached payload', function(done) {
     window._rollbarPayloadQueue.length = 0;
 
     var notifier = new Notifier();
@@ -252,12 +221,12 @@ describe('Notifier.global()', function() {
 describe('Notifier.configure()', function() {
   it('should save options', function(done) {
     var notifier = new Notifier();
-    var originalOptions = Util.copy(notifier.options);
+    var originalOptions = extend(true, {}, notifier.options);
 
     var config = {foo: 'bar', a: {b: 'c', array: ['a', 'b']}, d: [1, 2, 3]};
     notifier.configure(config);
 
-    Util.merge(originalOptions, config);
+    extend(true, originalOptions, config);
 
     expect(notifier.options).to.have.property('foo');
     expect(notifier.options).to.have.property('a');
@@ -273,7 +242,7 @@ describe('Notifier.configure()', function() {
     done();
   });
 
-  it('populates window._globalRollbarOptions when passed rating options', function() {
+  it('populates window._globalRollbarOptions when passed rate limiting options', function() {
     var notifier = new Notifier();
 
     notifier.configure({
@@ -362,32 +331,6 @@ describe('Notifier.configure()', function() {
     done();
   });
 
-  it('should log an internal error if Util.merge function throws an exception', function(done) {
-    var consoleLogStub = sinon.stub(window.console, 'log');
-    var notifier = new Notifier();
-    var _utilMergeStub = sinon.stub(Util, 'merge', function() {
-      throw new Error('merge() is broken');
-    });
-
-    // The error should not be propagated up the the caller of notifier.error()
-    try {
-      notifier.configure({test: 'data'});
-    } catch (e) {
-      expect(false).to.equal(true);
-    }
-    expect(consoleLogStub.called).to.equal(true);
-
-    var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.a('string');
-    expect(call.args[0]).to.contain('Rollbar:');
-    expect(call.args[0]).to.contain('merge() is broken');
-
-    _utilMergeStub.restore();
-    consoleLogStub.restore();
-
-    return done();
-  });
-
   it('should call the transform function', function(done) {
     window._rollbarPayloadQueue.length = 0;
 
@@ -407,6 +350,7 @@ describe('Notifier.configure()', function() {
   });
 
   it('should log an error if the transform function throws an exception', function(done) {
+    var consoleSpy = sinon.stub(window.console, 'error');
     window._rollbarPayloadQueue.length = 0;
 
     var notifier = new Notifier();
@@ -419,9 +363,10 @@ describe('Notifier.configure()', function() {
     notifier.error('test error');
 
     // The error should not be propagated up the the caller of notifier.error()
-    expect(window._rollbarPayloadQueue.length).to.equal(2);
-    window._rollbarPayloadQueue.length = 0;
+    expect(consoleSpy.calledOnce);
+    expect(window._rollbarPayloadQueue.length).to.equal(1);
 
+    consoleSpy.restore();
     return done();
   });
 });
@@ -434,7 +379,7 @@ describe('Notifier.configure()', function() {
 describe('Notifier.uncaughtError()', function() {
   it('should enqueue a payload with the provided error object', function(done) {
     var notifier = new Notifier();
-    var spy = sinon.spy(notifier, '_log');
+    var spy = sinon.spy(notifier, '_enqueuePayload');
 
     var err;
     try {
@@ -449,13 +394,14 @@ describe('Notifier.uncaughtError()', function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('error');
-    expect(args[1]).to.equal('testing uncaught error');
-    expect(args[2]).to.equal(err);
-    expect(args[3]).to.equal(null);
-    expect(args[4]).to.equal(null);
-    expect(args[5]).to.equal(true);
+    expect(args.length >= 3).to.equal(true);
+    expect(args[0]).to.be.an('object');
+
+    var payload = args[0];
+    var message = payload.data.body.trace.exception.description;
+    expect(message).to.equal('testing uncaught error');
+
+    expect(args[1]).to.equal(true);
 
     done();
   });
@@ -518,7 +464,7 @@ describe('Notifier.uncaughtError()', function() {
 
   it('should enqueue a payload with the custom data from a wrapped function error', function(done) {
     var notifier = new Notifier();
-    var spy = sinon.spy(notifier, '_log');
+    var spy = sinon.spy(notifier, '_enqueuePayload');
 
     var foo = notifier.wrap(function() {
       /* eslint-disable no-undef */
@@ -539,12 +485,13 @@ describe('Notifier.uncaughtError()', function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('error');
-    expect(args[1]).to.equal('testing uncaught error');
-    expect(args[2]).to.equal(err);
-    expect(args[3].custom).to.equal('value');
-    expect(args[3]._wrappedSource).to.contain('bar();');
+    expect(args.length >= 3).to.equal(true);
+
+    var payload = args[0];
+    expect(payload.data.body.trace.exception.description).to.equal('testing uncaught error');
+
+    var custom = payload.data.body.trace.extra.custom;
+    expect(custom).to.equal('value');
 
     done();
   });
@@ -579,7 +526,7 @@ describe('Notifier.uncaughtError()', function() {
 
   it('should handle the case where an error event is passed in place of the url', function(done) {
     var notifier = new Notifier();
-    var spy = sinon.spy(notifier, '_log');
+    var spy = sinon.spy(notifier, '_enqueuePayload');
 
     var err;
     try {
@@ -594,13 +541,11 @@ describe('Notifier.uncaughtError()', function() {
     var call = spy.getCall(0);
     var args = call.args;
 
-    expect(args.length).to.equal(6);
-    expect(args[0]).to.equal('error');
-    expect(args[1]).to.equal('testing uncaught error event');
-    expect(args[2]).to.equal(err);
-    expect(args[3]).to.equal(null);
-    expect(args[4]).to.equal(null);
-    expect(args[5]).to.equal(true);
+    expect(args.length >= 3).to.equal(true);
+
+    var payload = args[0];
+    expect(payload.data.body.trace.exception.message).to.equal('uncaught error event');
+    expect(payload.data.body.trace.exception.description).to.equal('testing uncaught error event');
 
     done();
   });
@@ -718,7 +663,7 @@ describe('Notifier.uncaughtError()', function() {
   });
 
   it('should log an internal error if given an error object and the _log() method throws an exception', function(done) {
-    var consoleLogStub = sinon.stub(window.console, 'log');
+    var consoleLogStub = sinon.stub(window.console, 'error');
     var notifier = new Notifier();
     var _logStub = sinon.stub(notifier, '_log', function() {
       throw new Error('_log() is broken');
@@ -746,8 +691,8 @@ describe('Notifier.uncaughtError()', function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.a('string');
-    expect(call.args[0]).to.contain('Rollbar:');
-    expect(call.args[0]).to.contain('_log() is broken');
+    expect(call.args[0]).to.contain('[Rollbar]:');
+    expect(String(call.args[1])).to.contain('_log() is broken');
 
     _logStub.restore();
     consoleLogStub.restore();
@@ -756,7 +701,7 @@ describe('Notifier.uncaughtError()', function() {
   });
 
   it('should log an internal error if the _enqueuePayload() method throws an exception', function(done) {
-    var consoleLogStub = sinon.stub(window.console, 'log');
+    var consoleLogStub = sinon.stub(window.console, 'error');
     var notifier = new Notifier();
     var _stub = sinon.stub(notifier, '_enqueuePayload', function() {
       throw new Error('_enqueuePayload() is broken');
@@ -778,8 +723,8 @@ describe('Notifier.uncaughtError()', function() {
 
     var call = consoleLogStub.getCall(0);
     expect(call.args[0]).to.be.a('string');
-    expect(call.args[0]).to.contain('Rollbar:');
-    expect(call.args[0]).to.contain('_enqueuePayload() is broken');
+    expect(call.args[0]).to.contain('[Rollbar]:');
+    expect(String(call.args[1])).to.contain('_enqueuePayload() is broken');
 
     _stub.restore();
     consoleLogStub.restore();
@@ -834,35 +779,6 @@ describe('Notifier.scope()', function() {
     expect(notifier.options).to.not.have.property('level');
 
     done();
-  });
-
-  it('should log an internal error if Util.merge function throws an exception', function(done) {
-    var consoleLogStub = sinon.stub(window.console, 'log');
-    var notifier = new Notifier();
-    var _utilMergeStub = sinon.stub(Util, 'merge', function() {
-      throw new Error('merge() is broken');
-    });
-    var test = function() {
-      notifier.scope({person: {id: 55}});
-    };
-
-    // The error should not be propagated up the the caller of notifier.error()
-    try {
-      test();
-    } catch (e) {
-      expect(false).to.equal(true);
-    }
-    expect(consoleLogStub.called).to.equal(true);
-
-    var call = consoleLogStub.getCall(0);
-    expect(call.args[0]).to.be.a('string');
-    expect(call.args[0]).to.contain('Rollbar:');
-    expect(call.args[0]).to.contain('merge() is broken');
-
-    _utilMergeStub.restore();
-    consoleLogStub.restore();
-
-    return done();
   });
 });
 
@@ -1017,14 +933,16 @@ describe('Notifier.log()', function() {
 
     function SpecificError(message) {
       var tmp = Error.apply(this, arguments);
-      if (Error.captureStackTrace) {
-        Error.captureStackTrace(this, SpecificError);
-      }
-      this.message = message
-      Error.call(this);
+      this.stack = tmp.stack;
+      this.message = tmp.message;
     }
-    SpecificError.prototype = Object.create(Error.prototype);
-    SpecificError.prototype.constructor = SpecificError;
+    SpecificError.prototype = Object.create(Error.prototype, {
+      constructor: {
+        value: SpecificError,
+        writable: true,
+        configurable: true
+      }
+    });
 
     var err;
     try {
@@ -1044,7 +962,7 @@ describe('Notifier.log()', function() {
     var custom = call.args[3];
 
     expect(message).to.be.equal('My awesome error subclass');
-    expect(err.stack).to.be.a('string');
+    expect(err instanceof Error).to.equal(true);
     expect(custom.custom).to.equal('data');
 
     done();
@@ -1086,7 +1004,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
 
   var internalErrorTest = function(level) {
     it(level + '() should log an internal error if the _log() method throws an exception', function(done) {
-      var consoleLogStub = sinon.stub(window.console, 'log');
+      var consoleLogStub = sinon.stub(window.console, 'error');
       var notifier = new Notifier();
       var _logStub = sinon.stub(notifier, '_log', function() {
         throw new Error('_log() is broken');
@@ -1107,8 +1025,8 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
 
       var call = consoleLogStub.getCall(0);
       expect(call.args[0]).to.be.a('string');
-      expect(call.args[0]).to.contain('Rollbar:');
-      expect(call.args[0]).to.contain('_log() is broken');
+      expect(call.args[0]).to.contain('[Rollbar]:');
+      expect(String(call.args[1])).to.contain('_log() is broken');
 
       _logStub.restore();
       consoleLogStub.restore();
@@ -1126,7 +1044,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       // clear all of the payloads from the queue before starting the processor
       window._rollbarPayloadQueue.length = 0;
 
-      var consoleLogStub = sinon.stub(window.console, 'log');
+      var consoleLogStub = sinon.stub(window.console, 'error');
       var notifier = new Notifier();
       var server = sinon.fakeServer.create();
       var _stub = sinon.stub().throws(new Error('user-supplied callback is broken'));
@@ -1146,8 +1064,6 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
           expect(window._rollbarPayloadQueue.length).to.equal(1);
           Notifier.processPayloads(true);
         } catch (e) {
-          console.log(e);
-          console.log(e.stack);
           throw e;
         }
       };
@@ -1172,8 +1088,8 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
 
       var call = consoleLogStub.getCall(0);
       expect(call.args[0]).to.be.a('string');
-      expect(call.args[0]).to.contain('Rollbar:');
-      expect(call.args[0]).to.contain('user-supplied callback is broken');
+      expect(call.args[0]).to.contain('[Rollbar]:');
+      expect(String(call.args[1])).to.contain('user-supplied callback is broken');
 
       consoleLogStub.restore();
       server.restore();
@@ -1194,7 +1110,7 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       // clear all of the payloads from the queue before starting the processor
       window._rollbarPayloadQueue.length = 0;
 
-      var consoleLogStub = sinon.stub(window.console, 'log');
+      var consoleLogStub = sinon.stub(window.console, 'error');
       var notifier = new Notifier();
       var server = sinon.fakeServer.create();
       var stub = sinon.stub();
@@ -1429,9 +1345,13 @@ describe('Notifier._buildPayload()', function() {
     expect(payload.data.body.trace.frames).to.be.an('array');
 
     var numFrames = payload.data.body.trace.frames.length;
-    expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
-    expect(payload.data.body.trace.frames[numFrames - 2].method).to.equal('second');
-    expect(payload.data.body.trace.frames[numFrames - 1].method).to.equal('last');
+    
+    // Short-circuit for IE9-
+    if (payload.data.body.trace.frames.length) {
+      expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
+      expect(payload.data.body.trace.frames[numFrames - 2].method).to.equal('second');
+      expect(payload.data.body.trace.frames[numFrames - 1].method).to.equal('last');
+    }
 
     done();
   });
@@ -2251,12 +2171,13 @@ describe('Notifier._logToFunction()', function() {
   });
 
   it('calls the given log function', function() {
+    var called = false;
     var logFunc = function() {
-      logFunc.called = true;
+      called = true;
     };
     var notifier = buildNotifierWithLogFunction(logFunc);
-    expect(logFunc.called).to.equal(undefined);
+    expect(called).to.equal(false);
     notifier._enqueuePayload({}, false, {}, null);
-    expect(logFunc.called).to.equal(true);
+    expect(called).to.equal(true);
   });
 });

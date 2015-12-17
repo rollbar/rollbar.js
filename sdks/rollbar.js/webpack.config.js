@@ -76,7 +76,7 @@ var testsConfig = {
     json: './test/json.test.js',
     mootools: './test/mootools.test.js',
     notifier: './test/notifier.test.js',
-    'notifier-ratelimit': './test/notifier.ratelimit.test.js',
+    notifier_ratelimit: './test/notifier_ratelimit.test.js',
     rollbar: './test/rollbar.test.js',
     shim: './test/shim.test.js',
     shimalias: './test/shimalias.test.js',

@@ -1,4 +1,4 @@
- {
+{
   "name": "rollbar-browser",
   "version": "1.7.5",
   "repository": {
@@ -7,6 +7,11 @@
   },
   "license": "MIT",
   "main": "dist/rollbar.umd.nojson.min.js",
+  "dependencies": {
+    "console-polyfill": "0.2.2",
+    "error-stack-parser": "git://github.com/rollbar/error-stack-parser.git",
+    "extend": "3.0.0"
+  },
   "devDependencies": {
     "babel-core": "^5.8.24",
     "babel-eslint": "^4.1.1",
@@ -14,7 +19,6 @@
     "browserstack-api": "0.0.5",
     "chai": "~1.8.1",
     "chalk": "^1.1.1",
-    "error-stack-parser": "git://github.com/rollbar/error-stack-parser.git",
     "eslint": "^1.3.1",
     "eslint-loader": "^1.0.0",
     "express": "~3.4.7",
