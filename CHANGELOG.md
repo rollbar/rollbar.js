@@ -1,5 +1,12 @@
 # Change Log
 
+**v1.8.0**
+- Fixed a few bugs in IE9, IE8 which were not recognozing `Error` instances properly. (pr#164)
+- Changed the behavior of `.global()` to only store options that we know how to process. (pr#164)
+- Refactored the code to remove custom polyfills. (pr#164)
+- Updated the snippet's script loading code to now include the `crossorigin` tag to allow the browser to send more information about internal rollbar.js errors. (pr#162)
+- Fixed a bug in the jQuery plugin which would cause an error to be thrown in the internal `checkIgnore()` function. (pr#161)
+
 **v1.7.5**
 - Fix bug when checking window.onerror.belongsToShim.
 
