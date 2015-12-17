@@ -107,7 +107,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	'use strict';
 	
 	var notifier = __webpack_require__(3);
-	var Util = __webpack_require__(7);
+	var Util = __webpack_require__(8);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set
@@ -216,9 +216,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* globals DOMException */
 	
 	
-	var errorParser = __webpack_require__(4);
-	var Util = __webpack_require__(7);
-	var xhr = __webpack_require__(8);
+	var extend = __webpack_require__(4);
+	
+	var errorParser = __webpack_require__(5);
+	var Util = __webpack_require__(8);
+	var xhr = __webpack_require__(10);
 	
 	var XHR = xhr.XHR;
 	var RollbarJSON = null;
@@ -228,16 +230,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  xhr.setupJSON(JSON);
 	}
 	
-	
 	function _wrapNotifierFn(fn, ctx) {
 	  return function() {
 	    var self = ctx || this;
 	    try {
 	      return fn.apply(self, arguments);
 	    } catch (e) {
-	      if (self) {
-	        self.logger(e);
-	      }
+	      console.error('[Rollbar]:', e);
 	    }
 	  };
 	}
@@ -253,7 +252,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.7.5");
+	Notifier.NOTIFIER_VERSION = ("1.8.0");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -297,7 +296,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    enabled: true,
 	    endpoint: endpoint,
 	    environment: 'production',
-	    scrubFields: Util.copy(Notifier.DEFAULT_SCRUB_FIELDS),
+	    scrubFields: extend([], Notifier.DEFAULT_SCRUB_FIELDS),
 	    checkIgnore: null,
 	    logLevel: Notifier.DEFAULT_LOG_LEVEL,
 	    reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
@@ -308,13 +307,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  this.lastError = null;
 	  this.plugins = {};
 	  this.parentNotifier = parentNotifier;
-	  this.logger = function() {
-	    var console = window.console;
-	    if (console && Util.isType(console.log, 'function')) {
-	      var message = (['Rollbar:'].concat(Array.prototype.slice.call(arguments, 0))).join(' ');
-	      console.log.apply(console, [message]);
-	    }
-	  };
 	
 	  if (parentNotifier) {
 	    // If the parent notifier has the shimId
@@ -324,7 +316,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	      // Notifier instance.
 	      parentNotifier.notifier = this;
 	    } else {
-	      this.logger = parentNotifier.logger;
 	      this.configure(parentNotifier.options);
 	    }
 	  }
@@ -367,7 +358,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    } else if (argT === 'date') {
 	      extraArgs.push(arg);
 	    } else if (argT === 'error' ||
-	               arg.stack ||
+	               arg instanceof Error ||
 	               (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
 	      if (err) {
 	        extraArgs.push(arg);
@@ -488,7 +479,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  // Pass in {payload: {environment: 'production'}} instead of just {environment: 'production'}
 	  var environment = this.options.environment;
 	
-	  var notifierOptions = Util.copy(this.options.payload);
+	  var notifierOptions = extend(true, {}, this.options.payload);
 	  var uuid = Util.uuid4();
 	
 	  if (Notifier.LEVELS[level] === undefined) {
@@ -542,7 +533,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  // data.
 	  var payload = {
 	    access_token: accessToken,
-	    data: Util.merge(payloadData, notifierOptions)
+	    data: extend(true, payloadData, notifierOptions)
 	  };
 	
 	  // Only scrub the data section since we never want to scrub "access_token"
@@ -659,7 +650,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	  try {
 	    whitelist = this.options.hostWhiteList;
-	    trace = payload.data.body.trace;
+	    trace = payload && payload.data && payload.data.body && payload.data.body.trace;
 	
 	    if (!whitelist || whitelist.length === 0) { return true; }
 	    if (!trace) { return true; }
@@ -685,7 +676,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  } catch (e) {
 	    this.configure({hostWhiteList: null});
-	    this.error("Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+	    console.error("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
 	    return true;
 	  }
 	
@@ -697,7 +688,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  try {
 	    messageIsIgnored = false;
 	    ignoredMessages = this.options.ignoredMessages;
-	    trace = payload.data.body.trace;
+	    trace = payload && payload.data && payload.data.body && payload.data.body.trace;
 	
 	    if (!ignoredMessages || ignoredMessages.length === 0) {
 	      return false;
@@ -721,7 +712,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	  catch(e) {
 	    this.configure({ignoredMessages: null});
-	    this.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+	    console.error("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
 	  }
 	
 	  return messageIsIgnored;
@@ -765,7 +756,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  } catch (e) {
 	    // Disable the custom checkIgnore and report errors in the checkIgnore function
 	    this.configure({checkIgnore: null});
-	    this.error('Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+	    console.error('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
 	  }
 	
 	  if (!this._urlIsWhitelisted(payload)) {
@@ -780,12 +771,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    if (payload.data && payload.data.body && payload.data.body.trace) {
 	      var trace = payload.data.body.trace;
 	      var exceptionMessage = trace.exception.message;
-	      this.logger(exceptionMessage);
+	      console.error('[Rollbar]: ', exceptionMessage);
 	    }
 	
 	    // FIXME: Some browsers do not output objects as json to the console, and
 	    // instead write [object Object], so let's write the message first to ensure that is logged.
-	    this.logger('Sending payload -', payloadToSend);
+	    console.info('[Rollbar]: ', payloadToSend);
 	  }
 	
 	  if (Util.isType(this.options.logFunction, 'function')) {
@@ -798,7 +789,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  } catch (e) {
 	    this.configure({transform: null});
-	    this.error('Error while calling custom transform() function. Removing custom transform().', e);
+	    console.error('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
 	  }
 	
 	  if (this.options.enabled) {
@@ -823,7 +814,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    try {
 	      // The jQuery plugin adds in this key. Return true if it exists since
 	      // we are ignoring ajax errors via the plugin config.
-	      return !!(payload.body.message.extra.isAjax);
+	      return !!(payload.data.body.message.extra.isAjax);
 	    } catch (e) {
 	      return false;
 	    }
@@ -862,7 +853,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	      this.lastError = err;
 	    } catch (e) {
-	      this.error('Error while parsing the error object.', e);
+	      console.error('[Rollbar]: Error while parsing the error object.', e);
 	      // err is not something we can parse so let's just send it along as a string
 	      message = err.message || err.description || message || String(err);
 	      err = null;
@@ -887,7 +878,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	// Adapted from tracekit.js
 	NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo, colNo, err, context) {
 	  context = context || null;
-	  if (err && err.stack) {
+	  if (err && Util.isType(err, 'error')) {
 	    this._log(this.options.uncaughtErrorLevel, message, err, context, null, true);
 	    return;
 	  }
@@ -896,7 +887,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  // on the window object directly which will result in errMsg
 	  // being an Object instead of a string.
 	  //
-	  if (url && url.stack) {
+	  if (url && Util.isType(url, 'error')) {
 	    this._log(this.options.uncaughtErrorLevel, message, url, context, null, true);
 	    return;
 	  }
@@ -915,15 +906,22 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    'useragent': navigator.userAgent
 	  };
 	
-	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel, message, stack);
-	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel, message, url, lineNo, colNo, err]);
+	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel,
+	    message, stack, context);
+	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel,
+	    message, url, lineNo, colNo, err]);
 	});
 	
 	
 	NotifierPrototype.global = _wrapNotifierFn(function(options) {
 	  options = options || {};
+	  var knownOptions = {
+	    startTime: options.startTime,
+	    maxItems: options.maxItems,
+	    itemsPerMinute: options.itemsPerMinute
+	  };
 	
-	  Util.merge(window._globalRollbarOptions, options);
+	  extend(true, window._globalRollbarOptions, knownOptions);
 	
 	  if (options.maxItems !== undefined) {
 	    rateLimitCounter = 0;
@@ -939,8 +937,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  // TODO(cory): only allow non-payload keys that we understand
 	
 	  // Make a copy of the options object for this notifier
-	  Util.merge(this.options, options);
-	  this.global(options);
+	  var newOptionsCopy = extend(true, {}, options);
+	  extend(false, this.options, newOptionsCopy);
+	  this.global(newOptionsCopy);
 	});
 	
 	/*
@@ -949,7 +948,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 */
 	NotifierPrototype.scope = _wrapNotifierFn(function(payloadOptions) {
 	  var scopedNotifier = new Notifier(this);
-	  Util.merge(scopedNotifier.options.payload, payloadOptions);
+	  extend(true, scopedNotifier.options.payload, payloadOptions);
 	  return scopedNotifier;
 	});
 	
@@ -1009,7 +1008,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	NotifierPrototype.loadFull = function() {
-	  this.logger('Unexpected Rollbar.loadFull() called on a Notifier instance');
+	  console.error('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
 	};
 	
 	
@@ -1038,7 +1037,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  };
 	
 	  if (custom) {
-	    result.extra = Util.copy(custom);
+	    result.extra = extend(true, {}, custom);
 	  }
 	
 	  return {
@@ -1116,7 +1115,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    trace.frames.reverse();
 	
 	    if (custom) {
-	      trace.extra = Util.copy(custom);
+	      trace.extra = extend(true, {}, custom);
 	    }
 	    return {trace: trace};
 	  } else {
@@ -1221,11 +1220,103 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 /***/ },
 /* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var hasOwn = Object.prototype.hasOwnProperty;
+	var toStr = Object.prototype.toString;
+	
+	var isArray = function isArray(arr) {
+		if (typeof Array.isArray === 'function') {
+			return Array.isArray(arr);
+		}
+	
+		return toStr.call(arr) === '[object Array]';
+	};
+	
+	var isPlainObject = function isPlainObject(obj) {
+		if (!obj || toStr.call(obj) !== '[object Object]') {
+			return false;
+		}
+	
+		var hasOwnConstructor = hasOwn.call(obj, 'constructor');
+		var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn.call(obj.constructor.prototype, 'isPrototypeOf');
+		// Not own constructor property must be Object
+		if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+			return false;
+		}
+	
+		// Own properties are enumerated firstly, so to speed up,
+		// if last one is own, then all properties are own.
+		var key;
+		for (key in obj) {/**/}
+	
+		return typeof key === 'undefined' || hasOwn.call(obj, key);
+	};
+	
+	module.exports = function extend() {
+		var options, name, src, copy, copyIsArray, clone,
+			target = arguments[0],
+			i = 1,
+			length = arguments.length,
+			deep = false;
+	
+		// Handle a deep copy situation
+		if (typeof target === 'boolean') {
+			deep = target;
+			target = arguments[1] || {};
+			// skip the boolean and the target
+			i = 2;
+		} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
+			target = {};
+		}
+	
+		for (; i < length; ++i) {
+			options = arguments[i];
+			// Only deal with non-null/undefined values
+			if (options != null) {
+				// Extend the base object
+				for (name in options) {
+					src = target[name];
+					copy = options[name];
+	
+					// Prevent never-ending loop
+					if (target !== copy) {
+						// Recurse if we're merging plain objects or arrays
+						if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+							if (copyIsArray) {
+								copyIsArray = false;
+								clone = src && isArray(src) ? src : [];
+							} else {
+								clone = src && isPlainObject(src) ? src : {};
+							}
+	
+							// Never move original objects, clone them
+							target[name] = extend(deep, clone, copy);
+	
+						// Don't bring in undefined values
+						} else if (typeof copy !== 'undefined') {
+							target[name] = copy;
+						}
+					}
+				}
+			}
+		}
+	
+		// Return the modified object
+		return target;
+	};
+	
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(5);
+	var ErrorStackParser = __webpack_require__(6);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -1316,14 +1407,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -1505,7 +1596,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -1606,10 +1697,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ },
-/* 7 */
-/***/ function(module, exports) {
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
+	
+	__webpack_require__(9);
 	
 	var parseUriOptions = {
 	  strictMode: false,
@@ -1647,73 +1740,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	function isType(obj, name) {
 	  return typeName(obj) === name;
-	}
-	
-	
-	// modified from https://github.com/jquery/jquery/blob/master/src/core.js#L127
-	function merge() {
-	  var options, name, src, targetCopy, copyIsArray, clone,
-	    target = arguments[0] || {},
-	    i = 1,
-	    length = arguments.length,
-	    deep = true,
-	    targetType = typeName(target);
-	
-	  // Handle case when target is a string or something (possible in deep copy)
-	  if (targetType !== 'object' && targetType !== 'array' && targetType !== 'function') {
-	    target = {};
-	  }
-	
-	  for (; i < length; i++) {
-	    // Only deal with non-null/undefined values
-	    if ((options = arguments[i]) !== null) {
-	      // Extend the base object
-	      for (name in options) {
-	        // IE8 will iterate over properties of objects like "indexOf"
-	        if (!options.hasOwnProperty(name)) {
-	          continue;
-	        }
-	
-	        src = target[name];
-	        targetCopy = options[name];
-	
-	        // Prevent never-ending loop
-	        if (target === targetCopy) {
-	          continue;
-	        }
-	
-	        // Recurse if we're merging plain objects or arrays
-	        if (deep && targetCopy && (isType(targetCopy, 'object') || (copyIsArray = (isType(targetCopy, 'array'))))) {
-	          if (copyIsArray) {
-	            copyIsArray = false;
-	            // Overwrite the source with a copy of the array to merge in
-	            clone = [];
-	          } else {
-	            clone = src && isType(src, 'object') ? src : {};
-	          }
-	
-	          // Never move original objects, clone them
-	          target[name] = merge(clone, targetCopy);
-	
-	          // Don't bring in undefined values
-	        } else if (targetCopy !== undefined) {
-	          target[name] = targetCopy;
-	        }
-	      }
-	    }
-	  }
-	
-	  // Return the modified object
-	  return target;
-	}
-	
-	
-	function copy(obj) {
-	  var dest, tName = typeName(obj);
-	  dest = {object: {}, array: []}[tName];
-	
-	  merge(dest, obj);
-	  return dest;
 	}
 	
 	
@@ -1809,9 +1835,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	var Util = {
-	  copy: copy,
 	  isType: isType,
-	  merge: merge,
 	  parseUri: parseUri,
 	  parseUriOptions: parseUriOptions,
 	  redact: redact,
@@ -1826,14 +1850,40 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ },
-/* 8 */
+/* 9 */
+/***/ function(module, exports) {
+
+	// Console-polyfill. MIT license.
+	// https://github.com/paulmillr/console-polyfill
+	// Make it safe to do console.log() always.
+	(function(global) {
+	  'use strict';
+	  global.console = global.console || {};
+	  var con = global.console;
+	  var prop, method;
+	  var empty = {};
+	  var dummy = function() {};
+	  var properties = 'memory'.split(',');
+	  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+	     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+	     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
+	  while (prop = properties.pop()) if (!con[prop]) con[prop] = empty;
+	  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
+	})(typeof window === 'undefined' ? this : window);
+	// Using `this` for web workers while maintaining compatibility with browser
+	// targeted script loaders such as Browserify or Webpack where the only way to
+	// get to the global object is via `window`.
+
+
+/***/ },
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals ActiveXObject */
 	
-	var Util = __webpack_require__(7);
+	var Util = __webpack_require__(8);
 	
 	var RollbarJSON = null;
 	
