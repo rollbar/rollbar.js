@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.8.1**
+- Changed the error-stack-parser dependency to use git+https. (pr#168)
+
 **v1.8.0**
 - Fixed a few bugs in IE9, IE8 which were not recognozing `Error` instances properly. (pr#164)
 - Changed the behavior of `.global()` to only store options that we know how to process. (pr#164)
