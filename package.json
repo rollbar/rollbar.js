@@ -9,7 +9,7 @@
   "main": "dist/rollbar.umd.nojson.min.js",
   "dependencies": {
     "console-polyfill": "0.2.2",
-    "error-stack-parser": "git://github.com/rollbar/error-stack-parser.git",
+    "error-stack-parser": "git+https://github.com/rollbar/error-stack-parser.git#master",
     "extend": "3.0.0"
   },
   "devDependencies": {
