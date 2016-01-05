@@ -252,7 +252,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.8.1");
+	Notifier.NOTIFIER_VERSION = ("1.8.2");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -1413,6 +1413,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	
+	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -1423,43 +1425,34 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}(this, function ErrorStackParser(StackFrame) {
 	    'use strict';
 	
-	    var FIREFOX_SAFARI_STACK_REGEXP = /\S+\:\d+/;
-	    var CHROME_IE_STACK_REGEXP = /\s+at /;
-	    var map, filter;
+	    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+\:\d+/;
+	    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+\:\d+|\(native\))/m;
+	    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code\])?$/;
 	
-	    if (Array.prototype.map) {
-	        map = function (arr, fn) {
-	            return arr.map(fn);
-	        };
-	    } else {
-	        map = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	
-	            for (i = 0; i < len; ++i) {
-	                ret.push(fn(arr[i]));
+	    function _map(array, fn, thisArg) {
+	        if (typeof Array.prototype.map === 'function') {
+	            return array.map(fn, thisArg);
+	        } else {
+	            var output = new Array(array.length);
+	            for (var i = 0; i < array.length; i++) {
+	                output[i] = fn.call(thisArg, array[i]);
 	            }
-	            return ret;
-	        };
+	            return output;
+	        }
 	    }
 	
-	    if (Array.prototype.filter) {
-	        filter = function (arr, fn) {
-	            return arr.filter(fn);
-	        };
-	    } else {
-	        filter = function (arr, fn) {
-	            var i;
-	            var len = arr.length;
-	            var ret = [];
-	            for (i = 0; i < len; ++i) {
-	                if (fn(arr[i])) {
-	                    ret.push(arr[i]);
+	    function _filter(array, fn, thisArg) {
+	        if (typeof Array.prototype.filter === 'function') {
+	            return array.filter(fn, thisArg);
+	        } else {
+	            var output = [];
+	            for (var i = 0; i < array.length; i++) {
+	                if (fn.call(thisArg, array[i])) {
+	                    output.push(array[i]);
 	                }
 	            }
-	            return ret;
-	        };
+	            return output;
+	        }
 	    }
 	
 	    return {
@@ -1473,7 +1466,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                return this.parseOpera(error);
 	            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
 	                return this.parseV8OrIE(error);
-	            } else if (error.stack && error.stack.match(FIREFOX_SAFARI_STACK_REGEXP)) {
+	            } else if (error.stack) {
 	                return this.parseFFOrSafari(error);
 	            } else {
 	                throw new Error('Cannot parse given Error object');
@@ -1503,28 +1496,45 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        },
 	
 	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(error.stack.split('\n').slice(1), function (line) {
-	                var tokens = line.replace(/^\s+/, '').split(/\s+/).slice(1);
-	                var locationParts = extractLocation(tokens.pop());
-	                var functionName = (!tokens[0] || tokens[0] === 'Anonymous') ? undefined : tokens[0];
-	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	            var filtered = _filter(error.stack.split('\n'), function (line) {
+	                return !!line.match(CHROME_IE_STACK_REGEXP);
+	            }, this);
+	
+	            return _map(filtered, function (line) {
+	                if (line.indexOf('(eval ') > -1) {
+	                    // Throw away eval information until we implement stacktrace.js/stackframe#8
+	                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^\()]*)|(\)\,.*$)/g, '');
+	                }
+	                var tokens = line.replace(/^\s+/, '').replace(/\(eval code/g, '(').split(/\s+/).slice(1);
+	                var locationParts = this.extractLocation(tokens.pop());
+	                var functionName = tokens.join(' ') || undefined;
+	                var fileName = locationParts[0] === 'eval' ? undefined : locationParts[0];
+	
+	                return new StackFrame(functionName, undefined, fileName, locationParts[1], locationParts[2], line);
+	            }, this);
 	        },
 	
 	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
-	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
-	                var functionName = tokens.shift() || undefined;
-	                return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	            var filtered = _filter(error.stack.split('\n'), function (line) {
+	                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
+	            }, this);
+	
+	            return _map(filtered, function (line) {
+	                // Throw away eval information until we implement stacktrace.js/stackframe#8
+	                if (line.indexOf(' > eval') > -1) {
+	                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval\:\d+\:\d+/g, ':$1');
+	                }
+	
+	                if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
+	                    // Safari eval frames only have function names and nothing else
+	                    return new StackFrame(line);
+	                } else {
+	                    var tokens = line.split('@');
+	                    var locationParts = this.extractLocation(tokens.pop());
+	                    var functionName = tokens.shift() || undefined;
+	                    return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2], line);
+	                }
+	            }, this);
 	        },
 	
 	        parseOpera: function ErrorStackParser$$parseOpera(e) {
@@ -1546,7 +1556,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	            for (var i = 2, len = lines.length; i < len; i += 2) {
 	                var match = lineRE.exec(lines[i]);
 	                if (match) {
-	                    result.push(new StackFrame(undefined, undefined, match[2], match[1]));
+	                    result.push(new StackFrame(undefined, undefined, match[2], match[1], undefined, lines[i]));
 	                }
 	            }
 	
@@ -1561,7 +1571,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	            for (var i = 0, len = lines.length; i < len; i += 2) {
 	                var match = lineRE.exec(lines[i]);
 	                if (match) {
-	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1]));
+	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1], undefined, lines[i]));
 	                }
 	            }
 	
@@ -1570,13 +1580,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	        // Opera 10.65+ Error.stack very similar to FF/Safari
 	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-	            var filtered = filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
-	            });
-	            var extractLocation = this.extractLocation;
-	            var mapped = map(filtered, function (line) {
+	            var filtered = _filter(error.stack.split('\n'), function (line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) &&
+	                    !line.match(/^Error created at/);
+	            }, this);
+	
+	            return _map(filtered, function (line) {
 	                var tokens = line.split('@');
-	                var locationParts = extractLocation(tokens.pop());
+	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionCall = (tokens.shift() || '');
 	                var functionName = functionCall
 	                        .replace(/<anonymous function(: (\w+))?>/, '$2')
@@ -1586,9 +1597,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
 	                }
 	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
-	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2]);
-	            });
-	            return mapped;
+	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2], line);
+	            }, this);
 	        }
 	    };
 	}));
@@ -1602,6 +1612,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+	
+	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -1615,7 +1627,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        return !isNaN(parseFloat(n)) && isFinite(n);
 	    }
 	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
 	        if (functionName !== undefined) {
 	            this.setFunctionName(functionName);
 	        }
@@ -1630,6 +1642,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        }
 	        if (columnNumber !== undefined) {
 	            this.setColumnNumber(columnNumber);
+	        }
+	        if (source !== undefined) {
+	            this.setSource(source);
 	        }
 	    }
 	
@@ -1680,6 +1695,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                throw new TypeError('Column Number must be a Number');
 	            }
 	            this.columnNumber = Number(v);
+	        },
+	
+	        getSource: function () {
+	            return this.source;
+	        },
+	        setSource: function (v) {
+	            this.source = String(v);
 	        },
 	
 	        toString: function() {
