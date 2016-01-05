@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.8.2**
+- Using the latest error-stack-parser from NPM. (pr#171)
+
 **v1.8.1**
 - Changed the error-stack-parser dependency to use git+https. (pr#168)
 
