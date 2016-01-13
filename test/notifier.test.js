@@ -242,6 +242,37 @@ describe('Notifier.configure()', function() {
     done();
   });
 
+  if('should not erase options', function(){
+    var notifier = new Notifier();
+    notifier.configure({
+      accessToken: 'abcdef0123456789abcdef0123456789',
+      captureUncaught: true,
+      payload: {
+        environment: 'testing'
+      }
+    });
+
+    notifier.configure({
+      payload: {
+        person: {
+          id: 5,
+          username: 'tester@rollbar.com',
+        }
+      }
+    });
+
+    expect(notifier.options).to.have.property('accessToken');
+    expect(notifier.options).to.have.property('captureUncaught');
+    expect(notifier.options).to.have.property('payload');
+    expect(notifier.options.payload).to.have.property('environment');
+    expect(notifier.options.payload).to.eql('testing');
+    expect(notifier.options.payload).to.have.property('person');
+    expect(notifier.options.payload.person).to.have.property('id')
+    expect(notifier.options.payload.person.id).to.eql(5)
+    expect(notifier.options.payload.person).to.have.property('username')
+    expect(notifier.options.payload.person.username).to.eql('tester@rollbar.com')
+  });
+
   it('populates window._globalRollbarOptions when passed rate limiting options', function() {
     var notifier = new Notifier();
 
@@ -1345,7 +1376,7 @@ describe('Notifier._buildPayload()', function() {
     expect(payload.data.body.trace.frames).to.be.an('array');
 
     var numFrames = payload.data.body.trace.frames.length;
-    
+
     // Short-circuit for IE9-
     if (payload.data.body.trace.frames.length) {
       expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
@@ -2116,22 +2147,38 @@ describe('Notifier._messageIsIgnored()', function() {
     expect(notifier._messageIsIgnored(payload)).to.equal(false);
   });
 
-  it("child notifiers should not ignore the parent's messages", function(){
+  it("child notifiers should ignore the parent's ignored messages", function(){
     var notifier = buildNotifierWithIgnoredMessages(['err1', 'err2']);
     var child = notifier.scope();
     var payload1 = buildPayloadWithExceptionMessage('err1');
     var payload2 = buildPayloadWithExceptionMessage('err2');
     var payload3 = buildPayloadWithExceptionMessage('err3');
+
     expect(child._messageIsIgnored(payload1)).to.equal(true);
     expect(child._messageIsIgnored(payload2)).to.equal(true);
+    expect(child._messageIsIgnored(payload3)).to.equal(false);
 
     var child2 = child.scope();
-    child2.configure({ignoredMessages: ['err3']});
-    expect(child2._messageIsIgnored(payload2)).to.equal(false);
+    child2.configure({ignoredMessages: ['err1', 'err2', 'err3']});
+    expect(child2._messageIsIgnored(payload1)).to.equal(true);
+    expect(child2._messageIsIgnored(payload2)).to.equal(true);
     expect(child2._messageIsIgnored(payload3)).to.equal(true);
 
+    // Make sure the scope() didn't effect child2's parent
+    expect(child._messageIsIgnored(payload1)).to.equal(true);
+    expect(child._messageIsIgnored(payload2)).to.equal(true);
     expect(child._messageIsIgnored(payload3)).to.equal(false);
+
+    // overwrite the set of ignored messages to just be ['err1']
+    child.configure({ignoredMessages: ['err1']}, true);
+    expect(child._messageIsIgnored(payload1)).to.equal(true);
+    expect(child._messageIsIgnored(payload2)).to.equal(false);
     expect(child._messageIsIgnored(payload3)).to.equal(false);
+
+    // Make sure that didn't affect child2
+    expect(child2._messageIsIgnored(payload1)).to.equal(true);
+    expect(child2._messageIsIgnored(payload2)).to.equal(true);
+    expect(child2._messageIsIgnored(payload3)).to.equal(true);
   });
 });
 

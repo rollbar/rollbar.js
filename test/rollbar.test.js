@@ -12,7 +12,10 @@ var Rollbar = shim.Rollbar;
 
 var rollbarConfig = {
   accessToken: '12c99de67a444c229fca100e0967486f',
-  captureUncaught: true
+  captureUncaught: true,
+  payload: {
+    environment: 'testing'
+  }
 };
 
 
@@ -274,6 +277,32 @@ describe('window.Rollbar.configure()', function() {
 
       done();
     });
+
+    it('should not erase un-set properties', function(done) {
+      window.Rollbar.configure({
+        payload: {
+          person: {
+            id: 5,
+            username: 'testing@rollbar.com'
+          }
+        }
+      });
+
+      expect(window.Rollbar.options).to.have.property('accessToken');
+      expect(window.Rollbar.options.accessToken).to.eql('12c99de67a444c229fca100e0967486f');
+      expect(window.Rollbar.options).to.have.property('captureUncaught');
+      expect(window.Rollbar.options.captureUncaught).to.eql(true);
+      expect(window.Rollbar.options).to.have.property('payload');
+      expect(window.Rollbar.options.payload).to.have.property('environment');
+      expect(window.Rollbar.options.payload.environment).to.eql('testing');
+      expect(window.Rollbar.options.payload).to.have.property('person');
+      expect(window.Rollbar.options.payload.person).to.have.property('id');
+      expect(window.Rollbar.options.payload.person.id).to.eql(5);
+      expect(window.Rollbar.options.payload.person).to.have.property('username');
+      expect(window.Rollbar.options.payload.person.username).to.eql('testing@rollbar.com');
+
+      done();
+    })
   });
 
   describe('window.Rollbar.log()', function() {
@@ -315,7 +344,7 @@ describe('window.Rollbar.log()', function() {
     var call = pushSpy.getCall(0);
     var payload = call.args[0].payload.data;
 
-    expect(payload.environment).to.equal('production');
+    expect(payload.environment).to.equal('testing');
     expect(payload.uuid).to.not.equal(undefined);
     expect(payload.level).to.equal('error');
     expect(payload.platform).to.equal('browser');
@@ -463,4 +492,3 @@ describe('window.Rollbar.uncaughtError()', function() {
     });
   }
 });
-
