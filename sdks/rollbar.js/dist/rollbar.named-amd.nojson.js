@@ -933,12 +933,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	});
 	
 	
-	NotifierPrototype.configure = _wrapNotifierFn(function(options) {
+	NotifierPrototype.configure = _wrapNotifierFn(function(options, overwrite) {
 	  // TODO(cory): only allow non-payload keys that we understand
 	
 	  // Make a copy of the options object for this notifier
 	  var newOptionsCopy = extend(true, {}, options);
-	  extend(false, this.options, newOptionsCopy);
+	  extend(!overwrite, this.options, newOptionsCopy);
 	  this.global(newOptionsCopy);
 	});
 	
