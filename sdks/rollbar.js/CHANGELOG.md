@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.8.3**
+- Fix a bug introduced in 1.8.0 where payload options were being removed by calls to `configure()`. (pr#176)
+
 **v1.8.2**
 - Using the latest error-stack-parser from NPM. (pr#171)
 
