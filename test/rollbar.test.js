@@ -344,7 +344,7 @@ describe('window.Rollbar.log()', function() {
     var call = pushSpy.getCall(0);
     var payload = call.args[0].payload.data;
 
-    expect(payload.environment).to.equal('production');
+    expect(payload.environment).to.equal('testing');
     expect(payload.uuid).to.not.equal(undefined);
     expect(payload.level).to.equal('error');
     expect(payload.platform).to.equal('browser');
