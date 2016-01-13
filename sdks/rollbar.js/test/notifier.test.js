@@ -242,6 +242,37 @@ describe('Notifier.configure()', function() {
     done();
   });
 
+  if('should not erase options', function(){
+    var notifier = new Notifier();
+    notifier.configure({
+      accessToken: 'abcdef0123456789abcdef0123456789',
+      captureUncaught: true,
+      payload: {
+        environment: 'testing'
+      }
+    });
+
+    notifier.configure({
+      payload: {
+        person: {
+          id: 5,
+          username: 'tester@rollbar.com',
+        }
+      }
+    });
+
+    expect(notifier.options).to.have.property('accessToken');
+    expect(notifier.options).to.have.property('captureUncaught');
+    expect(notifier.options).to.have.property('payload');
+    expect(notifier.options.payload).to.have.property('environment');
+    expect(notifier.options.payload).to.eql('testing');
+    expect(notifier.options.payload).to.have.property('person');
+    expect(notifier.options.payload.person).to.have.property('id')
+    expect(notifier.options.payload.person.id).to.eql(5)
+    expect(notifier.options.payload.person).to.have.property('username')
+    expect(notifier.options.payload.person.username).to.eql('tester@rollbar.com')
+  });
+
   it('populates window._globalRollbarOptions when passed rate limiting options', function() {
     var notifier = new Notifier();
 
@@ -1345,7 +1376,7 @@ describe('Notifier._buildPayload()', function() {
     expect(payload.data.body.trace.frames).to.be.an('array');
 
     var numFrames = payload.data.body.trace.frames.length;
-    
+
     // Short-circuit for IE9-
     if (payload.data.body.trace.frames.length) {
       expect(payload.data.body.trace.frames[numFrames - 3].method).to.equal('first');
