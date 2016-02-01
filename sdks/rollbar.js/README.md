@@ -199,7 +199,6 @@ You have a couple of options to fix this behavior:
 - [API reference](https://rollbar.com/docs/notifier/rollbar.js/api)
 - [Plugins](https://rollbar.com/docs/notifier/rollbar.js/plugins)
 - [Examples](https://github.com/rollbar/rollbar.js/tree/master/examples)
-- [FAQ](https://rollbar.com/docs/notifier/rollbar.js/faq)
 
 ## Help / Support
 
