@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.8.4**
+- Check messages body for ignored messages. (pr#180)
+
 **v1.8.3**
 - Fix a bug introduced in 1.8.0 where payload options were being removed by calls to `configure()`. (pr#176)
 
