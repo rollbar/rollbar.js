@@ -684,21 +684,33 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 	
 	NotifierPrototype._messageIsIgnored = function(payload){
-	  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace;
+	  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace, body, traceMessage, bodyMessage;
 	  try {
 	    messageIsIgnored = false;
 	    ignoredMessages = this.options.ignoredMessages;
-	    trace = payload && payload.data && payload.data.body && payload.data.body.trace;
-	
+	    
 	    if (!ignoredMessages || ignoredMessages.length === 0) {
 	      return false;
 	    }
 	
-	    if (!trace) {
+	    body =  payload &&
+	            payload.data &&
+	            payload.data.body;
+	
+	    traceMessage =  body && 
+	                    body.trace &&
+	                    body.trace.exception && 
+	                    body.trace.exception.message;
+	    
+	    bodyMessage = body && 
+	                  body.message && 
+	                  body.message.body;
+	
+	    exceptionMessage = traceMessage || bodyMessage;
+	
+	    if (!exceptionMessage){
 	      return false;
 	    }
-	
-	    exceptionMessage = trace.exception.message;
 	
 	    len = ignoredMessages.length;
 	    for (i = 0; i < len; i++) {
