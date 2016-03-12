@@ -2147,6 +2147,35 @@ describe('Notifier._messageIsIgnored()', function() {
     expect(notifier._messageIsIgnored(payload)).to.equal(false);
   });
 
+  it('should return false when a message does not have a trace', function(){
+    var notifier = buildNotifierWithIgnoredMessages(['Error: MySpace profile contains no animated gif.', 'Warning: Github is down!']);
+    var payload = buildPayloadWithExceptionMessage('Exception: Not all llamas are ugly.');
+    delete payload.data.body.trace;
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+
+  it('should return false when a message does not have a trace.exception', function(){
+    var notifier = buildNotifierWithIgnoredMessages(['Error: MySpace profile contains no animated gif.', 'Warning: Github is down!']);
+    var payload = buildPayloadWithExceptionMessage('Exception: Not all llamas are ugly.');
+    delete payload.data.body.trace.exception;
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+
+  it('should return false when a message does not have a trace.exception.message', function(){
+    var notifier = buildNotifierWithIgnoredMessages(['Error: MySpace profile contains no animated gif.', 'Warning: Github is down!']);
+    var payload = buildPayloadWithExceptionMessage('Exception: Not all llamas are ugly.');
+    delete payload.data.body.trace.exception.message;
+    expect(notifier._messageIsIgnored(payload)).to.equal(false);
+  });
+
+  it('should return true when a message has a body.message.body which matches the ignored message', function(){
+    var notifier = buildNotifierWithIgnoredMessages(['Error: MySpace profile contains no animated gif.', 'Warning: Github is down!']);
+    var payload = buildPayloadWithExceptionMessage('Exception: Not all llamas are ugly.');
+    delete payload.data.body.trace;
+    payload.data.body = {message: {body: 'Warning: Github is down!'}};
+    expect(notifier._messageIsIgnored(payload)).to.equal(true);
+  });
+
   it("child notifiers should ignore the parent's ignored messages", function(){
     var notifier = buildNotifierWithIgnoredMessages(['err1', 'err2']);
     var child = notifier.scope();
