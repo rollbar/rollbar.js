@@ -43,8 +43,6 @@ function _notifyPayloadAvailable() {
   }
 }
 
-
-
 // Updated by the build process to match package.json
 Notifier.NOTIFIER_VERSION = __NOTIFIER_VERSION__;
 Notifier.DEFAULT_ENDPOINT = __DEFAULT_ENDPOINT__;
@@ -62,6 +60,8 @@ Notifier.LEVELS = {
   error: 3,
   critical: 4
 };
+
+Notifier.RETRY_DELAY = 1000 * 10;
 
 // This is the global queue where all notifiers will put their
 // payloads to be sent to Rollbar.
@@ -1017,7 +1017,7 @@ function _processPayload(payloadObject) {
         payloadObject.callback = function () { };
         setTimeout(function () {
           directlyEnqueuePayload(payloadObject);
-        }, 1000 * 10);
+        }, Notifier.RETRY_DELAY);
       }
 
       return callback(err);
