@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.8.5**
+- Support retrying after being in offline mode. (pr#186)
+
 **v1.8.4**
 - Check messages body for ignored messages. (pr#180)
 
