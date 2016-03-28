@@ -223,6 +223,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var xhr = __webpack_require__(10);
 	
 	var XHR = xhr.XHR;
+	var ConnectionError = xhr.ConnectionError;
 	var RollbarJSON = null;
 	
 	function setupJSON(JSON) {
@@ -249,10 +250,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	}
 	
-	
-	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.8.4");
+	Notifier.NOTIFIER_VERSION = ("1.8.5");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -268,6 +267,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  error: 3,
 	  critical: 4
 	};
+	
+	Notifier.RETRY_DELAY = 1000 * 10;
 	
 	// This is the global queue where all notifiers will put their
 	// payloads to be sent to Rollbar.
@@ -805,12 +806,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	
 	  if (this.options.enabled) {
-	    window._rollbarPayloadQueue.push(payloadToSend);
-	
-	    _notifyPayloadAvailable();
+	    directlyEnqueuePayload(payloadToSend);
 	  }
 	};
 	
+	function directlyEnqueuePayload(payloadToSend) {
+	  window._rollbarPayloadQueue.push(payloadToSend);
+	  _notifyPayloadAvailable();
+	}
 	
 	NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
 	  var level = callerArgs[0];
@@ -1156,7 +1159,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	  try {
 	    while ((payloadObj = window._rollbarPayloadQueue.shift())) {
-	      _processPayload(payloadObj.endpointUrl, payloadObj.accessToken, payloadObj.payload, payloadObj.callback);
+	      _processPayload(payloadObj);
 	    }
 	  } finally {
 	    payloadProcessorTimeout = undefined;
@@ -1167,8 +1170,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var rateLimitStartTime = new Date().getTime();
 	var rateLimitCounter = 0;
 	var rateLimitPerMinCounter = 0;
-	function _processPayload(url, accessToken, payload, callback) {
-	  callback = callback || function cb() {};
+	function _processPayload(payloadObject) {
+	  var url = payloadObject.endpointUrl;
+	  var accessToken = payloadObject.accessToken;
+	  var payload = payloadObject.payload;
+	  var callback = payloadObject.callback || function cb() {};
+	
 	  var now = new Date().getTime();
 	  if (now - rateLimitStartTime >= 60000) {
 	    rateLimitStartTime = now;
@@ -1212,6 +1219,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  // go ahead and send it.
 	  XHR.post(url, accessToken, payload, function xhrCallback(err, resp) {
 	    if (err) {
+	      if (err instanceof ConnectionError) {
+	        // We're calling the callback now with the error, disable the callback for future attempts.
+	        payloadObject.callback = function () { };
+	        setTimeout(function () {
+	          directlyEnqueuePayload(payloadObject);
+	        }, Notifier.RETRY_DELAY);
+	      }
+	
 	      return callback(err);
 	    }
 	
@@ -1925,6 +1940,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  RollbarJSON = JSON;
 	}
 	
+	function ConnectionError(message) {
+	  this.name = 'Connection Error';
+	  this.message = message;
+	  this.stack = (new Error()).stack;
+	}
+	
+	ConnectionError.prototype = Object.create(Error.prototype);
+	ConnectionError.prototype.constructor = ConnectionError;
+	
 	var XHR = {
 	  XMLHttpFactories: [
 	      function () {
@@ -1983,7 +2007,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                  // IE will return a status 12000+ on some sort of connection failure,
 	                  // so we return a blank error
 	                  // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-	                  callback(new Error());
+	                  callback(new ConnectionError('XHR response had no status code (likely connection failure)'));
 	                }
 	              }
 	            } catch (ex) {
@@ -2020,7 +2044,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	            }
 	
 	            var ontimeout = function() {
-	              callback(new Error('Request timed out'));
+	              callback(new ConnectionError('Request timed out'));
 	            };
 	
 	            var onerror = function() {
@@ -2049,7 +2073,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	module.exports = {
 	  XHR: XHR,
-	  setupJSON: setupJSON
+	  setupJSON: setupJSON,
+	  ConnectionError: ConnectionError
 	};
 
 
