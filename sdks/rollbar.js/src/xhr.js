@@ -8,6 +8,15 @@ function setupJSON(JSON) {
   RollbarJSON = JSON;
 }
 
+function ConnectionError(message) {
+  this.name = 'Connection Error';
+  this.message = message;
+  this.stack = (new Error()).stack;
+}
+
+ConnectionError.prototype = Object.create(Error.prototype);
+ConnectionError.prototype.constructor = ConnectionError;
+
 var XHR = {
   XMLHttpFactories: [
       function () {
@@ -66,7 +75,7 @@ var XHR = {
                   // IE will return a status 12000+ on some sort of connection failure,
                   // so we return a blank error
                   // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-                  callback(new Error());
+                  callback(new ConnectionError('XHR response had no status code (likely connection failure)'));
                 }
               }
             } catch (ex) {
@@ -103,7 +112,7 @@ var XHR = {
             }
 
             var ontimeout = function() {
-              callback(new Error('Request timed out'));
+              callback(new ConnectionError('Request timed out'));
             };
 
             var onerror = function() {
@@ -132,5 +141,6 @@ var XHR = {
 
 module.exports = {
   XHR: XHR,
-  setupJSON: setupJSON
+  setupJSON: setupJSON,
+  ConnectionError: ConnectionError
 };
