@@ -105,6 +105,13 @@ Rollbar.configure({enabled: false});
 Rollbar.error("This will *not* be reported to Rollbar");
 ```
 
+## Dealing with adblocker / browser extension exceptions
+
+Unfortunately, some very popular browser extensions may modify a user's copy of your website in such a way as
+to break / block it's functionality.  This can result in Rollbar reporting exceptions that are not a direct result
+of your own code.  There are multiple approaches to dealing with this issue, the simplest of which is covered
+ [here](https://github.com/rollbar/rollbar.js/tree/master/docs/extension-exceptions.md)
+
 ## Ignoring specific exception messages
 
 If you want to ignore a specific exception message, say for a third-party browser plugin
