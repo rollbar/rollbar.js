@@ -5,9 +5,6 @@
     "dist/rollbar.umd.js"
   ],
   "ignore": [
-    "dist/rollbar.js",
-    "dist/*.js.map",
-    "dist/*.min.js",
     "dist/*.snippet*",
     "dist/*.nojson*",
     "dist/*.named-amd*",
