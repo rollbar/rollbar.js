@@ -720,6 +720,50 @@ NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo,
     message, url, lineNo, colNo, err]);
 });
 
+NotifierPrototype.unhandledRejection = _wrapNotifierFn(function(reason, promise) {
+  if (reason == null) {
+    _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
+      'unhandled rejection was null or undefined!', // message
+      null, // err
+      {}, // custom
+      null,  // callback
+      false, // isUncaught
+      false); // ignoreRateLimit
+    return;
+  }
+
+  var message = reason.message || (reason ? String(reason) : 'unhandled rejection');
+
+  // If the reason error was thrown within a wrap call, we'll extract the context given there.
+  // If users want to provide their Promise implementation with knowledge of the rollbar
+  // context they are created in, we'll search for that attribute, too.
+  var context = reason._rollbarContext || promise._rollbarContext || null;
+
+  if (reason && Util.isType(reason, 'error')) {
+    this._log(this.options.uncaughtErrorLevel, message, reason, context, null, true);
+    return;
+  }
+
+  var location = {
+    'url': '',
+    'line': 0
+  };
+  location.func = errorParser.guessFunctionName(location.url, location.line);
+  location.context = errorParser.gatherContext(location.url, location.line);
+  var stack = {
+    'mode': 'unhandledrejection',
+    'message': message,
+    'url': document.location.href,
+    'stack': [location],
+    'useragent': navigator.userAgent
+  };
+
+  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel,
+    message, stack, context);
+  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel,
+    message, location.url, location.line, 0, reason, promise]);
+});
+
 
 NotifierPrototype.global = _wrapNotifierFn(function(options) {
   options = options || {};

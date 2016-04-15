@@ -2,10 +2,14 @@
 /* globals describe */
 /* globals it */
 /* globals sinon */
+/* globals Promise */
 
 
 var snippetCallback = require('../src/snippet_callback');
 
+if (typeof Promise === 'undefined') {
+  window.Promise = require('bluebird');
+}
 
 window.Rollbar = require('../src/shim').Rollbar;
 
@@ -95,6 +99,42 @@ describe('window.Rollbar.init()', function() {
     expect(window._rollbarShimQueue[0].args[0]).to.have.property('captureUncaught', config.captureUncaught);
 
     done();
+  });
+
+  context('when captureUnhandledRejections is set on the config object', function() {
+    before(function() {
+      window.Rollbar = require('../src/shim').Rollbar;
+      config.captureUnhandledRejections = true;
+      window.Rollbar.init(window, config);
+    });
+
+    after(function() {
+      window.Rollbar = require('../src/shim').Rollbar;
+      delete config.captureUnhandledRejections;
+      window.Rollbar.init(window, config);
+    });
+
+    it('installs a top level handler to queue caught unhandled promise rejections', function(done) {
+      var preLen = window._rollbarShimQueue.length;
+
+      var promise = new Promise(function (resolve, reject) {
+        var error = new Error('oh gosh');
+        reject(error);
+        // Doesn't trigger the event immediately upon rejection, but in the next 'tick'
+        expect(window._rollbarShimQueue).to.have.length(preLen);
+
+        setTimeout(function () {
+          expect(window._rollbarShimQueue).to.have.length(preLen + 1);
+          var data = window._rollbarShimQueue[preLen];
+          var options = {};
+          expect(data.method).to.equal('unhandledRejection');
+          expect(data.args).to.have.length(2);
+          expect(data.args[0]).to.equal(error);
+          expect(data.args[1]).to.equal(promise);
+          done();
+        }, 1);
+      });
+    });
   });
 });
 

@@ -9,6 +9,9 @@ var snippetCallback = require('../src/snippet_callback');
 
 var Rollbar = shim.Rollbar;
 
+if (typeof Promise === 'undefined') {
+  window.Promise = require('bluebird');
+}
 
 var rollbarConfig = {
   accessToken: '12c99de67a444c229fca100e0967486f',
@@ -18,9 +21,7 @@ var rollbarConfig = {
   }
 };
 
-
 var origRollbar = Rollbar.init(window, rollbarConfig);
-
 
 describe('Script load', function() {
   // Create a div to use in the tests
@@ -491,4 +492,59 @@ describe('window.Rollbar.uncaughtError()', function() {
       }, 10);
     });
   }
+});
+
+describe('window.Rollbar.init', function() {
+  var ShimRollbar = shim.Rollbar;
+  var GlobalRollbar = require('../src/globalnotifier').wrapper;
+
+  context('when captureUnhandledRejections is set on the config object', function() {
+
+    context('when Rollbar is loaded via shim initially', function() {
+      before(function() {
+        rollbarConfig.captureUnhandledRejections = true;
+      });
+
+      after(function() {
+        delete rollbarConfig.captureUnhandledRejections;
+      });
+
+      context('and then is initialized via the full Rollbar', function() {
+        var handleRejectionSpy;
+        var parentRollbar;
+
+        beforeEach(function() {
+          delete window.Rollbar;
+          parentRollbar = ShimRollbar.init(window, rollbarConfig);
+          GlobalRollbar.init(rollbarConfig, parentRollbar);
+          handleRejectionSpy = sinon.spy(window.Rollbar, 'unhandledRejection');
+        });
+
+        afterEach(function() {
+          delete window.Rollbar;
+          if (handleRejectionSpy) {
+            handleRejectionSpy.restore();
+          }
+          ShimRollbar.init(window, rollbarConfig);
+        });
+
+        it('replaces the shim global rejected handler, and rejections are handled', function(done) {
+          var promise = new Promise(function (resolve, reject) {
+            // Verify test expectation -- at first, we haven't been called, it should be the result of the rejection
+            // itself that makes the call.
+
+            expect(handleRejectionSpy.called).to.equal(false);
+            var error = new Error('oh gosh');
+            reject(error);
+
+            // Promise resolution occurs in the next 'tick'
+            setTimeout(function () {
+              expect(handleRejectionSpy.calledOnce).to.equal(true);
+              done();
+            }, 1);
+          });
+        });
+      });
+    });
+  });
 });
