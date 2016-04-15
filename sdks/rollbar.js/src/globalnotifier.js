@@ -19,7 +19,6 @@ function _rollbarWindowOnError(client, old, args) {
   }
 }
 
-
 function _extendListenerPrototype(client, prototype) {
   if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
     var oldAddEventListener = prototype.addEventListener;
@@ -76,6 +75,29 @@ wrapper.init = function(config, parent) {
         _extendListenerPrototype(client, window[global].prototype);
       }
     }
+  }
+
+  if (config.captureUnhandledRejections) {
+    if (parent && Util.isType(parent._unhandledRejectionHandler, 'function')) {
+      window.removeEventListener('unhandledrejection', parent._unhandledRejectionHandler)
+    }
+
+    client._unhandledRejectionHandler = function (event) {
+      var reason = event.reason;
+      var promise = event.promise;
+      // Some Promise libraries do not yet conform to the standard and place the reason and promise inside
+      // a detail attribute
+      var detail = event.detail;
+
+      if (!reason && detail) {
+        reason = detail.reason;
+        promise = detail.promise;
+      }
+
+      client.unhandledRejection(reason, promise);
+    };
+
+    window.addEventListener('unhandledrejection', client._unhandledRejectionHandler);
   }
 
   window.Rollbar = client;
