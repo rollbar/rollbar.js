@@ -16,6 +16,7 @@ Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's ```po
 var _rollbarConfig = {
     accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
     captureUncaught: true,
+    captureUnhandledRejections: false,
     payload: {
         environment: "production"
     }
@@ -117,12 +118,23 @@ var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
   ignoredMessages: ["Can't find Clippy.bmp. The end is nigh."],
   captureUncaught: true,
+  captureUnhandledRejections: false,
   payload: {
     environment: "production"
   }
 };
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
+
+## Handling uncaught rejections.
+
+Rollbar.js supports the ability to catch and report unhandled Promise rejections, that is, Promise failures
+that do not have a corresponding `.then(null, function(e) {})` handler.  This support is best used for handling
+rejected `exceptions`, although rejected primitives will report (without a stack trace).
+
+If you decide to use this option, you may also want to combine it the `checkIgnore` 
+[configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) option to filter 'noisy' rejections,
+depending on the extent to which your application handles Promise failures, or rejects with alot of primitives.
 
 ## Verbose option
 
@@ -134,6 +146,7 @@ var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
   verbose: true, // This will now log to console.log, as well as Rollbar  
   captureUncaught: true,
+  captureUnhandledRejections: false, 
   payload: {
     environment: "production"
   }
