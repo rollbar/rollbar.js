@@ -127,7 +127,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	}
 	
-	
 	function _extendListenerPrototype(client, prototype) {
 	  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
 	    var oldAddEventListener = prototype.addEventListener;
@@ -184,6 +183,29 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        _extendListenerPrototype(client, window[global].prototype);
 	      }
 	    }
+	  }
+	
+	  if (config.captureUnhandledRejections) {
+	    if (parent && Util.isType(parent._unhandledRejectionHandler, 'function')) {
+	      window.removeEventListener('unhandledrejection', parent._unhandledRejectionHandler)
+	    }
+	
+	    client._unhandledRejectionHandler = function (event) {
+	      var reason = event.reason;
+	      var promise = event.promise;
+	      // Some Promise libraries do not yet conform to the standard and place the reason and promise inside
+	      // a detail attribute
+	      var detail = event.detail;
+	
+	      if (!reason && detail) {
+	        reason = detail.reason;
+	        promise = detail.promise;
+	      }
+	
+	      client.unhandledRejection(reason, promise);
+	    };
+	
+	    window.addEventListener('unhandledrejection', client._unhandledRejectionHandler);
 	  }
 	
 	  window.Rollbar = client;
@@ -251,7 +273,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.8.5");
+	Notifier.NOTIFIER_VERSION = ("1.9.0");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -366,7 +388,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	      } else {
 	        err = arg;
 	      }
-	    } else if (argT === 'object') {
+	    } else if (argT === 'object' || argT === 'array') {
 	      if (custom) {
 	        extraArgs.push(arg);
 	      } else {
@@ -925,6 +947,50 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    message, stack, context);
 	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel,
 	    message, url, lineNo, colNo, err]);
+	});
+	
+	NotifierPrototype.unhandledRejection = _wrapNotifierFn(function(reason, promise) {
+	  if (reason == null) {
+	    _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
+	      'unhandled rejection was null or undefined!', // message
+	      null, // err
+	      {}, // custom
+	      null,  // callback
+	      false, // isUncaught
+	      false); // ignoreRateLimit
+	    return;
+	  }
+	
+	  var message = reason.message || (reason ? String(reason) : 'unhandled rejection');
+	
+	  // If the reason error was thrown within a wrap call, we'll extract the context given there.
+	  // If users want to provide their Promise implementation with knowledge of the rollbar
+	  // context they are created in, we'll search for that attribute, too.
+	  var context = reason._rollbarContext || promise._rollbarContext || null;
+	
+	  if (reason && Util.isType(reason, 'error')) {
+	    this._log(this.options.uncaughtErrorLevel, message, reason, context, null, true);
+	    return;
+	  }
+	
+	  var location = {
+	    'url': '',
+	    'line': 0
+	  };
+	  location.func = errorParser.guessFunctionName(location.url, location.line);
+	  location.context = errorParser.gatherContext(location.url, location.line);
+	  var stack = {
+	    'mode': 'unhandledrejection',
+	    'message': message,
+	    'url': document.location.href,
+	    'stack': [location],
+	    'useragent': navigator.userAgent
+	  };
+	
+	  var payload = this._buildPayload(new Date(), this.options.uncaughtErrorLevel,
+	    message, stack, context);
+	  this._enqueuePayload(payload, true, [this.options.uncaughtErrorLevel,
+	    message, location.url, location.line, 0, reason, promise]);
 	});
 	
 	

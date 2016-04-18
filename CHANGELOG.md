@@ -1,5 +1,18 @@
 # Change Log
 
+**v1.9.0**
+- Added support for arrays as custom data. (pr#194)
+- Documentation added for disabling Rollbar in the presence of ad blockers. (pr#190)
+- Added support for unhandled rejections from Promises. (pr#192)
+- Decreased Bower release size. (pr#191)
+  - **Breaking Changes**
+    - Various files/directories were removed from the Bower release, including:
+      - `dist/*.snippet*`
+      - `dist/*.nojson*`
+      - `dist/*.named-amd*`
+      - `vendor`
+      - `src`
+
 **v1.8.5**
 - Support retrying after being in offline mode. (pr#186)
 
@@ -26,7 +39,7 @@
 - Fix bug when checking window.onerror.belongsToShim.
 
 **v1.7.4**
-- Don't save shim's onerror when we are building globalnotifier. 
+- Don't save shim's onerror when we are building globalnotifier.
   This fixes tests using window.onerror on a browser console
 - Fix Default endpoint on docs/configuration.md
 
