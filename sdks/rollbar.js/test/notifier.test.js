@@ -1187,6 +1187,21 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
     });
   };
 
+  var arrayDataTest = function(level) {
+    it(level + '() should be able to accept and report array data', function (done) {
+      var notifier = new Notifier();
+      var logSpy = sinon.spy(notifier, '_log');
+
+      notifier[level]('Oh no!', ['some array', 'data']);
+
+      var call = logSpy.getCall(0);
+
+      expect(call.args[1]).to.equal('Oh no!');
+      expect(call.args[3].join(',')).to.equal('some array,data');
+      done();
+    });
+  };
+
   var i;
   var levels = ['debug', 'info', 'warn', 'warning', 'error', 'critical'];
   for (i = 0; i < levels.length; ++i) {
@@ -1199,6 +1214,10 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
 
   for (i = 0; i < levels.length; ++i) {
     callbackErrorTest(levels[i]);
+  }
+
+  for (i = 0; i < levels.length; ++i) {
+    arrayDataTest(levels[i]);
   }
 
   var j = 0;

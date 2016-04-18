@@ -159,7 +159,7 @@ NotifierPrototype._getLogArgs = function(args) {
       } else {
         err = arg;
       }
-    } else if (argT === 'object') {
+    } else if (argT === 'object' || argT === 'array') {
       if (custom) {
         extraArgs.push(arg);
       } else {
