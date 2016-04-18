@@ -121,7 +121,7 @@ Default: ```0``` (no limit)
 Default: ```null```
 
 - isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
-- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```
+- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```.  In the case of unhandled rejections, the last parameter is originating `Promise`.
 - payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
   </dd>
 

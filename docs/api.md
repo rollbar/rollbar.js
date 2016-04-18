@@ -58,6 +58,21 @@ __Params__
     1. _Note_: Only newer browsers provide this variable.
 
 
+## Rollbar.unhandledRejection()
+
+This method is used to record unhandled Promise rejections via the window event `unhandledrejection`.  Many promise 
+libraries, including Bluebird, lie, and native Promise support (Chrome only currently, but it is a [standard to be
+built upon](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onunhandledrejection)). 
+
+To enable this handling, you should provide `captureUnhandledRejections` to the config given to `Rollbar.init()`.
+
+__Returns__: `undefined`
+
+__Params__
+
+1. message: `Exception`: The exception, or rejection being rejected.
+1. promise: `Promise`: The originating promise object.
+
 ## Rollbar.log()
 
 Log a message and potentially send it to Rollbar. The level that the message or error is logged at is determined by the `logLevel` config option.

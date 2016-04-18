@@ -43,7 +43,6 @@ function _buildOnErrorFn(client) {
   return fn;
 }
 
-
 function Rollbar(parentShim) {
   this.shimId = ++_shimCounter;
   this.notifier = null;
@@ -88,6 +87,27 @@ Rollbar.init = function(window, config) {
           _extendListenerPrototype(client, window[global].prototype);
         }
       }
+    }
+
+    if (config.captureUnhandledRejections) {
+      // Create an event based handler for the shim and expose it so that it can unregister it
+      // before creating its own handler.
+      client._unhandledRejectionHandler = function (event) {
+        var reason = event.reason;
+        var promise = event.promise;
+        // Some Promise libraries do not yet conform to the standard and place the reason and promise inside
+        // a detail attribute
+        var detail = event.detail;
+
+        if (!reason && detail) {
+          reason = detail.reason;
+          promise = detail.promise;
+        }
+
+        client.unhandledRejection(reason, promise);
+      };
+
+      window.addEventListener('unhandledrejection', client._unhandledRejectionHandler);
     }
 
     // Expose Rollbar globally
@@ -244,7 +264,9 @@ function _extendListenerPrototype(client, prototype) {
 }
 
 
-var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError'.split(',');
+var _methods = 
+  'log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError,unhandledRejection'.split(',');
+
 for (var i = 0; i < _methods.length; ++i) {
   Rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
