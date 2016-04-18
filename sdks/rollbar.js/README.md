@@ -206,6 +206,13 @@ You have a couple of options to fix this behavior:
   };
 ```
 
+## Dealing with adblocker / browser extension exceptions
+
+Unfortunately, some very popular browser extensions may modify a user's copy of your website in such a way as
+to break its functionality.  This can result in Rollbar reporting exceptions that are not a direct result
+of your own code.  There are multiple approaches to dealing with this issue, the simplest of which is covered
+ [in related documentation](https://github.com/rollbar/rollbar.js/tree/master/docs/extension-exceptions.md).
+
 ## Next steps
 
 - [Configuration reference](https://rollbar.com/docs/notifier/rollbar.js/configuration)
