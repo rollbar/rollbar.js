@@ -5,10 +5,16 @@
     "dist/rollbar.umd.js"
   ],
   "ignore": [
+    "dist/*.snippet*",
+    "dist/*.nojson*",
+    "dist/*.named-amd*",
     "docs",
+    "src",
+    "vendor",
     "examples",
     "release",
     "test",
+    "karma.conf.js",
     ".gitignore",
     ".gitmodules",
     ".travis.yml",
