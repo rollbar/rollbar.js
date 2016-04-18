@@ -403,6 +403,98 @@ describe('Notifier.configure()', function() {
 });
 
 
+describe('Notfier.unhandledRejection()', function() {
+  var notifier;
+  var enqueueSpy;
+
+  beforeEach(function() {
+    notifier = new Notifier();
+    enqueueSpy = sinon.spy(notifier, '_enqueuePayload');
+  });
+
+  context('with an error', function() {
+    it('should enqueue a payload with the provided error object', function(done) {
+      var err;
+      try {
+        throw new Error('uncaught exception');
+      } catch (e) {
+        err = e;
+      }
+      var promise = {};
+
+      notifier.unhandledRejection(err, promise);
+
+      expect(enqueueSpy.calledOnce).to.equal(true);
+      var args = enqueueSpy.getCall(0).args;
+
+      var payloadData = args[0].data;
+      expect(payloadData.level).to.equal('error');
+      var description = args[0].data.body.trace.exception.description;
+      var message = args[0].data.body.trace.exception.message;
+      var frames = args[0].data.body.trace.frames;
+      expect(description).to.equal('uncaught exception');
+      expect(message).to.equal('uncaught exception');
+      expect(frames.length > 1).to.equal(true);
+      done();
+    });
+
+    context('produced from a promise with _rollbarContext set', function() {
+      it('should enqueue a payload with custom data', function(done) {
+        var err;
+        var custom = { data: 'Some custom data' };
+        try {
+          throw new Error('uncaught exception');
+        } catch (e) {
+          err = e;
+        }
+        var promise = { _rollbarContext: custom };
+
+        notifier.unhandledRejection(err, promise);
+
+        expect(enqueueSpy.calledOnce).to.equal(true);
+        var args = enqueueSpy.getCall(0).args;
+
+        expect(args[0].data.body.trace.extra.data).to.equal(custom.data);
+        done();
+      });
+    })
+  });
+
+  context('with a non error object', function() {
+    it('should enqueue a payload with the string realization of the object', function(done) {
+      var err = {something: 1};
+      var promise = {};
+
+      notifier.unhandledRejection(err, promise);
+
+      expect(enqueueSpy.calledOnce).to.equal(true);
+      var args = enqueueSpy.getCall(0).args;
+
+      var payloadData = args[0].data;
+      expect(payloadData.level).to.equal('error');
+      var description = args[0].data.body.trace.exception.description;
+      var message = args[0].data.body.trace.exception.message;
+      var frames = args[0].data.body.trace.frames;
+      expect(description).to.equal(String(err));
+      expect(message).to.equal(String(err));
+      expect(frames.length).to.equal(1);
+      done();
+    });
+  });
+
+  context('with a null value', function() {
+    it('should not enqueue a payload', function(done) {
+      var err = null;
+      var promise = {};
+
+      notifier.unhandledRejection(err, promise);
+
+      expect(enqueueSpy.called).to.equal(false);
+      done();
+    });
+  })
+});
+
 /*
  * Notifier.uncaughtError()
  */
