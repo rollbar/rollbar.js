@@ -1,5 +1,9 @@
 # Change Log
 
+**v1.9.1**
+- Re-add rollbar.snippet.js to the Bower distribution. (pr#196)
+  - This re-adds `dist/rollbar.snippet.js` to be backwards compatible with v1.8.5
+
 **v1.9.0**
 - Added support for arrays as custom data. (pr#194)
 - Documentation added for disabling Rollbar in the presence of ad blockers. (pr#190)
