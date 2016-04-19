@@ -5,7 +5,6 @@
     "dist/rollbar.umd.js"
   ],
   "ignore": [
-    "dist/*.snippet*",
     "dist/*.nojson*",
     "dist/*.named-amd*",
     "docs",
@@ -22,6 +21,7 @@
     "Makefile",
     "travis.yml",
     "package.json",
-    "webpack.config.js"
+    "webpack.config.js",
+    "browserstack*"
   ]
 }
