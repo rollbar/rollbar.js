@@ -15,7 +15,12 @@
       };
       
       function breakme() {
-        Rollbar.error("This will be reported to Rollbar");
+        try {
+          var foo = null;
+          foo();
+        } catch (e) {
+            Rollbar.error(e);
+        }
       }
     </script>
     <script src="./bower_components/rollbar/dist/rollbar.snippet.js"></script>
