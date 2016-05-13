@@ -5,9 +5,18 @@
         accessToken: "ACCESS_TOKEN",
         captureUncaught: true,
         payload: {
-          environment: "test"
+          environment: "test",
+          person: {
+            id: 456,
+            username: "foo",
+            email: "foo@example.com"
+          }
         }
       };
+      
+      function breakme() {
+        Rollbar.error("This will be reported to Rollbar");
+      }
     </script>
     <script src="./bower_components/rollbar/dist/rollbar.snippet.js"></script>
   </head>
