@@ -1,6 +1,7 @@
 /* globals ActiveXObject */
 
 var Util = require('./util');
+var Polyfill = require('./polyfill');
 
 var RollbarJSON = null;
 
@@ -14,6 +15,7 @@ function ConnectionError(message) {
   this.stack = (new Error()).stack;
 }
 
+Polyfill.create();
 ConnectionError.prototype = Object.create(Error.prototype);
 ConnectionError.prototype.constructor = ConnectionError;
 
