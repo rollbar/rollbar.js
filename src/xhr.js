@@ -1,7 +1,6 @@
 /* globals ActiveXObject */
 
 var Util = require('./util');
-var Polyfill = require('./polyfill');
 
 var RollbarJSON = null;
 
