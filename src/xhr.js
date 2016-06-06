@@ -15,8 +15,7 @@ function ConnectionError(message) {
   this.stack = (new Error()).stack;
 }
 
-Polyfill.create();
-ConnectionError.prototype = Object.create(Error.prototype);
+ConnectionError.prototype = new Error();
 ConnectionError.prototype.constructor = ConnectionError;
 
 var XHR = {
