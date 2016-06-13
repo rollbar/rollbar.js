@@ -71,10 +71,10 @@ var XHR = {
                 } else if (Util.isType(request.status, 'number') &&
                   request.status >= 400 && request.status < 600) {
 
-                  if (request.status == 403 && console) {
+                  if (request.status == 403) {
                     // likely caused by using a server access token, display console message to let
                     // user know
-                    console.log(jsonResponse.message);
+                    console.error('[Rollbar]:' + jsonResponse.message);
                   }
                   // return valid http status codes
                   callback(new Error(String(request.status)));
