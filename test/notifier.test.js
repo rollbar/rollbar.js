@@ -1267,8 +1267,10 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       expect(stub.getCall(0).args[0]).to.be.an('object');
       expect(Util.typeName(stub.getCall(0).args[0])).to.equal('error');
 
-      // Shouldn't log internal errors for xhr request failures
-      expect(consoleLogStub.called).to.equal(false);
+      // Shouldn't log internal errors for xhr request failures, we log a message on 403
+      if (statusCode !== 403) {
+        expect(consoleLogStub.called).to.equal(false);
+      }
 
       consoleLogStub.restore();
       server.restore();
