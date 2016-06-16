@@ -1242,7 +1242,14 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       notifier.configure({reportLevel: 'debug'});
 
       // respond to the .error() with a 200 OK fake response
-      server.respondWith([statusCode, {'Content-Type': 'application/json'}, '{}']);
+      if (statusCode === 403) {
+        var jsonResponse = {
+          message: 'this is a test message'
+        }
+        server.respondWith([statusCode, {'Content-Type': 'application/json'}, JSON.stringify(jsonResponse)]);
+      } else {
+        server.respondWith([statusCode, {'Content-Type': 'application/json'}, '{}']);
+      }
 
       var test = function() {
         // Must call .error() with a callback so we can capture the error
@@ -1267,8 +1274,13 @@ describe('Notifier.debug/warn/warning/error/critical()', function() {
       expect(stub.getCall(0).args[0]).to.be.an('object');
       expect(Util.typeName(stub.getCall(0).args[0])).to.equal('error');
 
-      // Shouldn't log internal errors for xhr request failures
-      expect(consoleLogStub.called).to.equal(false);
+      // Shouldn't log internal errors for xhr request failures, we log a message on 403
+      if (statusCode !== 403) {
+        expect(consoleLogStub.called).to.equal(false);
+      } else {
+        var message = consoleLogStub.args[0][0];
+        expect(message).to.equal('[Rollbar]:this is a test message');
+      }
 
       consoleLogStub.restore();
       server.restore();
