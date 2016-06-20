@@ -8,9 +8,9 @@ For most websites, the path for dealing with browser extension originating excep
 ## Dealing with adblockers
 
 The most common type of extension that can be problematic is adblockers.  These extensions can disable loading
-certain external scripts or remove elements from a page based on a simple set of heuristics. 
+certain external scripts or remove elements from a page based on a simple set of heuristics.
 
-You can see a [full example](https://github.com/rollbar/rollbar.js/tree/master/examples/extension-exceptions/) 
+You can see a [full example](https://github.com/rollbar/rollbar.js/tree/master/examples/extension-exceptions/)
 for details, but the approach can best summarized as below:
 
 Load Rollbar.js as normal.
@@ -44,7 +44,7 @@ Add functions to check for the presence and visibility of our bait div.
     Rollbar.configure({enabled: false});
   }
 
-  function checkForAdds() {
+  function checkForAds() {
     var bait = document.getElementById("blocker-bait");
 
     if (bait == null) {
@@ -60,18 +60,18 @@ Add functions to check for the presence and visibility of our bait div.
     }
   }
 
-  function onLoadStartAddCheck() {
-    // Add blockers generally execute just after load, let's delay ourselves to get behind it.
-    setTimeout(checkForAdds, 1);
+  function onLoadStartAdCheck() {
+    // Ad blockers generally execute just after load, let's delay ourselves to get behind it.
+    setTimeout(checkForAds, 1);
   }
 
   if (window.addEventListener !== undefined) {
-    window.addEventListener('load', onLoadStartAddCheck, false);
+    window.addEventListener('load', onLoadStartAdCheck, false);
   } else {
-    window.attachEvent('onload', onLoadStartAddCheck);
+    window.attachEvent('onload', onLoadStartAdCheck);
   }
 ```
 
-The above approach is likely to work in the majority of cases, *but it is not foolproof*.  Extensions and their 
+The above approach is likely to work in the majority of cases, *but it is not foolproof*.  Extensions and their
 behaviors evolve over time, and nothing stops a user form opening their console and modifying / executing code as well.
 A practical approach involves incrementally adjusting your detection as new exceptions occur in large numbers.
