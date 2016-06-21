@@ -1,21 +1,13 @@
 /* globals ActiveXObject */
 
 var Util = require('./util');
+var Notifier = require('./notifier');
 
 var RollbarJSON = null;
 
 function setupJSON(JSON) {
   RollbarJSON = JSON;
 }
-
-function ConnectionError(message) {
-  this.name = 'Connection Error';
-  this.message = message;
-  this.stack = (new Error()).stack;
-}
-
-ConnectionError.prototype = new Error();
-ConnectionError.prototype.constructor = ConnectionError;
 
 var XHR = {
   XMLHttpFactories: [
@@ -60,6 +52,8 @@ var XHR = {
       try {
         try {
           var onreadystatechange = function() {
+            console.log('onreadystatechange');
+            console.log(request);
             try {
               if (onreadystatechange && request.readyState === 4) {
                 onreadystatechange = undefined;
@@ -75,7 +69,7 @@ var XHR = {
                   // IE will return a status 12000+ on some sort of connection failure,
                   // so we return a blank error
                   // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-                  callback(new ConnectionError('XHR response had no status code (likely connection failure)'));
+                  Notifier.directlyEnqueuePayload(payload);
                 }
               }
             } catch (ex) {
@@ -112,7 +106,7 @@ var XHR = {
             }
 
             var ontimeout = function() {
-              callback(new ConnectionError('Request timed out'));
+              Notifier.directlyEnqueuePayload(payload);
             };
 
             var onerror = function() {
@@ -141,6 +135,5 @@ var XHR = {
 
 module.exports = {
   XHR: XHR,
-  setupJSON: setupJSON,
-  ConnectionError: ConnectionError
+  setupJSON: setupJSON
 };

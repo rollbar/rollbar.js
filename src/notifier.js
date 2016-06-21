@@ -16,7 +16,6 @@ var Util = require('./util');
 var xhr = require('./xhr');
 
 var XHR = xhr.XHR;
-var ConnectionError = xhr.ConnectionError;
 var RollbarJSON = null;
 
 function setupJSON(JSON) {
@@ -599,14 +598,15 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
   }
 
   if (this.options.enabled) {
-    directlyEnqueuePayload(payloadToSend);
+    Notifier.directlyEnqueuePayload(payloadToSend);
   }
 };
 
-function directlyEnqueuePayload(payloadToSend) {
+Notifier.directlyEnqueuePayload = function(payloadToSend) {
+  console.log('Enqueueing payload');
   window._rollbarPayloadQueue.push(payloadToSend);
   _notifyPayloadAvailable();
-}
+};
 
 NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payload) {
   var level = callerArgs[0];
@@ -1056,14 +1056,6 @@ function _processPayload(payloadObject) {
   // go ahead and send it.
   XHR.post(url, accessToken, payload, function xhrCallback(err, resp) {
     if (err) {
-      if (err instanceof ConnectionError) {
-        // We're calling the callback now with the error, disable the callback for future attempts.
-        payloadObject.callback = function () { };
-        setTimeout(function () {
-          directlyEnqueuePayload(payloadObject);
-        }, Notifier.RETRY_DELAY);
-      }
-
       return callback(err);
     }
 
