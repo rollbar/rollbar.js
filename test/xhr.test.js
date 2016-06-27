@@ -6,7 +6,6 @@
 var xhr = require('../src/xhr');
 var XHR = xhr.XHR;
 
-
 describe('XHR', function() {
   xhr.setupJSON(JSON);
 
@@ -39,6 +38,20 @@ describe('XHR', function() {
       XHR.post(url, accessToken, payload, function() {});
     }
     expect(test).to.throwError();
+
+    done();
+  });
+
+  it('should retry on failure', function(done) {
+    var spy = sinon.spy(XHR, 'post');
+    var clock = sinon.useFakeTimers();
+    XHR.post('http://localhost:6445', 'ACCESS_TOKEN', {});
+
+    clock.tick(xhr.TIMEOUT);
+    clock.tick(xhr.RETRY_DELAY);
+    expect(spy.callCount).to.equal(2);
+
+    clock.restore();
 
     done();
   });

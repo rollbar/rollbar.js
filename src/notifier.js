@@ -603,7 +603,6 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
 };
 
 Notifier.directlyEnqueuePayload = function(payloadToSend) {
-  console.log('Enqueueing payload');
   window._rollbarPayloadQueue.push(payloadToSend);
   _notifyPayloadAvailable();
 };
