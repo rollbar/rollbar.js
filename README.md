@@ -132,7 +132,7 @@ Rollbar.js supports the ability to catch and report unhandled Promise rejections
 that do not have a corresponding `.then(null, function(e) {})` handler.  This support is best used for handling
 rejected `exceptions`, although rejected primitives will report (without a stack trace).
 
-If you decide to use this option, you may also want to combine it the `checkIgnore` 
+If you decide to use this option, you may also want to combine it the `checkIgnore`
 [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) option to filter 'noisy' rejections,
 depending on the extent to which your application handles Promise failures, or rejects with alot of primitives.
 
@@ -146,7 +146,7 @@ var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
   verbose: true, // This will now log to console.log, as well as Rollbar  
   captureUncaught: true,
-  captureUnhandledRejections: false, 
+  captureUnhandledRejections: false,
   payload: {
     environment: "production"
   }
@@ -174,30 +174,33 @@ If you minify your JavaScript in production, you'll want to configure source map
 
 ## iOS 9 Webviews
 
-iOS 9 webviews will currently not work properly with the rollbar.js snippet above. 
+iOS 9 webviews will currently not work properly with the rollbar.js snippet above.
 
 Starting with iOS 9, webviews will only allow connections to HTTPS hosts whose certificates are are signed using SHA256+ and whose key is either 2048+ bit RSA or 256+ ECC. Many CDNs, including Cloudfront, do not meet these specifications. More info [here](https://developer.apple.com/library/prerelease/ios/technotes/App-Transport-Security-Technote/index.html).
 
 You have a couple of options to fix this behavior:
 
 - Update your app's Info.plist file to not enforce Forward Secrecy for the Rollbar cloudfront domain:
+
 ```xml
-  <key>NSAppTransportSecurity</key> 
-  <dict> 
-    <key>NSExceptionDomains</key> 
-    <dict> 
-      <key>d37gvrvc0wt4s1.cloudfront.net</key> 
-      <dict> 
-        <key>NSExceptionRequiresForwardSecrecy</key> 
-          <false/> 
-        <key>NSIncludesSubdomains</key> 
-          <true/> 
-      </dict> 
-    </dict> 
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSExceptionDomains</key>
+    <dict>
+      <key>d37gvrvc0wt4s1.cloudfront.net</key>
+      <dict>
+        <key>NSExceptionRequiresForwardSecrecy</key>
+          <false/>
+        <key>NSIncludesSubdomains</key>
+          <true/>
+      </dict>
+    </dict>
   </dict>
 ```
+
 - Update your rollbar.js snippet to use cdn.rollbar.com
   - This will fix iOS 9 webviews but will cause rollbar.js to not work properly for IE6 and IE8 users
+
 ```js
   var _rollbarConfig = {
     accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
