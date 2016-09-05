@@ -73,5 +73,5 @@ Add functions to check for the presence and visibility of our bait div.
 ```
 
 The above approach is likely to work in the majority of cases, *but it is not foolproof*.  Extensions and their
-behaviors evolve over time, and nothing stops a user form opening their console and modifying / executing code as well.
+behavior evolve over time and nothing stops a user from opening their console and modifying / executing code as well.
 A practical approach involves incrementally adjusting your detection as new exceptions occur in large numbers.
