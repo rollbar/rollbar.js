@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.9.2**
+- Upgrade error-stack-parser dependency to latest version
+
 **v1.9.1**
 - Re-add rollbar.snippet.js to the Bower distribution. (pr#196)
   - This re-adds `dist/rollbar.snippet.js` to be backwards compatible with v1.8.5

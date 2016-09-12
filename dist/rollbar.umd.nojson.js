@@ -283,7 +283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.9.1");
+	Notifier.NOTIFIER_VERSION = ("1.9.2");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -1513,7 +1513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 	
@@ -1558,11 +1558,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	
+	    function _indexOf(array, target) {
+	        if (typeof Array.prototype.indexOf === 'function') {
+	            return array.indexOf(target);
+	        } else {
+	            for (var i = 0; i < array.length; i++) {
+	                if (array[i] === target) {
+	                    return i;
+	                }
+	            }
+	            return -1;
+	        }
+	    }
+	
 	    return {
 	        /**
 	         * Given an Error object, extract the most information from it.
-	         * @param error {Error}
-	         * @return Array[StackFrame]
+	         *
+	         * @param {Error} error object
+	         * @return {Array} of StackFrames
 	         */
 	        parse: function ErrorStackParser$$parse(error) {
 	            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
@@ -1576,34 +1590,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	
-	        /**
-	         * Separate line and column numbers from a URL-like string.
-	         * @param urlLike String
-	         * @return Array[String]
-	         */
+	        // Separate line and column numbers from a string of the form: (URI:Line:Column)
 	        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
 	            // Fail-fast but return locations like "(native)"
 	            if (urlLike.indexOf(':') === -1) {
 	                return [urlLike];
 	            }
 	
-	            var locationParts = urlLike.replace(/[\(\)\s]/g, '').split(':');
-	            var lastNumber = locationParts.pop();
-	            var possibleNumber = locationParts[locationParts.length - 1];
-	            if (!isNaN(parseFloat(possibleNumber)) && isFinite(possibleNumber)) {
-	                var lineNumber = locationParts.pop();
-	                return [locationParts.join(':'), lineNumber, lastNumber];
-	            } else {
-	                return [locationParts.join(':'), lastNumber, undefined];
-	            }
+	            var regExp = /(.+?)(?:\:(\d+))?(?:\:(\d+))?$/;
+	            var parts = regExp.exec(urlLike.replace(/[\(\)]/g, ''));
+	            return [parts[1], parts[2] || undefined, parts[3] || undefined];
 	        },
 	
 	        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-	            var filtered = _filter(error.stack.split('\n'), function (line) {
+	            var filtered = _filter(error.stack.split('\n'), function(line) {
 	                return !!line.match(CHROME_IE_STACK_REGEXP);
 	            }, this);
 	
-	            return _map(filtered, function (line) {
+	            return _map(filtered, function(line) {
 	                if (line.indexOf('(eval ') > -1) {
 	                    // Throw away eval information until we implement stacktrace.js/stackframe#8
 	                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^\()]*)|(\)\,.*$)/g, '');
@@ -1611,18 +1615,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var tokens = line.replace(/^\s+/, '').replace(/\(eval code/g, '(').split(/\s+/).slice(1);
 	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionName = tokens.join(' ') || undefined;
-	                var fileName = locationParts[0] === 'eval' ? undefined : locationParts[0];
+	                var fileName = _indexOf(['eval', '<anonymous>'], locationParts[0]) > -1 ? undefined : locationParts[0];
 	
 	                return new StackFrame(functionName, undefined, fileName, locationParts[1], locationParts[2], line);
 	            }, this);
 	        },
 	
 	        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-	            var filtered = _filter(error.stack.split('\n'), function (line) {
+	            var filtered = _filter(error.stack.split('\n'), function(line) {
 	                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
 	            }, this);
 	
-	            return _map(filtered, function (line) {
+	            return _map(filtered, function(line) {
 	                // Throw away eval information until we implement stacktrace.js/stackframe#8
 	                if (line.indexOf(' > eval') > -1) {
 	                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval\:\d+\:\d+/g, ':$1');
@@ -1634,8 +1638,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    var tokens = line.split('@');
 	                    var locationParts = this.extractLocation(tokens.pop());
-	                    var functionName = tokens.shift() || undefined;
-	                    return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2], line);
+	                    var functionName = tokens.join('@') || undefined;
+	                    return new StackFrame(functionName,
+	                        undefined,
+	                        locationParts[0],
+	                        locationParts[1],
+	                        locationParts[2],
+	                        line);
 	                }
 	            }, this);
 	        },
@@ -1674,7 +1683,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var i = 0, len = lines.length; i < len; i += 2) {
 	                var match = lineRE.exec(lines[i]);
 	                if (match) {
-	                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1], undefined, lines[i]));
+	                    result.push(
+	                        new StackFrame(
+	                            match[3] || undefined,
+	                            undefined,
+	                            match[2],
+	                            match[1],
+	                            undefined,
+	                            lines[i]
+	                        )
+	                    );
 	                }
 	            }
 	
@@ -1683,12 +1701,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        // Opera 10.65+ Error.stack very similar to FF/Safari
 	        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-	            var filtered = _filter(error.stack.split('\n'), function (line) {
-	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) &&
-	                    !line.match(/^Error created at/);
+	            var filtered = _filter(error.stack.split('\n'), function(line) {
+	                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
 	            }, this);
 	
-	            return _map(filtered, function (line) {
+	            return _map(filtered, function(line) {
 	                var tokens = line.split('@');
 	                var locationParts = this.extractLocation(tokens.pop());
 	                var functionCall = (tokens.shift() || '');
@@ -1699,8 +1716,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (functionCall.match(/\(([^\)]*)\)/)) {
 	                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
 	                }
-	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
-	                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2], line);
+	                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
+	                    undefined : argsRaw.split(',');
+	                return new StackFrame(
+	                    functionName,
+	                    args,
+	                    locationParts[0],
+	                    locationParts[1],
+	                    locationParts[2],
+	                    line);
 	            }, this);
 	        }
 	    };
@@ -1715,8 +1739,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	
-	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -1730,7 +1752,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return !isNaN(parseFloat(n)) && isFinite(n);
 	    }
 	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
 	        if (functionName !== undefined) {
 	            this.setFunctionName(functionName);
 	        }
@@ -1745,9 +1767,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (columnNumber !== undefined) {
 	            this.setColumnNumber(columnNumber);
-	        }
-	        if (source !== undefined) {
-	            this.setSource(source);
 	        }
 	    }
 	
@@ -1798,13 +1817,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                throw new TypeError('Column Number must be a Number');
 	            }
 	            this.columnNumber = Number(v);
-	        },
-	
-	        getSource: function () {
-	            return this.source;
-	        },
-	        setSource: function (v) {
-	            this.source = String(v);
 	        },
 	
 	        toString: function() {
@@ -2073,10 +2085,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                onreadystatechange = undefined;
 	
 	                // TODO(cory): have the notifier log an internal error on non-200 response codes
+	                var jsonResponse = RollbarJSON.parse(request.responseText);
 	                if (request.status === 200) {
-	                  callback(null, RollbarJSON.parse(request.responseText));
+	                  callback(null, jsonResponse);
 	                } else if (Util.isType(request.status, 'number') &&
-	                            request.status >= 400 && request.status < 600) {
+	                  request.status >= 400 && request.status < 600) {
+	
+	                  if (request.status == 403) {
+	                    // likely caused by using a server access token, display console message to let
+	                    // user know
+	                    console.error('[Rollbar]:' + jsonResponse.message);
+	                  }
 	                  // return valid http status codes
 	                  callback(new Error(String(request.status)));
 	                } else {
