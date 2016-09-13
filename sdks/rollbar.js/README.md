@@ -16,7 +16,7 @@ Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's ```po
 var _rollbarConfig = {
     accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
     captureUncaught: true,
-    captureUnhandledRejections: false,
+    captureUnhandledRejections: true,
     payload: {
         environment: "production"
     }
