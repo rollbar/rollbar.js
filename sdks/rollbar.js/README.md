@@ -170,7 +170,7 @@ var _rollbarConfig = {
 
 ## Source Maps
 
-If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/guides_sourcemaps/) for instructions.
+If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/source-maps/) for instructions.
 
 ## iOS 9 Webviews
 
