@@ -86,7 +86,7 @@ Rollbar.configure({
 });
 ```
 
-(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api_items/), use `Rollbar.scope`:
+(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api/items_post/), use `Rollbar.scope`:
 
 ```js
 Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
