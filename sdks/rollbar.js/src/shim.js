@@ -200,6 +200,9 @@ Rollbar.prototype.wrap = function(f, context) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
+          if (typeof e === 'string') {
+            e = new String(e);
+          }
           e._rollbarContext = ctxFn() || {};
           e._rollbarContext._wrappedSource = f.toString();
 
