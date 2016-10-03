@@ -273,7 +273,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.9.1");
+	Notifier.NOTIFIER_VERSION = ("1.9.2");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -1059,6 +1059,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        try {
 	          return f.apply(this, arguments);
 	        } catch(e) {
+	          if (typeof e === 'string') {
+	            e = new String(e);
+	          }
 	          if (!e.stack) {
 	            e._savedStackTrace = errorParser.parse(e);
 	          }
@@ -2063,10 +2066,17 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                onreadystatechange = undefined;
 	
 	                // TODO(cory): have the notifier log an internal error on non-200 response codes
+	                var jsonResponse = RollbarJSON.parse(request.responseText);
 	                if (request.status === 200) {
-	                  callback(null, RollbarJSON.parse(request.responseText));
+	                  callback(null, jsonResponse);
 	                } else if (Util.isType(request.status, 'number') &&
-	                            request.status >= 400 && request.status < 600) {
+	                  request.status >= 400 && request.status < 600) {
+	
+	                  if (request.status == 403) {
+	                    // likely caused by using a server access token, display console message to let
+	                    // user know
+	                    console.error('[Rollbar]:' + jsonResponse.message);
+	                  }
 	                  // return valid http status codes
 	                  callback(new Error(String(request.status)));
 	                } else {
