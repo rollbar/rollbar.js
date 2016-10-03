@@ -2124,6 +2124,22 @@ describe('Notifier.wrap()', function() {
       expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
     }
 
+    // Wrap a function that throws a string
+    wrapped = notifier.wrap(function() {
+      throw 'breakme';
+    });
+
+    window._rollbarWrappedError = null;
+
+    try {
+      wrapped();
+    } catch (e) {
+      expect(window._rollbarWrappedError).to.not.equal(null);
+      expect(window._rollbarWrappedError.constructor).to.equal(String);
+      expect(window._rollbarWrappedError._rollbarContext).to.not.equal(null);
+      expect(window._rollbarWrappedError._rollbarContext._wrappedSource).to.be.a('string');
+    }
+
     done();
   });
 

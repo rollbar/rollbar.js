@@ -830,6 +830,9 @@ NotifierPrototype.wrap = function(f, context) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
+          if (typeof e === 'string') {
+            e = new String(e);
+          }
           if (!e.stack) {
             e._savedStackTrace = errorParser.parse(e);
           }

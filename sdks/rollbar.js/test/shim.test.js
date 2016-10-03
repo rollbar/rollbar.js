@@ -385,6 +385,20 @@ describe('window.Rollbar.wrap()', function() {
     var object = {};
     expect(window.Rollbar.wrap(object)).to.be.equal(object);
   });
+
+  it('should handle a thrown string', function() {
+    var func = window.Rollbar.wrap(function() {
+      throw 'breakme';
+    });
+
+    try {
+      func();
+    } catch (e) {
+      expect(e).to.be.an('object');
+      expect(e._rollbarContext).to.be.an('object');
+      expect(e._rollbarContext).to.not.equal(null);
+    }
+  });
 });
 
 describe('window.Rollbar.loadFull()', function() {
