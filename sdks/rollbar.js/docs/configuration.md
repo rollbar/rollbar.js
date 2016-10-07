@@ -1,7 +1,5 @@
 # Configuration Reference
 
-<!-- Sub:[TOC] -->
-
 ## Configuration types
 
 There are 2 types of configuration data -- context and payload. Context provides information about the environment of the error while payload describes information about the error itself.
@@ -18,7 +16,7 @@ There are 2 types of configuration data -- context and payload. Context provides
 
 ## Configuration levels
 
-Rollbar can be configured at 3 different levels -- global, notifier and scope. All configuration is inherited at each level, so global configuration affects all notifiers while notifier configuration only affects the notifier being configured and any child notifiers created after the call to ```configure()```.
+Rollbar can be configured at 3 different levels -- global, notifier and scope. All configuration is inherited at each level, so global configuration affects all notifiers while notifier configuration only affects the notifier being configured and any child notifiers created after the call to `configure()`.
 
 ### Global configuration
 
@@ -37,7 +35,7 @@ Rollbar can be configured at 3 different levels -- global, notifier and scope. A
   - Affects only the notifier created by calling `scope()`
   - Only affects the payload of items sent to Rollbar, not the context
 
-All child notifiers, (created with ```Rollbar.scope()```) will inherit configuration from their parent notifier.
+All child notifiers, (created with `Rollbar.scope()`) will inherit configuration from their parent notifier.
 
 ## Examples
 
@@ -98,63 +96,75 @@ Both global and context configuration have the following reserved key names that
 ### Global
 
   <dl>
-  <dt>itemsPerMinute</dt>
-  <dd>Max number of items to report per minute. The limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
+<dt>itemsPerMinute
+</dt>
+<dd>Max number of items to report per minute. The limit counts uncaught errors (reported through `window.onerror`) and any direct calls to `Rollbar.log/debug/info/warning/error/critical()`. This is intended as a sanity check against infinite loops, but if you're using Rollbar heavily for logging, you may want to increase this.
 
-  If you would like to remove this limit, set it to `undefined`.
+If you would like to remove this limit, set it to `undefined`.
 
-Default: ```60```
+Default: `60`
+</dd>
   
-  <dt>maxItems</dt>
-  <dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```.
+<dt>maxItems
+</dt>
+<dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```.
 
 Default: ```0``` (no limit)
-  </dl>
+</dd>
+</dl>
 
 ### Context
 
   <dl>
   
-  <dt>checkIgnore</dt>
-  <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
+<dt>checkIgnore
+</dt>
+<dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
 
 Default: ```null```
 
 - isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
 - args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```.  In the case of unhandled rejections, the last parameter is originating `Promise`.
 - payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
-  </dd>
+</dd>
 
-  <dt>enabled</dt>
-  <dd>If set to ```false```, no data will be sent to Rollbar for this notifier.
+<dt>enabled
+</dt>
+<dd>If set to ```false```, no data will be sent to Rollbar for this notifier.
   Note: callbacks for errors will not be called if this is set to ```false```.
 
 Default: ```true```
-  </dd>
+</dd>
   
-  <dt>hostWhiteList</dt>
-  <dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.</dd>
+<dt>hostWhiteList
+</dt>
+<dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.
+</dd>
   
-  <dt>logLevel</dt>
-  <dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+<dt>logLevel
+</dt>
+<dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
 
 Default: ```"debug"```
-  </dd>
+</dd>
 
-  <dt>reportLevel</dt>
-  <dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
+<dt>reportLevel
+</dt>
+<dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
 
 Default: ```"warning"```
-  </dd>
+</dd>
   
-  <dt>scrubFields</dt>
-  <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
+<dt>scrubFields
+</dt>
+<dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
 
 Default: ```["passwd", "password", "secret", "confirm_password", "password_confirmation"]```
-  </dd>
+</dd>
 
-  <dt>transform</dt>
-  <dd>Optional function to modify the payload before sending to Rollbar.
+<dt>transform
+</dt>
+<dd>Optional function to modify the payload before sending to Rollbar.
 
 Default: ```null```
 
@@ -172,26 +182,29 @@ var _rollbarConfig = {
   transform: transformer
 };
 ```
-  </dd>
+</dd>
 
-  <dt>uncaughtErrorLevel</dt>
-  <dd>The severity level used when uncaught errors are reported to Rollbar.
+<dt>uncaughtErrorLevel
+</dt>
+<dd>The severity level used when uncaught errors are reported to Rollbar.
 
 Default: ```"error"```
-  </dd>
+</dd>
   
-  <dt>endpoint</dt>
-  <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
+<dt>endpoint
+</dt>
+<dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
 
 Default: ```'https://api.rollbar.com/api/1/'```
-  </dd>
-  <dl>
+</dd>
+</dl>
 
 ### Payload
 
 These keys should all be within the `payload` key.
 
 e.g. 
+
 ```js
 Rollbar.configure({
   payload: {
@@ -203,38 +216,46 @@ Rollbar.configure({
 
   <dl>
 
-  <dt>person</dt>
-  <dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
-  </dd>
+<dt>person
+</dt>
+<dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
+</dd>
 
-  <dt>context</dt>
-  <dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
-  </dd>
+<dt>context
+</dt>
+<dd>Name of the page context -- i.e. route name, url, etc. Can be used in the Rollbar interface to search for items by context prefix.
+</dd>
 
-  <dt>client</dt>
-  <dd>
+<dt>client
+</dt>
+<dd>
   An object describing properties of the client device reporting the error.
 
   This object should have a key that points to another object, ```javascript``` which describes properties of the javascript code/environment to Rollbar.
 
   ```client.javascript``` supports the following properties:
+</dd>
 
   <dl>
-  <dt>code_version</dt>
-  <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.</dd>
+<dt>code_version
+</dt>
+<dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
+</dd>
  
-  <dt>source_map_enabled</dt>
-  <dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
+<dt>source_map_enabled
+</dt>
+<dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
 
 Default: ```false```
 
-  </dd>
+</dd>
 
-  <dt>guess_uncaught_frames</dt>
-  <dd>When `true`, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers. Works best when the minified javascript file is generated using newlines instead of semicolons.
+<dt>guess_uncaught_frames
+</dt>
+<dd>When `true`, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers. Works best when the minified javascript file is generated using newlines instead of semicolons.
 
 Default: ```false```
-  </dd>
+</dd>
 
   E.g.
 
@@ -253,37 +274,39 @@ Rollbar.configure({
 });
 ```
 
-  </dl>
+</dl>
 
-  <dt>server</dt>
-  <dd>
+<dt>server
+</dt>
+<dd>
   An object describing properties of the server that was used to generate the page the notifier is reporting on.
 
   The following properties are supported:
 
   <dl>
-  <dt>branch</dt>
-  <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
+<dt>branch
+</dt>
+<dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
   
 Default: ```"master"```
 
-  </dd>
+</dd>
 
-  <dt>host</dt>
-  <dd>The hostname of the machine that rendered the page
+<dt>host
+</dt>
+<dd>The hostname of the machine that rendered the page
 
 e.g. ```"web1.mysite.com"```
 
 e.g. in Python, use ```socket.gethostname()```
 
-  </dd>
+</dd>
 
-  </dl>
+</dl>
 
   E.g.
 
 ```js
-
 Rollbar.configure({
   logLevel: "warning", // Rollbar.log() will be sent with a level = "warning"
   payload: {
@@ -295,9 +318,10 @@ Rollbar.configure({
 });
 
 ```
-  </dd>
 
-  </dl>
+</dd>
+
+</dl>
 
 
 ## More info
