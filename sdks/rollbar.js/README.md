@@ -209,6 +209,8 @@ You have a couple of options to fix this behavior:
   };
 ```
 
+Note: This will work for versions later than 1.7 as well, you'll just need to update the `rollbarJsUrl` in the example above. 
+
 ## Dealing with adblocker / browser extension exceptions
 
 Unfortunately, some very popular browser extensions may modify a user's copy of your website in such a way as
