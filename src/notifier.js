@@ -721,23 +721,20 @@ NotifierPrototype.uncaughtError = _wrapNotifierFn(function(message, url, lineNo,
 });
 
 NotifierPrototype.unhandledRejection = _wrapNotifierFn(function(reason, promise) {
-  if (reason == null) {
-    _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
-      'unhandled rejection was null or undefined!', // message
-      null, // err
-      {}, // custom
-      null,  // callback
-      false, // isUncaught
-      false); // ignoreRateLimit
-    return;
-  }
-
-  var message = reason.message || (reason ? String(reason) : 'unhandled rejection');
-
+  var message;
   // If the reason error was thrown within a wrap call, we'll extract the context given there.
   // If users want to provide their Promise implementation with knowledge of the rollbar
   // context they are created in, we'll search for that attribute, too.
-  var context = reason._rollbarContext || promise._rollbarContext || null;
+  var context;
+
+  if (reason) {
+    message = reason.message || String(reason);
+    context = reason._rollbarContext;
+  } else {
+    message = 'unhandled rejection was null or undefined!';
+  }
+
+  context = context || promise._rollbarContext || null;
 
   if (reason && Util.isType(reason, 'error')) {
     this._log(this.options.uncaughtErrorLevel, message, reason, context, null, true);
