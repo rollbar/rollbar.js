@@ -185,8 +185,6 @@ module.exports = function(grunt) {
         ]
       }
     }
-
-    // TODO: Upload assets to CDN
   });
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);

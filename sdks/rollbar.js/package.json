@@ -79,7 +79,7 @@
     "test_ci": "./node_modules/.bin/grunt test"
   },
   "cdn": {
-    "host": "d37gvrvc0wt4s1.cloudfront.net"
+    "host": "cdnjs.cloudflare.com"
   },
   "defaults": {
     "endpoint": "api.rollbar.com/api/1/",
