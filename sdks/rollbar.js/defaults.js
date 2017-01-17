@@ -2,13 +2,7 @@ var semver = require('semver');
 
 var pkg = require('./package.json');
 
-var semVer = semver.parse(pkg.version);
-
-// Get the minimum minor version to put into the CDN URL
-semVer.patch = 0;
-semVer.prerelease = [];
-var pinnedVersion = semVer.major + '.' + semVer.minor;
-
+var version = pkg.version;
 
 module.exports = {
   __NOTIFIER_VERSION__: JSON.stringify(pkg.version),
@@ -18,7 +12,7 @@ module.exports = {
   __DEFAULT_LOG_LEVEL__: JSON.stringify(pkg.defaults.logLevel),
   __DEFAULT_REPORT_LEVEL__: JSON.stringify(pkg.defaults.reportLevel),
   __DEFAULT_UNCAUGHT_ERROR_LEVEL: JSON.stringify(pkg.defaults.uncaughtErrorLevel),
-  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('https://' + pkg.cdn.host + '/js/v' + pinnedVersion + '/rollbar.min.js'),
+  __DEFAULT_ROLLBARJS_URL__: JSON.stringify('https://' + pkg.cdn.host + '/ajax/libs/rollbar.js/' + version + '/rollbar.min.js'),
   __DEFAULT_MAX_ITEMS__: pkg.defaults.maxItems,
   __DEFAULT_ITEMS_PER_MIN__: pkg.defaults.itemsPerMin
 };
