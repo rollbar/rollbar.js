@@ -4,7 +4,7 @@
 
   ```js
 
-  // Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.3/rollbar.umd.nojson.min.js and place in current directory.
+  // Download https://d37gvrvc0wt4s1.cloudfront.net/js/v1.9.1/rollbar.umd.nojson.min.js and place in current directory.
   var rollbarConfig = {
     accessToken: '...',
     captureUncaught: true,
@@ -30,6 +30,31 @@
     rollbar.error('Problem calling foo()', e);
   }
   ```
+
+3. You can also configure your payload before reporting exceptions:
+
+```js
+
+// configuring your payload
+rollbar.configure({
+  payload: {
+    person: {
+      id: 3,
+      username: 'John Doe',
+      email: 'john.doe@mailinator.com'
+    },
+    otherData: {
+      foo: 1,
+      bar: 'valuable info'
+    }
+  }
+});
+
+// reporting the error
+rollbar.error('Problem calling foo()', stacktrace);
+```
+
+To know more about Person Tracking and other cool stuff, [check out the Rollbar Docs](https://rollbar.com/docs/).
 
 ## Test the example
 
