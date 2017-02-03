@@ -1,6 +1,6 @@
 {
   "name": "rollbar-browser",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"

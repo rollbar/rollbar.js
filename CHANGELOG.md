@@ -1,5 +1,8 @@
 # Change Log
 
+**v1.9.3**
+- Serve rollbar.js from CDNJS
+
 **v1.9.2**
 - Fix bug which would break `Rollbar.wrap()` if a string was thrown. (pr#222)
 
@@ -263,4 +266,3 @@
 
 ### v1.0.x to v1.1.x
 1. Replace your rollbar snippet with the latest from the [rollbar.js quickstart docs](https://rollbar.com/docs/notifier/rollbar.js/) or from [the Github repo](https://github.com/rollbar/rollbar.js/blob/master/dist/rollbar.snippet.js).
-
