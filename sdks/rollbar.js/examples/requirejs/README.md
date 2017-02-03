@@ -4,7 +4,8 @@
 
   ```js
 
-  // Download https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/1.9.2/rollbar.umd.nojson.min.js and place in current directory.
+  //
+  // Download the latest rollbar.umd.nojson.min.js and place in current directory.
   var rollbarConfig = {
     accessToken: '...',
     captureUncaught: true,
