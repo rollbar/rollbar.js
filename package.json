@@ -39,6 +39,7 @@
     "grunt-karma-coveralls": "^2.5.4",
     "grunt-mocha": "^0.4.11",
     "grunt-mocha-cov": "^0.3.0",
+    "grunt-parallel": "^0.5.1",
     "grunt-saucelabs": "~4.1.2",
     "grunt-tagrelease": "~0.3.0",
     "grunt-text-replace": "^0.4.0",
@@ -71,7 +72,8 @@
     "stackframe": "^0.2.2",
     "strict-loader": "^0.1.2",
     "time-grunt": "^1.0.0",
-    "webpack": "^1.12.1"
+    "webpack": "^1.12.1",
+    "webpack-dev-server": "^1.16.3"
   },
   "scripts": {
     "build": "./node_modules/.bin/grunt",
