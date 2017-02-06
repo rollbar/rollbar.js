@@ -63,7 +63,7 @@
     "mocha": "^1.21.5",
     "mootools": "^1.5.1",
     "node-libs-browser": "^0.5.2",
-    "phantomjs": "^1.9.18",
+    "phantomjs": "^2.1.0",
     "request": "^2.62.0",
     "requirejs": "^2.1.20",
     "script-loader": "0.6.1",
