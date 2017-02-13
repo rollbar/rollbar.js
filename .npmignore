@@ -1,0 +1,7 @@
+node_modules
+bower_components
+.idea
+vendor/*.min.js
+test/*.bundle.js*
+sauce_connect.log
+release
