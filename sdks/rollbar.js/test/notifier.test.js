@@ -647,6 +647,14 @@ describe('Notifier.uncaughtError()', function() {
     done();
   });
 
+  it('should return the uuid of the error payload sent to the server', function(done) {
+    var notifier = new Notifier();
+    var obj = notifier.error('testing return value');
+
+    expect(obj.uuid).to.be.a('string');
+    done();
+  });
+
   it('should handle the case where an error event is passed in place of the url', function(done) {
     var notifier = new Notifier();
     var spy = sinon.spy(notifier, '_enqueuePayload');
