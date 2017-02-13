@@ -645,6 +645,8 @@ NotifierPrototype._internalCheckIgnore = function(isUncaught, callerArgs, payloa
  * - callback: Function to call once the item is reported to Rollbar
  * - isUncaught: True if this error originated from an uncaught exception handler
  * - ignoreRateLimit: True if this item should be allowed despite rate limit checks
+ *
+ * Returns an object with (at least) the "uuid" property set.
  */
 NotifierPrototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
   var stackInfo = null;
@@ -673,6 +675,12 @@ NotifierPrototype._log = function(level, message, err, custom, callback, isUncau
     payload.ignoreRateLimit = true;
   }
   this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
+
+  // We're generating the UUID client-side, may as well return it so it can be
+  // used even before the payload has been sent to Rollbar.  #236
+  // I'm returning an object here, in case we eventually want to add other
+  // contextual information besides the uuid.
+  return {uuid: payload.data.uuid};
 };
 
 NotifierPrototype.log = _generateLogFn();
