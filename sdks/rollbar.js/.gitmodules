@@ -1,6 +1,3 @@
-[submodule "vendor/TraceKit"]
-	path = vendor/TraceKit
-	url = https://github.com/rollbar/TraceKit.git
 [submodule "vendor/JSON-js"]
 	path = vendor/JSON-js
 	url = https://github.com/rollbar/JSON-js.git
