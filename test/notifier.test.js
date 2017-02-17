@@ -483,13 +483,23 @@ describe('Notfier.unhandledRejection()', function() {
   });
 
   context('with a null value', function() {
-    it('should not enqueue a payload', function(done) {
+    it('should enqueue a payload with trace and other details', function(done) {
       var err = null;
       var promise = {};
 
       notifier.unhandledRejection(err, promise);
 
-      expect(enqueueSpy.called).to.equal(false);
+      expect(enqueueSpy.calledOnce).to.equal(true);
+      var args = enqueueSpy.getCall(0).args;
+
+      var payloadData = args[0].data;
+      expect(payloadData.level).to.equal('error');
+      var description = args[0].data.body.trace.exception.description;
+      var message = args[0].data.body.trace.exception.message;
+      var frames = args[0].data.body.trace.frames;
+      expect(description).to.equal('unhandled rejection was null or undefined!');
+      expect(message).to.equal('unhandled rejection was null or undefined!');
+      expect(frames.length).to.equal(1);
       done();
     });
   })
