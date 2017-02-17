@@ -164,7 +164,8 @@ var Util = {
   sanitizeUrl: sanitizeUrl,
   traverse: traverse,
   typeName: typeName,
-  uuid4: uuid4
+  uuid4: uuid4,
+  objectCreate: objectCreate
 };
 
 
