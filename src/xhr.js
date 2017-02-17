@@ -4,18 +4,12 @@ var Util = require('./util');
 
 var RollbarJSON = null;
 
+var RETRY_DELAY = 1000 * 10;
+var TIMEOUT = 1000 * 20;
+
 function setupJSON(JSON) {
   RollbarJSON = JSON;
 }
-
-function ConnectionError(message) {
-  this.name = 'Connection Error';
-  this.message = message;
-  this.stack = (new Error()).stack;
-}
-
-ConnectionError.prototype = Object.create(Error.prototype);
-ConnectionError.prototype.constructor = ConnectionError;
 
 var XHR = {
   XMLHttpFactories: [
@@ -56,6 +50,13 @@ var XHR = {
     payload = RollbarJSON.stringify(payload);
     callback = callback || function() {};
     var request = XHR.createXMLHTTPObject();
+
+    var requeuePayload = function() {
+      setTimeout(function() {
+        this.post(url, accessToken, payload, callback);
+      }, RETRY_DELAY);
+    };
+
     if (request) {
       try {
         try {
@@ -82,7 +83,8 @@ var XHR = {
                   // IE will return a status 12000+ on some sort of connection failure,
                   // so we return a blank error
                   // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-                  callback(new ConnectionError('XHR response had no status code (likely connection failure)'));
+
+                  requeuePayload()
                 }
               }
             } catch (ex) {
@@ -99,6 +101,8 @@ var XHR = {
             }
           };
 
+          if (request.timeout != undefined)
+            request.timeout = TIMEOUT;
           request.open('POST', url, true);
           if (request.setRequestHeader) {
             request.setRequestHeader('Content-Type', 'application/json');
@@ -119,7 +123,7 @@ var XHR = {
             }
 
             var ontimeout = function() {
-              callback(new ConnectionError('Request timed out'));
+              requeuePayload();
             };
 
             var onerror = function() {
@@ -149,5 +153,6 @@ var XHR = {
 module.exports = {
   XHR: XHR,
   setupJSON: setupJSON,
-  ConnectionError: ConnectionError
+  RETRY_DELAY: RETRY_DELAY,
+  TIMEOUT: TIMEOUT
 };
