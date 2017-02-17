@@ -130,6 +130,30 @@ function uuid4() {
 }
 
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create
+if (typeof Object.create != 'function') {
+  Object.create = (function(undefined) {
+    var Temp = function() {};
+    return function (prototype, propertiesObject) {
+      if(prototype !== null && prototype !== Object(prototype)) {
+        throw TypeError('Argument must be an object, or null');
+      }
+      Temp.prototype = prototype || {};
+      var result = new Temp();
+      Temp.prototype = null;
+      if (propertiesObject !== undefined) {
+        Object.defineProperties(result, propertiesObject);
+      }
+
+      // to imitate the case of Object.create(null)
+      if(prototype === null) {
+         result.__proto__ = null;
+      }
+      return result;
+    };
+  })();
+}
+
 var Util = {
   isType: isType,
   parseUri: parseUri,
