@@ -14,7 +14,7 @@ function ConnectionError(message) {
   this.stack = (new Error()).stack;
 }
 
-ConnectionError.prototype = objectCreate(Error.prototype);
+ConnectionError.prototype = Util.objectCreate(Error.prototype);
 ConnectionError.prototype.constructor = ConnectionError;
 
 var XHR = {
