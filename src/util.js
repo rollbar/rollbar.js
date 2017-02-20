@@ -1,5 +1,13 @@
 require('console-polyfill');
 
+var browser = require('./browser');
+
+var RollbarJSON = null;
+
+function setupJSON(JSON) {
+  RollbarJSON = JSON;
+}
+
 var parseUriOptions = {
   strictMode: false,
     key: [
@@ -156,7 +164,51 @@ function objectCreate(prototype) {
   }
 }
 
+// IE8 logs objects as [object Object].  This is a wrapper that makes it a bit
+// more convenient by logging the JSON of the object.  But only do that in IE8 and below
+// because other browsers are smarter and handle it properly.
+function formatArgsAsString() {
+  var args = [];
+  for (var i=0; i < arguments.length; i++) {
+    var arg = arguments[i];
+    if (typeof arg === 'object') {
+      arg = RollbarJSON.stringify(arg);
+      if (arg.length > 500)
+        arg = arg.substr(0,500)+'...';
+    } else if (typeof arg === 'undefined') {
+      arg = 'undefined';
+    }
+    args.push(arg);
+  }
+  return args.join(' ');
+}
+
+function consoleError() {
+  if (browser.ieVersion() <= 8) {
+    console.error(formatArgsAsString.apply(null, arguments));
+  } else {
+    console.error.apply(null, arguments);
+  }
+}
+
+function consoleInfo() {
+  if (browser.ieVersion() <= 8) {
+    console.info(formatArgsAsString.apply(null, arguments));
+  } else {
+    console.info.apply(null, arguments);
+  }
+}
+
+function consoleLog() {
+  if (browser.ieVersion() <= 8) {
+    console.log(formatArgsAsString.apply(null, arguments));
+  } else {
+    console.log.apply(null, arguments);
+  }
+}
+
 var Util = {
+  setupJSON: setupJSON,
   isType: isType,
   parseUri: parseUri,
   parseUriOptions: parseUriOptions,
@@ -165,7 +217,10 @@ var Util = {
   traverse: traverse,
   typeName: typeName,
   uuid4: uuid4,
-  objectCreate: objectCreate
+  objectCreate: objectCreate,
+  consoleError: consoleError,
+  consoleInfo: consoleInfo,
+  consoleLog: consoleLog
 };
 
 

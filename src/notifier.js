@@ -22,6 +22,7 @@ var RollbarJSON = null;
 function setupJSON(JSON) {
   RollbarJSON = JSON;
   xhr.setupJSON(JSON);
+  Util.setupJSON(JSON);
 }
 
 function _wrapNotifierFn(fn, ctx) {
@@ -30,7 +31,7 @@ function _wrapNotifierFn(fn, ctx) {
     try {
       return fn.apply(self, arguments);
     } catch (e) {
-      console.error('[Rollbar]:', e);
+      Util.consoleError('[Rollbar]:', e);
     }
   };
 }
@@ -470,7 +471,7 @@ NotifierPrototype._urlIsWhitelisted = function(payload){
     }
   } catch (e) {
     this.configure({hostWhiteList: null});
-    console.error("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+    Util.consoleError("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
     return true;
   }
 
@@ -518,7 +519,7 @@ NotifierPrototype._messageIsIgnored = function(payload){
   }
   catch(e) {
     this.configure({ignoredMessages: null});
-    console.error("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+    Util.consoleError("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
   }
 
   return messageIsIgnored;
@@ -562,7 +563,7 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
   } catch (e) {
     // Disable the custom checkIgnore and report errors in the checkIgnore function
     this.configure({checkIgnore: null});
-    console.error('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+    Util.consoleError('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
   }
 
   if (!this._urlIsWhitelisted(payload)) {
@@ -577,12 +578,10 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
     if (payload.data && payload.data.body && payload.data.body.trace) {
       var trace = payload.data.body.trace;
       var exceptionMessage = trace.exception.message;
-      console.error('[Rollbar]: ', exceptionMessage);
+      Util.consoleError('[Rollbar]: ', exceptionMessage);
     }
 
-    // FIXME: Some browsers do not output objects as json to the console, and
-    // instead write [object Object], so let's write the message first to ensure that is logged.
-    console.info('[Rollbar]: ', payloadToSend);
+    Util.consoleInfo('[Rollbar]: ', payloadToSend);
   }
 
   if (Util.isType(this.options.logFunction, 'function')) {
@@ -595,12 +594,13 @@ NotifierPrototype._enqueuePayload = function(payload, isUncaught, callerArgs, ca
     }
   } catch (e) {
     this.configure({transform: null});
-    console.error('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
+    Util.consoleError('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
   }
 
   if (this.options.enabled) {
     directlyEnqueuePayload(payloadToSend);
   }
+
 };
 
 function directlyEnqueuePayload(payloadToSend) {
@@ -663,7 +663,7 @@ NotifierPrototype._log = function(level, message, err, custom, callback, isUncau
 
       this.lastError = err;
     } catch (e) {
-      console.error('[Rollbar]: Error while parsing the error object.', e);
+      Util.consoleError('[Rollbar]: Error while parsing the error object.', e);
       // err is not something we can parse so let's just send it along as a string
       message = err.message || err.description || message || String(err);
       err = null;
@@ -868,7 +868,7 @@ NotifierPrototype.wrap = function(f, context) {
 
 
 NotifierPrototype.loadFull = function() {
-  console.error('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
+  Util.consoleError('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
 };
 
 
