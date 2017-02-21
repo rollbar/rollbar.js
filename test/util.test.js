@@ -1,12 +1,16 @@
 /* globals expect */
 /* globals describe */
 /* globals it */
+/* globals sinon */
 
 
+
+var browser = require('../src/browser.js');
 var Util = require('../src/util.js');
 
-
 describe('Util', function() {
+  Util.setupJSON(JSON);
+
   it('should parse a URI properly', function(done) {
     var uri = 'http://usr:pwd@www.test.com:81/dir/dir.2/index.htm?q1=0&&test1&test2=value#top';
 
@@ -159,6 +163,47 @@ describe('Util', function() {
 
     // null is an object, (typeof null === 'object')... how silly is that?
     expect(Util.redact(null)).to.equal('****');
+
+    done();
+  });
+
+  it('should wrap console functions in IE8', function(done) {
+    var obj = {};
+    for (var i=0; i < 100; i+=1) obj['test'+i] = i;
+    var ieVersion = null;
+    var check = null;
+
+    sinon.stub(browser, 'ieVersion', function(){ return ieVersion; });
+    sinon.stub(console, 'error', function() { check.apply(this, arguments); });
+
+    // Check that it behaves like normal on IE9
+    ieVersion = 9;
+    check = function() {
+      expect(arguments[0]).to.equal('before');
+      expect(arguments[1]).to.equal(obj);
+      expect(arguments[2]).to.equal('after');
+      expect(typeof arguments[3]).to.equal('undefined');
+    };
+    Util.consoleError('before', obj, 'after', undefined);
+
+    // Now check that it returns a singnle formatted string for IE8
+    ieVersion = 8;
+    check = function() {
+      expect(arguments.length).to.equal(1);
+      expect(arguments[0]).to.match(/^before {/);
+      expect(arguments[0]).to.match(/\.\.\. after undefined$/);
+    };
+    Util.consoleError('before', obj, 'after', undefined);
+
+    // Now check that it works for non-IE versions as well
+    ieVersion = undefined;
+    check = function() {
+      expect(arguments[0]).to.equal('before');
+      expect(arguments[1]).to.equal(obj);
+      expect(arguments[2]).to.equal('after');
+      expect(typeof arguments[3]).to.equal('undefined');
+    };
+    Util.consoleError('before', obj, 'after', undefined);
 
     done();
   });
