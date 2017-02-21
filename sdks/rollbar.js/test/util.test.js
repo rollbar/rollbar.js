@@ -195,6 +195,16 @@ describe('Util', function() {
     };
     Util.consoleError('before', obj, 'after', undefined);
 
+    // Now check that it works for non-IE versions as well
+    ieVersion = undefined;
+    check = function() {
+      expect(arguments[0]).to.equal('before');
+      expect(arguments[1]).to.equal(obj);
+      expect(arguments[2]).to.equal('after');
+      expect(typeof arguments[3]).to.equal('undefined');
+    };
+    Util.consoleError('before', obj, 'after', undefined);
+
     done();
   });
 });
