@@ -200,7 +200,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('copyrelease', function createRelease() {
     var version = pkg.version;
-    var builds = ['', '.nojson', '.umd', '.umd.nojson'];
+    var builds = ['', '.umd'];
 
     builds.forEach(function (buildName) {
       var js = 'dist/rollbar' + buildName + '.js';
