@@ -153,10 +153,15 @@ var serverConfig = {
   },
   output: {
     path: serverOutputPath,
-    filename: '[name].js'
+    filename: '[name].js',
+    libraryTarget: 'commonjs2'
   },
   plugins: [defaultsPlugin],
-  target: 'node'
+  target: 'node',
+  node: {
+    __dirname: false,
+    __filename: false
+  }
 };
 
 
