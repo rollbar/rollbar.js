@@ -1,5 +1,5 @@
 language: node_js
 node_js:
-  - 0.10
+  - 4
 sudo: false
 script: npm run test_ci
