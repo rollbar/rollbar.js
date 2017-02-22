@@ -1,6 +1,6 @@
 /* globals __NOTIFIER_VERSION__ */
 /* globals __DEFAULT_ENDPOINT__ */
-/* globals __DEFAULT_SCRUB_FIELDS__ */
+/* globals __DEFAULT_BROWSER_SCRUB_FIELDS__ */
 /* globals __DEFAULT_LOG_LEVEL__ */
 /* globals __DEFAULT_REPORT_LEVEL__ */
 /* globals __DEFAULT_UNCAUGHT_ERROR_LEVEL */
@@ -47,7 +47,7 @@ function _notifyPayloadAvailable() {
 // Updated by the build process to match package.json
 Notifier.NOTIFIER_VERSION = __NOTIFIER_VERSION__;
 Notifier.DEFAULT_ENDPOINT = __DEFAULT_ENDPOINT__;
-Notifier.DEFAULT_SCRUB_FIELDS = __DEFAULT_SCRUB_FIELDS__;
+Notifier.DEFAULT_BROWSER_SCRUB_FIELDS = __DEFAULT_BROWSER_SCRUB_FIELDS__;
 Notifier.DEFAULT_LOG_LEVEL = __DEFAULT_LOG_LEVEL__;
 Notifier.DEFAULT_REPORT_LEVEL = __DEFAULT_REPORT_LEVEL__;
 Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = __DEFAULT_UNCAUGHT_ERROR_LEVEL;
@@ -91,7 +91,7 @@ function Notifier(parentNotifier) {
     enabled: true,
     endpoint: endpoint,
     environment: 'production',
-    scrubFields: extend([], Notifier.DEFAULT_SCRUB_FIELDS),
+    scrubFields: extend([], Notifier.DEFAULT_BROWSER_SCRUB_FIELDS),
     checkIgnore: null,
     logLevel: Notifier.DEFAULT_LOG_LEVEL,
     reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
