@@ -1,23 +1,21 @@
-/* globals __USE_JSON__ */
-
-
 var globalnotifier = require('../globalnotifier');
 var notifier = require('../notifier');
 
 
 function setupJSON() {
-  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
+  var JSONObject = {};
 
-  if (__USE_JSON__) {
-    // This adds the script to this context. We need it since this library
-    // is not a CommonJs or AMD module.
-    var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
-
-    var customJSON = {};
-    setupCustomJSON(customJSON);
-
-    JSONObject = customJSON;
+  if (typeof JSON !== 'undefined') {
+    if (typeof JSON.stringify === 'function') {
+      JSONObject.stringify = JSON.stringify;
+    }
+    if (typeof JSON.parse === 'function') {
+      JSONObject.parse = JSON.parse;
+    }
   }
+
+  var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
+  setupCustomJSON(JSONObject);
 
   globalnotifier.setupJSON(JSONObject);
 }
