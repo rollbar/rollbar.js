@@ -5,14 +5,6 @@ var defaults = require('./defaults');
 
 var outputPath = './dist/';
 
-var jsonDefines = {
-  __USE_JSON__: true
-};
-
-var noJsonDefines = {
-  __USE_JSON__: false
-};
-
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   // We've had some reports of the sourceMappingURL comment causing problems in Firefox.
@@ -21,8 +13,6 @@ var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   sourceMap: false,
   minimize: true
 });
-var useJsonPlugin = new webpack.DefinePlugin(jsonDefines);
-var notUseJsonPlugin = new webpack.DefinePlugin(noJsonDefines);
 
 var snippetConfig = {
   name: 'snippet',
@@ -203,9 +193,7 @@ function generateBuildConfig(name, plugins) {
   addNamedAMDToConfig(config, name, plugins);
 }
 
-generateBuildConfig('[name].js', [useJsonPlugin]);
-generateBuildConfig('[name].min.js', [useJsonPlugin, uglifyPlugin]);
-generateBuildConfig('[name].nojson.js', [notUseJsonPlugin]);
-generateBuildConfig('[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
+generateBuildConfig('[name].js', []);
+generateBuildConfig('[name].min.js', [uglifyPlugin]);
 
 module.exports = config;
