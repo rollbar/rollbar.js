@@ -4,6 +4,7 @@ var webpack = require('webpack');
 var defaults = require('./defaults');
 
 var outputPath = './dist/';
+var serverOutputPath = outputPath + 'server/';
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
@@ -145,8 +146,21 @@ namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output)
 namedAMDConfigBase.output.library = 'rollbar';
 namedAMDConfigBase.output.libraryTarget = 'amd';
 
+var serverConfig = {
+  name: 'rollbar',
+  entry: {
+    'rollbar': './src/server/rollbar.js'
+  },
+  output: {
+    path: serverOutputPath,
+    filename: '[name].js'
+  },
+  plugins: [defaultsPlugin],
+  target: 'node'
+};
 
-var config = [snippetConfig, pluginConfig];
+
+var config = [snippetConfig, pluginConfig, serverConfig];
 
 function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
