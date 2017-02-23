@@ -1,4 +1,10 @@
 var RollbarTransport = null;
+var pendingRequests = [];
+var pendingRequestCallbacks = [];
+
+/*************************************************************************/
+/** PUBLIC INTERFACE                                                    **/
+/*************************************************************************/
 
 function init(context) {
   if (context == 'server') {
@@ -31,6 +37,7 @@ function RollbarApi(options) {
  * @returns RollbarApiRequest[]
  */
 RollbarApi.prototype.pendingRequests = function() {
+  return pendingRequests;
 };
 
 /**
@@ -40,6 +47,11 @@ RollbarApi.prototype.pendingRequests = function() {
  * @param callback
  */
 RollbarApi.prototype.wait = function(callback) {
+  if (pendingRequests.length == 0) {
+    callback();
+  } else {
+    pendingRequestCallbacks.push(callback);
+  }
 };
 
 /**
@@ -51,6 +63,7 @@ RollbarApi.prototype.wait = function(callback) {
 RollbarApi.prototype.postItem = function(payload, callback) {
   RollbarTransport.post( /* ... */ );
 };
+
 
 module.exports = function(context) {
   init(context);

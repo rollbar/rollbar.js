@@ -14,6 +14,9 @@ vows.describe('RollbarApi')
       },
       'creates an instance': function (api) {
         assert(api instanceof RollbarApi);
+        assert(typeof api.pendingRequests == 'function');
+        assert(typeof api.wait == 'function');
+        assert(typeof api.postItem == 'function');
       }
     }
   }).export(module, {error: false});
