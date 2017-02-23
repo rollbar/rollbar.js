@@ -13,13 +13,18 @@ exports.VERSION = '1';
 exports.endpoint = 'https://api.rollbar.com/api/' + exports.VERSION + '/';
 exports.accessToken = null;
 
+var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN'];
 
 var SETTINGS = {
   accessToken: null,
   protocol: 'https',
   endpoint: exports.endpoint,
-  proxy: null
+  proxy: null,
+  retryInterval: null
 };
+
+var retryQueue = [];
+var retryHandle = null;
 
 
 /*
@@ -68,20 +73,38 @@ function parseApiResponse(respData, callback) {
   callback(null, respData.result);
 }
 
+function retryApiRequest(args) {
+  if (!SETTINGS.retryInterval)
+    return;
 
-function makeApiRequest(transport, opts, bodyObj, callback) {
+  retryQueue.push(args);
+
+  if (!retryHandle) {
+    retryHandle = setInterval(function() {
+      while (retryQueue.length) {
+        makeApiRequest(retryQueue.shift());
+      }
+    }, SETTINGS.retryInterval);
+  }
+}
+
+function makeApiRequest(args) {
   var writeData, req;
+  var transport = args.transport;
+  var opts = args.opts;
+  var payload = args.payload;
+  var callback = args.callback;
 
-  if (!bodyObj) {
+  if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
 
   try {
     try {
-      writeData = JSON.stringify(bodyObj);
+      writeData = JSON.stringify(payload);
     } catch (e) {
       logger.error('Could not serialize to JSON - falling back to safe-stringify');
-      writeData = stringify(bodyObj);
+      writeData = stringify(payload);
     }
   } catch (e) {
     logger.error('Could not safe-stringify data. Giving up');
@@ -116,8 +139,28 @@ function makeApiRequest(transport, opts, bodyObj, callback) {
   });
 
   req.on('error', function (err) {
-    logger.error('Could not make request to rollbar, ' + err);
-    callback(err);
+    // If the request to Rollbar failed due to a connection error, lets queue
+    // up the requests and try again periodically in the hopes that the connection
+    // will be restored.
+    //
+    // If no retryInterval set, interpret that as not wanting to retry send errors,
+    // so just bail out silently.
+
+    var shouldRetry = false;
+    if (SETTINGS.retryInterval) {
+      for (var i=0, j=RETRIABLE_ERRORS.length; i < j; i++) {
+        if (err.code === RETRIABLE_ERRORS[i]) {
+          shouldRetry = true;
+          break;
+        }
+      }
+    }
+    if (shouldRetry) {
+      retryApiRequest(args);
+    } else {
+      logger.error('Could not make request to rollbar, ' + err);
+      callback(err);
+    }
   });
 
   if (writeData) {
@@ -133,7 +176,12 @@ function postApi(path, payload, callback) {
   transport = SETTINGS.transport;
   opts = transportOpts(path, 'POST');
 
-  return makeApiRequest(transport, opts, payload, callback);
+  return makeApiRequest({
+    transport: transport,
+    opts: opts,
+    payload: payload,
+    callback: callback
+  });
 }
 
 

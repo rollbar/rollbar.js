@@ -305,7 +305,7 @@ exports.handleUnhandledRejections = function (accessToken, options) {
   }
 };
 
-
+exports.wait = notifier.wait;
 
 exports.api = api;
 exports.notifier = notifier;
