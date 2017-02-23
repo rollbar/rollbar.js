@@ -1,5 +1,5 @@
 language: node_js
 node_js:
-  - "0.12"
-sudo: false
+  - 4
+sudo: true
 script: npm run test_ci
