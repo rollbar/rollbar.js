@@ -9,6 +9,7 @@ var https = require('https');
 var uuidV4 = require('uuid/v4');
 var os = require('os');
 var url = require('url');
+var requestIp = require('request-ip');
 
 var parser = require('./parser');
 var packageJson = require('../../../package.json');
@@ -26,6 +27,7 @@ var SETTINGS = {
   framework: 'node-js',
   root: null,  // root path to your code
   branch: null,  // git branch name
+  showReportedMessageTraces: false, // optionally shows manually-reported errors and a stack trace
   notifier: {
     name: 'node_rollbar',
     version: exports.VERSION
@@ -40,7 +42,8 @@ var SETTINGS = {
 
 var apiClient;
 var initialized = false;
-
+var pendingItems = [];
+var waitCallback = null;
 
 /** Internal **/
 
@@ -186,11 +189,23 @@ function scrubRequestParams(params, settings) {
 function extractIp(req) {
   var ip = req.ip;
   if (!ip) {
-    if (req.headers) {
-      ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'];
-    }
-    if (!ip && req.connection && req.connection.remoteAddress) {
-      ip = req.connection.remoteAddress;
+    try {
+      ip = requestIp.getClientIp(req)
+    } catch (error) {
+      // we might get here if req.headers is undefined. in that case go ahead and
+      // walk through the various attributes of req that might contain an address
+      // (request-ip will do this for us but wouldn't have gotten this far if
+      // headers were undefined so we do it manually using the same logic from:
+      // https://github.com/pbojinov/request-ip/blob/master/index.js#L36)
+      if (req.connection && req.connection.remoteAddress) {
+        ip = req.connection.remoteAddress;
+      } else if (req.socket && req.socket.remoteAddress) {
+        ip = req.socket.remoteAddress;
+      } else if (req.connection && req.connection.socket && req.connection.socket.remoteAddress) {
+        ip = req.connection.socket.remoteAddress;
+      } else if (req.info && req.info.remoteAddress) {
+        ip = req.info.remoteAddress;
+      }
     }
   }
   return ip;
@@ -383,26 +398,53 @@ function addItem(item, callback) {
   }
 
   try {
+    var pendingItem = {item:item, req:null};
+    pendingItems.push(pendingItem);
+
     buildItemData(item, function (err, data) {
       if (err) {
+        dequeuePendingItem(pendingItem);
         return callback(err);
       }
 
       try {
         apiClient.postItem(data, function (err, resp) {
+          dequeuePendingItem(pendingItem);
           callback(err, data, resp);
         });
       } catch (e) {
+        dequeuePendingItem(pendingItem);
         logger.error('Internal error while posting item: ' + e);
         callback(e);
       }
     });
   } catch (e) {
+    dequeuePendingItem(pendingItem);
     logger.error('Internal error while building payload: ' + e);
     callback(e);
   }
 }
 
+
+/*
+ * This will remove a pendingItem entry from the queue.  This should be called
+ * either when there is an error, or when the item was sent successfully.
+ */
+function dequeuePendingItem(pendingItem) {
+  for (var i=0; i < pendingItems.length; i++) {
+    if (pendingItems[i] == pendingItem) {
+      pendingItems.splice(i, 1);
+
+      // If there is a registered wait callback, and we've reached the end
+      // of the pendingItem queue, then call that callback.
+      if (typeof waitCallback === 'function' && exports.pendingItemsCount() === 0) {
+        waitCallback();
+      }
+
+      return;
+    }
+  }
+}
 
 /*
  * Exports for testing
@@ -447,6 +489,26 @@ exports.init = function (api, options) {
     }
   }
   initialized = true;
+};
+
+
+exports.pendingItemsCount = function() {
+  return pendingItems.length;
+};
+
+
+/*
+ * This registers a wait callback.  This callback will be called
+ * when there are 0 pendingItems enqueued.  It could be called immediately
+ * if there are none pending right now.  Or if there are pending items
+ * then it will be called when the pendingItem queue becomes empty.
+ */
+exports.wait = function(callback) {
+  if (exports.pendingItemsCount() === 0) {
+    callback();
+  } else {
+    waitCallback = callback;
+  }
 };
 
 
@@ -495,5 +557,8 @@ exports.reportMessage = function (message, level, req, callback) {
 
 
 exports.reportMessageWithPayloadData = function (message, payloadData, req, callback) {
+  if (SETTINGS.showReportedMessageTraces) {
+    logger.log(message, new Error().stack);
+  }
   addItem({message: message, payload: payloadData, request: req}, callback);
 };
