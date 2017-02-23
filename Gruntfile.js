@@ -18,8 +18,8 @@ var webpackConfig = require('./webpack.config.js');
 var browserStackBrowsers = require('./browserstack.browsers');
 
 
-function findTests() {
-  var files = glob.sync('test/**/*.test.js');
+function findTests(context) {
+  var files = glob.sync('test-'+context+'/**/*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
@@ -29,7 +29,6 @@ function findTests() {
 
   return mapping;
 }
-
 
 function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
   var config = {
@@ -71,8 +70,8 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
     // Karma will inclue it in the web page.
     if (testName === 'requirejs') {
       testConfig.files = [
-        {src: './test/requirejs-loader.js'},
-        {src: './test/requirejs.test.js', included: false},
+        {src: './test-browser/requirejs-loader.js'},
+        {src: './test-browser/requirejs.test.js', included: false},
         {src: './dist/rollbar.umd.js', included: false}
       ];
       // NOTE: requirejs should go first in case the subsequent libraries
@@ -96,7 +95,7 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
 module.exports = function(grunt) {
   require('time-grunt')(grunt);
 
-  var tests = findTests();
+  var browserTests = findTests('browser');
   var browsers = grunt.option('browsers');
   if (browsers) {
     browsers = browsers.split(',');
@@ -133,6 +132,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
+  grunt.loadNpmTasks("grunt-vows");
 
 
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
@@ -141,13 +141,19 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: pkg,
     webpack: webpackConfig,
-    karma: buildGruntKarmaConfig(singleRun, browsers, tests, reporters),
+    vows: {
+      all: {
+        src: ["test-server/*.test.js"]
+      }
+    },
+
+    karma: buildGruntKarmaConfig(singleRun, browsers, browserTests, reporters),
 
     // Serves up responses to requests from the tests
     express: {
       defaults: {
         options: {
-          server: './test/express',
+          server: './test-browser/express',
           port: 3000
         }
       }
@@ -155,7 +161,7 @@ module.exports = function(grunt) {
 
     replace: {
       snippets: {
-        src: ['*.md', 'test/**/*.html', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
+        src: ['*.md', 'test-browser/**/*.html', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
         overwrite: true,
         replacements: [
           // Main rollbar snippet
@@ -189,10 +195,15 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('test', ['express', 'karma']);
+  grunt.registerTask('test', ['test-server', 'test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  grunt.registerTask('test', function(target) {
+  grunt.registerTask('test-server', function(target) {
+    var tasks = ['vows'];
+    grunt.task.run.apply(grunt.task, tasks);
+  });
+
+  grunt.registerTask('test-browser', function(target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
     var tasks = ['express', karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
