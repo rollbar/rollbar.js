@@ -11,7 +11,7 @@ var os = require('os');
 var url = require('url');
 
 var parser = require('./parser');
-var packageJson = require('../package.json');
+var packageJson = require('../../../package.json');
 var stringify = require('json-stringify-safe');
 
 
@@ -30,12 +30,8 @@ var SETTINGS = {
     name: 'node_rollbar',
     version: exports.VERSION
   },
-  scrubHeaders: ['authorization', 'www-authorization', 'http_authorization', 'omniauth.auth',
-                 'cookie', 'oauth-access-token', 'x_csrf_token', 'http_x_csrf_token', 'x-csrf-token'],
-  scrubFields: ['passwd', 'password', 'password_confirmation', 'secret', 'confirm_password',
-                'password_confirmation', 'secret_token', 'api_key', 'access_token', 'authenticity_token',
-                'oauth_token', 'token', 'user_session_secret', 'request.session.csrf',
-                'request.session._csrf', 'request.params._csrf', 'request.cookie', 'request.cookies'],
+  scrubHeaders: packageJson.defaults.server.scrubHeaders,
+  scrubFields: packageJson.defaults.server.scrubFields,
   addRequestData: null,  // Can be set by the user or will default to addRequestData defined below
   minimumLevel: 'debug',
   enabled: true
