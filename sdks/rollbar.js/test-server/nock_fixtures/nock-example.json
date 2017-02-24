@@ -1,0 +1,26 @@
+[
+    {
+        "scope": "http://zombo.com:80",
+        "method": "GET",
+        "path": "/",
+        "body": "",
+        "status": 200,
+        "response": "<html>\n<head>\n<title>ZOMBO</title>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n<!--Please Visit 15footstick.com our other website. ThankZ -->\n</head>\n\n<body bgcolor=\"#FFFFFF\">\n<object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\"\n\n codebase=\"http://active.macromedia.com/flash2/cabs/swflash.cab#version=4,0,0,0\"\n\n id=inrozxa width=100% height=100%>\n  <param name=movie value=\"welcomenew6.swf\">\n  <param name=quality value=high>\n  <param name=bgcolor value=#FFFFFF>\n  <embed src=\"inrozxa.swf\" quality=high bgcolor=#FFFFFF  width=100% height=100% type=\"application/x-shockwave-flash\" pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\">\n  </embed> \n</object> \n</body>\n</html>\n",
+        "rawHeaders": [
+            "Date",
+            "Fri, 24 Feb 2017 18:28:49 GMT",
+            "Server",
+            "Apache",
+            "Last-Modified",
+            "Tue, 23 Apr 2002 05:19:28 GMT",
+            "Accept-Ranges",
+            "bytes",
+            "Content-Length",
+            "758",
+            "Connection",
+            "close",
+            "Content-Type",
+            "text/html"
+        ]
+    }
+]

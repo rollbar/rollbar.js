@@ -143,6 +143,9 @@ module.exports = function(grunt) {
     webpack: webpackConfig,
     vows: {
       all: {
+        options: {
+          reporter: "spec"
+        },
         src: ["test-server/*.test.js"]
       }
     },
