@@ -51,8 +51,8 @@ RateLimiter.prototype.configureGlobal = function(options) {
  *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
  *  place of the passed in item.
  */
-RateLimiter.prototype.shouldSend = function(item) {
-  var now = (new Date()).getTime();
+RateLimiter.prototype.shouldSend = function(item, now) {
+  now = now || (new Date()).getTime();
   if (now - this.startTime >= 60000) {
     this.startTime = now;
     this.perMinCounter = 0;
@@ -61,37 +61,22 @@ RateLimiter.prototype.shouldSend = function(item) {
   var globalRateLimit = RateLimiter.globalSettings.maxItems;
   var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
 
-  if (checkRate(globalRateLimit, this.counter)) {
+  if (checkRate(item, globalRateLimit, this.counter)) {
     return shouldSendValue(globalRateLimit + ' max items reached', false);
-  } else if (checkRate(globalRateLimitPerMin, this.perMinCounter)) {
-    return shouldSendValue(globalRateLimitPerMin + ' items per minute  reached', false);
+  } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
+    return shouldSendValue(globalRateLimitPerMin + ' items per minute reached', false);
   }
   this.counter++;
   this.perMinCounter++;
 
-  var shouldSend = !checkRate(globalRateLimit, this.counter);
+  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
   return shouldSendValue(null, shouldSend, globalRateLimit);
 };
 
 /* Helpers */
 
-function checkRate(limit, counter) {
+function checkRate(item, limit, counter) {
   return !item.ignoreRateLimit && limit >= 1 && counter >= limit;
-}
-
-function rateLimitPayload(shouldSend, globalRateLimit) {
-  if (shouldSend) {
-    return null;
-  }
-
-  return {
-    message: 'maxItems has been hit. Ignoring errors until reset.',
-    err: null,
-    custom: {
-      maxItems: globalRateLimit
-    },
-    ignoreRateLimit: true
-  };
 }
 
 function shouldSendValue(error, shouldSend, globalRateLimit) {
@@ -100,9 +85,20 @@ function shouldSendValue(error, shouldSend, globalRateLimit) {
     error = new Error(error);
   }
   if (!error && !shouldSend) {
-    payload = rateLimitPayload(shouldSend, globalRateLimit);
+    payload = rateLimitPayload(globalRateLimit);
   }
   return {error: error, shouldSend: shouldSend, payload: payload};
+}
+
+function rateLimitPayload(globalRateLimit) {
+  return {
+    message: 'maxItems has been hit. Ignoring errors until reset.',
+    err: null,
+    custom: {
+      maxItems: globalRateLimit
+    },
+    ignoreRateLimit: true
+  };
 }
 
 module.exports = RateLimiter;
