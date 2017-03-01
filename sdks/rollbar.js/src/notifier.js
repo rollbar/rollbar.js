@@ -107,3 +107,4 @@ Notifier.prototype._applyTransforms = function(item, callback) {
   cb(null, item);
 };
 
+module.exports = Notifier;
