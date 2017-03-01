@@ -96,3 +96,19 @@ describe('isFunction', function() {
   });
 });
 
+describe('extend', function() {
+  it('should be exported and work', function(done) {
+    var o1 = {a: 1};
+    var o2 = {a: 42};
+    var e1 = _.extend(true, {}, o1);
+    expect(e1.a).to.eql(1);
+    e1.a = 100;
+    expect(o1.a).to.eql(1);
+
+    var e2 = _.extend(true, o2, {b: 45});
+    expect(e2).to.eql({a: 42, b: 45});
+
+    done();
+  });
+});
+
