@@ -52,6 +52,7 @@
     "grunt-text-replace": "^0.4.0",
     "grunt-vows": "^0.4.2",
     "grunt-webpack": "^1.0.11",
+    "istanbul-instrumenter-loader": "^2.0.0",
     "jade": "~0.27.7",
     "jasmine-core": "^2.3.4",
     "jquery-mockjax": "^2.0.1",
