@@ -19,7 +19,11 @@ var browserStackBrowsers = require('./browserstack.browsers');
 
 
 function findTests(context) {
-  var files = glob.sync('test-'+context+'/**/*.test.js');
+  var files = glob.sync('test/**/*.test.js');
+  if (context !== 'browser') {
+    return {};
+  }
+  //var files = glob.sync('test-'+context+'/**/*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
@@ -198,7 +202,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('test', ['test-server', 'test-browser']);
+  grunt.registerTask('test', ['rokob-test']);
+  //grunt.registerTask('test', ['test-server', 'test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   grunt.registerTask('test-server', function(target) {
@@ -209,6 +214,12 @@ module.exports = function(grunt) {
   grunt.registerTask('test-browser', function(target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
     var tasks = ['express', karmaTask];
+    grunt.task.run.apply(grunt.task, tasks);
+  });
+
+  grunt.registerTask('rokob-test', function(target) {
+    var karmaTask = 'karma' + (target ? ':' + target : '');
+    var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
 
