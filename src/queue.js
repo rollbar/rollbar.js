@@ -214,3 +214,4 @@ Queue.prototype._dequeuePendingRequest = function(item) {
   }
 };
 
+module.exports = Queue;
