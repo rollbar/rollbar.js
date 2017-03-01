@@ -24,7 +24,7 @@ RateLimiter.globalSettings = {
  *    maxItems: the maximum items
  *    itemsPerMinute: 
  */
-RateLimiter.prototype.configureGlobal(options) {
+RateLimiter.prototype.configureGlobal = function(options) {
   if (options.startTime !== undefined) {
     RateLimiter.globalSettings.startTime = options.startTime;
   }
@@ -34,7 +34,7 @@ RateLimiter.prototype.configureGlobal(options) {
   if (options.itemsPerMinute !== undefined) {
     RateLimiter.globalSettings.itemsPerMinute = options.itemsPerMinute;
   }
-}
+};
 
 /*
  * shouldSend - determine if we should send a given item based on rate limit settings
@@ -104,3 +104,5 @@ function shouldSendValue(error, shouldSend, globalRateLimit) {
   }
   return {error: error, shouldSend: shouldSend, payload: payload};
 }
+
+module.exports = RateLimiter;
