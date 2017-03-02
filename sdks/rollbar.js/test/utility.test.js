@@ -90,6 +90,7 @@ describe('isFunction', function() {
       return f(x);
     };
     expect(_.isFunction({})).to.not.be.ok();
+    expect(_.isFunction(null)).to.not.be.ok();
     expect(_.isFunction(f)).to.be.ok();
     expect(_.isFunction(g)).to.be.ok();
     done();
