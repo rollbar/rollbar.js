@@ -93,8 +93,12 @@ Queue.prototype.addItem = function(item, callback, force) {
  * @param callback - function() called when all pending items have been sent
  */
 Queue.prototype.wait = function(callback) {
-  if (_.isFunction(callback)) {
-    this.waitCallback = callback;
+  if (!_.isFunction(callback)) {
+    return;
+  }
+  this.waitCallback = callback;
+  if (this.pendingRequests.length == 0) {
+    this.waitCallback();
   }
 };
 
@@ -177,10 +181,6 @@ Queue.prototype._maybeRetry = function(err, item, callback) {
  * @param callback - function(err, response)
  */
 Queue.prototype._retryApiRequest = function(item, callback) {
-  if (!this.settings.retryInterval) {
-    return;
-  }
-
   this.retryQueue.push({item: item, callback: callback});
 
   if (!this.retryHandle) {
@@ -202,10 +202,10 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  * @param item - the item previously added to the pending request queue
  */
 Queue.prototype._dequeuePendingRequest = function(item) {
-  var shouldCallWaitOnRemove = pendingItems.length == 1;
-  for (var i=pendingItems.length; i >= 0; i--) {
-    if (pendingItems[i] == item) {
-      pendingItems.splice(i, 1);
+  var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
+  for (var i=this.pendingRequests.length; i >= 0; i--) {
+    if (this.pendingRequests[i] == item) {
+      this.pendingRequests.splice(i, 1);
       if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
         this.waitCallback();
       }
