@@ -113,3 +113,83 @@ describe('extend', function() {
   });
 });
 
+describe('traverse', function() {
+  describe('should call the func for every key,value', function() {
+    it('simple object', function(done) {
+      var obj = {a: 1, b: 2};
+      var expectedOutput = {a: 2, b: 3};
+      var callCount = 0;
+      var result = _.traverse(obj, function(k, v) {
+        callCount++;
+        return v + 1;
+      });
+      expect(result).to.eql(expectedOutput);
+      expect(callCount).to.eql(2);
+
+      done();
+    });
+    it('nested object', function(done) {
+      var obj = {a: 1, b: 2, c: {ca: 11}};
+      var expectedOutput = {a: 2, b: 3, c: {ca: 12}};
+      var callCount = 0;
+      var result = _.traverse(obj, function(k, v) {
+        callCount++;
+        if (k === 'c') {
+          return {ca: v.ca+1};
+       }
+        return v + 1;
+      });
+      expect(result).to.eql(expectedOutput);
+      expect(callCount).to.eql(3);
+
+      done();
+    });
+    it('array', function(done) {
+      var obj = [1, 2, 3];
+      var expected = [0, 1, 2];
+      var callCount = 0;
+      var result = _.traverse(obj, function(k, v) {
+        callCount++;
+        return v - 1;
+      });
+      expect(result).to.eql(expected);
+      expect(callCount).to.eql(3);
+      done();
+    });
+  });
+});
+
+describe('uuid4', function() {
+  it('should return a version 4 uuid', function(done) {
+    var id = _.uuid4();
+    var otherId = _.uuid4();
+    expect(id).to.not.eql(otherId);
+    var parts = id.split('-');
+    expect(parts.length).to.eql(5);
+    expect(parts[2][0]).to.eql('4');
+    expect(parts[0].length).to.eql(8);
+    expect(parts[1].length).to.eql(4);
+    expect(parts[2].length).to.eql(4);
+    expect(parts[3].length).to.eql(4);
+    expect(parts[4].length).to.eql(12);
+    done();
+  });
+});
+
+describe('redact', function() {
+  it('should return a string of stars', function(done) {
+    var s1 = 'thisIsApasswrD';
+    var s2 = 'short';
+    var o = {a: 123};
+    var a = [12, 34, 56];
+
+    expect(_.redact(s1)).to.not.match(/[^*]/);
+    expect(_.redact(s2)).to.not.match(/[^*]/);
+    expect(_.redact(s1)).to.eql(_.redact(s2));
+    expect(_.redact(o)).to.not.match(/[^*]/);
+    expect(_.redact(a)).to.not.match(/[^*]/);
+
+    done();
+  })
+});
+
