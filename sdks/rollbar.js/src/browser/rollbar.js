@@ -1,13 +1,13 @@
 var Client = require('../rollbar');
-var _ = require('../util');
+var _ = require('../utility');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
 
-function Rollbar(options) {
+function Rollbar(options, client) {
   this.options = _.extend(true, {}, options);
   var context = 'browser';
-  this.client = new Client(context, this.options);
+  this.client = client || new Client(context, this.options);
   this.init(this.client);
 }
 
@@ -90,7 +90,6 @@ function addPredicatesToQueue(queue) {
 }
 
 Rollbar.prototype._createItem = function(args) {
-  var level = this.options.logLevel;
   var message, err, custom, callback;
   var argT, arg;
   var extraArgs = [];
@@ -109,6 +108,7 @@ Rollbar.prototype._createItem = function(args) {
         extraArgs.push(arg);
         break;
       case 'error':
+      case 'domexception':
         err ? extraArgs.push(arg) : err = arg;
         break;
       case 'object':
@@ -124,6 +124,7 @@ Rollbar.prototype._createItem = function(args) {
           err ? extraArgs.push(arg) : err = arg;
           break;
         }
+        extraArgs.push(arg);
     }
   }
 
@@ -134,7 +135,6 @@ Rollbar.prototype._createItem = function(args) {
   }
 
   return {
-    level: level,
     message: message,
     err: err,
     custom: custom,

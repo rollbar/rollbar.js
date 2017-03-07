@@ -112,6 +112,14 @@ function uuid4() {
   return uuid;
 }
 
+var LEVELS = {
+  debug: 0,
+  info: 1,
+  warning: 2,
+  error: 3,
+  critical: 4
+};
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -121,6 +129,7 @@ module.exports = {
   redact: redact,
   uuid4: uuid4,
   wrapRollbarFunction: wrapRollbarFunction,
-  consoleError: consoleError
+  consoleError: consoleError,
+  LEVELS: LEVELS
 };
 

@@ -7,11 +7,6 @@ var extend = require('extend');
 
 var _ = require('../src/utility');
 
-var rollbarConfig = {
-  accessToken: '12c99de67a444c229fca100e0967486f',
-  captureUncaught: true
-};
-
 describe('typeName', function() {
   it('should handle undefined', function(done) {
     expect(_.typeName(undefined)).to.eql('undefined');
@@ -191,5 +186,14 @@ describe('redact', function() {
 
     done();
   })
+});
+
+describe('LEVELS', function() {
+  it('should include debug', function() {
+    expect(_.LEVELS['debug']).to.not.eql(undefined);
+  });
+  it('should have critical higher than debug', function() {
+    expect(_.LEVELS['critical']).to.be.greaterThan(_.LEVELS['debug']);
+  });
 });
 
