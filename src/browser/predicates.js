@@ -1,9 +1,9 @@
-var _ = require('../util');
+var _ = require('../utility');
 
 function checkIgnore(item, settings) {
   var level = item.level;
-  var levelVal = settings._rollbar.LEVELS[level] || 0;
-  var reportLevel = settings._rollbar.LEVELS[settings.reportLevel] || 0;
+  var levelVal = _.LEVELS[level] || 0;
+  var reportLevel = _.LEVELS[settings.reportLevel] || 0;
 
   if (levelVal < reportLevel) {
     return false;

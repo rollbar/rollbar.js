@@ -2,7 +2,7 @@ var RateLimiter = require('./rateLimiter');
 var Queue = require('./queue');
 var Notifier = require('./notifier');
 var API = require('./api');
-var _ = require('./util');
+var _ = require('./utility');
 
 /*
  * Rollbar - the interface to Rollbar
@@ -12,17 +12,14 @@ var _ = require('./util');
  */
 function Rollbar(context, options) {
   this.options = _.extend(true, {}, options);
-  var api = new API(context, options);
-  var queue = new Queue(Rollbar.rateLimiter, api, options); 
-  this.notifier = new Notifier(queue, options);
+  var api = new (API(context))(options);
+  this.queue = new Queue(Rollbar.rateLimiter, api, options); 
+  this.notifier = new Notifier(this.queue, options);
 };
 
-Rollbar.LEVELS = {
-  debug: 0,
-  info: 1,
-  warning: 2,
-  error: 3,
-  critical: 4
+var defaultOptions = {
+  maxItems: 0,
+  itemsPerMinute: 60
 };
 
 Rollbar.rateLimiter = new RateLimiter(defaultOptions);
