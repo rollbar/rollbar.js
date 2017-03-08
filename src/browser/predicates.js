@@ -43,7 +43,7 @@ function urlIsWhitelisted(item, settings) {
     if (!whitelist || whitelist.length === 0) {
       return true;
     }
-    if (!trace) {
+    if (!trace || !trace.frames) {
       return true;
     }
 
@@ -66,7 +66,9 @@ function urlIsWhitelisted(item, settings) {
         }
       }
     }
-  } catch (e) {
+  } catch (e)
+  /* istanbul ignore next */
+  {
     settings.hostWhiteList = null; // TODO
     _.consoleError("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
     return true;
@@ -112,82 +114,14 @@ function messageIsIgnored(item, settings) {
         break;
       }
     }
-  }
-  catch(e) {
+  } catch(e)
+  /* istanbul ignore next */
+  {
     settings.ignoredMessages = null; // TODO
     _.consoleError("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
   }
 
   return !messageIsIgnored;
-}
-
-/** Helpers **/
-
-function scrub(data, options) {
-  var scrubFields = options.scrubFields;
-  var paramRes = getScrubFieldRegexs(scrubFields);
-  var queryRes = getScrubQueryParamRegexs(scrubFields);
-
-  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
-    return paramPart + _.redact(valPart);
-  }
-
-  function paramScrubber(v) {
-    var i;
-    if (_.isType(v, 'string')) {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
-      }
-    }
-    return v;
-  }
-
-  function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
-        v = _.redact(v);
-        break;
-      }
-    }
-    return v;
-  }
-
-  function scrubber(k, v) {
-    var tmpV = valScrubber(k, v);
-    if (tmpV === v) {
-      if (_.isType(v, 'object') || _.isType(v, 'array')) {
-        return _.traverse(v, scrubber);
-      }
-      return paramScrubber(tmpV);
-    } else {
-      return tmpV;
-    }
-  }
-
-  _.traverse(obj, scrubber);
-  return obj;
-}
-
-function getScrubFieldRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
-}
-
-
-function getScrubQueryParamRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-  }
-  return ret;
 }
 
 module.exports = {
@@ -196,3 +130,4 @@ module.exports = {
   urlIsWhitelisted: urlIsWhitelisted,
   messageIsIgnored: messageIsIgnored
 };
+
