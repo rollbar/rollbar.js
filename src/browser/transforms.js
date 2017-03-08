@@ -1,12 +1,15 @@
 var _ = require('../utility');
 var errorParser = require('./errorParser');
 
+var RollbarJSON = JSON; // TODO
+
 function handleItemWithError(item, options, callback) {
-  var stackInfo = null;
   if (item.err) {
     try {
       item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
-    } catch (e) {
+    } catch (e)
+    /* istanbul ignore next */
+    {
       _.consoleError('[Rollbar]: Error while parsing the error object.', e);
       item.message = item.err.message || item.err.description || item.message || String(item.err);
       delete item.err;
@@ -39,54 +42,60 @@ function addBaseInfo(item, options, callback) {
   callback(null, newItem);
 }
 
-function addRequestInfo(item, options, callback) {
-  if (!window || !window.location) {
-    return callback(null, item);
-  }
-  item.request = {
-    url: window.location.href,
-    query_string: window.location.search,
-    user_id: '$remote_ip'
-  };
-  callback(null, item);
-}
-
-function addClientInfo(item, options, callback) {
-  if (!window) {
-    return callback(null, item);
-  }
-  item.client = {
-    runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
-    timestamp: Math.round(item.timestamp / 1000),
-    javascript: {
-      browser: window.navigator.userAgent,
-      language: window.navigator.language,
-      cookie_enabled: window.navigator.cookieEnabled,
-      screen: {
-        width: window.screen.width,
-        height: window.screen.height
-      },
+function addRequestInfo(window) {
+  return function(item, options, callback) {
+    if (!window || !window.location) {
+      return callback(null, item);
     }
-  }
-  delete item.timestamp;
-  callback(null, item);
+    item.request = {
+      url: window.location.href,
+      query_string: window.location.search,
+      user_ip: '$remote_ip'
+    };
+    callback(null, item);
+  };
 }
 
-function addPluginInfo(item, options, callback) {
-  if (!window || !window.navigator) {
-    return callback(null, item);
-  }
-  var plugins = [];
-  var navPLugins = window.navigator.plugins || [];
-  var cur;
-  for (var i=0, l=navPlugins.length; i < l; ++i) {
-    cur = navPlugins[i];
-    plugins.push({name: cur.name, description: cur.description});
-  }
-  item.client = item.client || {};
-  item.client.javascript = item.client.javascript || {};
-  item.client.javascript.plugins = plugins;
-  callback(null, item);
+function addClientInfo(window) {
+  return function(item, options, callback) {
+    if (!window) {
+      return callback(null, item);
+    }
+    item.client = {
+      runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
+      timestamp: Math.round(item.timestamp / 1000),
+      javascript: {
+        browser: window.navigator.userAgent,
+        language: window.navigator.language,
+        cookie_enabled: window.navigator.cookieEnabled,
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height
+        },
+      }
+    }
+    delete item.timestamp;
+    callback(null, item);
+  };
+}
+
+function addPluginInfo(window) {
+  return function(item, options, callback) {
+    if (!window || !window.navigator) {
+      return callback(null, item);
+    }
+    var plugins = [];
+    var navPlugins = window.navigator.plugins || [];
+    var cur;
+    for (var i=0, l=navPlugins.length; i < l; ++i) {
+      cur = navPlugins[i];
+      plugins.push({name: cur.name, description: cur.description});
+    }
+    item.client = item.client || {};
+    item.client.javascript = item.client.javascript || {};
+    item.client.javascript.plugins = plugins;
+    callback(null, item);
+  };
 }
 
 function addBody(item, options, callback) {
@@ -113,7 +122,7 @@ function addBodyMessage(item, options, callback) {
   };
 
   if (custom) {
-    result.extra = extend(true, {}, custom);
+    result.extra = _.extend(true, {}, custom);
   }
 
   item.body = {message: result};
@@ -154,7 +163,7 @@ function addBodyTrace(item, options, callback) {
     for (i = 0; i < stackInfo.stack.length; ++i) {
       stackFrame = stackInfo.stack[i];
       frame = {
-        filename: stackFrame.url ? Util.sanitizeUrl(stackFrame.url) : '(unknown)',
+        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
         lineno: stackFrame.line || null,
         method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
         colno: stackFrame.column
@@ -194,7 +203,7 @@ function addBodyTrace(item, options, callback) {
     trace.frames.reverse();
 
     if (custom) {
-      trace.extra = extend(true, {}, custom);
+      trace.extra = _.extend(true, {}, custom);
     }
     item.body = {trace: trace};
     callback(null, item);
@@ -205,7 +214,7 @@ function addBodyTrace(item, options, callback) {
 }
 
 function itemToPayload(item, options, callback) {
-  var payloadOptions = options.payload;
+  var payloadOptions = options.payload || {};
   if (payloadOptions.body) {
     delete payloadOptions.body;
   }
@@ -214,28 +223,51 @@ function itemToPayload(item, options, callback) {
   delete item.accessToken;
 
   var payload = {
-    access_token: item.accessToken,
-    data: _.extend(true, item, payloadOptions)
+    callback: item.callback,
+    accessToken: accessToken,
+    endpointUrl: _route(options, 'item/'),
+    payload: {
+      access_token: accessToken,
+      data: _.extend(true, item, payloadOptions)
+    }
   };
 
   callback(null, payload);
 }
 
+function _route(options, path) {
+  var endpoint = options.endpoint;
+
+  var endpointTrailingSlash = /\/$/.test(endpoint);
+  var pathBeginningSlash = /^\//.test(path);
+
+  if (endpointTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!endpointTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+
+  return endpoint + path;
+};
+
 function scrubPayload(item, options, callback) {
-  scrub(item.data, options);
+  scrub(item.payload.data, options);
   callback(null, item);
 }
 
 function userTransform(item, options, callback) {
+  var newItem = _.extend(true, {}, item);
   try {
     if (_.isFunction(options.transform)) {
-      options.transform(item.payload);
+      options.transform(newItem.payload);
     }
   } catch (e) {
     options.transform = null; // TODO
     _.consoleError('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
+    callback(null, item);
+    return;
   }
-  callback(null, item);
+  callback(null, newItem);
 }
 
 /** Helpers **/
@@ -282,8 +314,8 @@ function scrub(data, options) {
     }
   }
 
-  _.traverse(obj, scrubber);
-  return obj;
+  _.traverse(data, scrubber);
+  return data;
 }
 
 function getScrubFieldRegexs(scrubFields) {

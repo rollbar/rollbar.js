@@ -120,6 +120,69 @@ var LEVELS = {
   critical: 4
 };
 
+function sanitizeUrl(url) {
+  var baseUrlParts = parseUri(url);
+  // remove a trailing # if there is no anchor
+  if (baseUrlParts.anchor === '') {
+    baseUrlParts.source = baseUrlParts.source.replace('#', '');
+  }
+
+  url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
+  return url;
+}
+
+var parseUriOptions = {
+  strictMode: false,
+  key: [
+    'source',
+    'protocol',
+    'authority',
+    'userInfo',
+    'user',
+    'password',
+    'host',
+    'port',
+    'relative',
+    'path',
+    'directory',
+    'file',
+    'query',
+    'anchor'
+  ],
+  q: {
+    name: 'queryKey',
+    parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+  },
+  parser: {
+    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+    loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+  }
+};
+
+function parseUri(str) {
+  if (!isType(str, 'string')) {
+    throw new Error('received invalid input');
+  }
+
+  var o = parseUriOptions;
+  var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
+  var uri = {};
+  var i = o.key.length;
+
+  while (i--) {
+    uri[o.key[i]] = m[i] || '';
+  }
+
+  uri[o.q.name] = {};
+  uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+    if ($1) {
+      uri[o.q.name][$1] = $2;
+    }
+  });
+
+  return uri;
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -130,6 +193,7 @@ module.exports = {
   uuid4: uuid4,
   wrapRollbarFunction: wrapRollbarFunction,
   consoleError: consoleError,
-  LEVELS: LEVELS
+  LEVELS: LEVELS,
+  sanitizeUrl: sanitizeUrl
 };
 
