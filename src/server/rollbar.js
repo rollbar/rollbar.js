@@ -122,7 +122,10 @@ Rollbar.prototype.handleErrorWithPayloadData = function(err, payloadData, reques
 
 function addTransformsToNotifier(notifier) {
   notifier
-    .addTransform(transforms.x);
+    .addTransform(transforms.baseData)
+    .addTransform(transforms.addMessageData)
+    .addTransform(transforms.buildErrorData)
+    .addTransform(transforms.addRequestData);
 }
 
 function addPredicatesToQueue(queue) {
@@ -164,7 +167,8 @@ Rollbar.prototype._createItem = function(args) {
     uuid: _.uuid4(),
     err: err,
     message: message,
-    callback: callback
+    callback: callback,
+    request: request
   };
   if (custom.level !== undefined) {
     item.level = custom.level;
