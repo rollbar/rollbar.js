@@ -4,16 +4,7 @@ var packageJson = require('../../package.json');
 var parser = require('./parser');
 var requestIp = require('request-ip');
 var url = require('url');
-
-/*
- * {
- *  uuid,
- *  err,
- *  message,
- *  level,
- *  custom
- * }
- */
+var _ = require('../utility');
 
 var defaultSettings = {
   host: os.hostname(),
@@ -69,6 +60,16 @@ function baseData(item, options, callback) {
   callback(null, item);
 }
 
+function addMessageData(item, options, callback) {
+  item.body = {};
+  if (item.message !== undefined) {
+    item.body.message = {
+      body: item.message
+    };
+  }
+  callback(null, item);
+}
+
 function buildErrorData(item, options, callback) {
   if (!item.err) {
     callback(null, item);
@@ -82,6 +83,8 @@ function buildErrorData(item, options, callback) {
     errors.push(err);
   } while ((err = err.nested) !== undefined);
 
+  item.data = item.data || {};
+  item.data.body = item.data.body || {};
   item.data.body.trace_chain = chain;
 
   var cb = function(err) {
@@ -91,7 +94,54 @@ function buildErrorData(item, options, callback) {
     callback(null, item);
   };
   async.eachSeries(errors, _buildTraceData(chain), cb);
-};
+}
+
+function addRequestData(item, options, callback) {
+  var req = item.request;
+  if (!req) {
+    callback(null, item);
+    return;
+  }
+
+  if (options.addRequestData && _.isFunction(options.addRequestData)) {
+    options.addRequestData(item, req);
+    callback(null, item);
+    return;
+  }
+
+  var requestData = _buildRequestData(req, options);
+  item.request = requestData;
+
+  if (req.route) {
+    item.context = req.route.path;
+  } else {
+    try {
+      item.context = req.app.__router.matchRequest(req).path;
+    } catch (ignore) {}
+  }
+
+  if (req.rollbar_person) {
+    item.person = req.rollbar_person;
+  } else if (req.user) {
+    item.person = {id: req.user.id};
+    if (req.user.username) {
+      item.person.username = req.user.username;
+    }
+    if (req.user.email) {
+      item.person.email = req.user.email;
+    }
+  } else if (req.user_id || req.userId) {
+    var userId = req.user_id || req.userId;
+    if (_.isFunction(userId)) {
+      userId = userId();
+    }
+    item.person = {id: userId};
+  }
+
+  callback(null, item);
+}
+
+/** Helpers **/
 
 function _buildTraceData(chain) {
   return function(ex, cb) {
@@ -113,35 +163,74 @@ function _buildTraceData(chain) {
   };
 };
 
-// TODO TODO TODO
-function scrubRequestHeaders(headers, settings) {
-  var obj, k;
+function _scrubRequestHeaders(headers, options) {
+  var scrubHeaders = options.scrubHeaders || defaultSettings.scrubHeaders || [];
+  return _scrubObject(headers, scrubHeaders);
+}
 
-  obj = {};
-  settings = settings || SETTINGS;
-  for (k in headers) {
-    if (headers.hasOwnProperty(k)) {
-      if (settings.scrubHeaders.indexOf(k) === -1) {
-        obj[k] = headers[k];
-      } else {
-        obj[k] = '******';
-      }
+function _scrubRequestParams(params, options) {
+  var scrubFields = options.scrubFields || defaultSettings.scrubFields || [];
+  return _scrubObject(params, scrubFields);
+}
+
+function _scrubObject(input, scrubKeys) {
+  var obj = {};
+  var k;
+  for (k in input) {
+    if (input.hasOwnProperty(k)) {
+      obj[k] = scrubKeys.indexOf(k) === -1 ? input[k] : '******';
     }
   }
   return obj;
 }
 
+function _extractIp(req) {
+  var ip = req.ip;
+  if (!ip) {
+    ip = requestIp.getClientIp(req);
+  }
+  return ip;
+}
 
-function scrubRequestParams(params, settings) {
-  var k;
+function _buildRequestData(req, options) {
+  var headers = req.headers || {};
+  var host = headers.host || '<no host'>;
+  var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
+  var reqUrl = proto + '://' + host + (req.url || '');
+  var parsedUrl = url.parse(reqUrl, true);
+  var data = {
+    url: reqUrl,
+    GET: parsedUrl.query,
+    user_ip: _extractIp(req),
+    headers: _scrubRequestHeaders(headers, options),
+    method: req.method
+  };
 
-  settings = settings || SETTINGS;
-  for (k in params) {
-    if (params.hasOwnProperty(k) && params[k] && settings.scrubFields.indexOf(k) >= 0) {
-      params[k] = '******';
+  if (req.body) {
+    bodyParams = {};
+    if (_.isType(req.body, 'object')) {
+      isPlainObject = req.body.constructor === undefined;
+
+      for (k in req.body) {
+        hasOwnProperty = typeof req.body.hasOwnProperty === 'function'
+          && req.body.hasOwnProperty(k);
+
+        if (hasOwnProperty || isPlainObject) {
+          bodyParams[k] = req.body[k];
+        }
+      }
+      data[req.method] = _scrubRequestParams(bodyParams, options);
+    } else {
+      data.body = req.body;
     }
   }
-
-  return params;
+  return data;
 }
+
+module.exports = {
+  baseData: baseData,
+  addMessageData: addMessageData,
+  buildErrorData: buildErrorData,
+  addRequestData: addRequestData
+};
 
