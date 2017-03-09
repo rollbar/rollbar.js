@@ -66,7 +66,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  if (true) {
 	    // This adds the script to this context. We need it since this library
 	    // is not a CommonJs or AMD module.
-	    var setupCustomJSON = __webpack_require__(11);
+	    var setupCustomJSON = __webpack_require__(12);
 	
 	    var customJSON = {};
 	    setupCustomJSON(customJSON);
@@ -242,7 +242,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var errorParser = __webpack_require__(5);
 	var Util = __webpack_require__(8);
-	var xhr = __webpack_require__(10);
+	var xhr = __webpack_require__(11);
 	
 	var XHR = xhr.XHR;
 	var ConnectionError = xhr.ConnectionError;
@@ -251,6 +251,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	function setupJSON(JSON) {
 	  RollbarJSON = JSON;
 	  xhr.setupJSON(JSON);
+	  Util.setupJSON(JSON);
 	}
 	
 	function _wrapNotifierFn(fn, ctx) {
@@ -259,7 +260,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    try {
 	      return fn.apply(self, arguments);
 	    } catch (e) {
-	      console.error('[Rollbar]:', e);
+	      Util.consoleError('[Rollbar]:', e);
 	    }
 	  };
 	}
@@ -273,7 +274,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("1.9.3");
+	Notifier.NOTIFIER_VERSION = ("1.9.4");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
 	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
@@ -699,7 +700,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  } catch (e) {
 	    this.configure({hostWhiteList: null});
-	    console.error("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+	    Util.consoleError("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
 	    return true;
 	  }
 	
@@ -747,7 +748,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	  catch(e) {
 	    this.configure({ignoredMessages: null});
-	    console.error("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+	    Util.consoleError("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
 	  }
 	
 	  return messageIsIgnored;
@@ -791,7 +792,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  } catch (e) {
 	    // Disable the custom checkIgnore and report errors in the checkIgnore function
 	    this.configure({checkIgnore: null});
-	    console.error('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
+	    Util.consoleError('[Rollbar]: Error while calling custom checkIgnore() function. Removing custom checkIgnore().', e);
 	  }
 	
 	  if (!this._urlIsWhitelisted(payload)) {
@@ -806,12 +807,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    if (payload.data && payload.data.body && payload.data.body.trace) {
 	      var trace = payload.data.body.trace;
 	      var exceptionMessage = trace.exception.message;
-	      console.error('[Rollbar]: ', exceptionMessage);
+	      Util.consoleError('[Rollbar]: ', exceptionMessage);
 	    }
 	
-	    // FIXME: Some browsers do not output objects as json to the console, and
-	    // instead write [object Object], so let's write the message first to ensure that is logged.
-	    console.info('[Rollbar]: ', payloadToSend);
+	    Util.consoleInfo('[Rollbar]: ', payloadToSend);
 	  }
 	
 	  if (Util.isType(this.options.logFunction, 'function')) {
@@ -824,12 +823,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  } catch (e) {
 	    this.configure({transform: null});
-	    console.error('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
+	    Util.consoleError('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
 	  }
 	
 	  if (this.options.enabled) {
 	    directlyEnqueuePayload(payloadToSend);
 	  }
+	
 	};
 	
 	function directlyEnqueuePayload(payloadToSend) {
@@ -874,6 +874,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 * - callback: Function to call once the item is reported to Rollbar
 	 * - isUncaught: True if this error originated from an uncaught exception handler
 	 * - ignoreRateLimit: True if this item should be allowed despite rate limit checks
+	 *
+	 * Returns an object with (at least) the "uuid" property set.
 	 */
 	NotifierPrototype._log = function(level, message, err, custom, callback, isUncaught, ignoreRateLimit) {
 	  var stackInfo = null;
@@ -890,7 +892,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	      this.lastError = err;
 	    } catch (e) {
-	      console.error('[Rollbar]: Error while parsing the error object.', e);
+	      Util.consoleError('[Rollbar]: Error while parsing the error object.', e);
 	      // err is not something we can parse so let's just send it along as a string
 	      message = err.message || err.description || message || String(err);
 	      err = null;
@@ -902,6 +904,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    payload.ignoreRateLimit = true;
 	  }
 	  this._enqueuePayload(payload, isUncaught ? true : false, [level, message, err, custom], callback);
+	
+	  // We're generating the UUID client-side, may as well return it so it can be
+	  // used even before the payload has been sent to Rollbar.  #236
+	  // I'm returning an object here, in case we eventually want to add other
+	  // contextual information besides the uuid.
+	  return {uuid: payload.data.uuid};
 	};
 	
 	NotifierPrototype.log = _generateLogFn();
@@ -950,23 +958,20 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	});
 	
 	NotifierPrototype.unhandledRejection = _wrapNotifierFn(function(reason, promise) {
-	  if (reason == null) {
-	    _topLevelNotifier._log(_topLevelNotifier.options.uncaughtErrorLevel, //level
-	      'unhandled rejection was null or undefined!', // message
-	      null, // err
-	      {}, // custom
-	      null,  // callback
-	      false, // isUncaught
-	      false); // ignoreRateLimit
-	    return;
-	  }
-	
-	  var message = reason.message || (reason ? String(reason) : 'unhandled rejection');
-	
+	  var message;
 	  // If the reason error was thrown within a wrap call, we'll extract the context given there.
 	  // If users want to provide their Promise implementation with knowledge of the rollbar
 	  // context they are created in, we'll search for that attribute, too.
-	  var context = reason._rollbarContext || promise._rollbarContext || null;
+	  var context;
+	
+	  if (reason) {
+	    message = reason.message || String(reason);
+	    context = reason._rollbarContext;
+	  } else {
+	    message = 'unhandled rejection was null or undefined!';
+	  }
+	
+	  context = context || promise._rollbarContext || null;
 	
 	  if (reason && Util.isType(reason, 'error')) {
 	    this._log(this.options.uncaughtErrorLevel, message, reason, context, null, true);
@@ -1092,7 +1097,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	NotifierPrototype.loadFull = function() {
-	  console.error('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
+	  Util.consoleError('[Rollbar]: Unexpected Rollbar.loadFull() called on a Notifier instance');
 	};
 	
 	
@@ -1822,6 +1827,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	__webpack_require__(9);
 	
+	var browser = __webpack_require__(10);
+	
+	var RollbarJSON = null;
+	
+	function setupJSON(JSON) {
+	  RollbarJSON = JSON;
+	}
+	
 	var parseUriOptions = {
 	  strictMode: false,
 	    key: [
@@ -1952,7 +1965,77 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	
+	// Modified version of Object.create polyfill from:
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create
+	function objectCreate(prototype) {
+	  if (typeof Object.create != 'function') {
+	    return ((function(undefined) {
+	      var Temp = function() {};
+	      return function (prototype) {
+	        if(prototype !== null && prototype !== Object(prototype)) {
+	          throw TypeError('Argument must be an object, or null');
+	        }
+	        Temp.prototype = prototype || {};
+	        var result = new Temp();
+	        Temp.prototype = null;
+	
+	        // to imitate the case of Object.create(null)
+	        if(prototype === null) {
+	           result.__proto__ = null;
+	        }
+	        return result;
+	      };
+	    })())(prototype);
+	  } else {
+	    return Object.create(prototype);
+	  }
+	}
+	
+	// IE8 logs objects as [object Object].  This is a wrapper that makes it a bit
+	// more convenient by logging the JSON of the object.  But only do that in IE8 and below
+	// because other browsers are smarter and handle it properly.
+	function formatArgsAsString() {
+	  var args = [];
+	  for (var i=0; i < arguments.length; i++) {
+	    var arg = arguments[i];
+	    if (typeof arg === 'object') {
+	      arg = RollbarJSON.stringify(arg);
+	      if (arg.length > 500)
+	        arg = arg.substr(0,500)+'...';
+	    } else if (typeof arg === 'undefined') {
+	      arg = 'undefined';
+	    }
+	    args.push(arg);
+	  }
+	  return args.join(' ');
+	}
+	
+	function consoleError() {
+	  if (browser.ieVersion() <= 8) {
+	    console.error(formatArgsAsString.apply(null, arguments));
+	  } else {
+	    console.error.apply(null, arguments);
+	  }
+	}
+	
+	function consoleInfo() {
+	  if (browser.ieVersion() <= 8) {
+	    console.info(formatArgsAsString.apply(null, arguments));
+	  } else {
+	    console.info.apply(null, arguments);
+	  }
+	}
+	
+	function consoleLog() {
+	  if (browser.ieVersion() <= 8) {
+	    console.log(formatArgsAsString.apply(null, arguments));
+	  } else {
+	    console.log.apply(null, arguments);
+	  }
+	}
+	
 	var Util = {
+	  setupJSON: setupJSON,
 	  isType: isType,
 	  parseUri: parseUri,
 	  parseUriOptions: parseUriOptions,
@@ -1960,7 +2043,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  sanitizeUrl: sanitizeUrl,
 	  traverse: traverse,
 	  typeName: typeName,
-	  uuid4: uuid4
+	  uuid4: uuid4,
+	  objectCreate: objectCreate,
+	  consoleError: consoleError,
+	  consoleInfo: consoleInfo,
+	  consoleLog: consoleLog
 	};
 	
 	
@@ -1976,25 +2063,58 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	// Make it safe to do console.log() always.
 	(function(global) {
 	  'use strict';
-	  global.console = global.console || {};
+	  if (!global.console) {
+	    global.console = {};
+	  }
 	  var con = global.console;
 	  var prop, method;
-	  var empty = {};
 	  var dummy = function() {};
-	  var properties = 'memory'.split(',');
+	  var properties = ['memory'];
 	  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
 	     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
 	     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
-	  while (prop = properties.pop()) if (!con[prop]) con[prop] = empty;
+	  while (prop = properties.pop()) if (!con[prop]) con[prop] = {};
 	  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
+	  // Using `this` for web workers & supports Browserify / Webpack.
 	})(typeof window === 'undefined' ? this : window);
-	// Using `this` for web workers while maintaining compatibility with browser
-	// targeted script loaders such as Browserify or Webpack where the only way to
-	// get to the global object is via `window`.
 
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	// This browser.js module is used to encapsulate any ugly browser/feature
+	// detection we may need to do.
+	
+	// Figure out which version of IE we're using, if any.
+	// This is gleaned from http://stackoverflow.com/questions/5574842/best-way-to-check-for-ie-less-than-9-in-javascript-without-library
+	// Will return an integer on IE (i.e. 8)
+	// Will return undefined otherwise
+	function getIEVersion() {
+	  var undef,
+	    v = 3,
+	    div = document.createElement('div'),
+	    all = div.getElementsByTagName('i');
+	
+	  while (
+	    div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->',
+	      all[0]
+	    );
+	
+	  return v > 4 ? v : undef;
+	}
+	
+	var Browser = {
+	  ieVersion: getIEVersion
+	};
+	
+	module.exports = Browser;
+
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2015,7 +2135,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  this.stack = (new Error()).stack;
 	}
 	
-	ConnectionError.prototype = Object.create(Error.prototype);
+	ConnectionError.prototype = Util.objectCreate(Error.prototype);
 	ConnectionError.prototype.constructor = ConnectionError;
 	
 	var XHR = {
@@ -2075,7 +2195,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	                  if (request.status == 403) {
 	                    // likely caused by using a server access token, display console message to let
 	                    // user know
-	                    console.error('[Rollbar]:' + jsonResponse.message);
+	                    Util.consoleError('[Rollbar]:' + jsonResponse.message);
 	                  }
 	                  // return valid http status codes
 	                  callback(new Error(String(request.status)));
@@ -2155,7 +2275,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/*
