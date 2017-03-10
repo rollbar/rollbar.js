@@ -13,7 +13,7 @@ var defaultSettings = {
   showReportedMessageTraces: false,
   notifier: {
     name: 'node_rollbar',
-    version: packageJson.version;
+    version: packageJson.version
   },
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
@@ -194,7 +194,7 @@ function _extractIp(req) {
 
 function _buildRequestData(req, options) {
   var headers = req.headers || {};
-  var host = headers.host || '<no host'>;
+  var host = headers.host || '<no host>';
   var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
   var reqUrl = proto + '://' + host + (req.url || '');
   var parsedUrl = url.parse(reqUrl, true);
