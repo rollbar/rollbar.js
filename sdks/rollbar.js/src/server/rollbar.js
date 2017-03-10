@@ -130,7 +130,7 @@ function addTransformsToNotifier(notifier) {
 
 function addPredicatesToQueue(queue) {
   queue
-    .addPredicate(predicates.x);
+    .addPredicate(predicates.checkLevel);
 }
 
 /*
