@@ -1,3 +1,5 @@
+var util = require('util');
+
 var Client = require('../rollbar');
 var _ = require('../utility');
 var logger = require('./logger');
@@ -206,5 +208,16 @@ Rollbar.prototype.handleUnhandledRejections = function() {
     });
   }.bind(this));
 };
+
+function RollbarError(message, nested) {
+  Error.call(this);
+  Error.captureStackTrace(this, this.constructor);
+
+  this.message = message;
+  this.nested = nested;
+  this.name = this.constructor.name;
+}
+util.inherits(RollbarError, Error);
+Rollbar.Error = RollbarError;
 
 module.exports = Rollbar;
