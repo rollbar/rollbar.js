@@ -1,5 +1,13 @@
 # Change Log
 
+**v1.9.4**
+- Updated to the newest version of console-polyfill (pr#244)
+- Log functions now return an object with the uuid as one of the keys (pr#236)
+- Fix issue related to Object.assign which caused problems on IE8 (pr#246)
+- Retain more context on unhandled rejections (pr#229)
+- On IE8 and below when we log to the console, we now stringify objects rather than outputing
+  `[object Object]` (pr#249)
+
 **v1.9.3**
 - Serve rollbar.js from CDNJS
 

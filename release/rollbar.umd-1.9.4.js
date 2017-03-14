@@ -63,24 +63,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
+	/* globals __USE_JSON__ */
+	
+	
 	var globalnotifier = __webpack_require__(2);
 	var notifier = __webpack_require__(3);
 	
 	
 	function setupJSON() {
-	  var JSONObject = {};
+	  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
 	
-	  if (typeof JSON !== 'undefined') {
-	    if (typeof JSON.stringify === 'function') {
-	      JSONObject.stringify = JSON.stringify;
-	    }
-	    if (typeof JSON.parse === 'function') {
-	      JSONObject.parse = JSON.parse;
-	    }
+	  if (true) {
+	    // This adds the script to this context. We need it since this library
+	    // is not a CommonJs or AMD module.
+	    var setupCustomJSON = __webpack_require__(12);
+	
+	    var customJSON = {};
+	    setupCustomJSON(customJSON);
+	
+	    JSONObject = customJSON;
 	  }
-	
-	  var setupCustomJSON = __webpack_require__(12);
-	  setupCustomJSON(JSONObject);
 	
 	  globalnotifier.setupJSON(JSONObject);
 	}
@@ -237,7 +239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	/* globals __NOTIFIER_VERSION__ */
 	/* globals __DEFAULT_ENDPOINT__ */
-	/* globals __DEFAULT_BROWSER_SCRUB_FIELDS__ */
+	/* globals __DEFAULT_SCRUB_FIELDS__ */
 	/* globals __DEFAULT_LOG_LEVEL__ */
 	/* globals __DEFAULT_REPORT_LEVEL__ */
 	/* globals __DEFAULT_UNCAUGHT_ERROR_LEVEL */
@@ -282,9 +284,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("2.0.0");
+	Notifier.NOTIFIER_VERSION = ("1.9.4");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
-	Notifier.DEFAULT_BROWSER_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
+	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
 	Notifier.DEFAULT_REPORT_LEVEL = ("debug");
 	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = ("error");
@@ -328,7 +330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    enabled: true,
 	    endpoint: endpoint,
 	    environment: 'production',
-	    scrubFields: extend([], Notifier.DEFAULT_BROWSER_SCRUB_FIELDS),
+	    scrubFields: extend([], Notifier.DEFAULT_SCRUB_FIELDS),
 	    checkIgnore: null,
 	    logLevel: Notifier.DEFAULT_LOG_LEVEL,
 	    reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
