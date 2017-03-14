@@ -36,12 +36,14 @@ function baseData(item, options, callback) {
   if (options.codeVersion) {
     data.code_version = options.codeVersion;
   }
-  var props = Object.getOwnPropertyNames(item.custom);
-  props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
-      data[name] = item.custom[name];
-    }
-  });
+  if (item.custom) {
+    var props = Object.getOwnPropertyNames(item.custom);
+    props.forEach(function (name) {
+      if (!data.hasOwnProperty(name)) {
+        data[name] = item.custom[name];
+      }
+    });
+  }
 
   data.server = {
     host: options.host || defaultSettings.host,
@@ -61,9 +63,10 @@ function baseData(item, options, callback) {
 }
 
 function addMessageData(item, options, callback) {
-  item.body = {};
+  item.data = item.data || {};
+  item.data.body = item.data.body || {};
   if (item.message !== undefined) {
-    item.body.message = {
+    item.data.body.message = {
       body: item.message
     };
   }
