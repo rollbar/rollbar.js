@@ -1,14 +1,4 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else {
-		var a = factory();
-		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
-	}
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
+/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -54,33 +44,28 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(1);
-
-
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
 	'use strict';
 	
-	var globalnotifier = __webpack_require__(2);
-	var notifier = __webpack_require__(3);
+	/* globals __USE_JSON__ */
+	
+	
+	var globalnotifier = __webpack_require__(1);
+	var notifier = __webpack_require__(2);
 	
 	
 	function setupJSON() {
-	  var JSONObject = {};
+	  var JSONObject = typeof JSON === 'undefined' ? {} : JSON;
 	
-	  if (typeof JSON !== 'undefined') {
-	    if (typeof JSON.stringify === 'function') {
-	      JSONObject.stringify = JSON.stringify;
-	    }
-	    if (typeof JSON.parse === 'function') {
-	      JSONObject.parse = JSON.parse;
-	    }
+	  if (true) {
+	    // This adds the script to this context. We need it since this library
+	    // is not a CommonJs or AMD module.
+	    var setupCustomJSON = __webpack_require__(11);
+	
+	    var customJSON = {};
+	    setupCustomJSON(customJSON);
+	
+	    JSONObject = customJSON;
 	  }
-	
-	  var setupCustomJSON = __webpack_require__(12);
-	  setupCustomJSON(JSONObject);
 	
 	  globalnotifier.setupJSON(JSONObject);
 	}
@@ -109,13 +94,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 2 */
+/* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var notifier = __webpack_require__(3);
-	var Util = __webpack_require__(8);
+	var notifier = __webpack_require__(2);
+	var Util = __webpack_require__(7);
 	
 	var Notifier = notifier.Notifier;
 	// Stub out the wrapped error which is set
@@ -230,14 +215,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals __NOTIFIER_VERSION__ */
 	/* globals __DEFAULT_ENDPOINT__ */
-	/* globals __DEFAULT_BROWSER_SCRUB_FIELDS__ */
+	/* globals __DEFAULT_SCRUB_FIELDS__ */
 	/* globals __DEFAULT_LOG_LEVEL__ */
 	/* globals __DEFAULT_REPORT_LEVEL__ */
 	/* globals __DEFAULT_UNCAUGHT_ERROR_LEVEL */
@@ -246,11 +231,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* globals DOMException */
 	
 	
-	var extend = __webpack_require__(4);
+	var extend = __webpack_require__(3);
 	
-	var errorParser = __webpack_require__(5);
-	var Util = __webpack_require__(8);
-	var xhr = __webpack_require__(11);
+	var errorParser = __webpack_require__(4);
+	var Util = __webpack_require__(7);
+	var xhr = __webpack_require__(10);
 	
 	var XHR = xhr.XHR;
 	var ConnectionError = xhr.ConnectionError;
@@ -282,9 +267,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// Updated by the build process to match package.json
-	Notifier.NOTIFIER_VERSION = ("2.0.0");
+	Notifier.NOTIFIER_VERSION = ("1.9.4");
 	Notifier.DEFAULT_ENDPOINT = ("api.rollbar.com/api/1/");
-	Notifier.DEFAULT_BROWSER_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
+	Notifier.DEFAULT_SCRUB_FIELDS = (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]);
 	Notifier.DEFAULT_LOG_LEVEL = ("debug");
 	Notifier.DEFAULT_REPORT_LEVEL = ("debug");
 	Notifier.DEFAULT_UNCAUGHT_ERROR_LEVEL = ("error");
@@ -328,7 +313,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    enabled: true,
 	    endpoint: endpoint,
 	    environment: 'production',
-	    scrubFields: extend([], Notifier.DEFAULT_BROWSER_SCRUB_FIELDS),
+	    scrubFields: extend([], Notifier.DEFAULT_SCRUB_FIELDS),
 	    checkIgnore: null,
 	    logLevel: Notifier.DEFAULT_LOG_LEVEL,
 	    reportLevel: Notifier.DEFAULT_REPORT_LEVEL,
@@ -1328,7 +1313,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1420,12 +1405,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(6);
+	var ErrorStackParser = __webpack_require__(5);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -1516,7 +1501,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -1525,7 +1510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -1715,7 +1700,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -1828,14 +1813,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(9);
+	__webpack_require__(8);
 	
-	var browser = __webpack_require__(10);
+	var browser = __webpack_require__(9);
 	
 	var RollbarJSON = null;
 	
@@ -2063,7 +2048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	// Console-polyfill. MIT license.
@@ -2088,7 +2073,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2122,14 +2107,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals ActiveXObject */
 	
-	var Util = __webpack_require__(8);
+	var Util = __webpack_require__(7);
 	
 	var RollbarJSON = null;
 	
@@ -2283,7 +2268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	/*
@@ -2760,6 +2745,4 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }
-/******/ ])
-});
-;
+/******/ ]);
