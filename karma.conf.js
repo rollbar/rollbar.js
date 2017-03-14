@@ -43,14 +43,16 @@ module.exports = function (config) {
 
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
-      'test-browser/!(requirejs).test.js': ['webpack']
+      'test-browser/!(requirejs).test.js': ['webpack'],
+      'test/!(requirejs).test.js': ['webpack'],
+      'src/**/*.js': ['coverage']
     },
 
     proxies: {
       '/dist/rollbar.js': '/base/dist/rollbar.js'
     },
 
-    reporters: ['progress'],
+    reporters: ['progress', 'coverage'],
 
     singleRun: true,
 
@@ -75,6 +77,13 @@ module.exports = function (config) {
           {
             test: /(mootootls|requirejs)\.js$/,
             loader: 'script'
+          }
+        ],
+        postLoaders: [
+          {
+            test: /\.js$/,
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
+            loader: 'istanbul-instrumenter'
           }
         ]
       }

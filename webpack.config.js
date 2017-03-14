@@ -61,6 +61,8 @@ var pluginConfig = {
 var testsConfig = {
   name: 'tests',
   entry: {
+    notifier: './test/notifier.test.js',
+    /*
     browserify: './test-browser/browserify.test.js',
     error_parser: './test-browser/error_parser.test.js',
     json: './test-browser/json.test.js',
@@ -72,10 +74,14 @@ var testsConfig = {
     shimalias: './test-browser/shimalias.test.js',
     util: './test-browser/util.test.js',
     xhr: './test-browser/xhr.test.js',
+    */
   },
   plugins: [defaultsPlugin],
   output: {
+    path: 'test/',
+    /*
     path: 'test-browser/',
+    */
     filename: '[name].bundle.js',
   },
   module: {

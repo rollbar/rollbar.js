@@ -19,7 +19,14 @@ var browserStackBrowsers = require('./browserstack.browsers');
 
 
 function findTests(context) {
-  var files = glob.sync('test-'+context+'/**/*.test.js');
+  var files;
+  if (context === 'browser') {
+    files = glob.sync('test/**/[^(server.)]*.test.js');
+  }
+  if (context !== 'browser') {
+    return {};
+  }
+  //var files = glob.sync('test-'+context+'/**/*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
@@ -146,7 +153,7 @@ module.exports = function(grunt) {
         options: {
           reporter: "spec"
         },
-        src: ["test-server/*.test.js"]
+        src: ["test/server.*.test.js"]
       }
     },
 
