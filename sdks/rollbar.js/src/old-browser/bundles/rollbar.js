@@ -14,7 +14,7 @@ function setupJSON() {
     }
   }
 
-  var setupCustomJSON = require('../../vendor/JSON-js/json2.js');
+  var setupCustomJSON = require('../../../vendor/JSON-js/json2.js');
   setupCustomJSON(JSONObject);
 
   globalnotifier.setupJSON(JSONObject);
