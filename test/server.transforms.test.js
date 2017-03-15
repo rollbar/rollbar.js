@@ -286,4 +286,192 @@ vows.describe('transforms')
       }
     }
   })
+  .addBatch({
+    'addRequestData': {
+      'options': {
+        'without custom addRequestData method': {
+          'without scrub fields': {
+            topic: function() {
+              return {nothing: 'here'};
+            },
+            'item': {
+              'without a request': {
+                topic: function(options) {
+                  var item = {
+                    data: {body: {message: 'hey'}}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should not change the item': function(err, item) {
+                  assert.equal(item.request, undefined);
+                  assert.equal(item.data.request, undefined);
+                }
+              },
+              'with a request': {
+                topic: function(options) {
+                  var item = {
+                    request: {
+                      headers: {
+                        host: 'example.com',
+                        'x-auth-token': '12345'
+                      },
+                      protocol: 'https',
+                      url: '/some/endpoint',
+                      ip: '192.192.192.1',
+                      method: 'GET',
+                      body: {
+                        token: 'abc123',
+                        something: 'else'
+                      },
+                      user: {
+                        id: 42,
+                        email: 'fake@example.com'
+                      }
+                    },
+                    stuff: 'hey',
+                    data: {other: 'thing'}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should have a request object inside data': function(err, item) {
+                  assert.ok(item.data.request);
+                },
+                'should set a person based on request user': function(err, item) {
+                  assert.equal(item.data.person.id, 42);
+                  assert.equal(item.data.person.email, 'fake@example.com');
+                },
+                'should set some fields based on request data': function(err, item) {
+                  var r = item.data.request;
+                  assert.equal(r.url, 'https://example.com/some/endpoint');
+                  assert.equal(r.user_ip, '192.192.192.1');
+                  assert.ok(r.GET);
+                },
+                'should scrub based on the defaults': function(err, item) {
+                  var r = item.data.request;
+                  assert.equal(r.GET.token, '******');
+                  assert.equal(r.headers['x-auth-token'], '12345');
+                }
+              }
+            }
+          },
+          'with scrub fields': {
+            topic: function() {
+              return {
+                scrubHeaders: [
+                  'x-auth-token'
+                ],
+                scrubFields: [
+                  'passwd',
+                  'access_token',
+                  'request.cookie'
+                ]
+              };
+            },
+            'item': {
+              'with a request': {
+                topic: function(options) {
+                  var item = {
+                    request: {
+                      headers: {
+                        host: 'example.com',
+                        'x-auth-token': '12345'
+                      },
+                      protocol: 'https',
+                      url: '/some/endpoint',
+                      ip: '192.192.192.192',
+                      method: 'GET',
+                      body: {
+                        token: 'abc123',
+                        something: 'else'
+                      },
+                      user: {
+                        id: 42,
+                        email: 'fake@example.com'
+                      }
+                    },
+                    stuff: 'hey',
+                    data: {other: 'thing'}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should have a request object inside data': function(err, item) {
+                  assert.ok(item.data.request);
+                },
+                'should scrub based on the options': function(err, item) {
+                  var r = item.data.request;
+                  assert.equal(r.GET.token, 'abc123');
+                  assert.equal(r.headers['x-auth-token'], '******');
+                }
+              }
+            }
+          }
+        },
+        'with custom addRequestData': {
+          'with scrub fields': {
+            topic: function() {
+              var customFn = function(i, r) {
+                assert.equal(i.stuff, undefined);
+                assert.equal(i.other, 'thing');
+                i.myRequest = {body: r.body.token};
+              };
+              return {
+                addRequestData: customFn,
+                scrubFields: [
+                  'passwd',
+                  'access_token',
+                  'token',
+                  'request.cookie'
+                ]
+              };
+            },
+            'item': {
+              'with a request': {
+                topic: function(options) {
+                  var item = {
+                    request: {
+                      headers: {
+                        host: 'example.com',
+                        'x-auth-token': '12345'
+                      },
+                      protocol: 'https',
+                      url: '/some/endpoint',
+                      ip: '192.192.192.192',
+                      method: 'GET',
+                      body: {
+                        token: 'abc123',
+                        something: 'else'
+                      },
+                      user: {
+                        id: 42,
+                        email: 'fake@example.com'
+                      }
+                    },
+                    stuff: 'hey',
+                    data: {other: 'thing'}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should do what the function does': function(err, item) {
+                  assert.equal(item.data.request, undefined);
+                  assert.equal(item.data.myRequest.body, 'abc123');
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
   .export(module, {error: false});

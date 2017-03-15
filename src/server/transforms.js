@@ -100,6 +100,8 @@ function buildErrorData(item, options, callback) {
 }
 
 function addRequestData(item, options, callback) {
+  item.data = item.data || {};
+
   var req = item.request;
   if (!req) {
     callback(null, item);
@@ -107,41 +109,45 @@ function addRequestData(item, options, callback) {
   }
 
   if (options.addRequestData && _.isFunction(options.addRequestData)) {
-    options.addRequestData(item, req);
+    options.addRequestData(item.data, req);
     callback(null, item);
     return;
   }
 
   var requestData = _buildRequestData(req, options);
-  item.request = requestData;
+  item.data.request = requestData;
 
   if (req.route) {
-    item.context = req.route.path;
+    item.data.context = req.route.path;
   } else {
     try {
-      item.context = req.app.__router.matchRequest(req).path;
+      item.data.context = req.app.__router.matchRequest(req).path;
     } catch (ignore) {}
   }
 
   if (req.rollbar_person) {
-    item.person = req.rollbar_person;
+    item.data.person = req.rollbar_person;
   } else if (req.user) {
-    item.person = {id: req.user.id};
+    item.data.person = {id: req.user.id};
     if (req.user.username) {
-      item.person.username = req.user.username;
+      item.data.person.username = req.user.username;
     }
     if (req.user.email) {
-      item.person.email = req.user.email;
+      item.data.person.email = req.user.email;
     }
   } else if (req.user_id || req.userId) {
     var userId = req.user_id || req.userId;
     if (_.isFunction(userId)) {
       userId = userId();
     }
-    item.person = {id: userId};
+    item.data.person = {id: userId};
   }
 
   callback(null, item);
+}
+
+function convertToPayload(item, options, callback) {
+  callback(null, item.data);
 }
 
 /** Helpers **/
@@ -234,6 +240,7 @@ module.exports = {
   baseData: baseData,
   addMessageData: addMessageData,
   buildErrorData: buildErrorData,
-  addRequestData: addRequestData
+  addRequestData: addRequestData,
+  convertToPayload: convertToPayload
 };
 
