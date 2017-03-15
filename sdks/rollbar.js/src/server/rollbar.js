@@ -127,7 +127,8 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.baseData)
     .addTransform(transforms.addMessageData)
     .addTransform(transforms.buildErrorData)
-    .addTransform(transforms.addRequestData);
+    .addTransform(transforms.addRequestData)
+    .addTransform(transforms.convertToPayload);
 }
 
 function addPredicatesToQueue(queue) {
