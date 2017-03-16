@@ -183,6 +183,45 @@ function parseUri(str) {
   return uri;
 }
 
+function formatUrl(u, protocol) {
+  protocol = protocol || u.protocol;
+  if (!protocol && u.port) {
+    if (u.port === 80) {
+      protocol = 'http';
+    } else if (u.port === 443) {
+      protocol = 'https';
+    }
+  };
+  protocol = protocol || 'https';
+
+  if (!u.hostname) {
+    return null;
+  }
+  var result = protocol + '://' + u.hostname;
+  if (u.port) {
+    result = result + ':' + u.port;
+  }
+  if (u.path) {
+    result = result + u.path;
+  }
+  return result;
+}
+
+function stringify(obj, json, backup) {
+  var value, error;
+  try {
+    try {
+      value = json.stringify(obj);
+    } catch (e) {
+      error = e;
+      value = backup(obj);
+    }
+  } catch (e) {
+    error = e;
+  }
+  return {error: error, value: value};
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -194,6 +233,8 @@ module.exports = {
   wrapRollbarFunction: wrapRollbarFunction,
   consoleError: consoleError,
   LEVELS: LEVELS,
-  sanitizeUrl: sanitizeUrl
+  sanitizeUrl: sanitizeUrl,
+  formatUrl: formatUrl,
+  stringify: stringify
 };
 
