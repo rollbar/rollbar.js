@@ -12,7 +12,7 @@ var _ = require('./utility');
  */
 function Rollbar(context, options) {
   this.options = _.extend(true, {}, options);
-  var api = new (API(context))(options);
+  var api = new (API(context))(options.accessToken, options);
   this.queue = new Queue(Rollbar.rateLimiter, api, options); 
   this.notifier = new Notifier(this.queue, options);
 };

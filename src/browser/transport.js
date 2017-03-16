@@ -1,7 +1,7 @@
 module.exports = {
-  get: function (path, params, callback) {
+  get: function (accessToken, options, payload, callback) {
   },
 
-  post: function (path, payload, callback) {
+  post: function (accessToken, options, payload, callback) {
   }
 };
