@@ -187,7 +187,7 @@ function consoleError() {
   if (browser.ieVersion() <= 8) {
     console.error(formatArgsAsString.apply(null, arguments));
   } else {
-    console.error.apply(null, arguments);
+    console.error.apply(console, arguments);
   }
 }
 
@@ -195,7 +195,7 @@ function consoleInfo() {
   if (browser.ieVersion() <= 8) {
     console.info(formatArgsAsString.apply(null, arguments));
   } else {
-    console.info.apply(null, arguments);
+    console.info.apply(console, arguments);
   }
 }
 
@@ -203,7 +203,7 @@ function consoleLog() {
   if (browser.ieVersion() <= 8) {
     console.log(formatArgsAsString.apply(null, arguments));
   } else {
-    console.log.apply(null, arguments);
+    console.log.apply(console, arguments);
   }
 }
 
