@@ -16,6 +16,7 @@ function init(context) {
 var defaultOptions = {
   host: 'api.rollbar.com',
   path: '/api/1',
+  search: null,
   version: '1',
   protocol: 'https',
   port: 443
@@ -29,7 +30,14 @@ var defaultOptions = {
  * be different for another instance of RollbarApi.
  *
  * @param options {
- *    TBD
+ *    endpoint: an alternative endpoint to send errors to
+ *        must be a valid, fully qualified URL.
+ *        The default is: https://api.rollbar.com/api/1
+ *    proxy: if you wish to proxy requests provide an object
+ *        with the following keys:
+ *          host (required): foo.example.com
+ *          port (optional): 123
+ *          protocol (optional): https
  * }
  */
 function Api(accessToken, options) {
@@ -68,6 +76,7 @@ function getTransportFromOptions(options, defaults) {
   var protocol = defaults.protocol;
   var port = defaults.port;
   var path = defaults.path;
+  var search = defaults.search;
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -75,13 +84,15 @@ function getTransportFromOptions(options, defaults) {
     hostname = opts.hostname;
     protocol = opts.protocol.split(':')[0];
     port = opts.port;
-    path = opts.path;
+    path = opts.pathname;
+    search = opts.search;
   }
   return {
     hostname: hostname,
     protocol: protocol,
     port: port,
     path: path,
+    search: search,
     proxy: proxy
   };
 }
@@ -90,11 +101,15 @@ Api.prototype._transportOptions = function(path, method) {
   var protocol = this.transport.protocol || 'https';
   var port = this.transport.port || (protocol === 'http' ? 80 : protocol === 'https' ? 443 : undefined);
   var hostname = this.transport.hostname;
-  var path = this.transport.path + path;
+  var path = appendPathToPath(this.transport.path, path);
+  if (this.transport.search) {
+    path = path + this.transport.search;
+  }
   if (this.transport.proxy) {
     path = protocol + '://' + hostname + path;
     hostname = this.transport.proxy.host;
     port = this.transport.proxy.port;
+    protocol = this.transport.proxy.protocol || protocol;
   }
   return {
     protocol: protocol,
@@ -104,6 +119,19 @@ Api.prototype._transportOptions = function(path, method) {
     method: method
   };
 };
+
+function appendPathToPath(base, path) {
+  var baseTrailingSlash = /\/$/.test(base);
+  var pathBeginningSlash = /^\//.test(path);
+
+  if (baseTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!baseTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+
+  return base + path;
+}
 
 module.exports = function(context) {
   init(context);
