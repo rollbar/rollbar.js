@@ -1,6 +1,6 @@
 /*jslint devel: true, nomen: true, plusplus: true, regexp: true, indent: 2, maxlen: 100 */
 
-"use strict";
+'use strict';
 
 var debug = require('debug');
 var name = 'Rollbar';
