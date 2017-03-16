@@ -1,3 +1,4 @@
+// See https://nodejs.org/docs/latest/api/url.html
 function parse(url) {
   var result = {
     protocol: null, auth: null, host: null, path: null,
