@@ -183,6 +183,35 @@ function parseUri(str) {
   return uri;
 }
 
+function addParamsAndAccessTokenToPath(accessToken, options, params) {
+  params = params || {};
+  params.access_token = accessToken;
+  var paramsArray = [];
+  var k;
+  for (k in params) {
+    if (params.hasOwnProperty(k)) {
+      paramsArray.push([k, params[k]].join('='));
+    }
+  }
+  var query = '?' + paramsArray.join('&');
+
+  options = options || {};
+  options.path = options.path || '';
+  var qs = options.path.indexOf('?');
+  if (qs !== -1) {
+    var p = options.path;
+    options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
+  } else {
+    var h = options.path.indexOf('#');
+    if (h !== -1) {
+      var p = options.path;
+      options.path = p.substring(0,h) + query + p.substring(h);
+    } else {
+      options.path = options.path + query;
+    }
+  }
+}
+
 function formatUrl(u, protocol) {
   protocol = protocol || u.protocol;
   if (!protocol && u.port) {
@@ -237,6 +266,7 @@ module.exports = {
   consoleError: consoleError,
   LEVELS: LEVELS,
   sanitizeUrl: sanitizeUrl,
+  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   formatUrl: formatUrl,
   stringify: stringify
 };
