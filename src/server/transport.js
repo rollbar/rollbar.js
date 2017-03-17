@@ -19,10 +19,15 @@ var stringify = require('json-stringify-safe');
  *
  *  params is an object containing key/value pairs to be
  *    appended to the path as 'key=value&key=value'
+ *
+ * payload is an unserialized object
  */
 
 function get(accessToken, options, params, callback) {
-  _addParamsAndAccessTokenToPath(accessToken, options, params);
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+  _.addParamsAndAccessTokenToPath(accessToken, options, params);
   options.headers = _headers(accessToken, options);
   var t = _transport(options);
   if (!t) {
@@ -36,6 +41,9 @@ function get(accessToken, options, params, callback) {
 }
 
 function post(accessToken, options, payload, callback) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
   if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
@@ -90,29 +98,6 @@ function _headers(accessToken, options, data) {
   }
   headers['X-Rollbar-Access-Token'] = accessToken;
   return headers;
-}
-
-function _addParamsAndAccessTokenToPath(accessToken, options, params) {
-  params = params || {};
-  params.access_token = accessToken;
-  var paramsArray = [];
-  for (k in params) {
-    paramsArray.push([k, params[k]].join('='));
-  }
-  var query = '?' + paramsArray.join('&');
-  var qs = options.path.indexOf('?');
-  if (qs !== -1) {
-    var p = options.path;
-    options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
-  } else {
-    var h = options.path.indexOf('#');
-    if (h !== -1) {
-      var p = options.path;
-      options.path = p.substring(0,h) + query + p.substring(h);
-    } else {
-      options.path = options.path + query;
-    }
-  }
 }
 
 function _transport(options) {
