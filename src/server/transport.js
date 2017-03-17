@@ -3,7 +3,7 @@ var logger = require('./logger');
 
 var http = require('http');
 var https = require('https');
-var stringify = require('json-stringify-safe');
+var jsonBackup = require('json-stringify-safe');
 
 /*
  * accessToken may be embedded in payload but that should not
@@ -48,7 +48,7 @@ function post(accessToken, options, payload, callback) {
     return callback(new Error('Cannot send empty request'));
   }
 
-  var stringifyResult = _.stringify(payload, JSON, stringify);
+  var stringifyResult = _.stringify(payload, jsonBackup);
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
@@ -118,12 +118,12 @@ function _handleResponse(resp, callback) {
 }
 
 function _parseApiResponse(data, callback) {
-  try {
-    data = JSON.parse(data);
-  } catch (e) {
-    logger.error('Could not parse api response, err: ' + e);
-    return callback(e);
+  parsedData = _.jsonParse(data);
+  if (parsedData.error) {
+    logger.error('Could not parse api response, err: ' + parsedData.error);
+    return callback(parsedData.error);
   }
+  data = parsedData.value;
 
   if (data.err) {
     logger.error('Received error: ' + data.message);

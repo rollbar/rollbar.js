@@ -38,7 +38,7 @@ function post(accessToken, options, payload, callback) {
     return callback(new Error('Cannot send empty request'));
   }
 
-  var stringifyResult = _.stringify(payload, RollbarJSON);
+  var stringifyResult = _.stringify(payload);
   if (stringifyResult.error) {
     return callback(stringifyResult.error);
   }
@@ -62,13 +62,15 @@ function _makeRequest(accessToken, url, method, data, callback) {
           if (onreadystatechange && request.readyState === 4) {
             onreadystatechange = undefined;
 
-            var jsonResponse = RollbarJSON.parse(request.responseText);
+            var parseResponse = _.jsonParse(request.responseText);
             if (_isSuccess(request)) {
-              callback(null, jsonResponse);
+              callback(parseResponse.error, parseResponse.value);
+              return;
             } else if (_isNormalFailure(request)) {
               if (request.status === 403) {
                 // likely caused by using a server access token
-                _.consoleError('[Rollbar]:' + jsonResponse.message);
+                var message = parseResponse.value && parseResponse.value.message;
+                _.consoleError('[Rollbar]:' + message);
               }
               // return valid http status codes
               callback(new Error(String(request.status)));
@@ -129,7 +131,8 @@ function _makeRequest(accessToken, url, method, data, callback) {
           callback(new Error('Error during request'));
         };
         xdomainrequest.onload = function() {
-          callback(null, RollbarJSON.parse(xdomainrequest.responseText));
+          var parseResponse = _.jsonParse(xdomainrequest.responseText);
+          callback(parseResponse.error, parseResponse.value);
         };
         xdomainrequest.open(method, url, true);
         xdomainrequest.send(data);

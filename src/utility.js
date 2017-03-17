@@ -1,5 +1,29 @@
 var extend = require('extend');
 
+var RollbarJSON = {};
+var __initRollbarJSON = false;
+function setupJSON() {
+  if (__initRollbarJSON) {
+    return;
+  }
+  __initRollbarJSON = true;
+
+  if (isDefined(JSON)) {
+    if (isFunction(JSON.stringify)) {
+      RollbarJSON.stringify = JSON.stringify;
+    }
+    if (isFunction(JSON.parse)) {
+      RollbarJSON.parse = JSON.parse;
+    }
+  }
+  if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
+    // TODO: use my json3
+    var setupCustomJSON = require('../vendor/JSON-js/json2.js');
+    setupCustomJSON(RollbarJSON);
+  }
+}
+setupJSON();
+
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
  * given string.
@@ -42,6 +66,16 @@ function typeName(x) {
  */
 function isFunction(f) {
   return isType(f, 'function');
+}
+
+/*
+ * isDefined - a convenience function for checking if a value is not equal to undefined
+ *
+ * @param u - any value
+ * @returns true if u is anything other than undefined
+ */
+function isDefined(u) {
+  return !isType(u, 'undefined');
 }
 
 /* wrapRollbarFunction - puts a try/catch around a function, logs caught exceptions to console.error
@@ -236,10 +270,10 @@ function formatUrl(u, protocol) {
   return result;
 }
 
-function stringify(obj, json, backup) {
+function stringify(obj, backup) {
   var value, error;
   try {
-    value = json.stringify(obj);
+    value = RollbarJSON.stringify(obj);
   } catch (jsonError) {
     if (backup && isFunction(backup)) {
       try {
@@ -250,6 +284,16 @@ function stringify(obj, json, backup) {
     } else {
       error = jsonError;
     }
+  }
+  return {error: error, value: value};
+}
+
+function jsonParse(s) {
+  var value, error;
+  try {
+    value = RollbarJSON.parse(s);
+  } catch (e) {
+    error = e;
   }
   return {error: error, value: value};
 }
@@ -268,6 +312,7 @@ module.exports = {
   sanitizeUrl: sanitizeUrl,
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   formatUrl: formatUrl,
-  stringify: stringify
+  stringify: stringify,
+  jsonParse: jsonParse
 };
 
