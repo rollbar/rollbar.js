@@ -65,7 +65,7 @@ function wrapRollbarFunction(f, ctx) {
  * TODO: Fix this
  */
 function consoleError() {
-  console.error.apply(null, arguments);
+  console.error.apply(console, arguments);
 }
 
 function traverse(obj, func) {
@@ -210,14 +210,17 @@ function formatUrl(u, protocol) {
 function stringify(obj, json, backup) {
   var value, error;
   try {
-    try {
-      value = json.stringify(obj);
-    } catch (e) {
-      error = e;
-      value = backup(obj);
+    value = json.stringify(obj);
+  } catch (jsonError) {
+    if (backup && isFunction(backup)) {
+      try {
+        value = backup(obj);
+      } catch (backupError) {
+        error = backupError;
+      }
+    } else {
+      error = jsonError;
     }
-  } catch (e) {
-    error = e;
   }
   return {error: error, value: value};
 }
