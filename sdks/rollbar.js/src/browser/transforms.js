@@ -1,8 +1,6 @@
 var _ = require('../utility');
 var errorParser = require('./errorParser');
 
-var RollbarJSON = JSON; // TODO
-
 function handleItemWithError(item, options, callback) {
   if (item.err) {
     try {
@@ -112,7 +110,7 @@ function addBodyMessage(item, options, callback) {
 
   if (!message) {
     if (custom) {
-      message = RollbarJSON.stringify(custom);
+      message = _.stringify(custom);
     } else {
       message = '';
     }

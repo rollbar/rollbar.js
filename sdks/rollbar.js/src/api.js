@@ -2,19 +2,16 @@ var _ = require('./utility');
 
 var Transport = null;
 var url = null;
-var json = null;
 var jsonBackup = null;
 
 function init(context) {
   if (context == 'server') {
     Transport = require('./server/transport');
     url = require('url');
-    json = JSON;
     jsonBackup = require('json-stringify-safe');
   } else {
     Transport = require('./browser/transport');
     url = require('./browser/url');
-    json = RollbarJSON;
   }
 }
 
@@ -65,7 +62,7 @@ Api.prototype.postItem = function(data, callback) {
 
 function buildPayload(accessToken, data) {
   if (_.isType(data.context, 'object')) {
-    data.context = _.stringify(data.context, json, jsonBackup);
+    data.context = _.stringify(data.context, jsonBackup);
     if (data.context && data.context.length) {
       data.context = data.context.substr(0, 255);
     }
