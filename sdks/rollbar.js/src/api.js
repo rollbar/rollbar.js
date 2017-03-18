@@ -4,11 +4,15 @@ var Transport = null;
 var url = null;
 var jsonBackup = null;
 
-function init(context) {
-  if (context == 'server') {
+function init(context, transport, u, j) {
+  if (context === 'server') {
     Transport = require('./server/transport');
     url = require('url');
     jsonBackup = require('json-stringify-safe');
+  } else if (context === 'test') {
+    Transport = transport;
+    url = u;
+    jsonBackup = j;
   } else {
     Transport = require('./browser/transport');
     url = require('./browser/url');
@@ -16,7 +20,7 @@ function init(context) {
 }
 
 var defaultOptions = {
-  host: 'api.rollbar.com',
+  hostname: 'api.rollbar.com',
   path: '/api/1',
   search: null,
   version: '1',
@@ -37,7 +41,7 @@ var defaultOptions = {
  *        The default is: https://api.rollbar.com/api/1
  *    proxy: if you wish to proxy requests provide an object
  *        with the following keys:
- *          host (required): foo.example.com
+ *          host or hostname (required): foo.example.com
  *          port (optional): 123
  *          protocol (optional): https
  * }
@@ -62,8 +66,13 @@ Api.prototype.postItem = function(data, callback) {
 
 function buildPayload(accessToken, data) {
   if (_.isType(data.context, 'object')) {
-    data.context = _.stringify(data.context, jsonBackup);
-    if (data.context && data.context.length) {
+    var contextResult = _.stringify(data.context, jsonBackup);
+    if (contextResult.error) {
+      data.context = '';
+    } else {
+      data.context = contextResult.value || '';
+    }
+    if (data.context.length > 255) {
       data.context = data.context.substr(0, 255);
     }
   }
@@ -84,7 +93,11 @@ function getTransportFromOptions(options, defaults) {
   if (options.endpoint) {
     var opts = url.parse(options.endpoint);
     hostname = opts.hostname;
-    protocol = opts.protocol.split(':')[0];
+    if (opts.protocol && opts.protocol.split) {
+      protocol = opts.protocol.split(':')[0];
+    } else {
+      protocol = null;
+    }
     port = opts.port;
     path = opts.pathname;
     search = opts.search;
@@ -109,7 +122,7 @@ Api.prototype._transportOptions = function(path, method) {
   }
   if (this.transport.proxy) {
     path = protocol + '://' + hostname + path;
-    hostname = this.transport.proxy.host;
+    hostname = this.transport.proxy.host || this.transport.proxy.hostname;
     port = this.transport.proxy.port;
     protocol = this.transport.proxy.protocol || protocol;
   }
@@ -135,7 +148,7 @@ function appendPathToPath(base, path) {
   return base + path;
 }
 
-module.exports = function(context) {
-  init(context);
+module.exports = function(context, transport, u, j) {
+  init(context, transport, u, j);
   return Api;
 };
