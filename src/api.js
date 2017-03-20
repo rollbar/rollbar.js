@@ -1,4 +1,5 @@
 var _ = require('./utility');
+var helpers = require('./apiUtility');
 
 var Transport = null;
 var url = null;
@@ -47,7 +48,7 @@ var defaultOptions = {
  * }
  */
 function Api(accessToken, options) {
-  this.transport = getTransportFromOptions(options, defaultOptions);
+  this.transport = helpers.getTransportFromOptions(options, defaultOptions, url);
   this.accessToken = accessToken;
 }
 
@@ -57,96 +58,10 @@ function Api(accessToken, options) {
  * @param callback
  */
 Api.prototype.postItem = function(data, callback) {
-  var transportOptions = this._transportOptions('/item/', 'POST')
-  var payload = buildPayload(this.accessToken, data);
+  var transportOptions = helpers.transportOptions(this.transport, '/item/', 'POST')
+  var payload = helpers.buildPayload(this.accessToken, data, jsonBackup);
   Transport.post(this.accessToken, transportOptions, payload, callback);
 };
-
-/** Helpers **/
-
-function buildPayload(accessToken, data) {
-  if (_.isType(data.context, 'object')) {
-    var contextResult = _.stringify(data.context, jsonBackup);
-    if (contextResult.error) {
-      data.context = '';
-    } else {
-      data.context = contextResult.value || '';
-    }
-    if (data.context.length > 255) {
-      data.context = data.context.substr(0, 255);
-    }
-  }
-  return {
-    access_token: accessToken,
-    data: data
-  };
-}
-
-function getTransportFromOptions(options, defaults) {
-  var hostname = defaults.hostname;
-  var protocol = defaults.protocol;
-  var port = defaults.port;
-  var path = defaults.path;
-  var search = defaults.search;
-
-  var proxy = options.proxy;
-  if (options.endpoint) {
-    var opts = url.parse(options.endpoint);
-    hostname = opts.hostname;
-    if (opts.protocol && opts.protocol.split) {
-      protocol = opts.protocol.split(':')[0];
-    } else {
-      protocol = null;
-    }
-    port = opts.port;
-    path = opts.pathname;
-    search = opts.search;
-  }
-  return {
-    hostname: hostname,
-    protocol: protocol,
-    port: port,
-    path: path,
-    search: search,
-    proxy: proxy
-  };
-}
-
-Api.prototype._transportOptions = function(path, method) {
-  var protocol = this.transport.protocol || 'https';
-  var port = this.transport.port || (protocol === 'http' ? 80 : protocol === 'https' ? 443 : undefined);
-  var hostname = this.transport.hostname;
-  var path = appendPathToPath(this.transport.path, path);
-  if (this.transport.search) {
-    path = path + this.transport.search;
-  }
-  if (this.transport.proxy) {
-    path = protocol + '://' + hostname + path;
-    hostname = this.transport.proxy.host || this.transport.proxy.hostname;
-    port = this.transport.proxy.port;
-    protocol = this.transport.proxy.protocol || protocol;
-  }
-  return {
-    protocol: protocol,
-    hostname: hostname,
-    path: path,
-    port: port,
-    method: method
-  };
-};
-
-function appendPathToPath(base, path) {
-  var baseTrailingSlash = /\/$/.test(base);
-  var pathBeginningSlash = /^\//.test(path);
-
-  if (baseTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!baseTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-
-  return base + path;
-}
 
 module.exports = function(context, transport, u, j) {
   init(context, transport, u, j);
