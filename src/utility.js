@@ -227,16 +227,16 @@ function addParamsAndAccessTokenToPath(accessToken, options, params) {
       paramsArray.push([k, params[k]].join('='));
     }
   }
-  var query = '?' + paramsArray.join('&');
+  var query = '?' + paramsArray.sort().join('&');
 
   options = options || {};
   options.path = options.path || '';
   var qs = options.path.indexOf('?');
-  if (qs !== -1) {
+  var h = options.path.indexOf('#');
+  if (qs !== -1 && (h === -1 || h > qs)) {
     var p = options.path;
     options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
   } else {
-    var h = options.path.indexOf('#');
     if (h !== -1) {
       var p = options.path;
       options.path = p.substring(0,h) + query + p.substring(h);
