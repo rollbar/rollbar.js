@@ -21,7 +21,7 @@ var browserStackBrowsers = require('./browserstack.browsers');
 function findTests(context) {
   var files;
   if (context === 'browser') {
-    files = glob.sync('test/**/[^(server.)]*.test.js');
+    files = glob.sync('test/**/!(server.)*.test.js');
   }
   if (context !== 'browser') {
     return {};
