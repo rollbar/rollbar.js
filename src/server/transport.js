@@ -6,8 +6,7 @@ var https = require('https');
 var jsonBackup = require('json-stringify-safe');
 
 /*
- * accessToken may be embedded in payload but that should not
- *   be assumed
+ * accessToken may be embedded in payload but that should not be assumed
  *
  * options: {
  *   hostname
@@ -17,19 +16,25 @@ var jsonBackup = require('json-stringify-safe');
  *   method
  * }
  *
- *  params is an object containing key/value pairs to be
+ * params is an object containing key/value pairs to be
  *    appended to the path as 'key=value&key=value'
  *
  * payload is an unserialized object
  */
 
-function get(accessToken, options, params, callback) {
+function get(accessToken, options, params, callback, transportFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
+  options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
   options.headers = _headers(accessToken, options);
-  var t = _transport(options);
+  var t;
+  if (transportFactory) {
+    t = transportFactory(options);
+  } else {
+    t = _transport(options);
+  }
   if (!t) {
     logger.error('Unknown transport based on given protocol: ' + options.protocol);
     return callback(new Error('Unknown transport'));
@@ -37,51 +42,43 @@ function get(accessToken, options, params, callback) {
   var req = t.request(options, function(resp) {
     _handleResponse(resp, callback);
   });
+  req.on('error', function(err) {
+    callback(err);
+  });
   req.end();
 }
 
-function post(accessToken, options, payload, callback) {
+function post(accessToken, options, payload, callback, transportFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
+  options = options || {};
   if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
-
   var stringifyResult = _.stringify(payload, jsonBackup);
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
   }
   var writeData = stringifyResult.value;
-
   options.headers = _headers(accessToken, options, writeData);
-  var t = _transport(options);
+  var t;
+  if (transportFactory) {
+    t = transportFactory(options);
+  } else {
+    t = _transport(options);
+  }
   if (!t) {
     logger.error('Unknown transport based on given protocol: ' + options.protocol);
     return callback(new Error('Unknown transport'));
   }
   var req = t.request(options, function(resp) {
-    _handleResponse(resp, function(err, data) {
-      if (err) {
-        return callback(err);
-      }
-      if (data.result && data.result.uuid) {
-        logger.log([
-            'Successful api response.',
-            ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid
-        ].join(''));
-      } else {
-        logger.log('Successful api response');
-      }
-      callback(null, data.result);
-    });
+    _handleResponse(resp, _wrapPostCallback(callback));
   });
-
   req.on('error', function(err) {
     callback(err);
   });
-
   if (writeData) {
     req.write(writeData);
   }
@@ -91,10 +88,14 @@ function post(accessToken, options, payload, callback) {
 /** Helpers **/
 
 function _headers(accessToken, options, data) {
-  var headers = options.headers || {};
+  var headers = (options && options.headers) || {};
   headers['Content-Type'] = 'application/json';
   if (data) {
-    headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
+    try {
+      headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
+    } catch (e) {
+      logger.error('Could not get the content length of the data');
+    }
   }
   headers['X-Rollbar-Access-Token'] = accessToken;
   return headers;
@@ -131,6 +132,23 @@ function _parseApiResponse(data, callback) {
   }
 
   callback(null, data);
+}
+
+function _wrapPostCallback(callback) {
+  return function(err, data) {
+    if (err) {
+      return callback(err);
+    }
+    if (data.result && data.result.uuid) {
+      logger.log([
+          'Successful api response.',
+          ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid
+      ].join(''));
+    } else {
+      logger.log('Successful api response');
+    }
+    callback(null, data.result);
+  }
 }
 
 module.exports = {
