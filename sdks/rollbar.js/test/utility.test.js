@@ -238,3 +238,37 @@ describe('formatUrl', function() {
   });
 });
 
+describe('addParamsAndAccessTokenToPath', function() {
+  var accessToken = 'abc123';
+  it('should handle no params and no path', function() {
+    var options = {};
+    _.addParamsAndAccessTokenToPath(accessToken, options);
+    expect(options.path).to.eql('?access_token=abc123');
+  });
+  it('should handle existing params', function() {
+    var options = {path: '/api?a=b'};
+    _.addParamsAndAccessTokenToPath(accessToken, options);
+    expect(options.path).to.eql('/api?access_token=abc123&a=b');
+  });
+  it('should handle a hash with params', function() {
+    var options = {path: '/api?a=b#moreStuff??here'};
+    _.addParamsAndAccessTokenToPath(accessToken, options);
+    expect(options.path).to.eql('/api?access_token=abc123&a=b#moreStuff??here');
+  });
+  it('should handle a hash without params', function() {
+    var options = {path: '/api#moreStuff??here'};
+    _.addParamsAndAccessTokenToPath(accessToken, options);
+    expect(options.path).to.eql('/api?access_token=abc123#moreStuff??here');
+  });
+  it('should handle a hash without params and no ?', function() {
+    var options = {path: '/api#moreStuff'};
+    _.addParamsAndAccessTokenToPath(accessToken, options);
+    expect(options.path).to.eql('/api?access_token=abc123#moreStuff');
+  });
+  it('should handle extra params', function() {
+    var options = {path: '/api#moreStuff'};
+    _.addParamsAndAccessTokenToPath(accessToken, options, {foo: 'boo'});
+    expect(options.path).to.eql('/api?access_token=abc123&foo=boo#moreStuff');
+  });
+});
+
