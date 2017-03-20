@@ -18,7 +18,7 @@ var _ = require('../utility');
  * payload is an unserialized object
  */
 
-function get(accessToken, options, params, callback) {
+function get(accessToken, options, params, callback, requestFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -26,10 +26,10 @@ function get(accessToken, options, params, callback) {
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  _makeRequest(accessToken, url, method, null, callback);
+  _makeRequest(accessToken, url, method, null, callback, requestFactory);
 }
 
-function post(accessToken, options, payload, callback) {
+function post(accessToken, options, payload, callback, requestFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -46,11 +46,16 @@ function post(accessToken, options, payload, callback) {
   var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeRequest(accessToken, url, method, writeData, callback);
+  _makeRequest(accessToken, url, method, writeData, callback, requestFactory);
 }
 
-function _makeRequest(accessToken, url, method, data, callback) {
-  var request = _createXMLHTTPObject();
+function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
+  var request;
+  if (requestFactory) {
+    request = requestFactory();
+  } else {
+    request = _createXMLHTTPObject();
+  }
   if (!request) {
     // Give up, no way to send requests
     return callback(new Error('No way to send a request'));
@@ -145,24 +150,22 @@ function _makeRequest(accessToken, url, method, data, callback) {
   }
 }
 
-var _XMLHttpFactories = [
-function () {
-    return new XMLHttpRequest();
-  },
-  function () {
-    return new ActiveXObject('Msxml2.XMLHTTP');
-  },
-  function () {
-    return new ActiveXObject('Msxml3.XMLHTTP');
-  },
-  function () {
-    return new ActiveXObject('Microsoft.XMLHTTP');
-  }
-];
-
 function _createXMLHTTPObject() {
+  var factories = [
+    function () {
+      return new XMLHttpRequest();
+    },
+    function () {
+      return new ActiveXObject('Msxml2.XMLHTTP');
+    },
+    function () {
+      return new ActiveXObject('Msxml3.XMLHTTP');
+    },
+    function () {
+      return new ActiveXObject('Microsoft.XMLHTTP');
+    }
+  ];
   var xmlhttp;
-  var factories = _XMLHttpFactories;
   var i;
   var numFactories = factories.length;
   for (i = 0; i < numFactories; i++) {
@@ -176,7 +179,7 @@ function _createXMLHTTPObject() {
     /* eslint-enable no-empty */
   }
   return xmlhttp;
-};
+}
 
 function _isSuccess(r) {
   return r && r.status && r.status === 200;
