@@ -298,6 +298,33 @@ function jsonParse(s) {
   return {error: error, value: value};
 }
 
+function makeUnhandledStackInfo(
+  message,
+  url,
+  lineno,
+  colno,
+  error,
+  mode,
+  backupMessage,
+  errorParser
+) {
+  var location = {
+    url: url || '',
+    line: lineno
+  };
+  location.func = errorParser.guessFunctionName(location.url, location.line);
+  location.context = errorParser.gatherContext(location.url, location.line);
+  var href = document && document.location && document.location.href;
+  var useragent = window && window.navigator && window.navigator.userAgent;
+  return {
+    'mode': mode,
+    'message': error ? String(error) : (message || backupMessage),
+    'url': href,
+    'stack': [location],
+    'useragent': useragent
+  };
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -313,6 +340,7 @@ module.exports = {
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   formatUrl: formatUrl,
   stringify: stringify,
-  jsonParse: jsonParse
+  jsonParse: jsonParse,
+  makeUnhandledStackInfo: makeUnhandledStackInfo
 };
 
