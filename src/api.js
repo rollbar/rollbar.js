@@ -58,7 +58,7 @@ function Api(accessToken, options) {
  * @param callback
  */
 Api.prototype.postItem = function(data, callback) {
-  var transportOptions = helpers.transportOptions(this.transport, '/item/', 'POST')
+  var transportOptions = helpers.transportOptions(this.transport, '/item/', 'POST');
   var payload = helpers.buildPayload(this.accessToken, data, jsonBackup);
   Transport.post(this.accessToken, transportOptions, payload, callback);
 };
