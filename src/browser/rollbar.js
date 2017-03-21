@@ -3,6 +3,7 @@ var _ = require('../utility');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
+var errorParser = require('./errorParser');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, {}, options);
@@ -64,6 +65,54 @@ Rollbar.prototype.critical = function() {
   this.client.critical(item);
   return {uuid: uuid};
 };
+
+Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
+  var item;
+  if (error && _.isType(error, 'error')) {
+    item = this._createItem(message, err, context);
+  } else if (url && _.isType(url, 'error')) {
+    item = this._createItem(message, url, context);
+  } else {
+    item = this._createItem(message, context);
+    item.stackInfo = _.makeUnhandledStackInfo(
+      message,
+      url,
+      lineno,
+      colno,
+      error,
+      'onerror',
+      'uncaught exception',
+      errorParser
+    );
+  }
+  item.level = this.options.uncaughtErrorLevel;
+  this.client.log(item);
+};
+
+Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
+  var message = 'unhandled rejection was null or undefined!';
+  message = reason ? (reason.message || String(reason)) : message;
+  var context = (reason && reason._rollbarContext) || promise._rollbarContext;
+
+  var item;
+  if (reason && _.isType(reason, 'error')) {
+    item = this._createItem(message, reason, context);
+  } else {
+    item = this._createItem(message, context);
+    item.stackInfo = _.makeUnhandledStackInfo(
+      message,
+      '',
+      0,
+      0,
+      null,
+      'unhandledrejection',
+      '',
+      errorParser
+    );
+  }
+  item.level = this.options.uncaughtErrorLevel;
+  this.client.log(item);
+}
 
 /* Internal */
 
