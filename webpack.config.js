@@ -17,7 +17,7 @@ var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
 var snippetConfig = {
   name: 'snippet',
   entry: {
-    'rollbar.snippet': './src/old-browser/bundles/rollbar.snippet.js'
+    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js'
   },
   output: {
     path: outputPath,
@@ -100,7 +100,7 @@ var vanillaConfigBase = {
     configFile: path.resolve(__dirname, ".eslintrc")
   },
   entry: {
-    'rollbar': './src/old-browser/bundles/rollbar.js'
+    'rollbar': './src/browser/bundles/rollbar.js'
   },
   output: {
     path: outputPath
@@ -124,7 +124,7 @@ var UMDConfigBase = {
     configFile: path.resolve(__dirname, ".eslintrc")
   },
   entry: {
-    'rollbar.umd': ['./src/old-browser/bundles/rollbar.js']
+    'rollbar.umd': ['./src/browser/bundles/rollbar.js']
   },
   output: {
     path: outputPath,
