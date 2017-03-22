@@ -26,7 +26,6 @@ function findTests(context) {
   if (context !== 'browser') {
     return {};
   }
-  //var files = glob.sync('test-'+context+'/**/*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
