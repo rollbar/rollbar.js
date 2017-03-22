@@ -1,4 +1,5 @@
 var rollbar = require('./rollbar');
+var _ = require('../utility');
 
 window._rollbarWrappedError = null;
 
@@ -70,7 +71,7 @@ wrapper.init = function(options, shim) {
   }
 
   if (options.captureUnhandledRejections) {
-    if (shim && _.isFunction(shim._unhandledRejectionHandler) {
+    if (shim && _.isFunction(shim._unhandledRejectionHandler)) {
       window.removeEventListener('unhandledrejection', shim._unhandledRejectionHandler)
     }
 

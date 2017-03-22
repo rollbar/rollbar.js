@@ -2,9 +2,10 @@ var _ = require('../utility');
 var errorParser = require('./errorParser');
 
 function handleItemWithError(item, options, callback) {
+  item.data = item.data || {};
   if (item.err) {
     try {
-      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
+      item.data.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
     } catch (e)
     /* istanbul ignore next */
     {
@@ -17,7 +18,7 @@ function handleItemWithError(item, options, callback) {
 }
 
 function ensureItemHasSomethingToSay(item, options, callback) {
-  if (!item.message && !item.stackInfo && !item.custom) {
+  if (!item.message && !(item.data && item.data.stackInfo) && !item.custom) {
     callback(new Error('No message, stack info, or custom data'), null);
   }
   callback(null, item);
@@ -25,7 +26,7 @@ function ensureItemHasSomethingToSay(item, options, callback) {
 
 function addBaseInfo(item, options, callback) {
   var environment = options.environment || (options.payload && options.payload.environment);
-  var newItem = _.extend(true, {}, item, {
+  item.data = _.extend(true, {}, item.data, {
     environment: environment,
     endpoint: options.endpoint,
     platform: 'browser',
@@ -37,7 +38,7 @@ function addBaseInfo(item, options, callback) {
       version: options.version
     }
   });
-  callback(null, newItem);
+  callback(null, item);
 }
 
 function addRequestInfo(window) {
@@ -45,7 +46,8 @@ function addRequestInfo(window) {
     if (!window || !window.location) {
       return callback(null, item);
     }
-    item.request = {
+    item.data = item.data || {};
+    item.data.request = {
       url: window.location.href,
       query_string: window.location.search,
       user_ip: '$remote_ip'
@@ -59,7 +61,8 @@ function addClientInfo(window) {
     if (!window) {
       return callback(null, item);
     }
-    item.client = {
+    item.data = item.data || {};
+    item.data.client = {
       runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
       timestamp: Math.round(item.timestamp / 1000),
       javascript: {
@@ -72,7 +75,6 @@ function addClientInfo(window) {
         },
       }
     }
-    delete item.timestamp;
     callback(null, item);
   };
 }
@@ -89,15 +91,16 @@ function addPluginInfo(window) {
       cur = navPlugins[i];
       plugins.push({name: cur.name, description: cur.description});
     }
-    item.client = item.client || {};
-    item.client.javascript = item.client.javascript || {};
-    item.client.javascript.plugins = plugins;
+    item.data = item.data || {};
+    item.data.client = item.data.client || {};
+    item.data.client.javascript = item.data.client.javascript || {};
+    item.data.client.javascript.plugins = plugins;
     callback(null, item);
   };
 }
 
 function addBody(item, options, callback) {
-  if (item.stackInfo) {
+  if (item.data && item.data.stackInfo) {
     addBodyTrace(item, options, callback);
   } else {
     addBodyMessage(item, options, callback);
@@ -123,14 +126,15 @@ function addBodyMessage(item, options, callback) {
     result.extra = _.extend(true, {}, custom);
   }
 
-  item.body = {message: result};
+  item.data = item.data || {};
+  item.data.body = {message: result};
   callback(null, item);
 }
 
 
 function addBodyTrace(item, options, callback) {
-  var description = item.description;
-  var stackInfo = item.stackInfo;
+  var description = item.data.description;
+  var stackInfo = item.data.stackInfo;
   var custom = item.custom;
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
@@ -203,7 +207,7 @@ function addBodyTrace(item, options, callback) {
     if (custom) {
       trace.extra = _.extend(true, {}, custom);
     }
-    item.body = {trace: trace};
+    item.data.body = {trace: trace};
     callback(null, item);
   } else {
     item.message = className + ': ' + message;
@@ -221,35 +225,15 @@ function itemToPayload(item, options, callback) {
   delete item.accessToken;
 
   var payload = {
-    callback: item.callback,
-    accessToken: accessToken,
-    endpointUrl: _route(options, 'item/'),
-    payload: {
-      access_token: accessToken,
-      data: _.extend(true, item, payloadOptions)
-    }
+    access_token: accessToken,
+    data: _.extend(true, {}, item.data, payloadOptions)
   };
 
   callback(null, payload);
 }
 
-function _route(options, path) {
-  var endpoint = options.endpoint;
-
-  var endpointTrailingSlash = /\/$/.test(endpoint);
-  var pathBeginningSlash = /^\//.test(path);
-
-  if (endpointTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!endpointTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-
-  return endpoint + path;
-};
-
 function scrubPayload(item, options, callback) {
-  scrub(item.payload.data, options);
+  scrub(item.data, options);
   callback(null, item);
 }
 
@@ -257,7 +241,7 @@ function userTransform(item, options, callback) {
   var newItem = _.extend(true, {}, item);
   try {
     if (_.isFunction(options.transform)) {
-      options.transform(newItem.payload);
+      options.transform(newItem.data);
     }
   } catch (e) {
     options.transform = null; // TODO

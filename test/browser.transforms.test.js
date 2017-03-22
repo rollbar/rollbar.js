@@ -46,7 +46,7 @@ describe('handleItemWithError', function() {
     var item = itemFromArgs(args);
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
-      expect(i.stackInfo).to.eql(myTrace);
+      expect(i.data.stackInfo).to.eql(myTrace);
       done(e);
     });
   });
@@ -62,7 +62,7 @@ describe('handleItemWithError', function() {
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
       expect(i.message).to.eql('a message');
-      expect(i.stackInfo).to.be.ok();
+      expect(i.data.stackInfo).to.be.ok();
       done(e);
     });
   });
@@ -73,7 +73,7 @@ describe('handleItemWithError', function() {
     item.err = err;
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
-      expect(i.stackInfo).to.be.ok();
+      expect(i.data.stackInfo).to.be.ok();
       expect(i.message).to.eql('a message');
       done(e);
     });
@@ -103,7 +103,8 @@ describe('ensureItemHasSomethingToSay', function() {
   it('should do nothing if item has stackInfo', function(done) {
     var args = [];
     var item = itemFromArgs(args);
-    item.stackInfo = {};
+    item.data = item.data || {};
+    item.data.stackInfo = {};
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function(e, i) {
       expect(i).to.be.ok();
@@ -128,10 +129,10 @@ describe('addBaseInfo', function() {
     var item = itemFromArgs(args);
     var options = {};
     t.addBaseInfo(item, options, function(e, i) {
-      expect(i.platform).to.eql('browser');
-      expect(i.framework).to.eql('browser-js');
-      expect(i.language).to.eql('javascript');
-      expect(i.notifier.name).to.eql('rollbar-browser-js');
+      expect(i.data.platform).to.eql('browser');
+      expect(i.data.framework).to.eql('browser-js');
+      expect(i.data.language).to.eql('javascript');
+      expect(i.data.notifier.name).to.eql('rollbar-browser-js');
       done(e);
     });
   });
@@ -144,9 +145,9 @@ describe('addBaseInfo', function() {
       version: '42'
     };
     t.addBaseInfo(item, options, function(e, i) {
-      expect(i.environment).to.eql('dev');
-      expect(i.endpoint).to.eql('api.rollbar.com');
-      expect(i.notifier.version).to.eql('42');
+      expect(i.data.environment).to.eql('dev');
+      expect(i.data.endpoint).to.eql('api.rollbar.com');
+      expect(i.data.notifier.version).to.eql('42');
       done(e);
     });
   });
@@ -157,7 +158,7 @@ describe('addBaseInfo', function() {
       payload: {environment: 'dev'}
     };
     t.addBaseInfo(item, options, function(e, i) {
-      expect(i.environment).to.eql('dev');
+      expect(i.data.environment).to.eql('dev');
       done(e);
     });
   });
@@ -169,17 +170,18 @@ describe('addRequestInfo', function() {
     var item = itemFromArgs(args);
     var options = {};
     t.addRequestInfo(window)(item, options, function(e, i) {
-      expect(i.request).to.be.ok();
+      expect(i.data.request).to.be.ok();
       done(e);
     });
   });
   it('should do nothing without window', function(done) {
     var args = ['a message'];
     var item = itemFromArgs(args);
+    item.data = {};
     var options = {};
     var w = null;
     t.addRequestInfo(w)(item, options, function(e, i) {
-      expect(i.request).to.not.be.ok();
+      expect(i.data.request).to.not.be.ok();
       done(e);
     });
   });
@@ -189,10 +191,11 @@ describe('addClientInfo', function() {
   it('should do nothing without a window', function(done) {
     var args = ['a message'];
     var item = itemFromArgs(args);
+    item.data = {};
     var options = {};
     var w = null;
     t.addClientInfo(w)(item, options, function(e, i) {
-      expect(i.client).to.not.be.ok();
+      expect(i.data.client).to.not.be.ok();
       done(e);
     });
   });
@@ -201,9 +204,8 @@ describe('addClientInfo', function() {
     var item = itemFromArgs(args);
     var options = {};
     t.addClientInfo(window)(item, options, function(e, i) {
-      expect(i.client).to.be.ok();
-      expect(i.client.javascript).to.be.ok();
-      expect(i.timestamp).to.not.be.ok();
+      expect(i.data.client).to.be.ok();
+      expect(i.data.client.javascript).to.be.ok();
       done(e);
     });
   });
@@ -216,7 +218,7 @@ describe('addPluginInfo', function() {
     var options = {};
     var w = null;
     t.addPluginInfo(w)(item, options, function(e, i) {
-      expect(i.client && i.client.javascript && i.client.javascript.plugins).to.not.be.ok();
+      expect(i.data && i.data.client && i.data.client.javascript && i.data.client.javascript.plugins).to.not.be.ok();
       done(e);
     });
   });
@@ -228,9 +230,9 @@ describe('addPluginInfo', function() {
     w.navigator.plugins.push({name: 'plugin 1', description: '1'});
     w.navigator.plugins.push({name: 'plugin 2', description: '2'});
     t.addPluginInfo(w)(item, options, function(e, i) {
-      expect(i.client.javascript.plugins).to.be.ok();
-      expect(i.client.javascript.plugins.length).to.eql(2);
-      expect(i.client.javascript.plugins[0].name).to.eql('plugin 1');
+      expect(i.data.client.javascript.plugins).to.be.ok();
+      expect(i.data.client.javascript.plugins.length).to.eql(2);
+      expect(i.data.client.javascript.plugins[0].name).to.eql('plugin 1');
       done(e);
     });
   });
@@ -250,9 +252,9 @@ describe('addBody', function() {
       item.description = 'borked';
       var options = {};
       t.handleItemWithError(item, options, function(e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.data.stackInfo).to.be.ok();
         t.addBody(i, options, function(e, i) {
-          expect(i.body.trace).to.be.ok();
+          expect(i.data.body.trace).to.be.ok();
           done(e);
         });
       });
@@ -261,11 +263,12 @@ describe('addBody', function() {
       var args = ['a message'];
       var item = itemFromArgs(args);
       item.description = 'borked';
-      item.stackInfo = {name: 'bork'};
+      item.data = item.data || {};
+      item.data.stackInfo = {name: 'bork'};
       var options = {};
       t.addBody(item, options, function(e, i) {
-        expect(i.body.trace).to.not.be.ok();
-        expect(i.body.message.body).to.be.ok();
+        expect(i.data.body.trace).to.not.be.ok();
+        expect(i.data.body.message.body).to.be.ok();
         done(e);
       });
     });
@@ -276,7 +279,7 @@ describe('addBody', function() {
       var item = itemFromArgs(args);
       var options = {};
       t.addBody(item, options, function(e, i) {
-        expect(i.body.message.body).to.be.ok();
+        expect(i.data.body.message.body).to.be.ok();
         done(e);
       });
     });
@@ -285,7 +288,7 @@ describe('addBody', function() {
       var item = itemFromArgs(args);
       var options = {};
       t.addBody(item, options, function(e, i) {
-        expect(i.body.message.body).to.be.ok();
+        expect(i.data.body.message.body).to.be.ok();
         done(e);
       });
     });
@@ -294,7 +297,7 @@ describe('addBody', function() {
       var item = itemFromArgs(args);
       var options = {};
       t.addBody(item, options, function(e, i) {
-        expect(i.body.message.body).to.eql('');
+        expect(i.data.body.message.body).to.eql('');
         done(e);
       });
     });
@@ -311,9 +314,9 @@ describe('itemToPayload', function() {
       payload: {body: 'hey', x: 42}
     };
     t.itemToPayload(item, options, function(e, i) {
-      expect(i.payload.access_token).to.eql('abc123');
-      expect(i.payload.data.body).to.not.eql('hey');
-      expect(i.payload.data.x).to.eql(42);
+      expect(i.access_token).to.eql('abc123');
+      expect(i.data.body).to.not.eql('hey');
+      expect(i.data.x).to.eql(42);
       done(e);
     });
   });
@@ -321,12 +324,13 @@ describe('itemToPayload', function() {
     var args = ['a message', {custom: 'stuff'}];
     var item = itemFromArgs(args);
     item.accessToken = 'abc123';
+    item.data = {message: 'a message'};
     var options = {
       endpoint: 'api.rollbar.com/'
     };
     t.itemToPayload(item, options, function(e, i) {
-      expect(i.payload.access_token).to.eql('abc123');
-      expect(i.payload.data.message).to.eql('a message');
+      expect(i.access_token).to.eql('abc123');
+      expect(i.data.message).to.eql('a message');
       done(e);
     });
   });
@@ -342,18 +346,18 @@ describe('scrubPayload', function() {
       scrubFields: ['access_token', 'accessToken', 'scooby', 'fizz']
     };
     var payload = {
-      accessToken: accessToken,
-      payload: {access_token: accessToken, data: item}
+      access_token: accessToken,
+      data: item
     };
-    expect(payload.payload.access_token).to.eql(accessToken);
-    expect(payload.payload.data.custom.scooby).to.eql('doo');
-    expect(payload.payload.data.custom.okay).to.eql('fizz=buzz&fuzz=baz');
+    expect(payload.access_token).to.eql(accessToken);
+    expect(payload.data.custom.scooby).to.eql('doo');
+    expect(payload.data.custom.okay).to.eql('fizz=buzz&fuzz=baz');
     t.scrubPayload(payload, options, function(e, i) {
-      expect(i.payload.access_token).to.eql(accessToken);
-      expect(i.payload.data.custom.scooby).to.not.eql('doo');
-      expect(payload.payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
-      expect(payload.payload.data.custom.okay).to.match(/fizz=\**&fuzz=baz/);
-      expect(i.payload.data.message).to.eql('a message');
+      expect(i.access_token).to.eql(accessToken);
+      expect(i.data.custom.scooby).to.not.eql('doo');
+      expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
+      expect(payload.data.custom.okay).to.match(/fizz=\**&fuzz=baz/);
+      expect(i.data.message).to.eql('a message');
       done(e);
     });
   });
@@ -366,16 +370,16 @@ describe('userTransform', function() {
     var options = {
       endpoint: 'api.rollbar.com',
       transform: function(i) {
-        i.data.message = 'HELLO';
+        i.message = 'HELLO';
       }
     };
     var payload = {
-      accessToken: 'abc', 
-      payload: {access_token: '123', data: item}
+      access_token: '123',
+      data: item
     };
-    expect(payload.payload.data.message).to.not.eql('HELLO');
+    expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(payload, options, function(e, i) {
-      expect(i.payload.data.message).to.eql('HELLO');
+      expect(i.data.message).to.eql('HELLO');
       done(e);
     });
   });
@@ -387,12 +391,12 @@ describe('userTransform', function() {
       transform: 'hi there'
     };
     var payload = {
-      accessToken: 'abc', 
-      payload: {access_token: '123', data: item}
+      access_token: '123',
+      data: item
     };
-    expect(payload.payload.data.message).to.not.eql('HELLO');
+    expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(payload, options, function(e, i) {
-      expect(i.payload.data.message).to.not.eql('HELLO');
+      expect(i.data.message).to.not.eql('HELLO');
       done(e);
     });
   });
@@ -407,12 +411,12 @@ describe('userTransform', function() {
       }
     };
     var payload = {
-      accessToken: 'abc', 
-      payload: {access_token: '123', data: item}
+      access_token: '123',
+      data: item
     };
-    expect(payload.payload.data.message).to.not.eql('HELLO');
+    expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(payload, options, function(e, i) {
-      expect(i.payload.data.message).to.not.eql('HELLO');
+      expect(i.data.message).to.not.eql('HELLO');
       done(e);
     });
   });
