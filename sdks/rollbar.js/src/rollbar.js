@@ -24,6 +24,14 @@ var defaultOptions = {
 
 Rollbar.rateLimiter = new RateLimiter(defaultOptions);
 
+Rollbar.prototype.global = function(options) {
+  Rollbar.rateLimiter.configureGlobal(options);
+};
+
+Rollbar.prototype.configure = function(options) {
+  this.options = _.extend(true, {}, this.options, options);
+};
+
 Rollbar.prototype.log = function(item) {
   var level = this._defaultLogLevel();
   return this._log(level, item);
