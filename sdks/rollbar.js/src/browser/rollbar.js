@@ -193,4 +193,28 @@ Rollbar.prototype._createItem = function(args) {
   };
 };
 
+Rollbar._processShims = function(shims) {
+  var i = 0;
+  var shim, firstRollbar;
+  var options, queue, rollbar;
+  var obj, method, args;
+  while ((shim = shims[i++])) {
+    options = shim.options;
+    queue = shim.queue;
+    rollbar = new Rollbar(options);
+    while ((obj = queue.shift())) {
+      method = obj.method;
+      args = obj.args;
+      if (rollbar[method] && _.isFunction(rollbar[method])) {
+        rollbar[method].apply(rollbar, args);
+      }
+    }
+    if (!firstRollbar) {
+      firstRollbar = rollbar;
+    }
+  }
+
+  return firstRollbar;
+};
+
 module.exports = Rollbar;
