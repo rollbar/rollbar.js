@@ -12,38 +12,69 @@ function _wrapInternalErr(f) {
   };
 }
 
-function Rollbar(options) {
-  this.options = options;
-  this._rollbarOldOnError = null;
-  this._notifier = null;
-  this.init();
+function _rollbarWindowOnError(r, old, args) {
+  if (window._rollbarWrappedError) {
+    if (!args[4]) {
+      args[4] = window._rollbarWrappedError;
+    }
+    if (!args[5]) {
+      args[5] = window._rollbarWrappedError._rollbarContext;
+    }
+    window._rollbarWrappedError = null;
+  }
+
+  r.handleUncaughtError.apply(r, args);
+  if (old) {
+    old.apply(window, args);
+  }
 }
 
-Rollbar.prototype.init = function() {
-  var alias = this.options.globalAlias || 'Rollbar';
+function _buildOnErrorFn(r) {
+  var fn = function() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    _rollbarWindowOnError(r, r._rollbarOldOnError, args);
+  };
+  fn.belongsToShim = true;
+  return fn;
+}
+
+var _shimIdCounter = 0;
+function rollbar(options) {
+  this.options = options;
+  this._rollbarOldOnError = null;
+  this.shimId = _shimIdCounter++;
+  if (window && window._rollbarShims) {
+    window._rollbarShims[this.shimId] = [];
+  }
+}
+
+rollbar.init = function(window, options) {
+  var alias = options.globalAlias || 'Rollbar';
   if (typeof window[alias] === 'object') {
     return window[alias];
   }
 
-  window._rollbarShimQueue = [];
+  window._rollbarShims = {}; 
   window._rollbarWrappedError = null;
-  _wrapInternalError(function() {
-    if (this.options.captureUncaught) {
-      this._rollbarOldOnError = window.onerror;
-      window.onerror = _buildOnErrorFn(this);
 
-      var globals = ''.split(',');
+  var Rollbar = new rollbar(options);
+  return _wrapInternalError(function() {
+    if (options.captureUncaught) {
+      Rollbar._rollbarOldOnError = window.onerror;
+      window.onerror = _buildOnErrorFn(Rollbar);
+
+      var globals = 'EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload'.split(',');
       var i, global, globalLength = globals.length;
       for (i = 0; i < globalLength; ++i) {
         global = globals[i];
         if (window[global] && window[global].prototype) {
-          _extendListenerPrototype(this, window[global].prototype);
+          _extendListenerPrototype(Rollbar, window[global].prototype);
         }
       }
     }
 
-    if (this.options.captureUnhandledRejections) {
-      this._unhandledRejectionHandler = function(event) {
+    if (options.captureUnhandledRejections) {
+      Rollbar._unhandledRejectionHandler = function(event) {
         var reason = event.reason;
         var promise = event.promise;
         var detail = event.detail;
@@ -51,26 +82,21 @@ Rollbar.prototype.init = function() {
           reason = detail.reason;
           promise = detaili.promise;
         }
-        this.handleUnhandledRejction(reason, promise);
-      }.bind(this);
+        Rollbar.handleUnhandledRejection(reason, promise);
+      }
 
-      window.addEventListener('unhandledrejection', this._unhandledRejectionHandler);
+      window.addEventListener('unhandledrejection', Rollbar._unhandledRejectionHandler);
     }
 
-    window[alias] = this;
-    window._rollbarShimQueue.push({
-      shim: this,
-      method: 'new',
-      args: [],
-      ts: new Date()
-    });
-  }.bind(this))();
+    window[alias] = Rollbar;
+    return Rollbar;
+  })();
 };
 
-Rollbar.prototype.loadFull = function(window, document, immediate, options, callback) {
+rollbar.prototype.loadFull = function(window, document, immediate, options, callback) {
   var onload = function () {
     var err;
-    if (window._rollbarPayloadQueue === undefined) {
+    if (window._rollbarDidLoad === undefined) {
       var obj;
       var cb;
       var args;
@@ -78,7 +104,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, options, call
 
       err = new Error('rollbar.js did not load');
       while ((obj = window._rollbarShimQueue.shift())) {
-        args = obj.args;
+        args = obj.args || [];
         for (i = 0; i < args.length; ++i) {
           cb = args[i];
           if (typeof cb === 'function') {
@@ -119,7 +145,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, options, call
   parentNode.insertBefore(s, f);
 };
 
-Rollbar.prototype.wrap = function(f, context) {
+rollbar.prototype.wrap = function(f, context) {
   try {
     var ctxFn;
     if (typeof context === 'function') {
@@ -170,16 +196,11 @@ Rollbar.prototype.wrap = function(f, context) {
 
 // Stub out rollbar.js methods
 function stub(method) {
-  var R = Rollbar;
   return _wrapInternalErr(function() {
-    if (this._notifier) {
-      return this._notifier[method].apply(this._notifier, arguments);
-    } else {
-      var shim = this;
-      var args = Array.prototype.slice.call(arguments, 0);
-      var data = {shim: shim, method: method, args: args, ts: new Date()};
-      window._rollbarShimQueue.push(data);
-    }
+    var shim = this;
+    var args = Array.prototype.slice.call(arguments, 0);
+    var data = {shim: shim, method: method, args: args, ts: new Date()};
+    window._rollbarShims[shim.shimId].push(data);
   });
 }
 
@@ -192,7 +213,7 @@ function _extendListenerPrototype(client, prototype) {
 
     var oldRemoveEventListener = prototype.removeEventListener;
     prototype.removeEventListener = function(event, callback, bubble) {
-      oldRemoveEventListener.call(this, event, (callback && callback._wrapped) ? callback._wrapped : callback, bubble);
+      oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
     };
   }
 }
@@ -201,9 +222,7 @@ var _methods =
   'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection'.split(',');
 
 for (var i = 0; i < _methods.length; ++i) {
-  Rollbar.prototype[_methods[i]] = stub(_methods[i]);
+  rollbar.prototype[_methods[i]] = stub(_methods[i]);
 }
 
-module.exports = {
-  Rollbar: Rollbar
-};
+module.exports = rollbar;
