@@ -12,6 +12,15 @@ function Rollbar(options, client) {
   this.init(this.client);
 }
 
+Rollbar.prototype.global = function(options) {
+  this.client.global(options);
+};
+
+Rollbar.prototype.configure = function(options) {
+  this.options = _.extend(true, {}, this.options, options);
+  this.client.configure(options);
+};
+
 Rollbar.prototype.init = function(client) {
   addTransformsToNotifier(client.notifier);
   addPredicatesToQueue(client.queue);

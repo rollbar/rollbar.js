@@ -14,6 +14,15 @@ function Rollbar(accessToken, options, client) {
   this.initialize(options, client);
 }
 
+Rollbar.prototype.global = function(options) {
+  this.client.global(options);
+};
+
+Rollbar.prototype.configure = function(options) {
+  this.options = _.extend(true, {}, this.options, options);
+  this.client.configure(options);
+};
+
 Rollbar.prototype.initialize = function(options, client) {
   this.options = _.extend(true, {}, this.options, options);
 
