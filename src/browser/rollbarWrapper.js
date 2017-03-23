@@ -15,13 +15,14 @@ function _setupForwarding(prototype) {
     };
   };
 
-  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem'.split(',');
+  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull'.split(',');
   for (var i=0; i<_methods.length; i++) {
     prototype[_methods[i]] = _forward(_methods[i]);
   }
 }
 
 RollbarWrap.prototype._swapAndProcessMessages = function(impl, messages) {
+  console.log('_swap and process called with ', messages);
   this.impl = impl(this.options, this.client);
   var msg, method, args;
   while ((msg = messages.shift())) {
@@ -31,6 +32,7 @@ RollbarWrap.prototype._swapAndProcessMessages = function(impl, messages) {
       this[method].apply(this, args);
     }
   }
+  return this;
 };
 
 module.exports = RollbarWrap;

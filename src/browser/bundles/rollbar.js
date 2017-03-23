@@ -1,13 +1,22 @@
-var globalRollbar = require('../globalRollbar');
+var rollbar = require('../rollbar');
+var globals = require('../globalSetup');
 
-var options = window._rollbarOptions;
+var options = window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';
 var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
 
 if (!shimRunning && options) {
-  var rollbar = globalRollbar.wrapper.init(options);
-  module.exports = rollbar;
+  var Rollbar = new rollbar(options);
+  if (options.captureUncaught) {
+    globals.captureUncaughtExceptions(window, Rollbar);
+    globals.wrapGlobals(window, Rollbar);
+  }
+  if (options.captureUnhandledRejections) {
+    globals.captureUnhandledRejections(window, Rollbar);
+  }
+  window[alias] = Rollbar;
 } else {
-  window._rollbar = globalRollbar.wrapper;
-  module.exports = globalRollbar.wrapper;
+  window._rollbar = rollbar;
 }
+
+module.exports = rollbar;
