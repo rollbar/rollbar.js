@@ -134,9 +134,9 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addClientInfo(window))
     .addTransform(transforms.addPluginInfo(window))
     .addTransform(transforms.addBody)
-    .addTransform(transforms.itemToPayload)
     .addTransform(transforms.scrubPayload)
-    .addTransform(transforms.userTransform);
+    .addTransform(transforms.userTransform)
+    .addTransform(transforms.itemToPayload);
 }
 
 function addPredicatesToQueue(queue) {
