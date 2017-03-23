@@ -163,7 +163,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
 	  var item;
-	  console.log('args:', message, url, lineno, colno, error, context);
 	  if (error && _.isType(error, 'error')) {
 	    item = this._createItem([message, err, context]);
 	  } else if (url && _.isType(url, 'error')) {
@@ -15182,7 +15181,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    method = msg.method;
 	    args = msg.args;
 	    if (this[method] && typeof this[method] === 'function') {
-	      console.log('calling:', method, 'with: ', args);
 	      this[method].apply(this, args);
 	    }
 	  }
