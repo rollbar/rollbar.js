@@ -92,10 +92,12 @@ function shouldSendValue(error, shouldSend, globalRateLimit) {
 
 function rateLimitPayload(globalRateLimit) {
   return {
-    message: 'maxItems has been hit. Ignoring errors until reset.',
-    err: null,
-    custom: {
-      maxItems: globalRateLimit
+    data: {
+      message: 'maxItems has been hit. Ignoring errors until reset.',
+      err: null,
+      custom: {
+        maxItems: globalRateLimit
+      }
     },
     ignoreRateLimit: true
   };

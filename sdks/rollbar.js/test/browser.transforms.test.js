@@ -314,9 +314,8 @@ describe('itemToPayload', function() {
       payload: {body: 'hey', x: 42}
     };
     t.itemToPayload(item, options, function(e, i) {
-      expect(i.access_token).to.eql('abc123');
-      expect(i.data.body).to.not.eql('hey');
-      expect(i.data.x).to.eql(42);
+      expect(i.body).to.not.eql('hey');
+      expect(i.x).to.eql(42);
       done(e);
     });
   });
@@ -329,8 +328,7 @@ describe('itemToPayload', function() {
       endpoint: 'api.rollbar.com/'
     };
     t.itemToPayload(item, options, function(e, i) {
-      expect(i.access_token).to.eql('abc123');
-      expect(i.data.message).to.eql('a message');
+      expect(i.message).to.eql('a message');
       done(e);
     });
   });

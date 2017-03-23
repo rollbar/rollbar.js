@@ -215,23 +215,6 @@ function addBodyTrace(item, options, callback) {
   }
 }
 
-function itemToPayload(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
-  }
-
-  var accessToken = item.accessToken;
-  delete item.accessToken;
-
-  var payload = {
-    access_token: accessToken,
-    data: _.extend(true, {}, item.data, payloadOptions)
-  };
-
-  callback(null, payload);
-}
-
 function scrubPayload(item, options, callback) {
   scrub(item.data, options);
   callback(null, item);
@@ -250,6 +233,16 @@ function userTransform(item, options, callback) {
     return;
   }
   callback(null, newItem);
+}
+
+function itemToPayload(item, options, callback) {
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+
+  var data = _.extend(true, {}, item.data, payloadOptions);
+  callback(null, data);
 }
 
 /** Helpers **/
@@ -329,7 +322,7 @@ module.exports = {
   addClientInfo: addClientInfo,
   addPluginInfo: addPluginInfo,
   addBody: addBody,
-  itemToPayload: itemToPayload,
   scrubPayload: scrubPayload,
-  userTransform: userTransform
+  userTransform: userTransform,
+  itemToPayload: itemToPayload
 };
