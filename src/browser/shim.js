@@ -15,18 +15,19 @@ function _wrapInternalErr(f) {
 }
 
 var _shimIdCounter = 0;
-function Shim(options) {
+function Shim(options, wrap) {
   this.options = options;
   this._rollbarOldOnError = null;
-  this.shimId = _shimIdCounter++;
+  var shimId = _shimIdCounter++;
+  this.shimId = function() { return shimId; };
   if (window && window._rollbarShims) {
-    window._rollbarShims[this.shimId] = {handler: this, messages: []};
+    window._rollbarShims[shimId] = {handler: wrap, messages: []};
   }
 }
 
 var Wrapper = require('./rollbarWrapper');
-var ShimImpl = function(options) {
-  return new Shim(options);
+var ShimImpl = function(options, client, wrap) {
+  return new Shim(options, wrap);
 };
 var Rollbar = Wrapper.bind(null, ShimImpl);
 
@@ -44,7 +45,7 @@ Shim.init = function(window, options) {
     if (options.captureUncaught) {
       handler._rollbarOldOnError = window.onerror;
       globals.captureUncaughtExceptions(window, handler, true);
-     globals.wrapGlobals(window, handler);
+      globals.wrapGlobals(window, handler);
     }
 
     if (options.captureUnhandledRejections) {
@@ -162,8 +163,8 @@ function stub(method) {
   return _wrapInternalErr(function() {
     var shim = this;
     var args = Array.prototype.slice.call(arguments, 0);
-    var data = {shim: shim, method: method, args: args, ts: new Date(), test: 'yo'};
-    window._rollbarShims[shim.shimId].messages.push(data);
+    var data = {shim: shim, method: method, args: args, ts: new Date()};
+    window._rollbarShims[this.shimId()].messages.push(data);
   });
 }
 
