@@ -175,4 +175,7 @@ for (var i = 0; i < _methods.length; ++i) {
   Shim.prototype[_methods[i]] = stub(_methods[i]);
 }
 
-module.exports = Shim;
+module.exports = {
+  Shim: Shim,
+  Rollbar: Rollbar
+};

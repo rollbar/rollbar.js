@@ -16,7 +16,7 @@ if (!shimRunning && options) {
   }
   window[alias] = Rollbar;
 } else {
-  window._rollbar = rollbar;
+  window.rollbar = rollbar;
   window._rollbarDidLoad = true;
 }
 
