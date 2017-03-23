@@ -103,4 +103,18 @@ describe('parse', function() {
     expect(p.query).to.not.be.ok();
     expect(p.hash).to.eql('#hashash');
   });
+  it('should handle missing protocol without slashes', function() {
+    var u = 'api.rollbar.com/api/1';
+    var p = url.parse(u);
+    expect(p.protocol).to.not.be.ok();
+    expect(p.host).to.eql('api.rollbar.com');
+    expect(p.hostname).to.eql('api.rollbar.com');
+    expect(p.path).to.eql('/api/1');
+    expect(p.pathname).to.eql('/api/1');
+    expect(p.auth).to.not.be.ok();
+    expect(p.port).to.not.be.ok();
+    expect(p.search).to.not.be.ok();
+    expect(p.query).to.not.be.ok();
+    expect(p.hash).to.not.be.ok();
+  });
 });

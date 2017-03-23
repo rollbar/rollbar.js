@@ -10,8 +10,10 @@ function parse(url) {
   i = url.indexOf('//');
   if (i !== -1) {
     result.protocol = url.substring(0,i);
+    last = i+2;
+  } else {
+    last = 0;
   }
-  last = i+2;
   
   i = url.indexOf('@', last);
   if (i !== -1) {
