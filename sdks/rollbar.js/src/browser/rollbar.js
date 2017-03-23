@@ -6,7 +6,7 @@ var predicates = require('./predicates');
 var errorParser = require('./errorParser');
 
 function Rollbar(options, client) {
-  this.options = _.extend(true, {}, options);
+  this.options = _.extend(true, defaultOptions, options);
   var context = 'browser';
   this.client = client || new Client(context, this.options);
   this.init(this.client);
@@ -200,6 +200,15 @@ Rollbar.prototype._createItem = function(args) {
     callback: callback,
     uuid: _.uuid4()
   };
+};
+
+var defaultOptions = {
+  version: __NOTIFIER_VERSION__,
+  scrubFields: __DEFAULT_BROWSER_SCRUB_FIELDS__,
+  logLevel: __DEFAULT_LOG_LEVEL__,
+  reportLevel: __DEFAULT_REPORT_LEVEL__,
+  uncaughtErrorLevel: __DEFAULT_UNCAUGHT_ERROR_LEVEL,
+  endpoint: __DEFAULT_ENDPOINT__
 };
 
 var Wrapper = require('./rollbarWrapper');
