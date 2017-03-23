@@ -8,7 +8,7 @@ module.exports = function(options) {
       var options = options || {};
       var alias = options.globalAlias || 'Rollbar';
 
-      var rollbar = window._rollbar;
+      var rollbar = window.rollbar;
       var realImpl = function(o) {
         return new rollbar(o);
       };

@@ -78,7 +78,7 @@ Rollbar.prototype.critical = function() {
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
   var item;
   if (error && _.isType(error, 'error')) {
-    item = this._createItem([message, err, context]);
+    item = this._createItem([message, error, context]);
   } else if (url && _.isType(url, 'error')) {
     item = this._createItem([message, url, context]);
   } else {
