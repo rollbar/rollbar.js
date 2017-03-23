@@ -78,11 +78,11 @@ Rollbar.prototype.critical = function() {
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
   var item;
   if (error && _.isType(error, 'error')) {
-    item = this._createItem(message, err, context);
+    item = this._createItem([message, err, context]);
   } else if (url && _.isType(url, 'error')) {
-    item = this._createItem(message, url, context);
+    item = this._createItem([message, url, context]);
   } else {
-    item = this._createItem(message, context);
+    item = this._createItem([message, context]);
     item.stackInfo = _.makeUnhandledStackInfo(
       message,
       url,
@@ -105,9 +105,9 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
 
   var item;
   if (reason && _.isType(reason, 'error')) {
-    item = this._createItem(message, reason, context);
+    item = this._createItem([message, reason, context]);
   } else {
-    item = this._createItem(message, context);
+    item = this._createItem([message, context]);
     item.stackInfo = _.makeUnhandledStackInfo(
       message,
       '',
