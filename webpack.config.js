@@ -39,7 +39,7 @@ var snippetConfig = {
 var pluginConfig = {
   name: 'plugins',
   entry: {
-    'jquery': './src/old-browser/plugins/jquery.js'
+    'jquery': './src/browser/plugins/jquery.js'
   },
   output: {
     path: outputPath + '/plugins/',
@@ -62,26 +62,10 @@ var testsConfig = {
   name: 'tests',
   entry: {
     notifier: './test/notifier.test.js',
-    /*
-    browserify: './test-browser/browserify.test.js',
-    error_parser: './test-browser/error_parser.test.js',
-    json: './test-browser/json.test.js',
-    mootools: './test-browser/mootools.test.js',
-    notifier: './test-browser/notifier.test.js',
-    notifier_ratelimit: './test-browser/notifier_ratelimit.test.js',
-    rollbar: './test-browser/rollbar.test.js',
-    shim: './test-browser/shim.test.js',
-    shimalias: './test-browser/shimalias.test.js',
-    util: './test-browser/util.test.js',
-    xhr: './test-browser/xhr.test.js',
-    */
   },
   plugins: [defaultsPlugin],
   output: {
     path: 'test/',
-    /*
-    path: 'test-browser/',
-    */
     filename: '[name].bundle.js',
   },
   module: {
