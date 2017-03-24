@@ -123,6 +123,55 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   this.client.log(item);
 }
 
+Rollbar.prototype.wrap = function(f, context) {
+  try {
+    var ctxFn;
+    if (typeof context === 'function') {
+      ctxFn = context;
+    } else {
+      ctxFn = function() { return context || {}; };
+    }
+
+    if (typeof f !== 'function') {
+      return f;
+    }
+
+    if (f._isWrap) {
+      return f;
+    }
+
+    if (!f._wrapped) {
+      f._wrapped = function () {
+        try {
+          return f.apply(this, arguments);
+        } catch(e) {
+          if (typeof e === 'string') {
+            e = new String(e);
+          }
+          e._rollbarContext = ctxFn() || {};
+          e._rollbarContext._wrappedSource = f.toString();
+
+          window._rollbarWrappedError = e;
+          throw e;
+        }
+      };
+
+      f._wrapped._isWrap = true;
+
+      for (var prop in f) {
+        if (f.hasOwnProperty(prop)) {
+          f._wrapped[prop] = f[prop];
+        }
+      }
+    }
+
+    return f._wrapped;
+  } catch (e) {
+    // Return the original function if the wrap fails.
+    return f;
+  }
+};
+
 /* Internal */
 
 function addTransformsToNotifier(notifier) {
