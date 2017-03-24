@@ -17,8 +17,7 @@ function setupJSON() {
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    // TODO: use my json3
-    var setupCustomJSON = require('../vendor/JSON-js/json2.js');
+    var setupCustomJSON = require('../vendor/JSON-js/json3.js');
     setupCustomJSON(RollbarJSON);
   }
 }
