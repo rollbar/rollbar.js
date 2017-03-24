@@ -272,3 +272,28 @@ describe('addParamsAndAccessTokenToPath', function() {
   });
 });
 
+describe('json3', function() {
+  var setupCustomJSON = require('../vendor/JSON-js/json3.js');
+  it('should replace stringify if not there', function() {
+    var j = {};
+    setupCustomJSON(j);
+    expect(j.stringify({a: 1})).to.eql('{"a":1}');
+  });
+  it('should replace parse if not there', function() {
+    var j = {};
+    setupCustomJSON(j);
+    expect(j.parse('{"a":1}').a).to.eql(1);
+  });
+  it('should not replace parse if there', function() {
+    var j = {parse: function(s) { return 42; }};
+    setupCustomJSON(j);
+    expect(j.parse('{"a":1}')).to.eql(42);
+    expect(j.stringify({a: 1})).to.eql('{"a":1}');
+  });
+  it('should not replace stringify if there', function() {
+    var j = {stringify: function(s) { return '42'; }};
+    setupCustomJSON(j);
+    expect(j.stringify({a: 1})).to.eql('42');
+    expect(j.parse('{"a":1}').a).to.eql(1);
+  });
+});
