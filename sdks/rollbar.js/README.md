@@ -158,7 +158,7 @@ var _rollbarConfig = {
 
 By default, the snippet loads the full Rollbar source **asynchronously**. You can disable this which will cause the browser to download and evaluate the full rollbar source before evaluating the rest of the page.
 
-More information can be found here: http://www.w3schools.com/tags/att_script_async.asp
+More information can be found here: http://www.w3schools.com/tags/att_script_async.asp and https://www.w3schools.com/tags/att_script_defer.asp
 
 ```js
 var _rollbarConfig = {
