@@ -649,7 +649,7 @@ try {
 ```
 
 
-### Rollbar.debug/info/warn/warning/error/critical()
+### Rollbar.debug/ info/ warn/ warning/ error/ critical()
 
 These methods are all shorthand for `Rollbar.log()` with the appropriate log level set.
 
