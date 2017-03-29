@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "2.0.0",
+  "version": "2.0.0-rc1",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -126,20 +126,28 @@
         "omniauth.auth",
         "cookie",
         "oauth-access-token",
+        "x-access-token",
         "x_csrf_token",
         "http_x_csrf_token",
         "x-csrf-token"
       ],
       "scrubFields": [
+        "pw",
+        "pass",
         "passwd",
         "password",
         "password_confirmation",
-        "secret",
+        "passwordConfirmation",
         "confirm_password",
-        "password_confirmation",
+        "confirmPassword",
+        "secret",
         "secret_token",
+        "secretToken",
+        "secret_key",
+        "secretKey",
         "api_key",
         "access_token",
+        "accessToken",
         "authenticity_token",
         "oauth_token",
         "token",
