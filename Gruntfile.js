@@ -19,13 +19,10 @@ var browserStackBrowsers = require('./browserstack.browsers');
 
 
 function findTests(context) {
-  var files;
-  if (context === 'browser') {
-    files = glob.sync('test/**/!(server.)*.test.js');
-  }
   if (context !== 'browser') {
     return {};
   }
+  var files = glob.sync('test/**/!(server.)*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
