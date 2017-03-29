@@ -4,7 +4,7 @@ function buildPayload(accessToken, data, jsonBackup) {
   if (_.isType(data.context, 'object')) {
     var contextResult = _.stringify(data.context, jsonBackup);
     if (contextResult.error) {
-      data.context = '';
+      data.context = 'Error: could not serialize \'context\'';
     } else {
       data.context = contextResult.value || '';
     }
