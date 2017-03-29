@@ -15,6 +15,11 @@ function Rollbar(context, options) {
   var api = new (API(context))(options.accessToken, options);
   this.queue = new Queue(Rollbar.rateLimiter, api, options); 
   this.notifier = new Notifier(this.queue, options);
+  if (context === 'server') {
+    this.logger = require('./server/logger');
+  } else {
+    this.logger = require('./browser/logger');
+  }
 };
 
 var defaultOptions = {
@@ -64,7 +69,7 @@ Rollbar.prototype.critical = function(item) {
 /* Internal */
 
 Rollbar.prototype._log = function(defaultLevel, item) {
-  _.wrapRollbarFunction(function() {
+  _.wrapRollbarFunction(this.logger, function() {
     var callback = null;
     if (item.callback) {
       callback = item.callback;

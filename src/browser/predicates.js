@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var logger = require('./logger');
 
 function checkIgnore(item, settings) {
   var level = item.level;
@@ -27,7 +28,7 @@ function userCheckIgnore(item, settings) {
     }
   } catch (e) {
     settings.checkIgnore = null; // TODO
-    _.consoleError('[Rollbar]: Error while calling custom checkIgnore(), removing', e);
+    logger.error('Error while calling custom checkIgnore(), removing', e);
   }
   return true;
 }
@@ -70,7 +71,7 @@ function urlIsWhitelisted(item, settings) {
   /* istanbul ignore next */
   {
     settings.hostWhiteList = null; // TODO
-    _.consoleError("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+    logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
     return true;
   }
   return false;
@@ -118,7 +119,7 @@ function messageIsIgnored(item, settings) {
   /* istanbul ignore next */
   {
     settings.ignoredMessages = null; // TODO
-    _.consoleError("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+    logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
   }
 
   return !messageIsIgnored;

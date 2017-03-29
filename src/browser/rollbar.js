@@ -1,5 +1,6 @@
 var Client = require('../rollbar');
 var _ = require('../utility');
+var logger = require('./logger');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
@@ -209,7 +210,7 @@ Rollbar.prototype._createItem = function(args) {
         message ? extraArgs.push(arg) : message = arg;
         break;
       case 'function':
-        callback = _.wrapRollbarFunction(arg, this);
+        callback = _.wrapRollbarFunction(logger, arg, this);
         break;
       case 'date':
         extraArgs.push(arg);

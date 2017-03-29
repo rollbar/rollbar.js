@@ -82,23 +82,15 @@ function isDefined(u) {
  * @param f - a function
  * @param ctx - an optional context to bind the function to
  */
-function wrapRollbarFunction(f, ctx) {
+function wrapRollbarFunction(logger, f, ctx) {
   return function() {
     var self = ctx || this;
     try {
       return f.apply(self, arguments);
     } catch (e) {
-      consoleError('[Rollbar]:', e);
+      logger.error(e);
     }
   };
-}
-
-/*
- * consoleError - safe console.error
- * TODO: Fix this
- */
-function consoleError() {
-  console.error.apply(console, arguments);
 }
 
 function traverse(obj, func) {
@@ -333,7 +325,6 @@ module.exports = {
   redact: redact,
   uuid4: uuid4,
   wrapRollbarFunction: wrapRollbarFunction,
-  consoleError: consoleError,
   LEVELS: LEVELS,
   sanitizeUrl: sanitizeUrl,
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
@@ -342,4 +333,3 @@ module.exports = {
   jsonParse: jsonParse,
   makeUnhandledStackInfo: makeUnhandledStackInfo
 };
-

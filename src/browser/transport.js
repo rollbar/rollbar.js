@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var logger = require('./logger');
 
 /*
  * accessToken may be embedded in payload but that should not
@@ -75,7 +76,7 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory) 
               if (request.status === 403) {
                 // likely caused by using a server access token
                 var message = parseResponse.value && parseResponse.value.message;
-                _.consoleError('[Rollbar]:' + message);
+                logger.error(message);
               }
               // return valid http status codes
               callback(new Error(String(request.status)));
