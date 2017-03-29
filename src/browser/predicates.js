@@ -39,16 +39,16 @@ function urlIsWhitelisted(item, settings) {
 
   try {
     whitelist = settings.hostWhiteList;
+    listLength = whitelist && whitelist.length;
     trace = item && item.data && item.data.body && item.data.body.trace;
 
-    if (!whitelist || whitelist.length === 0) {
+    if (!whitelist || listLength === 0) {
       return true;
     }
     if (!trace || !trace.frames) {
       return true;
     }
 
-    listLength = whitelist.length;
     frameLength = trace.frames.length;
     for (i = 0; i < frameLength; i++) {
       frame = trace.frames[i];
