@@ -21,7 +21,7 @@ app.get('*', function response(req, res) {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.use(rollbar.errorHandler('1d5fbaf040c2418c9ea8c9fa8ffc1241'));
+app.use(rollbar.errorHandler('POST_SERVER_ITEM_TOKEN'));
 
 app.listen(port, '0.0.0.0', function onStart(err) {
   if (err) {
