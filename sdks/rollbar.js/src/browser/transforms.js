@@ -1,5 +1,6 @@
 var _ = require('../utility');
 var errorParser = require('./errorParser');
+var logger = require('./logger');
 
 function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
@@ -9,7 +10,7 @@ function handleItemWithError(item, options, callback) {
     } catch (e)
     /* istanbul ignore next */
     {
-      _.consoleError('[Rollbar]: Error while parsing the error object.', e);
+      logger.error('Error while parsing the error object.', e);
       item.message = item.err.message || item.err.description || item.message || String(item.err);
       delete item.err;
     }
@@ -228,7 +229,7 @@ function userTransform(item, options, callback) {
     }
   } catch (e) {
     options.transform = null; // TODO
-    _.consoleError('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
+    logger.error('Error while calling custom transform() function. Removing custom transform().', e);
     callback(null, item);
     return;
   }
