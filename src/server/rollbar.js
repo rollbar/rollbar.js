@@ -11,25 +11,9 @@ function Rollbar(accessToken, options, client) {
   options = options || {};
   options.accessToken = accessToken;
   this.context = 'server';
-  this.initialize(options, client);
-}
-
-Rollbar.prototype.global = function(options) {
-  this.client.global(options);
-};
-
-Rollbar.prototype.configure = function(options) {
   this.options = _.extend(true, {}, this.options, options);
-  this.client.configure(options);
-};
-
-Rollbar.prototype.initialize = function(options, client) {
-  this.options = _.extend(true, {}, this.options, options);
-
-  options.environment = options.environment || process.env.NODE_ENV || 'unspecified';
-
+  this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
   this.client = client || new Client(this.context, this.options);
-
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 
@@ -39,6 +23,15 @@ Rollbar.prototype.initialize = function(options, client) {
   if (this.optiions.handleUnhandledRejections) {
     this.handleUnhandledRejects();
   }
+}
+
+Rollbar.prototype.global = function(options) {
+  this.client.global(options);
+};
+
+Rollbar.prototype.configure = function(options) {
+  this.options = _.extend(true, {}, this.options, options);
+  this.client.configure(options);
 };
 
 Rollbar.prototype.log = function() {
