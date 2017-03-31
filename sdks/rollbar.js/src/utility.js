@@ -316,7 +316,18 @@ function makeUnhandledStackInfo(
   };
 }
 
+/*
+ * get - given an obj/array and a keypath, return the value at that keypath or
+ *       undefined if not possible.
+ *
+ * @param obj - an object or array
+ * @param path - a string of keys separated by '.' such as 'plugin.jquery.0.message'
+ *    which would correspond to 42 in `{plugin: {jquery: [{message: 42}]}}`
+ */
 function get(obj, path) {
+  if (!obj) {
+    return undefined;
+  }
   var keys = path.split('.');
   var result = obj;
   try {

@@ -10,8 +10,7 @@ function checkIgnore(item, settings) {
     return false;
   }
 
-  var plugins = settings.plugins || {};
-  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors) {
+  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
     try {
       return !(item.data.body.message.extra.isAjax);
     } catch (e) {
@@ -87,18 +86,9 @@ function messageIsIgnored(item, settings) {
       return true;
     }
 
-    body =  item &&
-            item.data &&
-            item.data.body;
-
-    traceMessage =  body && 
-                    body.trace &&
-                    body.trace.exception && 
-                    body.trace.exception.message;
-    
-    bodyMessage = body && 
-                  body.message && 
-                  body.message.body;
+    body = _.get(item, 'data.body');
+    traceMessage = _.get(body, 'trace.exception.message');
+    bodyMessage = _.get(body, 'message.body');
 
     exceptionMessage = traceMessage || bodyMessage;
 
