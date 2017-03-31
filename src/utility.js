@@ -77,6 +77,16 @@ function isDefined(u) {
   return !isType(u, 'undefined');
 }
 
+/*
+ * isError - convenience function for checking if a value is of an error type
+ *
+ * @param e - any value
+ * @returns true if e is an error
+ */
+function isError(e) {
+  return isType(e, 'error');
+}
+
 /* wrapRollbarFunction - puts a try/catch around a function, logs caught exceptions to console.error
  *
  * @param f - a function
@@ -344,6 +354,7 @@ module.exports = {
   isType: isType,
   typeName: typeName,
   isFunction: isFunction,
+  isError: isError,
   extend: extend,
   traverse: traverse,
   redact: redact,
