@@ -316,6 +316,19 @@ function makeUnhandledStackInfo(
   };
 }
 
+function get(obj, path) {
+  var keys = path.split('.');
+  var result = obj;
+  try {
+    for (var i = 0, l = keys.length; i < l; ++i) {
+      result = result[keys[i]];
+    }
+  } catch (e) {
+    result = undefined;
+  }
+  return result;
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -331,5 +344,6 @@ module.exports = {
   formatUrl: formatUrl,
   stringify: stringify,
   jsonParse: jsonParse,
-  makeUnhandledStackInfo: makeUnhandledStackInfo
+  makeUnhandledStackInfo: makeUnhandledStackInfo,
+  get: get
 };

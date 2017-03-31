@@ -297,3 +297,18 @@ describe('json3', function() {
     expect(j.parse('{"a":1}').a).to.eql(1);
   });
 });
+
+describe('get', function() {
+  it ('should get a deeply nested value', function() {
+    var o = {a: {b: {c: {d: 42}}}};
+    expect(_.get(o, 'a.b.c.d')).to.eql(42);
+  });
+  it('should be undefined for a missing value', function() {
+    var o = {a: {b: {c: {d: 42}}}};
+    expect(_.get(o, 'a.b.x.d')).to.not.be.ok();
+  });
+  it('should handle bad input', function() {
+    var o = 'hello';
+    expect(_.get(o, 'oops.1.2.3')).to.not.be.ok();
+  });
+});
