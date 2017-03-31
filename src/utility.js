@@ -341,13 +341,40 @@ function get(obj, path) {
   var keys = path.split('.');
   var result = obj;
   try {
-    for (var i = 0, l = keys.length; i < l; ++i) {
+    for (var i = 0, len = keys.length; i < len; ++i) {
       result = result[keys[i]];
     }
   } catch (e) {
     result = undefined;
   }
   return result;
+}
+
+function set(obj, path, value) {
+  if (!obj) {
+    return;
+  }
+  var keys = path.split('.');
+  var len = keys.length;
+  if (len < 1) {
+    return;
+  }
+  if (len === 1) {
+    obj[keys[0]] = value;
+    return;
+  }
+  try {
+    var temp = obj[keys[0]] || {};
+    var replacement = temp;
+    for (var i = 1; i < len-1; i++) {
+      temp[keys[i]] = temp[keys[i]] || {};
+      temp = temp[keys[i]];
+    }
+    temp[keys[len-1]] = value;
+    obj[keys[0]] = replacement;
+  } catch (e) {
+    return;
+  }
 }
 
 module.exports = {
@@ -367,5 +394,6 @@ module.exports = {
   stringify: stringify,
   jsonParse: jsonParse,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
-  get: get
+  get: get,
+  set: set
 };
