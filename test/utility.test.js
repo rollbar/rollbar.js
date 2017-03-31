@@ -311,4 +311,8 @@ describe('get', function() {
     var o = 'hello';
     expect(_.get(o, 'oops.1.2.3')).to.not.be.ok();
   });
+  it('should actually work with arrays too', function() {
+    var o = {a: [{b: {c: [1, {d: 42}, null]}}, 99]};
+    expect(_.get(o, 'a.0.b.c.1.d')).to.eql(42);
+  });
 });
