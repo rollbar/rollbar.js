@@ -47,12 +47,11 @@ function addRequestInfo(window) {
     if (!window || !window.location) {
       return callback(null, item);
     }
-    item.data = item.data || {};
-    item.data.request = {
+    _.set(item, 'data.request', {
       url: window.location.href,
       query_string: window.location.search,
       user_ip: '$remote_ip'
-    };
+    });
     callback(null, item);
   };
 }
@@ -62,8 +61,7 @@ function addClientInfo(window) {
     if (!window) {
       return callback(null, item);
     }
-    item.data = item.data || {};
-    item.data.client = {
+    _.set(item, 'data.client', {
       runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
       timestamp: Math.round(item.timestamp / 1000),
       javascript: {
@@ -75,7 +73,7 @@ function addClientInfo(window) {
           height: window.screen.height
         },
       }
-    }
+    });
     callback(null, item);
   };
 }
@@ -92,10 +90,7 @@ function addPluginInfo(window) {
       cur = navPlugins[i];
       plugins.push({name: cur.name, description: cur.description});
     }
-    item.data = item.data || {};
-    item.data.client = item.data.client || {};
-    item.data.client.javascript = item.data.client.javascript || {};
-    item.data.client.javascript.plugins = plugins;
+    _.set(item, 'data.client.javascript.plugins', plugins);
     callback(null, item);
   };
 }
@@ -127,8 +122,7 @@ function addBodyMessage(item, options, callback) {
     result.extra = _.extend(true, {}, custom);
   }
 
-  item.data = item.data || {};
-  item.data.body = {message: result};
+  _.set(item, 'data.body', {message: result});
   callback(null, item);
 }
 
@@ -208,7 +202,7 @@ function addBodyTrace(item, options, callback) {
     if (custom) {
       trace.extra = _.extend(true, {}, custom);
     }
-    item.data.body = {trace: trace};
+    _.set(item, 'data.body', {trace: trace});
     callback(null, item);
   } else {
     item.message = className + ': ' + message;
