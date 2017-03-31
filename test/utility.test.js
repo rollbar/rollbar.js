@@ -315,4 +315,8 @@ describe('get', function() {
     var o = {a: [{b: {c: [1, {d: 42}, null]}}, 99]};
     expect(_.get(o, 'a.0.b.c.1.d')).to.eql(42);
   });
+  it('should handle undefined input', function() {
+    var u = undefined;
+    expect(_.get(u, 'a.b.c')).to.not.be.ok();
+  });
 });

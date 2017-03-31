@@ -59,7 +59,7 @@ describe('checkIgnore', function() {
     };
     expect(p.checkIgnore(item, settings)).to.be.ok();
   });
-  it('should return true if no ajax extra key and  ignoring ajax errors is on', function() {
+  it('should return true if no ajax extra key and ignoring ajax errors is on', function() {
     var item = {
       level: 'critical',
       data: {body: {message: 'a message'}}
