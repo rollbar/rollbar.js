@@ -5,6 +5,7 @@ var logger = require('./logger');
 var transforms = require('./transforms');
 var predicates = require('./predicates');
 var errorParser = require('./errorParser');
+var Wrapper = require('./rollbarWrapper');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
@@ -127,13 +128,13 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
 Rollbar.prototype.wrap = function(f, context) {
   try {
     var ctxFn;
-    if (typeof context === 'function') {
+    if(_.isFunction(context)) {
       ctxFn = context;
     } else {
       ctxFn = function() { return context || {}; };
     }
 
-    if (typeof f !== 'function') {
+    if (!_.isFunction(f)) {
       return f;
     }
 
@@ -146,7 +147,7 @@ Rollbar.prototype.wrap = function(f, context) {
         try {
           return f.apply(this, arguments);
         } catch(e) {
-          if (typeof e === 'string') {
+          if (_.isType(e, 'string')) {
             e = new String(e);
           }
           e._rollbarContext = ctxFn() || {};
@@ -261,7 +262,6 @@ var defaultOptions = {
   endpoint: __DEFAULT_ENDPOINT__
 };
 
-var Wrapper = require('./rollbarWrapper');
 var RollbarImpl = function(options, client) {
   return new Rollbar(options, client);
 };
