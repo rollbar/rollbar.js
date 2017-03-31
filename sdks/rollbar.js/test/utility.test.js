@@ -299,7 +299,7 @@ describe('json3', function() {
 });
 
 describe('get', function() {
-  it ('should get a deeply nested value', function() {
+  it('should get a deeply nested value', function() {
     var o = {a: {b: {c: {d: 42}}}};
     expect(_.get(o, 'a.b.c.d')).to.eql(42);
   });
@@ -318,5 +318,49 @@ describe('get', function() {
   it('should handle undefined input', function() {
     var u = undefined;
     expect(_.get(u, 'a.b.c')).to.not.be.ok();
+  });
+});
+
+describe('set', function() {
+  it('should handle a top level key', function() {
+    var o = {a: 42};
+    _.set(o, 'b', 1);
+    expect(o.b).to.eql(1);
+    expect(o.a).to.eql(42);
+  });
+  it('should handle a top level key', function() {
+    var o = {a: 42, b: {c: 44, d: {e: 99}}};
+    _.set(o, 'f', 1);
+    expect(o.f).to.eql(1);
+    expect(o.a).to.eql(42);
+    expect(o.b.c).to.eql(44);
+    expect(o.b.d.e).to.eql(99);
+  });
+  it('should replace a value that is already there', function() {
+    var o = {a: 42};
+    _.set(o, 'a', 1);
+    expect(o.a).to.eql(1);
+  });
+  it('should set a nested value with missing keys', function() {
+    var o = {baz: 21};
+    _.set(o, 'foo.bar', [42]);
+    expect(o.baz).to.eql(21);
+    expect(o.foo.bar).to.eql([42]);
+  });
+  it('should replace a nested value', function() {
+    var o = {woo: 99, foo: {bar: {baz: 42, buzz: 97}, a: 98}};
+    _.set(o, 'foo.bar.baz', 1);
+    expect(o.woo).to.eql(99);
+    expect(o.foo.a).to.eql(98);
+    expect(o.foo.bar.buzz).to.eql(97);
+    expect(o.foo.bar.baz).to.eql(1);
+  });
+  it('should set a nested value with some missing keys', function() {
+    var o = {woo: 99, foo: {bar: {buzz: 97}, a: 98}};
+    _.set(o, 'foo.bar.baz.fizz', 1);
+    expect(o.woo).to.eql(99);
+    expect(o.foo.a).to.eql(98);
+    expect(o.foo.bar.buzz).to.eql(97);
+    expect(o.foo.bar.baz.fizz).to.eql(1);
   });
 });
