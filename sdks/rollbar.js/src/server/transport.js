@@ -23,13 +23,13 @@ var jsonBackup = require('json-stringify-safe');
  */
 
 function get(accessToken, options, params, callback, transportFactory) {
+  var t;
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
   options.headers = _headers(accessToken, options);
-  var t;
   if (transportFactory) {
     t = transportFactory(options);
   } else {
@@ -49,6 +49,7 @@ function get(accessToken, options, params, callback, transportFactory) {
 }
 
 function post(accessToken, options, payload, callback, transportFactory) {
+  var t;
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -63,7 +64,6 @@ function post(accessToken, options, payload, callback, transportFactory) {
   }
   var writeData = stringifyResult.value;
   options.headers = _headers(accessToken, options, writeData);
-  var t;
   if (transportFactory) {
     t = transportFactory(options);
   } else {
