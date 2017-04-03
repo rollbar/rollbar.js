@@ -204,13 +204,13 @@ Rollbar can be configured at 3 different levels -- global, notifier and scope. A
 
   - Affects all notifiers
   - Set by calling `global()` on any notifier
-  - Merges/overwrites previous configuration
+  - Merges/updates previous configuration
   - Currently, the only supported options are `maxItems` and `itemsPerMinute`
 
 #### Notifier configuration - context and/or payload
 
   - Affects only the notifier you call `configure()` on
-  - Merges/overwrites previous configuration for the notifier you call `configure()` on
+  - Merges/updates previous configuration for the notifier you call `configure()` on
 
 #### Scope configuration - only payload
 
@@ -517,7 +517,7 @@ Check out the API reference below for more information on how to use ```global/c
 
 (See the section on configuration above.)
 
-_Note_: This method will overwrite any existing global configuration.
+_Note_: This method will update any existing global configuration.
 
 __Returns__: `undefined`
 
@@ -530,7 +530,7 @@ __Params__
 
 (See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
-_Note_: This method will overwrite any existing configuration for the `Rollbar` instance used.
+_Note_: This method will update any existing configuration for the `Rollbar` instance used.
 
 __Returns__: `undefined`
 
@@ -543,7 +543,7 @@ __Params__
 
 (See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
 
-This method acts the same as `configure()` except it will not overwrite any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
+This method acts the same as `configure()` except it will not update any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
 
 __Returns__: a new `Rollbar` instance
 
