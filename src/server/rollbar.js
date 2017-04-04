@@ -187,7 +187,7 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
   var exitOnUncaught = !!this.options.exitOnUncaughtException;
   delete this.options.exitOnUncaughtException;
 
-  process.on('uncaughtException', function(err) {
+  addOrReplaceRollbarHandler('uncaughtException', function(err) {
     this.error(err, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
@@ -202,7 +202,7 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
 };
 
 Rollbar.prototype.handleUnhandledRejections = function() {
-  process.on('unhandledRejection', function(reason) {
+  addOrReplaceRollbarHandler('unhandledRejection', function(reason) {
     this.error(reason, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
@@ -211,6 +211,24 @@ Rollbar.prototype.handleUnhandledRejections = function() {
     });
   }.bind(this));
 };
+
+function addOrReplaceRollbarHandler(event, action) {
+  // We only support up to two arguments which is enough for how this is used
+  // rather than dealing with `arguments` and `apply`
+  var fn = function(a, b) {
+    action(a, b);
+  };
+  fn._rollbarHandler = true;
+
+  var listeners = process.listeners(event);
+  var len = listeners.length;
+  for (var i = 0; i < len; ++i) {
+    if (listeners[i]._rollbarHandler) {
+      process.removeListener(event, listeners[i]);
+    }
+  }
+  process.on(event, fn);
+}
 
 function RollbarError(message, nested) {
   Error.call(this);
