@@ -47,7 +47,7 @@
 	'use strict';
 	
 	var rollbar = __webpack_require__(1);
-	var globals = __webpack_require__(78);
+	var globals = __webpack_require__(81);
 	
 	var options = window._rollbarConfig;
 	var alias = options && options.globalAlias || 'Rollbar';
@@ -79,10 +79,12 @@
 	
 	var Client = __webpack_require__(2);
 	var _ = __webpack_require__(5);
+	var logger = __webpack_require__(71);
 	
-	var transforms = __webpack_require__(72);
-	var predicates = __webpack_require__(76);
-	var errorParser = __webpack_require__(73);
+	var transforms = __webpack_require__(75);
+	var predicates = __webpack_require__(79);
+	var errorParser = __webpack_require__(76);
+	var Wrapper = __webpack_require__(80);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
@@ -205,13 +207,13 @@
 	Rollbar.prototype.wrap = function(f, context) {
 	  try {
 	    var ctxFn;
-	    if (typeof context === 'function') {
+	    if(_.isFunction(context)) {
 	      ctxFn = context;
 	    } else {
 	      ctxFn = function() { return context || {}; };
 	    }
 	
-	    if (typeof f !== 'function') {
+	    if (!_.isFunction(f)) {
 	      return f;
 	    }
 	
@@ -224,7 +226,7 @@
 	        try {
 	          return f.apply(this, arguments);
 	        } catch(e) {
-	          if (typeof e === 'string') {
+	          if (_.isType(e, 'string')) {
 	            e = new String(e);
 	          }
 	          e._rollbarContext = ctxFn() || {};
@@ -288,7 +290,7 @@
 	        message ? extraArgs.push(arg) : message = arg;
 	        break;
 	      case 'function':
-	        callback = _.wrapRollbarFunction(arg, this);
+	        callback = _.wrapRollbarFunction(logger, arg, this);
 	        break;
 	      case 'date':
 	        extraArgs.push(arg);
@@ -331,7 +333,7 @@
 	};
 	
 	var defaultOptions = {
-	  version: ("2.0.0"),
+	  version: ("2.0.0-rc1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -339,7 +341,6 @@
 	  endpoint: ("api.rollbar.com/api/1/")
 	};
 	
-	var Wrapper = __webpack_require__(77);
 	var RollbarImpl = function(options, client) {
 	  return new Rollbar(options, client);
 	};
@@ -371,6 +372,11 @@
 	  var api = new (API(context))(options.accessToken, options);
 	  this.queue = new Queue(Rollbar.rateLimiter, api, options); 
 	  this.notifier = new Notifier(this.queue, options);
+	  if (context === 'server') {
+	    this.logger = __webpack_require__(16);
+	  } else {
+	    this.logger = __webpack_require__(71);
+	  }
 	};
 	
 	var defaultOptions = {
@@ -420,7 +426,7 @@
 	/* Internal */
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
-	  _.wrapRollbarFunction(function() {
+	  _.wrapRollbarFunction(this.logger, function() {
 	    var callback = null;
 	    if (item.callback) {
 	      callback = item.callback;
@@ -862,28 +868,30 @@
 	  return !isType(u, 'undefined');
 	}
 	
+	/*
+	 * isError - convenience function for checking if a value is of an error type
+	 *
+	 * @param e - any value
+	 * @returns true if e is an error
+	 */
+	function isError(e) {
+	  return isType(e, 'error');
+	}
+	
 	/* wrapRollbarFunction - puts a try/catch around a function, logs caught exceptions to console.error
 	 *
 	 * @param f - a function
 	 * @param ctx - an optional context to bind the function to
 	 */
-	function wrapRollbarFunction(f, ctx) {
+	function wrapRollbarFunction(logger, f, ctx) {
 	  return function() {
 	    var self = ctx || this;
 	    try {
 	      return f.apply(self, arguments);
 	    } catch (e) {
-	      consoleError('[Rollbar]:', e);
+	      logger.error(e);
 	    }
 	  };
-	}
-	
-	/*
-	 * consoleError - safe console.error
-	 * TODO: Fix this
-	 */
-	function consoleError() {
-	  console.error.apply(console, arguments);
 	}
 	
 	function traverse(obj, func) {
@@ -1109,25 +1117,77 @@
 	  };
 	}
 	
+	/*
+	 * get - given an obj/array and a keypath, return the value at that keypath or
+	 *       undefined if not possible.
+	 *
+	 * @param obj - an object or array
+	 * @param path - a string of keys separated by '.' such as 'plugin.jquery.0.message'
+	 *    which would correspond to 42 in `{plugin: {jquery: [{message: 42}]}}`
+	 */
+	function get(obj, path) {
+	  if (!obj) {
+	    return undefined;
+	  }
+	  var keys = path.split('.');
+	  var result = obj;
+	  try {
+	    for (var i = 0, len = keys.length; i < len; ++i) {
+	      result = result[keys[i]];
+	    }
+	  } catch (e) {
+	    result = undefined;
+	  }
+	  return result;
+	}
+	
+	function set(obj, path, value) {
+	  if (!obj) {
+	    return;
+	  }
+	  var keys = path.split('.');
+	  var len = keys.length;
+	  if (len < 1) {
+	    return;
+	  }
+	  if (len === 1) {
+	    obj[keys[0]] = value;
+	    return;
+	  }
+	  try {
+	    var temp = obj[keys[0]] || {};
+	    var replacement = temp;
+	    for (var i = 1; i < len-1; i++) {
+	      temp[keys[i]] = temp[keys[i]] || {};
+	      temp = temp[keys[i]];
+	    }
+	    temp[keys[len-1]] = value;
+	    obj[keys[0]] = replacement;
+	  } catch (e) {
+	    return;
+	  }
+	}
+	
 	module.exports = {
 	  isType: isType,
 	  typeName: typeName,
 	  isFunction: isFunction,
+	  isError: isError,
 	  extend: extend,
 	  traverse: traverse,
 	  redact: redact,
 	  uuid4: uuid4,
 	  wrapRollbarFunction: wrapRollbarFunction,
-	  consoleError: consoleError,
 	  LEVELS: LEVELS,
 	  sanitizeUrl: sanitizeUrl,
 	  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
 	  formatUrl: formatUrl,
 	  stringify: stringify,
 	  jsonParse: jsonParse,
-	  makeUnhandledStackInfo: makeUnhandledStackInfo
+	  makeUnhandledStackInfo: makeUnhandledStackInfo,
+	  get: get,
+	  set: set
 	};
-	
 
 
 /***/ },
@@ -2133,7 +2193,7 @@
 	    jsonBackup = j;
 	  } else {
 	    Transport = __webpack_require__(70);
-	    url = __webpack_require__(71);
+	    url = __webpack_require__(74);
 	  }
 	}
 	
@@ -2198,7 +2258,7 @@
 	  if (_.isType(data.context, 'object')) {
 	    var contextResult = _.stringify(data.context, jsonBackup);
 	    if (contextResult.error) {
-	      data.context = '';
+	      data.context = 'Error: could not serialize \'context\'';
 	    } else {
 	      data.context = contextResult.value || '';
 	    }
@@ -2317,13 +2377,13 @@
 	 */
 	
 	function get(accessToken, options, params, callback, transportFactory) {
+	  var t;
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() {};
 	  }
 	  options = options || {};
 	  _.addParamsAndAccessTokenToPath(accessToken, options, params);
 	  options.headers = _headers(accessToken, options);
-	  var t;
 	  if (transportFactory) {
 	    t = transportFactory(options);
 	  } else {
@@ -2343,6 +2403,7 @@
 	}
 	
 	function post(accessToken, options, payload, callback, transportFactory) {
+	  var t;
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() {};
 	  }
@@ -2357,7 +2418,6 @@
 	  }
 	  var writeData = stringifyResult.value;
 	  options.headers = _headers(accessToken, options, writeData);
-	  var t;
 	  if (transportFactory) {
 	    t = transportFactory(options);
 	  } else {
@@ -14299,6 +14359,7 @@
 	'use strict';
 	
 	var _ = __webpack_require__(5);
+	var logger = __webpack_require__(71);
 	
 	/*
 	 * accessToken may be embedded in payload but that should not
@@ -14375,7 +14436,7 @@
 	              if (request.status === 403) {
 	                // likely caused by using a server access token
 	                var message = parseResponse.value && parseResponse.value.message;
-	                _.consoleError('[Rollbar]:' + message);
+	                logger.error(message);
 	              }
 	              // return valid http status codes
 	              callback(new Error(String(request.status)));
@@ -14503,6 +14564,134 @@
 
 /***/ },
 /* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	__webpack_require__(72);
+	var detection = __webpack_require__(73);
+	
+	function error() {
+	  var args = Array.prototype.slice.call(arguments, 0);
+	  args.unshift('Rollbar:');
+	  if (detection.ieVersion() <= 8) {
+	    console.error(formatArgsAsString.apply(null, args));
+	  } else {
+	    console.error.apply(console, args);
+	  }
+	}
+	
+	function info() {
+	  var args = Array.prototype.slice.call(arguments, 0);
+	  args.unshift('Rollbar:');
+	  if (detection.ieVersion() <= 8) {
+	    console.info(formatArgsAsString.apply(null, args));
+	  } else {
+	    console.info.apply(console, args);
+	  }
+	}
+	
+	function log() {
+	  var args = Array.prototype.slice.call(arguments, 0);
+	  args.unshift('Rollbar:');
+	  if (detection.ieVersion() <= 8) {
+	    console.log(formatArgsAsString.apply(null, args));
+	  } else {
+	    console.log.apply(console, args);
+	  }
+	}
+	
+	// IE8 logs objects as [object Object].  This is a wrapper that makes it a bit
+	// more convenient by logging the JSON of the object.  But only do that in IE8 and below
+	// because other browsers are smarter and handle it properly.
+	function formatArgsAsString() {
+	  var args = [];
+	  for (var i=0; i < arguments.length; i++) {
+	    var arg = arguments[i];
+	    if (typeof arg === 'object') {
+	      arg = RollbarJSON.stringify(arg);
+	      if (arg.length > 500)
+	        arg = arg.substr(0,500)+'...';
+	    } else if (typeof arg === 'undefined') {
+	      arg = 'undefined';
+	    }
+	    args.push(arg);
+	  }
+	  return args.join(' ');
+	}
+	
+	module.exports = {
+	  error: error,
+	  info: info,
+	  log: log
+	};
+
+
+/***/ },
+/* 72 */
+/***/ function(module, exports) {
+
+	// Console-polyfill. MIT license.
+	// https://github.com/paulmillr/console-polyfill
+	// Make it safe to do console.log() always.
+	(function(global) {
+	  'use strict';
+	  if (!global.console) {
+	    global.console = {};
+	  }
+	  var con = global.console;
+	  var prop, method;
+	  var dummy = function() {};
+	  var properties = ['memory'];
+	  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+	     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+	     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
+	  while (prop = properties.pop()) if (!con[prop]) con[prop] = {};
+	  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
+	  // Using `this` for web workers & supports Browserify / Webpack.
+	})(typeof window === 'undefined' ? this : window);
+
+
+/***/ },
+/* 73 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	// This detection.js module is used to encapsulate any ugly browser/feature
+	// detection we may need to do.
+	
+	// Figure out which version of IE we're using, if any.
+	// This is gleaned from http://stackoverflow.com/questions/5574842/best-way-to-check-for-ie-less-than-9-in-javascript-without-library
+	// Will return an integer on IE (i.e. 8)
+	// Will return undefined otherwise
+	function getIEVersion() {
+		var undef;
+		if (!document) {
+			return undef;
+		}
+	
+	  var v = 3,
+	    div = document.createElement('div'),
+	    all = div.getElementsByTagName('i');
+	
+	  while (
+	    div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->',
+	      all[0]
+	    );
+	
+	  return v > 4 ? v : undef;
+	}
+	
+	var Detection = {
+	  ieVersion: getIEVersion
+	};
+	
+	module.exports = Detection;
+
+
+/***/ },
+/* 74 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -14589,13 +14778,14 @@
 
 
 /***/ },
-/* 72 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var errorParser = __webpack_require__(73);
+	var errorParser = __webpack_require__(76);
+	var logger = __webpack_require__(71);
 	
 	function handleItemWithError(item, options, callback) {
 	  item.data = item.data || {};
@@ -14605,7 +14795,7 @@
 	    } catch (e)
 	    /* istanbul ignore next */
 	    {
-	      _.consoleError('[Rollbar]: Error while parsing the error object.', e);
+	      logger.error('Error while parsing the error object.', e);
 	      item.message = item.err.message || item.err.description || item.message || String(item.err);
 	      delete item.err;
 	    }
@@ -14642,12 +14832,11 @@
 	    if (!window || !window.location) {
 	      return callback(null, item);
 	    }
-	    item.data = item.data || {};
-	    item.data.request = {
+	    _.set(item, 'data.request', {
 	      url: window.location.href,
 	      query_string: window.location.search,
 	      user_ip: '$remote_ip'
-	    };
+	    });
 	    callback(null, item);
 	  };
 	}
@@ -14657,8 +14846,7 @@
 	    if (!window) {
 	      return callback(null, item);
 	    }
-	    item.data = item.data || {};
-	    item.data.client = {
+	    _.set(item, 'data.client', {
 	      runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
 	      timestamp: Math.round(item.timestamp / 1000),
 	      javascript: {
@@ -14670,7 +14858,7 @@
 	          height: window.screen.height
 	        },
 	      }
-	    }
+	    });
 	    callback(null, item);
 	  };
 	}
@@ -14687,10 +14875,7 @@
 	      cur = navPlugins[i];
 	      plugins.push({name: cur.name, description: cur.description});
 	    }
-	    item.data = item.data || {};
-	    item.data.client = item.data.client || {};
-	    item.data.client.javascript = item.data.client.javascript || {};
-	    item.data.client.javascript.plugins = plugins;
+	    _.set(item, 'data.client.javascript.plugins', plugins);
 	    callback(null, item);
 	  };
 	}
@@ -14722,8 +14907,7 @@
 	    result.extra = _.extend(true, {}, custom);
 	  }
 	
-	  item.data = item.data || {};
-	  item.data.body = {message: result};
+	  _.set(item, 'data.body', {message: result});
 	  callback(null, item);
 	}
 	
@@ -14803,7 +14987,7 @@
 	    if (custom) {
 	      trace.extra = _.extend(true, {}, custom);
 	    }
-	    item.data.body = {trace: trace};
+	    _.set(item, 'data.body', {trace: trace});
 	    callback(null, item);
 	  } else {
 	    item.message = className + ': ' + message;
@@ -14824,7 +15008,7 @@
 	    }
 	  } catch (e) {
 	    options.transform = null; // TODO
-	    _.consoleError('[Rollbar]: Error while calling custom transform() function. Removing custom transform().', e);
+	    logger.error('Error while calling custom transform() function. Removing custom transform().', e);
 	    callback(null, item);
 	    return;
 	  }
@@ -14925,12 +15109,12 @@
 
 
 /***/ },
-/* 73 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(74);
+	var ErrorStackParser = __webpack_require__(77);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -15021,7 +15205,7 @@
 
 
 /***/ },
-/* 74 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -15030,7 +15214,7 @@
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(75)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(78)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -15220,7 +15404,7 @@
 
 
 /***/ },
-/* 75 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -15333,12 +15517,13 @@
 
 
 /***/ },
-/* 76 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
+	var logger = __webpack_require__(71);
 	
 	function checkIgnore(item, settings) {
 	  var level = item.level;
@@ -15349,8 +15534,7 @@
 	    return false;
 	  }
 	
-	  var plugins = settings.plugins || {};
-	  if (plugins && plugins.jquery && plugins.jquery.ignoreAjaxErrors) {
+	  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
 	    try {
 	      return !(item.data.body.message.extra.isAjax);
 	    } catch (e) {
@@ -15367,7 +15551,7 @@
 	    }
 	  } catch (e) {
 	    settings.checkIgnore = null; // TODO
-	    _.consoleError('[Rollbar]: Error while calling custom checkIgnore(), removing', e);
+	    logger.error('Error while calling custom checkIgnore(), removing', e);
 	  }
 	  return true;
 	}
@@ -15378,16 +15562,16 @@
 	
 	  try {
 	    whitelist = settings.hostWhiteList;
+	    listLength = whitelist && whitelist.length;
 	    trace = item && item.data && item.data.body && item.data.body.trace;
 	
-	    if (!whitelist || whitelist.length === 0) {
+	    if (!whitelist || listLength === 0) {
 	      return true;
 	    }
 	    if (!trace || !trace.frames) {
 	      return true;
 	    }
 	
-	    listLength = whitelist.length;
 	    frameLength = trace.frames.length;
 	    for (i = 0; i < frameLength; i++) {
 	      frame = trace.frames[i];
@@ -15410,7 +15594,7 @@
 	  /* istanbul ignore next */
 	  {
 	    settings.hostWhiteList = null; // TODO
-	    _.consoleError("[Rollbar]: Error while reading your configuration's hostWhiteList option. Removing custom hostWhiteList.", e);
+	    logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
 	    return true;
 	  }
 	  return false;
@@ -15426,18 +15610,9 @@
 	      return true;
 	    }
 	
-	    body =  item &&
-	            item.data &&
-	            item.data.body;
-	
-	    traceMessage =  body && 
-	                    body.trace &&
-	                    body.trace.exception && 
-	                    body.trace.exception.message;
-	    
-	    bodyMessage = body && 
-	                  body.message && 
-	                  body.message.body;
+	    body = _.get(item, 'data.body');
+	    traceMessage = _.get(body, 'trace.exception.message');
+	    bodyMessage = _.get(body, 'message.body');
 	
 	    exceptionMessage = traceMessage || bodyMessage;
 	
@@ -15458,7 +15633,7 @@
 	  /* istanbul ignore next */
 	  {
 	    settings.ignoredMessages = null; // TODO
-	    _.consoleError("[Rollbar]: Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+	    logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
 	  }
 	
 	  return !messageIsIgnored;
@@ -15474,7 +15649,7 @@
 
 
 /***/ },
-/* 77 */
+/* 80 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15519,7 +15694,7 @@
 
 
 /***/ },
-/* 78 */
+/* 81 */
 /***/ function(module, exports) {
 
 	'use strict';
