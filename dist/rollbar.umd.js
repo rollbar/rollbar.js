@@ -350,7 +350,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var defaultOptions = {
-	  version: ("2.0.0-rc1"),
+	  version: ("2.0.0-alpha.1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
