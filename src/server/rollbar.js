@@ -20,7 +20,7 @@ function Rollbar(accessToken, options, client) {
   if (this.options.handleUncaughtExceptions) {
     this.handleUncaughtExceptions();
   }
-  if (this.optiions.handleUnhandledRejections) {
+  if (this.options.handleUnhandledRejections) {
     this.handleUnhandledRejects();
   }
 }
