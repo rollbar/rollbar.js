@@ -133,7 +133,7 @@ that do not have a corresponding `.then(null, function(e) {})` handler.  This su
 rejected `exceptions`, although rejected primitives will report (without a stack trace).
 
 If you decide to use this option, you may also want to combine it the `checkIgnore`
-[configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) option to filter 'noisy' rejections,
+[configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) option to filter 'noisy' rejections,
 depending on the extent to which your application handles Promise failures, or rejects with alot of primitives.
 
 ## Verbose option
@@ -528,7 +528,7 @@ __Params__
 
 ### Rollbar.configure()
 
-(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
+(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference).)
 
 _Note_: This method will update any existing configuration for the `Rollbar` instance used.
 
@@ -541,7 +541,7 @@ __Params__
 
 ### Rollbar.scope()
 
-(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration).)
+(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference).)
 
 This method acts the same as `configure()` except it will not update any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
 
@@ -590,7 +590,7 @@ Log a message and potentially send it to Rollbar. The level that the message or 
 
 In order for the message to be sent to Rollbar, the log level must be greater than or equal to the `reportLevel` config option. 
 
-See [configuration](https://rollbar.com/docs/notifier/rollbar.js/configuration) for more information on configuring log levels.
+See [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) for more information on configuring log levels.
 
 __Returns__: `undefined`
 
