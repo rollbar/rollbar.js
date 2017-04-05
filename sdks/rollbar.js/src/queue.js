@@ -61,16 +61,16 @@ Queue.prototype.addPredicate = function(predicate) {
  *  error and response are null then the item was stopped by a predicate which did not consider this
  *  to be an error condition, but nonetheless did not send the item to the API.
  */
-Queue.prototype.addItem = function(item, callback, force) {
+Queue.prototype.addItem = function(item, callback) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() { return; };
   }
   var predicateResult = this._applyPredicates(item);
-  if (predicateResult.stop && !force) {
+  if (predicateResult.stop) {
     callback(predicateResult.err);
     return;
   }
-  if (!force && this.waitCallback) {
+  if (this.waitCallback) {
     callback();
     return;
   }
