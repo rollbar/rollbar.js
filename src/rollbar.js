@@ -66,6 +66,10 @@ Rollbar.prototype.critical = function(item) {
   this._log('critical', item);
 };
 
+Rollbar.prototype.wait = function(callback) {
+  this.queue.wait(callback);
+};
+
 /* Internal */
 
 Rollbar.prototype._log = function(defaultLevel, item) {
