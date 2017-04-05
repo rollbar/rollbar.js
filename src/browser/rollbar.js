@@ -79,9 +79,9 @@ Rollbar.prototype.critical = function() {
 
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
   var item;
-  if (error && _.isType(error, 'error')) {
+  if (_.isError(error)) {
     item = this._createItem([message, error, context]);
-  } else if (url && _.isType(url, 'error')) {
+  } else if (_.isError(url)) {
     item = this._createItem([message, url, context]);
   } else {
     item = this._createItem([message, context]);
@@ -106,7 +106,7 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   var context = (reason && reason._rollbarContext) || promise._rollbarContext;
 
   var item;
-  if (reason && _.isType(reason, 'error')) {
+  if (_.isError(reason)) {
     item = this._createItem([message, reason, context]);
   } else {
     item = this._createItem([message, context]);

@@ -92,6 +92,18 @@ describe('isFunction', function() {
   });
 });
 
+describe('isError', function() {
+  it('should handle null', function(done) {
+    expect(_.isError(null)).to.not.be.ok();
+    done();
+  });
+  it('should handle errors', function(done) {
+    var e = new Error('hello');
+    expect(_.isError(e)).to.be.ok();
+    done();
+  });
+});
+
 describe('extend', function() {
   it('should be exported and work', function(done) {
     var o1 = {a: 1};
