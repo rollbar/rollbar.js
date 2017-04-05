@@ -9,7 +9,7 @@ vows.describe('predicates')
     'checkLevel': {
       'an item without a level': {
         topic: function() {
-          return {payload: 'nothing'};
+          return {body: 'nothing'};
         },
         'settings with a critical minimumLevel': {
           topic: function(item) {
@@ -21,23 +21,9 @@ vows.describe('predicates')
           }
         }
       },
-      'an item without a payload': {
-        topic: function() {
-          return {not: 'a payload'};
-        },
-        'settings with an error minimumLevel': {
-          topic: function(item) {
-            var settings = {minimumLevel: 'error'};
-            return p.checkLevel(item, settings);
-          },
-          'should send': function(topic) {
-            assert.isTrue(topic);
-          }
-        }
-      },
       'an item with an unknown level': {
         topic: function() {
-          return {payload: {level: 'wooo'}};
+          return {level: 'wooo'};
         },
         'settings with an error minimumLevel': {
           topic: function(item) {
@@ -69,7 +55,7 @@ vows.describe('predicates')
       },
       'an item with a warning level': {
         topic: function() {
-          return {payload: {level: 'warning'}};
+          return {level: 'warning'};
         },
         'settings with an error minimumLevel': {
           topic: function(item) {
