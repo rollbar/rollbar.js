@@ -83,6 +83,10 @@ Rollbar.prototype.critical = function() {
   return {uuid: uuid};
 };
 
+Rollbar.prototype.wait = function(callback) {
+  this.client.wait(callback);
+};
+
 Rollbar.prototype.errorHandler = function(err, request, response, next) {
   var cb = function(rollbarError) {
     if (rollbarError) {
