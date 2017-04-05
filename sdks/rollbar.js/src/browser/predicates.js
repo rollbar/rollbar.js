@@ -11,11 +11,7 @@ function checkIgnore(item, settings) {
   }
 
   if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
-    try {
-      return !(item.data.body.message.extra.isAjax);
-    } catch (e) {
-      return true;
-    }
+    return !_.get(item, 'body.message.extra.isAjax');
   }
   return true;
 }
@@ -39,7 +35,7 @@ function urlIsWhitelisted(item, settings) {
   try {
     whitelist = settings.hostWhiteList;
     listLength = whitelist && whitelist.length;
-    trace = item && item.data && item.data.body && item.data.body.trace;
+    trace = _.get(item, 'body.trace');
 
     if (!whitelist || listLength === 0) {
       return true;
@@ -86,7 +82,7 @@ function messageIsIgnored(item, settings) {
       return true;
     }
 
-    body = _.get(item, 'data.body');
+    body = item.body;
     traceMessage = _.get(body, 'trace.exception.message');
     bodyMessage = _.get(body, 'message.body');
 

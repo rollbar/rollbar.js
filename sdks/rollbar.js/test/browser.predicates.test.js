@@ -29,7 +29,7 @@ describe('checkIgnore', function() {
   it('should return false if is ajax and ignoring ajax errors is on', function() {
     var item = {
       level: 'critical',
-      data: {body: {message: {extra: {isAjax: true}}}}
+      body: {message: {extra: {isAjax: true}}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -40,7 +40,7 @@ describe('checkIgnore', function() {
   it('should return true if is ajax and ignoring ajax errors is off', function() {
     var item = {
       level: 'critical',
-      data: {body: {message: {extra: {isAjax: true}}}}
+      body: {message: {extra: {isAjax: true}}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -51,7 +51,7 @@ describe('checkIgnore', function() {
   it('should return true if is not ajax and ignoring ajax errors is on', function() {
     var item = {
       level: 'critical',
-      data: {body: {message: {extra: {isAjax: false}}}}
+      body: {message: {extra: {isAjax: false}}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -62,7 +62,7 @@ describe('checkIgnore', function() {
   it('should return true if no ajax extra key and ignoring ajax errors is on', function() {
     var item = {
       level: 'critical',
-      data: {body: {message: 'a message'}}
+      body: {message: 'a message'}
     };
     var settings = {
       reportLevel: 'debug',
@@ -110,11 +110,11 @@ describe('urlIsWhitelisted', function() {
   it('should return true with no whitelist', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {frames: [
+      body: {trace: {frames: [
         {filename: 'http://api.fake.com/v1/something'},
         {filename: 'http://api.example.com/v1/something'},
         {filename: 'http://api.fake.com/v2/something'}
-      ]}}}
+      ]}}
     };
     var settings = {
       reportLevel: 'debug'
@@ -124,7 +124,7 @@ describe('urlIsWhitelisted', function() {
   it('should return true with no trace', function() {
     var item = {
       level: 'critical',
-      data: {body: {message: 'hey'}}
+      body: {message: 'hey'}
     };
     var settings = {
       reportLevel: 'debug',
@@ -135,11 +135,11 @@ describe('urlIsWhitelisted', function() {
   it('should return true if at least one regex matches at least one filename in the trace', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {frames: [
+      body: {trace: {frames: [
         {filename: 'http://api.fake.com/v1/something'},
         {filename: 'http://api.example.com/v1/something'},
         {filename: 'http://api.fake.com/v2/something'}
-      ]}}}
+      ]}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -150,11 +150,11 @@ describe('urlIsWhitelisted', function() {
   it('should return true if the filename is not a string', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {frames: [
+      body: {trace: {frames: [
         {filename: {url: 'http://api.fake.com/v1/something'}},
         {filename: {url: 'http://api.example.com/v1/something'}},
         {filename: {url: 'http://api.fake.com/v2/something'}},
-      ]}}}
+      ]}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -165,7 +165,7 @@ describe('urlIsWhitelisted', function() {
   it('should return true if there is no frames key', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {notframes: []}}}
+      body: {trace: {notframes: []}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -176,7 +176,7 @@ describe('urlIsWhitelisted', function() {
   it('should return false if there are no frames', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {frames: []}}}
+      body: {trace: {frames: []}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -187,11 +187,11 @@ describe('urlIsWhitelisted', function() {
   it('should return false if nothing in the whitelist matches', function() {
     var item = {
       level: 'critical',
-      data: {body: {trace: {frames: [
+      body: {trace: {frames: [
         {filename: 'http://api.fake.com/v1/something'},
         {filename: 'http://api.example.com/v1/something'},
         {filename: 'http://api.fake.com/v2/something'}
-      ]}}}
+      ]}}
     };
     var settings = {
       reportLevel: 'debug',
@@ -205,10 +205,10 @@ describe('messageIsIgnored', function() {
   it('true if no ignoredMessages setting', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {message: 'bork bork'}},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug'
@@ -218,10 +218,10 @@ describe('messageIsIgnored', function() {
   it('true if ignoredMessages is empty', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {message: 'bork bork'}},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
@@ -232,10 +232,10 @@ describe('messageIsIgnored', function() {
   it('true if no exception message', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {}},
         message: 'fuzz'
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
@@ -246,10 +246,10 @@ describe('messageIsIgnored', function() {
   it('true if no ignoredMessages match', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {message: 'bork bork'}},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
@@ -260,10 +260,10 @@ describe('messageIsIgnored', function() {
   it('false if any ignoredMessages match', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {message: 'bork bork'}},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
@@ -274,10 +274,10 @@ describe('messageIsIgnored', function() {
   it('true if both trace and body message but ignoredMessages only match body', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {exception: {message: 'bork bork'}},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
@@ -288,10 +288,10 @@ describe('messageIsIgnored', function() {
   it('false if ignoredMessages match something in body exception message', function() {
     var item = {
       level: 'critical',
-      data: {body: {
+      body: {
         trace: {frames: []},
         message: {body: 'fuzz'}
-      }}
+      }
     };
     var settings = {
       reportLevel: 'debug',
