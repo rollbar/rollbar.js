@@ -112,7 +112,7 @@ Queue.prototype.wait = function(callback) {
 Queue.prototype._applyPredicates = function(item) {
   var error = null;
   var p = null;
-  for (var i=0, l = this.predicates.length; i < l; i++) {
+  for (var i = 0, len = this.predicates.length; i < len; i++) {
     p = this.predicates[i](item, this.settings);
     if (!p || p.err !== undefined) {
       return {stop: true, err: p.err};
@@ -159,7 +159,7 @@ var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT
 Queue.prototype._maybeRetry = function(err, item, callback) {
   var shouldRetry = false;
   if (this.settings.retryInterval) {
-    for (var i=0, j=RETRIABLE_ERRORS.length; i < j; i++) {
+    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
       if (err.code === RETRIABLE_ERRORS[i]) {
         shouldRetry = true;
         break;
@@ -203,7 +203,7 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  */
 Queue.prototype._dequeuePendingRequest = function(item) {
   var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
-  for (var i=this.pendingRequests.length; i >= 0; i--) {
+  for (var i = this.pendingRequests.length; i >= 0; i--) {
     if (this.pendingRequests[i] == item) {
       this.pendingRequests.splice(i, 1);
       if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
