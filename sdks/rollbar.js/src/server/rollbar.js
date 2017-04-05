@@ -162,7 +162,7 @@ Rollbar.prototype._createItem = function(args) {
   }
 
   var message, err;
-  if (_.isType(messageOrError, 'error')) {
+  if (_.isError(messageOrError)) {
     err = messageOrError;
   } else {
     message = messageOrError;
