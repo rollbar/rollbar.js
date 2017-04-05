@@ -297,31 +297,6 @@ describe('addItem', function() {
           done(err);
         });
       });
-      it('should not stop if force is used even if a wait callback is set', function(done) {
-        var rateLimiter = new (TestRateLimiterGenerator())();
-        var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
-      
-        var item = {mykey: 'myvalue'};
-        var serverResponse = {success: true};
-
-        rateLimiter.handler = function(i) {
-          return {error: null, shouldSend: true, payload: null};
-        };
-        api.handler = function(i, cb) {
-          cb(null, serverResponse);
-        };
-        var waitCalled = false;
-        queue.wait(function() {
-          waitCalled = true;
-        });
-        queue.addItem({mykey: 'myvalue'}, function(err, resp) {
-          expect(resp).to.eql(serverResponse);
-          expect(waitCalled).to.be.ok();
-          done(err);
-        }, true);
-      });
     });
     describe('api failure', function() {
       it('should callback if the api throws an exception', function(done) {
