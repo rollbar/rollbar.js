@@ -107,6 +107,7 @@ Rollbar.prototype.errorHandler = function(err, request, response, next) {
 /** DEPRECATED **/
 
 Rollbar.prototype.reportMessage = function(message, level, request, callback) {
+  logger.log('reportMessage is deprecated');
   if (_.isFunction(this[level])) {
     return this[level](message, request, callback);
   } else {
@@ -115,14 +116,17 @@ Rollbar.prototype.reportMessage = function(message, level, request, callback) {
 };
 
 Rollbar.prototype.reportMessageWithPayloadData = function(message, payloadData, request, callback) {
+  logger.log('reportMessageWithPayloadData is deprecated');
   return this.error(message, request, payloadData, callback);
 };
 
 Rollbar.prototype.handleError = function(err, request, callback) {
+  logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, callback);
 };
 
 Rollbar.prototype.handleErrorWithPayloadData = function(err, payloadData, request, callback) {
+  logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, payloadData, callback);
 };
 
