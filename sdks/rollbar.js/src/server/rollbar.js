@@ -138,6 +138,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addMessageData)
     .addTransform(transforms.buildErrorData)
     .addTransform(transforms.addRequestData)
+    .addTransform(transforms.scrubPayload)
     .addTransform(transforms.convertToPayload);
 }
 
