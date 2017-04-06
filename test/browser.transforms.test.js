@@ -336,12 +336,12 @@ describe('itemToPayload', function() {
 
 describe('scrubPayload', function() {
   it('only scrubs payload data', function(done) {
-    var args = ['a message', {scooby: 'doo', okay: 'fizz=buzz&fuzz=baz'}];
+    var args = ['a message', {scooby: 'doo', okay: 'fizz=buzz&fuzz=baz', user: {id: 42}}];
     var item = itemFromArgs(args);
     var accessToken = 'abc123';
     var options = {
       endpoint: 'api.rollbar.com/',
-      scrubFields: ['access_token', 'accessToken', 'scooby', 'fizz']
+      scrubFields: ['access_token', 'accessToken', 'scooby', 'fizz', 'user']
     };
     var payload = {
       access_token: accessToken,
@@ -350,11 +350,14 @@ describe('scrubPayload', function() {
     expect(payload.access_token).to.eql(accessToken);
     expect(payload.data.custom.scooby).to.eql('doo');
     expect(payload.data.custom.okay).to.eql('fizz=buzz&fuzz=baz');
+    expect(payload.data.custom.user.id).to.eql(42);
     t.scrubPayload(payload, options, function(e, i) {
       expect(i.access_token).to.eql(accessToken);
       expect(i.data.custom.scooby).to.not.eql('doo');
       expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
       expect(payload.data.custom.okay).to.match(/fizz=\**&fuzz=baz/);
+      expect(payload.data.custom.user.id).to.not.be.ok();
+      expect(payload.data.custom.user).to.match(/\**/);
       expect(i.data.message).to.eql('a message');
       done(e);
     });
