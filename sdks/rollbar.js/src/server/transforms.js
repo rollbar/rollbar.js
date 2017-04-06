@@ -146,6 +146,14 @@ function addRequestData(item, options, callback) {
   callback(null, item);
 }
 
+function scrubPayload(item, options, callback) {
+  var scrubHeaders = options.scrubHeaders || defaultSettings.scrubHeaders || [];
+  var scrubFields = options.scrubFields || defaultSettings.scrubFields || [];
+  scrubFields = scrubHeaders.concat(scrubFields);
+  _.scrub(item.data, scrubFields);
+  callback(null, item);
+}
+
 function convertToPayload(item, options, callback) {
   callback(null, item.data);
 }
@@ -172,27 +180,6 @@ function _buildTraceData(chain) {
   };
 };
 
-function _scrubRequestHeaders(headers, options) {
-  var scrubHeaders = options.scrubHeaders || defaultSettings.scrubHeaders || [];
-  return _scrubObject(headers, scrubHeaders);
-}
-
-function _scrubRequestParams(params, options) {
-  var scrubFields = options.scrubFields || defaultSettings.scrubFields || [];
-  return _scrubObject(params, scrubFields);
-}
-
-function _scrubObject(input, scrubKeys) {
-  var obj = {};
-  var k;
-  for (k in input) {
-    if (input.hasOwnProperty(k)) {
-      obj[k] = scrubKeys.indexOf(k) === -1 ? input[k] : '******';
-    }
-  }
-  return obj;
-}
-
 function _extractIp(req) {
   var ip = req.ip;
   if (!ip) {
@@ -211,7 +198,7 @@ function _buildRequestData(req, options) {
     url: reqUrl,
     GET: parsedUrl.query,
     user_ip: _extractIp(req),
-    headers: _scrubRequestHeaders(headers, options),
+    headers: headers,
     method: req.method
   };
 
@@ -228,7 +215,7 @@ function _buildRequestData(req, options) {
           bodyParams[k] = req.body[k];
         }
       }
-      data[req.method] = _scrubRequestParams(bodyParams, options);
+      data[req.method] = bodyParams;
     } else {
       data.body = req.body;
     }
@@ -241,6 +228,7 @@ module.exports = {
   addMessageData: addMessageData,
   buildErrorData: buildErrorData,
   addRequestData: addRequestData,
+  scrubPayload: scrubPayload,
   convertToPayload: convertToPayload
 };
 

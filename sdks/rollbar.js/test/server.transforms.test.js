@@ -352,11 +352,6 @@ vows.describe('transforms')
                   assert.equal(r.user_ip, '192.192.192.1');
                   assert.ok(r.GET);
                 },
-                'should scrub based on the defaults': function(err, item) {
-                  var r = item.data.request;
-                  assert.equal(r.GET.token, '******');
-                  assert.equal(r.headers['x-auth-token'], '12345');
-                }
               }
             }
           },
@@ -406,11 +401,6 @@ vows.describe('transforms')
                 'should have a request object inside data': function(err, item) {
                   assert.ok(item.data.request);
                 },
-                'should scrub based on the options': function(err, item) {
-                  var r = item.data.request;
-                  assert.equal(r.GET.token, 'abc123');
-                  assert.equal(r.headers['x-auth-token'], '******');
-                }
               }
             }
           }
@@ -467,6 +457,110 @@ vows.describe('transforms')
                   assert.equal(item.data.request, undefined);
                   assert.equal(item.data.myRequest.body, 'abc123');
                 }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  .addBatch({
+    'scrubPayload': {
+      'options': {
+        'without scrub fields': {
+          topic: function() {
+            return {nothing: 'here'};
+          },
+          'item': {
+            topic: function(options) {
+              var item = {
+                data: {
+                  body: {
+                    message: 'hey',
+                    password: '123',
+                    secret: {stuff: 'here'}
+                  }
+                }
+              };
+              t.scrubPayload(item, options, this.callback);
+            },
+            'should not error': function(err, item) {
+              assert.ifError(err);
+            },
+            'should not scrub okay keys': function(err, item) {
+              assert.equal(item.data.body.message, 'hey');
+            },
+            'should scrub key/value based on defaults': function(err, item) {
+              assert.matches(item.data.body.password, /\**/);
+              assert.matches(item.data.body.secret, /\**/);
+            }
+          }
+        },
+        'with scrub fields': {
+          topic: function() {
+            return {
+              scrubHeaders: [
+                'x-auth-token'
+              ],
+              scrubFields: [
+                'passwd',
+                'access_token',
+                'request.cookie',
+                'sauce'
+              ]
+            };
+          },
+          'item': {
+            'with a request': {
+              topic: function(options) {
+                var item = {
+                  request: {
+                    headers: {
+                      host: 'example.com',
+                      'x-auth-token': '12345'
+                    },
+                    protocol: 'https',
+                    url: '/some/endpoint',
+                    ip: '192.192.192.192',
+                    method: 'GET',
+                    body: {
+                      token: 'abc123',
+                      something: 'else'
+                    },
+                    user: {
+                      id: 42,
+                      email: 'fake@example.com'
+                    }
+                  },
+                  stuff: 'hey',
+                  data: {
+                    other: 'thing',
+                    sauce: 'secrets',
+                    someParams: 'foo=okay&passwd=iamhere'
+                  }
+                };
+                t.addRequestData(item, options, function(e, i) {
+                  if (e) {
+                    this.callback(e);
+                    return;
+                  }
+                  t.scrubPayload(i, options, this.callback)
+                }.bind(this));
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should have a request object inside data': function(err, item) {
+                assert.ok(item.data.request);
+              },
+              'should scrub based on the options': function(err, item) {
+                var r = item.data.request;
+                assert.equal(r.GET.token, 'abc123');
+                assert.match(r.headers['x-auth-token'], /\**/);
+                assert.equal(r.headers['host'], 'example.com');
+                assert.match(item.data.sauce, /\**/);
+                assert.equal(item.data.other, 'thing');
+                assert.match(item.data.someParams, /foo=okay&passwd=\**/);
               }
             }
           }
