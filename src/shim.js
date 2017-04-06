@@ -158,6 +158,7 @@ Rollbar.prototype.loadFull = function(window, document, immediate, config, callb
   s.crossOrigin = '';
   s.src = config.rollbarJsUrl;
   s.async = !immediate;
+  s.defer = !immediate;
 
   // From http://stackoverflow.com/questions/4845762/onload-handler-for-script-tag-in-internet-explorer
   s.onload = s.onreadystatechange = _wrapInternalErr(function() {
