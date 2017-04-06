@@ -9,4 +9,4 @@ _rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || __DEFAULT_ROLLBARJS
 var shim = RollbarShim.init(window, _rollbarConfig);
 var callback = snippetCallback(shim, _rollbarConfig);
 
-shim.loadFull(window, document, !_rollbarConfig.async, _rollbarConfig, callback);
+shim.loadFull(window, document, !(_rollbarConfig.async === undefined || _rollbarConfig.async), _rollbarConfig, callback);
