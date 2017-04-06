@@ -377,6 +377,73 @@ function set(obj, path, value) {
   }
 }
 
+function scrub(data, scrubFields) {
+  scrubFields = scrubFields || [];
+  var paramRes = _getScrubFieldRegexs(scrubFields);
+  var queryRes = _getScrubQueryParamRegexs(scrubFields);
+
+  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
+    return paramPart + redact(valPart);
+  }
+
+  function paramScrubber(v) {
+    var i;
+    if (isType(v, 'string')) {
+      for (i = 0; i < queryRes.length; ++i) {
+        v = v.replace(queryRes[i], redactQueryParam);
+      }
+    }
+    return v;
+  }
+
+  function valScrubber(k, v) {
+    var i;
+    for (i = 0; i < paramRes.length; ++i) {
+      if (paramRes[i].test(k)) {
+        v = redact(v);
+        break;
+      }
+    }
+    return v;
+  }
+
+  function scrubber(k, v) {
+    var tmpV = valScrubber(k, v);
+    if (tmpV === v) {
+      if (isType(v, 'object') || isType(v, 'array')) {
+        return traverse(v, scrubber);
+      }
+      return paramScrubber(tmpV);
+    } else {
+      return tmpV;
+    }
+  }
+
+  traverse(data, scrubber);
+  return data;
+}
+
+function _getScrubFieldRegexs(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp(pat, 'i'));
+  }
+  return ret;
+}
+
+
+function _getScrubQueryParamRegexs(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+  }
+  return ret;
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -395,5 +462,6 @@ module.exports = {
   jsonParse: jsonParse,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
   get: get,
-  set: set
+  set: set,
+  scrub: scrub
 };
