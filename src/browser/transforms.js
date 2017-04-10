@@ -62,7 +62,7 @@ function addClientInfo(window) {
       return callback(null, item);
     }
     _.set(item, 'data.client', {
-      runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
+      runtime_ms: item.timestamp - window._rollbarStartTime,
       timestamp: Math.round(item.timestamp / 1000),
       javascript: {
         browser: window.navigator.userAgent,
@@ -223,7 +223,7 @@ function userTransform(item, options, callback) {
       options.transform(newItem.data);
     }
   } catch (e) {
-    options.transform = null; // TODO
+    options.transform = null;
     logger.error('Error while calling custom transform() function. Removing custom transform().', e);
     callback(null, item);
     return;

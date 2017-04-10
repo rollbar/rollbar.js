@@ -5,6 +5,10 @@ var options = window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';
 var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
 
+if (!window._rollbarStartTime) {
+  window._rollbarStartTime = (new Date()).getTime();
+}
+
 if (!shimRunning && options) {
   var Rollbar = new rollbar(options);
   if (options.captureUncaught) {
