@@ -418,6 +418,7 @@ describe('userTransform', function() {
     expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(payload, options, function(e, i) {
       expect(i.data.message).to.not.eql('HELLO');
+      expect(options.transform).to.not.be.ok();
       done(e);
     });
   });
