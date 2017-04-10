@@ -22,7 +22,7 @@ RateLimiter.globalSettings = {
  * @param options - Only the following values are recognized:
  *    startTime: a timestamp of the form returned by (new Date()).getTime()
  *    maxItems: the maximum items
- *    itemsPerMinute: 
+ *    itemsPerMinute: the max number of items to send in a given minute
  */
 RateLimiter.prototype.configureGlobal = function(options) {
   if (options.startTime !== undefined) {
