@@ -2,13 +2,12 @@ var _ = require('../utility');
 
 function checkLevel(item, settings) {
   var level = item.level || 'error';
-  // TODO: change minimumLevel to reportLevel to match browser
-  var minimumLevel = settings.minimumLevel;
+  var reportLevel = settings.reportLevel;
 
   var levelVal = _.LEVELS[level] || 0;
-  var minimumLevelVal = _.LEVELS[minimumLevel] || 0;
+  var reportLevelVal = _.LEVELS[reportLevel] || 0;
 
-  if (levelVal < minimumLevelVal) {
+  if (levelVal < reportLevelVal) {
     return false;
   }
   return true;
