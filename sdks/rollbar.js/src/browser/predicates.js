@@ -22,7 +22,7 @@ function userCheckIgnore(item, settings) {
       return false;
     }
   } catch (e) {
-    settings.checkIgnore = null; // TODO
+    settings.checkIgnore = null;
     logger.error('Error while calling custom checkIgnore(), removing', e);
   }
   return true;
@@ -65,7 +65,7 @@ function urlIsWhitelisted(item, settings) {
   } catch (e)
   /* istanbul ignore next */
   {
-    settings.hostWhiteList = null; // TODO
+    settings.hostWhiteList = null;
     logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
     return true;
   }
@@ -104,7 +104,7 @@ function messageIsIgnored(item, settings) {
   } catch(e)
   /* istanbul ignore next */
   {
-    settings.ignoredMessages = null; // TODO
+    settings.ignoredMessages = null;
     logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
   }
 

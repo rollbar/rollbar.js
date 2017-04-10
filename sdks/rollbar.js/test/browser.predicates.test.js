@@ -103,6 +103,7 @@ describe('userCheckIgnore', function() {
       throw new Error('bork bork');
     }};
     expect(p.userCheckIgnore(item, settings)).to.be.ok();
+    expect(settings.checkIgnore).to.not.be.ok();
   });
 });
 
