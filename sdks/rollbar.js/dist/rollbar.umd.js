@@ -70,6 +70,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var alias = options && options.globalAlias || 'Rollbar';
 	var shimRunning = window[alias] && typeof window[alias].shimId !== 'undefined';
 	
+	if (!window._rollbarStartTime) {
+	  window._rollbarStartTime = (new Date()).getTime();
+	}
+	
 	if (!shimRunning && options) {
 	  var Rollbar = new rollbar(options);
 	  if (options.captureUncaught) {
@@ -175,9 +179,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
 	  var item;
-	  if (error && _.isType(error, 'error')) {
+	  if (_.isError(error)) {
 	    item = this._createItem([message, error, context]);
-	  } else if (url && _.isType(url, 'error')) {
+	  } else if (_.isError(url)) {
 	    item = this._createItem([message, url, context]);
 	  } else {
 	    item = this._createItem([message, context]);
@@ -202,7 +206,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var context = (reason && reason._rollbarContext) || promise._rollbarContext;
 	
 	  var item;
-	  if (reason && _.isType(reason, 'error')) {
+	  if (_.isError(reason)) {
 	    item = this._createItem([message, reason, context]);
 	  } else {
 	    item = this._createItem([message, context]);
@@ -440,6 +444,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this._log('critical', item);
 	};
 	
+	Rollbar.prototype.wait = function(callback) {
+	  this.queue.wait(callback);
+	};
+	
 	/* Internal */
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
@@ -491,7 +499,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param options - Only the following values are recognized:
 	 *    startTime: a timestamp of the form returned by (new Date()).getTime()
 	 *    maxItems: the maximum items
-	 *    itemsPerMinute: 
+	 *    itemsPerMinute: the max number of items to send in a given minute
 	 */
 	RateLimiter.prototype.configureGlobal = function(options) {
 	  if (options.startTime !== undefined) {
@@ -561,14 +569,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function rateLimitPayload(globalRateLimit) {
 	  return {
-	    data: {
-	      message: 'maxItems has been hit. Ignoring errors until reset.',
-	      err: null,
-	      custom: {
-	        maxItems: globalRateLimit
-	      }
-	    },
-	    ignoreRateLimit: true
+	    message: 'maxItems has been hit. Ignoring errors until reset.',
+	    err: null,
+	    custom: {
+	      maxItems: globalRateLimit
+	    }
 	  };
 	}
 	
@@ -644,16 +649,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *  error and response are null then the item was stopped by a predicate which did not consider this
 	 *  to be an error condition, but nonetheless did not send the item to the API.
 	 */
-	Queue.prototype.addItem = function(item, callback, force) {
+	Queue.prototype.addItem = function(item, callback) {
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() { return; };
 	  }
 	  var predicateResult = this._applyPredicates(item);
-	  if (predicateResult.stop && !force) {
+	  if (predicateResult.stop) {
 	    callback(predicateResult.err);
 	    return;
 	  }
-	  if (!force && this.waitCallback) {
+	  if (this.waitCallback) {
 	    callback();
 	    return;
 	  }
@@ -695,7 +700,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Queue.prototype._applyPredicates = function(item) {
 	  var error = null;
 	  var p = null;
-	  for (var i=0, l = this.predicates.length; i < l; i++) {
+	  for (var i = 0, len = this.predicates.length; i < len; i++) {
 	    p = this.predicates[i](item, this.settings);
 	    if (!p || p.err !== undefined) {
 	      return {stop: true, err: p.err};
@@ -742,7 +747,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Queue.prototype._maybeRetry = function(err, item, callback) {
 	  var shouldRetry = false;
 	  if (this.settings.retryInterval) {
-	    for (var i=0, j=RETRIABLE_ERRORS.length; i < j; i++) {
+	    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
 	      if (err.code === RETRIABLE_ERRORS[i]) {
 	        shouldRetry = true;
 	        break;
@@ -786,7 +791,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	Queue.prototype._dequeuePendingRequest = function(item) {
 	  var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
-	  for (var i=this.pendingRequests.length; i >= 0; i--) {
+	  for (var i = this.pendingRequests.length; i >= 0; i--) {
 	    if (this.pendingRequests[i] == item) {
 	      this.pendingRequests.splice(i, 1);
 	      if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
@@ -1185,6 +1190,73 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 	
+	function scrub(data, scrubFields) {
+	  scrubFields = scrubFields || [];
+	  var paramRes = _getScrubFieldRegexs(scrubFields);
+	  var queryRes = _getScrubQueryParamRegexs(scrubFields);
+	
+	  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
+	    return paramPart + redact(valPart);
+	  }
+	
+	  function paramScrubber(v) {
+	    var i;
+	    if (isType(v, 'string')) {
+	      for (i = 0; i < queryRes.length; ++i) {
+	        v = v.replace(queryRes[i], redactQueryParam);
+	      }
+	    }
+	    return v;
+	  }
+	
+	  function valScrubber(k, v) {
+	    var i;
+	    for (i = 0; i < paramRes.length; ++i) {
+	      if (paramRes[i].test(k)) {
+	        v = redact(v);
+	        break;
+	      }
+	    }
+	    return v;
+	  }
+	
+	  function scrubber(k, v) {
+	    var tmpV = valScrubber(k, v);
+	    if (tmpV === v) {
+	      if (isType(v, 'object') || isType(v, 'array')) {
+	        return traverse(v, scrubber);
+	      }
+	      return paramScrubber(tmpV);
+	    } else {
+	      return tmpV;
+	    }
+	  }
+	
+	  traverse(data, scrubber);
+	  return data;
+	}
+	
+	function _getScrubFieldRegexs(scrubFields) {
+	  var ret = [];
+	  var pat;
+	  for (var i = 0; i < scrubFields.length; ++i) {
+	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+	    ret.push(new RegExp(pat, 'i'));
+	  }
+	  return ret;
+	}
+	
+	
+	function _getScrubQueryParamRegexs(scrubFields) {
+	  var ret = [];
+	  var pat;
+	  for (var i = 0; i < scrubFields.length; ++i) {
+	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+	    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+	  }
+	  return ret;
+	}
+	
 	module.exports = {
 	  isType: isType,
 	  typeName: typeName,
@@ -1203,7 +1275,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  jsonParse: jsonParse,
 	  makeUnhandledStackInfo: makeUnhandledStackInfo,
 	  get: get,
-	  set: set
+	  set: set,
+	  scrub: scrub
 	};
 
 
@@ -14864,7 +14937,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return callback(null, item);
 	    }
 	    _.set(item, 'data.client', {
-	      runtime_ms: item.timestamp - window._rollbarStartTime, // TODO
+	      runtime_ms: item.timestamp - window._rollbarStartTime,
 	      timestamp: Math.round(item.timestamp / 1000),
 	      javascript: {
 	        browser: window.navigator.userAgent,
@@ -15013,7 +15086,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	function scrubPayload(item, options, callback) {
-	  scrub(item.data, options);
+	  var scrubFields = options.scrubFields;
+	  _.scrub(item.data, scrubFields);
 	  callback(null, item);
 	}
 	
@@ -15024,7 +15098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      options.transform(newItem.data);
 	    }
 	  } catch (e) {
-	    options.transform = null; // TODO
+	    options.transform = null;
 	    logger.error('Error while calling custom transform() function. Removing custom transform().', e);
 	    callback(null, item);
 	    return;
@@ -15040,75 +15114,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  var data = _.extend(true, {}, item.data, payloadOptions);
 	  callback(null, data);
-	}
-	
-	/** Helpers **/
-	
-	function scrub(data, options) {
-	  var scrubFields = options.scrubFields;
-	  var paramRes = getScrubFieldRegexs(scrubFields);
-	  var queryRes = getScrubQueryParamRegexs(scrubFields);
-	
-	  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
-	    return paramPart + _.redact(valPart);
-	  }
-	
-	  function paramScrubber(v) {
-	    var i;
-	    if (_.isType(v, 'string')) {
-	      for (i = 0; i < queryRes.length; ++i) {
-	        v = v.replace(queryRes[i], redactQueryParam);
-	      }
-	    }
-	    return v;
-	  }
-	
-	  function valScrubber(k, v) {
-	    var i;
-	    for (i = 0; i < paramRes.length; ++i) {
-	      if (paramRes[i].test(k)) {
-	        v = _.redact(v);
-	        break;
-	      }
-	    }
-	    return v;
-	  }
-	
-	  function scrubber(k, v) {
-	    var tmpV = valScrubber(k, v);
-	    if (tmpV === v) {
-	      if (_.isType(v, 'object') || _.isType(v, 'array')) {
-	        return _.traverse(v, scrubber);
-	      }
-	      return paramScrubber(tmpV);
-	    } else {
-	      return tmpV;
-	    }
-	  }
-	
-	  _.traverse(data, scrubber);
-	  return data;
-	}
-	
-	function getScrubFieldRegexs(scrubFields) {
-	  var ret = [];
-	  var pat;
-	  for (var i = 0; i < scrubFields.length; ++i) {
-	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-	    ret.push(new RegExp(pat, 'i'));
-	  }
-	  return ret;
-	}
-	
-	
-	function getScrubQueryParamRegexs(scrubFields) {
-	  var ret = [];
-	  var pat;
-	  for (var i = 0; i < scrubFields.length; ++i) {
-	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-	    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-	  }
-	  return ret;
 	}
 	
 	module.exports = {
@@ -15552,11 +15557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
-	    try {
-	      return !(item.data.body.message.extra.isAjax);
-	    } catch (e) {
-	      return true;
-	    }
+	    return !_.get(item, 'body.message.extra.isAjax');
 	  }
 	  return true;
 	}
@@ -15567,7 +15568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return false;
 	    }
 	  } catch (e) {
-	    settings.checkIgnore = null; // TODO
+	    settings.checkIgnore = null;
 	    logger.error('Error while calling custom checkIgnore(), removing', e);
 	  }
 	  return true;
@@ -15580,7 +15581,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  try {
 	    whitelist = settings.hostWhiteList;
 	    listLength = whitelist && whitelist.length;
-	    trace = item && item.data && item.data.body && item.data.body.trace;
+	    trace = _.get(item, 'body.trace');
 	
 	    if (!whitelist || listLength === 0) {
 	      return true;
@@ -15610,7 +15611,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } catch (e)
 	  /* istanbul ignore next */
 	  {
-	    settings.hostWhiteList = null; // TODO
+	    settings.hostWhiteList = null;
 	    logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
 	    return true;
 	  }
@@ -15627,7 +15628,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return true;
 	    }
 	
-	    body = _.get(item, 'data.body');
+	    body = item.body;
 	    traceMessage = _.get(body, 'trace.exception.message');
 	    bodyMessage = _.get(body, 'message.body');
 	
@@ -15649,7 +15650,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } catch(e)
 	  /* istanbul ignore next */
 	  {
-	    settings.ignoredMessages = null; // TODO
+	    settings.ignoredMessages = null;
 	    logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
 	  }
 	
