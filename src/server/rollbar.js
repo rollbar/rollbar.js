@@ -27,11 +27,13 @@ function Rollbar(accessToken, options, client) {
 
 Rollbar.prototype.global = function(options) {
   this.client.global(options);
+  return this;
 };
 
 Rollbar.prototype.configure = function(options) {
   this.options = _.extend(true, {}, this.options, options);
   this.client.configure(options);
+  return this;
 };
 
 Rollbar.prototype.log = function() {

@@ -86,10 +86,11 @@ Rollbar.configure({
 });
 ```
 
-(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api/items_post/), use `Rollbar.scope`:
+(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api/items_post/), you can override any keys by nesting
+them in the configuration under the payload key:
 
 ```js
-Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
+Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
 
 ## UMD / Browserify / Requirejs / Webpack

@@ -31,10 +31,12 @@ Rollbar.rateLimiter = new RateLimiter(defaultOptions);
 
 Rollbar.prototype.global = function(options) {
   Rollbar.rateLimiter.configureGlobal(options);
+  return this;
 };
 
 Rollbar.prototype.configure = function(options) {
   this.options = _.extend(true, {}, this.options, options);
+  return this;
 };
 
 Rollbar.prototype.log = function(item) {
