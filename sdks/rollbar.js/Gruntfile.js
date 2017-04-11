@@ -188,7 +188,7 @@ module.exports = function(grunt) {
           },
           // README travis link
           {
-            from: new RegExp('(https://api\.travis-ci\.org/rollbar/rollbar\.js\.png\\?branch=v)([0-9.-a-zA-Z]+)'),
+            from: new RegExp('(https://api\.travis-ci\.org/rollbar/rollbar\.js\.png\\?branch=v)([0-9a-zA-Z.-]+)'),
             to: function(match, index, fullText, captures) {
               captures[1] = pkg.version;
               return captures.join('');
