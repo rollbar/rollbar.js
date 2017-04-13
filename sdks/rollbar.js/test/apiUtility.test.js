@@ -54,7 +54,7 @@ describe('getTransportFromOptions', function() {
     };
     var defaults = {
       hostname: 'api.com',
-      protocol: 'https',
+      protocol: 'https:',
       path: '/api/1',
     };
     var url = {
@@ -79,7 +79,7 @@ describe('getTransportFromOptions', function() {
     };
     var defaults = {
       hostname: 'api.com',
-      protocol: 'https',
+      protocol: 'https:',
       path: '/api/1',
       search: '?abc=456',
     };
@@ -96,7 +96,7 @@ describe('getTransportFromOptions', function() {
     var t = u.getTransportFromOptions(options, defaults, url);
     expect(t.hostname).to.not.eql(defaults.hostname);
     expect(t.hostname).to.eql('whatever.com');
-    expect(t.protocol).to.eql('http');
+    expect(t.protocol).to.eql('http:');
     expect(t.search).to.not.be.ok();
     expect(t.proxy).to.eql(options.proxy);
   });
@@ -113,7 +113,7 @@ describe('transportOptions', function() {
     var method = 'GET';
 
     var o = u.transportOptions(transport, path, method);
-    expect(o.protocol).to.eql('https');
+    expect(o.protocol).to.eql('https:');
     expect(o.hostname).to.eql('a.com');
     expect(o.path).to.eql('/api/v1/item/');
     expect(o.port).to.eql(5000);
@@ -133,7 +133,7 @@ describe('transportOptions', function() {
     var method = 'GET';
     
     var o = u.transportOptions(transport, path, method);
-    expect(o.protocol).to.eql('https');
+    expect(o.protocol).to.eql('https:');
     expect(o.hostname).to.eql('b.com');
     expect(o.port).to.eql(8080);
     expect(o.path).to.eql('https://a.com/api/v1/item/');

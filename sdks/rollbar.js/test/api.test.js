@@ -42,7 +42,7 @@ describe('Api()', function() {
     expect(api.accessToken).to.eql(accessToken);
     expect(api.transport.hostname).to.eql('api.rollbar.com');
     expect(api.transport.path).to.match(/\/api\/1/);
-    expect(api.transport.protocol).to.eql('https');
+    expect(api.transport.protocol).to.eql('https:');
     done();
   });
   it('should parse the endpoint and use that if given', function(done) {
@@ -67,7 +67,7 @@ describe('Api()', function() {
     expect(api.accessToken).to.eql(accessToken);
     expect(api.transport.hostname).to.eql('woo.foo.com');
     expect(api.transport.path).to.match(/\/api\/42/);
-    expect(api.transport.protocol).to.eql('http');
+    expect(api.transport.protocol).to.eql('http:');
     done();
   });
 });
