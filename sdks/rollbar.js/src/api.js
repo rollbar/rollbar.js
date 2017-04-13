@@ -25,7 +25,7 @@ var defaultOptions = {
   path: '/api/1',
   search: null,
   version: '1',
-  protocol: 'https',
+  protocol: 'https:',
   port: 443
 };
 
