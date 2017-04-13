@@ -29,11 +29,7 @@ function getTransportFromOptions(options, defaults, url) {
   if (options.endpoint) {
     var opts = url.parse(options.endpoint);
     hostname = opts.hostname;
-    if (opts.protocol && opts.protocol.split) {
-      protocol = opts.protocol.split(':')[0];
-    } else {
-      protocol = null;
-    }
+    protocol = opts.protocol;
     port = opts.port;
     path = opts.pathname;
     search = opts.search;
@@ -49,15 +45,15 @@ function getTransportFromOptions(options, defaults, url) {
 }
 
 function transportOptions(transport, path, method) {
-  var protocol = transport.protocol || 'https';
-  var port = transport.port || (protocol === 'http' ? 80 : protocol === 'https' ? 443 : undefined);
+  var protocol = transport.protocol || 'https:';
+  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
   var path = appendPathToPath(transport.path, path);
   if (transport.search) {
     path = path + transport.search;
   }
   if (transport.proxy) {
-    path = protocol + '://' + hostname + path;
+    path = protocol + '//' + hostname + path;
     hostname = transport.proxy.host || transport.proxy.hostname;
     port = transport.proxy.port;
     protocol = transport.proxy.protocol || protocol;
