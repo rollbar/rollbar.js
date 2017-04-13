@@ -224,7 +224,7 @@ describe('formatUrl', function() {
       path: '/wooza/',
       port: 42
     };
-    expect(_.formatUrl(u, 'file')).to.eql('file://a.b.com:42/wooza/');
+    expect(_.formatUrl(u, 'file:')).to.eql('file://a.b.com:42/wooza/');
   });
   it('should pick a protocol based on port if others are missing', function() {
     var u = {
@@ -233,7 +233,7 @@ describe('formatUrl', function() {
       path: '/woo'
     };
     expect(_.formatUrl(u)).to.eql('http://a.b.com:80/woo');
-    u.protocol = 'https';
+    u.protocol = 'https:';
     expect(_.formatUrl(u)).to.eql('https://a.b.com:80/woo');
   });
   it('should handle missing parts', function() {
@@ -241,12 +241,12 @@ describe('formatUrl', function() {
       hostname: 'a.b.com'
     };
     expect(_.formatUrl(u)).to.eql('https://a.b.com');
-    expect(_.formatUrl(u, 'http')).to.eql('http://a.b.com');
+    expect(_.formatUrl(u, 'http:')).to.eql('http://a.b.com');
   });
   it('should return null without a hostname', function() {
     var u = {};
     expect(_.formatUrl(u)).to.not.be.ok();
-    expect(_.formatUrl(u, 'https')).to.not.be.ok();
+    expect(_.formatUrl(u, 'https:')).to.not.be.ok();
   });
 });
 
