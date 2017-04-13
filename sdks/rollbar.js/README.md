@@ -2,7 +2,7 @@
 
 <!-- Sub:[TOC] -->
 
-## Quick start
+## Quick start Browser
 
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
@@ -219,6 +219,214 @@ of your own code.  There are multiple approaches to dealing with this issue, the
 - [API reference](https://rollbar.com/docs/notifier/rollbar.js/api)
 - [Plugins](https://rollbar.com/docs/notifier/rollbar.js/plugins)
 - [Examples](https://github.com/rollbar/rollbar.js/tree/master/examples)
+
+## Quick Start Server
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN', {
+  handleUncaughtExceptions: true,
+  handleUnhandledRejections: true
+});
+
+// log a generic message and send to rollbar
+rollbar.log('Hello world!');
+```
+Setting the ```handleUncaughtExceptions``` option to true will register Rollbar as a handler for
+any uncaught exceptions in your Node process.
+
+Similarly, setting the ```handleUnhandledRejections``` option to true will register Rollbar as a
+handler for any unhandled Promise rejections in your Node process.
+
+<!-- RemoveNextIfProject -->
+Be sure to replace ```POST_SERVER_ITEM_ACCESS_TOKEN``` with your project's ```post_server_item``` access token, which you can find in the Rollbar.com interface.
+
+## Server Installation
+
+Install using the node package manager, npm:
+
+    $ npm install --save rollbar
+
+
+## Server Configuration
+
+### Using Express
+
+```js
+var express = require('express');
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+var app = express();
+
+app.get('/', function(req, res) {
+  // ...
+});
+
+// Use the rollbar error handler to send exceptions to your rollbar account
+app.use(rollbar.errorHandler());
+
+app.listen(6943);
+```
+
+### Using Hapi
+
+```js
+#!/usr/bin/env node
+
+var Hapi = require('hapi');
+var server = new Hapi.Server();
+server.connection({ host:'localhost', port:8000 });
+
+// Begin Rollbar initialization code
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+server.on('request-error', function(request, error) {
+  // Note: before Hapi v8.0.0, this should be 'internalError' instead of 'request-error'
+  var cb = function(rollbarErr) {
+    if (rollbarErr)
+      console.error('Error reporting to rollbar, ignoring: '+rollbarErr);
+  };
+  if (error instanceof Error)
+    return rollbar.error(error, request, cb);
+  rollbar.error('Error: '+error, 'error', request, cb);
+});
+// End Rollbar initialization code
+
+server.route({
+  method: 'GET',
+  path:'/throw_error',
+  handler: function (request, reply) {
+    throw new Error('Example error manually thrown from route.');
+  }
+});
+server.start(function(err) {
+  if (err)
+    throw err;
+  console.log('Server running at:', server.info.uri);
+}); 
+```
+
+### Standalone
+
+In your main application, require and construct a rollbar instance using your access_token::
+
+```js
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN");
+```
+
+Other options can be passed into the constructor using a second parameter. E.g.:
+
+```js
+// Configure the library to send errors to api.rollbar.com
+new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN", {
+  environment: "staging",
+  endpoint: "https://api.rollbar.com/api/1/"
+});
+```
+
+## Server Usage
+
+### Caught exceptions
+
+To report an exception that you have caught, use one of the named logging functions
+(log/debug/info/warning/error/critical) depending on the level of severity of the exception.
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+try {
+  someCode();
+} catch (e) {
+  rollbar.error(e);
+
+  // if you have a request object (or a function that returns one), pass it as the second arg
+  // see below for details about what the request object is expected to be
+  rollbar.error(e, request);
+
+  // you can also pass a callback, which will be called upon success/failure
+  rollbar.error(e, function(err2) {
+    if (err2) {
+      // an error occurred
+    } else {
+      // success
+    }
+  });
+
+  // if you have a request and a callback, pass the callback last
+  rollbar.error(e, request, callback);
+
+  // to specify payload options - like extra data, or the level - pass a custom object as the third argument. The second argument must be a request or null
+  rollbar.error(e, request, {level: "info"});
+  rollbar.error(e, null, {level: "warning", custom: {someKey: "arbitrary value"}});
+
+  // you can also pass a callback as the last argument
+  rollbar.error(e, null, {level: "info"}, callback);
+  rollbar.error(e, request, {level: "info"}, callback);
+}
+```
+
+### Log messages
+
+To report a string message, possibly along with additional context, use (log/debug/info/warning/error/critical) depending on the level of severity to attach to the message.
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+// reports a string message at the default severity level ("error")
+rollbar.log("Timeout connecting to database");
+
+
+// reports a string message at the specified level, along with a request and callback
+// only the first param is required
+rollbar.debug("Response time exceeded threshold of 1s", request, callback);
+rollbar.info("Response time exceeded threshold of 1s", request, callback);
+rollbar.warning("Response time exceeded threshold of 1s", request, callback);
+rollbar.error("Response time exceeded threshold of 1s", request, callback);
+rollbar.critical("Response time exceeded threshold of 1s", request, callback);
+
+// reports a string message along with additional data conforming to the Rollbar API Schema
+// documented here: https://rollbar.com/docs/api/items_post/
+rollbar.warning(
+  "Response time exceeded threshold of 1s",
+  request,
+  {
+    threshold: 1,
+    timeElapsed: 2.3
+  }, callback
+);
+```
+
+### The Request Object
+
+If your Node.js application is responding to web requests, you can send data about the current request along with each report to Rollbar. This will allow you to replay requests, track events by browser, IP address, and much more.
+
+All of the logging methods accept a `request` parameter as the second argument.
+
+If you're using Express, just pass the express request object. If you're using something custom, pass an object with these keys (all optional):
+
+- `headers`: an object containing the request headers
+- `protocol`: the request protocol (e.g. `"https"`)
+- `url`: the URL starting after the domain name (e.g. `"/index.html?foo=bar"`)
+- `method`: the request method (e.g. `"GET"`)
+- `body`: the request body as a string
+- `route`: an object containing a 'path' key, which will be used as the "context" for the event (e.g. `{"path": "home/index"}`)
+
+Sensitive param names will be scrubbed from the request body and, if `scrubHeaders` is configured, headers. See the `scrubFields` and `scrubHeaders` configuration options for details.
+
+### Person Tracking
+
+If your application has authenticated users, you can track which user ("person" in Rollbar parlance) was associated with each event.
+
+If you're using the [Passport](http://passportjs.org/) authentication library, this will happen automatically when you pass the request object (which will have "user" attached). Otherwise, attach one of these keys to the `request` object described in the previous section:
+
+- `rollbar_person` or `user`: an object like `{"id": "123", "username": "foo", "email": "foo@example.com"}`. id is required, others are optional.
+- `user_id`: the user id as an integer or string, or a function which when called will return the user id
+
+Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `username` are supplemental and will be overwritten whenever a new value is received for an existing `id`. The `id` is a string up to 40 characters long.
 
 ## Help / Support
 
