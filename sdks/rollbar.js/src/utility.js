@@ -251,17 +251,17 @@ function formatUrl(u, protocol) {
   protocol = protocol || u.protocol;
   if (!protocol && u.port) {
     if (u.port === 80) {
-      protocol = 'http';
+      protocol = 'http:';
     } else if (u.port === 443) {
-      protocol = 'https';
+      protocol = 'https:';
     }
   };
-  protocol = protocol || 'https';
+  protocol = protocol || 'https:';
 
   if (!u.hostname) {
     return null;
   }
-  var result = protocol + '://' + u.hostname;
+  var result = protocol + '//' + u.hostname;
   if (u.port) {
     result = result + ':' + u.port;
   }
