@@ -173,6 +173,38 @@ var _rollbarConfig = {
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/source-maps/) for instructions.
 
+## Angular 2
+
+Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
+Rollbar by default. Additionally, one can catch any Angular 2 specific exceptions reported through the
+`@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
+
+```js
+import Rollbar = require('rollbar');
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { AppComponent } from './app.component';
+
+Rollbar.configure({
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+});
+
+export class RollbarErrorHandler implements ErrorHandler {
+  handleError(err:any) : void {
+    Rollbar.error(err.originalError || err);
+  }
+}
+
+@NgModule({
+  imports: [ BrowserModule ],
+  declarations: [ AppComponent ],
+  bootstrap: [ AppComponent ],
+  providers: [ { provide: ErrorHandler, useClass: RollbarErrorHandler } ]
+})
+export class AppModule { }
+```
 
 ## Dealing with adblocker / browser extension exceptions
 
