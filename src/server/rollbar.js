@@ -89,21 +89,23 @@ Rollbar.prototype.wait = function(callback) {
   this.client.wait(callback);
 };
 
-Rollbar.prototype.errorHandler = function(err, request, response, next) {
-  var cb = function(rollbarError) {
-    if (rollbarError) {
-      logger.error('Error reporting to rollbar, ignoring: ' + rollbarError);
+Rollbar.prototype.errorHandler = function() {
+  return function(err, request, response, next) {
+    var cb = function(rollbarError) {
+      if (rollbarError) {
+        logger.error('Error reporting to rollbar, ignoring: ' + rollbarError);
+      }
+      return next(err, request, response);
+    };
+    if (!err) {
+      return next(err, request, response);
     }
-    return next(err, request, response);
-  };
-  if (!err) {
-    return next(err, request, response);
-  }
 
-  if (err instanceof Error) {
-    return this.error(err, request, cb);
-  }
-  return this.error('Error: ' + err, request, cb);
+    if (err instanceof Error) {
+      return this.error(err, request, cb);
+    }
+    return this.error('Error: ' + err, request, cb);
+  }.bind(this);
 };
 
 /** DEPRECATED **/
@@ -186,7 +188,7 @@ Rollbar.prototype._createItem = function(args) {
     callback: callback,
     request: request
   };
-  if (custom.level !== undefined) {
+  if (custom && custom.level !== undefined) {
     item.level = custom.level;
     delete custom.level;
   }
