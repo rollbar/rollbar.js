@@ -102,7 +102,7 @@ function _headers(accessToken, options, data) {
 }
 
 function _transport(options) {
-  return {http: http, https: https}[options.protocol];  
+  return {'http:': http, 'https:': https}[options.protocol];
 }
 
 function _handleResponse(resp, callback) {
