@@ -77,24 +77,28 @@ Rollbar.prototype.critical = function() {
 
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
   var item;
+  var stackInfo = _.makeUnhandledStackInfo(
+    message,
+    url,
+    lineno,
+    colno,
+    error,
+    'onerror',
+    'uncaught exception',
+    errorParser
+  );
   if (_.isError(error)) {
     item = this._createItem([message, error, context]);
+    item._unhandledStackInfo = stackInfo;
   } else if (_.isError(url)) {
     item = this._createItem([message, url, context]);
+    item._unhandledStackInfo = stackInfo;
   } else {
     item = this._createItem([message, context]);
-    item.stackInfo = _.makeUnhandledStackInfo(
-      message,
-      url,
-      lineno,
-      colno,
-      error,
-      'onerror',
-      'uncaught exception',
-      errorParser
-    );
+    item.stackInfo = stackInfo;
   }
   item.level = this.options.uncaughtErrorLevel;
+  item._isUncaught = true;
   this.client.log(item);
 };
 
@@ -205,6 +209,8 @@ Rollbar.prototype._createItem = function(args) {
     arg = args[i];
 
     switch (_.typeName(arg)) {
+      case 'undefined':
+        break;
       case 'string':
         message ? extraArgs.push(arg) : message = arg;
         break;
@@ -235,7 +241,7 @@ Rollbar.prototype._createItem = function(args) {
     }
   }
 
-  if (extraArgs.length) {
+  if (extraArgs.length > 0) {
     // if custom is an array this turns it into an object with integer keys
     custom = _.extend(true, {}, custom);
     custom.extraArgs = extraArgs;
