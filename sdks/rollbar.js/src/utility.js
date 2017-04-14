@@ -311,7 +311,8 @@ function makeUnhandledStackInfo(
 ) {
   var location = {
     url: url || '',
-    line: lineno
+    line: lineno,
+    column: colno
   };
   location.func = errorParser.guessFunctionName(location.url, location.line);
   location.context = errorParser.gatherContext(location.url, location.line);
