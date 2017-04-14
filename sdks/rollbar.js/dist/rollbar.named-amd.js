@@ -101,21 +101,19 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  this.options = _.extend(true, defaultOptions, options);
 	  var context = 'browser';
 	  this.client = client || new Client(context, this.options);
-	  this.init(this.client);
+	  addTransformsToNotifier(this.client.notifier);
+	  addPredicatesToQueue(this.client.queue);
 	}
 	
 	Rollbar.prototype.global = function(options) {
 	  this.client.global(options);
+	  return this;
 	};
 	
 	Rollbar.prototype.configure = function(options) {
 	  this.options = _.extend(true, {}, this.options, options);
 	  this.client.configure(options);
-	};
-	
-	Rollbar.prototype.init = function(client) {
-	  addTransformsToNotifier(client.notifier);
-	  addPredicatesToQueue(client.queue);
+	  return this;
 	};
 	
 	Rollbar.prototype.log = function() {
@@ -169,24 +167,28 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
 	  var item;
+	  var stackInfo = _.makeUnhandledStackInfo(
+	    message,
+	    url,
+	    lineno,
+	    colno,
+	    error,
+	    'onerror',
+	    'uncaught exception',
+	    errorParser
+	  );
 	  if (_.isError(error)) {
 	    item = this._createItem([message, error, context]);
+	    item._unhandledStackInfo = stackInfo;
 	  } else if (_.isError(url)) {
 	    item = this._createItem([message, url, context]);
+	    item._unhandledStackInfo = stackInfo;
 	  } else {
 	    item = this._createItem([message, context]);
-	    item.stackInfo = _.makeUnhandledStackInfo(
-	      message,
-	      url,
-	      lineno,
-	      colno,
-	      error,
-	      'onerror',
-	      'uncaught exception',
-	      errorParser
-	    );
+	    item.stackInfo = stackInfo;
 	  }
 	  item.level = this.options.uncaughtErrorLevel;
+	  item._isUncaught = true;
 	  this.client.log(item);
 	};
 	
@@ -297,6 +299,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    arg = args[i];
 	
 	    switch (_.typeName(arg)) {
+	      case 'undefined':
+	        break;
 	      case 'string':
 	        message ? extraArgs.push(arg) : message = arg;
 	        break;
@@ -327,7 +331,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  }
 	
-	  if (extraArgs.length) {
+	  if (extraArgs.length > 0) {
 	    // if custom is an array this turns it into an object with integer keys
 	    custom = _.extend(true, {}, custom);
 	    custom.extraArgs = extraArgs;
@@ -399,10 +403,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Rollbar.prototype.global = function(options) {
 	  Rollbar.rateLimiter.configureGlobal(options);
+	  return this;
 	};
 	
 	Rollbar.prototype.configure = function(options) {
 	  this.options = _.extend(true, {}, this.options, options);
+	  return this;
 	};
 	
 	Rollbar.prototype.log = function(item) {
@@ -1054,17 +1060,17 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  protocol = protocol || u.protocol;
 	  if (!protocol && u.port) {
 	    if (u.port === 80) {
-	      protocol = 'http';
+	      protocol = 'http:';
 	    } else if (u.port === 443) {
-	      protocol = 'https';
+	      protocol = 'https:';
 	    }
 	  };
-	  protocol = protocol || 'https';
+	  protocol = protocol || 'https:';
 	
 	  if (!u.hostname) {
 	    return null;
 	  }
-	  var result = protocol + '://' + u.hostname;
+	  var result = protocol + '//' + u.hostname;
 	  if (u.port) {
 	    result = result + ':' + u.port;
 	  }
@@ -1114,7 +1120,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	) {
 	  var location = {
 	    url: url || '',
-	    line: lineno
+	    line: lineno,
+	    column: colno
 	  };
 	  location.func = errorParser.guessFunctionName(location.url, location.line);
 	  location.context = errorParser.gatherContext(location.url, location.line);
@@ -2282,7 +2289,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  path: '/api/1',
 	  search: null,
 	  version: '1',
-	  protocol: 'https',
+	  protocol: 'https:',
 	  port: 443
 	};
 	
@@ -2363,11 +2370,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  if (options.endpoint) {
 	    var opts = url.parse(options.endpoint);
 	    hostname = opts.hostname;
-	    if (opts.protocol && opts.protocol.split) {
-	      protocol = opts.protocol.split(':')[0];
-	    } else {
-	      protocol = null;
-	    }
+	    protocol = opts.protocol;
 	    port = opts.port;
 	    path = opts.pathname;
 	    search = opts.search;
@@ -2383,15 +2386,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function transportOptions(transport, path, method) {
-	  var protocol = transport.protocol || 'https';
-	  var port = transport.port || (protocol === 'http' ? 80 : protocol === 'https' ? 443 : undefined);
+	  var protocol = transport.protocol || 'https:';
+	  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
 	  var hostname = transport.hostname;
 	  var path = appendPathToPath(transport.path, path);
 	  if (transport.search) {
 	    path = path + transport.search;
 	  }
 	  if (transport.proxy) {
-	    path = protocol + '://' + hostname + path;
+	    path = protocol + '//' + hostname + path;
 	    hostname = transport.proxy.host || transport.proxy.hostname;
 	    port = transport.proxy.port;
 	    protocol = transport.proxy.protocol || protocol;
@@ -2536,7 +2539,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function _transport(options) {
-	  return {http: http, https: https}[options.protocol];  
+	  return {'http:': http, 'https:': https}[options.protocol];
 	}
 	
 	function _handleResponse(resp, callback) {
@@ -14871,7 +14874,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  item.data = item.data || {};
 	  if (item.err) {
 	    try {
-	      item.data.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
+	      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
 	    } catch (e)
 	    /* istanbul ignore next */
 	    {
@@ -14884,7 +14887,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function ensureItemHasSomethingToSay(item, options, callback) {
-	  if (!item.message && !(item.data && item.data.stackInfo) && !item.custom) {
+	  if (!item.message && !item.stackInfo && !item.custom) {
 	    callback(new Error('No message, stack info, or custom data'), null);
 	  }
 	  callback(null, item);
@@ -14961,7 +14964,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function addBody(item, options, callback) {
-	  if (item.data && item.data.stackInfo) {
+	  if (item.stackInfo) {
 	    addBodyTrace(item, options, callback);
 	  } else {
 	    addBodyMessage(item, options, callback);
@@ -14994,7 +14997,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	function addBodyTrace(item, options, callback) {
 	  var description = item.data.description;
-	  var stackInfo = item.data.stackInfo;
+	  var stackInfo = item.stackInfo;
 	  var custom = item.custom;
 	
 	  var guess = errorParser.guessErrorClass(stackInfo.message);
@@ -15012,7 +15015,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	
 	  // Transform a TraceKit stackInfo object into a Rollbar trace
-	  if (stackInfo.stack) {
+	  var stack = stackInfo.stack;
+	  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+	    stack = item._unhandledStackInfo.stack;
+	  }
+	  if (stack) {
 	    var stackFrame;
 	    var frame;
 	    var code;
@@ -15022,8 +15029,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    var i, mid;
 	
 	    trace.frames = [];
-	    for (i = 0; i < stackInfo.stack.length; ++i) {
-	      stackFrame = stackInfo.stack[i];
+	    for (i = 0; i < stack.length; ++i) {
+	      stackFrame = stack[i];
 	      frame = {
 	        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
 	        lineno: stackFrame.line || null,
@@ -15103,6 +15110,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	
 	  var data = _.extend(true, {}, item.data, payloadOptions);
+	  if (item._isUncaught) {
+	    data._isUncaught = true;
+	  }
 	  callback(null, data);
 	}
 	
@@ -15553,8 +15563,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function userCheckIgnore(item, settings) {
+	  var isUncaught = !!item._isUncaught;
+	  delete item._isUncaught;
 	  try {
-	    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(item, settings)) {
+	    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, item, settings)) {
 	      return false;
 	    }
 	  } catch (e) {
