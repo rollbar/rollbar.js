@@ -46,7 +46,7 @@ describe('handleItemWithError', function() {
     var item = itemFromArgs(args);
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
-      expect(i.data.stackInfo).to.eql(myTrace);
+      expect(i.stackInfo).to.eql(myTrace);
       done(e);
     });
   });
@@ -62,7 +62,7 @@ describe('handleItemWithError', function() {
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
       expect(i.message).to.eql('a message');
-      expect(i.data.stackInfo).to.be.ok();
+      expect(i.stackInfo).to.be.ok();
       done(e);
     });
   });
@@ -73,7 +73,7 @@ describe('handleItemWithError', function() {
     item.err = err;
     var options = {};
     t.handleItemWithError(item, options, function(e, i) {
-      expect(i.data.stackInfo).to.be.ok();
+      expect(i.stackInfo).to.be.ok();
       expect(i.message).to.eql('a message');
       done(e);
     });
@@ -104,7 +104,7 @@ describe('ensureItemHasSomethingToSay', function() {
     var args = [];
     var item = itemFromArgs(args);
     item.data = item.data || {};
-    item.data.stackInfo = {};
+    item.stackInfo = {};
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function(e, i) {
       expect(i).to.be.ok();
@@ -252,7 +252,7 @@ describe('addBody', function() {
       item.description = 'borked';
       var options = {};
       t.handleItemWithError(item, options, function(e, i) {
-        expect(i.data.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok();
         t.addBody(i, options, function(e, i) {
           expect(i.data.body.trace).to.be.ok();
           done(e);
@@ -264,7 +264,7 @@ describe('addBody', function() {
       var item = itemFromArgs(args);
       item.description = 'borked';
       item.data = item.data || {};
-      item.data.stackInfo = {name: 'bork'};
+      item.stackInfo = {name: 'bork'};
       var options = {};
       t.addBody(item, options, function(e, i) {
         expect(i.data.body.trace).to.not.be.ok();

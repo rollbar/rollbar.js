@@ -6,7 +6,7 @@ function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
   if (item.err) {
     try {
-      item.data.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
+      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
     } catch (e)
     /* istanbul ignore next */
     {
@@ -19,7 +19,7 @@ function handleItemWithError(item, options, callback) {
 }
 
 function ensureItemHasSomethingToSay(item, options, callback) {
-  if (!item.message && !(item.data && item.data.stackInfo) && !item.custom) {
+  if (!item.message && !item.stackInfo && !item.custom) {
     callback(new Error('No message, stack info, or custom data'), null);
   }
   callback(null, item);
@@ -96,7 +96,7 @@ function addPluginInfo(window) {
 }
 
 function addBody(item, options, callback) {
-  if (item.data && item.data.stackInfo) {
+  if (item.stackInfo) {
     addBodyTrace(item, options, callback);
   } else {
     addBodyMessage(item, options, callback);
@@ -129,7 +129,7 @@ function addBodyMessage(item, options, callback) {
 
 function addBodyTrace(item, options, callback) {
   var description = item.data.description;
-  var stackInfo = item.data.stackInfo;
+  var stackInfo = item.stackInfo;
   var custom = item.custom;
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
@@ -147,7 +147,11 @@ function addBodyTrace(item, options, callback) {
   }
 
   // Transform a TraceKit stackInfo object into a Rollbar trace
-  if (stackInfo.stack) {
+  var stack = stackInfo.stack;
+  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+    stack = item._unhandledStackInfo.stack;
+  }
+  if (stack) {
     var stackFrame;
     var frame;
     var code;
@@ -157,8 +161,8 @@ function addBodyTrace(item, options, callback) {
     var i, mid;
 
     trace.frames = [];
-    for (i = 0; i < stackInfo.stack.length; ++i) {
-      stackFrame = stackInfo.stack[i];
+    for (i = 0; i < stack.length; ++i) {
+      stackFrame = stack[i];
       frame = {
         filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
         lineno: stackFrame.line || null,
@@ -238,6 +242,9 @@ function itemToPayload(item, options, callback) {
   }
 
   var data = _.extend(true, {}, item.data, payloadOptions);
+  if (item._isUncaught) {
+    data._isUncaught = true;
+  }
   callback(null, data);
 }
 
