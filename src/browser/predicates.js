@@ -17,8 +17,10 @@ function checkIgnore(item, settings) {
 }
 
 function userCheckIgnore(item, settings) {
+  var isUncaught = !!item._isUncaught;
+  delete item._isUncaught;
   try {
-    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(item, settings)) {
+    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, item, settings)) {
       return false;
     }
   } catch (e) {
