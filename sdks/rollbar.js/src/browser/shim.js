@@ -26,12 +26,12 @@ function Shim(options, wrap) {
 }
 
 var Wrapper = require('./rollbarWrapper');
-var ShimImpl = function(options, client, wrap) {
+var ShimImpl = function(options, wrap) {
   return new Shim(options, wrap);
 };
 var Rollbar = Wrapper.bind(null, ShimImpl);
 
-Shim.init = function(window, options) {
+function setupShim(window, options) {
   var alias = options.globalAlias || 'Rollbar';
   if (typeof window[alias] === 'object') {
     return window[alias];
@@ -176,6 +176,6 @@ for (var i = 0; i < _methods.length; ++i) {
 }
 
 module.exports = {
-  Shim: Shim,
+  setupShim: setupShim,
   Rollbar: Rollbar
 };
