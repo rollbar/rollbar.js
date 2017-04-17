@@ -5,7 +5,6 @@ var logger = require('./logger');
 var transforms = require('./transforms');
 var predicates = require('./predicates');
 var errorParser = require('./errorParser');
-var Wrapper = require('./rollbarWrapper');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
@@ -21,7 +20,8 @@ Rollbar.prototype.global = function(options) {
 };
 
 Rollbar.prototype.configure = function(options) {
-  this.options = _.extend(true, {}, this.options, options);
+  var oldOptions = this.options;
+  this.options = _.extend(true, {}, oldOptions, options);
   this.client.configure(options);
   return this;
 };
@@ -266,9 +266,4 @@ var defaultOptions = {
   endpoint: __DEFAULT_ENDPOINT__
 };
 
-var RollbarImpl = function(options, client) {
-  return new Rollbar(options, client);
-};
-var RollbarWrap = Wrapper.bind(null, RollbarImpl);
-
-module.exports = RollbarWrap;
+module.exports = Rollbar;
