@@ -54,7 +54,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	'use strict';
 	
 	var rollbar = __webpack_require__(2);
-	var globals = __webpack_require__(82);
+	var globals = __webpack_require__(81);
 	
 	var options = window._rollbarConfig;
 	var alias = options && options.globalAlias || 'Rollbar';
@@ -95,7 +95,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var transforms = __webpack_require__(76);
 	var predicates = __webpack_require__(80);
 	var errorParser = __webpack_require__(77);
-	var Wrapper = __webpack_require__(81);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
@@ -111,7 +110,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 	
 	Rollbar.prototype.configure = function(options) {
-	  this.options = _.extend(true, {}, this.options, options);
+	  var oldOptions = this.options;
+	  this.options = _.extend(true, {}, oldOptions, options);
 	  this.client.configure(options);
 	  return this;
 	};
@@ -356,12 +356,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  endpoint: ("api.rollbar.com/api/1/")
 	};
 	
-	var RollbarImpl = function(options, client) {
-	  return new Rollbar(options, client);
-	};
-	var RollbarWrap = Wrapper.bind(null, RollbarImpl);
-	
-	module.exports = RollbarWrap;
+	module.exports = Rollbar;
 
 
 /***/ },
@@ -407,7 +402,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 	
 	Rollbar.prototype.configure = function(options) {
-	  this.options = _.extend(true, {}, this.options, options);
+	  this.notifier && this.notifier.configure(options);
+	  var oldOptions = this.options;
+	  this.options = _.extend(true, {}, oldOptions, options);
 	  return this;
 	};
 	
@@ -594,12 +591,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 *    rateLimiter.shouldSend(item) -> bool
 	 * @param api - An object which conforms to the interface
 	 *    api.postItem(payload, function(err, response))
-	 * @param settings - see Queue.prototype.configure
+	 * @param options - see Queue.prototype.configure
 	 */
-	function Queue(rateLimiter, api, settings) {
+	function Queue(rateLimiter, api, options) {
 	  this.rateLimiter = rateLimiter;
 	  this.api = api;
-	  this.settings = settings;
+	  this.options = options;
 	  this.predicates = [];
 	  this.pendingRequests = [];
 	  this.retryQueue = [];
@@ -608,22 +605,21 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	/*
-	 * configure - updates the settings this queue uses
+	 * configure - updates the options this queue uses
 	 *
-	 * @param settings - an object with the following possible keys
-	 *    * something
-	 *    * else
+	 * @param options
 	 */
-	Queue.prototype.configure = function(settings) {
-	  var oldSettings = this.settings;
-	  this.settings = _.extend(true, {}, oldSettings, settings);
+	Queue.prototype.configure = function(options) {
+	  this.api && this.api.configure(options);
+	  var oldOptions = this.options;
+	  this.options = _.extend(true, {}, oldOptions, options);
 	  return this;
 	};
 	
 	/*
 	 * addPredicate - adds a predicate to the end of the list of predicates for this queue
 	 * 
-	 * @param predicate - function(item, settings) -> (bool|{err: Error})
+	 * @param predicate - function(item, options) -> (bool|{err: Error})
 	 *  Returning true means that this predicate passes and the item is okay to go on the queue
 	 *  Returning false means do not add the item to the queue, but it is not an error
 	 *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
@@ -687,7 +683,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 	
 	/* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
-	 *   given item with the currently configured settings.
+	 *   given item with the currently configured options.
 	 *
 	 * @param item - An item in the queue
 	 * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
@@ -697,7 +693,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  var error = null;
 	  var p = null;
 	  for (var i = 0, len = this.predicates.length; i < len; i++) {
-	    p = this.predicates[i](item, this.settings);
+	    p = this.predicates[i](item, this.options);
 	    if (!p || p.err !== undefined) {
 	      return {stop: true, err: p.err};
 	    }
@@ -742,7 +738,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 */
 	Queue.prototype._maybeRetry = function(err, item, callback) {
 	  var shouldRetry = false;
-	  if (this.settings.retryInterval) {
+	  if (this.options.retryInterval) {
 	    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
 	      if (err.code === RETRIABLE_ERRORS[i]) {
 	        shouldRetry = true;
@@ -759,7 +755,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	/*
 	 * _retryApiRequest - Add an item and a callback to a queue and possibly start a timer to process
-	 *   that queue based on the retryInterval in the settings for this queue.
+	 *   that queue based on the retryInterval in the options for this queue.
 	 *
 	 * @param item - an item that failed to send due to an error we deem retriable
 	 * @param callback - function(err, response)
@@ -773,7 +769,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        var retryObject = this.retryQueue.shift();
 	        this._makeApiRequest(retryObject.item, retryObject.callback);
 	      }
-	    }.bind(this), this.settings.retryInterval);
+	    }.bind(this), this.options.retryInterval);
 	  }
 	};
 	
@@ -2168,6 +2164,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 * @returns this
 	 */
 	Notifier.prototype.configure = function(options) {
+	  this.queue && this.queue.configure(options);
 	  var oldOptions = this.options;
 	  this.options = _.extend(true, {}, oldOptions, options);
 	  return this;
@@ -2312,8 +2309,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 * }
 	 */
 	function Api(accessToken, options) {
-	  this.transport = helpers.getTransportFromOptions(options, defaultOptions, url);
 	  this.accessToken = accessToken;
+	  this.options = options;
+	  this.transport = _getTransport(options);
 	}
 	
 	/**
@@ -2326,6 +2324,17 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  var payload = helpers.buildPayload(this.accessToken, data, jsonBackup);
 	  Transport.post(this.accessToken, transportOptions, payload, callback);
 	};
+	
+	Api.prototype.configure = function(options) {
+	  var oldOptions = this.oldOptions;
+	  this.options = _.extend(true, {}, oldOptions, options);
+	  this.transport = _getTransport(this.options);
+	  return this;
+	};
+	
+	function _getTransport(options) {
+	  return helpers.getTransportFromOptions(options, defaultOptions, url);
+	}
 	
 	module.exports = function(context, transport, u, j) {
 	  init(context, transport, u, j);
@@ -15670,51 +15679,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 /***/ },
 /* 81 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	function RollbarWrap(impl, options, client) {
-	  this.impl = impl(options, client, this);
-	  this.options = options;
-	  this.client = client;
-	  _setupForwarding(RollbarWrap.prototype);
-	}
-	
-	function _setupForwarding(prototype) {
-	  var _forward = function(method) {
-	    return function() {
-	      var args = Array.prototype.slice.call(arguments, 0);
-	      if (this.impl[method]) {
-	        return this.impl[method].apply(this.impl, args);
-	      }
-	    };
-	  };
-	
-	  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId'.split(',');
-	  for (var i=0; i<_methods.length; i++) {
-	    prototype[_methods[i]] = _forward(_methods[i]);
-	  }
-	}
-	
-	RollbarWrap.prototype._swapAndProcessMessages = function(impl, messages) {
-	  this.impl = impl(this.options, this.client);
-	  var msg, method, args;
-	  while ((msg = messages.shift())) {
-	    method = msg.method;
-	    args = msg.args;
-	    if (this[method] && typeof this[method] === 'function') {
-	      this[method].apply(this, args);
-	    }
-	  }
-	  return this;
-	};
-	
-	module.exports = RollbarWrap;
-
-
-/***/ },
-/* 82 */
 /***/ function(module, exports) {
 
 	'use strict';
