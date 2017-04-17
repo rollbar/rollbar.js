@@ -1,7 +1,6 @@
-function RollbarWrap(impl, options, client) {
-  this.impl = impl(options, client, this);
+function RollbarWrap(impl, options) {
+  this.impl = impl(options, this);
   this.options = options;
-  this.client = client;
   _setupForwarding(RollbarWrap.prototype);
 }
 
@@ -22,7 +21,7 @@ function _setupForwarding(prototype) {
 }
 
 RollbarWrap.prototype._swapAndProcessMessages = function(impl, messages) {
-  this.impl = impl(this.options, this.client);
+  this.impl = impl(this.options);
   var msg, method, args;
   while ((msg = messages.shift())) {
     method = msg.method;
