@@ -35,6 +35,8 @@ function TestApiGenerator() {
       }
     }
   };
+
+  TestApi.prototype.configure = function() {};
   
   return TestApi;
 }
@@ -43,8 +45,8 @@ describe('Queue()', function() {
   it('should have all of the expected methods', function(done) {
     var rateLimiter = new (TestRateLimiterGenerator())();
     var api = new (TestApiGenerator())();
-    var settings = {};
-    var queue = new Queue(rateLimiter, api, settings);
+    var options = {};
+    var queue = new Queue(rateLimiter, api, options);
     expect(queue).to.have.property('configure');
     expect(queue).to.have.property('addPredicate');
     expect(queue).to.have.property('addItem');
@@ -55,20 +57,20 @@ describe('Queue()', function() {
 });
 
 describe('configure', function() {
-  it('should update the settings', function(done) {
+  it('should update the options', function(done) {
     var rateLimiter = new (TestRateLimiterGenerator())();
     var api = new (TestApiGenerator())();
-    var settings = {a: 1, b: 42};
-    var queue = new Queue(rateLimiter, api, settings);
+    var options = {a: 1, b: 42};
+    var queue = new Queue(rateLimiter, api, options);
   
-    expect(queue.settings.a).to.eql(1);
-    expect(queue.settings.b).to.eql(42);
+    expect(queue.options.a).to.eql(1);
+    expect(queue.options.b).to.eql(42);
 
     queue.configure({a: 2, c: 15});
 
-    expect(queue.settings.a).to.eql(2);
-    expect(queue.settings.b).to.eql(42);
-    expect(queue.settings.c).to.eql(15);
+    expect(queue.options.a).to.eql(2);
+    expect(queue.options.b).to.eql(42);
+    expect(queue.options.c).to.eql(15);
 
     done();
   });
@@ -80,8 +82,8 @@ describe('addItem', function() {
       it('should work with no callback', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -100,8 +102,8 @@ describe('addItem', function() {
       it('should work with a garbage callback', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -120,8 +122,8 @@ describe('addItem', function() {
       it('should work with no predicates', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -142,8 +144,8 @@ describe('addItem', function() {
       it('should stop if a predicate returns false', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -167,8 +169,8 @@ describe('addItem', function() {
       it('should stop if a predicate returns an error', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -194,8 +196,8 @@ describe('addItem', function() {
       it('should stop if any predicate returns an error', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -225,8 +227,8 @@ describe('addItem', function() {
       it('should stop and callback if a wait callback is set', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -252,8 +254,8 @@ describe('addItem', function() {
       it('should work if wait is called with a non-function', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -273,8 +275,8 @@ describe('addItem', function() {
       it('should work if all predicates return true', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -302,8 +304,8 @@ describe('addItem', function() {
       it('should callback if the api throws an exception', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var exception = 'boom!';
@@ -329,8 +331,8 @@ describe('addItem', function() {
       it('should callback with the api error if not retriable', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {retryInterval: 1};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {retryInterval: 1};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var apiError = {code: 'NOPE', message: 'borked'};
@@ -350,8 +352,8 @@ describe('addItem', function() {
       it('should callback with the api error if no retryInterval is set', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var apiError = {code: 'ENOTFOUND', message: 'No internet connection'};
@@ -371,8 +373,8 @@ describe('addItem', function() {
       it('should retry if we get a retriable error', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
-        var settings = {retryInterval: 1};
-        var queue = new Queue(rateLimiter, api, settings);
+        var options = {retryInterval: 1};
+        var queue = new Queue(rateLimiter, api, options);
       
         var item = {mykey: 'myvalue'};
         var serverResponse = {success: true};
@@ -403,8 +405,8 @@ describe('addItem', function() {
     it('should callback if the rate limiter says not to send and has an error', function(done) {
       var rateLimiter = new (TestRateLimiterGenerator())();
       var api = new (TestApiGenerator())();
-      var settings = {};
-      var queue = new Queue(rateLimiter, api, settings);
+      var options = {};
+      var queue = new Queue(rateLimiter, api, options);
     
       var item = {mykey: 'myvalue'};
       var rateLimitError = 'bork';
@@ -430,8 +432,8 @@ describe('addItem', function() {
     it('should callback if the rate limiter says not to send and has a payload', function(done) {
       var rateLimiter = new (TestRateLimiterGenerator())();
       var api = new (TestApiGenerator())();
-      var settings = {};
-      var queue = new Queue(rateLimiter, api, settings);
+      var options = {};
+      var queue = new Queue(rateLimiter, api, options);
     
       var item = {mykey: 'myvalue'};
       var rateLimitPayload = {something: 'went wrong'};
