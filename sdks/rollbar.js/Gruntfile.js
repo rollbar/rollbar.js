@@ -73,8 +73,6 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
     // Karma will inclue it in the web page.
     if (testName === 'requirejs') {
       testConfig.files = [
-        {src: './test-browser/requirejs-loader.js'},
-        {src: './test-browser/requirejs.test.js', included: false},
         {src: './dist/rollbar.umd.js', included: false}
       ];
       // NOTE: requirejs should go first in case the subsequent libraries
@@ -155,19 +153,9 @@ module.exports = function(grunt) {
 
     karma: buildGruntKarmaConfig(singleRun, browsers, browserTests, reporters),
 
-    // Serves up responses to requests from the tests
-    express: {
-      defaults: {
-        options: {
-          server: './test-browser/express',
-          port: 3000
-        }
-      }
-    },
-
     replace: {
       snippets: {
-        src: ['*.md', 'test-browser/**/*.html', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
+        src: ['*.md', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
         overwrite: true,
         replacements: [
           // Main rollbar snippet
@@ -211,7 +199,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test-browser', function(target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
-    var tasks = ['express', karmaTask];
+    var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
 
