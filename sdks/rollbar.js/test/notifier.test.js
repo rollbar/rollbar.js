@@ -21,6 +21,8 @@ function TestQueueGenerator() {
     this.items.push({item: item, callback: callback});
   };
 
+  TestQueue.prototype.configure = function() {};
+
   return TestQueue;
 }
 
