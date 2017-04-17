@@ -48,8 +48,9 @@ var defaultOptions = {
  * }
  */
 function Api(accessToken, options) {
-  this.transport = helpers.getTransportFromOptions(options, defaultOptions, url);
   this.accessToken = accessToken;
+  this.options = options;
+  this.transport = _getTransport(options);
 }
 
 /**
@@ -62,6 +63,17 @@ Api.prototype.postItem = function(data, callback) {
   var payload = helpers.buildPayload(this.accessToken, data, jsonBackup);
   Transport.post(this.accessToken, transportOptions, payload, callback);
 };
+
+Api.prototype.configure = function(options) {
+  var oldOptions = this.oldOptions;
+  this.options = _.extend(true, {}, oldOptions, options);
+  this.transport = _getTransport(this.options);
+  return this;
+};
+
+function _getTransport(options) {
+  return helpers.getTransportFromOptions(options, defaultOptions, url);
+}
 
 module.exports = function(context, transport, u, j) {
   init(context, transport, u, j);
