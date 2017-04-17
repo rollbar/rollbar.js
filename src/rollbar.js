@@ -35,7 +35,9 @@ Rollbar.prototype.global = function(options) {
 };
 
 Rollbar.prototype.configure = function(options) {
-  this.options = _.extend(true, {}, this.options, options);
+  this.notifier && this.notifier.configure(options);
+  var oldOptions = this.options;
+  this.options = _.extend(true, {}, oldOptions, options);
   return this;
 };
 
