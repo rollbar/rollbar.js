@@ -10,12 +10,12 @@ var _ = require('./utility');
  *    rateLimiter.shouldSend(item) -> bool
  * @param api - An object which conforms to the interface
  *    api.postItem(payload, function(err, response))
- * @param settings - see Queue.prototype.configure
+ * @param options - see Queue.prototype.configure
  */
-function Queue(rateLimiter, api, settings) {
+function Queue(rateLimiter, api, options) {
   this.rateLimiter = rateLimiter;
   this.api = api;
-  this.settings = settings;
+  this.options = options;
   this.predicates = [];
   this.pendingRequests = [];
   this.retryQueue = [];
@@ -24,22 +24,21 @@ function Queue(rateLimiter, api, settings) {
 }
 
 /*
- * configure - updates the settings this queue uses
+ * configure - updates the options this queue uses
  *
- * @param settings - an object with the following possible keys
- *    * something
- *    * else
+ * @param options
  */
-Queue.prototype.configure = function(settings) {
-  var oldSettings = this.settings;
-  this.settings = _.extend(true, {}, oldSettings, settings);
+Queue.prototype.configure = function(options) {
+  this.api && this.api.configure(options);
+  var oldOptions = this.options;
+  this.options = _.extend(true, {}, oldOptions, options);
   return this;
 };
 
 /*
  * addPredicate - adds a predicate to the end of the list of predicates for this queue
  * 
- * @param predicate - function(item, settings) -> (bool|{err: Error})
+ * @param predicate - function(item, options) -> (bool|{err: Error})
  *  Returning true means that this predicate passes and the item is okay to go on the queue
  *  Returning false means do not add the item to the queue, but it is not an error
  *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
@@ -103,7 +102,7 @@ Queue.prototype.wait = function(callback) {
 };
 
 /* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
- *   given item with the currently configured settings.
+ *   given item with the currently configured options.
  *
  * @param item - An item in the queue
  * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
@@ -113,7 +112,7 @@ Queue.prototype._applyPredicates = function(item) {
   var error = null;
   var p = null;
   for (var i = 0, len = this.predicates.length; i < len; i++) {
-    p = this.predicates[i](item, this.settings);
+    p = this.predicates[i](item, this.options);
     if (!p || p.err !== undefined) {
       return {stop: true, err: p.err};
     }
@@ -158,7 +157,7 @@ var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT
  */
 Queue.prototype._maybeRetry = function(err, item, callback) {
   var shouldRetry = false;
-  if (this.settings.retryInterval) {
+  if (this.options.retryInterval) {
     for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
       if (err.code === RETRIABLE_ERRORS[i]) {
         shouldRetry = true;
@@ -175,7 +174,7 @@ Queue.prototype._maybeRetry = function(err, item, callback) {
 
 /*
  * _retryApiRequest - Add an item and a callback to a queue and possibly start a timer to process
- *   that queue based on the retryInterval in the settings for this queue.
+ *   that queue based on the retryInterval in the options for this queue.
  *
  * @param item - an item that failed to send due to an error we deem retriable
  * @param callback - function(err, response)
@@ -189,7 +188,7 @@ Queue.prototype._retryApiRequest = function(item, callback) {
         var retryObject = this.retryQueue.shift();
         this._makeApiRequest(retryObject.item, retryObject.callback);
       }
-    }.bind(this), this.settings.retryInterval);
+    }.bind(this), this.options.retryInterval);
   }
 };
 
