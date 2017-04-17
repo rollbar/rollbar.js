@@ -43,7 +43,6 @@ module.exports = function (config) {
 
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
-      'test-browser/!(requirejs).test.js': ['webpack'],
       'test/!(requirejs).test.js': ['webpack'],
       'src/**/*.js': ['coverage']
     },
