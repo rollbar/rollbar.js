@@ -68,6 +68,9 @@ Api.prototype.configure = function(options) {
   var oldOptions = this.oldOptions;
   this.options = _.extend(true, {}, oldOptions, options);
   this.transport = _getTransport(this.options);
+  if (this.options.accessToken !== undefined) {
+    this.accessToken = this.options.accessToken;
+  }
   return this;
 };
 
