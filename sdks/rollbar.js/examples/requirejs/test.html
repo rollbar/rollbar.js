@@ -28,7 +28,7 @@
           // exception to Rollbar.
         function(Rollbar) {
 
-          var rollbar = Rollbar.init(_rollbarConfig);
+          var rollbar = new Rollbar(_rollbarConfig);
 
           rollbar.info('Hello world');
         }
