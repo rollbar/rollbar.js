@@ -1,10 +1,10 @@
-function captureUncaughtExceptions(window, handler, belongsToShim) {
+function captureUncaughtExceptions(window, handler) {
   if (!window) { return; }
   var oldOnError;
 
   if (typeof handler._rollbarOldOnError === 'function') {
     oldOnError = handler._rollbarOldOnError;
-  } else if (window.onerror && !window.onerror.belongsToShim) {
+  } else if (window.onerror && !window.onerror.belongsToRollbar) {
     oldOnError = window.onerror;
     handler._rollbarOldOnError = oldOnError;
   }
@@ -13,7 +13,7 @@ function captureUncaughtExceptions(window, handler, belongsToShim) {
     var args = Array.prototype.slice.call(arguments, 0);
     _rollbarWindowOnError(window, handler, oldOnError, args);
   };
-  fn.belongsToShim = !!belongsToShim;
+  fn.belongsToRollbar = true;
   window.onerror = fn;
 }
 
@@ -34,14 +34,14 @@ function _rollbarWindowOnError(window, r, old, args) {
   }
 }
 
-function captureUnhandledRejections(window, handler, shim) {
+function captureUnhandledRejections(window, handler) {
   if (!window) { return; }
 
-  if (shim && typeof shim._unhandledRejectionHandler === 'function') {
-    window.removeEventListener('unhandledrejection', shim._unhandledRejectionHandler);
+  if (typeof window._rollbarURH === 'function') {
+    window.removeEventListner('unhandledrejection', window._rollbarURH);
   }
 
-  handler._unhandledRejectionHandler = function (event) {
+  var rejectionHandler = function (event) {
     var reason = event.reason;
     var promise = event.promise;
     var detail = event.detail;
@@ -53,7 +53,8 @@ function captureUnhandledRejections(window, handler, shim) {
 
     handler.handleUnhandledRejection(reason, promise);
   };
-  window.addEventListener('unhandledrejection', handler._unhandledRejectionHandler);
+  window._rollbarURH = rejectionHandler;
+  window.addEventListener('unhandledrejection', rejectionHandler);
 }
 
 function wrapGlobals(window, handler) {
@@ -73,14 +74,24 @@ function wrapGlobals(window, handler) {
 function _extendListenerPrototype(handler, prototype) {
   if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
     var oldAddEventListener = prototype.addEventListener;
-    prototype.addEventListener = function(event, callback, bubble) {
+    if (oldAddEventListener._rollbarOldAdd) {
+      oldAddEventListener = oldAddEventListener._rollbarOldAdd;
+    }
+    var addFn = function(event, callback, bubble) {
       oldAddEventListener.call(this, event, handler.wrap(callback), bubble);
     };
+    addFn._rollbarOldAdd = oldAddEventListener;
+    prototype.addEventListener = addFn;
 
     var oldRemoveEventListener = prototype.removeEventListener;
-    prototype.removeEventListener = function(event, callback, bubble) {
+    if (oldRemoveEventListener._rollbarOldRemove) {
+      oldRemoveEventListener = oldRemoveEventListener._rollbarOldRemove;
+    }
+    var removeFn = function(event, callback, bubble) {
       oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
     };
+    removeFn._rollbarOldRemove = oldRemoveEventListener;
+    prototype.removeEventListener = removeFn;
   }
 }
 

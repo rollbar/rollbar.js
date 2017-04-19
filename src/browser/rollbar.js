@@ -1,6 +1,7 @@
 var Client = require('../rollbar');
 var _ = require('../utility');
 var logger = require('./logger');
+var globals = require('./globalSetup');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
@@ -12,6 +13,13 @@ function Rollbar(options, client) {
   this.client = client || new Client(context, this.options);
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  if (this.options.captureUncaught) {
+    globals.captureUncaughtExceptions(window, this);
+    globals.wrapGlobals(window, this);
+  }
+  if (this.options.captureUnhandledRejections) {
+    globals.captureUnhandledRejections(window, this);
+  }
 }
 
 Rollbar.prototype.global = function(options) {

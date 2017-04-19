@@ -44,7 +44,7 @@ function setupShim(window, options) {
   return _wrapInternalErr(function() {
     if (options.captureUncaught) {
       handler._rollbarOldOnError = window.onerror;
-      globals.captureUncaughtExceptions(window, handler, true);
+      globals.captureUncaughtExceptions(window, handler);
       globals.wrapGlobals(window, handler);
     }
 
