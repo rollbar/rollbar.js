@@ -18,7 +18,7 @@ var defaultSettings = {
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
   addRequestData: null,
-  minimumLevel: 'debug',
+  reportLevel: packageJson.defaults.reportLevel,
   enabled: true
 };
 
