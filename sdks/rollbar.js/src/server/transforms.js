@@ -1,36 +1,18 @@
 var async = require('async');
-var os = require('os');
-var packageJson = require('../../package.json');
 var parser = require('./parser');
 var requestIp = require('request-ip');
 var url = require('url');
 var _ = require('../utility');
 
-var defaultSettings = {
-  host: os.hostname(),
-  environment: 'development',
-  framework: 'node-js',
-  showReportedMessageTraces: false,
-  notifier: {
-    name: 'node_rollbar',
-    version: packageJson.version
-  },
-  scrubHeaders: packageJson.defaults.server.scrubHeaders,
-  scrubFields: packageJson.defaults.server.scrubFields,
-  addRequestData: null,
-  reportLevel: packageJson.defaults.reportLevel,
-  enabled: true
-};
-
 function baseData(item, options, callback) {
   var data = {
     timestamp: Math.floor((new Date().getTime()) / 1000),
-    environment: item.environment || options.environment || defaultSettings.environment,
+    environment: item.environment || options.environment,
     level: item.level || 'error',
     language: 'javascript',
-    framework: item.framework || options.framework || defaultSettings.framework,
+    framework: item.framework || options.framework,
     uuid: item.uuid,
-    notifier: JSON.parse(JSON.stringify(options.notifier || defaultSettings.notifier))
+    notifier: JSON.parse(JSON.stringify(options.notifier))
   };
 
   if (options.codeVersion) {
@@ -46,16 +28,16 @@ function baseData(item, options, callback) {
   }
 
   data.server = {
-    host: options.host || defaultSettings.host,
+    host: options.host,
     argv: process.argv.concat(),
     pid: process.pid
   };
 
-  if (options.branch || defaultSettings.branch) {
-    data.server.branch = options.branch || defaultSettings.branch;
+  if (options.branch) {
+    data.server.branch = options.branch;
   }
-  if (options.root || defaultSettings.root) {
-    data.server.root = options.root || defaultSettings.root;
+  if (options.root) {
+    data.server.root = options.root;
   }
 
   item.data = data;
@@ -147,8 +129,8 @@ function addRequestData(item, options, callback) {
 }
 
 function scrubPayload(item, options, callback) {
-  var scrubHeaders = options.scrubHeaders || defaultSettings.scrubHeaders || [];
-  var scrubFields = options.scrubFields || defaultSettings.scrubFields || [];
+  var scrubHeaders = options.scrubHeaders || [];
+  var scrubFields = options.scrubFields || [];
   scrubFields = scrubHeaders.concat(scrubFields);
   _.scrub(item.data, scrubFields);
   callback(null, item);

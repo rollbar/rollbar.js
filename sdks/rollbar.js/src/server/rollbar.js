@@ -1,5 +1,7 @@
 var util = require('util');
+var os = require('os');
 
+var packageJson = require('../../package.json');
 var Client = require('../rollbar');
 var _ = require('../utility');
 var logger = require('./logger');
@@ -11,7 +13,7 @@ function Rollbar(accessToken, options, client) {
   options = options || {};
   options.accessToken = accessToken;
   this.context = 'server';
-  this.options = _.extend(true, {}, this.options, options);
+  this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
   this.client = client || new Client(this.context, this.options);
   addTransformsToNotifier(this.client.notifier);
@@ -254,5 +256,21 @@ function RollbarError(message, nested) {
 }
 util.inherits(RollbarError, Error);
 Rollbar.Error = RollbarError;
+
+Rollbar.defaultOptions = {
+  host: os.hostname(),
+  environment: 'development',
+  framework: 'node-js',
+  showReportedMessageTraces: false,
+  notifier: {
+    name: 'node_rollbar',
+    version: packageJson.version
+  },
+  scrubHeaders: packageJson.defaults.server.scrubHeaders,
+  scrubFields: packageJson.defaults.server.scrubFields,
+  addRequestData: null,
+  reportLevel: packageJson.defaults.reportLevel,
+  enabled: true
+};
 
 module.exports = Rollbar;
