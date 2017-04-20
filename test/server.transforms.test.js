@@ -5,6 +5,7 @@ var util = require('util');
 var vows = require('vows');
 var t = require('../src/server/transforms');
 var rollbar = require('../src/server/rollbar');
+var _ = require('../src/utility');
 
 function CustomError(message, nested) {
   rollbar.Error.call(this, message, nested);
@@ -15,9 +16,9 @@ vows.describe('transforms')
   .addBatch({
     'baseData': {
       'options': {
-        'blank': {
+        'defaults': {
           topic: function() {
-            return {};
+            return rollbar.defaultOptions;
           },
           'item': {
             'empty': {
@@ -82,12 +83,12 @@ vows.describe('transforms')
         },
         'with values': {
           topic: function() {
-            return {
+            return _.extend(true, {}, rollbar.defaultOptions, {
               environment: 'opt-prod',
               framework: 'opt-node',
               host: 'opt-host',
               branch: 'opt-master'
-            };
+            });
           },
           'item': {
             'empty': {
