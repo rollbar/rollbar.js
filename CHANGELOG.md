@@ -1,5 +1,35 @@
 # Change Log
 
+**v2.0.0**
+This release is the first where the library supports both browser and node environments from the
+same package. We decided to deprecate the `rollbar-browser` npm package in favor of using the
+`rollbar` npm package for all javascript environments. This single codebase now handles both
+environments and therefore `require('rollbar')` can be used regardless of where the code is to be
+run. The [node_rollbar](https://github.com/rollbar/node_rollbar) library is now deprecated in favor
+of this library.
+
+The major structural change in the library is that we no longer treat Rollbar as a singleton. In
+order to report errors to Rollbar, one uses a particular instance of the Rollbar notifier. For
+convenience, when loaded via the html snippet, we put the rollbar constructor onto the window at
+`window.rollbar` and we put an instance on the window at `window.Rollbar` which has been
+instantiated with the options set via `_rollbarConfig`. For most workflows, this change should not
+be noticable. However, there are a few cases where one might run in to trouble.
+
+- scope: this method no longer exists, it was arguably a hack to allow something like a new instance
+  without having to instantiate something manually because a constructor was not exposed. Instead of
+  using scope, it works just to create a new instance `var otherRollbar = new rollbar({...})`. The
+  downside being that the options passed to the constructor must be a complete set of options, not
+  just the ones you want to override which is how scope worked. This is a minor inconvenience to pay
+  for the flexibility of having real lifecycle ownership over your rollbar instances.
+- uncaught exceptions and unhandled rejections: the choice to report uncaught exceptions and/or
+  unhandled rejections is still made via a configuration parameter set in `_rollbarConfig` or in the
+  options passed directly to the constructor. However, due to the nature of these handlers being
+  global, we made the choice to only have one instance set as this handler. What this means is that
+  if you create a new instance with the option `captureUncaught` set to true, that instance will
+  take over as the uncaught exception handler. Similarly for `captureUnhandledRejections`. If you
+  set either of these options to true in `_rollbarConfig` and use the snippet to load rollbar, then
+  the convenience instance located at `window.Rollbar` will be setup as this handler.
+
 **v1.9.4**
 - Updated to the newest version of console-polyfill (pr#244)
 - Log functions now return an object with the uuid as one of the keys (pr#236)
