@@ -208,8 +208,9 @@
 	    );
 	  }
 	  item.level = this.options.uncaughtErrorLevel;
+	  item._isUncaught = true;
 	  this.client.log(item);
-	}
+	};
 	
 	Rollbar.prototype.wrap = function(f, context) {
 	  try {
@@ -331,7 +332,7 @@
 	    custom.extraArgs = extraArgs;
 	  }
 	
-	  return {
+	  var item = {
 	    message: message,
 	    err: err,
 	    custom: custom,
@@ -339,10 +340,12 @@
 	    callback: callback,
 	    uuid: _.uuid4()
 	  };
+	  item._originalArgs = args;
+	  return item;
 	};
 	
 	var defaultOptions = {
-	  version: ("2.0.0-alpha.1"),
+	  version: ("2.0.0-alpha.2"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -15681,8 +15684,10 @@
 	function userCheckIgnore(item, settings) {
 	  var isUncaught = !!item._isUncaught;
 	  delete item._isUncaught;
+	  var args = item._originalArgs;
+	  delete item._originalArgs;
 	  try {
-	    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, item, settings)) {
+	    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
 	      return false;
 	    }
 	  } catch (e) {
