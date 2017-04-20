@@ -247,7 +247,6 @@ Install using the node package manager, npm:
 
     $ npm install --save rollbar
 
-
 ## Server Configuration
 
 ### Using Express
@@ -427,6 +426,66 @@ If you're using the [Passport](http://passportjs.org/) authentication library, t
 - `user_id`: the user id as an integer or string, or a function which when called will return the user id
 
 Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `username` are supplemental and will be overwritten whenever a new value is received for an existing `id`. The `id` is a string up to 40 characters long.
+
+## Upgrading from node_rollbar
+
+The upgrade path from `node_rollbar` version 0.6.4 to version 2.0.0 of this library is not
+automatic, but it should be straightforward. The main changes are related to naming, however we also
+changed the library from being a singleton to being used via individual instances.
+
+Old:
+
+```js
+var rollbar = require("rollbar");
+rollbar.init("POST_SERVER_ITEM_ACCESS_TOKEN");
+rollbar.reportMessage("Hello world!");
+```
+
+New:
+
+```js
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN");
+rollbar.log("Hello world!");
+```
+
+- Instead of importing the library as a singleton upon which you act, you are now importing a
+  constructor.
+- The constructor is a function of the form `function (accessToken, options)` where options is an
+  object with the same configuration options as before.
+- `reportMessage`, `reportMessageWithPayloadData`, `handleError`, and `handleErrorWithPayloadData`
+  are all deprecated in favor of: log/debug/info/warning/error/critical
+- Each of these new logging functions can be called with any of the following sets of arguments:
+  - message/error, callback
+  - message/error, request
+  - message/error, request, callback
+  - message/error, request, custom
+  - message/error, request, custom, callback
+- In other words, the first arugment can be a string or an exception, the type of which will be used
+  to subsequently construct the payload. The last argument can be a callback or the callback can be
+  omitted. The second argument must be a request or null (or a callback if only two arguments are
+  present). The third argument is treated as extra custom data which will be sent along with the
+  payload. Note that to include custom data and no request, you must pass null for the second
+  argument.
+
+The other major change is that if you wish to capture uncaught exceptions and unhandled rejections,
+you now use a configuration option.
+
+Old:
+
+```js
+rollbar.handleUncaughtExceptionsAndRejections("POST_SERVER_ITEM_ACCESS_TOKEN", options);
+```
+
+New:
+
+```js
+var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN, {
+  handleUncaughtExceptions: true,
+  handleUnhandledRejections: true
+});
+
+```
 
 ## Help / Support
 
