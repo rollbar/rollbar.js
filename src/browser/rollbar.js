@@ -132,8 +132,9 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
     );
   }
   item.level = this.options.uncaughtErrorLevel;
+  item._isUncaught = true;
   this.client.log(item);
-}
+};
 
 Rollbar.prototype.wrap = function(f, context) {
   try {
@@ -255,7 +256,7 @@ Rollbar.prototype._createItem = function(args) {
     custom.extraArgs = extraArgs;
   }
 
-  return {
+  var item = {
     message: message,
     err: err,
     custom: custom,
@@ -263,6 +264,8 @@ Rollbar.prototype._createItem = function(args) {
     callback: callback,
     uuid: _.uuid4()
   };
+  item._originalArgs = args;
+  return item;
 };
 
 var defaultOptions = {

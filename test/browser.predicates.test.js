@@ -74,36 +74,45 @@ describe('checkIgnore', function() {
 
 describe('userCheckIgnore', function() {
   it('should return true if no user function', function() {
-    var item = {level: 'debug', body: 'stuff'};
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
     var settings = {reportLevel: 'debug'};
     expect(p.userCheckIgnore(item, settings)).to.be.ok();
   });
   it('should return true if checkIgnore is not a function', function() {
-    var item = {level: 'debug', body: 'stuff'};
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
     var settings = {reportLevel: 'debug', checkIgnore: true};
     expect(p.userCheckIgnore(item, settings)).to.be.ok();
   });
   it('should return true if checkIgnore returns false', function() {
-    var item = {level: 'debug', body: 'stuff'};
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
     var settings = {reportLevel: 'debug', checkIgnore: function() {
       return false;
     }};
     expect(p.userCheckIgnore(item, settings)).to.be.ok();
   });
   it('should return false if checkIgnore returns true', function() {
-    var item = {level: 'debug', body: 'stuff'};
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
     var settings = {reportLevel: 'debug', checkIgnore: function() {
       return true;
     }};
     expect(p.userCheckIgnore(item, settings)).to.not.be.ok();
   });
   it('should return true if checkIgnore throws', function() {
-    var item = {level: 'debug', body: 'stuff'};
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
     var settings = {reportLevel: 'debug', checkIgnore: function() {
       throw new Error('bork bork');
     }};
     expect(p.userCheckIgnore(item, settings)).to.be.ok();
     expect(settings.checkIgnore).to.not.be.ok();
+  });
+  it('should get the right arguments', function() {
+    var item = {level: 'debug', body: 'stuff', _originalArgs: [1,2,3]};
+    var settings = {reportLevel: 'debug', checkIgnore: function(isUncaught, args, payload) {
+      expect(isUncaught).to.not.be.ok();
+      expect(args).to.eql([1,2,3]);
+      expect(payload).to.eql(item);
+    }};
+    expect(p.userCheckIgnore(item, settings)).to.be.ok();
   });
 });
 
