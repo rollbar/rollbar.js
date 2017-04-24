@@ -292,6 +292,17 @@ describe('addBody', function() {
         done(e);
       });
     });
+    it('should use scrubbed custom as message without a message', function(done) {
+      var args = [{password: 'stuff'}];
+      var item = itemFromArgs(args);
+      var options = {scrubFields: ['password']};
+      t.addBody(item, options, function(e, i) {
+        console.log(i.data.body.message.body);
+        expect(i.data.body.message.body).to.not.match(/stuff/);
+        expect(i.data.body.message.body).to.match(/\*+/);
+        done(e);
+      });
+    });
     it('should have blank message without a message or custom', function(done) {
       var args = [new Error('bork')];
       var item = itemFromArgs(args);
@@ -355,9 +366,9 @@ describe('scrubPayload', function() {
       expect(i.access_token).to.eql(accessToken);
       expect(i.data.custom.scooby).to.not.eql('doo');
       expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
-      expect(payload.data.custom.okay).to.match(/fizz=\**&fuzz=baz/);
+      expect(payload.data.custom.okay).to.match(/fizz=\*+&fuzz=baz/);
       expect(payload.data.custom.user.id).to.not.be.ok();
-      expect(payload.data.custom.user).to.match(/\**/);
+      expect(payload.data.custom.user).to.match(/\*+/);
       expect(i.data.message).to.eql('a message');
       done(e);
     });
