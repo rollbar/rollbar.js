@@ -15113,7 +15113,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  if (!message) {
 	    if (custom) {
-	      message = _.stringify(custom);
+	      var scrubFields = options.scrubFields;
+	      var messageResult = _.stringify(_.scrub(custom, scrubFields));
+	      message = messageResult.error || messageResult.value || '';
 	    } else {
 	      message = '';
 	    }
