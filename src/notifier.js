@@ -341,6 +341,11 @@ NotifierPrototype._buildPayload = function(ts, level, message, stackInfo, custom
 
 NotifierPrototype._buildBody = function(message, stackInfo, custom) {
   var body;
+
+  if (custom) {
+    custom = extend(true, {}, this._scrub(custom));
+  }
+
   if (stackInfo) {
     body = _buildPayloadBodyTrace(message, stackInfo, custom);
   } else {
@@ -483,7 +488,7 @@ NotifierPrototype._messageIsIgnored = function(payload){
   try {
     messageIsIgnored = false;
     ignoredMessages = this.options.ignoredMessages;
-    
+
     if (!ignoredMessages || ignoredMessages.length === 0) {
       return false;
     }
@@ -492,13 +497,13 @@ NotifierPrototype._messageIsIgnored = function(payload){
             payload.data &&
             payload.data.body;
 
-    traceMessage =  body && 
+    traceMessage =  body &&
                     body.trace &&
-                    body.trace.exception && 
+                    body.trace.exception &&
                     body.trace.exception.message;
-    
-    bodyMessage = body && 
-                  body.message && 
+
+    bodyMessage = body &&
+                  body.message &&
                   body.message.body;
 
     exceptionMessage = traceMessage || bodyMessage;
@@ -897,7 +902,7 @@ function _buildPayloadBodyMessage(message, custom) {
   };
 
   if (custom) {
-    result.extra = extend(true, {}, custom);
+    result.extra = custom;
   }
 
   return {
@@ -975,7 +980,7 @@ function _buildPayloadBodyTrace(description, stackInfo, custom) {
     trace.frames.reverse();
 
     if (custom) {
-      trace.extra = extend(true, {}, custom);
+      trace.extra = custom;
     }
     return {trace: trace};
   } else {
@@ -1087,4 +1092,3 @@ module.exports = {
   setupJSON: setupJSON,
   topLevelNotifier: topLevelNotifier
 };
-
