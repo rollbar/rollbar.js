@@ -9,13 +9,16 @@ var logger = require('./logger');
 var transforms = require('./transforms');
 var predicates = require('./predicates');
 
-function Rollbar(accessToken, options, client) {
-  options = options || {};
-  options.accessToken = accessToken;
+function Rollbar(options) {
+  if (_.isType(options, 'string')) {
+    var accessToken = options;
+    options = {};
+    options.accessToken = accessToken;
+  }
   this.context = 'server';
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
-  this.client = client || new Client(this.context, this.options);
+  this.client = new Client(this.context, this.options);
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 

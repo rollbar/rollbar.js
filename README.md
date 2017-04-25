@@ -222,9 +222,17 @@ of your own code.  There are multiple approaches to dealing with this issue, the
 
 ## Quick Start Server
 
+The recommended way to use the rollbar constructor is to pass an object which
+represents the configuration options with at least the one required
+key `accessToken` with the value equal to your
+`POST_SERVER_ITEM_ACCESS_TOKEN`. If you do not want to pass any configuration options, then for
+convenience, you can simply pass just the access token as a string as the only argument to the
+constructor.
+
 ```js
 var Rollbar = require('rollbar');
-var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN', {
+var rollbar = new Rollbar({
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
   handleUncaughtExceptions: true,
   handleUnhandledRejections: true
 });
@@ -319,7 +327,8 @@ Other options can be passed into the constructor using a second parameter. E.g.:
 
 ```js
 // Configure the library to send errors to api.rollbar.com
-new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN", {
+new Rollbar({
+  accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
   environment: "staging",
   endpoint: "https://api.rollbar.com/api/1/"
 });
@@ -431,7 +440,11 @@ Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `u
 
 The upgrade path from `node_rollbar` version 0.6.4 to version 2.0.0 of this library is not
 automatic, but it should be straightforward. The main changes are related to naming, however we also
-changed the library from being a singleton to being used via individual instances.
+changed the library from being a singleton to being used via individual instances. As we have said
+above, the recommended way to use the constructor is to pass an object which represents
+the configuration options with the access token contained within. The old style was to always pass the
+access token as the first parameter, we retain this style for convenience when converting from the
+old style, but for new code one should really use an object as the only argument.
 
 Old:
 
@@ -451,8 +464,9 @@ rollbar.log("Hello world!");
 
 - Instead of importing the library as a singleton upon which you act, you are now importing a
   constructor.
-- The constructor is a function of the form `function (accessToken, options)` where options is an
-  object with the same configuration options as before.
+- The constructor is a function of the form `function (options)` where options is an
+  object with the same configuration options as before, and also requires a key `accessToken` with
+  your access token as the value.
 - `reportMessage`, `reportMessageWithPayloadData`, `handleError`, and `handleErrorWithPayloadData`
   are all deprecated in favor of: log/debug/info/warning/error/critical
 - Each of these new logging functions can be called with any of the following sets of arguments:
@@ -480,7 +494,8 @@ rollbar.handleUncaughtExceptionsAndRejections("POST_SERVER_ITEM_ACCESS_TOKEN", o
 New:
 
 ```js
-var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN, {
+var rollbar = new Rollbar({
+  accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
   handleUncaughtExceptions: true,
   handleUnhandledRejections: true
 });
