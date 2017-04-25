@@ -11,7 +11,8 @@ const isDeveloping = process.env.NODE_ENV !== 'production';
 const port = isDeveloping ? 3000 : process.env.PORT;
 const app = express();
 
-const rollbar = new Rollbar('POST_SERVER_ITEM_TOKEN', {
+const rollbar = new Rollbar({
+  accessToken: 'POST_SERVER_ITEM_TOKEN',
   handleUncaughtExceptions: true
 });
 
