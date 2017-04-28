@@ -18,14 +18,12 @@ function baseData(item, options, callback) {
   if (options.codeVersion) {
     data.code_version = options.codeVersion;
   }
-  if (item.custom) {
-    var props = Object.getOwnPropertyNames(item.custom);
-    props.forEach(function (name) {
-      if (!data.hasOwnProperty(name)) {
-        data[name] = item.custom[name];
-      }
-    });
-  }
+  var props = Object.getOwnPropertyNames(item.custom || {});
+  props.forEach(function (name) {
+    if (!data.hasOwnProperty(name)) {
+      data[name] = item.custom[name];
+    }
+  });
 
   data.server = {
     host: options.host,
