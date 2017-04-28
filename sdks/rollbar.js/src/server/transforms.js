@@ -18,6 +18,7 @@ function baseData(item, options, callback) {
   if (options.codeVersion) {
     data.code_version = options.codeVersion;
   }
+
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
     if (!data.hasOwnProperty(name)) {
