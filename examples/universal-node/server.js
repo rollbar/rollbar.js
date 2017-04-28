@@ -21,7 +21,9 @@ app.get('/error', function(req, res) {
   throw new Error('Hello World');
 });
 app.get('/dolog', function(req, res) {
-  var u = rollbar.log('hello there', function(err, resp) {
+  var u = rollbar.log('hello there', req, {
+    customName: 'bork bork',
+  }, function(err, resp) {
     if (err) {
       console.log('Error');
       console.log(err);
