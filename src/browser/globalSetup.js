@@ -38,7 +38,7 @@ function captureUnhandledRejections(window, handler) {
   if (!window) { return; }
 
   if (typeof window._rollbarURH === 'function') {
-    window.removeEventListner('unhandledrejection', window._rollbarURH);
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
   }
 
   var rejectionHandler = function (event) {
