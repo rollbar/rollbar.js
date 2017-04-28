@@ -421,7 +421,7 @@ Rollbar.configure({
   <dl>
 <dt>code_version
 </dt>
-<dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to Github.
+<dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to GitHub.
 </dd>
  
 <dt>source_map_enabled
