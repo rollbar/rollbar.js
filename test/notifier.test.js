@@ -1804,7 +1804,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(spy.called).to.equal(true);
 
-    var call = spy.getCall(0);
+    var call = spy.getCall(1);
     var scrubbedPayload = call.args[0];
 
     expect(payload.data).to.equal(scrubbedPayload);
@@ -1831,7 +1831,7 @@ describe('Notifier._buildPayload()', function() {
 
     expect(spy.called).to.equal(true);
 
-    var call = spy.getCall(0);
+    var call = spy.getCall(1);
     var scrubbedPayload = call.args[0];
 
     expect(payload.data).to.equal(scrubbedPayload);
@@ -1840,6 +1840,30 @@ describe('Notifier._buildPayload()', function() {
     expect(payload.access_token).to.equal('access token');
     expect(payload.data.body.message.extra.access_token).to.equal('******');
     expect(payload.data.body.message.extra.visible).to.equal('visible');
+
+    done();
+  });
+
+  it.only('should scrub custom object when used as message', function(done) {
+    var notifier = new Notifier();
+    notifier.configure({accessToken: 'access token', scrubFields: ['access_token']});
+
+    var custom = {
+      access_token: 'hidden',
+      visible: 'visible',
+      password: 'hidden',
+    };
+
+    var spy = sinon.spy(notifier, '_scrub');
+
+    var payload = notifier._buildPayload(new Date(), 'error', null, null, custom);
+
+    expect(spy.called).to.equal(true);
+
+    var call = spy.getCall(0);
+    var scrubbedPayload = call.args[0];
+
+    expect(payload.data.body.message.body).to.not.contain('hidden');
 
     done();
   });
