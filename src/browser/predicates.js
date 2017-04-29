@@ -77,7 +77,10 @@ function urlIsWhitelisted(item, settings) {
 }
 
 function messageIsIgnored(item, settings) {
-  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace, body, traceMessage, bodyMessage;
+  var exceptionMessage, i, ignoredMessages,
+      len, messageIsIgnored, rIgnoredMessage,
+      body, traceMessage, bodyMessage;
+
   try {
     messageIsIgnored = false;
     ignoredMessages = settings.ignoredMessages;

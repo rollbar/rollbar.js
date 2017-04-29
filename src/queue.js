@@ -109,7 +109,6 @@ Queue.prototype.wait = function(callback) {
  *   the error value should be passed up to a callbak if we are stopping.
  */
 Queue.prototype._applyPredicates = function(item) {
-  var error = null;
   var p = null;
   for (var i = 0, len = this.predicates.length; i < len; i++) {
     p = this.predicates[i](item, this.options);
