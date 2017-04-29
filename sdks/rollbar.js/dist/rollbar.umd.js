@@ -362,7 +362,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var defaultOptions = {
-	  version: ("2.0.0-alpha.5"),
+	  version: ("2.0.0-alpha.6"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -14932,7 +14932,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (!window) { return; }
 	
 	  if (typeof window._rollbarURH === 'function') {
-	    window.removeEventListner('unhandledrejection', window._rollbarURH);
+	    window.removeEventListener('unhandledrejection', window._rollbarURH);
 	  }
 	
 	  var rejectionHandler = function (event) {
