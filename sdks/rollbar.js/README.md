@@ -2,6 +2,12 @@
 
 <!-- Sub:[TOC] -->
 
+**Note**: The latest version published on NPM is an alpha version which is still undergoing testing. The docs for the v2 alpha version can be found [here](https://github.com/rollbar/rollbar.js/blob/universal/README.md) and will be merged into master once v2 goes out of alpha. If you wish to use the non-alpha version, you can pin the Rollbar dependency at v1:
+
+```
+npm install rollbar-browser@^1.9.4 --save
+```
+
 ## Quick start
 
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
