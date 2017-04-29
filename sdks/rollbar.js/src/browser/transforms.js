@@ -71,7 +71,7 @@ function addClientInfo(window) {
         screen: {
           width: window.screen.width,
           height: window.screen.height
-        },
+        }
       }
     });
     callback(null, item);

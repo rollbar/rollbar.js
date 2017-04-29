@@ -132,9 +132,11 @@ function traverse(obj, func) {
   return obj;
 }
 
+/* eslint-disable no-unused-vars */
 function redact(val) {
   return '********';
 }
+/* eslint-enable no-unused-vars */
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
@@ -234,12 +236,13 @@ function addParamsAndAccessTokenToPath(accessToken, options, params) {
   options.path = options.path || '';
   var qs = options.path.indexOf('?');
   var h = options.path.indexOf('#');
+  var p;
   if (qs !== -1 && (h === -1 || h > qs)) {
-    var p = options.path;
+    p = options.path;
     options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
   } else {
     if (h !== -1) {
-      var p = options.path;
+      p = options.path;
       options.path = p.substring(0,h) + query + p.substring(h);
     } else {
       options.path = options.path + query;
@@ -255,7 +258,7 @@ function formatUrl(u, protocol) {
     } else if (u.port === 443) {
       protocol = 'https:';
     }
-  };
+  }
   protocol = protocol || 'https:';
 
   if (!u.hostname) {
