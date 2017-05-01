@@ -73,7 +73,7 @@ function buildErrorData(item, options, callback) {
 
   var cb = function(err) {
     if (err) {
-      callback(e, null);
+      callback(err, null);
     }
     callback(null, item);
   };
@@ -103,7 +103,9 @@ function addRequestData(item, options, callback) {
   } else {
     try {
       item.data.context = req.app.__router.matchRequest(req).path;
-    } catch (ignore) {}
+    } catch (ignore) {
+      // Ignored
+    }
   }
 
   if (req.rollbar_person) {
@@ -159,7 +161,7 @@ function _buildTraceData(chain) {
       return cb();
     });
   };
-};
+}
 
 function _extractIp(req) {
   var ip = req.ip;
@@ -184,15 +186,15 @@ function _buildRequestData(req, options) {
   };
 
   if (req.body) {
-    bodyParams = {};
+    var bodyParams = {};
     if (_.isType(req.body, 'object')) {
-      isPlainObject = req.body.constructor === undefined;
+      var isPlainObject = req.body.constructor === undefined;
 
-      for (k in req.body) {
-        hasOwnProperty = typeof req.body.hasOwnProperty === 'function'
+      for (var k in req.body) {
+        var _hasOwnProperty = typeof req.body.hasOwnProperty === 'function'
           && req.body.hasOwnProperty(k);
 
-        if (hasOwnProperty || isPlainObject) {
+        if (_hasOwnProperty || isPlainObject) {
           bodyParams[k] = req.body[k];
         }
       }

@@ -6,7 +6,9 @@ function _wrapInternalErr(f) {
       return f.apply(this, arguments);
     } catch (e) {
       try {
+        /* eslint-disable no-console */
         console.error('[Rollbar]: Internal error', e);
+        /* eslint-enable no-console */
       } catch (e2) {
         // Ignore
       }
@@ -55,7 +57,7 @@ function setupShim(window, options) {
     window[alias] = handler;
     return handler;
   })();
-};
+}
 
 Shim.prototype.loadFull = function(window, document, immediate, options, callback) {
   var onload = function () {
@@ -131,7 +133,8 @@ Shim.prototype.wrap = function(f, context) {
       f._wrapped = function () {
         try {
           return f.apply(this, arguments);
-        } catch(e) {
+        } catch(exc) {
+          var e = exc;
           if (typeof e === 'string') {
             e = new String(e);
           }

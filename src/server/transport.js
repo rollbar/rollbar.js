@@ -119,7 +119,7 @@ function _handleResponse(resp, callback) {
 }
 
 function _parseApiResponse(data, callback) {
-  parsedData = _.jsonParse(data);
+  var parsedData = _.jsonParse(data);
   if (parsedData.error) {
     logger.error('Could not parse api response, err: ' + parsedData.error);
     return callback(parsedData.error);

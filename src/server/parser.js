@@ -1,6 +1,4 @@
-/*jslint devel: true, nomen: true, plusplus: true, regexp: true, indent: 2, maxlen: 100 */
-
-"use strict";
+'use strict';
 
 var logger = require('./logger');
 var async = require('async');
@@ -35,7 +33,7 @@ function getMultipleErrors(errors) {
     return null;
   }
 
-  if (typeof errors !== "object") {
+  if (typeof errors !== 'object') {
     return null;
   }
 

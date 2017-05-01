@@ -93,7 +93,8 @@
   "scripts": {
     "build": "./node_modules/.bin/grunt",
     "test": "./node_modules/.bin/grunt test",
-    "test_ci": "./node_modules/.bin/grunt test"
+    "test_ci": "./node_modules/.bin/grunt test",
+    "lint": "./node_modules/.bin/eslint"
   },
   "cdn": {
     "host": "cdnjs.cloudflare.com"

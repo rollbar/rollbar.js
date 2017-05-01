@@ -152,6 +152,8 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory) 
 }
 
 function _createXMLHTTPObject() {
+  /* global ActiveXObject:false */
+
   var factories = [
     function () {
       return new XMLHttpRequest();
