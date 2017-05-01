@@ -54,7 +54,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	'use strict';
 	
 	var rollbar = __webpack_require__(2);
-	var globals = __webpack_require__(76);
 	
 	var options = window && window._rollbarConfig;
 	var alias = options && options.globalAlias || 'Rollbar';
@@ -240,7 +239,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	      f._wrapped = function () {
 	        try {
 	          return f.apply(this, arguments);
-	        } catch(e) {
+	        } catch(exc) {
+	          var e = exc;
 	          if (_.isType(e, 'string')) {
 	            e = new String(e);
 	          }
@@ -294,7 +294,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Rollbar.prototype._createItem = function(args) {
 	  var message, err, custom, callback;
-	  var argT, arg;
+	  var arg;
 	  var extraArgs = [];
 	
 	  for (var i = 0, l = args.length; i < l; ++i) {
@@ -351,8 +351,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  return item;
 	};
 	
+	/* global __NOTIFIER_VERSION__:false */
+	/* global __DEFAULT_BROWSER_SCRUB_FIELDS__:false */
+	/* global __DEFAULT_LOG_LEVEL__:false */
+	/* global __DEFAULT_REPORT_LEVEL__:false */
+	/* global __DEFAULT_UNCAUGHT_ERROR_LEVEL:false */
+	/* global __DEFAULT_ENDPOINT__:false */
+	
 	var defaultOptions = {
-	  version: ("2.0.0-alpha.6"),
+	  version: ("2.0.0-alpha.7"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -391,7 +398,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  } else {
 	    this.logger = __webpack_require__(72);
 	  }
-	};
+	}
 	
 	var defaultOptions = {
 	  maxItems: 0,
@@ -694,7 +701,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 *   the error value should be passed up to a callbak if we are stopping.
 	 */
 	Queue.prototype._applyPredicates = function(item) {
-	  var error = null;
 	  var p = null;
 	  for (var i = 0, len = this.predicates.length; i < len; i++) {
 	    p = this.predicates[i](item, this.options);
@@ -941,9 +947,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  return obj;
 	}
 	
+	/* eslint-disable no-unused-vars */
 	function redact(val) {
 	  return '********';
 	}
+	/* eslint-enable no-unused-vars */
 	
 	// from http://stackoverflow.com/a/8809472/1138191
 	function uuid4() {
@@ -1043,12 +1051,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  options.path = options.path || '';
 	  var qs = options.path.indexOf('?');
 	  var h = options.path.indexOf('#');
+	  var p;
 	  if (qs !== -1 && (h === -1 || h > qs)) {
-	    var p = options.path;
+	    p = options.path;
 	    options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
 	  } else {
 	    if (h !== -1) {
-	      var p = options.path;
+	      p = options.path;
 	      options.path = p.substring(0,h) + query + p.substring(h);
 	    } else {
 	      options.path = options.path + query;
@@ -1064,7 +1073,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    } else if (u.port === 443) {
 	      protocol = 'https:';
 	    }
-	  };
+	  }
 	  protocol = protocol || 'https:';
 	
 	  if (!u.hostname) {
@@ -2405,7 +2414,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  var protocol = transport.protocol || 'https:';
 	  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
 	  var hostname = transport.hostname;
-	  var path = appendPathToPath(transport.path, path);
+	  path = appendPathToPath(transport.path, path);
 	  if (transport.search) {
 	    path = path + transport.search;
 	  }
@@ -2572,7 +2581,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function _parseApiResponse(data, callback) {
-	  parsedData = _.jsonParse(data);
+	  var parsedData = _.jsonParse(data);
 	  if (parsedData.error) {
 	    logger.error('Could not parse api response, err: ' + parsedData.error);
 	    return callback(parsedData.error);
@@ -4634,8 +4643,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 	'use strict';
 	
-	/*jslint devel: true, nomen: true, plusplus: true, regexp: true, indent: 2, maxlen: 100 */
-	
 	'use strict';
 	
 	var debug = __webpack_require__(18);
@@ -4646,8 +4653,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  error: debug(name + ':error')
 	};
 	
+	/* eslint-disable no-console */
+	
 	// Make logger.log log to stdout rather than stderr
 	logger.log.log = console.log.bind(console);
+	
+	/* eslint-enable no-console */
 	
 	module.exports = logger;
 
@@ -14611,6 +14622,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function _createXMLHTTPObject() {
+	  /* global ActiveXObject:false */
+	
 	  var factories = [
 	    function () {
 	      return new XMLHttpRequest();
@@ -14667,8 +14680,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 	'use strict';
 	
+	/* eslint-disable no-console */
+	
 	__webpack_require__(73);
 	var detection = __webpack_require__(74);
+	var _ = __webpack_require__(6);
 	
 	function error() {
 	  var args = Array.prototype.slice.call(arguments, 0);
@@ -14708,7 +14724,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  for (var i=0; i < arguments.length; i++) {
 	    var arg = arguments[i];
 	    if (typeof arg === 'object') {
-	      arg = RollbarJSON.stringify(arg);
+	      arg = _.stringify(arg);
+	      arg = arg.error || arg.value;
 	      if (arg.length > 500)
 	        arg = arg.substr(0,500)+'...';
 	    } else if (typeof arg === 'undefined') {
@@ -14718,6 +14735,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	  return args.join(' ');
 	}
+	
+	/* eslint-enable no-console */
 	
 	module.exports = {
 	  error: error,
@@ -15065,7 +15084,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        screen: {
 	          width: window.screen.width,
 	          height: window.screen.height
-	        },
+	        }
 	      }
 	    });
 	    callback(null, item);
@@ -15751,7 +15770,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	function messageIsIgnored(item, settings) {
-	  var exceptionMessage, i, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, trace, body, traceMessage, bodyMessage;
+	  var exceptionMessage, i, ignoredMessages,
+	      len, messageIsIgnored, rIgnoredMessage,
+	      body, traceMessage, bodyMessage;
+	
 	  try {
 	    messageIsIgnored = false;
 	    ignoredMessages = settings.ignoredMessages;
