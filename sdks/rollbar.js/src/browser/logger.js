@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 require('console-polyfill');
 var detection = require('./detection');
 
@@ -49,6 +51,8 @@ function formatArgsAsString() {
   }
   return args.join(' ');
 }
+
+/* eslint-enable no-console */
 
 module.exports = {
   error: error,

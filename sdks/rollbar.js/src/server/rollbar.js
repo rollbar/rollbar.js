@@ -26,7 +26,7 @@ function Rollbar(options, client) {
     this.handleUncaughtExceptions();
   }
   if (this.options.handleUnhandledRejections) {
-    this.handleUnhandledRejects();
+    this.handleUnhandledRejections();
   }
 }
 

@@ -20,7 +20,7 @@ function Rollbar(context, options) {
   } else {
     this.logger = require('./browser/logger');
   }
-};
+}
 
 var defaultOptions = {
   maxItems: 0,

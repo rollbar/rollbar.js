@@ -157,7 +157,8 @@ Rollbar.prototype.wrap = function(f, context) {
       f._wrapped = function () {
         try {
           return f.apply(this, arguments);
-        } catch(e) {
+        } catch(exc) {
+          var e = exc;
           if (_.isType(e, 'string')) {
             e = new String(e);
           }
@@ -211,7 +212,7 @@ function addPredicatesToQueue(queue) {
 
 Rollbar.prototype._createItem = function(args) {
   var message, err, custom, callback;
-  var argT, arg;
+  var arg;
   var extraArgs = [];
 
   for (var i = 0, l = args.length; i < l; ++i) {
@@ -267,6 +268,13 @@ Rollbar.prototype._createItem = function(args) {
   item._originalArgs = args;
   return item;
 };
+
+/* global __NOTIFIER_VERSION__:false */
+/* global __DEFAULT_BROWSER_SCRUB_FIELDS__:false */
+/* global __DEFAULT_LOG_LEVEL__:false */
+/* global __DEFAULT_REPORT_LEVEL__:false */
+/* global __DEFAULT_UNCAUGHT_ERROR_LEVEL:false */
+/* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
   version: __NOTIFIER_VERSION__,
