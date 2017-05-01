@@ -95,7 +95,7 @@ function addRequestData(item, options, callback) {
     return;
   }
 
-  var requestData = _buildRequestData(req, options);
+  var requestData = _buildRequestData(req);
   item.data.request = requestData;
 
   if (req.route) {
@@ -171,7 +171,7 @@ function _extractIp(req) {
   return ip;
 }
 
-function _buildRequestData(req, options) {
+function _buildRequestData(req) {
   var headers = req.headers || {};
   var host = headers.host || '<no host>';
   var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );

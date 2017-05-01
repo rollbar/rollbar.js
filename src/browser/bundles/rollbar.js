@@ -1,5 +1,4 @@
 var rollbar = require('../rollbar');
-var globals = require('../globalSetup');
 
 var options = window && window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';

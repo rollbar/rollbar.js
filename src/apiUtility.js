@@ -48,7 +48,7 @@ function transportOptions(transport, path, method) {
   var protocol = transport.protocol || 'https:';
   var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
-  var path = appendPathToPath(transport.path, path);
+  path = appendPathToPath(transport.path, path);
   if (transport.search) {
     path = path + transport.search;
   }
