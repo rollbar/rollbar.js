@@ -55,6 +55,12 @@ var XHR = {
     }
     payload = RollbarJSON.stringify(payload);
     callback = callback || function() {};
+
+    if("sendBeacon" in navigator) {
+      if(navigator.sendBeacon(url, payload))
+          return callback(null, {});
+    }
+
     var request = XHR.createXMLHTTPObject();
     if (request) {
       try {
