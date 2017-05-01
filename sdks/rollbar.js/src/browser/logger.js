@@ -2,6 +2,7 @@
 
 require('console-polyfill');
 var detection = require('./detection');
+var _ = require('../utility');
 
 function error() {
   var args = Array.prototype.slice.call(arguments, 0);
@@ -41,7 +42,8 @@ function formatArgsAsString() {
   for (var i=0; i < arguments.length; i++) {
     var arg = arguments[i];
     if (typeof arg === 'object') {
-      arg = RollbarJSON.stringify(arg);
+      arg = _.stringify(arg);
+      arg = arg.error || arg.value;
       if (arg.length > 500)
         arg = arg.substr(0,500)+'...';
     } else if (typeof arg === 'undefined') {
