@@ -296,7 +296,7 @@ server.on('request-error', function(request, error) {
   };
   if (error instanceof Error)
     return rollbar.error(error, request, cb);
-  rollbar.error('Error: '+error, 'error', request, cb);
+  rollbar.error('Error: '+error, request, cb);
 });
 // End Rollbar initialization code
 
