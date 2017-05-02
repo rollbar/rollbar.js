@@ -30,6 +30,15 @@ function Rollbar(options, client) {
   }
 }
 
+Rollbar.instance = null;
+Rollbar.init = function(options) {
+  if (Rollbar.instance) {
+    return Rollbar.instance;
+  }
+  Rollbar.instance = new Rollbar(options);
+  return Rollbar.instance;
+};
+
 Rollbar.prototype.global = function(options) {
   this.client.global(options);
   return this;
