@@ -11,10 +11,13 @@ const isDeveloping = process.env.NODE_ENV !== 'production';
 const port = isDeveloping ? 3000 : process.env.PORT;
 const app = express();
 
-const rollbar = new Rollbar({
-  accessToken: 'POST_SERVER_ITEM_TOKEN',
+var token = 'POST_SERVER_ITEM_TOKEN';
+
+const rollbar = Rollbar.init({
+  accessToken: token,
   handleUncaughtExceptions: true
 });
+const other = require('./other');
 
 app.get('/error', function(req, res) {
   req.user_id = "test-user";
@@ -33,6 +36,11 @@ app.get('/dolog', function(req, res) {
     }
   });
   res.send(JSON.stringify(u));
+});
+app.get('/other', function(req, res) {
+  other.doSomeLog('hello', req);
+  other.doSomeError('bork bork bork', req);
+  res.json({'hello': 'world'});
 });
 
 app.use(express.static(path.join(__dirname)));
