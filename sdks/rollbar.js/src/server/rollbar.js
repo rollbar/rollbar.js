@@ -30,7 +30,7 @@ function Rollbar(options, client) {
   }
 }
 
-_instance = null;
+var _instance = null;
 Rollbar.init = function(options, client) {
   if (_instance) {
     return _instance;
