@@ -30,18 +30,29 @@ function Rollbar(options, client) {
   }
 }
 
-Rollbar.instance = null;
-Rollbar.init = function(options) {
-  if (Rollbar.instance) {
-    return Rollbar.instance;
+_instance = null;
+Rollbar.init = function(options, client) {
+  if (_instance) {
+    return _instance;
   }
-  Rollbar.instance = new Rollbar(options);
-  return Rollbar.instance;
+  _instance = new Rollbar(options, client);
+  return _instance;
 };
+
+function handleUninitialized() {
+  throw Exception('Rollbar not initialized');
+}
 
 Rollbar.prototype.global = function(options) {
   this.client.global(options);
   return this;
+};
+Rollbar.global = function(options) {
+  if (_instance) {
+    return _instance.global(options);
+  } else {
+    handleUninitialized();
+  }
 };
 
 Rollbar.prototype.configure = function(options) {
@@ -50,6 +61,13 @@ Rollbar.prototype.configure = function(options) {
   this.client.configure(options);
   return this;
 };
+Rollbar.configure = function(options) {
+  if (_instance) {
+    return _instance.configure(options);
+  } else {
+    handleUninitialized();
+  }
+};
 
 Rollbar.prototype.log = function() {
   var item = this._createItem(arguments);
@@ -57,6 +75,14 @@ Rollbar.prototype.log = function() {
   this.client.log(item);
   return {uuid: uuid};
 };
+Rollbar.log = function() {
+  if (_instance) {
+    return _instance.log.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.debug = function() {
   var item = this._createItem(arguments);
@@ -71,6 +97,14 @@ Rollbar.prototype.info = function() {
   this.client.info(item);
   return {uuid: uuid};
 };
+Rollbar.info = function() {
+  if (_instance) {
+    return _instance.info.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.warn = function() {
   var item = this._createItem(arguments);
@@ -78,6 +112,14 @@ Rollbar.prototype.warn = function() {
   this.client.warn(item);
   return {uuid: uuid};
 };
+Rollbar.warn = function() {
+  if (_instance) {
+    return _instance.warn.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.warning = function() {
   var item = this._createItem(arguments);
@@ -85,6 +127,14 @@ Rollbar.prototype.warning = function() {
   this.client.warning(item);
   return {uuid: uuid};
 };
+Rollbar.warning = function() {
+  if (_instance) {
+    return _instance.warning.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.error = function() {
   var item = this._createItem(arguments);
@@ -92,6 +142,14 @@ Rollbar.prototype.error = function() {
   this.client.error(item);
   return {uuid: uuid};
 };
+Rollbar.error = function() {
+  if (_instance) {
+    return _instance.error.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.critical = function() {
   var item = this._createItem(arguments);
@@ -99,10 +157,26 @@ Rollbar.prototype.critical = function() {
   this.client.critical(item);
   return {uuid: uuid};
 };
+Rollbar.critical = function() {
+  if (_instance) {
+    return _instance.critical.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.wait = function(callback) {
   this.client.wait(callback);
 };
+Rollbar.wait = function(callback) {
+  if (_instance) {
+    return _instance.wait(callback)
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.errorHandler = function() {
   return function(err, request, response, next) {
@@ -122,6 +196,14 @@ Rollbar.prototype.errorHandler = function() {
     return this.error('Error: ' + err, request, cb);
   }.bind(this);
 };
+Rollbar.errorHandler = function() {
+  if (_instance) {
+    return _instance.errorHandler()
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 /** DEPRECATED **/
 
@@ -133,21 +215,52 @@ Rollbar.prototype.reportMessage = function(message, level, request, callback) {
     return this.error(message, request, callback);
   }
 };
+Rollbar.reportMessage = function(message, level, request, callback) {
+  if (_instance) {
+    return _instance.reportMessage(message, level, request, callback);
+  } else {
+    handleUninitialized();
+  }
+};
 
 Rollbar.prototype.reportMessageWithPayloadData = function(message, payloadData, request, callback) {
   logger.log('reportMessageWithPayloadData is deprecated');
   return this.error(message, request, payloadData, callback);
 };
+Rollbar.reportMessageWithPayloadData = function(message, payloadData, request, callback) {
+  if (_instance) {
+    return _instance.reportMessageWithPayloadData(message, payloadData, request, callback);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.handleError = function(err, request, callback) {
   logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, callback);
 };
+Rollbar.handleError = function(err, request, callback) {
+  if (_instance) {
+    return _instance.handleError(err, request, callback);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 Rollbar.prototype.handleErrorWithPayloadData = function(err, payloadData, request, callback) {
   logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, payloadData, callback);
 };
+Rollbar.handleErrorWithPayloadData = function(err, payloadData, request, callback) {
+  if (_instance) {
+    return _instance.handleErrorWithPayloadData(err, payloadData, request, callback);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 /** Internal **/
 

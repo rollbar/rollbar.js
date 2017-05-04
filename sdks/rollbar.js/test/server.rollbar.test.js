@@ -67,5 +67,17 @@ vows.describe('rollbar')
         r.log('hello', {req: 'a'}, {stuff: 'more'});
         assert.equal(r.client.logCalls[0].item.custom.stuff, 'more')
       }
+    },
+    'singleton': {
+      topic: function() {
+        var client = new (TestClientGen())();
+        return Rollbar.init({accessToken: 'abc123'}, client);
+      },
+      'should allow log on constructor to pass through': function(r) {
+        r.log('hello 1');
+        Rollbar.log('hello 2');
+        assert.equal(r.client.logCalls[0].item.message, 'hello 1');
+        assert.equal(r.client.logCalls[1].item.message, 'hello 2');
+      }
     }
   }).export(module, {error: false});
