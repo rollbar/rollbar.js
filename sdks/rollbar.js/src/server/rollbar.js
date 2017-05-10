@@ -39,8 +39,12 @@ Rollbar.init = function(options, client) {
   return _instance;
 };
 
-function handleUninitialized() {
-  throw Exception('Rollbar not initialized');
+function handleUninitialized(maybeCallback) {
+  var message = 'Rollbar is not initialized';
+  logger.error(message);
+  if (maybeCallback) {
+    maybeCallback(new Error(message));
+  }
 }
 
 Rollbar.prototype.global = function(options) {
@@ -79,7 +83,8 @@ Rollbar.log = function() {
   if (_instance) {
     return _instance.log.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -90,6 +95,15 @@ Rollbar.prototype.debug = function() {
   this.client.debug(item);
   return {uuid: uuid};
 };
+Rollbar.debug = function() {
+  if (_instance) {
+    return _instance.debug.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
+};
+
 
 Rollbar.prototype.info = function() {
   var item = this._createItem(arguments);
@@ -101,7 +115,8 @@ Rollbar.info = function() {
   if (_instance) {
     return _instance.info.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -116,7 +131,8 @@ Rollbar.warn = function() {
   if (_instance) {
     return _instance.warn.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -131,7 +147,8 @@ Rollbar.warning = function() {
   if (_instance) {
     return _instance.warning.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -146,7 +163,8 @@ Rollbar.error = function() {
   if (_instance) {
     return _instance.error.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -161,7 +179,8 @@ Rollbar.critical = function() {
   if (_instance) {
     return _instance.critical.apply(_instance, arguments);
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -173,7 +192,8 @@ Rollbar.wait = function(callback) {
   if (_instance) {
     return _instance.wait(callback)
   } else {
-    handleUninitialized();
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
   }
 };
 
@@ -219,7 +239,7 @@ Rollbar.reportMessage = function(message, level, request, callback) {
   if (_instance) {
     return _instance.reportMessage(message, level, request, callback);
   } else {
-    handleUninitialized();
+    handleUninitialized(callback);
   }
 };
 
@@ -231,7 +251,7 @@ Rollbar.reportMessageWithPayloadData = function(message, payloadData, request, c
   if (_instance) {
     return _instance.reportMessageWithPayloadData(message, payloadData, request, callback);
   } else {
-    handleUninitialized();
+    handleUninitialized(callback);
   }
 };
 
@@ -244,7 +264,7 @@ Rollbar.handleError = function(err, request, callback) {
   if (_instance) {
     return _instance.handleError(err, request, callback);
   } else {
-    handleUninitialized();
+    handleUninitialized(callback);
   }
 };
 
@@ -257,10 +277,39 @@ Rollbar.handleErrorWithPayloadData = function(err, payloadData, request, callbac
   if (_instance) {
     return _instance.handleErrorWithPayloadData(err, payloadData, request, callback);
   } else {
+    handleUninitialized(callback);
+  }
+};
+
+Rollbar.handleUncaughtExceptions = function(accessToken, options) {
+  if (_instance) {
+    options = options || {};
+    options.accessToken = accessToken;
+    return _instance.configure(options);
+  } else {
     handleUninitialized();
   }
 };
 
+Rollbar.handleUnhandledRejections = function(accessToken, options) {
+  if (_instance) {
+    options = options || {};
+    options.accessToken = accessToken;
+    return _instance.configure(options);
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.handleUncaughtExceptionsAndRejections = function(accessToken, options) {
+  if (_instance) {
+    options = options || {};
+    options.accessToken = accessToken;
+    return _instance.configure(options);
+  } else {
+    handleUninitialized();
+  }
+};
 
 /** Internal **/
 
@@ -323,6 +372,15 @@ Rollbar.prototype._createItem = function(args) {
   item.custom = custom;
   return item;
 };
+
+function _getFirstFunction(args) {
+  for (var i = 0, len = args.length; i < len; ++i) {
+    if (_.isFunction(args[i])) {
+      return args[i];
+    }
+  }
+  return undefined;
+}
 
 Rollbar.prototype.handleUncaughtExceptions = function() {
   var exitOnUncaught = !!this.options.exitOnUncaughtException;
