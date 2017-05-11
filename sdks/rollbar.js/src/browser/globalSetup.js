@@ -51,7 +51,9 @@ function captureUnhandledRejections(window, handler) {
       promise = detail.promise;
     }
 
-    handler.handleUnhandledRejection(reason, promise);
+    if (handler && handler.handleUnhandledRejection) {
+      handler.handleUnhandledRejection(reason, promise);
+    }
   };
   window._rollbarURH = rejectionHandler;
   window.addEventListener('unhandledrejection', rejectionHandler);
