@@ -352,7 +352,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.0-beta.1"),
+	  version: ("2.0.0-beta.2"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -14947,7 +14947,9 @@
 	      promise = detail.promise;
 	    }
 	
-	    handler.handleUnhandledRejection(reason, promise);
+	    if (handler && handler.handleUnhandledRejection) {
+	      handler.handleUnhandledRejection(reason, promise);
+	    }
 	  };
 	  window._rollbarURH = rejectionHandler;
 	  window.addEventListener('unhandledrejection', rejectionHandler);
