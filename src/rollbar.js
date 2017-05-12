@@ -1,25 +1,20 @@
 var RateLimiter = require('./rateLimiter');
 var Queue = require('./queue');
 var Notifier = require('./notifier');
-var API = require('./api');
 var _ = require('./utility');
 
 /*
  * Rollbar - the interface to Rollbar
  *
- * @param context (browser|server) - define the environment
  * @param options
+ * @param api
+ * @param logger
  */
-function Rollbar(context, options) {
+function Rollbar(options, api, logger) {
   this.options = _.extend(true, {}, options);
-  var api = new (API(context))(options.accessToken, options);
-  this.queue = new Queue(Rollbar.rateLimiter, api, options); 
-  this.notifier = new Notifier(this.queue, options);
-  if (context === 'server') {
-    this.logger = require('./server/logger');
-  } else {
-    this.logger = require('./browser/logger');
-  }
+  this.logger = logger;
+  this.queue = new Queue(Rollbar.rateLimiter, api, this.options);
+  this.notifier = new Notifier(this.queue, this.options);
 }
 
 var defaultOptions = {

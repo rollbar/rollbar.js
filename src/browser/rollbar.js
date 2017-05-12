@@ -1,7 +1,11 @@
 var Client = require('../rollbar');
 var _ = require('../utility');
+var API = require('../api');
 var logger = require('./logger');
 var globals = require('./globalSetup');
+
+var transport = require('./transport');
+var urllib = require('./url');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
@@ -9,8 +13,8 @@ var errorParser = require('./errorParser');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
-  var context = 'browser';
-  this.client = client || new Client(context, this.options);
+  var api = new API(this.options, transport, urllib);
+  this.client = client || new Client(this.options, api, logger);
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   if (this.options.captureUncaught) {

@@ -1,25 +1,6 @@
 var _ = require('./utility');
 var helpers = require('./apiUtility');
 
-var Transport = null;
-var url = null;
-var jsonBackup = null;
-
-function init(context, transport, u, j) {
-  if (context === 'server') {
-    Transport = require('./server/transport');
-    url = require('url');
-    jsonBackup = require('json-stringify-safe');
-  } else if (context === 'test') {
-    Transport = transport;
-    url = u;
-    jsonBackup = j;
-  } else {
-    Transport = require('./browser/transport');
-    url = require('./browser/url');
-  }
-}
-
 var defaultOptions = {
   hostname: 'api.rollbar.com',
   path: '/api/1',
@@ -37,6 +18,7 @@ var defaultOptions = {
  * be different for another instance of RollbarApi.
  *
  * @param options {
+ *    accessToken: the accessToken to use for posting items to rollbar
  *    endpoint: an alternative endpoint to send errors to
  *        must be a valid, fully qualified URL.
  *        The default is: https://api.rollbar.com/api/1
@@ -47,10 +29,13 @@ var defaultOptions = {
  *          protocol (optional): https
  * }
  */
-function Api(accessToken, options) {
-  this.accessToken = accessToken;
+function Api(options, t, u, j) {
   this.options = options;
-  this.transport = _getTransport(options);
+  this.transport = t;
+  this.url = u;
+  this.jsonBackup = j;
+  this.accessToken = options.accessToken;
+  this.transportOptions = _getTransport(options, u);
 }
 
 /**
@@ -59,26 +44,23 @@ function Api(accessToken, options) {
  * @param callback
  */
 Api.prototype.postItem = function(data, callback) {
-  var transportOptions = helpers.transportOptions(this.transport, '/item/', 'POST');
-  var payload = helpers.buildPayload(this.accessToken, data, jsonBackup);
-  Transport.post(this.accessToken, transportOptions, payload, callback);
+  var transportOptions = helpers.transportOptions(this.transportOptions, '/item/', 'POST');
+  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  this.transport.post(this.accessToken, transportOptions, payload, callback);
 };
 
 Api.prototype.configure = function(options) {
   var oldOptions = this.oldOptions;
   this.options = _.extend(true, {}, oldOptions, options);
-  this.transport = _getTransport(this.options);
+  this.transportOptions = _getTransport(this.options, this.url);
   if (this.options.accessToken !== undefined) {
     this.accessToken = this.options.accessToken;
   }
   return this;
 };
 
-function _getTransport(options) {
+function _getTransport(options, url) {
   return helpers.getTransportFromOptions(options, defaultOptions, url);
 }
 
-module.exports = function(context, transport, u, j) {
-  init(context, transport, u, j);
-  return Api;
-};
+module.exports = Api;

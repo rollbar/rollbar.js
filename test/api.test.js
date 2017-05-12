@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var APIGenerator = require('../src/api');
+var API = require('../src/api');
 
 function TestTransportGenerator() {
   var TestTransport = function(callbackError, callbackResponse) {
@@ -33,16 +33,15 @@ describe('Api()', function() {
       }
     };
     var backup = null;
-    var API = APIGenerator('test', transport, url, backup);
     var accessToken = 'abc123';
-    var options = {};
-    var api = new API(accessToken, options);
+    var options = {accessToken: accessToken};
+    var api = new API(options, transport, url, backup);
     // I know this is testing internal state but it
     // is the most expedient way to do this
     expect(api.accessToken).to.eql(accessToken);
-    expect(api.transport.hostname).to.eql('api.rollbar.com');
-    expect(api.transport.path).to.match(/\/api\/1/);
-    expect(api.transport.protocol).to.eql('https:');
+    expect(api.transportOptions.hostname).to.eql('api.rollbar.com');
+    expect(api.transportOptions.path).to.match(/\/api\/1/);
+    expect(api.transportOptions.protocol).to.eql('https:');
     done();
   });
   it('should parse the endpoint and use that if given', function(done) {
@@ -60,14 +59,13 @@ describe('Api()', function() {
       }
     };
     var backup = null;
-    var API = APIGenerator('test', transport, url, backup);
     var accessToken = 'abc123';
-    var options = {endpoint: endpoint};
-    var api = new API(accessToken, options);
+    var options = {accessToken: accessToken, endpoint: endpoint};
+    var api = new API(options, transport, url, backup);
     expect(api.accessToken).to.eql(accessToken);
-    expect(api.transport.hostname).to.eql('woo.foo.com');
-    expect(api.transport.path).to.match(/\/api\/42/);
-    expect(api.transport.protocol).to.eql('http:');
+    expect(api.transportOptions.hostname).to.eql('woo.foo.com');
+    expect(api.transportOptions.path).to.match(/\/api\/42/);
+    expect(api.transportOptions.protocol).to.eql('http:');
     done();
   });
 });
@@ -82,10 +80,9 @@ describe('postItem', function() {
       }
     };
     var backup = null;
-    var API = APIGenerator('test', transport, url, backup);
     var accessToken = 'abc123';
-    var options = {};
-    var api = new API(accessToken, options);
+    var options = {accessToken: accessToken};
+    var api = new API(options, transport, url, backup);
 
     var data = {a: 1};
     api.postItem(data, function(err, resp) {
@@ -108,10 +105,9 @@ describe('postItem', function() {
       }
     };
     var backup = null;
-    var API = APIGenerator('test', transport, url, backup);
     var accessToken = 'abc123';
-    var options = {};
-    var api = new API(accessToken, options);
+    var options = {accessToken: accessToken};
+    var api = new API(options, transport, url, backup);
 
     var data = {a: 1, context: {some: [1, 2, 'stuff']}};
     api.postItem(data, function(err, resp) {
