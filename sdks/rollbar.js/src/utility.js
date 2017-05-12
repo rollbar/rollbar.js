@@ -78,6 +78,18 @@ function isDefined(u) {
 }
 
 /*
+ * isIterable - convenience function for checking if a value can be iterated, essentially
+ * whether it is an object or an array.
+ *
+ * @param i - any value
+ * @returns true if i is an object or an array as determined by `typeName`
+ */
+function isIterable(i) {
+  var type = typeName(i);
+  return (type === 'object' || type === 'array');
+}
+
+/*
  * isError - convenience function for checking if a value is of an error type
  *
  * @param e - any value
@@ -452,6 +464,7 @@ module.exports = {
   isType: isType,
   typeName: typeName,
   isFunction: isFunction,
+  isIterable: isIterable,
   isError: isError,
   extend: extend,
   traverse: traverse,
