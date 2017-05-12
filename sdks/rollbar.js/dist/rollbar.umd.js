@@ -369,7 +369,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.0-beta.2"),
+	  version: ("2.0.0-beta.3"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -903,6 +903,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	/*
+	 * isIterable - convenience function for checking if a value can be iterated, essentially
+	 * whether it is an object or an array.
+	 *
+	 * @param i - any value
+	 * @returns true if i is an object or an array as determined by `typeName`
+	 */
+	function isIterable(i) {
+	  var type = typeName(i);
+	  return (type === 'object' || type === 'array');
+	}
+	
+	/*
 	 * isError - convenience function for checking if a value is of an error type
 	 *
 	 * @param e - any value
@@ -1277,6 +1289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  isType: isType,
 	  typeName: typeName,
 	  isFunction: isFunction,
+	  isIterable: isIterable,
 	  isError: isError,
 	  extend: extend,
 	  traverse: traverse,
