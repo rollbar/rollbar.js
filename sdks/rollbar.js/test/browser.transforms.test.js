@@ -25,7 +25,9 @@ function TestClientGen() {
 function itemFromArgs(args) {
   var client = new (TestClientGen())();
   var rollbar = new Rollbar({}, client);
-  return rollbar._createItem(args);
+  var item = rollbar._createItem(args);
+  item.level = 'debug';
+  return item;
 }
 
 describe('handleItemWithError', function() {
@@ -127,8 +129,10 @@ describe('addBaseInfo', function() {
   it('should add all of the expected data', function(done) {
     var args = ['a message'];
     var item = itemFromArgs(args);
+    item.level = 'critical';
     var options = {};
     t.addBaseInfo(item, options, function(e, i) {
+      expect(i.data.level).to.eql('critical');
       expect(i.data.platform).to.eql('browser');
       expect(i.data.framework).to.eql('browser-js');
       expect(i.data.language).to.eql('javascript');
@@ -297,7 +301,6 @@ describe('addBody', function() {
       var item = itemFromArgs(args);
       var options = {scrubFields: ['password']};
       t.addBody(item, options, function(e, i) {
-        console.log(i.data.body.message.body);
         expect(i.data.body.message.body).to.not.match(/stuff/);
         expect(i.data.body.message.body).to.match(/\*+/);
         done(e);

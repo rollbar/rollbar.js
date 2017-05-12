@@ -29,6 +29,7 @@ function addBaseInfo(item, options, callback) {
   var environment = options.environment || (options.payload && options.payload.environment);
   item.data = _.extend(true, {}, item.data, {
     environment: environment,
+    level: item.level,
     endpoint: options.endpoint,
     platform: 'browser',
     framework: 'browser-js',
