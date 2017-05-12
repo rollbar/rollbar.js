@@ -11,7 +11,7 @@ var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   // The uglifyjs plugin doesn't provide a way to generate the source map without generating
   // that comment, so until we can resolve that, let's just not generate the source map.
   sourceMap: false,
-  minimize: true
+  compress: true
 });
 
 var snippetConfig = {
