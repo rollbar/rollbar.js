@@ -4,7 +4,12 @@ var os = require('os');
 var packageJson = require('../../package.json');
 var Client = require('../rollbar');
 var _ = require('../utility');
+var API = require('../api');
 var logger = require('./logger');
+
+var transport = require('./transport');
+var urllib = require('url');
+var jsonBackup = require('json-stringify-safe');
 
 var transforms = require('./transforms');
 var predicates = require('./predicates');
@@ -15,10 +20,10 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
-  this.context = 'server';
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
-  this.client = client || new Client(this.context, this.options);
+  var api = new API(this.options, transport, urllib, jsonBackup);
+  this.client = client || new Client(this.options, api, logger);
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 
