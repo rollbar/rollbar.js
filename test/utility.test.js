@@ -92,6 +92,19 @@ describe('isFunction', function() {
   });
 });
 
+describe('isIterable', function() {
+  it('should work for all types', function(done) {
+    expect(_.isIterable({})).to.be.ok();
+    expect(_.isIterable([])).to.be.ok();
+    expect(_.isIterable([{a: 1}])).to.be.ok();
+    expect(_.isIterable(null)).to.not.be.ok();
+    expect(_.isIterable(undefined)).to.not.be.ok();
+    expect(_.isIterable('object')).to.not.be.ok();
+    expect(_.isIterable(42)).to.not.be.ok();
+    done();
+  });
+});
+
 describe('isError', function() {
   it('should handle null', function(done) {
     expect(_.isError(null)).to.not.be.ok();
