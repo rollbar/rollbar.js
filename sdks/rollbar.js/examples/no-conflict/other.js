@@ -1,6 +1,5 @@
 
       var token = "POST_CLIENT_ITEM_TOKEN";
-      token = "12c99de67a444c229fca100e0967486f";
       var _rollbarConfig = {
         globalAlias: 'bork',
         accessToken: token,

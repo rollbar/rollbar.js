@@ -1,7 +1,7 @@
 import Rollbar from 'rollbar';
 
 const rollbar = new Rollbar({
-  accessToken: '59c9582c45d945f0ad2b7c3dc1aa9813',
+  accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: false,
   captureUnhandledRejections: false
 })
