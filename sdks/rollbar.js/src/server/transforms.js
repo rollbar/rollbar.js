@@ -187,7 +187,7 @@ function _buildRequestData(req) {
 
   if (req.body) {
     var bodyParams = {};
-    if (_.isType(req.body, 'object')) {
+    if (_.isIterable(req.body)) {
       var isPlainObject = req.body.constructor === undefined;
 
       for (var k in req.body) {
