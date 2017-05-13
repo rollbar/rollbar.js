@@ -117,7 +117,7 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   var message = 'unhandled rejection was null or undefined!';
   message = reason ? (reason.message || String(reason)) : message;
-  var context = (reason && reason._rollbarContext) || promise._rollbarContext;
+  var context = (reason && reason._rollbarContext) || (promise && promise._rollbarContext);
 
   var item;
   if (_.isError(reason)) {
