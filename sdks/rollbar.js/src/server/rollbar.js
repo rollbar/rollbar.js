@@ -20,6 +20,10 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
+  if (options.minimumLevel !== undefined) {
+    options.reportLevel = options.minimumLevel;
+    delete options.minimumLevel;
+  }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
   var api = new API(this.options, transport, urllib, jsonBackup);
