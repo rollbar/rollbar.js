@@ -97,7 +97,6 @@ Rollbar.log = function() {
   }
 };
 
-
 Rollbar.prototype.debug = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
@@ -113,7 +112,6 @@ Rollbar.debug = function() {
   }
 };
 
-
 Rollbar.prototype.info = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
@@ -128,7 +126,6 @@ Rollbar.info = function() {
     handleUninitialized(maybeCallback);
   }
 };
-
 
 Rollbar.prototype.warn = function() {
   var item = this._createItem(arguments);

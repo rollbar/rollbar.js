@@ -327,6 +327,7 @@ vows.describe('transforms')
                         token: 'abc123',
                         something: 'else'
                       },
+                      route: { path: '/api/:bork' },
                       user: {
                         id: 42,
                         email: 'fake@example.com'
@@ -352,6 +353,8 @@ vows.describe('transforms')
                   assert.equal(r.url, 'https://example.com/some/endpoint');
                   assert.equal(r.user_ip, '192.192.192.1');
                   assert.ok(r.GET);
+
+                  assert.equal(item.data.context, '/api/:bork');
                 },
               },
               'with a request with an array body': {

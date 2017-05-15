@@ -102,7 +102,7 @@ function addRequestData(item, options, callback) {
     item.data.context = req.route.path;
   } else {
     try {
-      item.data.context = req.app.__router.matchRequest(req).path;
+      item.data.context = req.app._router.matchRequest(req).path;
     } catch (ignore) {
       // Ignored
     }
