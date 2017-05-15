@@ -127,15 +127,15 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
-## Handling uncaught rejections.
+## Handling uncaught rejections
 
 Rollbar.js supports the ability to catch and report unhandled Promise rejections, that is, Promise failures
 that do not have a corresponding `.then(null, function(e) {})` handler.  This support is best used for handling
 rejected `exceptions`, although rejected primitives will report (without a stack trace).
 
-If you decide to use this option, you may also want to combine it the `checkIgnore`
+If you decide to use this option, you may also want to combine it with the `checkIgnore`
 [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) option to filter 'noisy' rejections,
-depending on the extent to which your application handles Promise failures, or rejects with alot of primitives.
+depending on the extent to which your application handles Promise failures, or rejects with a lot of primitives.
 
 ## Verbose option
 
@@ -173,6 +173,12 @@ var _rollbarConfig = {
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/source-maps/) for instructions.
 
+## Angular 1
+
+The [community library](https://github.com/tandibar/ng-rollbar) which provides the machinery for
+Angular 1 support has releases for the different versions of this Rollbar.js library. Those releases
+lag behind releases to this library, but they are usually in sync.
+
 ## Angular 2
 
 Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
@@ -185,15 +191,18 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, ErrorHandler } from '@angular/core';
 import { AppComponent } from './app.component';
 
-Rollbar.configure({
+const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
-});
+};
 
+@Injectable()
 export class RollbarErrorHandler implements ErrorHandler {
+  constructor(private injector: Injector) { }
   handleError(err:any) : void {
-    Rollbar.error(err.originalError || err);
+    var rollbar = this.injector.get(Rollbar);
+    rollbar.error(err.originalError || err);
   }
 }
 
@@ -201,7 +210,14 @@ export class RollbarErrorHandler implements ErrorHandler {
   imports: [ BrowserModule ],
   declarations: [ AppComponent ],
   bootstrap: [ AppComponent ],
-  providers: [ { provide: ErrorHandler, useClass: RollbarErrorHandler } ]
+  providers: [
+    { provide: ErrorHandler, useClass: RollbarErrorHandler },
+    { provide: Rollbar,
+      useFactory: () => {
+        return new Rollbar(rollbarConfig)
+      }
+    }
+  ]
 })
 export class AppModule { }
 ```
@@ -245,13 +261,6 @@ Rollbar can be configured at 3 different levels -- global, notifier and scope. A
   - Affects only the notifier you call `configure()` on
   - Merges/updates previous configuration for the notifier you call `configure()` on
 
-#### Scope configuration - only payload
-
-  - Affects only the notifier created by calling `scope()`
-  - Only affects the payload of items sent to Rollbar, not the context
-
-All child notifiers, (created with `Rollbar.scope()`) will inherit configuration from their parent notifier.
-
 ### Examples
 
 #### Global
@@ -287,21 +296,6 @@ Rollbar.configure({payload: {sessionId: "asdf12345"}});
 
 // Scrub any payload keys/query parameters named 'creditCardNumber'
 Rollbar.configure({scrubFields: ['creditCardNumber']});
-```
-
-#### Scope
-
-```js
-// Create a notifier for two different components, each having a different name
-var commentBoxNotifier = Rollbar.scope({component: {name: 'commentBox'}});
-var accountSettingsNotifier = Rollbar.scope({component: {name: 'accountSettings'}});
-
-commentBoxNotifier.info('will send a payload containing {component: {name: "commentBox"}}');
-accountSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}}');
-
-// Override the accountSettingsNotifier's payload settings
-var projectSettingsNotifier = accountSettingsNotifier.scope({projectName: 'the-new-hotness'});
-projectSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}, projectName: "the-new-hotness"}');
 ```
 
 ### Reference
@@ -572,22 +566,9 @@ __Params__
 1. options: `Object` - A javascript object that contains the notifier configuration.
 
 
-### Rollbar.scope()
+### Rollbar.handleUncaughtException()
 
-(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference).)
-
-This method acts the same as `configure()` except it will not update any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
-
-__Returns__: a new `Rollbar` instance
-
-__Params__
-
-1. options: `Object` - A javascript object that contains the notifier configuration.
-
-
-### Rollbar.uncaughtError()
-
-This method is used to record uncaught exceptions from `window.onerror`. The Rollbar snippet will set `window.onerror = Rollbar.uncaughtError` if it was configured to do so via the `captureUncaught` config parameter given to `Rollbar.init()`.
+This method is used to record uncaught exceptions from `window.onerror`. The Rollbar snippet will set `window.onerror = Rollbar.uncaughtError` if it was configured to do so via the `captureUncaught` config parameter given to the constructor of this Rollbar instance.
 
 __Returns__: `undefined`
 
@@ -602,13 +583,13 @@ __Params__
     1. _Note_: Only newer browsers provide this variable.
 
 
-### Rollbar.unhandledRejection()
+### Rollbar.handleUnhandledRejection()
 
 This method is used to record unhandled Promise rejections via the window event `unhandledrejection`.  Many promise 
 libraries, including Bluebird, lie, and native Promise support (Chrome only currently, but it is a [standard to be
 built upon](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onunhandledrejection)). 
 
-To enable this handling, you should provide `captureUnhandledRejections` to the config given to `Rollbar.init()`.
+To enable this handling, you should provide `captureUnhandledRejections` to the config given to this Rollbar constructor.
 
 __Returns__: `undefined`
 
@@ -945,7 +926,7 @@ changed the library from being a singleton to being used via individual instance
 above, the recommended way to use the constructor is to pass an object which represents
 the configuration options with the access token contained within. The old style was to always pass the
 access token as the first parameter, we permit this style for convenience when no other options are
-necessary to ease the migration path, but for new code one should really use an object as the only argument.
+necessary to ease the migration path, but for new code one should use an object as the only argument.
 
 Old:
 
@@ -1003,8 +984,11 @@ var rollbar = new Rollbar({
 
 ```
 
+We have also changed the `minimumLevel` configuration option to `reportLevel` in order to match the
+configuration option currently in use by the browserjs library.
+
 Now that we have said the above, because of how one might be using the library currently, converting
-to not use a singleton may be problematic. Therefore, we provide a convenient interface to a what is
+to not use a singleton may be problematic. Therefore, we provide a convenient interface to what is
 essentially a singleton managed by the library. First, you would use this code somewhere before any
 other instances of rollbar are required or used:
 
@@ -1020,14 +1004,10 @@ const rollbar = Rollbar.init({
 Then, in other places, you can use:
 
 ```js
-const rollbar = require('rollbar').instance;
+const Rollbar = require('rollbar');
 
-rollbar.log('hello world');
+Rollbar.log('hello world');
 ```
-
-The `instance` method defined on the constructor object will return the singleton instance that was
-constructed by the call to `init`. The return value of `init` is also this same instance.
-
 
 ## Help / Support
 
