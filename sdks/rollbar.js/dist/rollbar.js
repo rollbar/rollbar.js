@@ -50,7 +50,7 @@
 	
 	var options = window && window._rollbarConfig;
 	var alias = options && options.globalAlias || 'Rollbar';
-	var shimRunning = window && window[alias] && typeof window[alias].shimId !== 'undefined';
+	var shimRunning = window && window[alias] && typeof window[alias].shimId === 'function' && window[alias].shimId() !== undefined;
 	
 	if (window && !window._rollbarStartTime) {
 	  window._rollbarStartTime = (new Date()).getTime();
@@ -192,7 +192,7 @@
 	Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
 	  var message = 'unhandled rejection was null or undefined!';
 	  message = reason ? (reason.message || String(reason)) : message;
-	  var context = (reason && reason._rollbarContext) || promise._rollbarContext;
+	  var context = (reason && reason._rollbarContext) || (promise && promise._rollbarContext);
 	
 	  var item;
 	  if (_.isError(reason)) {
@@ -356,7 +356,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.0-beta.4"),
+	  version: ("2.0.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
