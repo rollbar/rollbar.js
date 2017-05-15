@@ -5,29 +5,19 @@ var defaults = require('./defaults');
 
 var outputPath = './dist/';
 
-var jsonDefines = {
-  __USE_JSON__: true
-};
-
-var noJsonDefines = {
-  __USE_JSON__: false
-};
-
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   // We've had some reports of the sourceMappingURL comment causing problems in Firefox.
   // The uglifyjs plugin doesn't provide a way to generate the source map without generating
   // that comment, so until we can resolve that, let's just not generate the source map.
   sourceMap: false,
-  minimize: true
+  compress: true
 });
-var useJsonPlugin = new webpack.DefinePlugin(jsonDefines);
-var notUseJsonPlugin = new webpack.DefinePlugin(noJsonDefines);
 
 var snippetConfig = {
   name: 'snippet',
   entry: {
-    'rollbar.snippet': './src/bundles/rollbar.snippet.js'
+    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js'
   },
   output: {
     path: outputPath,
@@ -49,7 +39,7 @@ var snippetConfig = {
 var pluginConfig = {
   name: 'plugins',
   entry: {
-    'jquery': './src/plugins/jquery.js'
+    'jquery': './src/browser/plugins/jquery.js'
   },
   output: {
     path: outputPath + '/plugins/',
@@ -71,17 +61,7 @@ var pluginConfig = {
 var testsConfig = {
   name: 'tests',
   entry: {
-    browserify: './test/browserify.test.js',
-    error_parser: './test/error_parser.test.js',
-    json: './test/json.test.js',
-    mootools: './test/mootools.test.js',
     notifier: './test/notifier.test.js',
-    notifier_ratelimit: './test/notifier_ratelimit.test.js',
-    rollbar: './test/rollbar.test.js',
-    shim: './test/shim.test.js',
-    shimalias: './test/shimalias.test.js',
-    util: './test/util.test.js',
-    xhr: './test/xhr.test.js',
   },
   plugins: [defaultsPlugin],
   output: {
@@ -104,7 +84,7 @@ var vanillaConfigBase = {
     configFile: path.resolve(__dirname, ".eslintrc")
   },
   entry: {
-    'rollbar': './src/bundles/rollbar.js'
+    'rollbar': './src/browser/bundles/rollbar.js'
   },
   output: {
     path: outputPath
@@ -128,7 +108,7 @@ var UMDConfigBase = {
     configFile: path.resolve(__dirname, ".eslintrc")
   },
   entry: {
-    'rollbar.umd': ['./src/bundles/rollbar.js']
+    'rollbar.umd': ['./src/browser/bundles/rollbar.js']
   },
   output: {
     path: outputPath,
@@ -203,9 +183,7 @@ function generateBuildConfig(name, plugins) {
   addNamedAMDToConfig(config, name, plugins);
 }
 
-generateBuildConfig('[name].js', [useJsonPlugin]);
-generateBuildConfig('[name].min.js', [useJsonPlugin, uglifyPlugin]);
-generateBuildConfig('[name].nojson.js', [notUseJsonPlugin]);
-generateBuildConfig('[name].nojson.min.js', [notUseJsonPlugin, uglifyPlugin]);
+generateBuildConfig('[name].js', []);
+generateBuildConfig('[name].min.js', [uglifyPlugin]);
 
 module.exports = config;

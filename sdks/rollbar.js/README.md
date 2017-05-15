@@ -1,14 +1,8 @@
-# Rollbar notifier for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v1.9.4)](https://travis-ci.org/rollbar/rollbar.js)
+# Rollbar notifier for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.0.0)](https://travis-ci.org/rollbar/rollbar.js)
 
 <!-- Sub:[TOC] -->
 
-**Note**: The latest version published on NPM is an alpha version which is still undergoing testing. The docs for the v2 alpha version can be found [here](https://github.com/rollbar/rollbar.js/blob/universal/README.md) and will be merged into master once v2 goes out of alpha. If you wish to use the non-alpha version, you can pin the Rollbar dependency at v1:
-
-```
-npm install rollbar-browser@^1.9.4 --save
-```
-
-## Quick start
+## Quick start Browser
 
 Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
 
@@ -28,7 +22,7 @@ var _rollbarConfig = {
     }
 };
 // Rollbar Snippet
-!function(r){function e(n){if(o[n])return o[n].exports;var t=o[n]={exports:{},id:n,loaded:!1};return r[n].call(t.exports,t,t.exports,e),t.loaded=!0,t.exports}var o={};return e.m=r,e.c=o,e.p="",e(0)}([function(r,e,o){"use strict";var n=o(1).Rollbar,t=o(2);_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||"https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/1.9.4/rollbar.min.js";var a=n.init(window,_rollbarConfig),i=t(a,_rollbarConfig);a.loadFull(window,document,!_rollbarConfig.async,_rollbarConfig,i)},function(r,e){"use strict";function o(r){return function(){try{return r.apply(this,arguments)}catch(r){try{console.error("[Rollbar]: Internal error",r)}catch(r){}}}}function n(r,e,o){window._rollbarWrappedError&&(o[4]||(o[4]=window._rollbarWrappedError),o[5]||(o[5]=window._rollbarWrappedError._rollbarContext),window._rollbarWrappedError=null),r.uncaughtError.apply(r,o),e&&e.apply(window,o)}function t(r){var e=function(){var e=Array.prototype.slice.call(arguments,0);n(r,r._rollbarOldOnError,e)};return e.belongsToShim=!0,e}function a(r){this.shimId=++c,this.notifier=null,this.parentShim=r,this._rollbarOldOnError=null}function i(r){var e=a;return o(function(){if(this.notifier)return this.notifier[r].apply(this.notifier,arguments);var o=this,n="scope"===r;n&&(o=new e(this));var t=Array.prototype.slice.call(arguments,0),a={shim:o,method:r,args:t,ts:new Date};return window._rollbarShimQueue.push(a),n?o:void 0})}function l(r,e){if(e.hasOwnProperty&&e.hasOwnProperty("addEventListener")){var o=e.addEventListener;e.addEventListener=function(e,n,t){o.call(this,e,r.wrap(n),t)};var n=e.removeEventListener;e.removeEventListener=function(r,e,o){n.call(this,r,e&&e._wrapped?e._wrapped:e,o)}}}var c=0;a.init=function(r,e){var n=e.globalAlias||"Rollbar";if("object"==typeof r[n])return r[n];r._rollbarShimQueue=[],r._rollbarWrappedError=null,e=e||{};var i=new a;return o(function(){if(i.configure(e),e.captureUncaught){i._rollbarOldOnError=r.onerror,r.onerror=t(i);var o,a,c="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(o=0;o<c.length;++o)a=c[o],r[a]&&r[a].prototype&&l(i,r[a].prototype)}return e.captureUnhandledRejections&&(i._unhandledRejectionHandler=function(r){var e=r.reason,o=r.promise,n=r.detail;!e&&n&&(e=n.reason,o=n.promise),i.unhandledRejection(e,o)},r.addEventListener("unhandledrejection",i._unhandledRejectionHandler)),r[n]=i,i})()},a.prototype.loadFull=function(r,e,n,t,a){var i=function(){var e;if(void 0===r._rollbarPayloadQueue){var o,n,t,i;for(e=new Error("rollbar.js did not load");o=r._rollbarShimQueue.shift();)for(t=o.args,i=0;i<t.length;++i)if(n=t[i],"function"==typeof n){n(e);break}}"function"==typeof a&&a(e)},l=!1,c=e.createElement("script"),p=e.getElementsByTagName("script")[0],s=p.parentNode;c.crossOrigin="",c.src=t.rollbarJsUrl,c.async=!n,c.onload=c.onreadystatechange=o(function(){if(!(l||this.readyState&&"loaded"!==this.readyState&&"complete"!==this.readyState)){c.onload=c.onreadystatechange=null;try{s.removeChild(c)}catch(r){}l=!0,i()}}),s.insertBefore(c,p)},a.prototype.wrap=function(r,e){try{var o;if(o="function"==typeof e?e:function(){return e||{}},"function"!=typeof r)return r;if(r._isWrap)return r;if(!r._wrapped){r._wrapped=function(){try{return r.apply(this,arguments)}catch(e){throw"string"==typeof e&&(e=new String(e)),e._rollbarContext=o()||{},e._rollbarContext._wrappedSource=r.toString(),window._rollbarWrappedError=e,e}},r._wrapped._isWrap=!0;for(var n in r)r.hasOwnProperty(n)&&(r._wrapped[n]=r[n])}return r._wrapped}catch(e){return r}};for(var p="log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError,unhandledRejection".split(","),s=0;s<p.length;++s)a.prototype[p[s]]=i(p[s]);r.exports={Rollbar:a,_rollbarWindowOnError:n}},function(r,e){"use strict";r.exports=function(r,e){return function(o){if(!o&&!window._rollbarInitialized){var n=window.RollbarNotifier,t=e||{},a=t.globalAlias||"Rollbar",i=window.Rollbar.init(t,r);i._processShimQueue(window._rollbarShimQueue||[]),window[a]=i,window._rollbarInitialized=!0,n.processPayloads()}}}}]);
+!function(r){function o(e){if(n[e])return n[e].exports;var t=n[e]={exports:{},id:e,loaded:!1};return r[e].call(t.exports,t,t.exports,o),t.loaded=!0,t.exports}var n={};return o.m=r,o.c=n,o.p="",o(0)}([function(r,o,n){"use strict";var e=n(1),t=n(4);_rollbarConfig=_rollbarConfig||{},_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||"https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/2.0.0/rollbar.min.js",_rollbarConfig.async=void 0===_rollbarConfig.async||_rollbarConfig.async;var a=e.setupShim(window,_rollbarConfig),l=t(_rollbarConfig);window.rollbar=e.Rollbar,a.loadFull(window,document,!_rollbarConfig.async,_rollbarConfig,l)},function(r,o,n){"use strict";function e(r){return function(){try{return r.apply(this,arguments)}catch(r){try{console.error("[Rollbar]: Internal error",r)}catch(r){}}}}function t(r,o){this.options=r,this._rollbarOldOnError=null;var n=s++;this.shimId=function(){return n},window&&window._rollbarShims&&(window._rollbarShims[n]={handler:o,messages:[]})}function a(r,o){var n=o.globalAlias||"Rollbar";if("object"==typeof r[n])return r[n];r._rollbarShims={},r._rollbarWrappedError=null;var t=new p(o);return e(function(){return o.captureUncaught&&(t._rollbarOldOnError=r.onerror,i.captureUncaughtExceptions(r,t),i.wrapGlobals(r,t)),o.captureUnhandledRejections&&i.captureUnhandledRejections(r,t),r[n]=t,t})()}function l(r){return e(function(){var o=this,n=Array.prototype.slice.call(arguments,0),e={shim:o,method:r,args:n,ts:new Date};window._rollbarShims[this.shimId()].messages.push(e)})}var i=n(2),s=0,c=n(3),d=function(r,o){return new t(r,o)},p=c.bind(null,d);t.prototype.loadFull=function(r,o,n,t,a){var l=function(){var o;if(void 0===r._rollbarDidLoad){o=new Error("rollbar.js did not load");for(var n,e,t,l,i=0;n=r._rollbarShims[i++];)for(n=n.messages||[];e=n.shift();)for(t=e.args||[],i=0;i<t.length;++i)if(l=t[i],"function"==typeof l){l(o);break}}"function"==typeof a&&a(o)},i=!1,s=o.createElement("script"),c=o.getElementsByTagName("script")[0],d=c.parentNode;s.crossOrigin="",s.src=t.rollbarJsUrl,n||(s.async=!0),s.onload=s.onreadystatechange=e(function(){if(!(i||this.readyState&&"loaded"!==this.readyState&&"complete"!==this.readyState)){s.onload=s.onreadystatechange=null;try{d.removeChild(s)}catch(r){}i=!0,l()}}),d.insertBefore(s,c)},t.prototype.wrap=function(r,o){try{var n;if(n="function"==typeof o?o:function(){return o||{}},"function"!=typeof r)return r;if(r._isWrap)return r;if(!r._wrapped){r._wrapped=function(){try{return r.apply(this,arguments)}catch(e){var o=e;throw"string"==typeof o&&(o=new String(o)),o._rollbarContext=n()||{},o._rollbarContext._wrappedSource=r.toString(),window._rollbarWrappedError=o,o}},r._wrapped._isWrap=!0;for(var e in r)r.hasOwnProperty(e)&&(r._wrapped[e]=r[e])}return r._wrapped}catch(o){return r}};for(var u="log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection".split(","),f=0;f<u.length;++f)t.prototype[u[f]]=l(u[f]);r.exports={setupShim:a,Rollbar:p}},function(r,o){"use strict";function n(r,o){if(r){var n;"function"==typeof o._rollbarOldOnError?n=o._rollbarOldOnError:r.onerror&&!r.onerror.belongsToRollbar&&(n=r.onerror,o._rollbarOldOnError=n);var t=function(){var t=Array.prototype.slice.call(arguments,0);e(r,o,n,t)};t.belongsToRollbar=!0,r.onerror=t}}function e(r,o,n,e){r._rollbarWrappedError&&(e[4]||(e[4]=r._rollbarWrappedError),e[5]||(e[5]=r._rollbarWrappedError._rollbarContext),r._rollbarWrappedError=null),o.handleUncaughtException.apply(o,e),n&&n.apply(r,e)}function t(r,o){if(r){"function"==typeof r._rollbarURH&&r.removeEventListener("unhandledrejection",r._rollbarURH);var n=function(r){var n=r.reason,e=r.promise,t=r.detail;!n&&t&&(n=t.reason,e=t.promise),o&&o.handleUnhandledRejection&&o.handleUnhandledRejection(n,e)};r._rollbarURH=n,r.addEventListener("unhandledrejection",n)}}function a(r,o){if(r){var n,e,t="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(n=0;n<t.length;++n)e=t[n],r[e]&&r[e].prototype&&l(o,r[e].prototype)}}function l(r,o){if(o.hasOwnProperty&&o.hasOwnProperty("addEventListener")){var n=o.addEventListener;n._rollbarOldAdd&&(n=n._rollbarOldAdd);var e=function(o,e,t){n.call(this,o,r.wrap(e),t)};e._rollbarOldAdd=n,o.addEventListener=e;var t=o.removeEventListener;t._rollbarOldRemove&&(t=t._rollbarOldRemove);var a=function(r,o,n){t.call(this,r,o&&o._wrapped||o,n)};a._rollbarOldRemove=t,o.removeEventListener=a}}r.exports={captureUncaughtExceptions:n,captureUnhandledRejections:t,wrapGlobals:a}},function(r,o){"use strict";function n(r,o){this.impl=r(o,this),this.options=o,e(n.prototype)}function e(r){for(var o=function(r){return function(){var o=Array.prototype.slice.call(arguments,0);if(this.impl[r])return this.impl[r].apply(this.impl,o)}},n="log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId".split(","),e=0;e<n.length;e++)r[n[e]]=o(n[e])}n.prototype._swapAndProcessMessages=function(r,o){this.impl=r(this.options);for(var n,e,t;n=o.shift();)e=n.method,t=n.args,this[e]&&"function"==typeof this[e]&&this[e].apply(this,t);return this},r.exports=n},function(r,o){"use strict";r.exports=function(r){return function(o){if(!o&&!window._rollbarInitialized){r=r||{};for(var n,e,t=r.globalAlias||"Rollbar",a=window.rollbar,l=function(r){return new a(r)},i=0;n=window._rollbarShims[i++];)e||(e=n.handler),n.handler._swapAndProcessMessages(l,n.messages);window[t]=e,window._rollbarInitialized=!0}}}}]);
 // End Rollbar Snippet
 </script>
 ```
@@ -92,10 +86,11 @@ Rollbar.configure({
 });
 ```
 
-(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api/items_post/), use `Rollbar.scope`:
+(Advanced) For fine-grained control of the payload sent to the [Rollbar API](https://rollbar.com/docs/api/items_post/), you can override any keys by nesting
+them in the configuration under the payload key:
 
 ```js
-Rollbar.scope({fingerprint: "custom fingerprint to override grouping algorithm"}).error(err);
+Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
 
 ## UMD / Browserify / Requirejs / Webpack
@@ -132,15 +127,15 @@ var _rollbarConfig = {
 // init your rollbar like normal, or insert rollbar.js source snippet here
 ```
 
-## Handling uncaught rejections.
+## Handling uncaught rejections
 
 Rollbar.js supports the ability to catch and report unhandled Promise rejections, that is, Promise failures
 that do not have a corresponding `.then(null, function(e) {})` handler.  This support is best used for handling
 rejected `exceptions`, although rejected primitives will report (without a stack trace).
 
-If you decide to use this option, you may also want to combine it the `checkIgnore`
+If you decide to use this option, you may also want to combine it with the `checkIgnore`
 [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) option to filter 'noisy' rejections,
-depending on the extent to which your application handles Promise failures, or rejects with alot of primitives.
+depending on the extent to which your application handles Promise failures, or rejects with a lot of primitives.
 
 ## Verbose option
 
@@ -178,6 +173,54 @@ var _rollbarConfig = {
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/source-maps/) for instructions.
 
+## Angular 1
+
+The [community library](https://github.com/tandibar/ng-rollbar) which provides the machinery for
+Angular 1 support has releases for the different versions of this Rollbar.js library. Those releases
+lag behind releases to this library, but they are usually in sync.
+
+## Angular 2
+
+Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
+Rollbar by default. Additionally, one can catch any Angular 2 specific exceptions reported through the
+`@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
+
+```js
+import Rollbar = require('rollbar');
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { AppComponent } from './app.component';
+
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+};
+
+@Injectable()
+export class RollbarErrorHandler implements ErrorHandler {
+  constructor(private injector: Injector) { }
+  handleError(err:any) : void {
+    var rollbar = this.injector.get(Rollbar);
+    rollbar.error(err.originalError || err);
+  }
+}
+
+@NgModule({
+  imports: [ BrowserModule ],
+  declarations: [ AppComponent ],
+  bootstrap: [ AppComponent ],
+  providers: [
+    { provide: ErrorHandler, useClass: RollbarErrorHandler },
+    { provide: Rollbar,
+      useFactory: () => {
+        return new Rollbar(rollbarConfig)
+      }
+    }
+  ]
+})
+export class AppModule { }
+```
 
 ## Dealing with adblocker / browser extension exceptions
 
@@ -218,13 +261,6 @@ Rollbar can be configured at 3 different levels -- global, notifier and scope. A
   - Affects only the notifier you call `configure()` on
   - Merges/updates previous configuration for the notifier you call `configure()` on
 
-#### Scope configuration - only payload
-
-  - Affects only the notifier created by calling `scope()`
-  - Only affects the payload of items sent to Rollbar, not the context
-
-All child notifiers, (created with `Rollbar.scope()`) will inherit configuration from their parent notifier.
-
 ### Examples
 
 #### Global
@@ -260,21 +296,6 @@ Rollbar.configure({payload: {sessionId: "asdf12345"}});
 
 // Scrub any payload keys/query parameters named 'creditCardNumber'
 Rollbar.configure({scrubFields: ['creditCardNumber']});
-```
-
-#### Scope
-
-```js
-// Create a notifier for two different components, each having a different name
-var commentBoxNotifier = Rollbar.scope({component: {name: 'commentBox'}});
-var accountSettingsNotifier = Rollbar.scope({component: {name: 'accountSettings'}});
-
-commentBoxNotifier.info('will send a payload containing {component: {name: "commentBox"}}');
-accountSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}}');
-
-// Override the accountSettingsNotifier's payload settings
-var projectSettingsNotifier = accountSettingsNotifier.scope({projectName: 'the-new-hotness'});
-projectSettingsNotifier.info('will send a payload containing {component: {name: "accountSettings"}, projectName: "the-new-hotness"}');
 ```
 
 ### Reference
@@ -545,22 +566,9 @@ __Params__
 1. options: `Object` - A javascript object that contains the notifier configuration.
 
 
-### Rollbar.scope()
+### Rollbar.handleUncaughtException()
 
-(See the section on [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference).)
-
-This method acts the same as `configure()` except it will not update any config options. Rather, it will return a new `Rollbar` instance with the inherited config options set along with those passed into `scope()`.
-
-__Returns__: a new `Rollbar` instance
-
-__Params__
-
-1. options: `Object` - A javascript object that contains the notifier configuration.
-
-
-### Rollbar.uncaughtError()
-
-This method is used to record uncaught exceptions from `window.onerror`. The Rollbar snippet will set `window.onerror = Rollbar.uncaughtError` if it was configured to do so via the `captureUncaught` config parameter given to `Rollbar.init()`.
+This method is used to record uncaught exceptions from `window.onerror`. The Rollbar snippet will set `window.onerror = Rollbar.uncaughtError` if it was configured to do so via the `captureUncaught` config parameter given to the constructor of this Rollbar instance.
 
 __Returns__: `undefined`
 
@@ -575,13 +583,13 @@ __Params__
     1. _Note_: Only newer browsers provide this variable.
 
 
-### Rollbar.unhandledRejection()
+### Rollbar.handleUnhandledRejection()
 
 This method is used to record unhandled Promise rejections via the window event `unhandledrejection`.  Many promise 
 libraries, including Bluebird, lie, and native Promise support (Chrome only currently, but it is a [standard to be
 built upon](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onunhandledrejection)). 
 
-To enable this handling, you should provide `captureUnhandledRejections` to the config given to `Rollbar.init()`.
+To enable this handling, you should provide `captureUnhandledRejections` to the config given to this Rollbar constructor.
 
 __Returns__: `undefined`
 
@@ -671,7 +679,7 @@ If you use jQuery 1.7 and up, you can include a plugin script that will instrume
 ```html
 <script>
 // Rollbar jQuery Snippet
-!function(r){function t(n){if(e[n])return e[n].exports;var a=e[n]={exports:{},id:n,loaded:!1};return r[n].call(a.exports,a,a.exports,t),a.loaded=!0,a.exports}var e={};return t.m=r,t.c=e,t.p="",t(0)}([function(r,t,e){"use strict";!function(r,t,e){var n=t.Rollbar;if(n){var a="0.0.8";n.configure({notifier:{plugins:{jquery:{version:a}}}});var o=function(r){if(n.error(r),t.console){var e="[reported to Rollbar]";n.options&&!n.options.enabled&&(e="[Rollbar not enabled]"),t.console.log(r.message+" "+e)}};r(e).ajaxError(function(r,t,e,a){var o=t.status,u=e.url,i=e.type;if(o){var s={status:o,url:u,type:i,isAjax:!0,data:e.data,jqXHR_responseText:t.responseText,jqXHR_statusText:t.statusText},d=a?a:"jQuery ajax error for "+i;n.warning(d,s)}});var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(t){try{r(t)}catch(r){o(r)}})};var i=r.event.add;r.event.add=function(t,e,n,a,u){var s,d=function(r){return function(){try{return r.apply(this,arguments)}catch(r){o(r)}}};return n.handler?(s=n.handler,n.handler=d(n.handler)):(s=n,n=d(n)),s.guid?n.guid=s.guid:n.guid=s.guid=r.guid++,i.call(this,t,e,n,a,u)}}}(jQuery,window,document)}]);
+!function(r){function t(n){if(e[n])return e[n].exports;var a=e[n]={exports:{},id:n,loaded:!1};return r[n].call(a.exports,a,a.exports,t),a.loaded=!0,a.exports}var e={};return t.m=r,t.c=e,t.p="",t(0)}([function(r,t,e){"use strict";!function(r,t,e){var n=t.Rollbar;if(n){var a="0.0.8";n.configure({payload:{notifier:{plugins:{jquery:{version:a}}}}});var o=function(r){if(n.error(r),t.console){var e="[reported to Rollbar]";n.options&&!n.options.enabled&&(e="[Rollbar not enabled]"),t.console.log(r.message+" "+e)}};r(e).ajaxError(function(r,t,e,a){var o=t.status,u=e.url,i=e.type;if(o){var s={status:o,url:u,type:i,isAjax:!0,data:e.data,jqXHR_responseText:t.responseText,jqXHR_statusText:t.statusText},d=a?a:"jQuery ajax error for "+i;n.warning(d,s)}});var u=r.fn.ready;r.fn.ready=function(r){return u.call(this,function(t){try{r(t)}catch(r){o(r)}})};var i=r.event.add;r.event.add=function(t,e,n,a,u){var s,d=function(r){return function(){try{return r.apply(this,arguments)}catch(r){o(r)}}};return n.handler?(s=n.handler,n.handler=d(n.handler)):(s=n,n=d(n)),s.guid?n.guid=s.guid:n.guid=s.guid=r.guid++,i.call(this,t,e,n,a,u)}}}(jQuery,window,document)}]);
 // End Rollbar jQuery Snippet
 </script>
 ```
@@ -693,6 +701,313 @@ window.Rollbar.configure({
 ## Examples
 
 See [here](https://github.com/rollbar/rollbar.js/tree/master/examples) for some examples of how to use rollbar.js with Bower, Browserify, RequireJS, Webpack, and others.
+
+## Quick Start Server
+
+The recommended way to use the rollbar constructor is to pass an object which
+represents the configuration options with at least the one required
+key `accessToken` with the value equal to your
+`POST_SERVER_ITEM_ACCESS_TOKEN`. If you do not want to pass any configuration options, then for
+convenience, you can simply pass just the access token as a string as the only argument to the
+constructor.
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar({
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  handleUncaughtExceptions: true,
+  handleUnhandledRejections: true
+});
+
+// log a generic message and send to rollbar
+rollbar.log('Hello world!');
+```
+Setting the ```handleUncaughtExceptions``` option to true will register Rollbar as a handler for
+any uncaught exceptions in your Node process.
+
+Similarly, setting the ```handleUnhandledRejections``` option to true will register Rollbar as a
+handler for any unhandled Promise rejections in your Node process.
+
+<!-- RemoveNextIfProject -->
+Be sure to replace ```POST_SERVER_ITEM_ACCESS_TOKEN``` with your project's ```post_server_item``` access token, which you can find in the Rollbar.com interface.
+
+## Server Installation
+
+Install using the node package manager, npm:
+
+    $ npm install --save rollbar
+
+## Server Configuration
+
+### Using Express
+
+```js
+var express = require('express');
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+var app = express();
+
+app.get('/', function(req, res) {
+  // ...
+});
+
+// Use the rollbar error handler to send exceptions to your rollbar account
+app.use(rollbar.errorHandler());
+
+app.listen(6943);
+```
+
+### Using Hapi
+
+```js
+#!/usr/bin/env node
+
+var Hapi = require('hapi');
+var server = new Hapi.Server();
+server.connection({ host:'localhost', port:8000 });
+
+// Begin Rollbar initialization code
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+server.on('request-error', function(request, error) {
+  // Note: before Hapi v8.0.0, this should be 'internalError' instead of 'request-error'
+  var cb = function(rollbarErr) {
+    if (rollbarErr)
+      console.error('Error reporting to rollbar, ignoring: '+rollbarErr);
+  };
+  if (error instanceof Error)
+    return rollbar.error(error, request, cb);
+  rollbar.error('Error: '+error, request, cb);
+});
+// End Rollbar initialization code
+
+server.route({
+  method: 'GET',
+  path:'/throw_error',
+  handler: function (request, reply) {
+    throw new Error('Example error manually thrown from route.');
+  }
+});
+server.start(function(err) {
+  if (err)
+    throw err;
+  console.log('Server running at:', server.info.uri);
+}); 
+```
+
+### Standalone
+
+In your main application, require and construct a rollbar instance using your access_token::
+
+```js
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN");
+```
+
+Other options can be passed into the constructor using a second parameter. E.g.:
+
+```js
+// Configure the library to send errors to api.rollbar.com
+new Rollbar({
+  accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
+  environment: "staging",
+  endpoint: "https://api.rollbar.com/api/1/"
+});
+```
+
+## Server Usage
+
+### Caught exceptions
+
+To report an exception that you have caught, use one of the named logging functions
+(log/debug/info/warning/error/critical) depending on the level of severity of the exception.
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+try {
+  someCode();
+} catch (e) {
+  rollbar.error(e);
+
+  // if you have a request object (or a function that returns one), pass it as the second arg
+  // see below for details about what the request object is expected to be
+  rollbar.error(e, request);
+
+  // you can also pass a callback, which will be called upon success/failure
+  rollbar.error(e, function(err2) {
+    if (err2) {
+      // an error occurred
+    } else {
+      // success
+    }
+  });
+
+  // if you have a request and a callback, pass the callback last
+  rollbar.error(e, request, callback);
+
+  // to specify payload options - like extra data, or the level - pass a custom object as the third argument. The second argument must be a request or null
+  rollbar.error(e, request, {level: "info"});
+  rollbar.error(e, null, {level: "warning", custom: {someKey: "arbitrary value"}});
+
+  // you can also pass a callback as the last argument
+  rollbar.error(e, null, {level: "info"}, callback);
+  rollbar.error(e, request, {level: "info"}, callback);
+}
+```
+
+### Log messages
+
+To report a string message, possibly along with additional context, use (log/debug/info/warning/error/critical) depending on the level of severity to attach to the message.
+
+```js
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar('POST_SERVER_ITEM_ACCESS_TOKEN');
+
+// reports a string message at the default severity level ("error")
+rollbar.log("Timeout connecting to database");
+
+
+// reports a string message at the specified level, along with a request and callback
+// only the first param is required
+rollbar.debug("Response time exceeded threshold of 1s", request, callback);
+rollbar.info("Response time exceeded threshold of 1s", request, callback);
+rollbar.warning("Response time exceeded threshold of 1s", request, callback);
+rollbar.error("Response time exceeded threshold of 1s", request, callback);
+rollbar.critical("Response time exceeded threshold of 1s", request, callback);
+
+// reports a string message along with additional data conforming to the Rollbar API Schema
+// documented here: https://rollbar.com/docs/api/items_post/
+rollbar.warning(
+  "Response time exceeded threshold of 1s",
+  request,
+  {
+    threshold: 1,
+    timeElapsed: 2.3
+  }, callback
+);
+```
+
+### The Request Object
+
+If your Node.js application is responding to web requests, you can send data about the current request along with each report to Rollbar. This will allow you to replay requests, track events by browser, IP address, and much more.
+
+All of the logging methods accept a `request` parameter as the second argument.
+
+If you're using Express, just pass the express request object. If you're using something custom, pass an object with these keys (all optional):
+
+- `headers`: an object containing the request headers
+- `protocol`: the request protocol (e.g. `"https"`)
+- `url`: the URL starting after the domain name (e.g. `"/index.html?foo=bar"`)
+- `method`: the request method (e.g. `"GET"`)
+- `body`: the request body as a string
+- `route`: an object containing a 'path' key, which will be used as the "context" for the event (e.g. `{"path": "home/index"}`)
+
+Sensitive param names will be scrubbed from the request body and, if `scrubHeaders` is configured, headers. See the `scrubFields` and `scrubHeaders` configuration options for details.
+
+### Person Tracking
+
+If your application has authenticated users, you can track which user ("person" in Rollbar parlance) was associated with each event.
+
+If you're using the [Passport](http://passportjs.org/) authentication library, this will happen automatically when you pass the request object (which will have "user" attached). Otherwise, attach one of these keys to the `request` object described in the previous section:
+
+- `rollbar_person` or `user`: an object like `{"id": "123", "username": "foo", "email": "foo@example.com"}`. id is required, others are optional.
+- `user_id`: the user id as an integer or string, or a function which when called will return the user id
+
+Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `username` are supplemental and will be overwritten whenever a new value is received for an existing `id`. The `id` is a string up to 40 characters long.
+
+## Upgrading from node_rollbar
+
+The upgrade path from `node_rollbar` version 0.6.4 to version 2.0.0 of this library is not
+automatic, but it should be straightforward. The main changes are related to naming, however we also
+changed the library from being a singleton to being used via individual instances. As we have said
+above, the recommended way to use the constructor is to pass an object which represents
+the configuration options with the access token contained within. The old style was to always pass the
+access token as the first parameter, we permit this style for convenience when no other options are
+necessary to ease the migration path, but for new code one should use an object as the only argument.
+
+Old:
+
+```js
+var rollbar = require("rollbar");
+rollbar.init("POST_SERVER_ITEM_ACCESS_TOKEN");
+rollbar.reportMessage("Hello world!");
+```
+
+New:
+
+```js
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN");
+rollbar.log("Hello world!");
+```
+
+- Instead of importing the library as a singleton upon which you act, you are now importing a
+  constructor.
+- The constructor is a function of the form `function (options)` where options is an
+  object with the same configuration options as before, and also requires a key `accessToken` with
+  your access token as the value.
+- `reportMessage`, `reportMessageWithPayloadData`, `handleError`, and `handleErrorWithPayloadData`
+  are all deprecated in favor of: log/debug/info/warning/error/critical
+- Each of these new logging functions can be called with any of the following sets of arguments:
+  - message/error, callback
+  - message/error, request
+  - message/error, request, callback
+  - message/error, request, custom
+  - message/error, request, custom, callback
+- In other words, the first arugment can be a string or an exception, the type of which will be used
+  to subsequently construct the payload. The last argument can be a callback or the callback can be
+  omitted. The second argument must be a request or null (or a callback if only two arguments are
+  present). The third argument is treated as extra custom data which will be sent along with the
+  payload. Note that to include custom data and no request, you must pass null for the second
+  argument.
+
+The other major change is that if you wish to capture uncaught exceptions and unhandled rejections,
+you now use a configuration option.
+
+Old:
+
+```js
+rollbar.handleUncaughtExceptionsAndRejections("POST_SERVER_ITEM_ACCESS_TOKEN", options);
+```
+
+New:
+
+```js
+var rollbar = new Rollbar({
+  accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
+  handleUncaughtExceptions: true,
+  handleUnhandledRejections: true
+});
+
+```
+
+We have also changed the `minimumLevel` configuration option to `reportLevel` in order to match the
+configuration option currently in use by the browserjs library.
+
+Now that we have said the above, because of how one might be using the library currently, converting
+to not use a singleton may be problematic. Therefore, we provide a convenient interface to what is
+essentially a singleton managed by the library. First, you would use this code somewhere before any
+other instances of rollbar are required or used:
+
+```js
+const Rollbar = require('rollbar');
+
+const rollbar = Rollbar.init({
+  accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
+  handleUncaughtExceptions: true
+});
+```
+
+Then, in other places, you can use:
+
+```js
+const Rollbar = require('rollbar');
+
+Rollbar.log('hello world');
+```
 
 ## Help / Support
 

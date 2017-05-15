@@ -18,8 +18,11 @@ var webpackConfig = require('./webpack.config.js');
 var browserStackBrowsers = require('./browserstack.browsers');
 
 
-function findTests() {
-  var files = glob.sync('test/**/*.test.js');
+function findTests(context) {
+  if (context !== 'browser') {
+    return {};
+  }
+  var files = glob.sync('test/**/!(server.)*.test.js');
   var mapping = {};
 
   files.forEach(function(file) {
@@ -29,7 +32,6 @@ function findTests() {
 
   return mapping;
 }
-
 
 function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
   var config = {
@@ -71,8 +73,6 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
     // Karma will inclue it in the web page.
     if (testName === 'requirejs') {
       testConfig.files = [
-        {src: './test/requirejs-loader.js'},
-        {src: './test/requirejs.test.js', included: false},
         {src: './dist/rollbar.umd.js', included: false}
       ];
       // NOTE: requirejs should go first in case the subsequent libraries
@@ -96,7 +96,7 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
 module.exports = function(grunt) {
   require('time-grunt')(grunt);
 
-  var tests = findTests();
+  var browserTests = findTests('browser');
   var browsers = grunt.option('browsers');
   if (browsers) {
     browsers = browsers.split(',');
@@ -133,6 +133,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
+  grunt.loadNpmTasks("grunt-vows");
 
 
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
@@ -141,21 +142,20 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: pkg,
     webpack: webpackConfig,
-    karma: buildGruntKarmaConfig(singleRun, browsers, tests, reporters),
-
-    // Serves up responses to requests from the tests
-    express: {
-      defaults: {
+    vows: {
+      all: {
         options: {
-          server: './test/express',
-          port: 3000
-        }
+          reporter: "spec"
+        },
+        src: ["test/server.*.test.js"]
       }
     },
 
+    karma: buildGruntKarmaConfig(singleRun, browsers, browserTests, reporters),
+
     replace: {
       snippets: {
-        src: ['*.md', 'test/**/*.html', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
+        src: ['*.md', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
         overwrite: true,
         replacements: [
           // Main rollbar snippet
@@ -176,7 +176,7 @@ module.exports = function(grunt) {
           },
           // README travis link
           {
-            from: new RegExp('(https://api\.travis-ci\.org/rollbar/rollbar\.js\.png\\?branch=v)([0-9.-a-zA-Z]+)'),
+            from: new RegExp('(https://api\.travis-ci\.org/rollbar/rollbar\.js\.png\\?branch=v)([0-9a-zA-Z.-]+)'),
             to: function(match, index, fullText, captures) {
               captures[1] = pkg.version;
               return captures.join('');
@@ -189,18 +189,23 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('test', ['express', 'karma']);
+  grunt.registerTask('test', ['test-server', 'test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  grunt.registerTask('test', function(target) {
+  grunt.registerTask('test-server', function(target) {
+    var tasks = ['vows'];
+    grunt.task.run.apply(grunt.task, tasks);
+  });
+
+  grunt.registerTask('test-browser', function(target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
-    var tasks = ['express', karmaTask];
+    var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
 
   grunt.registerTask('copyrelease', function createRelease() {
     var version = pkg.version;
-    var builds = ['', '.nojson', '.umd', '.umd.nojson'];
+    var builds = ['', '.umd'];
 
     builds.forEach(function (buildName) {
       var js = 'dist/rollbar' + buildName + '.js';
