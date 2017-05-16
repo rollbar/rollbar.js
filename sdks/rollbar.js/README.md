@@ -147,6 +147,7 @@ export class RollbarErrorHandler implements ErrorHandler {
 })
 export class AppModule { }
 ```
+
 ### Ember
 
 [ember-cli-rollbar](https://github.com/davewasmer/ember-cli-rollbar) is a community-maintained library that enables `Ember.Logger.error()` to be reported to Rollbar.
