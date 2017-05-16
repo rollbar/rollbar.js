@@ -92,6 +92,66 @@ them in the configuration under the payload key:
 ```js
 Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
+## Javascript Framework Support
+### React
+
+Rollbar.js supports React applications with no additional configuration required.  For apps using React 15.2 and later, production error messages are automatically decoded.
+
+### Angular 1
+
+The [community library](https://github.com/tandibar/ng-rollbar) which provides the machinery for
+Angular 1 support has releases for the different versions of this Rollbar.js library. Those releases
+lag behind releases to this library, but they are usually in sync.
+
+### Angular 2
+
+Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
+Rollbar by default. Additionally, one can catch any Angular 2 specific exceptions reported through the
+`@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
+
+```js
+import Rollbar = require('rollbar');
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { AppComponent } from './app.component';
+
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+};
+
+@Injectable()
+export class RollbarErrorHandler implements ErrorHandler {
+  constructor(private injector: Injector) { }
+  handleError(err:any) : void {
+    var rollbar = this.injector.get(Rollbar);
+    rollbar.error(err.originalError || err);
+  }
+}
+
+@NgModule({
+  imports: [ BrowserModule ],
+  declarations: [ AppComponent ],
+  bootstrap: [ AppComponent ],
+  providers: [
+    { provide: ErrorHandler, useClass: RollbarErrorHandler },
+    { provide: Rollbar,
+      useFactory: () => {
+        return new Rollbar(rollbarConfig)
+      }
+    }
+  ]
+})
+export class AppModule { }
+```
+### Ember
+
+[ember-cli-rollbar](https://github.com/davewasmer/ember-cli-rollbar) is a community-maintained library that enables `Ember.Logger.error()` to be reported to Rollbar.
+
+### Backbone.js
+
+Rollbar.js supports Backbone.js with no additional configuration required. 
 
 ## UMD / Browserify / Requirejs / Webpack
 
@@ -172,55 +232,6 @@ var _rollbarConfig = {
 ## Source Maps
 
 If you minify your JavaScript in production, you'll want to configure source maps so you get meaningful stack traces. See the [source maps guide](https://rollbar.com/docs/source-maps/) for instructions.
-
-## Angular 1
-
-The [community library](https://github.com/tandibar/ng-rollbar) which provides the machinery for
-Angular 1 support has releases for the different versions of this Rollbar.js library. Those releases
-lag behind releases to this library, but they are usually in sync.
-
-## Angular 2
-
-Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
-Rollbar by default. Additionally, one can catch any Angular 2 specific exceptions reported through the
-`@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
-
-```js
-import Rollbar = require('rollbar');
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, ErrorHandler } from '@angular/core';
-import { AppComponent } from './app.component';
-
-const rollbarConfig = {
-  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
-  captureUncaught: true,
-  captureUnhandledRejections: true,
-};
-
-@Injectable()
-export class RollbarErrorHandler implements ErrorHandler {
-  constructor(private injector: Injector) { }
-  handleError(err:any) : void {
-    var rollbar = this.injector.get(Rollbar);
-    rollbar.error(err.originalError || err);
-  }
-}
-
-@NgModule({
-  imports: [ BrowserModule ],
-  declarations: [ AppComponent ],
-  bootstrap: [ AppComponent ],
-  providers: [
-    { provide: ErrorHandler, useClass: RollbarErrorHandler },
-    { provide: Rollbar,
-      useFactory: () => {
-        return new Rollbar(rollbarConfig)
-      }
-    }
-  ]
-})
-export class AppModule { }
-```
 
 ## Dealing with adblocker / browser extension exceptions
 
