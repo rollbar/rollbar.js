@@ -93,6 +93,7 @@ them in the configuration under the payload key:
 Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
 ## Javascript Framework Support
+
 ### React
 
 Rollbar.js supports React applications with no additional configuration required.  For apps using React 15.2 and later, production error messages are automatically decoded.
