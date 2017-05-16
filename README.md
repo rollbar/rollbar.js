@@ -92,6 +92,7 @@ them in the configuration under the payload key:
 ```js
 Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
+
 ## Javascript Framework Support
 
 ### React
