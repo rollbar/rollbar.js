@@ -5,3 +5,5 @@ vendor/*.min.js
 test/*.bundle.js*
 sauce_connect.log
 release
+examples
+coverage
