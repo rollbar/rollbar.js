@@ -64,6 +64,10 @@ Notifier.prototype.log = function(item, callback) {
     callback = function() {};
   }
 
+  if (!this.options.enabled) {
+    return callback(new Error('Rollbar is not enabled'));
+  }
+
   this._applyTransforms(item, function(err, i) {
     if (err) {
       return callback(err, null);

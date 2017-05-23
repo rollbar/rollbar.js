@@ -286,7 +286,8 @@ var defaultOptions = {
   logLevel: __DEFAULT_LOG_LEVEL__,
   reportLevel: __DEFAULT_REPORT_LEVEL__,
   uncaughtErrorLevel: __DEFAULT_UNCAUGHT_ERROR_LEVEL,
-  endpoint: __DEFAULT_ENDPOINT__
+  endpoint: __DEFAULT_ENDPOINT__,
+  enabled: true
 };
 
 module.exports = Rollbar;
