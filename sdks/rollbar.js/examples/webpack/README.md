@@ -4,7 +4,7 @@
 
 ```js
 
-// Download https://raw.githubusercontent.com/rollbar/rollbar.js/master/dist/rollbar.umd.nojson.min.js and place in current directory
+// Download https://raw.githubusercontent.com/rollbar/rollbar.js/master/dist/rollbar.umd.min.js and place in current directory
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ACCESS_TOKEN',
   captureUncaught: true,
@@ -13,7 +13,8 @@ var rollbarConfig = {
   }
 };
 
-var Rollbar = require('./rollbar.umd.nojson.min.js').init(rollbarConfig);
+var rollbar = require('./rollbar.umd.min.js');
+var Rollbar = new rollbar(rollbarConfig);
 ```
 
 2. Report exceptions and messages in your code:

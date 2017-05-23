@@ -363,12 +363,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.1"),
+	  version: ("2.0.2"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
 	  uncaughtErrorLevel: ("error"),
-	  endpoint: ("api.rollbar.com/api/1/")
+	  endpoint: ("api.rollbar.com/api/1/"),
+	  enabled: true
 	};
 	
 	module.exports = Rollbar;
@@ -2229,6 +2230,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	Notifier.prototype.log = function(item, callback) {
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() {};
+	  }
+	
+	  if (!this.options.enabled) {
+	    return callback(new Error('Rollbar is not enabled'));
 	  }
 	
 	  this._applyTransforms(item, function(err, i) {
