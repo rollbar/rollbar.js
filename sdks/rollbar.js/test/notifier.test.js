@@ -29,7 +29,7 @@ function TestQueueGenerator() {
 describe('Notifier()', function() {
   it('should have all of the expected methods', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
     expect(notifier).to.have.property('configure');
     expect(notifier).to.have.property('addTransform');
@@ -42,7 +42,7 @@ describe('Notifier()', function() {
 describe('configure', function() {
   it('should update the options', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {someBool: true, other: 'stuff'};
+    var options = {someBool: true, other: 'stuff', enabled: true};
     var notifier = new Notifier(queue, options);
 
     notifier.configure({other: 'baz'});
@@ -55,7 +55,7 @@ describe('configure', function() {
 
   it('should pass the updated options to the transform', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {someBool: true};
+    var options = {someBool: true, enabled: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
@@ -80,12 +80,31 @@ describe('configure', function() {
 
     done();
   });
+  it('should not add an item if disabled in constructor', function(done) {
+    var queue = new (TestQueueGenerator())();
+    var options = {someBool: true, enabled: false};
+    var notifier = new Notifier(queue, options);
+    var initialItem = {a: 123, b: 'a string'};
+    notifier.log(initialItem);
+    expect(queue.items.length).to.eql(0);
+    done();
+  });
+  it('should not add an item if disabled via call to configure', function(done) {
+    var queue = new (TestQueueGenerator())();
+    var options = {someBool: true, enabled: true};
+    var notifier = new Notifier(queue, options);
+    var initialItem = {a: 123, b: 'a string'};
+    notifier.configure({enabled: false});
+    notifier.log(initialItem);
+    expect(queue.items.length).to.eql(0);
+    done();
+  });
 });
 
 describe('addTransform', function() {
   it('should not add a non-function', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     expect(notifier.transforms.length).to.eql(0);
@@ -97,7 +116,7 @@ describe('addTransform', function() {
 
   it('should add a function', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     expect(notifier.transforms.length).to.eql(0);
@@ -111,7 +130,7 @@ describe('addTransform', function() {
 describe('log', function() {
   it('should work without any transforms', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
@@ -126,7 +145,7 @@ describe('log', function() {
 
   it('should apply the transforms', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
@@ -149,7 +168,7 @@ describe('log', function() {
 
   it('should stop and callback if a transform errors', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
@@ -171,7 +190,7 @@ describe('log', function() {
 
   it('should work without a callback', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {};
+    var options = {enabled: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
@@ -190,7 +209,7 @@ describe('log', function() {
 
   it('should pass the options to the transforms', function(done) {
     var queue = new (TestQueueGenerator())();
-    var options = {someBool: true};
+    var options = {enabled: true, someBool: true};
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
