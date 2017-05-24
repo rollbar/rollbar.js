@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var assert = require('assert');
 var vows = require('vows');
@@ -63,9 +63,147 @@ vows.describe('rollbar')
         var rollbar = new Rollbar({accessToken: 'abc123'}, client);
         return rollbar;
       },
-      'should create an item with extra data': function(r) {
-        r.log('hello', {req: 'a'}, {stuff: 'more'});
-        assert.equal(r.client.logCalls[0].item.custom.stuff, 'more')
+      'message': {
+        'with unordered options': {
+          'should work with custom, request, callback, message ': function(r) {
+            var message = 'hello'
+            var callback = function cb() {}
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            r.log(custom, request, callback, message)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+            assert.equal(item.callback, callback)
+          }
+        },
+        'with old option ordering': {
+          'should work': function(r) {
+            var message = 'hello'
+            r.log(message)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+          },
+          'should work with callback': function(r) {
+            var message = 'hello'
+            var callback = function cb() {}
+            r.log(message, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.callback, callback)
+          },
+          'should work with request': function(r) {
+            var message = 'hello'
+            var request = { method: 'GET' }
+            r.log(message, request)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.request, request)
+          },
+          'should work with request and callback': function(r) {
+            var message = 'hello'
+            var request = { method: 'GET' }
+            var callback = function cb() {}
+            r.log(message, request, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.request, request)
+            assert.equal(item.callback, callback)
+          },
+          'should work with request and custom': function(r) {
+            var message = 'hello'
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            r.log(message, request, custom)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+          },
+          'should work with request and custom and callback': function(r) {
+            var message = 'hello'
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            var callback = function cb() {}
+            r.log(message, request, custom, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.message, message)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+          }
+        }
+      },
+      'error': {
+        'with unordered options': {
+          'should work with custom, request, callback, message ': function(r) {
+            var err = new Error('hello!')
+            var callback = function cb() {}
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            r.log(custom, request, callback, err)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+            assert.equal(item.callback, callback)
+          }
+        },
+        'with old option ordering': {
+          'should work': function(r) {
+            var err = new Error('hello!')
+            r.log(err)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+          },
+          'should work with callback': function(r) {
+            var err = new Error('hello!')
+            var callback = function cb() {}
+            r.log(err, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.callback, callback)
+          },
+          'should work with request': function(r) {
+            var err = new Error('hello!')
+            var request = { method: 'GET' }
+            r.log(err, request)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.request, request)
+          },
+          'should work with request and callback': function(r) {
+            var err = new Error('hello!')
+            var request = { method: 'GET' }
+            var callback = function cb() {}
+            r.log(err, request, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.request, request)
+            assert.equal(item.callback, callback)
+          },
+          'should work with request and custom': function(r) {
+            var err = new Error('hello!')
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            r.log(err, request, custom)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+          },
+          'should work with request and custom and callback': function(r) {
+            var err = new Error('hello!')
+            var request = { method: 'GET' }
+            var custom = { a: 1, b: 2 }
+            var callback = function cb() {}
+            r.log(err, request, custom, callback)
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item
+            assert.equal(item.err, err)
+            assert.equal(item.request, request)
+            assert.equal(item.custom, custom)
+          }
+        }
       }
     },
     'singleton': {
