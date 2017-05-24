@@ -154,7 +154,7 @@ export class AppModule { }
 
 ### Backbone.js
 
-Rollbar.js supports Backbone.js with no additional configuration required. 
+Rollbar.js supports Backbone.js with no additional configuration required.
 
 ## UMD / Browserify / Requirejs / Webpack
 
@@ -327,7 +327,7 @@ If you would like to remove this limit, set it to `undefined`.
 
 Default: `60`
 </dd>
-  
+
 <dt>maxItems
 </dt>
 <dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```.
@@ -339,7 +339,7 @@ Default: ```0``` (no limit)
 ### Context
 
   <dl>
-  
+
 <dt>checkIgnore
 </dt>
 <dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
@@ -358,12 +358,12 @@ Default: ```null```
 
 Default: ```true```
 </dd>
-  
+
 <dt>hostWhiteList
 </dt>
 <dd>Check payload frames for white listed domains. This is an array of strings, each of which get compiled to a `Regexp`. If no file in the trace matches one of these domains the payload is ignored.
 </dd>
-  
+
 <dt>logLevel
 </dt>
 <dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
@@ -377,7 +377,7 @@ Default: ```"debug"```
 
 Default: ```"warning"```
 </dd>
-  
+
 <dt>scrubFields
 </dt>
 <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
@@ -413,7 +413,7 @@ var _rollbarConfig = {
 
 Default: ```"error"```
 </dd>
-  
+
 <dt>endpoint
 </dt>
 <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
@@ -426,7 +426,7 @@ Default: ```'https://api.rollbar.com/api/1/'```
 
 These keys should all be within the `payload` key.
 
-e.g. 
+e.g.
 
 ```js
 Rollbar.configure({
@@ -464,7 +464,7 @@ Rollbar.configure({
 </dt>
 <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to GitHub.
 </dd>
- 
+
 <dt>source_map_enabled
 </dt>
 <dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
@@ -510,7 +510,7 @@ Rollbar.configure({
 <dt>branch
 </dt>
 <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
-  
+
 Default: ```"master"```
 
 </dd>
@@ -599,9 +599,9 @@ __Params__
 
 ### Rollbar.handleUnhandledRejection()
 
-This method is used to record unhandled Promise rejections via the window event `unhandledrejection`.  Many promise 
+This method is used to record unhandled Promise rejections via the window event `unhandledrejection`.  Many promise
 libraries, including Bluebird, lie, and native Promise support (Chrome only currently, but it is a [standard to be
-built upon](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onunhandledrejection)). 
+built upon](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onunhandledrejection)).
 
 To enable this handling, you should provide `captureUnhandledRejections` to the config given to this Rollbar constructor.
 
@@ -616,7 +616,7 @@ __Params__
 
 Log a message and potentially send it to Rollbar. The level that the message or error is logged at is determined by the `logLevel` config option.
 
-In order for the message to be sent to Rollbar, the log level must be greater than or equal to the `reportLevel` config option. 
+In order for the message to be sent to Rollbar, the log level must be greater than or equal to the `reportLevel` config option.
 
 See [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) for more information on configuring log levels.
 
@@ -636,8 +636,8 @@ _Note_: order does not matter
 ##### Log a debug message
 
 ```js
-// By default, the .log() method uses the 
-// "debug" log level and "warning" report level 
+// By default, the .log() method uses the
+// "debug" log level and "warning" report level
 // so this message will not be sent to Rollbar.
 Rollbar.log("hello world!");
 ```
@@ -807,7 +807,7 @@ server.start(function(err) {
   if (err)
     throw err;
   console.log('Server running at:', server.info.uri);
-}); 
+});
 ```
 
 ### Standalone
@@ -832,6 +832,32 @@ new Rollbar({
 
 ## Server Usage
 
+### Rollbar.log()
+
+Log a message and potentially send it to Rollbar. The level that the message or error is logged at is determined by the `logLevel` config option.
+
+In order for the message to be sent to Rollbar, the log level must be greater than or equal to the `reportLevel` config option.
+
+See [configuration](https://rollbar.com/docs/notifier/rollbar.js/#configuration-reference) for more information on configuring log levels.
+
+__Returns__: `undefined`
+
+__Params__
+
+_Note_: order does not matter, however the first `Object` that contains at least one key from the list under `request` will be considered a request object.
+
+- message: `String` - The message to send to Rollbar.
+- err: `Exception` - The exception object to send.
+- custom: `Object` - The custom payload data to send to Rollbar.
+- callback: `Function` - The function to call once the message has been sent to Rollbar.
+- request: `Object` - A request object containing at least one of these optional keys:
+  - `headers`: an object containing the request headers
+  - `protocol`: the request protocol (e.g. `"https"`)
+  - `url`: the URL starting after the domain name (e.g. `"/index.html?foo=bar"`)
+  - `method`: the request method (e.g. `"GET"`)
+  - `body`: the request body as a string
+  - `route`: an object containing a 'path' key, which will be used as the "context" for the event (e.g. `{"path": "home/index"}`)
+
 ### Caught exceptions
 
 To report an exception that you have caught, use one of the named logging functions
@@ -846,8 +872,7 @@ try {
 } catch (e) {
   rollbar.error(e);
 
-  // if you have a request object (or a function that returns one), pass it as the second arg
-  // see below for details about what the request object is expected to be
+  // if you have a request object (or a function that returns one), pass it in
   rollbar.error(e, request);
 
   // you can also pass a callback, which will be called upon success/failure
@@ -859,15 +884,13 @@ try {
     }
   });
 
-  // if you have a request and a callback, pass the callback last
+  // pass a request and a callback
   rollbar.error(e, request, callback);
 
-  // to specify payload options - like extra data, or the level - pass a custom object as the third argument. The second argument must be a request or null
+  // to specify payload options - like extra data, or the level - pass a custom object
   rollbar.error(e, request, {level: "info"});
-  rollbar.error(e, null, {level: "warning", custom: {someKey: "arbitrary value"}});
 
-  // you can also pass a callback as the last argument
-  rollbar.error(e, null, {level: "info"}, callback);
+  // you can also pass a callback
   rollbar.error(e, request, {level: "info"}, callback);
 }
 ```
@@ -908,7 +931,7 @@ rollbar.warning(
 
 If your Node.js application is responding to web requests, you can send data about the current request along with each report to Rollbar. This will allow you to replay requests, track events by browser, IP address, and much more.
 
-All of the logging methods accept a `request` parameter as the second argument.
+All of the logging methods accept a `request` parameter.
 
 If you're using Express, just pass the express request object. If you're using something custom, pass an object with these keys (all optional):
 
