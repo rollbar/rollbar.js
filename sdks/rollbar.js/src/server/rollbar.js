@@ -333,42 +333,67 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(predicates.checkLevel);
 }
-
-/*
- * message/error, callback
- * message/error, request
- * message/error, request, callback
- * message/error, request, custom
- * message/error, request, custom, callback
- */
 Rollbar.prototype._createItem = function(args) {
-  var messageOrError = args[0];
-  var request = args[1];
-  var custom = args[2];
-  var callback = args[3];
+  var message, err, custom, callback, request;
+  var arg;
+  var extraArgs = [];
+  var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route']
+  for (var i = 0, l = args.length; i < l; ++i) {
+    arg = args[i];
 
-  if (_.isFunction(request) && !callback) {
-    callback = request;
-    request = null;
+    switch (_.typeName(arg)) {
+      case 'undefined':
+        break;
+      case 'string':
+        message ? extraArgs.push(arg) : message = arg;
+        break;
+      case 'function':
+        callback = arg
+        break;
+      case 'date':
+        extraArgs.push(arg);
+        break;
+      case 'error':
+      case 'domexception':
+        err ? extraArgs.push(arg) : err = arg;
+        break;
+      case 'object':
+      case 'array':
+        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+          err ? extraArgs.push(arg) : err = arg;
+          break;
+        }
+        if (_.typeName(arg) === 'object' && !request) {
+          for (var j=0; j < requestKeys.length; j++) {
+            if (arg[requestKeys[j]]) {
+              request = arg;
+              break;
+            }
+          }
+          if (request) break;
+        }
+        custom ? extraArgs.push(arg) : custom = arg;
+        break;
+      default:
+        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+          err ? extraArgs.push(arg) : err = arg;
+          break;
+        }
+        extraArgs.push(arg);
+    }
   }
 
-  if (_.isFunction(custom) && !callback) {
-    callback = custom;
-    custom = null;
-  }
-
-  var message, err;
-  if (_.isError(messageOrError)) {
-    err = messageOrError;
-  } else {
-    message = messageOrError;
+  if (extraArgs.length > 0) {
+    // if custom is an array this turns it into an object with integer keys
+    custom = _.extend(true, {}, custom);
+    custom.extraArgs = extraArgs;
   }
 
   var item = {
-    uuid: _.uuid4(),
-    err: err,
     message: message,
+    err: err,
     callback: callback,
+    uuid: _.uuid4(),
     request: request
   };
   if (custom && custom.level !== undefined) {
