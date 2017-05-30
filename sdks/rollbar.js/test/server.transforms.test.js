@@ -311,6 +311,21 @@ vows.describe('transforms')
                   assert.equal(item.data.request, undefined);
                 }
               },
+              'with an empty request object': {
+                topic: function(options) {
+                  var item = {
+                    request: {},
+                    data: {body: {message: 'hey'}}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should not change request object': function(err, item) {
+                  assert.equal(item.request.headers, undefined);
+                }
+              },
               'with a request': {
                 topic: function(options) {
                   var item = {
