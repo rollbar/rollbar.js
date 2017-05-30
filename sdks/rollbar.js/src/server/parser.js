@@ -44,7 +44,7 @@ function getMultipleErrors(errors) {
   errArray = [];
 
   for (key in errors) {
-    if (errors.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(errors, key)) {
       errArray.push(errors[key]);
     }
   }

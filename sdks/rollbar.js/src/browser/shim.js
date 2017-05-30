@@ -148,9 +148,11 @@ Shim.prototype.wrap = function(f, context) {
 
       f._wrapped._isWrap = true;
 
-      for (var prop in f) {
-        if (f.hasOwnProperty(prop)) {
-          f._wrapped[prop] = f[prop];
+      if (f.hasOwnProperty) {
+        for (var prop in f) {
+          if (f.hasOwnProperty(prop)) {
+            f._wrapped[prop] = f[prop];
+          }
         }
       }
     }

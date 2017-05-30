@@ -188,13 +188,8 @@ function _buildRequestData(req) {
   if (req.body) {
     var bodyParams = {};
     if (_.isIterable(req.body)) {
-      var isPlainObject = req.body.constructor === undefined;
-
       for (var k in req.body) {
-        var _hasOwnProperty = typeof req.body.hasOwnProperty === 'function'
-          && req.body.hasOwnProperty(k);
-
-        if (_hasOwnProperty || isPlainObject) {
+        if (Object.prototype.hasOwnProperty.call(req.body, k)) {
           bodyParams[k] = req.body[k];
         }
       }
