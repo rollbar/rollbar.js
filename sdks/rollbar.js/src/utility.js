@@ -125,7 +125,7 @@ function traverse(obj, func) {
 
   if (isObj) {
     for (k in obj) {
-      if (obj.hasOwnProperty(k)) {
+      if (Object.prototype.hasOwnProperty.call(obj, k)) {
         keys.push(k);
       }
     }
@@ -144,11 +144,9 @@ function traverse(obj, func) {
   return obj;
 }
 
-/* eslint-disable no-unused-vars */
-function redact(val) {
+function redact() {
   return '********';
 }
-/* eslint-enable no-unused-vars */
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
@@ -238,7 +236,7 @@ function addParamsAndAccessTokenToPath(accessToken, options, params) {
   var paramsArray = [];
   var k;
   for (k in params) {
-    if (params.hasOwnProperty(k)) {
+    if (Object.prototype.hasOwnProperty.call(params, k)) {
       paramsArray.push([k, params[k]].join('='));
     }
   }
