@@ -25,7 +25,7 @@ function Rollbar(options, client) {
     delete options.minimumLevel;
   }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
-  this.options.environment = this.options.environment || process.env.NODE_ENV || 'unspecified';
+  this.options.environment = this.options.environment || 'unspecified';
   var api = new API(this.options, transport, urllib, jsonBackup);
   this.client = client || new Client(this.options, api, logger);
   addTransformsToNotifier(this.client.notifier);
@@ -473,7 +473,7 @@ Rollbar.Error = RollbarError;
 
 Rollbar.defaultOptions = {
   host: os.hostname(),
-  environment: 'development',
+  environment: process.env.NODE_ENV || 'development',
   framework: 'node-js',
   showReportedMessageTraces: false,
   notifier: {
