@@ -256,9 +256,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	      f._wrapped._isWrap = true;
 	
-	      for (var prop in f) {
-	        if (f.hasOwnProperty(prop)) {
-	          f._wrapped[prop] = f[prop];
+	      if (f.hasOwnProperty) {
+	        for (var prop in f) {
+	          if (f.hasOwnProperty(prop)) {
+	            f._wrapped[prop] = f[prop];
+	          }
 	        }
 	      }
 	    }
@@ -361,7 +363,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.2"),
+	  version: ("2.0.3"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -938,7 +940,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  if (isObj) {
 	    for (k in obj) {
-	      if (obj.hasOwnProperty(k)) {
+	      if (Object.prototype.hasOwnProperty.call(obj, k)) {
 	        keys.push(k);
 	      }
 	    }
@@ -957,11 +959,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return obj;
 	}
 	
-	/* eslint-disable no-unused-vars */
-	function redact(val) {
+	function redact() {
 	  return '********';
 	}
-	/* eslint-enable no-unused-vars */
 	
 	// from http://stackoverflow.com/a/8809472/1138191
 	function uuid4() {
@@ -1051,7 +1051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var paramsArray = [];
 	  var k;
 	  for (k in params) {
-	    if (params.hasOwnProperty(k)) {
+	    if (Object.prototype.hasOwnProperty.call(params, k)) {
 	      paramsArray.push([k, params[k]].join('='));
 	    }
 	  }
@@ -2591,13 +2591,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	function captureUncaughtExceptions(window, handler) {
+	function captureUncaughtExceptions(window, handler, shim) {
 	  if (!window) { return; }
 	  var oldOnError;
 	
 	  if (typeof handler._rollbarOldOnError === 'function') {
 	    oldOnError = handler._rollbarOldOnError;
-	  } else if (window.onerror && !window.onerror.belongsToRollbar) {
+	  } else if (window.onerror && !window.onerror.belongsToShim) {
 	    oldOnError = window.onerror;
 	    handler._rollbarOldOnError = oldOnError;
 	  }
@@ -2606,7 +2606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var args = Array.prototype.slice.call(arguments, 0);
 	    _rollbarWindowOnError(window, handler, oldOnError, args);
 	  };
-	  fn.belongsToRollbar = true;
+	  fn.belongsToShim = shim;
 	  window.onerror = fn;
 	}
 	
@@ -2627,10 +2627,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 	
-	function captureUnhandledRejections(window, handler) {
+	function captureUnhandledRejections(window, handler, shim) {
 	  if (!window) { return; }
 	
-	  if (typeof window._rollbarURH === 'function') {
+	  if (typeof window._rollbarURH === 'function' && window._rollbaarURH.belongsToShim) {
 	    window.removeEventListener('unhandledrejection', window._rollbarURH);
 	  }
 	
@@ -2648,11 +2648,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      handler.handleUnhandledRejection(reason, promise);
 	    }
 	  };
+	  rejectionHandler.belongsToShim = shim;
 	  window._rollbarURH = rejectionHandler;
 	  window.addEventListener('unhandledrejection', rejectionHandler);
 	}
 	
-	function wrapGlobals(window, handler) {
+	function wrapGlobals(window, handler, shim) {
 	  if (!window) { return; }
 	  // Adapted from https://github.com/bugsnag/bugsnag-js
 	  var globals = 'EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload'.split(',');
@@ -2661,31 +2662,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    global = globals[i];
 	
 	    if (window[global] && window[global].prototype) {
-	      _extendListenerPrototype(handler, window[global].prototype);
+	      _extendListenerPrototype(handler, window[global].prototype, shim);
 	    }
 	  }
 	}
 	
-	function _extendListenerPrototype(handler, prototype) {
+	function _extendListenerPrototype(handler, prototype, shim) {
 	  if (prototype.hasOwnProperty && prototype.hasOwnProperty('addEventListener')) {
 	    var oldAddEventListener = prototype.addEventListener;
-	    if (oldAddEventListener._rollbarOldAdd) {
+	    while (oldAddEventListener._rollbarOldAdd && oldAddEventListener.belongsToShim) {
 	      oldAddEventListener = oldAddEventListener._rollbarOldAdd;
 	    }
 	    var addFn = function(event, callback, bubble) {
 	      oldAddEventListener.call(this, event, handler.wrap(callback), bubble);
 	    };
 	    addFn._rollbarOldAdd = oldAddEventListener;
+	    addFn.belongsToShim = shim;
 	    prototype.addEventListener = addFn;
 	
 	    var oldRemoveEventListener = prototype.removeEventListener;
-	    if (oldRemoveEventListener._rollbarOldRemove) {
+	    while (oldRemoveEventListener._rollbarOldRemove && oldRemoveEventListener.belongsToShim) {
 	      oldRemoveEventListener = oldRemoveEventListener._rollbarOldRemove;
 	    }
 	    var removeFn = function(event, callback, bubble) {
 	      oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
 	    };
 	    removeFn._rollbarOldRemove = oldRemoveEventListener;
+	    removeFn.belongsToShim = shim;
 	    prototype.removeEventListener = removeFn;
 	  }
 	}
