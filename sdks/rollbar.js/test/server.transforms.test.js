@@ -4,6 +4,8 @@ var assert = require('assert');
 var util = require('util');
 var vows = require('vows');
 var t = require('../src/server/transforms');
+
+process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var rollbar = require('../src/server/rollbar');
 var _ = require('../src/utility');
 
@@ -39,7 +41,7 @@ vows.describe('transforms')
               'should have some defaults': function(err, item) {
                 assert.ifError(err);
                 var data = item.data;
-                assert.equal(data.environment, 'development');
+                assert.equal(data.environment, process.env.NODE_ENV);
                 assert.equal(data.framework, 'node-js');
                 assert.equal(data.language, 'javascript');
                 assert.ok(data.server);
