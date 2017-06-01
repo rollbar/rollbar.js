@@ -846,6 +846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param t - a lowercase string containing one of the following type names:
 	 *    - undefined
 	 *    - null
+	 *    - error
 	 *    - number
 	 *    - boolean
 	 *    - string
@@ -869,6 +870,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  if (!x) {
 	    return 'null';
+	  }
+	  if (x instanceof Error) {
+	    return 'error';
 	  }
 	  return ({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
 	}
