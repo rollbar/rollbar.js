@@ -1,4 +1,14 @@
-define("rollbar", [], function() { return /******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else {
+		var a = factory();
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -55,20 +65,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var rollbar = __webpack_require__(2);
 	
-	var options = window && window._rollbarConfig;
-	var alias = options && options.globalAlias || 'Rollbar';
-	var shimRunning = window && window[alias] && typeof window[alias].shimId === 'function' && window[alias].shimId() !== undefined;
-	
 	if (window && !window._rollbarStartTime) {
 	  window._rollbarStartTime = (new Date()).getTime();
-	}
-	
-	if (!shimRunning && options) {
-	  var Rollbar = new rollbar(options);
-	  window[alias] = Rollbar;
-	} else {
-	  window.rollbar = rollbar;
-	  window._rollbarDidLoad = true;
 	}
 	
 	module.exports = rollbar;
@@ -3818,4 +3816,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }
-/******/ ])});;
+/******/ ])
+});
+;
