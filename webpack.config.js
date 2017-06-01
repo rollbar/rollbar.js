@@ -127,6 +127,11 @@ var UMDConfigBase = {
   }
 };
 
+var noConflictConfigBase = extend({}, UMDConfigBase);
+noConflictConfigBase.entry = {
+  'rollbar.noconflict.umd': ['./src/browser/bundles/rollbar.noconflict.js']
+};
+
 var namedAMDConfigBase = extend({}, UMDConfigBase);
 namedAMDConfigBase.entry = {
   'rollbar.named-amd': namedAMDConfigBase.entry['rollbar.umd']
@@ -164,6 +169,19 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
 }
 
 
+function addNoConflictToConfig(webpackConfig, filename, extraPlugins) {
+  var basePlugins = [defaultsPlugin];
+  var noConflictConfig = extend({}, noConflictConfigBase);
+
+  plugins = basePlugins.concat(extraPlugins);
+  noConflictConfig.plugins = plugins;
+
+  noConflictConfig.output = extend({filename: filename}, noConflictConfig.output);
+
+  webpackConfig.push(noConflictConfig);
+}
+
+
 function addNamedAMDToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
   var AMDConfig = extend({}, namedAMDConfigBase);
@@ -181,6 +199,7 @@ function generateBuildConfig(name, plugins) {
   addVanillaToConfig(config, name, plugins);
   addUMDToConfig(config, name, plugins);
   addNamedAMDToConfig(config, name, plugins);
+  addNoConflictToConfig(config, name, plugins);
 }
 
 generateBuildConfig('[name].js', []);
