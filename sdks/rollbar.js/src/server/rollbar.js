@@ -42,7 +42,7 @@ function Rollbar(options, client) {
 var _instance = null;
 Rollbar.init = function(options, client) {
   if (_instance) {
-    return _instance;
+    return _instance.global(options).configure(options);
   }
   _instance = new Rollbar(options, client);
   return _instance;
