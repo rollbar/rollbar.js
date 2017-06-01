@@ -71,6 +71,9 @@ function buildErrorData(item, options, callback) {
   item.data.body = item.data.body || {};
   item.data.body.trace_chain = chain;
 
+  // clear out any existing message
+  delete item.data.body.message
+
   var cb = function(err) {
     if (err) {
       callback(err, null);
@@ -209,4 +212,3 @@ module.exports = {
   scrubPayload: scrubPayload,
   convertToPayload: convertToPayload
 };
-
