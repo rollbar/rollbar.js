@@ -250,3 +250,20 @@ describe('createItem', function() {
   });
 });
 
+describe('singleton', function() {
+  it('should pass through the underlying client after init', function(done) {
+    var client = new (TestClientGen())();
+    var options = {};
+    var rollbar = Rollbar.init(options, client);
+
+    rollbar.log('hello 1');
+    Rollbar.log('hello 2');
+
+    var loggedItemDirect = client.logCalls[0].item;
+    var loggedItemSingleton = client.logCalls[1].item;
+    expect(loggedItemDirect.message).to.eql('hello 1');
+    expect(loggedItemSingleton.message).to.eql('hello 2');
+
+    done();
+  });
+});
