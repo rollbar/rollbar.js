@@ -2,6 +2,8 @@
 
 var assert = require('assert');
 var vows = require('vows');
+
+process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
 
 function TestClientGen() {
@@ -54,6 +56,26 @@ vows.describe('rollbar')
         },
         'should have accessToken in options': function(r) {
           assert.equal('abc123', r.options.accessToken);
+        },
+        'should set environment based on default': function(r) {
+          assert.equal(process.env.NODE_ENV, r.options.environment);
+        }
+      },
+      'with more options': {
+        topic: function() {
+          return new Rollbar({accessToken: 'abc123', environment: 'fake-env'});
+        },
+        'should have log method': function(r) {
+          assert.isFunction(r.log);
+        },
+        'should have error method': function(r) {
+          assert.isFunction(r.error);
+        },
+        'should have accessToken in options': function(r) {
+          assert.equal('abc123', r.options.accessToken);
+        },
+        'should set environment based on options': function(r) {
+          assert.equal('fake-env', r.options.environment);
         }
       }
     },
