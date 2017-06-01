@@ -26,9 +26,33 @@ function Rollbar(options, client) {
   }
 }
 
+var _instance = null;
+Rollbar.init = function(options, client) {
+  if (_instance) {
+    return _instance.global(options).configure(options);
+  }
+  _instance = new Rollbar(options, client);
+  return _instance;
+};
+
+function handleUninitialized(maybeCallback) {
+  var message = 'Rollbar is not initialized';
+  logger.error(message);
+  if (maybeCallback) {
+    maybeCallback(new Error(message));
+  }
+}
+
 Rollbar.prototype.global = function(options) {
   this.client.global(options);
   return this;
+};
+Rollbar.global = function(options) {
+  if (_instance) {
+    return _instance.global(options);
+  } else {
+    handleUninitialized();
+  }
 };
 
 Rollbar.prototype.configure = function(options) {
@@ -37,12 +61,27 @@ Rollbar.prototype.configure = function(options) {
   this.client.configure(options);
   return this;
 };
+Rollbar.configure = function(options) {
+  if (_instance) {
+    return _instance.configure(options);
+  } else {
+    handleUninitialized();
+  }
+};
 
 Rollbar.prototype.log = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.log(item);
   return {uuid: uuid};
+};
+Rollbar.log = function() {
+  if (_instance) {
+    return _instance.log.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
 };
 
 Rollbar.prototype.debug = function() {
@@ -51,12 +90,28 @@ Rollbar.prototype.debug = function() {
   this.client.debug(item);
   return {uuid: uuid};
 };
+Rollbar.debug = function() {
+  if (_instance) {
+    return _instance.debug.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
+};
 
 Rollbar.prototype.info = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.info(item);
   return {uuid: uuid};
+};
+Rollbar.info = function() {
+  if (_instance) {
+    return _instance.info.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
 };
 
 Rollbar.prototype.warn = function() {
@@ -65,12 +120,28 @@ Rollbar.prototype.warn = function() {
   this.client.warn(item);
   return {uuid: uuid};
 };
+Rollbar.warn = function() {
+  if (_instance) {
+    return _instance.warn.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
+};
 
 Rollbar.prototype.warning = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.warning(item);
   return {uuid: uuid};
+};
+Rollbar.warning = function() {
+  if (_instance) {
+    return _instance.warning.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
 };
 
 Rollbar.prototype.error = function() {
@@ -79,12 +150,28 @@ Rollbar.prototype.error = function() {
   this.client.error(item);
   return {uuid: uuid};
 };
+Rollbar.error = function() {
+  if (_instance) {
+    return _instance.error.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
+};
 
 Rollbar.prototype.critical = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.critical(item);
   return {uuid: uuid};
+};
+Rollbar.critical = function() {
+  if (_instance) {
+    return _instance.critical.apply(_instance, arguments);
+  } else {
+    var maybeCallback = _getFirstFunction(arguments);
+    handleUninitialized(maybeCallback);
+  }
 };
 
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
@@ -191,6 +278,13 @@ Rollbar.prototype.wrap = function(f, context) {
     return f;
   }
 };
+Rollbar.wrap = function(f, context) {
+  if (_instance) {
+    return _instance.wrap(f, context);
+  } else {
+    handleUninitialized();
+  }
+};
 
 /* Internal */
 
@@ -274,6 +368,15 @@ Rollbar.prototype._createItem = function(args) {
   item._originalArgs = args;
   return item;
 };
+
+function _getFirstFunction(args) {
+  for (var i = 0, len = args.length; i < len; ++i) {
+    if (_.isFunction(args[i])) {
+      return args[i];
+    }
+  }
+  return undefined;
+}
 
 /* global __NOTIFIER_VERSION__:false */
 /* global __DEFAULT_BROWSER_SCRUB_FIELDS__:false */
