@@ -115,6 +115,45 @@ describe('isError', function() {
     expect(_.isError(e)).to.be.ok();
     done();
   });
+  it('should handle subclasses of error', function(done) {
+    // This is a mostly browser compliant way of doing this
+    // just for the sake of doing it, even though we mostly
+    // need this to work in node environments
+    function TestCustomError(message) {
+      Object.defineProperty(this, 'name', {
+        enumerable: false,
+        writable: false,
+        value: 'TestCustomError'
+      });
+
+      Object.defineProperty(this, 'message', {
+        enumerable: false,
+        writable: true,
+        value: message
+      });
+
+      if (Error.hasOwnProperty('captureStackTrace')) {
+        Error.captureStackTrace(this, TestCustomError);
+      } else {
+        Object.defineProperty(this, 'stack', {
+          enumerable: false,
+          writable: false,
+          value: (new Error(message)).stack
+        });
+      }
+    }
+
+    if (typeof Object.setPrototypeOf === 'function') {
+      Object.setPrototypeOf(TestCustomError.prototype, Error.prototype);
+    } else {
+      TestCustomError.prototype = Object.create(Error.prototype, {
+        constructor: { value: TestCustomError }
+      });
+    }
+    var e = new TestCustomError('bork');
+    expect(_.isError(e)).to.be.ok();
+    done();
+  });
 });
 
 describe('extend', function() {
