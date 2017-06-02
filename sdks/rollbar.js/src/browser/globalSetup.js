@@ -37,7 +37,7 @@ function _rollbarWindowOnError(window, r, old, args) {
 function captureUnhandledRejections(window, handler, shim) {
   if (!window) { return; }
 
-  if (typeof window._rollbarURH === 'function' && window._rollbaarURH.belongsToShim) {
+  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
     window.removeEventListener('unhandledrejection', window._rollbarURH);
   }
 
