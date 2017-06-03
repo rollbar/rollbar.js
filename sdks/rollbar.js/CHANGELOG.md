@@ -1,5 +1,25 @@
 # Change Log
 
+**v2.0.4**
+- Fixes a small typo in the unhandled rejection handler. (pr#303)
+- Updated the no-conflict example to use the new noconflict bundle and updated docs. 
+
+**v2.0.3**
+- Decreased NPM package size by removing examples and coverage directories. (pr#276)
+- Handle unordered params on the server side. (pr#286)
+- Fixes a server-side bug which failed to report an error if the request did not contain a `headers` key. (pr#288)
+- Fixes a bug which caused an error while checking `hasOwnProperty()` in some situations. (pr#291)
+- Fixes a bug which was causing the `NODE_ENV` environment variable to not be used. (pr#292)
+- Fixes a bug which was causing subclasses of errors to not be treated as errors. (pr#293)
+- Added a no-conflict bundle for the browser. (pr#295)
+
+**v2.0.2**
+- Added/updated docs on how to use rollbar.js with React, Angular 1 & 2, Ember, Backbone.js
+- Fixed a bug which was not respecting the `enabled` flag. (pr#280)
+
+**v2.0.1**
+- Maintenance release - No new features or bugfixes
+
 **v2.0.0**
 This release is the first where the library supports both browser and node environments from the
 same package. We decided to deprecate the `rollbar-browser` npm package in favor of using the
