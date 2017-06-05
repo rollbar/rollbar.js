@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var assert = require('assert');
 var util = require('util');
@@ -254,7 +254,30 @@ vows.describe('transforms')
               },
               'should add some data to the trace_chain': function(err, item) {
                 assert.ok(item.data.body.trace_chain);
-              }
+              },
+              'should not set a message': function(err, item) {
+                assert.ok(!item.data.body.message);
+              },
+
+            },
+            'with a normal error and an existing message': {
+              topic: function (options) {
+                var err = new Error('asdf')
+                var item = {
+                  data: {body: { message: 'a message' }},
+                  err: err
+                };
+                t.buildErrorData(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should add some data to the trace_chain': function(err, item) {
+                assert.ok(item.data.body.trace_chain);
+              },
+              'should remove any existing message': function(err, item) {
+                assert.ok(!item.data.body.message);
+              },
             },
             'with a nested error': {
               topic: function (options) {
