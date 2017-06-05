@@ -858,7 +858,7 @@ var Rollbar = require("rollbar");
 var rollbar = new Rollbar("POST_SERVER_ITEM_ACCESS_TOKEN");
 ```
 
-Other options can be passed into the constructor using a second parameter. E.g.:
+Other options can be passed into the constructor as a collection. E.g.:
 
 ```js
 // Configure the library to send errors to api.rollbar.com
