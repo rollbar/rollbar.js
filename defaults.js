@@ -1,5 +1,3 @@
-var semver = require('semver');
-
 var pkg = require('./package.json');
 
 var version = pkg.version;
