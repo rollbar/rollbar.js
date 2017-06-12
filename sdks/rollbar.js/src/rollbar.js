@@ -13,7 +13,7 @@ var _ = require('./utility');
 function Rollbar(options, api, logger) {
   this.options = _.extend(true, {}, options);
   this.logger = logger;
-  this.queue = new Queue(Rollbar.rateLimiter, api, this.options);
+  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
 }
 

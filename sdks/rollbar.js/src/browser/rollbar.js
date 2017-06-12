@@ -291,6 +291,7 @@ var defaultOptions = {
   reportLevel: __DEFAULT_REPORT_LEVEL__,
   uncaughtErrorLevel: __DEFAULT_UNCAUGHT_ERROR_LEVEL,
   endpoint: __DEFAULT_ENDPOINT__,
+  verbose: false,
   enabled: true
 };
 
