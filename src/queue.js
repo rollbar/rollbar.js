@@ -10,11 +10,13 @@ var _ = require('./utility');
  *    rateLimiter.shouldSend(item) -> bool
  * @param api - An object which conforms to the interface
  *    api.postItem(payload, function(err, response))
+ * @param logger - An object used to log verbose messages if desired
  * @param options - see Queue.prototype.configure
  */
-function Queue(rateLimiter, api, options) {
+function Queue(rateLimiter, api, logger, options) {
   this.rateLimiter = rateLimiter;
   this.api = api;
+  this.logger = logger;
   this.options = options;
   this.predicates = [];
   this.pendingRequests = [];
@@ -73,6 +75,7 @@ Queue.prototype.addItem = function(item, callback) {
     callback();
     return;
   }
+  this._maybeLog(item);
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(item, function(err, resp) {
@@ -208,6 +211,18 @@ Queue.prototype._dequeuePendingRequest = function(item) {
         this.waitCallback();
       }
       return;
+    }
+  }
+};
+
+Queue.prototype._maybeLog = function(item) {
+  if (this.logger && this.options.verbose) {
+    var message = _.get(item, 'data.body.trace.exception.message');
+    if (!message) {
+      message = _.get(item, 'data.body.trace_chain.0.exception.message');
+    }
+    if (message) {
+      this.logger.error(message);
     }
   }
 };
