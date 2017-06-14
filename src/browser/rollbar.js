@@ -137,6 +137,8 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   }
   item.level = this.options.uncaughtErrorLevel;
   item._isUncaught = true;
+  item._originalArgs = item._originalArgs || [];
+  item._originalArgs.push(reason, promise);
   this.client.log(item);
 };
 
