@@ -123,7 +123,7 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   if (_.isError(reason)) {
     item = this._createItem([message, reason, context]);
   } else {
-    item = this._createItem([message, context]);
+    item = this._createItem([message, reason, context]);
     item.stackInfo = _.makeUnhandledStackInfo(
       message,
       '',
@@ -138,7 +138,7 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   item.level = this.options.uncaughtErrorLevel;
   item._isUncaught = true;
   item._originalArgs = item._originalArgs || [];
-  item._originalArgs.push(reason, promise);
+  item._originalArgs.push(promise);
   this.client.log(item);
 };
 
