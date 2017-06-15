@@ -484,6 +484,7 @@ Rollbar.defaultOptions = {
   scrubFields: packageJson.defaults.server.scrubFields,
   addRequestData: null,
   reportLevel: packageJson.defaults.reportLevel,
+  verbose: false,
   enabled: true
 };
 
