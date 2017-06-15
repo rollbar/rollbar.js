@@ -43,14 +43,6 @@ function baseData(item, options, callback) {
   callback(null, item);
 }
 
-function addBody(item, options, callback) {
-  if (item.stackInfo) {
-    addErrorData(item, options, callback);
-  } else {
-    addMessageData(item, options, callback);
-  }
-}
-
 function addMessageData(item, options, callback) {
   item.data = item.data || {};
   item.data.body = item.data.body || {};
@@ -68,6 +60,14 @@ function addErrorData(item, options, callback) {
     item.data.body.trace_chain = item.stackInfo;
   }
   callback(null, item);
+}
+
+function addBody(item, options, callback) {
+  if (item.stackInfo) {
+    addErrorData(item, options, callback);
+  } else {
+    addMessageData(item, options, callback);
+  }
 }
 
 function handleItemWithError(item, options, callback) {
