@@ -228,7 +228,7 @@ Queue.prototype._maybeLog = function(item) {
   }
 
   message = _.get(item, 'data.body.message.body');
-  if (messagge) {
+  if (message) {
     this.logger.log(message);
   }
 };
