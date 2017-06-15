@@ -322,8 +322,8 @@ Rollbar.handleUncaughtExceptionsAndRejections = function(accessToken, options) {
 function addTransformsToNotifier(notifier) {
   notifier
     .addTransform(transforms.baseData)
-    .addTransform(transforms.addMessageData)
-    .addTransform(transforms.buildErrorData)
+    .addTransform(transforms.handleItemWithError)
+    .addTransform(transforms.addBody)
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.scrubPayload)
     .addTransform(transforms.convertToPayload);

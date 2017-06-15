@@ -158,6 +158,49 @@ vows.describe('transforms')
     }
   })
   .addBatch({
+    'addBody': {
+      'options': {
+        'anything': {
+          topic: function() {
+            return {whatever: 'stuff'};
+          },
+          'item': {
+            'with stackInfo': {
+              topic: function(options) {
+                var item = {stackInfo: [{message: 'hey'}]};
+                t.addBody(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should set the trace_chain': function(err, item) {
+                assert.ok(item.data.body.trace_chain);
+              },
+              'should not set a message': function(err, item) {
+                assert.ok(!item.data.body.message);
+              }
+            },
+            'with no stackInfo': {
+              topic: function(options) {
+                var item = {message: 'hello'};
+                t.addBody(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should not set the trace_chain': function(err, item) {
+                assert.ok(!item.data.body.trace_chain);
+              },
+              'should set a message': function(err, item) {
+                assert.ok(item.data.body.message);
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  .addBatch({
     'addMessageData': {
       'options': {
         'anything': {
@@ -195,7 +238,7 @@ vows.describe('transforms')
     }
   })
   .addBatch({
-    'buildErrorData': {
+    'handleItemWithError': {
       'options': {
         'anything': {
           topic: function() {
@@ -208,7 +251,7 @@ vows.describe('transforms')
                   data: {body: {yo: 'hey'}},
                   message: 'hey'
                 };
-                t.buildErrorData(item, options, this.callback);
+                t.handleItemWithError(item, options, this.callback);
               },
               'should not error': function(err, item) {
                 assert.ifError(err);
@@ -223,13 +266,13 @@ vows.describe('transforms')
                   data: {body: {}},
                   err: new Error('wookie')
                 };
-                t.buildErrorData(item, options, this.callback);
+                t.handleItemWithError(item, options, this.callback);
               },
               'should not error': function(err, item) {
                 assert.ifError(err);
               },
               'should add some data to the trace_chain': function(err, item) {
-                assert.ok(item.data.body.trace_chain);
+                assert.ok(item.stackInfo);
               }
             },
             'with a normal error': {
@@ -247,13 +290,13 @@ vows.describe('transforms')
                   data: {body: {}},
                   err: err
                 };
-                t.buildErrorData(item, options, this.callback);
+                t.handleItemWithError(item, options, this.callback);
               },
               'should not error': function(err, item) {
                 assert.ifError(err);
               },
               'should add some data to the trace_chain': function(err, item) {
-                assert.ok(item.data.body.trace_chain);
+                assert.ok(item.stackInfo);
               }
             },
             'with a nested error': {
@@ -271,13 +314,13 @@ vows.describe('transforms')
                   data: {body: {}},
                   err: err
                 };
-                t.buildErrorData(item, options, this.callback);
+                t.handleItemWithError(item, options, this.callback);
               },
               'should not error': function(err, item) {
                 assert.ifError(err);
               },
               'should have the right data in the trace_chain': function(err, item) {
-                var trace_chain = item.data.body.trace_chain;
+                var trace_chain = item.stackInfo;
                 assert.lengthOf(trace_chain, 2);
                 assert.equal(trace_chain[0].exception.class, 'CustomError');
                 assert.equal(trace_chain[0].exception.message, 'nested-message');
