@@ -39,7 +39,7 @@ Queue.prototype.configure = function(options) {
 
 /*
  * addPredicate - adds a predicate to the end of the list of predicates for this queue
- * 
+ *
  * @param predicate - function(item, options) -> (bool|{err: Error})
  *  Returning true means that this predicate passes and the item is okay to go on the queue
  *  Returning false means do not add the item to the queue, but it is not an error
@@ -216,20 +216,17 @@ Queue.prototype._dequeuePendingRequest = function(item) {
 };
 
 Queue.prototype._maybeLog = function(item) {
-  if (!this.logger || !this.options.verbose) {
-    return;
-  }
-
-  var message = _.get(item, 'data.body.trace.exception.message');
-  message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
-  if (message) {
-    this.logger.error(message);
-    return;
-  }
-
-  message = _.get(item, 'data.body.message.body');
-  if (message) {
-    this.logger.log(message);
+  if (this.logger && this.options.verbose) {
+    var message = _.get(item, 'data.body.trace.exception.message');
+    message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
+    if (message) {
+      this.logger.error(message);
+      return;
+    }
+    message = _.get(item, 'data.body.message.body');
+    if (message) {
+      this.logger.log(message);
+    }
   }
 };
 
