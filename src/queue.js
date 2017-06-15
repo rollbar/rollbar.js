@@ -216,14 +216,20 @@ Queue.prototype._dequeuePendingRequest = function(item) {
 };
 
 Queue.prototype._maybeLog = function(item) {
-  if (this.logger && this.options.verbose) {
-    var message = _.get(item, 'data.body.trace.exception.message');
-    if (!message) {
-      message = _.get(item, 'data.body.trace_chain.0.exception.message');
-    }
-    if (message) {
-      this.logger.error(message);
-    }
+  if (!this.logger || !this.options.verbose) {
+    return;
+  }
+
+  var message = _.get(item, 'data.body.trace.exception.message');
+  message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
+  if (message) {
+    this.logger.error(message);
+    return;
+  }
+
+  message = _.get(item, 'data.body.message.body');
+  if (messagge) {
+    this.logger.log(message);
   }
 };
 
