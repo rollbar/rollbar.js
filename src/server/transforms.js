@@ -46,15 +46,31 @@ function baseData(item, options, callback) {
 function addMessageData(item, options, callback) {
   item.data = item.data || {};
   item.data.body = item.data.body || {};
-  if (item.message !== undefined) {
-    item.data.body.message = {
-      body: item.message
-    };
+  var message = item.message || '';
+  item.data.body.message = {
+    body: message
+  };
+  callback(null, item);
+}
+
+function addErrorData(item, options, callback) {
+  if (item.stackInfo) {
+    item.data = item.data || {};
+    item.data.body = item.data.body || {};
+    item.data.body.trace_chain = item.stackInfo;
   }
   callback(null, item);
 }
 
-function buildErrorData(item, options, callback) {
+function addBody(item, options, callback) {
+  if (item.stackInfo) {
+    addErrorData(item, options, callback);
+  } else {
+    addMessageData(item, options, callback);
+  }
+}
+
+function handleItemWithError(item, options, callback) {
   if (!item.err) {
     callback(null, item);
     return;
@@ -66,14 +82,14 @@ function buildErrorData(item, options, callback) {
   do {
     errors.push(err);
   } while ((err = err.nested) !== undefined);
-
-  item.data = item.data || {};
-  item.data.body = item.data.body || {};
-  item.data.body.trace_chain = chain;
+  item.stackInfo = chain;
 
   var cb = function(err) {
     if (err) {
-      callback(err, null);
+      item.message = item.err.message || item.err.description || item.message || String(item.err);
+      delete item.err;
+      delete item.stackInfo;
+      callback(null, item);
     }
     callback(null, item);
   };
@@ -203,8 +219,10 @@ function _buildRequestData(req) {
 
 module.exports = {
   baseData: baseData,
+  handleItemWithError: handleItemWithError,
+  addBody: addBody,
   addMessageData: addMessageData,
-  buildErrorData: buildErrorData,
+  addErrorData: addErrorData,
   addRequestData: addRequestData,
   scrubPayload: scrubPayload,
   convertToPayload: convertToPayload
