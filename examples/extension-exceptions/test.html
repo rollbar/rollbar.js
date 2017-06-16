@@ -1,0 +1,53 @@
+<html>
+<body>
+<script src="../../dist/rollbar.js"></script>
+
+<!-- bait for adblocker like addons.  If they remove this div, we should disable error reporting -->
+<div id="blocker-bait" style="height: 1px; width: 1px; position: absolute; left: -999em; top: -999em"
+     class="ads ad adsbox doubleclick ad-placement carbon-ads"></div>
+
+<script>
+  var _rollbarConfig = {
+    accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+    captureUncaught: true,
+    payload: {
+      environment: 'development',
+    }
+  };
+
+  function disableRollbar() {
+    console.log("disabled rollbar")
+    Rollbar.configure({enabled: false});
+  }
+
+  function checkForAdds() {
+    var bait = document.getElementById("blocker-bait");
+
+    if (bait == null) {
+      disableRollbar();
+      return;
+    }
+
+    var baitStyles = window.getComputedStyle(bait);
+    if (baitStyles && (
+        baitStyles.getPropertyValue('display') === 'none' ||
+        baitStyles.getPropertyValue('visibility') === 'hidden')) {
+      disableRollbar();
+    }
+  }
+
+  function onLoadStartAddCheck() {
+    // Add blockers generally execute just after load, let's delay ourselves to get behind it.
+    setTimeout(checkForAdds, 1);
+  }
+
+  if (window.addEventListener !== undefined) {
+    window.addEventListener('load', onLoadStartAddCheck, false);
+  } else {
+    window.attachEvent('onload', onLoadStartAddCheck);
+  }
+</script>
+<button onclick="foo();">Foo</button>
+<button onclick="functionC();">Bar</button>
+</body>
+</html>
