@@ -1,5 +1,75 @@
 # Change Log
 
+**v2.0.0**
+This release is the first where the library supports both browser and node environments from the
+same package. We decided to deprecate the `rollbar-browser` npm package in favor of using the
+`rollbar` npm package for all javascript environments. This single codebase now handles both
+environments and therefore `require('rollbar')` can be used regardless of where the code is to be
+run. The [node_rollbar](https://github.com/rollbar/node_rollbar) library is now deprecated in favor
+of this library.
+
+The major structural change in the library is that we no longer treat Rollbar as a singleton. In
+order to report errors to Rollbar, one uses a particular instance of the Rollbar notifier. For
+convenience, when loaded via the html snippet, we put the rollbar constructor onto the window at
+`window.rollbar` and we put an instance on the window at `window.Rollbar` which has been
+instantiated with the options set via `_rollbarConfig`. For most workflows, this change should not
+be noticable. However, there are a few cases where one might run in to trouble.
+
+- scope: this method no longer exists, it was arguably a hack to allow something like a new instance
+  without having to instantiate something manually because a constructor was not exposed. Instead of
+  using scope, it works just to create a new instance `var otherRollbar = new rollbar({...})`. The
+  downside being that the options passed to the constructor must be a complete set of options, not
+  just the ones you want to override which is how scope worked. This is a minor inconvenience to pay
+  for the flexibility of having real lifecycle ownership over your rollbar instances.
+- uncaught exceptions and unhandled rejections: the choice to report uncaught exceptions and/or
+  unhandled rejections is still made via a configuration parameter set in `_rollbarConfig` or in the
+  options passed directly to the constructor. However, due to the nature of these handlers being
+  global, we made the choice to only have one instance set as this handler. What this means is that
+  if you create a new instance with the option `captureUncaught` set to true, that instance will
+  take over as the uncaught exception handler. Similarly for `captureUnhandledRejections`. If you
+  set either of these options to true in `_rollbarConfig` and use the snippet to load rollbar, then
+  the convenience instance located at `window.Rollbar` will be setup as this handler.
+
+**v1.9.4**
+- Updated to the newest version of console-polyfill (pr#244)
+- Log functions now return an object with the uuid as one of the keys (pr#236)
+- Fix issue related to Object.assign which caused problems on IE8 (pr#246)
+- Retain more context on unhandled rejections (pr#229)
+- On IE8 and below when we log to the console, we now stringify objects rather than outputing
+  `[object Object]` (pr#249)
+
+**v1.9.3**
+- Serve rollbar.js from CDNJS
+
+**v1.9.2**
+- Fix bug which would break `Rollbar.wrap()` if a string was thrown. (pr#222)
+
+**v1.9.1**
+- Re-add rollbar.snippet.js to the Bower distribution. (pr#196)
+  - This re-adds `dist/rollbar.snippet.js` to be backwards compatible with v1.8.5
+
+**v1.9.0**
+- Added support for arrays as custom data. (pr#194)
+- Documentation added for disabling Rollbar in the presence of ad blockers. (pr#190)
+- Added support for unhandled rejections from Promises. (pr#192)
+- Decreased Bower release size. (pr#191)
+  - **Breaking Changes**
+    - Various files/directories were removed from the Bower release, including:
+      - `dist/*.snippet*`
+      - `dist/*.nojson*`
+      - `dist/*.named-amd*`
+      - `vendor`
+      - `src`
+
+**v1.8.5**
+- Support retrying after being in offline mode. (pr#186)
+
+**v1.8.4**
+- Check messages body for ignored messages. (pr#180)
+
+**v1.8.3**
+- Fix a bug introduced in 1.8.0 where payload options were being removed by calls to `configure()`. (pr#176)
+
 **v1.8.2**
 - Using the latest error-stack-parser from NPM. (pr#171)
 
@@ -17,7 +87,7 @@
 - Fix bug when checking window.onerror.belongsToShim.
 
 **v1.7.4**
-- Don't save shim's onerror when we are building globalnotifier. 
+- Don't save shim's onerror when we are building globalnotifier.
   This fixes tests using window.onerror on a browser console
 - Fix Default endpoint on docs/configuration.md
 
@@ -233,5 +303,4 @@
 ## Upgrade Instructions
 
 ### v1.0.x to v1.1.x
-1. Replace your rollbar snippet with the latest from the [rollbar.js quickstart docs](https://rollbar.com/docs/notifier/rollbar.js/) or from [the Github repo](https://github.com/rollbar/rollbar.js/blob/master/dist/rollbar.snippet.js).
-
+1. Replace your rollbar snippet with the latest from the [rollbar.js quickstart docs](https://rollbar.com/docs/notifier/rollbar.js/) or from [the GitHub repo](https://github.com/rollbar/rollbar.js/blob/master/dist/rollbar.snippet.js).
