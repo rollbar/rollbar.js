@@ -32,16 +32,31 @@ function userCheckIgnore(item, settings) {
   return true;
 }
 
+function urlIsBlacklisted(item, settings) {
+  return urlIsOnAList(item, settings, 'blacklist');
+}
+
 function urlIsWhitelisted(item, settings) {
-  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
+  return urlIsOnAList(item, settings, 'whitelist');
+}
+
+function urlIsOnAList(item, settings, whiteOrBlack) {
+  // whitelist is the default
+  var black = false;
+  if (whiteOrBlack === 'blacklist') {
+    black = true;
+  }
+  var list, trace, frame, filename, frameLength, url, listLength, urlRegex;
   var i, j;
 
   try {
-    whitelist = settings.hostWhiteList;
-    listLength = whitelist && whitelist.length;
+    list = black ? settings.hostBlackList : settings.hostWhiteList;
+    listLength = list && list.length;
     trace = _.get(item, 'body.trace');
 
-    if (!whitelist || listLength === 0) {
+    // These two checks are important to come first as they are defaults
+    // in case the list is missing or the trace is missing or not well-formed
+    if (!list || listLength === 0) {
       return true;
     }
     if (!trace || !trace.frames) {
@@ -58,22 +73,27 @@ function urlIsWhitelisted(item, settings) {
       }
 
       for (j = 0; j < listLength; j++) {
-        url = whitelist[j];
+        url = list[j];
         urlRegex = new RegExp(url);
 
         if (urlRegex.test(filename)){
-          return true;
+          return !black;
         }
       }
     }
   } catch (e)
   /* istanbul ignore next */
   {
-    settings.hostWhiteList = null;
-    logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
+    if (black) {
+      settings.hostBlackList = null;
+    } else {
+      settings.hostWhiteList = null;
+    }
+    var listName = black ? 'hostBlackList' : 'hostWhiteList';
+    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
     return true;
   }
-  return false;
+  return black;
 }
 
 function messageIsIgnored(item, settings) {
@@ -84,7 +104,7 @@ function messageIsIgnored(item, settings) {
   try {
     messageIsIgnored = false;
     ignoredMessages = settings.ignoredMessages;
-    
+
     if (!ignoredMessages || ignoredMessages.length === 0) {
       return true;
     }
@@ -121,6 +141,7 @@ function messageIsIgnored(item, settings) {
 module.exports = {
   checkIgnore: checkIgnore,
   userCheckIgnore: userCheckIgnore,
+  urlIsBlacklisted: urlIsBlacklisted,
   urlIsWhitelisted: urlIsWhitelisted,
   messageIsIgnored: messageIsIgnored
 };
