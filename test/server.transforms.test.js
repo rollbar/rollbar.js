@@ -677,4 +677,37 @@ vows.describe('transforms')
       }
     }
   })
+  .addBatch({
+    'convertToPayload': {
+      'options': {
+        'with payload data': {
+          topic: function() {
+            return {payload: {client: {code_version: 'bork'}, body: 'hello'}};
+          },
+          item: {
+            topic: function(options) {
+              var item = {
+                data: {
+                  body: {
+                    message: 'hey'
+                  }
+                },
+                other: 'thing'
+              };
+              t.convertToPayload(item, options, this.callback);
+            },
+            'should not error': function(err, item) {
+              assert.ifError(err);
+            },
+            'should only return data': function(err, item) {
+              assert.equal(item.body.message, 'hey');
+            },
+            'should include payload options': function(err, item) {
+              assert.equal(item.client.code_version, 'bork');
+            }
+          }
+        }
+      }
+    }
+  })
   .export(module, {error: false});
