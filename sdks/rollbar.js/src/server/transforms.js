@@ -154,7 +154,13 @@ function scrubPayload(item, options, callback) {
 }
 
 function convertToPayload(item, options, callback) {
-  callback(null, item.data);
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+
+  var data = _.extend(true, {}, item.data, payloadOptions);
+  callback(null, data);
 }
 
 /** Helpers **/
