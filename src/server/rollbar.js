@@ -37,7 +37,6 @@ function Rollbar(options, client) {
   if (this.options.handleUnhandledRejections) {
     this.handleUnhandledRejections();
   }
-  this.lastError = null;
 }
 
 var _instance = null;
@@ -83,12 +82,20 @@ Rollbar.configure = function(options) {
   }
 };
 
+Rollbar.prototype.lastError = function() {
+  return this.client.lastError;
+};
+Rollbar.lastError = function() {
+  if (_instance) {
+    return _instance.lastError();
+  } else {
+    handleUninitialized();
+  }
+};
+
 Rollbar.prototype.log = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.log(item);
   return {uuid: uuid};
 };
@@ -104,9 +111,6 @@ Rollbar.log = function() {
 Rollbar.prototype.debug = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.debug(item);
   return {uuid: uuid};
 };
@@ -122,9 +126,6 @@ Rollbar.debug = function() {
 Rollbar.prototype.info = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.info(item);
   return {uuid: uuid};
 };
@@ -140,9 +141,6 @@ Rollbar.info = function() {
 Rollbar.prototype.warn = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.warn(item);
   return {uuid: uuid};
 };
@@ -159,9 +157,6 @@ Rollbar.warn = function() {
 Rollbar.prototype.warning = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.warning(item);
   return {uuid: uuid};
 };
@@ -178,9 +173,6 @@ Rollbar.warning = function() {
 Rollbar.prototype.error = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.error(item);
   return {uuid: uuid};
 };
@@ -197,9 +189,6 @@ Rollbar.error = function() {
 Rollbar.prototype.critical = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
-  if (this._sameAsLastError(item)) {
-    return;
-  }
   this.client.critical(item);
   return {uuid: uuid};
 };
@@ -424,14 +413,6 @@ Rollbar.prototype._createItem = function(args) {
   }
   item.custom = custom;
   return item;
-};
-
-Rollbar.prototype._sameAsLastError = function(item) {
-  if (this.lastError && this.lastError === item.err) {
-    return true;
-  }
-  this.lastError = item.err;
-  return false;
 };
 
 function _getFirstFunction(args) {

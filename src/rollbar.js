@@ -15,6 +15,7 @@ function Rollbar(options, api, logger) {
   this.logger = logger;
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
+  this.lastError = null;
 }
 
 var defaultOptions = {
@@ -72,6 +73,9 @@ Rollbar.prototype.wait = function(callback) {
 /* Internal */
 
 Rollbar.prototype._log = function(defaultLevel, item) {
+  if (this._sameAsLastError(item)) {
+    return;
+  }
   _.wrapRollbarFunction(this.logger, function() {
     var callback = null;
     if (item.callback) {
@@ -85,6 +89,14 @@ Rollbar.prototype._log = function(defaultLevel, item) {
 
 Rollbar.prototype._defaultLogLevel = function() {
   return this.options.logLevel || 'debug';
+};
+
+Rollbar.prototype._sameAsLastError = function(item) {
+  if (this.lastError && this.lastError === item.err) {
+    return true;
+  }
+  this.lastError = item.err;
+  return false;
 };
 
 module.exports = Rollbar;
