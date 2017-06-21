@@ -427,7 +427,7 @@ Rollbar.prototype._createItem = function(args) {
 };
 
 Rollbar.prototype._sameAsLastError = function(item) {
-  if (this.lastError === item.err && this.lastError) {
+  if (this.lastError && this.lastError === item.err) {
     return true;
   }
   this.lastError = item.err;
