@@ -105,31 +105,6 @@ describe('Rollbar()', function() {
 
     done();
   });
-
-  it('should not log the same error twice in a row', function(done) {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = new Rollbar(options, client);
-
-    var args = [new Error('Whoa'), 'first', 'second'];
-    var methods = 'log,debug,info,warn,warning,error,critical'.split(',');
-    for (var i=0; i < methods.length; i++) {
-      var msgA = 'Amessage:' + i;
-      var msgB = 'Bmessage:' + i;
-      rollbar[methods[i]](msgA);
-      rollbar[methods[i]].apply(rollbar, args);
-      rollbar[methods[i]].apply(rollbar, args);
-      rollbar[methods[i]](msgB);
-      for (var j=0; j<3; j++) {
-        expect(client.logCalls[j+3*i].func).to.eql(methods[i]);
-      }
-      expect(client.logCalls[0+3*i].item.message).to.eql(msgA);
-      expect(client.logCalls[1+3*i].item.err).to.be.ok();
-      expect(client.logCalls[2+3*i].item.message).to.eql(msgB);
-    }
-
-    done();
-  });
 });
 
 describe('createItem', function() {

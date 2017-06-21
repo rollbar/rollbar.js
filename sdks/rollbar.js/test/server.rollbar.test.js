@@ -181,24 +181,6 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
           },
-          'should not log same one twice': function(r) {
-            var err = new Error('hello!')
-            r.client.clearLogCalls();
-            var msgA = 'some message A';
-            var msgB = 'some message B';
-            r.log(msgA);
-            r.log(err)
-            r.log(err)
-            r.log(msgB);
-            var len = r.client.logCalls.length;
-            assert.equal(len, 3);
-            var msgItemA = r.client.logCalls[0].item
-            var errItem = r.client.logCalls[1].item
-            var msgItemB = r.client.logCalls[2].item
-            assert.equal(msgItemA.message, msgA);
-            assert.equal(errItem.err, err)
-            assert.equal(msgItemB.message, msgB);
-          },
           'should work with callback': function(r) {
             var err = new Error('hello!')
             var callback = function cb() {}
