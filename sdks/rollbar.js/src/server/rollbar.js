@@ -230,6 +230,27 @@ Rollbar.errorHandler = function() {
   }
 };
 
+function wrapCallback(r, f) {
+  return function() {
+    var err = arguments[0];
+    if (err) {
+      r.error(err);
+    }
+    return f.apply(this, arguments);
+  }
+}
+
+Rollbar.prototype.wrapCallbac = function(f) {
+  return wrapCallback(this, f);
+};
+Rollbar.wrapCallback = function(f) {
+  if (_instance) {
+    return _instance.wrapCallback(f);
+  } else {
+    handleUninitialized();
+  }
+};
+
 
 /** DEPRECATED **/
 
