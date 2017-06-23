@@ -237,7 +237,7 @@ function wrapCallback(r, f) {
       r.error(err);
     }
     return f.apply(this, arguments);
-  }
+  };
 }
 
 Rollbar.prototype.wrapCallbac = function(f) {
