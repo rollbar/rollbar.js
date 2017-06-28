@@ -173,7 +173,13 @@ Rollbar.error = function() {
     handleUninitialized(maybeCallback);
   }
 };
-
+Rollbar.prototype._uncaughtError = function() {
+  var item = this._createItem(arguments);
+  item._isUncaught = true;
+  var uuid = item.uuid;
+  this.client.error(item);
+  return {uuid: uuid};
+};
 
 Rollbar.prototype.critical = function() {
   var item = this._createItem(arguments);
@@ -331,7 +337,8 @@ function addTransformsToNotifier(notifier) {
 
 function addPredicatesToQueue(queue) {
   queue
-    .addPredicate(predicates.checkLevel);
+    .addPredicate(predicates.checkLevel)
+    .addPredicate(predicates.userCheckIgnore);
 }
 Rollbar.prototype._createItem = function(args) {
   var message, err, custom, callback, request;
@@ -418,7 +425,7 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
   delete this.options.exitOnUncaughtException;
 
   addOrReplaceRollbarHandler('uncaughtException', function(err) {
-    this.error(err, function(err) {
+    this._uncaughtError(err, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
         logger.error(err);
@@ -433,7 +440,7 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
 
 Rollbar.prototype.handleUnhandledRejections = function() {
   addOrReplaceRollbarHandler('unhandledRejection', function(reason) {
-    this.error(reason, function(err) {
+    this._uncaughtError(reason, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
         logger.error(err);
