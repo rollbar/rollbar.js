@@ -27,7 +27,7 @@ function Rollbar(options, client) {
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || 'unspecified';
   var api = new API(this.options, transport, urllib, jsonBackup);
-  this.client = client || new Client(this.options, api, logger);
+  this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 

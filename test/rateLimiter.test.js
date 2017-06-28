@@ -115,7 +115,7 @@ describe('shouldSend', function() {
     expect(result4.shouldSend).to.not.be.ok();
     expect(result4.error).to.not.be.ok();
     expect(result4.payload).to.be.ok();
-    expect(result4.payload.custom.maxItems).to.eql(options.maxItems);
+    expect(result4.payload.body.message.extra.maxItems).to.eql(options.maxItems);
 
     done();
   });
