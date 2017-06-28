@@ -84,7 +84,7 @@ function messageIsIgnored(item, settings) {
   try {
     messageIsIgnored = false;
     ignoredMessages = settings.ignoredMessages;
-    
+
     if (!ignoredMessages || ignoredMessages.length === 0) {
       return true;
     }
