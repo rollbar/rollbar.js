@@ -10,9 +10,10 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger) {
+function Rollbar(options, api, logger, platform) {
   this.options = _.extend(true, {}, options);
   this.logger = logger;
+  Rollbar.rateLimiter.setPlatformOptions(platform, options);
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
 }
