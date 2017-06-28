@@ -395,7 +395,7 @@ Default: ```null```
 // For example:
 // Set a custom fingerprint
 var transformer = function(payload) {
-  payload.data.fingerprint = 'my custom fingerprint';
+  payload.fingerprint = 'my custom fingerprint';
 };
 
 Rollbar.configure({transform: transformer});
