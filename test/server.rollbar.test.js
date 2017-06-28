@@ -88,16 +88,20 @@ vows.describe('rollbar')
       'message': {
         'with unordered options': {
           'should work with custom, request, callback, message ': function(r) {
-            var message = 'hello'
-            var callback = function cb() {}
-            var request = { method: 'GET' }
-            var custom = { a: 1, b: 2 }
-            r.log(custom, request, callback, message)
-            var item = r.client.logCalls[r.client.logCalls.length - 1].item
-            assert.equal(item.message, message)
-            assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
-            assert.equal(item.callback, callback)
+            var message = 'hello';
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
+            var request = { method: 'GET' };
+            var custom = { a: 1, b: 2 };
+            r.log(custom, request, callback, message);
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item;
+            assert.equal(item.message, message);
+            assert.equal(item.request, request);
+            assert.equal(item.custom, custom);
+            item.callback();
+            assert.isTrue(callbackCalled);
           }
         },
         'with old option ordering': {
@@ -109,11 +113,15 @@ vows.describe('rollbar')
           },
           'should work with callback': function(r) {
             var message = 'hello'
-            var callback = function cb() {}
-            r.log(message, callback)
-            var item = r.client.logCalls[r.client.logCalls.length - 1].item
-            assert.equal(item.message, message)
-            assert.equal(item.callback, callback)
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
+            r.log(message, callback);
+            var item = r.client.logCalls[r.client.logCalls.length - 1].item;
+            assert.equal(item.message, message);
+            item.callback();
+            assert.isTrue(callbackCalled);
           },
           'should work with request': function(r) {
             var message = 'hello'
@@ -126,12 +134,16 @@ vows.describe('rollbar')
           'should work with request and callback': function(r) {
             var message = 'hello'
             var request = { method: 'GET' }
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             r.log(message, request, callback)
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.message, message)
             assert.equal(item.request, request)
-            assert.equal(item.callback, callback)
+            item.callback();
+            assert.isTrue(callbackCalled);
           },
           'should work with request and custom': function(r) {
             var message = 'hello'
@@ -147,12 +159,17 @@ vows.describe('rollbar')
             var message = 'hello'
             var request = { method: 'GET' }
             var custom = { a: 1, b: 2 }
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             r.log(message, request, custom, callback)
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.message, message)
             assert.equal(item.request, request)
             assert.equal(item.custom, custom)
+            item.callback();
+            assert.isTrue(callbackCalled);
           }
         }
       },
@@ -160,7 +177,10 @@ vows.describe('rollbar')
         'with unordered options': {
           'should work with custom, request, callback, message ': function(r) {
             var err = new Error('hello!')
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             var request = { method: 'GET' }
             var custom = { a: 1, b: 2 }
             r.log(custom, request, callback, err)
@@ -168,7 +188,8 @@ vows.describe('rollbar')
             assert.equal(item.err, err)
             assert.equal(item.request, request)
             assert.equal(item.custom, custom)
-            assert.equal(item.callback, callback)
+            item.callback();
+            assert.isTrue(callbackCalled);
           }
         },
         'with old option ordering': {
@@ -180,11 +201,15 @@ vows.describe('rollbar')
           },
           'should work with callback': function(r) {
             var err = new Error('hello!')
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             r.log(err, callback)
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
-            assert.equal(item.callback, callback)
+            item.callback();
+            assert.isTrue(callbackCalled);
           },
           'should work with request': function(r) {
             var err = new Error('hello!')
@@ -197,12 +222,16 @@ vows.describe('rollbar')
           'should work with request and callback': function(r) {
             var err = new Error('hello!')
             var request = { method: 'GET' }
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             r.log(err, request, callback)
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
             assert.equal(item.request, request)
-            assert.equal(item.callback, callback)
+            item.callback();
+            assert.isTrue(callbackCalled);
           },
           'should work with request and custom': function(r) {
             var err = new Error('hello!')
@@ -218,12 +247,17 @@ vows.describe('rollbar')
             var err = new Error('hello!')
             var request = { method: 'GET' }
             var custom = { a: 1, b: 2 }
-            var callback = function cb() {}
+            var callbackCalled = false;
+            var callback = function cb() {
+              callbackCalled = true;
+            };
             r.log(err, request, custom, callback)
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
             assert.equal(item.request, request)
             assert.equal(item.custom, custom)
+            item.callback();
+            assert.isTrue(callbackCalled);
           }
         }
       }
