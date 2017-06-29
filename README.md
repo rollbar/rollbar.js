@@ -290,7 +290,7 @@ Rollbar.global({itemsPerMinute: 5});
 // Set the top-level notifier's checkIgnore() function
 Rollbar.configure({checkIgnore: function(isUncaught, args, payload) {
     // ignore all uncaught errors and all 'debug' items
-    return isUncaught === true || payload.data.level === 'debug';
+    return isUncaught === true || payload.level === 'debug';
 }});
 
 // Set the environment, default log level and the context
@@ -395,7 +395,7 @@ Default: ```null```
 // For example:
 // Set a custom fingerprint
 var transformer = function(payload) {
-  payload.data.fingerprint = 'my custom fingerprint';
+  payload.fingerprint = 'my custom fingerprint';
 };
 
 Rollbar.configure({transform: transformer});
