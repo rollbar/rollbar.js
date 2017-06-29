@@ -22,6 +22,9 @@ function TestClientGen() {
         this.logCalls.push({func: fn, item: item});
       }.bind(this, fn)
     }
+    this.clearLogCalls = function() {
+      this.logCalls = [];
+    };
   };
 
   return TestClient;

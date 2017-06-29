@@ -69,6 +69,17 @@ Rollbar.configure = function(options) {
   }
 };
 
+Rollbar.prototype.lastError = function() {
+  return this.client.lastError;
+};
+Rollbar.lastError = function() {
+  if (_instance) {
+    return _instance.lastError();
+  } else {
+    handleUninitialized();
+  }
+};
+
 Rollbar.prototype.log = function() {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
