@@ -7,3 +7,4 @@ sauce_connect.log
 coverage
 .DS_Store
 *.swp
+npm-debug.log
