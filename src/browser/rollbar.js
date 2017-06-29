@@ -14,7 +14,7 @@ var errorParser = require('./errorParser');
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
   var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger);
+  this.client = client || new Client(this.options, api, logger, 'browser');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   if (this.options.captureUncaught) {
