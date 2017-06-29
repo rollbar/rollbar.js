@@ -240,7 +240,7 @@ function wrapCallback(r, f) {
   };
 }
 
-Rollbar.prototype.wrapCallbac = function(f) {
+Rollbar.prototype.wrapCallback = function(f) {
   return wrapCallback(this, f);
 };
 Rollbar.wrapCallback = function(f) {
