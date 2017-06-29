@@ -313,7 +313,7 @@ function addPredicatesToQueue(queue) {
 }
 
 Rollbar.prototype._createItem = function(args) {
-  return _.createItem(args);
+  return _.createItem(args, logger, this);
 };
 
 function _getFirstFunction(args) {
