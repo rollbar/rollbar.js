@@ -7,6 +7,8 @@ function RateLimiter(options) {
   this.startTime = (new Date()).getTime();
   this.counter = 0;
   this.perMinCounter = 0;
+  this.platform = null;
+  this.platformOptions = {};
   this.configureGlobal(options);
 }
 
@@ -62,15 +64,20 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
 
   if (checkRate(item, globalRateLimit, this.counter)) {
-    return shouldSendValue(globalRateLimit + ' max items reached', false);
+    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
   } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
-    return shouldSendValue(globalRateLimitPerMin + ' items per minute reached', false);
+    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
   }
   this.counter++;
   this.perMinCounter++;
 
   var shouldSend = !checkRate(item, globalRateLimit, this.counter);
-  return shouldSendValue(null, shouldSend, globalRateLimit);
+  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
+};
+
+RateLimiter.prototype.setPlatformOptions = function(platform, options) {
+  this.platform = platform;
+  this.platformOptions = options;
 };
 
 /* Helpers */
@@ -79,25 +86,43 @@ function checkRate(item, limit, counter) {
   return !item.ignoreRateLimit && limit >= 1 && counter >= limit;
 }
 
-function shouldSendValue(error, shouldSend, globalRateLimit) {
+function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
   var payload = null;
   if (error) {
     error = new Error(error);
   }
   if (!error && !shouldSend) {
-    payload = rateLimitPayload(globalRateLimit);
+    payload = rateLimitPayload(platform, options, globalRateLimit);
   }
   return {error: error, shouldSend: shouldSend, payload: payload};
 }
 
-function rateLimitPayload(globalRateLimit) {
-  return {
-    message: 'maxItems has been hit. Ignoring errors until reset.',
-    err: null,
-    custom: {
-      maxItems: globalRateLimit
+function rateLimitPayload(platform, options, globalRateLimit) {
+  var environment = options.environment || (options.payload && options.payload.environment);
+  var item = {
+    body: {
+      message: {
+        body: 'maxItems has been hit. Ignoring errors until reset.',
+        extra: {
+          maxItems: globalRateLimit
+        }
+      }
+    },
+    language: 'javascript',
+    environment: environment,
+    notifier: {
+      version: (options.notifier && options.notifier.version) || options.version
     }
   };
+  if (platform === 'browser') {
+    item.platform = 'browser';
+    item.framework = 'browser-js';
+    item.notifier.name = 'rollbar-browser-js';
+  } else if (platform === 'server') {
+    item.framework = options.framework || 'node-js';
+    item.notifier.name = options.notifier.name;
+  }
+  return item;
 }
 
 module.exports = RateLimiter;
