@@ -344,6 +344,84 @@ function makeUnhandledStackInfo(
   };
 }
 
+function createItem(args, logger, notifier, requestKeys) {
+  var message, err, custom, callback, request;
+  var arg;
+  var extraArgs = [];
+
+  for (var i = 0, l = args.length; i < l; ++i) {
+    arg = args[i];
+
+    var typ = typeName(arg);
+    switch (typ) {
+      case 'undefined':
+        break;
+      case 'string':
+        message ? extraArgs.push(arg) : message = arg;
+        break;
+      case 'function':
+        callback = wrapRollbarFunction(logger, arg, notifier);
+        break;
+      case 'date':
+        extraArgs.push(arg);
+        break;
+      case 'error':
+      case 'domexception':
+        err ? extraArgs.push(arg) : err = arg;
+        break;
+      case 'object':
+      case 'array':
+        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+          err ? extraArgs.push(arg) : err = arg;
+          break;
+        }
+        if (requestKeys && typ === 'object' && !request) {
+          for (var j = 0, len = requestKeys.length; j < len; ++j) {
+            if (arg[requestKeys[j]]) {
+              request = arg;
+              break;
+            }
+          }
+          if (request) {
+            break;
+          }
+        }
+        custom ? extraArgs.push(arg) : custom = arg;
+        break;
+      default:
+        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+          err ? extraArgs.push(arg) : err = arg;
+          break;
+        }
+        extraArgs.push(arg);
+    }
+  }
+
+  if (extraArgs.length > 0) {
+    // if custom is an array this turns it into an object with integer keys
+    custom = extend(true, {}, custom);
+    custom.extraArgs = extraArgs;
+  }
+
+  var item = {
+    message: message,
+    err: err,
+    custom: custom,
+    timestamp: (new Date()).getTime(),
+    callback: callback,
+    uuid: uuid4()
+  };
+  if (custom && custom.level !== undefined) {
+    item.level = custom.level;
+    delete custom.level;
+  }
+  if (requestKeys && request) {
+    item.request = request;
+  }
+  item._originalArgs = args;
+  return item;
+}
+
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
  *       undefined if not possible.
@@ -480,6 +558,7 @@ module.exports = {
   stringify: stringify,
   jsonParse: jsonParse,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
+  createItem: createItem,
   get: get,
   set: set,
   scrub: scrub

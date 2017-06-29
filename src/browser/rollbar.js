@@ -324,62 +324,7 @@ function addPredicatesToQueue(queue) {
 }
 
 Rollbar.prototype._createItem = function(args) {
-  var message, err, custom, callback;
-  var arg;
-  var extraArgs = [];
-
-  for (var i = 0, l = args.length; i < l; ++i) {
-    arg = args[i];
-
-    switch (_.typeName(arg)) {
-      case 'undefined':
-        break;
-      case 'string':
-        message ? extraArgs.push(arg) : message = arg;
-        break;
-      case 'function':
-        callback = _.wrapRollbarFunction(logger, arg, this);
-        break;
-      case 'date':
-        extraArgs.push(arg);
-        break;
-      case 'error':
-      case 'domexception':
-        err ? extraArgs.push(arg) : err = arg;
-        break;
-      case 'object':
-      case 'array':
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-          err ? extraArgs.push(arg) : err = arg;
-          break;
-        }
-        custom ? extraArgs.push(arg) : custom = arg;
-        break;
-      default:
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-          err ? extraArgs.push(arg) : err = arg;
-          break;
-        }
-        extraArgs.push(arg);
-    }
-  }
-
-  if (extraArgs.length > 0) {
-    // if custom is an array this turns it into an object with integer keys
-    custom = _.extend(true, {}, custom);
-    custom.extraArgs = extraArgs;
-  }
-
-  var item = {
-    message: message,
-    err: err,
-    custom: custom,
-    timestamp: (new Date()).getTime(),
-    callback: callback,
-    uuid: _.uuid4()
-  };
-  item._originalArgs = args;
-  return item;
+  return _.createItem(args, logger, this);
 };
 
 function _getFirstFunction(args) {
