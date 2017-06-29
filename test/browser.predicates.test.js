@@ -211,6 +211,101 @@ describe('urlIsWhitelisted', function() {
   });
 });
 
+describe('urlIsBlacklisted', function() {
+  it('should return true with no blacklist', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {frames: [
+        {filename: 'http://api.fake.com/v1/something'},
+        {filename: 'http://api.example.com/v1/something'},
+        {filename: 'http://api.fake.com/v2/something'}
+      ]}}
+    };
+    var settings = {
+      reportLevel: 'debug'
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+  it('should return true with no trace', function() {
+    var item = {
+      level: 'critical',
+      body: {message: 'hey'}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['fake.com', 'other.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+  it('should return false if any regex matches at least one filename in the trace', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {frames: [
+        {filename: 'http://api.fake.com/v1/something'},
+        {filename: 'http://api.example.com/v1/something'},
+        {filename: 'http://api.fake.com/v2/something'}
+      ]}}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['example.com', 'other.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.not.be.ok();
+  });
+  it('should return true if the filename is not a string', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {frames: [
+        {filename: {url: 'http://api.fake.com/v1/something'}},
+        {filename: {url: 'http://api.example.com/v1/something'}},
+        {filename: {url: 'http://api.fake.com/v2/something'}},
+      ]}}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['example.com', 'other.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+  it('should return true if there is no frames key', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {notframes: []}}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['nope.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+  it('should return true if there are no frames', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {frames: []}}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['nope.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+  it('should return true if nothing in the blacklist matches', function() {
+    var item = {
+      level: 'critical',
+      body: {trace: {frames: [
+        {filename: 'http://api.fake.com/v1/something'},
+        {filename: 'http://api.example.com/v1/something'},
+        {filename: 'http://api.fake.com/v2/something'}
+      ]}}
+    };
+    var settings = {
+      reportLevel: 'debug',
+      hostBlackList: ['baz\.com', 'foo\.com']
+    };
+    expect(p.urlIsBlacklisted(item, settings)).to.be.ok();
+  });
+});
+
 describe('messageIsIgnored', function() {
   it('true if no ignoredMessages setting', function() {
     var item = {
