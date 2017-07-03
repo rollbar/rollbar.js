@@ -5,9 +5,10 @@ var url = require('url');
 var _ = require('../utility');
 
 function baseData(item, options, callback) {
+  var environment = (options.payload && options.payload.environment) || options.environment;
   var data = {
     timestamp: Math.floor((new Date().getTime()) / 1000),
-    environment: item.environment || options.environment,
+    environment: item.environment || environment,
     level: item.level || 'error',
     language: 'javascript',
     framework: item.framework || options.framework,
