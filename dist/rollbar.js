@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -67,9 +67,9 @@
 	module.exports = rollbar;
 
 
-/***/ }),
+/***/ },
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -89,7 +89,7 @@
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
 	  var api = new API(this.options, transport, urllib);
-	  this.client = client || new Client(this.options, api, logger);
+	  this.client = client || new Client(this.options, api, logger, 'browser');
 	  addTransformsToNotifier(this.client.notifier);
 	  addPredicatesToQueue(this.client.queue);
 	  if (this.options.captureUncaught) {
@@ -101,9 +101,33 @@
 	  }
 	}
 	
+	var _instance = null;
+	Rollbar.init = function(options, client) {
+	  if (_instance) {
+	    return _instance.global(options).configure(options);
+	  }
+	  _instance = new Rollbar(options, client);
+	  return _instance;
+	};
+	
+	function handleUninitialized(maybeCallback) {
+	  var message = 'Rollbar is not initialized';
+	  logger.error(message);
+	  if (maybeCallback) {
+	    maybeCallback(new Error(message));
+	  }
+	}
+	
 	Rollbar.prototype.global = function(options) {
 	  this.client.global(options);
 	  return this;
+	};
+	Rollbar.global = function(options) {
+	  if (_instance) {
+	    return _instance.global(options);
+	  } else {
+	    handleUninitialized();
+	  }
 	};
 	
 	Rollbar.prototype.configure = function(options) {
@@ -112,12 +136,38 @@
 	  this.client.configure(options);
 	  return this;
 	};
+	Rollbar.configure = function(options) {
+	  if (_instance) {
+	    return _instance.configure(options);
+	  } else {
+	    handleUninitialized();
+	  }
+	};
+	
+	Rollbar.prototype.lastError = function() {
+	  return this.client.lastError;
+	};
+	Rollbar.lastError = function() {
+	  if (_instance) {
+	    return _instance.lastError();
+	  } else {
+	    handleUninitialized();
+	  }
+	};
 	
 	Rollbar.prototype.log = function() {
 	  var item = this._createItem(arguments);
 	  var uuid = item.uuid;
 	  this.client.log(item);
 	  return {uuid: uuid};
+	};
+	Rollbar.log = function() {
+	  if (_instance) {
+	    return _instance.log.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
 	};
 	
 	Rollbar.prototype.debug = function() {
@@ -126,12 +176,28 @@
 	  this.client.debug(item);
 	  return {uuid: uuid};
 	};
+	Rollbar.debug = function() {
+	  if (_instance) {
+	    return _instance.debug.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
+	};
 	
 	Rollbar.prototype.info = function() {
 	  var item = this._createItem(arguments);
 	  var uuid = item.uuid;
 	  this.client.info(item);
 	  return {uuid: uuid};
+	};
+	Rollbar.info = function() {
+	  if (_instance) {
+	    return _instance.info.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
 	};
 	
 	Rollbar.prototype.warn = function() {
@@ -140,12 +206,28 @@
 	  this.client.warn(item);
 	  return {uuid: uuid};
 	};
+	Rollbar.warn = function() {
+	  if (_instance) {
+	    return _instance.warn.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
+	};
 	
 	Rollbar.prototype.warning = function() {
 	  var item = this._createItem(arguments);
 	  var uuid = item.uuid;
 	  this.client.warning(item);
 	  return {uuid: uuid};
+	};
+	Rollbar.warning = function() {
+	  if (_instance) {
+	    return _instance.warning.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
 	};
 	
 	Rollbar.prototype.error = function() {
@@ -154,12 +236,28 @@
 	  this.client.error(item);
 	  return {uuid: uuid};
 	};
+	Rollbar.error = function() {
+	  if (_instance) {
+	    return _instance.error.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
+	};
 	
 	Rollbar.prototype.critical = function() {
 	  var item = this._createItem(arguments);
 	  var uuid = item.uuid;
 	  this.client.critical(item);
 	  return {uuid: uuid};
+	};
+	Rollbar.critical = function() {
+	  if (_instance) {
+	    return _instance.critical.apply(_instance, arguments);
+	  } else {
+	    var maybeCallback = _getFirstFunction(arguments);
+	    handleUninitialized(maybeCallback);
+	  }
 	};
 	
 	Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
@@ -198,7 +296,7 @@
 	  if (_.isError(reason)) {
 	    item = this._createItem([message, reason, context]);
 	  } else {
-	    item = this._createItem([message, context]);
+	    item = this._createItem([message, reason, context]);
 	    item.stackInfo = _.makeUnhandledStackInfo(
 	      message,
 	      '',
@@ -212,6 +310,8 @@
 	  }
 	  item.level = this.options.uncaughtErrorLevel;
 	  item._isUncaught = true;
+	  item._originalArgs = item._originalArgs || [];
+	  item._originalArgs.push(promise);
 	  this.client.log(item);
 	};
 	
@@ -266,6 +366,13 @@
 	    return f;
 	  }
 	};
+	Rollbar.wrap = function(f, context) {
+	  if (_instance) {
+	    return _instance.wrap(f, context);
+	  } else {
+	    handleUninitialized();
+	  }
+	};
 	
 	/* Internal */
 	
@@ -292,63 +399,17 @@
 	}
 	
 	Rollbar.prototype._createItem = function(args) {
-	  var message, err, custom, callback;
-	  var arg;
-	  var extraArgs = [];
+	  return _.createItem(args, logger, this);
+	};
 	
-	  for (var i = 0, l = args.length; i < l; ++i) {
-	    arg = args[i];
-	
-	    switch (_.typeName(arg)) {
-	      case 'undefined':
-	        break;
-	      case 'string':
-	        message ? extraArgs.push(arg) : message = arg;
-	        break;
-	      case 'function':
-	        callback = _.wrapRollbarFunction(logger, arg, this);
-	        break;
-	      case 'date':
-	        extraArgs.push(arg);
-	        break;
-	      case 'error':
-	      case 'domexception':
-	        err ? extraArgs.push(arg) : err = arg;
-	        break;
-	      case 'object':
-	      case 'array':
-	        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-	          err ? extraArgs.push(arg) : err = arg;
-	          break;
-	        }
-	        custom ? extraArgs.push(arg) : custom = arg;
-	        break;
-	      default:
-	        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-	          err ? extraArgs.push(arg) : err = arg;
-	          break;
-	        }
-	        extraArgs.push(arg);
+	function _getFirstFunction(args) {
+	  for (var i = 0, len = args.length; i < len; ++i) {
+	    if (_.isFunction(args[i])) {
+	      return args[i];
 	    }
 	  }
-	
-	  if (extraArgs.length > 0) {
-	    // if custom is an array this turns it into an object with integer keys
-	    custom = _.extend(true, {}, custom);
-	    custom.extraArgs = extraArgs;
-	  }
-	
-	  var item = {
-	    message: message,
-	    err: err,
-	    custom: custom,
-	    timestamp: (new Date()).getTime(),
-	    callback: callback,
-	    uuid: _.uuid4()
-	  };
-	  item._originalArgs = args;
-	  return item;
-	};
+	  return undefined;
+	}
 	
 	/* global __NOTIFIER_VERSION__:false */
 	/* global __DEFAULT_BROWSER_SCRUB_FIELDS__:false */
@@ -358,21 +419,22 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.0.4"),
+	  version: ("2.1.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
 	  uncaughtErrorLevel: ("error"),
 	  endpoint: ("api.rollbar.com/api/1/"),
+	  verbose: false,
 	  enabled: true
 	};
 	
 	module.exports = Rollbar;
 
 
-/***/ }),
+/***/ },
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -388,11 +450,13 @@
 	 * @param api
 	 * @param logger
 	 */
-	function Rollbar(options, api, logger) {
+	function Rollbar(options, api, logger, platform) {
 	  this.options = _.extend(true, {}, options);
 	  this.logger = logger;
-	  this.queue = new Queue(Rollbar.rateLimiter, api, this.options);
+	  Rollbar.rateLimiter.setPlatformOptions(platform, options);
+	  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
 	  this.notifier = new Notifier(this.queue, this.options);
+	  this.lastError = null;
 	}
 	
 	var defaultOptions = {
@@ -450,6 +514,9 @@
 	/* Internal */
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
+	  if (this._sameAsLastError(item)) {
+	    return;
+	  }
 	  _.wrapRollbarFunction(this.logger, function() {
 	    var callback = null;
 	    if (item.callback) {
@@ -465,12 +532,20 @@
 	  return this.options.logLevel || 'debug';
 	};
 	
+	Rollbar.prototype._sameAsLastError = function(item) {
+	  if (this.lastError && this.lastError === item.err) {
+	    return true;
+	  }
+	  this.lastError = item.err;
+	  return false;
+	};
+	
 	module.exports = Rollbar;
 
 
-/***/ }),
+/***/ },
 /* 3 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 	
@@ -483,6 +558,8 @@
 	  this.startTime = (new Date()).getTime();
 	  this.counter = 0;
 	  this.perMinCounter = 0;
+	  this.platform = null;
+	  this.platformOptions = {};
 	  this.configureGlobal(options);
 	}
 	
@@ -538,15 +615,20 @@
 	  var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
 	
 	  if (checkRate(item, globalRateLimit, this.counter)) {
-	    return shouldSendValue(globalRateLimit + ' max items reached', false);
+	    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
 	  } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
-	    return shouldSendValue(globalRateLimitPerMin + ' items per minute reached', false);
+	    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
 	  }
 	  this.counter++;
 	  this.perMinCounter++;
 	
 	  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
-	  return shouldSendValue(null, shouldSend, globalRateLimit);
+	  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
+	};
+	
+	RateLimiter.prototype.setPlatformOptions = function(platform, options) {
+	  this.platform = platform;
+	  this.platformOptions = options;
 	};
 	
 	/* Helpers */
@@ -555,33 +637,51 @@
 	  return !item.ignoreRateLimit && limit >= 1 && counter >= limit;
 	}
 	
-	function shouldSendValue(error, shouldSend, globalRateLimit) {
+	function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
 	  var payload = null;
 	  if (error) {
 	    error = new Error(error);
 	  }
 	  if (!error && !shouldSend) {
-	    payload = rateLimitPayload(globalRateLimit);
+	    payload = rateLimitPayload(platform, options, globalRateLimit);
 	  }
 	  return {error: error, shouldSend: shouldSend, payload: payload};
 	}
 	
-	function rateLimitPayload(globalRateLimit) {
-	  return {
-	    message: 'maxItems has been hit. Ignoring errors until reset.',
-	    err: null,
-	    custom: {
-	      maxItems: globalRateLimit
+	function rateLimitPayload(platform, options, globalRateLimit) {
+	  var environment = options.environment || (options.payload && options.payload.environment);
+	  var item = {
+	    body: {
+	      message: {
+	        body: 'maxItems has been hit. Ignoring errors until reset.',
+	        extra: {
+	          maxItems: globalRateLimit
+	        }
+	      }
+	    },
+	    language: 'javascript',
+	    environment: environment,
+	    notifier: {
+	      version: (options.notifier && options.notifier.version) || options.version
 	    }
 	  };
+	  if (platform === 'browser') {
+	    item.platform = 'browser';
+	    item.framework = 'browser-js';
+	    item.notifier.name = 'rollbar-browser-js';
+	  } else if (platform === 'server') {
+	    item.framework = options.framework || 'node-js';
+	    item.notifier.name = options.notifier.name;
+	  }
+	  return item;
 	}
 	
 	module.exports = RateLimiter;
 
 
-/***/ }),
+/***/ },
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -597,11 +697,13 @@
 	 *    rateLimiter.shouldSend(item) -> bool
 	 * @param api - An object which conforms to the interface
 	 *    api.postItem(payload, function(err, response))
+	 * @param logger - An object used to log verbose messages if desired
 	 * @param options - see Queue.prototype.configure
 	 */
-	function Queue(rateLimiter, api, options) {
+	function Queue(rateLimiter, api, logger, options) {
 	  this.rateLimiter = rateLimiter;
 	  this.api = api;
+	  this.logger = logger;
 	  this.options = options;
 	  this.predicates = [];
 	  this.pendingRequests = [];
@@ -624,7 +726,7 @@
 	
 	/*
 	 * addPredicate - adds a predicate to the end of the list of predicates for this queue
-	 * 
+	 *
 	 * @param predicate - function(item, options) -> (bool|{err: Error})
 	 *  Returning true means that this predicate passes and the item is okay to go on the queue
 	 *  Returning false means do not add the item to the queue, but it is not an error
@@ -660,6 +762,7 @@
 	    callback();
 	    return;
 	  }
+	  this._maybeLog(item);
 	  this.pendingRequests.push(item);
 	  try {
 	    this._makeApiRequest(item, function(err, resp) {
@@ -799,12 +902,27 @@
 	  }
 	};
 	
+	Queue.prototype._maybeLog = function(item) {
+	  if (this.logger && this.options.verbose) {
+	    var message = _.get(item, 'data.body.trace.exception.message');
+	    message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
+	    if (message) {
+	      this.logger.error(message);
+	      return;
+	    }
+	    message = _.get(item, 'data.body.message.body');
+	    if (message) {
+	      this.logger.log(message);
+	    }
+	  }
+	};
+	
 	module.exports = Queue;
 
 
-/***/ }),
+/***/ },
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -1154,6 +1272,84 @@
 	  };
 	}
 	
+	function createItem(args, logger, notifier, requestKeys) {
+	  var message, err, custom, callback, request;
+	  var arg;
+	  var extraArgs = [];
+	
+	  for (var i = 0, l = args.length; i < l; ++i) {
+	    arg = args[i];
+	
+	    var typ = typeName(arg);
+	    switch (typ) {
+	      case 'undefined':
+	        break;
+	      case 'string':
+	        message ? extraArgs.push(arg) : message = arg;
+	        break;
+	      case 'function':
+	        callback = wrapRollbarFunction(logger, arg, notifier);
+	        break;
+	      case 'date':
+	        extraArgs.push(arg);
+	        break;
+	      case 'error':
+	      case 'domexception':
+	        err ? extraArgs.push(arg) : err = arg;
+	        break;
+	      case 'object':
+	      case 'array':
+	        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+	          err ? extraArgs.push(arg) : err = arg;
+	          break;
+	        }
+	        if (requestKeys && typ === 'object' && !request) {
+	          for (var j = 0, len = requestKeys.length; j < len; ++j) {
+	            if (arg[requestKeys[j]]) {
+	              request = arg;
+	              break;
+	            }
+	          }
+	          if (request) {
+	            break;
+	          }
+	        }
+	        custom ? extraArgs.push(arg) : custom = arg;
+	        break;
+	      default:
+	        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+	          err ? extraArgs.push(arg) : err = arg;
+	          break;
+	        }
+	        extraArgs.push(arg);
+	    }
+	  }
+	
+	  if (extraArgs.length > 0) {
+	    // if custom is an array this turns it into an object with integer keys
+	    custom = extend(true, {}, custom);
+	    custom.extraArgs = extraArgs;
+	  }
+	
+	  var item = {
+	    message: message,
+	    err: err,
+	    custom: custom,
+	    timestamp: (new Date()).getTime(),
+	    callback: callback,
+	    uuid: uuid4()
+	  };
+	  if (custom && custom.level !== undefined) {
+	    item.level = custom.level;
+	    delete custom.level;
+	  }
+	  if (requestKeys && request) {
+	    item.request = request;
+	  }
+	  item._originalArgs = args;
+	  return item;
+	}
+	
 	/*
 	 * get - given an obj/array and a keypath, return the value at that keypath or
 	 *       undefined if not possible.
@@ -1290,15 +1486,16 @@
 	  stringify: stringify,
 	  jsonParse: jsonParse,
 	  makeUnhandledStackInfo: makeUnhandledStackInfo,
+	  createItem: createItem,
 	  get: get,
 	  set: set,
 	  scrub: scrub
 	};
 
 
-/***/ }),
+/***/ },
 /* 6 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 	
@@ -1388,9 +1585,9 @@
 	
 
 
-/***/ }),
+/***/ },
 /* 7 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	//  json3.js
 	//  2017-02-21
@@ -2157,9 +2354,9 @@
 	module.exports = setupCustomJSON;
 
 
-/***/ }),
+/***/ },
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2280,9 +2477,9 @@
 	module.exports = Notifier;
 
 
-/***/ }),
+/***/ },
 /* 9 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2354,9 +2551,9 @@
 	module.exports = Api;
 
 
-/***/ }),
+/***/ },
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2450,9 +2647,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 11 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2521,9 +2718,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 12 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	// Console-polyfill. MIT license.
 	// https://github.com/paulmillr/console-polyfill
@@ -2546,9 +2743,9 @@
 	})(typeof window === 'undefined' ? this : window);
 
 
-/***/ }),
+/***/ },
 /* 13 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 	
@@ -2584,9 +2781,9 @@
 	module.exports = Detection;
 
 
-/***/ }),
+/***/ },
 /* 14 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 	
@@ -2699,9 +2896,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 15 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2911,9 +3108,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 16 */
-/***/ (function(module, exports) {
+/***/ function(module, exports) {
 
 	'use strict';
 	
@@ -2998,9 +3195,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 17 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3032,7 +3229,7 @@
 	}
 	
 	function addBaseInfo(item, options, callback) {
-	  var environment = options.environment || (options.payload && options.payload.environment);
+	  var environment = (options.payload && options.payload.environment) || options.environment;
 	  item.data = _.extend(true, {}, item.data, {
 	    environment: environment,
 	    level: item.level,
@@ -3271,9 +3468,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 18 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3367,9 +3564,9 @@
 	};
 
 
-/***/ }),
+/***/ },
 /* 19 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3566,9 +3763,9 @@
 	
 
 
-/***/ }),
+/***/ },
 /* 20 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3679,9 +3876,9 @@
 	}));
 
 
-/***/ }),
+/***/ },
 /* 21 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3719,16 +3916,31 @@
 	  return true;
 	}
 	
+	function urlIsBlacklisted(item, settings) {
+	  return urlIsOnAList(item, settings, 'blacklist');
+	}
+	
 	function urlIsWhitelisted(item, settings) {
-	  var whitelist, trace, frame, filename, frameLength, url, listLength, urlRegex;
+	  return urlIsOnAList(item, settings, 'whitelist');
+	}
+	
+	function urlIsOnAList(item, settings, whiteOrBlack) {
+	  // whitelist is the default
+	  var black = false;
+	  if (whiteOrBlack === 'blacklist') {
+	    black = true;
+	  }
+	  var list, trace, frame, filename, frameLength, url, listLength, urlRegex;
 	  var i, j;
 	
 	  try {
-	    whitelist = settings.hostWhiteList;
-	    listLength = whitelist && whitelist.length;
+	    list = black ? settings.hostBlackList : settings.hostWhiteList;
+	    listLength = list && list.length;
 	    trace = _.get(item, 'body.trace');
 	
-	    if (!whitelist || listLength === 0) {
+	    // These two checks are important to come first as they are defaults
+	    // in case the list is missing or the trace is missing or not well-formed
+	    if (!list || listLength === 0) {
 	      return true;
 	    }
 	    if (!trace || !trace.frames) {
@@ -3745,22 +3957,27 @@
 	      }
 	
 	      for (j = 0; j < listLength; j++) {
-	        url = whitelist[j];
+	        url = list[j];
 	        urlRegex = new RegExp(url);
 	
 	        if (urlRegex.test(filename)){
-	          return true;
+	          return !black;
 	        }
 	      }
 	    }
 	  } catch (e)
 	  /* istanbul ignore next */
 	  {
-	    settings.hostWhiteList = null;
-	    logger.error('Error while reading your configuration\'s hostWhiteList option. Removing custom hostWhiteList.', e);
+	    if (black) {
+	      settings.hostBlackList = null;
+	    } else {
+	      settings.hostWhiteList = null;
+	    }
+	    var listName = black ? 'hostBlackList' : 'hostWhiteList';
+	    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
 	    return true;
 	  }
-	  return false;
+	  return black;
 	}
 	
 	function messageIsIgnored(item, settings) {
@@ -3771,7 +3988,7 @@
 	  try {
 	    messageIsIgnored = false;
 	    ignoredMessages = settings.ignoredMessages;
-	    
+	
 	    if (!ignoredMessages || ignoredMessages.length === 0) {
 	      return true;
 	    }
@@ -3808,11 +4025,12 @@
 	module.exports = {
 	  checkIgnore: checkIgnore,
 	  userCheckIgnore: userCheckIgnore,
+	  urlIsBlacklisted: urlIsBlacklisted,
 	  urlIsWhitelisted: urlIsWhitelisted,
 	  messageIsIgnored: messageIsIgnored
 	};
 	
 
 
-/***/ })
+/***/ }
 /******/ ]);
