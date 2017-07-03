@@ -26,7 +26,7 @@ function ensureItemHasSomethingToSay(item, options, callback) {
 }
 
 function addBaseInfo(item, options, callback) {
-  var environment = options.environment || (options.payload && options.payload.environment);
+  var environment = (options.payload && options.payload.environment) || options.environment;
   item.data = _.extend(true, {}, item.data, {
     environment: environment,
     level: item.level,

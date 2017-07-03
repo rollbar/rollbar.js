@@ -86,7 +86,9 @@ vows.describe('transforms')
         'with values': {
           topic: function() {
             return _.extend(true, {}, rollbar.defaultOptions, {
-              environment: 'opt-prod',
+              payload: {
+                environment: 'payload-prod',
+              },
               framework: 'opt-node',
               host: 'opt-host',
               branch: 'opt-master'
@@ -111,7 +113,7 @@ vows.describe('transforms')
               'should have data from options and defaults': function(err, item) {
                 assert.ifError(err);
                 var data = item.data;
-                assert.equal(data.environment, 'opt-prod');
+                assert.equal(data.environment, 'payload-prod');
                 assert.equal(data.framework, 'opt-node');
                 assert.equal(data.language, 'javascript');
                 assert.ok(data.server);
@@ -124,9 +126,9 @@ vows.describe('transforms')
               topic: function(options) {
                 var item = {
                   level: 'critical',
+                  environment: 'production',
                   framework: 'star-wars',
                   uuid: '12345',
-                  environment: 'production',
                   custom: {
                     one: 'a1',
                     stuff: 'b2',
