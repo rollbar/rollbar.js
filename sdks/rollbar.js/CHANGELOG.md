@@ -1,5 +1,28 @@
 # Change Log
 
+**v2.1.0**
+- Use the upstream version of console-polyfill: [#306](https://github.com/rollbar/rollbar.js/pull/306)
+- The verbose option still existed but didn't do anything, this adds back the functionality to
+  output some information to the console: [#311](https://github.com/rollbar/rollbar.js/pull/311)
+- Fix how unhandled rejections operate if they are rejected with a non-error:
+  [#312](https://github.com/rollbar/rollbar.js/pull/312)
+- Handle logging both messages and errors in one log call properly:
+  [#313](https://github.com/rollbar/rollbar.js/pull/313)
+- Actually included the options set in payload in the final payload on the server side:
+  [#317](https://github.com/rollbar/rollbar.js/pull/317)
+- `lastError` was an undocumented feature that was accidentially removed, add it back but as a
+  function rather than as a simple property: [#318](https://github.com/rollbar/rollbar.js/pull/318)
+- Add a blacklist functionality similar to the host whitelist:
+  [#319](https://github.com/rollbar/rollbar.js/pull/319)
+- Add a helper function for wrapping server-side callbacks:
+  [#321](https://github.com/rollbar/rollbar.js/pull/321)
+- There was a bug in the payload if you hit your own configured rate limit:
+  [#325](https://github.com/rollbar/rollbar.js/pull/325)
+- Add checkIgnore to the server side to match what is available in the browser:
+  [#326](https://github.com/rollbar/rollbar.js/pull/326)
+- Allow environment to be nested inside the payload key in the configuration on the server side to
+  match what we allow in the browser: [#329](https://github.com/rollbar/rollbar.js/pull/329)
+
 **v2.0.4**
 - Fixes a small typo in the unhandled rejection handler. (pr#303)
 - Updated the no-conflict example to use the new noconflict bundle and updated docs. 
