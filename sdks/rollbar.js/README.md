@@ -994,6 +994,18 @@ If you're using the [Passport](http://passportjs.org/) authentication library, t
 
 Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `username` are supplemental and will be overwritten whenever a new value is received for an existing `id`. The `id` is a string up to 40 characters long.
 
+## Verbose Option
+
+If you would like to see what is being sent to Rollbar in your console, use the
+`verbose` option. Set `verbose: true` in your configuration, and we will output certain information
+via the [debug](https://www.npmjs.com/package/debug) package. This package uses the `DEBUG`
+environment variable to configure what to output. We use the namespace `Rollbar` for our
+log messages, so for example, to see everything you need to do something like this:
+
+```
+DEBUG=Rollbar:* node app.js
+```
+
 ## Upgrading from node_rollbar
 
 The upgrade path from `node_rollbar` version 0.6.4 to version 2.0.0 of this library is not
