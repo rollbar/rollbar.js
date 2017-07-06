@@ -61,8 +61,9 @@ Queue.prototype.addPredicate = function(predicate) {
  *  in the case of a success, otherwise response will be null and error will have a value. If both
  *  error and response are null then the item was stopped by a predicate which did not consider this
  *  to be an error condition, but nonetheless did not send the item to the API.
+ *  @param originalError - The original error before any transformations that is to be logged if any
  */
-Queue.prototype.addItem = function(item, callback) {
+Queue.prototype.addItem = function(item, callback, originalError) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() { return; };
   }
@@ -75,7 +76,7 @@ Queue.prototype.addItem = function(item, callback) {
     callback();
     return;
   }
-  this._maybeLog(item);
+  this._maybeLog(item, originalError);
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(item, function(err, resp) {
@@ -215,15 +216,16 @@ Queue.prototype._dequeuePendingRequest = function(item) {
   }
 };
 
-Queue.prototype._maybeLog = function(item) {
+Queue.prototype._maybeLog = function(data, originalError) {
   if (this.logger && this.options.verbose) {
-    var message = _.get(item, 'data.body.trace.exception.message');
-    message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
+    var message = originalError;
+    message = message || _.get(data, 'body.trace.exception.message');
+    message = message || _.get(data, 'body.trace_chain.0.exception.message');
     if (message) {
       this.logger.error(message);
       return;
     }
-    message = _.get(item, 'data.body.message.body');
+    message = _.get(data, 'body.message.body');
     if (message) {
       this.logger.log(message);
     }
