@@ -68,11 +68,12 @@ Notifier.prototype.log = function(item, callback) {
     return callback(new Error('Rollbar is not enabled'));
   }
 
+  var originalError = item.err;
   this._applyTransforms(item, function(err, i) {
     if (err) {
       return callback(err, null);
     }
-    this.queue.addItem(i, callback);
+    this.queue.addItem(i, callback, originalError);
   }.bind(this));
 };
 
@@ -108,7 +109,7 @@ Notifier.prototype._applyTransforms = function(item, callback) {
 
     transforms[transformIndex](i, options, cb);
   };
-  
+
   cb(null, item);
 };
 
