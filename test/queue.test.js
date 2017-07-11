@@ -174,7 +174,7 @@ describe('addItem', function() {
         var options = {verbose: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = {data: {body: {trace: {exception: {message: 'hello'}}}}};
+        var item = {body: {trace: {exception: {message: 'hello'}}}};
         var serverResponse = {success: true};
 
         rateLimiter.handler = function(i) {
@@ -198,7 +198,7 @@ describe('addItem', function() {
         var options = {verbose: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = {data: {body: {message: {body: 'hello'}}}};
+        var item = {body: {message: {body: 'hello'}}};
         var serverResponse = {success: true};
 
         rateLimiter.handler = function(i) {
@@ -222,7 +222,7 @@ describe('addItem', function() {
         var options = {verbose: false};
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = {data: {body: {message: {body: 'hello'}}}};
+        var item = {body: {message: {body: 'hello'}}};
         var serverResponse = {success: true};
 
         rateLimiter.handler = function(i) {
