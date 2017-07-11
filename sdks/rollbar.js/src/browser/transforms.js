@@ -172,6 +172,9 @@ function addBodyTrace(item, options, callback) {
         method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
         colno: stackFrame.column
       };
+      if (frame.method && frame.method.indexOf('f._wrapped') != -1) {
+        continue;
+      }
 
       code = pre = post = null;
       contextLength = stackFrame.context ? stackFrame.context.length : 0;
