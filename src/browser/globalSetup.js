@@ -92,7 +92,7 @@ function _extendListenerPrototype(handler, prototype, shim) {
       oldRemoveEventListener = oldRemoveEventListener._rollbarOldRemove;
     }
     var removeFn = function(event, callback, bubble) {
-      oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
+      oldRemoveEventListener.call(this, event, callback && callback._rollbar_wrapped || callback, bubble);
     };
     removeFn._rollbarOldRemove = oldRemoveEventListener;
     removeFn.belongsToShim = shim;
