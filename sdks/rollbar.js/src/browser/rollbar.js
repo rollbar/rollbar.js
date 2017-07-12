@@ -311,6 +311,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addClientInfo(window))
     .addTransform(transforms.addPluginInfo(window))
     .addTransform(transforms.addBody)
+    .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(transforms.scrubPayload)
     .addTransform(transforms.userTransform)
     .addTransform(sharedTransforms.itemToPayload);

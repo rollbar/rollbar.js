@@ -363,6 +363,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.baseData)
     .addTransform(transforms.handleItemWithError)
     .addTransform(transforms.addBody)
+    .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.itemToPayload);

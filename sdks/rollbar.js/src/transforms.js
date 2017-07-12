@@ -13,6 +13,31 @@ function itemToPayload(item, options, callback) {
   callback(null, data);
 }
 
+function addMessageWithError(item, options, callback) {
+  if (!item.message) {
+    callback(null, item);
+    return;
+  }
+  var tracePath = 'data.body.trace_chain.0';
+  var trace = _.get(item, tracePath);
+  if (!trace) {
+    tracePath = 'data.body.trace';
+    trace = _.get(item, tracePath);
+  }
+  if (trace) {
+    if (!(trace.exception && trace.exception.description)) {
+      _.set(item, tracePath+'.exception.description', item.message);
+      callback(null, item);
+      return;
+    }
+    var extra = _.get(item, tracePath+'.extra') || {};
+    var newExtra =  _.extend(true, {}, extra, {message: item.message});
+    _.set(item, tracePath+'.extra', newExtra);
+  }
+  callback(null, item);
+}
+
 module.exports = {
-  itemToPayload: itemToPayload
+  itemToPayload: itemToPayload,
+  addMessageWithError: addMessageWithError
 };
