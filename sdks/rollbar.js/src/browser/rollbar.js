@@ -8,6 +8,7 @@ var transport = require('./transport');
 var urllib = require('./url');
 
 var transforms = require('./transforms');
+var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var errorParser = require('./errorParser');
 
@@ -312,7 +313,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addBody)
     .addTransform(transforms.scrubPayload)
     .addTransform(transforms.userTransform)
-    .addTransform(transforms.itemToPayload);
+    .addTransform(sharedTransforms.itemToPayload);
 }
 
 function addPredicatesToQueue(queue) {

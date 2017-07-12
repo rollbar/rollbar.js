@@ -12,6 +12,7 @@ var urllib = require('url');
 var jsonBackup = require('json-stringify-safe');
 
 var transforms = require('./transforms');
+var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 
 function Rollbar(options, client) {
@@ -364,7 +365,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addBody)
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.scrubPayload)
-    .addTransform(transforms.convertToPayload);
+    .addTransform(sharedTransforms.itemToPayload);
 }
 
 function addPredicatesToQueue(queue) {
