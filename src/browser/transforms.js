@@ -146,7 +146,7 @@ function addBodyTrace(item, options, callback) {
   };
 
   if (description) {
-    trace.exception.description = description || 'uncaught exception';
+    trace.exception.description = description;
   }
 
   // Transform a TraceKit stackInfo object into a Rollbar trace
