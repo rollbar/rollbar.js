@@ -39,7 +39,7 @@ function setupShim(window, options) {
     return window[alias];
   }
 
-  window._rollbarShims = {}; 
+  window._rollbarShims = {};
   window._rollbarWrappedError = null;
 
   var handler = new Rollbar(options);
@@ -129,8 +129,8 @@ Shim.prototype.wrap = function(f, context) {
       return f;
     }
 
-    if (!f._wrapped) {
-      f._wrapped = function () {
+    if (!f._rollbar_wrapped) {
+      f._rollbar_wrapped = function () {
         try {
           return f.apply(this, arguments);
         } catch(exc) {
@@ -146,18 +146,18 @@ Shim.prototype.wrap = function(f, context) {
         }
       };
 
-      f._wrapped._isWrap = true;
+      f._rollbar_wrapped._isWrap = true;
 
       if (f.hasOwnProperty) {
         for (var prop in f) {
           if (f.hasOwnProperty(prop)) {
-            f._wrapped[prop] = f[prop];
+            f._rollbar_wrapped[prop] = f[prop];
           }
         }
       }
     }
 
-    return f._wrapped;
+    return f._rollbar_wrapped;
   } catch (e) {
     // Return the original function if the wrap fails.
     return f;
@@ -173,7 +173,7 @@ function stub(method) {
   });
 }
 
-var _methods = 
+var _methods =
   'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection'.split(',');
 
 for (var i = 0; i < _methods.length; ++i) {
