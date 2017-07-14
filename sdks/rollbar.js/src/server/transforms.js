@@ -154,16 +154,6 @@ function scrubPayload(item, options, callback) {
   callback(null, item);
 }
 
-function convertToPayload(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
-  }
-
-  var data = _.extend(true, {}, item.data, payloadOptions);
-  callback(null, data);
-}
-
 /** Helpers **/
 
 function _buildTraceData(chain) {
@@ -231,7 +221,6 @@ module.exports = {
   addMessageData: addMessageData,
   addErrorData: addErrorData,
   addRequestData: addRequestData,
-  scrubPayload: scrubPayload,
-  convertToPayload: convertToPayload
+  scrubPayload: scrubPayload
 };
 
