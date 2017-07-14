@@ -23,6 +23,7 @@ function Queue(rateLimiter, api, logger, options) {
   this.retryQueue = [];
   this.retryHandle = null;
   this.waitCallback = null;
+  this.waitIntervalID = null;
 }
 
 /*
@@ -102,7 +103,14 @@ Queue.prototype.wait = function(callback) {
   this.waitCallback = callback;
   if (this.pendingRequests.length == 0) {
     this.waitCallback();
+    return;
   }
+  if (this.waitIntervalID) {
+    this.waitIntervalID = clearInterval(this.waitIntervalID);
+  }
+  this.waitIntervalID = setInterval(function() {
+    this._maybeCallWait();
+  }.bind(this), 500);
 };
 
 /* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
@@ -229,6 +237,15 @@ Queue.prototype._maybeLog = function(data, originalError) {
     if (message) {
       this.logger.log(message);
     }
+  }
+};
+
+Queue.prototype._maybeCallWait = function() {
+  if (_.isFunction(this.waitCallback) && this.pendingRequests.length === 0) {
+    if (this.waitIntervalID) {
+      this.waitIntervalID = clearInterval(this.waitIntervalID);
+    }
+    this.waitCallback();
   }
 };
 
