@@ -101,8 +101,7 @@ Queue.prototype.wait = function(callback) {
     return;
   }
   this.waitCallback = callback;
-  if (this.pendingRequests.length == 0) {
-    this.waitCallback();
+  if (this._maybeCallWait()) {
     return;
   }
   if (this.waitIntervalID) {
@@ -216,9 +215,7 @@ Queue.prototype._dequeuePendingRequest = function(item) {
   for (var i = this.pendingRequests.length; i >= 0; i--) {
     if (this.pendingRequests[i] == item) {
       this.pendingRequests.splice(i, 1);
-      if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
-        this.waitCallback();
-      }
+      this._maybeCallWait();
       return;
     }
   }
@@ -246,7 +243,9 @@ Queue.prototype._maybeCallWait = function() {
       this.waitIntervalID = clearInterval(this.waitIntervalID);
     }
     this.waitCallback();
+    return true;
   }
+  return false;
 };
 
 module.exports = Queue;
