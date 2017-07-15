@@ -211,7 +211,6 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  * @param item - the item previously added to the pending request queue
  */
 Queue.prototype._dequeuePendingRequest = function(item) {
-  var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
   for (var i = this.pendingRequests.length; i >= 0; i--) {
     if (this.pendingRequests[i] == item) {
       this.pendingRequests.splice(i, 1);
