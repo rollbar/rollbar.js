@@ -23,6 +23,7 @@ function Queue(rateLimiter, api, logger, options) {
   this.retryQueue = [];
   this.retryHandle = null;
   this.waitCallback = null;
+  this.waitIntervalID = null;
 }
 
 /*
@@ -100,9 +101,15 @@ Queue.prototype.wait = function(callback) {
     return;
   }
   this.waitCallback = callback;
-  if (this.pendingRequests.length == 0) {
-    this.waitCallback();
+  if (this._maybeCallWait()) {
+    return;
   }
+  if (this.waitIntervalID) {
+    this.waitIntervalID = clearInterval(this.waitIntervalID);
+  }
+  this.waitIntervalID = setInterval(function() {
+    this._maybeCallWait();
+  }.bind(this), 500);
 };
 
 /* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
@@ -204,13 +211,10 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  * @param item - the item previously added to the pending request queue
  */
 Queue.prototype._dequeuePendingRequest = function(item) {
-  var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
   for (var i = this.pendingRequests.length; i >= 0; i--) {
     if (this.pendingRequests[i] == item) {
       this.pendingRequests.splice(i, 1);
-      if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
-        this.waitCallback();
-      }
+      this._maybeCallWait();
       return;
     }
   }
@@ -230,6 +234,17 @@ Queue.prototype._maybeLog = function(data, originalError) {
       this.logger.log(message);
     }
   }
+};
+
+Queue.prototype._maybeCallWait = function() {
+  if (_.isFunction(this.waitCallback) && this.pendingRequests.length === 0) {
+    if (this.waitIntervalID) {
+      this.waitIntervalID = clearInterval(this.waitIntervalID);
+    }
+    this.waitCallback();
+    return true;
+  }
+  return false;
 };
 
 module.exports = Queue;

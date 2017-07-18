@@ -399,11 +399,14 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
         logger.error('Encountered error while handling an uncaught exception.');
         logger.error(err);
       }
-
-      if (exitOnUncaught) {
-        process.exit(1);
-      }
     });
+    if (exitOnUncaught) {
+      setImmediate(function() {
+        this.wait(function() {
+          process.exit(1);
+        });
+      }.bind(this));
+    }
   }.bind(this));
 };
 
