@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var urlparser = require('./url');
 
 var defaults = {
   network: true,
@@ -36,6 +37,9 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this.rollbar = rollbar;
   this._window = _window || {};
   this._document = _document || {};
+
+  this._location = this._window.location;
+  this._lastHref = this._location && this._location.href;
 }
 
 Instrumenter.prototype.instrument = function() {
@@ -61,7 +65,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
   function wrapProp(prop, xhr) {
     if (prop in xhr && _.isFunction(xhr[prop])) {
-      replace(xhr, prop, function (orig) {
+      replace(xhr, prop, function(orig) {
         return self.rollbar.wrap(orig);
       });
     }
@@ -101,7 +105,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
         if ('onreadystatechange' in xhr && _.isFunction(xhr.onreadystatechange)) {
           replace(xhr, 'onreadystatechange', function(orig) {
-            self.rollbar.wrap(orig, onreadystatechangeHandler); // FIXME
+            self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
           });
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;
@@ -148,12 +152,76 @@ Instrumenter.prototype.instrumentNetwork = function() {
 };
 
 Instrumenter.prototype.instrumentConsole = function() {
+  if (!('console' in this._window && this._window.console.log)) {
+    return;
+  }
+
+  var self = this;
+  var c = this._window.console;
+
+  function wrapConsole(method) {
+    var orig = c[method];
+    var origConsole = c;
+    var level = method === 'warn' ? 'warning' : method;
+    c[method] = function() {
+      var args = Array.prototype.slice.call(arguments);
+      var message = _.formatArgsAsString(args);
+      self.telemeter.captureLog(message, level);
+      if (orig) {
+        Function.prototype.apply.call(orig, origConsole, args);
+      }
+    };
+  }
+  var methods = ['debug','info','warn','error','log'];
+  for (var i=0, len=methods.length; i < len; i++) {
+    wrapConsole(methods[i]);
+  }
 };
 
 Instrumenter.prototype.instrumentDom = function() {
 };
 
 Instrumenter.prototype.instrumentLocation = function() {
+  var chrome = this._window.chrome;
+  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+  // See https://github.com/angular/angular.js/pull/13945/files
+  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+  if (!hasPushState) {
+    return;
+  }
+  var self = this;
+  var oldOnPopState = this._window.onpopstate;
+  this._window.onpopstate = function() {
+    var current = self._location.href;
+    self.handleUrlChange(self._lastHref, current);
+    if (oldOnPopState) {
+      oldOnPopState.apply(this, arguments);
+    }
+  };
+
+  replace(this._window.history, 'pushState', function(orig) {
+    return function() {
+      var url = arguments.length > 2 ? arguments[2] : undefined;
+      if (url) {
+        self.handleUrlChange(self._lastHref, url + '');
+      }
+      return orig.apply(this, arguments);
+    };
+  });
+};
+
+Instrumenter.prototype.handleUrlChange = function(from, to) {
+  var parsedHref = urlparser.parse(this._location.href);
+  var parsedTo = urlparser.parse(to);
+  var parsedFrom = urlparser.parse(from);
+  this._lastHref = to;
+  if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
+    to = parsedTo.path + (parsedTo.hash || '');
+  }
+  if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
+    from = parsedFrom.path + (parsedFrom.hash || '');
+  }
+  this.telemeter.captureNavigation(from, to);
 };
 
 module.exports = Instrumenter;
