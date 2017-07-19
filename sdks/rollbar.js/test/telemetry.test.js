@@ -28,7 +28,7 @@ describe('capture', function() {
     expect(event.timestamp_ms - now).to.be.below(500);
     expect(event.type).to.equal('network');
     expect(event.level).to.equal('debug');
-    expect(event.metadata.url).to.equal('a.com');
+    expect(event.body.url).to.equal('a.com');
 
     done();
   });
