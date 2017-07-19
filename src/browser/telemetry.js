@@ -1,15 +1,15 @@
 var _ = require('../utility');
 
 var defaults = {
-	network: true,
-	console: true,
-	dom: true,
-	location: true
+  network: true,
+  console: true,
+  dom: true,
+  location: true
 };
 
 function replace(obj, name, replacement, replacements) {
-	var orig = obj[name];
-	obj[name] = replacement(orig);
+  var orig = obj[name];
+  obj[name] = replacement(orig);
   if (replacements) {
     replacements.push([obj, name, orig]);
   }
