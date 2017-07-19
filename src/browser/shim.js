@@ -112,7 +112,7 @@ Shim.prototype.loadFull = function(window, document, immediate, options, callbac
   parentNode.insertBefore(s, f);
 };
 
-Shim.prototype.wrap = function(f, context) {
+Shim.prototype.wrap = function(f, context, _before) {
   try {
     var ctxFn;
     if (typeof context === 'function') {
@@ -131,6 +131,9 @@ Shim.prototype.wrap = function(f, context) {
 
     if (!f._rollbar_wrapped) {
       f._rollbar_wrapped = function () {
+        if (_before && typeof _before === 'function') {
+          _before.apply(this, arguments);
+        }
         try {
           return f.apply(this, arguments);
         } catch(exc) {

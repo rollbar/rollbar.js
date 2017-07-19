@@ -241,7 +241,7 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   this.client.log(item);
 };
 
-Rollbar.prototype.wrap = function(f, context) {
+Rollbar.prototype.wrap = function(f, context, _before) {
   try {
     var ctxFn;
     if(_.isFunction(context)) {
@@ -260,6 +260,9 @@ Rollbar.prototype.wrap = function(f, context) {
 
     if (!f._rollbar_wrapped) {
       f._rollbar_wrapped = function () {
+        if (_before && _.isFunction(_before)) {
+          _before.apply(this, arguments);
+        }
         try {
           return f.apply(this, arguments);
         } catch(exc) {
