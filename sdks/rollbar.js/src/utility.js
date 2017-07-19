@@ -534,6 +534,23 @@ function _getScrubQueryParamRegexs(scrubFields) {
   return ret;
 }
 
+function formatArgsAsString(args) {
+  var i, len, arg;
+  for (i=0, len=args.length; i < len; i++) {
+    arg = args[i];
+    if (typeof arg === 'object') {
+      arg = stringify(arg);
+      arg = arg.error || arg.value;
+      if (arg.length > 500)
+        arg = arg.substr(0,500)+'...';
+    } else if (typeof arg === 'undefined') {
+      arg = 'undefined';
+    }
+    args.push(arg);
+  }
+  return args.join(' ');
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -554,5 +571,6 @@ module.exports = {
   createItem: createItem,
   get: get,
   set: set,
-  scrub: scrub
+  scrub: scrub,
+  formatArgsAsString: formatArgsAsString
 };
