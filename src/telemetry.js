@@ -17,11 +17,15 @@ Telemeter.prototype.capture = function(type, metadata, level) {
     level: getLevel(type, level),
     type: type,
     timestamp_ms: now(),
-    metadata: metadata
+    body: metadata
   };
   this.push(e);
   return e;
 };
+
+Telemeter.prototype.captureEvent = function(metadata, level) {
+  return this.capture('manual', metadata, level);
+}
 
 Telemeter.prototype.captureError = function(err) {
   return this.capture('error', {
@@ -35,14 +39,10 @@ Telemeter.prototype.captureLog = function(message, level) {
   }, level);
 };
 
-Telemeter.prototype.captureNetwork = function(method, url, statusCode, subtype) {
+Telemeter.prototype.captureNetwork = function(metadata, subtype) {
   subtype = subtype || 'xhr';
-  return this.capture('network', {
-    subtype: subtype,
-    method: method,
-    url: url,
-    status_code: statusCode
-  }, 'info');
+  metadata.subtype = metadata.subtype || subtype;
+  return this.capture('network', metadata, 'info');
 };
 
 Telemeter.prototype.captureRollbar = function(item) {
@@ -82,7 +82,8 @@ function getLevel(type, level) {
     return level;
   }
   var defaultLevel = {
-    'error': 'error'
+    'error': 'error',
+    'manual': 'info'
   };
   return defaultLevel[type] || 'info';
 }
