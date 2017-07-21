@@ -768,17 +768,17 @@ constructor.
 var Rollbar = require('rollbar');
 var rollbar = new Rollbar({
   accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
-  handleUncaughtExceptions: true,
-  handleUnhandledRejections: true
+  captureUncaught: true,
+  captureUnhandledRejections: true
 });
 
 // log a generic message and send to rollbar
 rollbar.log('Hello world!');
 ```
-Setting the ```handleUncaughtExceptions``` option to true will register Rollbar as a handler for
+Setting the ```captureUncaught``` option to true will register Rollbar as a handler for
 any uncaught exceptions in your Node process.
 
-Similarly, setting the ```handleUnhandledRejections``` option to true will register Rollbar as a
+Similarly, setting the ```captureUnhandledRejections``` option to true will register Rollbar as a
 handler for any unhandled Promise rejections in your Node process.
 
 <!-- RemoveNextIfProject -->
@@ -1066,8 +1066,8 @@ New:
 ```js
 var rollbar = new Rollbar({
   accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
-  handleUncaughtExceptions: true,
-  handleUnhandledRejections: true
+  captureUncaught: true,
+  captureUnhandledRejections: true
 });
 
 ```
@@ -1085,7 +1085,7 @@ const Rollbar = require('rollbar');
 
 const rollbar = Rollbar.init({
   accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
-  handleUncaughtExceptions: true
+  captureUncaught: true
 });
 ```
 
