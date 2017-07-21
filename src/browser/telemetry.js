@@ -246,7 +246,7 @@ Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChe
   }
   var elementString = treeToString(element);
   this.telemeter.captureDom(subtype, elementString, value, isChecked);
-}
+};
 
 function getElementType(e) {
   return (e.getAttribute('type') || '').toLowerCase();
@@ -310,7 +310,7 @@ function elementToString(elem) {
     out.push('#' + elem.id);
   }
   className = elem.className;
-  if (className && _.isString(className)) {
+  if (className && _.isType(className, 'string')) {
     classes = className.split(/\s+/);
     for (i = 0; i < classes.length; i++) {
       out.push('.' + classes[i]);
