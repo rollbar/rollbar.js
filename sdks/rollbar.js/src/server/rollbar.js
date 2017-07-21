@@ -32,10 +32,10 @@ function Rollbar(options, client) {
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 
-  if (this.options.handleUncaughtExceptions) {
+  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
     this.handleUncaughtExceptions();
   }
-  if (this.options.handleUnhandledRejections) {
+  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
     this.handleUnhandledRejections();
   }
 }
