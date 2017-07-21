@@ -551,6 +551,13 @@ function formatArgsAsString(args) {
   return args.join(' ');
 }
 
+function now() {
+  if (Date.now) {
+    return Date.now();
+  }
+  return +new Date();
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -572,5 +579,6 @@ module.exports = {
   get: get,
   set: set,
   scrub: scrub,
-  formatArgsAsString: formatArgsAsString
+  formatArgsAsString: formatArgsAsString,
+  now: now
 };
