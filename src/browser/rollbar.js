@@ -18,11 +18,11 @@ function Rollbar(options, client) {
   this.client = client || new Client(this.options, api, logger, 'browser');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-  if (this.options.captureUncaught) {
+  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
     globals.captureUncaughtExceptions(window, this);
     globals.wrapGlobals(window, this);
   }
-  if (this.options.captureUnhandledRejections) {
+  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
     globals.captureUnhandledRejections(window, this);
   }
 }
