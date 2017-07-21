@@ -180,7 +180,152 @@ Instrumenter.prototype.instrumentConsole = function() {
 };
 
 Instrumenter.prototype.instrumentDom = function() {
+  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+    return;
+  }
+  var clickHandler = this.handleClick.bind(this);
+  var blurHandler = this.handleBlur.bind(this);
+  if (this._window.addEventListener) {
+    this._window.addEventListener('click' clickHandler, true);
+    this._window.addEventListener('blur' blurHandler, true);
+  } else {
+    this._window.attachEvent('click', clickHandler);
+    this._window.attachEvent('onfocusout', blurHandler);
+  }
 };
+
+Instrumenter.prototype.handleClick = function(evt) {
+  try {
+    var e = getElementFromEvent(evt, this._document);
+    var hasTag = e && e.tagName;
+    var anchorOrButton = isDescribedElement(e, 'a') || isDescribedElement(e, 'button');
+    if (hasTag && (anchorOrButton || isDescribedElement(e, 'input', ['button', 'submit']))) {
+        this.captureDomEvent('click', e);
+    } else if (isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
+      this.captureDomEvent('input', e, e.value, e.checked);
+    }
+  } catch (exc) {
+    // TODO: Not sure what to do here
+  }
+};
+
+Instrumenter.prototype.handleBlur = function(evt) {
+  try {
+    var e = getElementFromEvent(evt, this._document);
+    if (e && e.tagName) {
+      if (isDescribedElement(e, 'textarea')) {
+        this.captureDomEvent('input', e, e.value);
+      } else if (isDescribedElement(e, 'select') && e.options && e.options.length) {
+        this.handleSelectInputChanged(e);
+      }
+    } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
+      this.captureDomEvent('input', e, e.value);
+    }
+  } catch (exc) {
+    // TODO: Not sure what to do here
+  }
+};
+
+Instrumenter.prototype.handleSelectInputChanged = function(elem) {
+  if (elem.multiple) {
+    for (var i = 0; i < elem.options.length; i++) {
+      if (elem.options[i].selected) {
+        this.captureDomEvent('input', elem, elem.options[i].value);
+      }
+    }
+  } else {
+    if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
+      this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
+    }
+  }
+};
+
+Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
+  if (getElementType(element) === 'password') {
+    value = undefined;
+  }
+  var elementString = treeToString(element);
+  this.telemeter.captureDom(subtype, elementString, value, isChecked);
+}
+
+function getElementType(e) {
+  return (e.getAttribute('type') || '').toLowerCase();
+}
+
+function isDescribedElement(element, type, subtypes) {
+  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
+    return false;
+  }
+  if (!subtypes) {
+    return true;
+  }
+  element = getElementType(element);
+  for (var i = 0; i < subtypes.length; i++) {
+    if (subtypes[i] === element) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getElementFromEvent(evt, doc) {
+  if (evt.target) {
+    return evt.target;
+  }
+  if (doc && doc.elementFromPoint) {
+    return doc.elementFromPoint(evt.clientX, evt.clientY);
+  }
+  return undefined;
+}
+
+function treeToString(elem) {
+  var MAX_HEIGHT = 5, MAX_LENGTH = 80;
+  var separator = ' > ', separatorLength = separator.length;
+  var out = [], len = 0, nextStr, totalLength;
+
+  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+    nextStr = elementToString(elem);
+    if (nextStr === 'html') {
+      break;
+    }
+    totalLength = len + (out.length * separatorLength) + nextStr.length;
+    if (height > 1 && totalLength >= MAX_LENGTH) {
+      break;
+    }
+    out.push(nextStr);
+    len += nextStr.length;
+    elem = elem.parentNode;
+  }
+  return out.reverse().join(separator);
+}
+
+function elementToString(elem) {
+  if (!elem || !elem.tagName) {
+    return '';
+  }
+  var out = [], className, classes, key, attr, i;
+
+  out.push(elem.tagName.toLowerCase());
+  if (elem.id) {
+    out.push('#' + elem.id);
+  }
+  className = elem.className;
+  if (className && _.isString(className)) {
+    classes = className.split(/\s+/);
+    for (i = 0; i < classes.length; i++) {
+      out.push('.' + classes[i]);
+    }
+  }
+  var attributes = ['type', 'name', 'title', 'alt'];
+  for (i = 0; i < attributes.length; i++) {
+    key = attributes[i];
+    attr = elem.getAttribute(key);
+    if (attr) {
+      out.push('[' + key + '="' + attr + '"]');
+    }
+  }
+  return out.join('');
+}
 
 Instrumenter.prototype.instrumentNavigation = function() {
   var chrome = this._window.chrome;
