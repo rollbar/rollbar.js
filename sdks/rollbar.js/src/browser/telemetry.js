@@ -3,9 +3,9 @@ var urlparser = require('./url');
 
 var defaults = {
   network: true,
-  console: true,
+  log: true,
   dom: true,
-  location: true
+  navigation: true
 };
 
 function replace(obj, name, replacement, replacements) {
@@ -27,6 +27,7 @@ function restore(replacements) {
 function Instrumenter(options, telemeter, rollbar, _window, _document) {
   var autoInstrument = options.autoInstrument;
   if (autoInstrument === false) {
+    this.autoInstrument = {};
     return;
   }
   if (!_.isType(autoInstrument, 'object')) {
@@ -47,7 +48,7 @@ Instrumenter.prototype.instrument = function() {
     this.instrumentNetwork();
   }
 
-  if (this.autoInstrument.console) {
+  if (this.autoInstrument.log) {
     this.instrumentConsole();
   }
 
@@ -55,8 +56,8 @@ Instrumenter.prototype.instrument = function() {
     this.instrumentDom();
   }
 
-  if (this.autoInstrument.location) {
-    this.instrumentLocation();
+  if (this.autoInstrument.navigation) {
+    this.instrumentNavigation();
   }
 };
 
@@ -181,7 +182,7 @@ Instrumenter.prototype.instrumentConsole = function() {
 Instrumenter.prototype.instrumentDom = function() {
 };
 
-Instrumenter.prototype.instrumentLocation = function() {
+Instrumenter.prototype.instrumentNavigation = function() {
   var chrome = this._window.chrome;
   var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
   // See https://github.com/angular/angular.js/pull/13945/files
