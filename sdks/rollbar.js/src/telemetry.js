@@ -52,13 +52,16 @@ Telemeter.prototype.captureRollbar = function(item) {
   }, item.level);
 };
 
-Telemeter.prototype.captureDom = function(subtype, element, value) {
+Telemeter.prototype.captureDom = function(subtype, element, value, checked) {
   var metadata = {
     subtype: subtype,
     element: element
   };
-  if (value) {
+  if (value !== undefined) {
     metadata['value'] = value;
+  }
+  if (checked !== undefined) {
+    metadata['checked'] = checked;
   }
   return this.capture('dom', metadata, 'info');
 };
