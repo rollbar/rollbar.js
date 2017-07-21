@@ -16,7 +16,7 @@ Telemeter.prototype.capture = function(type, metadata, level) {
   var e = {
     level: getLevel(type, level),
     type: type,
-    timestamp_ms: now(),
+    timestamp_ms: _.now(),
     body: metadata
   };
   this.push(e);
@@ -76,13 +76,6 @@ Telemeter.prototype.push = function(e) {
     this.queue.shift();
   }
 };
-
-function now() {
-  if (Date.now) {
-    return Date.now();
-  }
-  return +new Date();
-}
 
 function getLevel(type, level) {
   if (level) {
