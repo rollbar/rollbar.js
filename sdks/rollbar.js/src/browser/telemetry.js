@@ -5,7 +5,8 @@ var defaults = {
   network: true,
   log: true,
   dom: true,
-  navigation: true
+  navigation: true,
+  connectivity: true
 };
 
 function replace(obj, name, replacement, replacements) {
@@ -58,6 +59,10 @@ Instrumenter.prototype.instrument = function() {
 
   if (this.autoInstrument.navigation) {
     this.instrumentNavigation();
+  }
+
+  if (this.autoInstrument.connectivity) {
+    this.instrumentConnectivity();
   }
 };
 
@@ -376,6 +381,27 @@ Instrumenter.prototype.handleUrlChange = function(from, to) {
     from = parsedFrom.path + (parsedFrom.hash || '');
   }
   this.telemeter.captureNavigation(from, to);
+};
+
+Instrumenter.prototype.instrumentConnectivity = function() {
+  if (!('addEventListener' in this._window || 'body' in this._document)) {
+    return;
+  }
+  if (this._window.addEventListener) {
+    this._window.addEventListener('online', function() {
+      this.telemeter.captureConnectivityChange('online');
+    }.bind(this), true);
+    this._window.addEventListener('offline', function() {
+      this.telemeter.captureConnectivityChange('offline');
+    }.bind(this), true);
+  } else {
+    this._document.body.ononline = function() {
+      this.telemeter.captureConnectivityChange('online');
+    }.bind(this);
+    this._document.body.onoffline = function() {
+      this.telemeter.captureConnectivityChange('offline');
+    }.bind(this);
+  }
 };
 
 module.exports = Instrumenter;
