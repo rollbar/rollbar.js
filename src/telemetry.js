@@ -70,6 +70,10 @@ Telemeter.prototype.captureNavigation = function(from, to) {
   return this.capture('navigation', {from: from, to: to}, 'info');
 };
 
+Telemeter.prototype.captureConnectivityChange = function(type) {
+  return this.capture('connectivity', {change: type}, 'info');
+};
+
 Telemeter.prototype.push = function(e) {
   this.queue.push(e);
   if (this.queue.length > this.maxQueueSize) {
