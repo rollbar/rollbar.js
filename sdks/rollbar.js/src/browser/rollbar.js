@@ -11,11 +11,13 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var errorParser = require('./errorParser');
+var Instrumeter = require('./telemetry');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
+
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
@@ -25,6 +27,12 @@ function Rollbar(options, client) {
   if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
     globals.captureUnhandledRejections(window, this);
   }
+
+  this.instrumenter = this.client.instrument(function(telemeter) {
+    var i = new Instrumenter(this.options, telemeter, this, window, document);
+    i.instrument();
+    return i;
+  }.bind(this));
 }
 
 var _instance = null;
@@ -298,6 +306,17 @@ Rollbar.prototype.wrap = function(f, context, _before) {
 Rollbar.wrap = function(f, context) {
   if (_instance) {
     return _instance.wrap(f, context);
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.prototype.captureEvent = function(metadata, level) {
+  return this.client.captureEvent(metadata, level);
+};
+Rollbar.captureEvent = function(metadata, level) {
+  if (_instance) {
+    return _instance.captureEvent(metadata, level);
   } else {
     handleUninitialized();
   }
