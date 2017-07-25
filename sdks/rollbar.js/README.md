@@ -1045,7 +1045,7 @@ rollbar.log("Hello world!");
   - message/error, request, callback
   - message/error, request, custom
   - message/error, request, custom, callback
-- In other words, the first arugment can be a string or an exception, the type of which will be used
+- In other words, the first argument can be a string or an exception, the type of which will be used
   to subsequently construct the payload. The last argument can be a callback or the callback can be
   omitted. The second argument must be a request or null (or a callback if only two arguments are
   present). The third argument is treated as extra custom data which will be sent along with the
