@@ -87,8 +87,8 @@ Instrumenter.prototype.instrumentNetwork = function() {
             method: method,
             url: url,
             status_code: null,
-            open_time_ms: _.now(),
-            done_time_ms: null
+            start_time_ms: null,
+            end_time_ms: null
           };
         }
         return orig.apply(this, arguments);
@@ -102,9 +102,14 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var xhr = this;
 
         function onreadystatechangeHandler() {
-          if (xhr.__rollbar_xhr && xhr.readyState === 4) {
+          // FIXME: This may create two identical events because of JS references
+          if (xhr.__rollbar_xhr && (xhr.readState === 1 || xhr.readyState === 4)) {
             try {
-              xhr.__rollbar_xhr.done_time_ms = _.now();
+              if (xhr.readState === 1) {
+                xhr.__rollbar_xhr.start_time_ms = _.now();
+              } else {
+                xhr.__rollbar_xhr.end_time_ms = _.now();
+              }
               xhr.__rollbar_xhr.status_code = xhr.status;
             } catch (e) {
               /* ignore possible exception from xhr.status */
@@ -156,12 +161,12 @@ Instrumenter.prototype.instrumentNetwork = function() {
           method: method,
           url: url,
           status_code: null,
-          open_time_ms: _.now(),
-          done_time_ms: null
+          start_time_ms: _.now(),
+          end_time_ms: null
         };
         self.telemeter.captureNetwork(metadata, 'fetch');
         return orig.apply(this, args).then(function (resp) {
-          metadata.done_time_ms = _.now();
+          metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
           return resp;
         });
