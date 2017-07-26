@@ -39,6 +39,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this.rollbar = rollbar;
   this._window = _window || {};
   this._document = _document || {};
+  this.replacements = [];
 
   this._location = this._window.location;
   this._lastHref = this._location && this._location.href;
@@ -73,7 +74,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     if (prop in xhr && _.isFunction(xhr[prop])) {
       replace(xhr, prop, function(orig) {
         return self.rollbar.wrap(orig);
-      });
+      }, this.replacements);
     }
   }
 
@@ -92,10 +93,12 @@ Instrumenter.prototype.instrumentNetwork = function() {
         }
         return orig.apply(this, arguments);
       };
-    });
+    }, this.replacements);
 
     replace(xhrp, 'send', function(orig) {
+      /* eslint-disable no-unused-vars */
       return function(data) {
+      /* eslint-enable no-unused-vars */
         var xhr = this;
 
         function onreadystatechangeHandler() {
@@ -123,12 +126,14 @@ Instrumenter.prototype.instrumentNetwork = function() {
         }
         return orig.apply(this, arguments);
       }
-    });
+    }, this.replacements);
   }
 
   if ('fetch' in this._window) {
     replace(this._window, 'fetch', function(orig) {
+      /* eslint-disable no-unused-vars */
       return function(fn, t) {
+      /* eslint-enable no-unused-vars */
         var args = new Array(arguments.length);
         for (var i=0, len=args.length; i < len; i++) {
           args[i] = arguments[i];
@@ -161,7 +166,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           return resp;
         });
       };
-    });
+    }, this.replacements);
   }
 };
 
@@ -366,7 +371,7 @@ Instrumenter.prototype.instrumentNavigation = function() {
       }
       return orig.apply(this, arguments);
     };
-  });
+  }, this.replacements);
 };
 
 Instrumenter.prototype.handleUrlChange = function(from, to) {
@@ -402,6 +407,11 @@ Instrumenter.prototype.instrumentConnectivity = function() {
       this.telemeter.captureConnectivityChange('offline');
     }.bind(this);
   }
+};
+
+Instrumenter.prototype.restore = function() {
+  restore(this.replacements);
+  this.replacements = [];
 };
 
 module.exports = Instrumenter;
