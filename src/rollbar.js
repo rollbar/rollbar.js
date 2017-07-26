@@ -1,7 +1,7 @@
 var RateLimiter = require('./rateLimiter');
 var Queue = require('./queue');
 var Notifier = require('./notifier');
-var Telemeter = require('./telemeter');
+var Telemeter = require('./telemetry');
 var _ = require('./utility');
 
 /*
@@ -73,14 +73,8 @@ Rollbar.prototype.wait = function(callback) {
   this.queue.wait(callback);
 };
 
-Rollbar.prototype.instrument = function(callback) {
-  if (callback) {
-    return callback(this.telemeter);
-  }
-};
-
 Rollbar.prototype.captureEvent = function(metadata, level) {
-  return this.telemeter.captureEvent(metadata,level);
+  return this.telemeter.captureEvent(metadata, level);
 };
 
 /* Internal */
@@ -96,6 +90,8 @@ Rollbar.prototype._log = function(defaultLevel, item) {
       delete item.callback;
     }
     item.level = item.level || defaultLevel;
+    item.telemetryEvents = this.telemeter.copyEvents();
+    this.telemeter.captureRollbar(item);
     this.notifier.log(item, callback);
   } catch (e) {
     this.logger.error(e)

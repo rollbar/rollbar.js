@@ -269,6 +269,16 @@ Rollbar.wrapCallback = function(f) {
   }
 };
 
+Rollbar.prototype.captureEvent = function(metadata, level) {
+  return this.client.captureEvent(metadata, level);
+};
+Rollbar.captureEvent = function(metadata, level) {
+  if (_instance) {
+    return _instance.captureEvent(metadata, level);
+  } else {
+    handleUninitialized();
+  }
+};
 
 /** DEPRECATED **/
 
@@ -364,6 +374,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.handleItemWithError)
     .addTransform(transforms.addBody)
     .addTransform(sharedTransforms.addMessageWithError)
+    .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.itemToPayload);

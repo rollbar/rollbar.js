@@ -47,8 +47,7 @@ Telemeter.prototype.captureNetwork = function(metadata, subtype) {
 
 Telemeter.prototype.captureRollbar = function(item) {
   return this.capture('rollbar', {
-    subtype: rollbarSubtype(item),
-    message: rollbarMessage(item)
+    uuid: item.uuid
   }, item.level);
 };
 
@@ -90,16 +89,6 @@ function getLevel(type, level) {
     'manual': 'info'
   };
   return defaultLevel[type] || 'info';
-}
-
-function rollbarSubtype(item) {
-  // TODO
-  return item.data.body.message ? 'info' : 'error';
-}
-
-function rollbarMessage(item) {
-  // TODO
-  return item.data.message;
 }
 
 module.exports = Telemeter;
