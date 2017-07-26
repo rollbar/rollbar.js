@@ -11,7 +11,7 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var errorParser = require('./errorParser');
-var Instrumeter = require('./telemetry');
+var Instrumenter = require('./telemetry');
 
 function Rollbar(options, client) {
   this.options = _.extend(true, defaultOptions, options);
