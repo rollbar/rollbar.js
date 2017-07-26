@@ -28,11 +28,8 @@ function Rollbar(options, client) {
     globals.captureUnhandledRejections(window, this);
   }
 
-  this.instrumenter = this.client.instrument(function(telemeter) {
-    var i = new Instrumenter(this.options, telemeter, this, window, document);
-    i.instrument();
-    return i;
-  }.bind(this));
+  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, window, document);
+  this.instrumenter.instrument();
 }
 
 var _instance = null;
@@ -334,6 +331,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addPluginInfo(window))
     .addTransform(transforms.addBody)
     .addTransform(sharedTransforms.addMessageWithError)
+    .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(transforms.scrubPayload)
     .addTransform(transforms.userTransform)
     .addTransform(sharedTransforms.itemToPayload);

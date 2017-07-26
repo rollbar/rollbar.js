@@ -13,6 +13,13 @@ function itemToPayload(item, options, callback) {
   callback(null, data);
 }
 
+function addTelemetryData(item, options, callback) {
+  if (item.telemetryEvents) {
+    _.set(item, 'data.body.telemetry', item.telemetryEvents);
+  }
+  callback(null, item);
+}
+
 function addMessageWithError(item, options, callback) {
   if (!item.message) {
     callback(null, item);
@@ -39,5 +46,6 @@ function addMessageWithError(item, options, callback) {
 
 module.exports = {
   itemToPayload: itemToPayload,
+  addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError
 };

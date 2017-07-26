@@ -156,7 +156,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         };
         self.telemeter.captureNetwork(metadata, 'fetch');
         return orig.apply(this, args).then(function (resp) {
-          metadata.done_time_ms: _.now();
+          metadata.done_time_ms = _.now();
           metadata.status_code = resp.status;
           return resp;
         });
@@ -199,8 +199,8 @@ Instrumenter.prototype.instrumentDom = function() {
   var clickHandler = this.handleClick.bind(this);
   var blurHandler = this.handleBlur.bind(this);
   if (this._window.addEventListener) {
-    this._window.addEventListener('click' clickHandler, true);
-    this._window.addEventListener('blur' blurHandler, true);
+    this._window.addEventListener('click', clickHandler, true);
+    this._window.addEventListener('blur', blurHandler, true);
   } else {
     this._window.attachEvent('click', clickHandler);
     this._window.attachEvent('onfocusout', blurHandler);
