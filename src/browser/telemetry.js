@@ -256,10 +256,8 @@ Instrumenter.prototype.handleSelectInputChanged = function(elem) {
         this.captureDomEvent('input', elem, elem.options[i].value);
       }
     }
-  } else {
-    if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
-      this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
-    }
+  } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
+    this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
   }
 };
 
