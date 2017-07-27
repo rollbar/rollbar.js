@@ -77,7 +77,7 @@ Rollbar.prototype._log = function(defaultLevel, item) {
   if (this._sameAsLastError(item)) {
     return;
   }
-  _.wrapRollbarFunction(this.logger, function() {
+  try {
     var callback = null;
     if (item.callback) {
       callback = item.callback;
@@ -85,7 +85,9 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     }
     item.level = item.level || defaultLevel;
     this.notifier.log(item, callback);
-  }, this)();
+  } catch (e) {
+    this.logger.error(e)
+  }
 };
 
 Rollbar.prototype._defaultLogLevel = function() {
