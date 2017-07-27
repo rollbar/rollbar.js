@@ -103,22 +103,6 @@ function isError(e) {
   return isType(e, 'error');
 }
 
-/* wrapRollbarFunction - puts a try/catch around a function, logs caught exceptions to console.error
- *
- * @param f - a function
- * @param ctx - an optional context to bind the function to
- */
-function wrapRollbarFunction(logger, f, ctx) {
-  return function() {
-    var self = ctx || this;
-    try {
-      return f.apply(self, arguments);
-    } catch (e) {
-      logger.error(e);
-    }
-  };
-}
-
 function traverse(obj, func) {
   var k;
   var v;
@@ -344,6 +328,16 @@ function makeUnhandledStackInfo(
   };
 }
 
+function wrapCallback(logger, f) {
+  return function(err, resp) {
+    try {
+      f(err, resp);
+    } catch (e) {
+      logger.error(e);
+    }
+  };
+}
+
 function createItem(args, logger, notifier, requestKeys) {
   var message, err, custom, callback, request;
   var arg;
@@ -360,7 +354,7 @@ function createItem(args, logger, notifier, requestKeys) {
         message ? extraArgs.push(arg) : message = arg;
         break;
       case 'function':
-        callback = wrapRollbarFunction(logger, arg, notifier);
+        callback = wrapCallback(logger, arg);
         break;
       case 'date':
         extraArgs.push(arg);
@@ -377,7 +371,7 @@ function createItem(args, logger, notifier, requestKeys) {
         }
         if (requestKeys && typ === 'object' && !request) {
           for (var j = 0, len = requestKeys.length; j < len; ++j) {
-            if (arg[requestKeys[j]]) {
+            if (arg[requestKeys[j]] !== undefined) {
               request = arg;
               break;
             }
@@ -550,7 +544,6 @@ module.exports = {
   traverse: traverse,
   redact: redact,
   uuid4: uuid4,
-  wrapRollbarFunction: wrapRollbarFunction,
   LEVELS: LEVELS,
   sanitizeUrl: sanitizeUrl,
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
