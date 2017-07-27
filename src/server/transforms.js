@@ -85,8 +85,8 @@ function handleItemWithError(item, options, callback) {
   } while (err !== undefined);
   item.stackInfo = chain;
 
-  var cb = function(err) {
-    if (err) {
+  var cb = function(e) {
+    if (e) {
       item.message = item.err.message || item.err.description || item.message || String(item.err);
       delete item.err;
       delete item.stackInfo;
@@ -170,7 +170,7 @@ function _buildTraceData(chain) {
         }
       });
 
-      return cb();
+      return cb(null);
     });
   };
 }
