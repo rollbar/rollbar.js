@@ -73,8 +73,7 @@ function addBody(item, options, callback) {
 
 function handleItemWithError(item, options, callback) {
   if (!item.err) {
-    callback(null, item);
-    return;
+    return callback(null, item);
   }
 
   var err = item.err;
@@ -82,7 +81,8 @@ function handleItemWithError(item, options, callback) {
   var chain = [];
   do {
     errors.push(err);
-  } while ((err = err.nested) !== undefined);
+    err = err.nested;
+  } while (err !== undefined);
   item.stackInfo = chain;
 
   var cb = function(err) {
@@ -90,7 +90,6 @@ function handleItemWithError(item, options, callback) {
       item.message = item.err.message || item.err.description || item.message || String(item.err);
       delete item.err;
       delete item.stackInfo;
-      callback(null, item);
     }
     callback(null, item);
   };
