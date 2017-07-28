@@ -112,7 +112,7 @@ function levelFromStatus(statusCode) {
   if (statusCode >= 200 && statusCode < 400) {
     return 'info';
   }
-  if (statusCode >= 400) {
+  if (statusCode === 0 || statusCode >= 400) {
     return 'error';
   }
   return 'info';
