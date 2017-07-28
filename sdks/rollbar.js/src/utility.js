@@ -536,6 +536,7 @@ function _getScrubQueryParamRegexs(scrubFields) {
 
 function formatArgsAsString(args) {
   var i, len, arg;
+  var result = [];
   for (i = 0, len = args.length; i < len; i++) {
     arg = args[i];
     if (typeof arg === 'object') {
@@ -546,9 +547,9 @@ function formatArgsAsString(args) {
     } else if (typeof arg === 'undefined') {
       arg = 'undefined';
     }
-    args.push(arg);
+    result.push(arg);
   }
-  return args.join(' ');
+  return result.join(' ');
 }
 
 function now() {
