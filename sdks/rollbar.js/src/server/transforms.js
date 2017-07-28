@@ -7,7 +7,7 @@ var _ = require('../utility');
 function baseData(item, options, callback) {
   var environment = (options.payload && options.payload.environment) || options.environment;
   var data = {
-    timestamp: Math.floor((new Date().getTime()) / 1000),
+    timestamp: Math.round(item.timestamp / 1000),
     environment: item.environment || environment,
     level: item.level || 'error',
     language: 'javascript',
