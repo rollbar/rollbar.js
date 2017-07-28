@@ -18,7 +18,8 @@ Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, times
     level: getLevel(type, level),
     type: type,
     timestamp_ms: timestamp || _.now(),
-    body: metadata
+    body: metadata,
+    source: 'client'
   };
   if (rollbarUUID) {
     e.uuid = rollbarUUID;
