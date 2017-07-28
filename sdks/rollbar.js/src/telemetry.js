@@ -54,18 +54,6 @@ Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
   return this.capture('network', metadata, level, rollbarUUID);
 };
 
-Telemeter.prototype.captureItem = function(item) {
-  if (item.err) {
-    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
-  }
-  if (item.message) {
-    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
-  }
-  if (item.custom) {
-    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
-  }
-};
-
 Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
   var metadata = {
     subtype: subtype,
@@ -86,6 +74,19 @@ Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
 
 Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
   return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
+};
+
+// Only intended to be used internally by the notifier
+Telemeter.prototype._captureRollbarItem = function(item) {
+  if (item.err) {
+    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
+  }
+  if (item.message) {
+    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
+  }
+  if (item.custom) {
+    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
+  }
 };
 
 Telemeter.prototype.push = function(e) {
