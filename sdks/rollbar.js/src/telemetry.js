@@ -47,10 +47,10 @@ Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp
   }, level, rollbarUUID, timestamp);
 };
 
-Telemeter.prototype.captureNetwork = function(metadata, subtype, status, rollbarUUID) {
+Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
   subtype = subtype || 'xhr';
   metadata.subtype = metadata.subtype || subtype;
-  var level = levelFromStatus(status);
+  var level = levelFromStatus(metadata.status_code);
   return this.capture('network', metadata, level, rollbarUUID);
 };
 
@@ -85,7 +85,7 @@ Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
 };
 
 Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
-  return this.captureNetwork({change: type}, 'connectivity', undefined, rollbarUUID);
+  return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
 };
 
 Telemeter.prototype.push = function(e) {
@@ -106,11 +106,11 @@ function getLevel(type, level) {
   return defaultLevel[type] || 'info';
 }
 
-function levelFromStatus(status) {
-  if (status >= 200 && status < 400) {
+function levelFromStatus(statusCode) {
+  if (statusCode >= 200 && statusCode < 400) {
     return 'info';
   }
-  if (status >= 400) {
+  if (statusCode >= 400) {
     return 'error';
   }
   return 'info';

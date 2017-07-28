@@ -102,19 +102,18 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var xhr = this;
 
         function onreadystatechangeHandler() {
-          // FIXME: This may create two identical events because of JS references
-          if (xhr.__rollbar_xhr && (xhr.readState === 1 || xhr.readyState === 4)) {
+          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
+            if (xhr.readyState === 1) {
+              self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+              xhr.__rollbar_xhr.start_time_ms = _.now();
+            } else {
+              xhr.__rollbar_xhr.end_time_ms = _.now();
+            }
             try {
-              if (xhr.readState === 1) {
-                xhr.__rollbar_xhr.start_time_ms = _.now();
-              } else {
-                xhr.__rollbar_xhr.end_time_ms = _.now();
-              }
               xhr.__rollbar_xhr.status_code = xhr.status;
             } catch (e) {
               /* ignore possible exception from xhr.status */
             }
-            self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
           }
         }
 
