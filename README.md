@@ -243,6 +243,74 @@ to break its functionality.  This can result in Rollbar reporting exceptions tha
 of your own code.  There are multiple approaches to dealing with this issue, the simplest of which is covered
  [in related documentation](https://github.com/rollbar/rollbar.js/tree/master/docs/extension-exceptions.md).
 
+## Telemetry
+
+We can capture a sequence of events leading up to an error/log message to enhance your visibility
+into the state of your application when something happens. We provide a few configuration options to
+allow you to decide if and what to instrument for collecting telemetry events. The configuration
+option to pass along with the other configuration values is `autoInstrument`. This can have either a
+boolean value or be an object.
+
+If you set `autoInstrument` to `false` then we will not collect any events automatically. If you set
+`autoInstrument` to an object, then the set of possible keys is `network`, `log`, `dom`,
+`navigation`, and `connectivity`. The values can be either `true` or `false`. If a key/value pair
+is omitted, then we use the default value for that key. Setting
+`autoInstrument` to `true` is equivalent to passing all of these keys with the values of `true`.
+Hence,
+
+```
+_rollbarConfig = {
+  ...
+  autoInstrument: true
+  ...
+}
+```
+
+is equivalent to
+
+```
+_rollbarConfig = {
+  ...
+  autoInstrument: {
+    network: true,
+    log: true,
+    dom: true,
+    navigation: true,
+    connectivity: true
+  }
+  ...
+}
+```
+
+Likewise,
+
+```
+_rollbarConfig = {
+  ...
+  autoInstrument: {
+    dom: false,
+    navigation: false
+  }
+  ...
+}
+```
+
+is equivalent to
+
+```
+_rollbarConfig = {
+  ...
+  autoInstrument: {
+    network: true,
+    log: true,
+    dom: false,
+    navigation: false,
+    connectivity: true
+  }
+  ...
+}
+```
+
 ## Configuration Reference
 
 ### Configuration types
@@ -419,6 +487,23 @@ Default: ```"error"```
 <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
 
 Default: ```'https://api.rollbar.com/api/1/'```
+</dd>
+
+<dt>autoInstrument
+</dt>
+<dd>An object or boolean describing what events to automatically collect. If this value is false
+then we collect nothing, if it is true we collect everything, otherwise we do not collect events for
+the keys with a false value. The default structure for this object is:
+
+```
+{
+  network: true,
+  log: true,
+  dom: true,
+  navigation: true,
+  connectivity: true
+}
+```
 </dd>
 </dl>
 
