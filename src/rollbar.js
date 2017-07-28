@@ -91,7 +91,7 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     }
     item.level = item.level || defaultLevel;
     item.telemetryEvents = this.telemeter.copyEvents();
-    this.telemeter.captureRollbar(item);
+    this.telemeter._captureRollbarItem(item);
     this.notifier.log(item, callback);
   } catch (e) {
     this.logger.error(e)
