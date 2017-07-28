@@ -74,7 +74,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     if (prop in xhr && _.isFunction(xhr[prop])) {
       replace(xhr, prop, function(orig) {
         return self.rollbar.wrap(orig);
-      }, this.replacements);
+      }, self.replacements);
     }
   }
 
@@ -87,7 +87,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
             method: method,
             url: url,
             status_code: null,
-            start_time_ms: null,
+            start_time_ms: _.now(),
             end_time_ms: null
           };
         }
@@ -103,14 +103,18 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
         function onreadystatechangeHandler() {
           if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
-            if (xhr.readyState === 1) {
+            if (xhr.__rollbar_xhr.status_code === null) {
+              xhr.__rollbar_xhr.status_code = 0;
               self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+            }
+            if (xhr.readyState === 1) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
             } else {
               xhr.__rollbar_xhr.end_time_ms = _.now();
             }
             try {
-              xhr.__rollbar_xhr.status_code = xhr.status;
+              var code = xhr.status;
+              xhr.__rollbar_xhr.status_code = code === 1223 ? 204 : code;
             } catch (e) {
               /* ignore possible exception from xhr.status */
             }
@@ -239,9 +243,9 @@ Instrumenter.prototype.handleBlur = function(evt) {
         this.captureDomEvent('input', e, e.value);
       } else if (isDescribedElement(e, 'select') && e.options && e.options.length) {
         this.handleSelectInputChanged(e);
+      } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
+        this.captureDomEvent('input', e, e.value);
       }
-    } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
-      this.captureDomEvent('input', e, e.value);
     }
   } catch (exc) {
     // TODO: Not sure what to do here
