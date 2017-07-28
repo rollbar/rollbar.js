@@ -138,7 +138,7 @@ function redact() {
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
-  var d = new Date().getTime();
+  var d = now();
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
@@ -401,7 +401,7 @@ function createItem(args, logger, notifier, requestKeys) {
     message: message,
     err: err,
     custom: custom,
-    timestamp: (new Date()).getTime(),
+    timestamp: now(),
     callback: callback,
     uuid: uuid4()
   };
