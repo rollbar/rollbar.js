@@ -187,27 +187,37 @@ function _buildRequestData(req) {
   var headers = req.headers || {};
   var host = headers.host || '<no host>';
   var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
-  var reqUrl = proto + '://' + host + (req.url || '');
-  var parsedUrl = url.parse(reqUrl, true);
+  var parsedUrl;
+  if (_.isType(req.url, 'string')) {
+    parsedUrl = url.parse(req.url, true);
+  } else {
+    parsedUrl = req.url || {};
+  }
+  parsedUrl.protocol = parsedUrl.protocol || proto;
+  parsedUrl.host = parsedUrl.host || host;
+  var reqUrl = url.format(parsedUrl);
   var data = {
     url: reqUrl,
-    GET: parsedUrl.query,
     user_ip: _extractIp(req),
     headers: headers,
     method: req.method
   };
+  if (parsedUrl.search && parsedUrl.search.length > 0) {
+    data.GET = parsedUrl.query;
+  }
 
-  if (req.body) {
+  var body = req.body || req.payload;
+  if (body) {
     var bodyParams = {};
-    if (_.isIterable(req.body)) {
-      for (var k in req.body) {
-        if (Object.prototype.hasOwnProperty.call(req.body, k)) {
-          bodyParams[k] = req.body[k];
+    if (_.isIterable(body)) {
+      for (var k in body) {
+        if (Object.prototype.hasOwnProperty.call(body, k)) {
+          bodyParams[k] = body[k];
         }
       }
       data[req.method] = bodyParams;
     } else {
-      data.body = req.body;
+      data.body = body;
     }
   }
   return data;
