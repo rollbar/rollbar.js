@@ -419,6 +419,66 @@ vows.describe('transforms')
                   assert.equal(item.data.context, '/api/:bork');
                 },
               },
+              'with a request like from hapi': {
+                topic: function(options) {
+                  var item = {
+                    request: {
+                      headers: {
+                        host: 'example.com',
+                        'x-auth-token': '12345'
+                      },
+                      protocol: 'https',
+                      url: {
+                        protocol: null,
+                        slashes: null,
+                        auth: null,
+                        host: null,
+                        port: null,
+                        hostname: null,
+                        hash: null,
+                        search: '',
+                        query: {},
+                        pathname: '/some/endpoint',
+                        path: '/some/endpoint',
+                        href: '/some/endpoint'
+                      },
+                      ip: '192.192.192.1',
+                      method: 'POST',
+                      payload: {
+                        token: 'abc123',
+                        something: 'else'
+                      },
+                      route: { path: '/api/:bork' },
+                      user: {
+                        id: 42,
+                        email: 'fake@example.com'
+                      }
+                    },
+                    stuff: 'hey',
+                    data: {other: 'thing'}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should have a request object inside data': function(err, item) {
+                  assert.ok(item.data.request);
+                },
+                'should set a person based on request user': function(err, item) {
+                  assert.equal(item.data.person.id, 42);
+                  assert.equal(item.data.person.email, 'fake@example.com');
+                },
+                'should set some fields based on request data': function(err, item) {
+                  var r = item.data.request;
+                  assert.equal(r.url, 'https://example.com/some/endpoint');
+                  assert.equal(r.user_ip, '192.192.192.1');
+                  assert.ok(!r.GET);
+                  assert.ok(r.POST);
+
+                  assert.equal(item.data.context, '/api/:bork');
+                },
+              },
               'with a request with an array body': {
                 topic: function(options) {
                   var item = {
