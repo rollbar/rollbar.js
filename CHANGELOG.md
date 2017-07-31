@@ -1,5 +1,26 @@
 # Change Log
 
+**v2.1.1**
+
+- Allow more flexibility of request objects 
+[#346](https://github.com/rollbar/rollbar.js/pull/346)
+- Address issue with handleItemWithError possible not calling the callback 
+[#345](https://github.com/rollbar/rollbar.js/pull/345)
+- Fixed a typo in README.md 
+[#343](https://github.com/rollbar/rollbar.js/pull/343)
+- unify configuration options 
+[#341](https://github.com/rollbar/rollbar.js/pull/341)
+- add some intervals to keep the event loop running when wait is called 
+[#338](https://github.com/rollbar/rollbar.js/pull/338)
+- [Fixes #336] Propagate message 
+[#337](https://github.com/rollbar/rollbar.js/pull/337)
+- [Fixes #269] get rid of rollbar wrapper stack frames 
+[#335](https://github.com/rollbar/rollbar.js/pull/335)
+- first pass at a typescript declaration file 
+[#334](https://github.com/rollbar/rollbar.js/pull/334)
+- Fix #331 Verbose logging was using the wrong key structure 
+[#332](https://github.com/rollbar/rollbar.js/pull/332)
+
 **v2.1.0**
 - Use the upstream version of console-polyfill: [#306](https://github.com/rollbar/rollbar.js/pull/306)
 - The verbose option still existed but didn't do anything, this adds back the functionality to
