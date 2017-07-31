@@ -100,7 +100,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var urllib = __webpack_require__(17);
 	
 	var transforms = __webpack_require__(18);
-	var predicates = __webpack_require__(22);
+	var sharedTransforms = __webpack_require__(22);
+	var predicates = __webpack_require__(23);
 	var errorParser = __webpack_require__(19);
 	
 	function Rollbar(options, client) {
@@ -109,11 +110,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.client = client || new Client(this.options, api, logger, 'browser');
 	  addTransformsToNotifier(this.client.notifier);
 	  addPredicatesToQueue(this.client.queue);
-	  if (this.options.captureUncaught) {
+	  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
 	    globals.captureUncaughtExceptions(window, this);
 	    globals.wrapGlobals(window, this);
 	  }
-	  if (this.options.captureUnhandledRejections) {
+	  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
 	    globals.captureUnhandledRejections(window, this);
 	  }
 	}
@@ -349,8 +350,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return f;
 	    }
 	
-	    if (!f._wrapped) {
-	      f._wrapped = function () {
+	    if (!f._rollbar_wrapped) {
+	      f._rollbar_wrapped = function () {
 	        try {
 	          return f.apply(this, arguments);
 	        } catch(exc) {
@@ -366,18 +367,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      };
 	
-	      f._wrapped._isWrap = true;
+	      f._rollbar_wrapped._isWrap = true;
 	
 	      if (f.hasOwnProperty) {
 	        for (var prop in f) {
 	          if (f.hasOwnProperty(prop)) {
-	            f._wrapped[prop] = f[prop];
+	            f._rollbar_wrapped[prop] = f[prop];
 	          }
 	        }
 	      }
 	    }
 	
-	    return f._wrapped;
+	    return f._rollbar_wrapped;
 	  } catch (e) {
 	    // Return the original function if the wrap fails.
 	    return f;
@@ -402,9 +403,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    .addTransform(transforms.addClientInfo(window))
 	    .addTransform(transforms.addPluginInfo(window))
 	    .addTransform(transforms.addBody)
+	    .addTransform(sharedTransforms.addMessageWithError)
 	    .addTransform(transforms.scrubPayload)
 	    .addTransform(transforms.userTransform)
-	    .addTransform(transforms.itemToPayload);
+	    .addTransform(sharedTransforms.itemToPayload);
 	}
 	
 	function addPredicatesToQueue(queue) {
@@ -436,7 +438,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.1.0"),
+	  version: ("2.1.1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -534,7 +536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (this._sameAsLastError(item)) {
 	    return;
 	  }
-	  _.wrapRollbarFunction(this.logger, function() {
+	  try {
 	    var callback = null;
 	    if (item.callback) {
 	      callback = item.callback;
@@ -542,7 +544,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    item.level = item.level || defaultLevel;
 	    this.notifier.log(item, callback);
-	  }, this)();
+	  } catch (e) {
+	    this.logger.error(e)
+	  }
 	};
 	
 	Rollbar.prototype._defaultLogLevel = function() {
@@ -727,6 +731,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.retryQueue = [];
 	  this.retryHandle = null;
 	  this.waitCallback = null;
+	  this.waitIntervalID = null;
 	}
 	
 	/*
@@ -765,8 +770,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *  in the case of a success, otherwise response will be null and error will have a value. If both
 	 *  error and response are null then the item was stopped by a predicate which did not consider this
 	 *  to be an error condition, but nonetheless did not send the item to the API.
+	 *  @param originalError - The original error before any transformations that is to be logged if any
 	 */
-	Queue.prototype.addItem = function(item, callback) {
+	Queue.prototype.addItem = function(item, callback, originalError) {
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() { return; };
 	  }
@@ -779,7 +785,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    callback();
 	    return;
 	  }
-	  this._maybeLog(item);
+	  this._maybeLog(item, originalError);
 	  this.pendingRequests.push(item);
 	  try {
 	    this._makeApiRequest(item, function(err, resp) {
@@ -803,9 +809,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return;
 	  }
 	  this.waitCallback = callback;
-	  if (this.pendingRequests.length == 0) {
-	    this.waitCallback();
+	  if (this._maybeCallWait()) {
+	    return;
 	  }
+	  if (this.waitIntervalID) {
+	    this.waitIntervalID = clearInterval(this.waitIntervalID);
+	  }
+	  this.waitIntervalID = setInterval(function() {
+	    this._maybeCallWait();
+	  }.bind(this), 500);
 	};
 	
 	/* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
@@ -907,31 +919,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param item - the item previously added to the pending request queue
 	 */
 	Queue.prototype._dequeuePendingRequest = function(item) {
-	  var shouldCallWaitOnRemove = this.pendingRequests.length == 1;
 	  for (var i = this.pendingRequests.length; i >= 0; i--) {
 	    if (this.pendingRequests[i] == item) {
 	      this.pendingRequests.splice(i, 1);
-	      if (shouldCallWaitOnRemove && _.isFunction(this.waitCallback)) {
-	        this.waitCallback();
-	      }
+	      this._maybeCallWait();
 	      return;
 	    }
 	  }
 	};
 	
-	Queue.prototype._maybeLog = function(item) {
+	Queue.prototype._maybeLog = function(data, originalError) {
 	  if (this.logger && this.options.verbose) {
-	    var message = _.get(item, 'data.body.trace.exception.message');
-	    message = message || _.get(item, 'data.body.trace_chain.0.exception.message');
+	    var message = originalError;
+	    message = message || _.get(data, 'body.trace.exception.message');
+	    message = message || _.get(data, 'body.trace_chain.0.exception.message');
 	    if (message) {
 	      this.logger.error(message);
 	      return;
 	    }
-	    message = _.get(item, 'data.body.message.body');
+	    message = _.get(data, 'body.message.body');
 	    if (message) {
 	      this.logger.log(message);
 	    }
 	  }
+	};
+	
+	Queue.prototype._maybeCallWait = function() {
+	  if (_.isFunction(this.waitCallback) && this.pendingRequests.length === 0) {
+	    if (this.waitIntervalID) {
+	      this.waitIntervalID = clearInterval(this.waitIntervalID);
+	    }
+	    this.waitCallback();
+	    return true;
+	  }
+	  return false;
 	};
 	
 	module.exports = Queue;
@@ -1046,22 +1067,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function isError(e) {
 	  return isType(e, 'error');
-	}
-	
-	/* wrapRollbarFunction - puts a try/catch around a function, logs caught exceptions to console.error
-	 *
-	 * @param f - a function
-	 * @param ctx - an optional context to bind the function to
-	 */
-	function wrapRollbarFunction(logger, f, ctx) {
-	  return function() {
-	    var self = ctx || this;
-	    try {
-	      return f.apply(self, arguments);
-	    } catch (e) {
-	      logger.error(e);
-	    }
-	  };
 	}
 	
 	function traverse(obj, func) {
@@ -1289,6 +1294,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	}
 	
+	function wrapCallback(logger, f) {
+	  return function(err, resp) {
+	    try {
+	      f(err, resp);
+	    } catch (e) {
+	      logger.error(e);
+	    }
+	  };
+	}
+	
 	function createItem(args, logger, notifier, requestKeys) {
 	  var message, err, custom, callback, request;
 	  var arg;
@@ -1305,7 +1320,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        message ? extraArgs.push(arg) : message = arg;
 	        break;
 	      case 'function':
-	        callback = wrapRollbarFunction(logger, arg, notifier);
+	        callback = wrapCallback(logger, arg);
 	        break;
 	      case 'date':
 	        extraArgs.push(arg);
@@ -1322,7 +1337,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (requestKeys && typ === 'object' && !request) {
 	          for (var j = 0, len = requestKeys.length; j < len; ++j) {
-	            if (arg[requestKeys[j]]) {
+	            if (arg[requestKeys[j]] !== undefined) {
 	              request = arg;
 	              break;
 	            }
@@ -1495,7 +1510,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  traverse: traverse,
 	  redact: redact,
 	  uuid4: uuid4,
-	  wrapRollbarFunction: wrapRollbarFunction,
 	  LEVELS: LEVELS,
 	  sanitizeUrl: sanitizeUrl,
 	  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
@@ -2447,11 +2461,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return callback(new Error('Rollbar is not enabled'));
 	  }
 	
+	  var originalError = item.err;
 	  this._applyTransforms(item, function(err, i) {
 	    if (err) {
 	      return callback(err, null);
 	    }
-	    this.queue.addItem(i, callback);
+	    this.queue.addItem(i, callback, originalError);
 	  }.bind(this));
 	};
 	
@@ -2487,7 +2502,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    transforms[transformIndex](i, options, cb);
 	  };
-	  
+	
 	  cb(null, item);
 	};
 	
@@ -2898,7 +2913,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      oldRemoveEventListener = oldRemoveEventListener._rollbarOldRemove;
 	    }
 	    var removeFn = function(event, callback, bubble) {
-	      oldRemoveEventListener.call(this, event, callback && callback._wrapped || callback, bubble);
+	      oldRemoveEventListener.call(this, event, callback && callback._rollbar_wrapped || callback, bubble);
 	    };
 	    removeFn._rollbarOldRemove = oldRemoveEventListener;
 	    removeFn.belongsToShim = shim;
@@ -3366,7 +3381,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  if (description) {
-	    trace.exception.description = description || 'uncaught exception';
+	    trace.exception.description = description;
 	  }
 	
 	  // Transform a TraceKit stackInfo object into a Rollbar trace
@@ -3392,6 +3407,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
 	        colno: stackFrame.column
 	      };
+	      if (frame.method && frame.method.endsWith && frame.method.endsWith('._rollbar_wrapped')) {
+	        continue;
+	      }
 	
 	      code = pre = post = null;
 	      contextLength = stackFrame.context ? stackFrame.context.length : 0;
@@ -3458,19 +3476,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  callback(null, newItem);
 	}
 	
-	function itemToPayload(item, options, callback) {
-	  var payloadOptions = options.payload || {};
-	  if (payloadOptions.body) {
-	    delete payloadOptions.body;
-	  }
-	
-	  var data = _.extend(true, {}, item.data, payloadOptions);
-	  if (item._isUncaught) {
-	    data._isUncaught = true;
-	  }
-	  callback(null, data);
-	}
-	
 	module.exports = {
 	  handleItemWithError: handleItemWithError,
 	  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
@@ -3480,8 +3485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  addPluginInfo: addPluginInfo,
 	  addBody: addBody,
 	  scrubPayload: scrubPayload,
-	  userTransform: userTransform,
-	  itemToPayload: itemToPayload
+	  userTransform: userTransform
 	};
 
 
@@ -3895,6 +3899,57 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _ = __webpack_require__(6);
+	
+	function itemToPayload(item, options, callback) {
+	  var payloadOptions = options.payload || {};
+	  if (payloadOptions.body) {
+	    delete payloadOptions.body;
+	  }
+	
+	  var data = _.extend(true, {}, item.data, payloadOptions);
+	  if (item._isUncaught) {
+	    data._isUncaught = true;
+	  }
+	  callback(null, data);
+	}
+	
+	function addMessageWithError(item, options, callback) {
+	  if (!item.message) {
+	    callback(null, item);
+	    return;
+	  }
+	  var tracePath = 'data.body.trace_chain.0';
+	  var trace = _.get(item, tracePath);
+	  if (!trace) {
+	    tracePath = 'data.body.trace';
+	    trace = _.get(item, tracePath);
+	  }
+	  if (trace) {
+	    if (!(trace.exception && trace.exception.description)) {
+	      _.set(item, tracePath+'.exception.description', item.message);
+	      callback(null, item);
+	      return;
+	    }
+	    var extra = _.get(item, tracePath+'.extra') || {};
+	    var newExtra =  _.extend(true, {}, extra, {message: item.message});
+	    _.set(item, tracePath+'.extra', newExtra);
+	  }
+	  callback(null, item);
+	}
+	
+	module.exports = {
+	  itemToPayload: itemToPayload,
+	  addMessageWithError: addMessageWithError
+	};
+
+
+/***/ },
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
