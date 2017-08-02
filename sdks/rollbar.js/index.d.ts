@@ -15,7 +15,7 @@ declare class Rollbar {
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
-    public lastError(): MaybeError;
+    public lastError(): Rollbar.MaybeError;
 
     public log(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public debug(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
