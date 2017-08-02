@@ -35,6 +35,7 @@ function addBaseInfo(item, options, callback) {
     framework: 'browser-js',
     language: 'javascript',
     server: {},
+    uuid: item.uuid,
     notifier: {
       name: 'rollbar-browser-js',
       version: options.version
