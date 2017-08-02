@@ -10,12 +10,12 @@
 export = Rollbar;
 
 declare class Rollbar {
-    constructor(options: Rollbar.Configuration?);
+    constructor(options?: Rollbar.Configuration);
     static init(options: Rollbar.Configuration): Rollbar;
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
-    public lastError(): Error?;
+    public lastError(): Rollbar.MaybeError;
 
     public log(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public debug(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
@@ -27,6 +27,7 @@ declare class Rollbar {
 }
 
 declare namespace Rollbar {
+    export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
         version?: string;
@@ -39,8 +40,9 @@ declare namespace Rollbar {
         enabled?: boolean;
         captureUncaught?: boolean;
         captureUnhandledRejections?: boolean;
+        payload?: object;
     }
-    export type Callback = (err: Error?, response: object) => void;
+    export type Callback = (err: MaybeError, response: object) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
     export interface LogResult {
         uuid: string;
