@@ -170,18 +170,6 @@ Rollbar.configure({enabled: false});
 Rollbar.error("This will *not* be reported to Rollbar");
 ```
 
-## Content Security Policy 
-
-If you have [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) enabled, you can use the 'nojson' distribution of rollbar.js in order to not have to allow 'unsafe-eval', as we use an eval() tag in rollbar.js normally. You can configure this like so:
-
-```js
-_rollbarConfig = {
-  accessToken: "your token...",
-  rollbarJsUrl: 'https://d37gvrvc0wt4s1.cloudfront.net/js/v1.9/rollbar.nojson.min.js',
-  // ... other params as usual...
-}
-```
-
 ## Ignoring specific exception messages
 
 If you want to ignore a specific exception message, say for a third-party browser plugin
