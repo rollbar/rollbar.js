@@ -92,6 +92,9 @@ them in the configuration under the payload key:
 ```js
 Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
+### Using rollbar.js with Segment
+
+If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. To use them, you will need to include the Rollbar snippet directly in your <head>, rather than loading it through Segment.
 
 ## Javascript Framework Support
 
