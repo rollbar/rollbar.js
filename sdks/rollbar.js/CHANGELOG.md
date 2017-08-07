@@ -1,5 +1,8 @@
 # Change Log
 
+**v2.1.3**
+- Actually change version number in package.json and build all relevant files
+
 **v2.1.2**
 - Actually send the client-side UUID with the item
 - Fix typos in typescript declaration
