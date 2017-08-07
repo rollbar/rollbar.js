@@ -73,6 +73,21 @@ Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
   return this.capture('navigation', {from: from, to: to}, 'info', rollbarUUID);
 };
 
+Telemeter.prototype.captureDomContentLoaded = function(ts) {
+  return this.capture('navigation', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+  /**
+   * If we decide to make this a dom event instead, then use the line below:
+  return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+  */
+};
+Telemeter.prototype.captureLoad = function(ts) {
+  return this.capture('navigation', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+  /**
+   * If we decide to make this a dom event instead, then use the line below:
+  return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+  */
+};
+
 Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
   return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
 };

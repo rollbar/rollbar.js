@@ -77,6 +77,14 @@ Rollbar.prototype.captureEvent = function(metadata, level) {
   return this.telemeter.captureEvent(metadata, level);
 };
 
+Rollbar.prototype.captureDomContentLoaded = function(ts) {
+  return this.telemeter.captureDomContentLoaded(ts);
+};
+
+Rollbar.prototype.captureLoad = function(ts) {
+  return this.telemeter.captureLoad(ts);
+};
+
 /* Internal */
 
 Rollbar.prototype._log = function(defaultLevel, item) {

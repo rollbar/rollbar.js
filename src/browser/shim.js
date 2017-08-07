@@ -54,6 +54,14 @@ function setupShim(window, options) {
       globals.captureUnhandledRejections(window, handler, true);
     }
 
+    var ai = options.autoInstrument;
+    if (ai === undefined || ai === true || (typeof ai === 'object' && ai.network)) {
+      if (window.addEventListener) {
+        window.addEventListener('load', handler.captureLoad.bind(handler));
+        window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
+      }
+    }
+
     window[alias] = handler;
     return handler;
   })();
@@ -177,7 +185,7 @@ function stub(method) {
 }
 
 var _methods =
-  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection'.split(',');
+  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,captureDomContentLoaded,captureLoad'.split(',');
 
 for (var i = 0; i < _methods.length; ++i) {
   Shim.prototype[_methods[i]] = stub(_methods[i]);

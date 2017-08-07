@@ -319,6 +319,21 @@ Rollbar.captureEvent = function(metadata, level) {
   }
 };
 
+// The following two methods are used internally and are not meant for public use
+Rollbar.prototype.captureDomContentLoaded = function(e, ts) {
+  if (!ts) {
+    ts = new Date();
+  }
+  return this.client.captureDomContentLoaded(ts);
+};
+
+Rollbar.prototype.captureLoad = function(e, ts) {
+  if (!ts) {
+    ts = new Date();
+  }
+  return this.client.captureLoad(ts);
+};
+
 /* Internal */
 
 function addTransformsToNotifier(notifier) {
