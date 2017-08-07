@@ -421,7 +421,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.1.1"),
+	  version: ("2.1.3"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -3253,6 +3253,7 @@
 	    framework: 'browser-js',
 	    language: 'javascript',
 	    server: {},
+	    uuid: item.uuid,
 	    notifier: {
 	      name: 'rollbar-browser-js',
 	      version: options.version
