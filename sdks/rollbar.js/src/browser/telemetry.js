@@ -268,7 +268,7 @@ Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChe
   if (getElementType(element) === 'password') {
     value = undefined;
   }
-  var elementString = treeToString(element);
+  var elementString = elementArrayToString(treeToArray(element));
   this.telemeter.captureDom(subtype, elementString, value, isChecked);
 };
 
@@ -302,6 +302,42 @@ function getElementFromEvent(evt, doc) {
   return undefined;
 }
 
+function treeToArray(elem) {
+  var MAX_HEIGHT = 5;
+  var out = [];
+  var nextDescription;
+  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+    nextDescription = describeElement(elem);
+    if (nextDescription.tagName === 'html') {
+      break;
+    }
+    out.push(nextDescription);
+    elem = elem.parentNode;
+  }
+  return out.reverse();
+}
+
+function elementArrayToString(a) {
+  var MAX_LENGTH = 80;
+  var separator = ' > ', separatorLength = separator.length;
+  var out = [], len = 0, nextStr, totalLength;
+
+  for (var i = 0; i < a.length; i++) {
+    nextStr = descriptionToString(a[i]);
+    totalLength = len + (out.length * separatorLength) + nextStr.length;
+    if (i > 0 && totalLength >= MAX_LENGTH) {
+      break;
+    }
+    out.push(nextStr);
+    len += nextStr.length;
+  }
+  return out.join(separator);
+}
+
+/**
+ * Old implementation
+ * Should be equivalent to: elementArrayToString(treeToArray(elem))
+ */
 function treeToString(elem) {
   var MAX_HEIGHT = 5, MAX_LENGTH = 80;
   var separator = ' > ', separatorLength = separator.length;
@@ -324,31 +360,65 @@ function treeToString(elem) {
 }
 
 function elementToString(elem) {
-  if (!elem || !elem.tagName) {
+  return descriptionToString(describeElement(elem));
+}
+
+function descriptionToString(desc) {
+  if (!desc || !desc.tagName) {
     return '';
   }
-  var out = [], className, classes, key, attr, i;
+  var out = [desc.tagName];
+  if (desc.id) {
+    out.push('#' + desc.id);
+  }
+  if (desc.classes) {
+    out.push('.' + desc.classes.join('.'));
+  }
+  for (var i = 0; i < desc.attributes.length; i++) {
+    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+  }
 
-  out.push(elem.tagName.toLowerCase());
+  return out.join('');
+}
+
+/**
+ * Input: a dom element
+ * Output: null if tagName is falsey or input is falsey, else
+ *  {
+ *    tagName: String,
+ *    id: String | undefined,
+ *    classes: [String] | undefined,
+ *    attributes: [
+ *      {
+ *        key: OneOf(type, name, title, alt),
+ *        value: String
+ *      }
+ *    ]
+ *  }
+ */
+function describeElement(elem) {
+  if (!elem || !elem.tagName) {
+    return null;
+  }
+  var out = {}, className, key, attr, i;
+  out.tagName = elem.tagName.toLowerCase();
   if (elem.id) {
-    out.push('#' + elem.id);
+    out.id = elem.id;
   }
   className = elem.className;
   if (className && _.isType(className, 'string')) {
-    classes = className.split(/\s+/);
-    for (i = 0; i < classes.length; i++) {
-      out.push('.' + classes[i]);
-    }
+    out.classes = className.split(/\s+/);
   }
   var attributes = ['type', 'name', 'title', 'alt'];
+  out.attributes = [];
   for (i = 0; i < attributes.length; i++) {
     key = attributes[i];
     attr = elem.getAttribute(key);
     if (attr) {
-      out.push('[' + key + '="' + attr + '"]');
+      out.attributes.push({key: key, value: attr});
     }
   }
-  return out.join('');
+  return out;
 }
 
 Instrumenter.prototype.instrumentNavigation = function() {
