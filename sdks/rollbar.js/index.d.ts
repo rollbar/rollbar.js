@@ -30,6 +30,7 @@ declare namespace Rollbar {
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
+        accessToken: string;
         version?: string;
         scrubFields?: string[];
         logLevel?: Level;
