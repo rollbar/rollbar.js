@@ -80,22 +80,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Client = __webpack_require__(3);
 	var _ = __webpack_require__(6);
-	var API = __webpack_require__(10);
-	var logger = __webpack_require__(12);
-	var globals = __webpack_require__(15);
+	var API = __webpack_require__(11);
+	var logger = __webpack_require__(13);
+	var globals = __webpack_require__(16);
 	
-	var transport = __webpack_require__(16);
-	var urllib = __webpack_require__(17);
+	var transport = __webpack_require__(17);
+	var urllib = __webpack_require__(18);
 	
-	var transforms = __webpack_require__(18);
-	var sharedTransforms = __webpack_require__(22);
-	var predicates = __webpack_require__(23);
-	var errorParser = __webpack_require__(19);
+	var transforms = __webpack_require__(19);
+	var sharedTransforms = __webpack_require__(23);
+	var predicates = __webpack_require__(24);
+	var errorParser = __webpack_require__(20);
+	var Instrumenter = __webpack_require__(25);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
 	  var api = new API(this.options, transport, urllib);
 	  this.client = client || new Client(this.options, api, logger, 'browser');
+	
 	  addTransformsToNotifier(this.client.notifier);
 	  addPredicatesToQueue(this.client.queue);
 	  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
@@ -105,6 +107,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
 	    globals.captureUnhandledRejections(window, this);
 	  }
+	
+	  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, window, document);
+	  this.instrumenter.instrument();
 	}
 	
 	var _instance = null;
@@ -321,7 +326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.client.log(item);
 	};
 	
-	Rollbar.prototype.wrap = function(f, context) {
+	Rollbar.prototype.wrap = function(f, context, _before) {
 	  try {
 	    var ctxFn;
 	    if(_.isFunction(context)) {
@@ -340,6 +345,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if (!f._rollbar_wrapped) {
 	      f._rollbar_wrapped = function () {
+	        if (_before && _.isFunction(_before)) {
+	          _before.apply(this, arguments);
+	        }
 	        try {
 	          return f.apply(this, arguments);
 	        } catch(exc) {
@@ -380,6 +388,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 	
+	Rollbar.prototype.captureEvent = function(metadata, level) {
+	  return this.client.captureEvent(metadata, level);
+	};
+	Rollbar.captureEvent = function(metadata, level) {
+	  if (_instance) {
+	    return _instance.captureEvent(metadata, level);
+	  } else {
+	    handleUninitialized();
+	  }
+	};
+	
+	// The following two methods are used internally and are not meant for public use
+	Rollbar.prototype.captureDomContentLoaded = function(e, ts) {
+	  if (!ts) {
+	    ts = new Date();
+	  }
+	  return this.client.captureDomContentLoaded(ts);
+	};
+	
+	Rollbar.prototype.captureLoad = function(e, ts) {
+	  if (!ts) {
+	    ts = new Date();
+	  }
+	  return this.client.captureLoad(ts);
+	};
+	
 	/* Internal */
 	
 	function addTransformsToNotifier(notifier) {
@@ -392,6 +426,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    .addTransform(transforms.addPluginInfo(window))
 	    .addTransform(transforms.addBody)
 	    .addTransform(sharedTransforms.addMessageWithError)
+	    .addTransform(sharedTransforms.addTelemetryData)
 	    .addTransform(transforms.scrubPayload)
 	    .addTransform(transforms.userTransform)
 	    .addTransform(sharedTransforms.itemToPayload);
@@ -426,7 +461,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.1.3"),
+	  version: ("2.2.0-alpha.1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -448,6 +483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RateLimiter = __webpack_require__(4);
 	var Queue = __webpack_require__(5);
 	var Notifier = __webpack_require__(9);
+	var Telemeter = __webpack_require__(10);
 	var _ = __webpack_require__(6);
 	
 	/*
@@ -460,9 +496,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function Rollbar(options, api, logger, platform) {
 	  this.options = _.extend(true, {}, options);
 	  this.logger = logger;
-	  Rollbar.rateLimiter.setPlatformOptions(platform, options);
+	  Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
 	  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
 	  this.notifier = new Notifier(this.queue, this.options);
+	  this.telemeter = new Telemeter(this.options);
 	  this.lastError = null;
 	}
 	
@@ -518,6 +555,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.queue.wait(callback);
 	};
 	
+	Rollbar.prototype.captureEvent = function(metadata, level) {
+	  return this.telemeter.captureEvent(metadata, level);
+	};
+	
+	Rollbar.prototype.captureDomContentLoaded = function(ts) {
+	  return this.telemeter.captureDomContentLoaded(ts);
+	};
+	
+	Rollbar.prototype.captureLoad = function(ts) {
+	  return this.telemeter.captureLoad(ts);
+	};
+	
 	/* Internal */
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
@@ -531,6 +580,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      delete item.callback;
 	    }
 	    item.level = item.level || defaultLevel;
+	    item.telemetryEvents = this.telemeter.copyEvents();
+	    this.telemeter._captureRollbarItem(item);
 	    this.notifier.log(item, callback);
 	  } catch (e) {
 	    this.logger.error(e)
@@ -1092,7 +1143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// from http://stackoverflow.com/a/8809472/1138191
 	function uuid4() {
-	  var d = new Date().getTime();
+	  var d = now();
 	  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 	    var r = (d + Math.random() * 16) % 16 | 0;
 	    d = Math.floor(d / 16);
@@ -1355,7 +1406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    message: message,
 	    err: err,
 	    custom: custom,
-	    timestamp: (new Date()).getTime(),
+	    timestamp: now(),
 	    callback: callback,
 	    uuid: uuid4()
 	  };
@@ -1488,6 +1539,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return ret;
 	}
 	
+	function formatArgsAsString(args) {
+	  var i, len, arg;
+	  var result = [];
+	  for (i = 0, len = args.length; i < len; i++) {
+	    arg = args[i];
+	    if (typeof arg === 'object') {
+	      arg = stringify(arg);
+	      arg = arg.error || arg.value;
+	      if (arg.length > 500)
+	        arg = arg.substr(0,500)+'...';
+	    } else if (typeof arg === 'undefined') {
+	      arg = 'undefined';
+	    }
+	    result.push(arg);
+	  }
+	  return result.join(' ');
+	}
+	
+	function now() {
+	  if (Date.now) {
+	    return Date.now();
+	  }
+	  return +new Date();
+	}
+	
 	module.exports = {
 	  isType: isType,
 	  typeName: typeName,
@@ -1508,7 +1584,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  createItem: createItem,
 	  get: get,
 	  set: set,
-	  scrub: scrub
+	  scrub: scrub,
+	  formatArgsAsString: formatArgsAsString,
+	  now: now
 	};
 
 
@@ -2504,7 +2582,151 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var helpers = __webpack_require__(11);
+	
+	var MAX_EVENTS = 100;
+	
+	function Telemeter(options) {
+	  this.queue = [];
+	  this.options = _.extend(true, {}, options);
+	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+	  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+	}
+	
+	Telemeter.prototype.copyEvents = function() {
+	  return Array.prototype.slice.call(this.queue, 0);
+	};
+	
+	Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, timestamp) {
+	  var e = {
+	    level: getLevel(type, level),
+	    type: type,
+	    timestamp_ms: timestamp || _.now(),
+	    body: metadata,
+	    source: 'client'
+	  };
+	  if (rollbarUUID) {
+	    e.uuid = rollbarUUID;
+	  }
+	  this.push(e);
+	  return e;
+	};
+	
+	Telemeter.prototype.captureEvent = function(metadata, level, rollbarUUID) {
+	  return this.capture('manual', metadata, level, rollbarUUID);
+	};
+	
+	Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) {
+	  var metadata = {
+	    message: err.message || String(err)
+	  };
+	  if (err.stack) {
+	    metadata.stack = err.stack;
+	  }
+	  return this.capture('error', metadata, level, rollbarUUID, timestamp);
+	};
+	
+	Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp) {
+	  return this.capture('log', {
+	    message: message
+	  }, level, rollbarUUID, timestamp);
+	};
+	
+	Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+	  subtype = subtype || 'xhr';
+	  metadata.subtype = metadata.subtype || subtype;
+	  var level = levelFromStatus(metadata.status_code);
+	  return this.capture('network', metadata, level, rollbarUUID);
+	};
+	
+	Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
+	  var metadata = {
+	    subtype: subtype,
+	    element: element
+	  };
+	  if (value !== undefined) {
+	    metadata.value = value;
+	  }
+	  if (checked !== undefined) {
+	    metadata.checked = checked;
+	  }
+	  return this.capture('dom', metadata, 'info', rollbarUUID);
+	};
+	
+	Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
+	  return this.capture('navigation', {from: from, to: to}, 'info', rollbarUUID);
+	};
+	
+	Telemeter.prototype.captureDomContentLoaded = function(ts) {
+	  return this.capture('navigation', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+	  /**
+	   * If we decide to make this a dom event instead, then use the line below:
+	  return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+	  */
+	};
+	Telemeter.prototype.captureLoad = function(ts) {
+	  return this.capture('navigation', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+	  /**
+	   * If we decide to make this a dom event instead, then use the line below:
+	  return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+	  */
+	};
+	
+	Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
+	  return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
+	};
+	
+	// Only intended to be used internally by the notifier
+	Telemeter.prototype._captureRollbarItem = function(item) {
+	  if (item.err) {
+	    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
+	  }
+	  if (item.message) {
+	    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
+	  }
+	  if (item.custom) {
+	    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
+	  }
+	};
+	
+	Telemeter.prototype.push = function(e) {
+	  this.queue.push(e);
+	  if (this.queue.length > this.maxQueueSize) {
+	    this.queue.shift();
+	  }
+	};
+	
+	function getLevel(type, level) {
+	  if (level) {
+	    return level;
+	  }
+	  var defaultLevel = {
+	    error: 'error',
+	    manual: 'info'
+	  };
+	  return defaultLevel[type] || 'info';
+	}
+	
+	function levelFromStatus(statusCode) {
+	  if (statusCode >= 200 && statusCode < 400) {
+	    return 'info';
+	  }
+	  if (statusCode === 0 || statusCode >= 400) {
+	    return 'error';
+	  }
+	  return 'info';
+	}
+	
+	module.exports = Telemeter;
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _ = __webpack_require__(6);
+	var helpers = __webpack_require__(12);
 	
 	var defaultOptions = {
 	  hostname: 'api.rollbar.com',
@@ -2572,7 +2794,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2668,22 +2890,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* eslint-disable no-console */
-	
-	__webpack_require__(13);
-	var detection = __webpack_require__(14);
+	__webpack_require__(14);
+	var detection = __webpack_require__(15);
 	var _ = __webpack_require__(6);
 	
 	function error() {
 	  var args = Array.prototype.slice.call(arguments, 0);
 	  args.unshift('Rollbar:');
 	  if (detection.ieVersion() <= 8) {
-	    console.error(formatArgsAsString.apply(null, args));
+	    console.error(_.formatArgsAsString(args));
 	  } else {
 	    console.error.apply(console, args);
 	  }
@@ -2693,7 +2914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var args = Array.prototype.slice.call(arguments, 0);
 	  args.unshift('Rollbar:');
 	  if (detection.ieVersion() <= 8) {
-	    console.info(formatArgsAsString.apply(null, args));
+	    console.info(_.formatArgsAsString(args));
 	  } else {
 	    console.info.apply(console, args);
 	  }
@@ -2703,30 +2924,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var args = Array.prototype.slice.call(arguments, 0);
 	  args.unshift('Rollbar:');
 	  if (detection.ieVersion() <= 8) {
-	    console.log(formatArgsAsString.apply(null, args));
+	    console.log(_.formatArgsAsString(args));
 	  } else {
 	    console.log.apply(console, args);
 	  }
-	}
-	
-	// IE8 logs objects as [object Object].  This is a wrapper that makes it a bit
-	// more convenient by logging the JSON of the object.  But only do that in IE8 and below
-	// because other browsers are smarter and handle it properly.
-	function formatArgsAsString() {
-	  var args = [];
-	  for (var i=0; i < arguments.length; i++) {
-	    var arg = arguments[i];
-	    if (typeof arg === 'object') {
-	      arg = _.stringify(arg);
-	      arg = arg.error || arg.value;
-	      if (arg.length > 500)
-	        arg = arg.substr(0,500)+'...';
-	    } else if (typeof arg === 'undefined') {
-	      arg = 'undefined';
-	    }
-	    args.push(arg);
-	  }
-	  return args.join(' ');
 	}
 	
 	/* eslint-enable no-console */
@@ -2739,7 +2940,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	// Console-polyfill. MIT license.
@@ -2764,7 +2965,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2802,7 +3003,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2917,13 +3118,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var logger = __webpack_require__(12);
+	var logger = __webpack_require__(13);
 	
 	/*
 	 * accessToken may be embedded in payload but that should not
@@ -3129,7 +3330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3216,14 +3417,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var errorParser = __webpack_require__(19);
-	var logger = __webpack_require__(12);
+	var errorParser = __webpack_require__(20);
+	var logger = __webpack_require__(13);
 	
 	function handleItemWithError(item, options, callback) {
 	  item.data = item.data || {};
@@ -3479,12 +3680,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(20);
+	var ErrorStackParser = __webpack_require__(21);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -3575,7 +3776,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -3584,7 +3785,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(21)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(22)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -3774,7 +3975,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -3887,7 +4088,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3905,6 +4106,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    data._isUncaught = true;
 	  }
 	  callback(null, data);
+	}
+	
+	function addTelemetryData(item, options, callback) {
+	  if (item.telemetryEvents) {
+	    _.set(item, 'data.body.telemetry', item.telemetryEvents);
+	  }
+	  callback(null, item);
 	}
 	
 	function addMessageWithError(item, options, callback) {
@@ -3933,18 +4141,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = {
 	  itemToPayload: itemToPayload,
+	  addTelemetryData: addTelemetryData,
 	  addMessageWithError: addMessageWithError
 	};
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var logger = __webpack_require__(12);
+	var logger = __webpack_require__(13);
 	
 	function checkIgnore(item, settings) {
 	  var level = item.level;
@@ -4091,6 +4300,507 @@ return /******/ (function(modules) { // webpackBootstrap
 	  messageIsIgnored: messageIsIgnored
 	};
 	
+
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _ = __webpack_require__(6);
+	var urlparser = __webpack_require__(18);
+	
+	var defaults = {
+	  network: true,
+	  log: true,
+	  dom: true,
+	  navigation: true,
+	  connectivity: true
+	};
+	
+	function replace(obj, name, replacement, replacements) {
+	  var orig = obj[name];
+	  obj[name] = replacement(orig);
+	  if (replacements) {
+	    replacements.push([obj, name, orig]);
+	  }
+	}
+	
+	function restore(replacements) {
+	  var b;
+	  while (replacements.length) {
+	    b = replacements.shift();
+	    b[0][b[1]] = b[2];
+	  }
+	}
+	
+	function Instrumenter(options, telemeter, rollbar, _window, _document) {
+	  var autoInstrument = options.autoInstrument;
+	  if (autoInstrument === false) {
+	    this.autoInstrument = {};
+	    return;
+	  }
+	  if (!_.isType(autoInstrument, 'object')) {
+	    autoInstrument = defaults;
+	  }
+	  this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+	  this.telemeter = telemeter;
+	  this.rollbar = rollbar;
+	  this._window = _window || {};
+	  this._document = _document || {};
+	  this.replacements = [];
+	
+	  this._location = this._window.location;
+	  this._lastHref = this._location && this._location.href;
+	}
+	
+	Instrumenter.prototype.instrument = function() {
+	  if (this.autoInstrument.network) {
+	    this.instrumentNetwork();
+	  }
+	
+	  if (this.autoInstrument.log) {
+	    this.instrumentConsole();
+	  }
+	
+	  if (this.autoInstrument.dom) {
+	    this.instrumentDom();
+	  }
+	
+	  if (this.autoInstrument.navigation) {
+	    this.instrumentNavigation();
+	  }
+	
+	  if (this.autoInstrument.connectivity) {
+	    this.instrumentConnectivity();
+	  }
+	};
+	
+	Instrumenter.prototype.instrumentNetwork = function() {
+	  var self = this;
+	
+	  function wrapProp(prop, xhr) {
+	    if (prop in xhr && _.isFunction(xhr[prop])) {
+	      replace(xhr, prop, function(orig) {
+	        return self.rollbar.wrap(orig);
+	      }, self.replacements);
+	    }
+	  }
+	
+	  if ('XMLHttpRequest' in this._window) {
+	    var xhrp = this._window.XMLHttpRequest.prototype;
+	    replace(xhrp, 'open', function(orig) {
+	      return function(method, url) {
+	        if (_.isType(url, 'string')) {
+	          this.__rollbar_xhr = {
+	            method: method,
+	            url: url,
+	            status_code: null,
+	            start_time_ms: _.now(),
+	            end_time_ms: null
+	          };
+	        }
+	        return orig.apply(this, arguments);
+	      };
+	    }, this.replacements);
+	
+	    replace(xhrp, 'send', function(orig) {
+	      /* eslint-disable no-unused-vars */
+	      return function(data) {
+	      /* eslint-enable no-unused-vars */
+	        var xhr = this;
+	
+	        function onreadystatechangeHandler() {
+	          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
+	            if (xhr.__rollbar_xhr.status_code === null) {
+	              xhr.__rollbar_xhr.status_code = 0;
+	              self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+	            }
+	            if (xhr.readyState === 1) {
+	              xhr.__rollbar_xhr.start_time_ms = _.now();
+	            } else {
+	              xhr.__rollbar_xhr.end_time_ms = _.now();
+	            }
+	            try {
+	              var code = xhr.status;
+	              xhr.__rollbar_xhr.status_code = code === 1223 ? 204 : code;
+	            } catch (e) {
+	              /* ignore possible exception from xhr.status */
+	            }
+	          }
+	        }
+	
+	        wrapProp('onload', xhr);
+	        wrapProp('onerror', xhr);
+	        wrapProp('onprogress', xhr);
+	
+	        if ('onreadystatechange' in xhr && _.isFunction(xhr.onreadystatechange)) {
+	          replace(xhr, 'onreadystatechange', function(orig) {
+	            self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
+	          });
+	        } else {
+	          xhr.onreadystatechange = onreadystatechangeHandler;
+	        }
+	        return orig.apply(this, arguments);
+	      }
+	    }, this.replacements);
+	  }
+	
+	  if ('fetch' in this._window) {
+	    replace(this._window, 'fetch', function(orig) {
+	      /* eslint-disable no-unused-vars */
+	      return function(fn, t) {
+	      /* eslint-enable no-unused-vars */
+	        var args = new Array(arguments.length);
+	        for (var i=0, len=args.length; i < len; i++) {
+	          args[i] = arguments[i];
+	        }
+	        var input = args[0];
+	        var method = 'GET';
+	        var url;
+	        if (_.isType(input, 'string')) {
+	          url = input;
+	        } else {
+	          url = input.url;
+	          if (input.method) {
+	            method = input.method;
+	          }
+	        }
+	        if (args[1] && args[1].method) {
+	          method = args[1].method;
+	        }
+	        var metadata = {
+	          method: method,
+	          url: url,
+	          status_code: null,
+	          start_time_ms: _.now(),
+	          end_time_ms: null
+	        };
+	        self.telemeter.captureNetwork(metadata, 'fetch');
+	        return orig.apply(this, args).then(function (resp) {
+	          metadata.end_time_ms = _.now();
+	          metadata.status_code = resp.status;
+	          return resp;
+	        });
+	      };
+	    }, this.replacements);
+	  }
+	};
+	
+	Instrumenter.prototype.instrumentConsole = function() {
+	  if (!('console' in this._window && this._window.console.log)) {
+	    return;
+	  }
+	
+	  var self = this;
+	  var c = this._window.console;
+	
+	  function wrapConsole(method) {
+	    var orig = c[method];
+	    var origConsole = c;
+	    var level = method === 'warn' ? 'warning' : method;
+	    c[method] = function() {
+	      var args = Array.prototype.slice.call(arguments);
+	      var message = _.formatArgsAsString(args);
+	      self.telemeter.captureLog(message, level);
+	      if (orig) {
+	        Function.prototype.apply.call(orig, origConsole, args);
+	      }
+	    };
+	  }
+	  var methods = ['debug','info','warn','error','log'];
+	  for (var i=0, len=methods.length; i < len; i++) {
+	    wrapConsole(methods[i]);
+	  }
+	};
+	
+	Instrumenter.prototype.instrumentDom = function() {
+	  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+	    return;
+	  }
+	  var clickHandler = this.handleClick.bind(this);
+	  var blurHandler = this.handleBlur.bind(this);
+	  if (this._window.addEventListener) {
+	    this._window.addEventListener('click', clickHandler, true);
+	    this._window.addEventListener('blur', blurHandler, true);
+	  } else {
+	    this._window.attachEvent('click', clickHandler);
+	    this._window.attachEvent('onfocusout', blurHandler);
+	  }
+	};
+	
+	Instrumenter.prototype.handleClick = function(evt) {
+	  try {
+	    var e = getElementFromEvent(evt, this._document);
+	    var hasTag = e && e.tagName;
+	    var anchorOrButton = isDescribedElement(e, 'a') || isDescribedElement(e, 'button');
+	    if (hasTag && (anchorOrButton || isDescribedElement(e, 'input', ['button', 'submit']))) {
+	        this.captureDomEvent('click', e);
+	    } else if (isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
+	      this.captureDomEvent('input', e, e.value, e.checked);
+	    }
+	  } catch (exc) {
+	    // TODO: Not sure what to do here
+	  }
+	};
+	
+	Instrumenter.prototype.handleBlur = function(evt) {
+	  try {
+	    var e = getElementFromEvent(evt, this._document);
+	    if (e && e.tagName) {
+	      if (isDescribedElement(e, 'textarea')) {
+	        this.captureDomEvent('input', e, e.value);
+	      } else if (isDescribedElement(e, 'select') && e.options && e.options.length) {
+	        this.handleSelectInputChanged(e);
+	      } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
+	        this.captureDomEvent('input', e, e.value);
+	      }
+	    }
+	  } catch (exc) {
+	    // TODO: Not sure what to do here
+	  }
+	};
+	
+	Instrumenter.prototype.handleSelectInputChanged = function(elem) {
+	  if (elem.multiple) {
+	    for (var i = 0; i < elem.options.length; i++) {
+	      if (elem.options[i].selected) {
+	        this.captureDomEvent('input', elem, elem.options[i].value);
+	      }
+	    }
+	  } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
+	    this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
+	  }
+	};
+	
+	Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
+	  if (getElementType(element) === 'password') {
+	    value = undefined;
+	  }
+	  var elementString = elementArrayToString(treeToArray(element));
+	  this.telemeter.captureDom(subtype, elementString, value, isChecked);
+	};
+	
+	function getElementType(e) {
+	  return (e.getAttribute('type') || '').toLowerCase();
+	}
+	
+	function isDescribedElement(element, type, subtypes) {
+	  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
+	    return false;
+	  }
+	  if (!subtypes) {
+	    return true;
+	  }
+	  element = getElementType(element);
+	  for (var i = 0; i < subtypes.length; i++) {
+	    if (subtypes[i] === element) {
+	      return true;
+	    }
+	  }
+	  return false;
+	}
+	
+	function getElementFromEvent(evt, doc) {
+	  if (evt.target) {
+	    return evt.target;
+	  }
+	  if (doc && doc.elementFromPoint) {
+	    return doc.elementFromPoint(evt.clientX, evt.clientY);
+	  }
+	  return undefined;
+	}
+	
+	function treeToArray(elem) {
+	  var MAX_HEIGHT = 5;
+	  var out = [];
+	  var nextDescription;
+	  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+	    nextDescription = describeElement(elem);
+	    if (nextDescription.tagName === 'html') {
+	      break;
+	    }
+	    out.push(nextDescription);
+	    elem = elem.parentNode;
+	  }
+	  return out.reverse();
+	}
+	
+	function elementArrayToString(a) {
+	  var MAX_LENGTH = 80;
+	  var separator = ' > ', separatorLength = separator.length;
+	  var out = [], len = 0, nextStr, totalLength;
+	
+	  for (var i = 0; i < a.length; i++) {
+	    nextStr = descriptionToString(a[i]);
+	    totalLength = len + (out.length * separatorLength) + nextStr.length;
+	    if (i > 0 && totalLength >= MAX_LENGTH) {
+	      break;
+	    }
+	    out.push(nextStr);
+	    len += nextStr.length;
+	  }
+	  return out.join(separator);
+	}
+	
+	/**
+	 * Old implementation
+	 * Should be equivalent to: elementArrayToString(treeToArray(elem))
+	function treeToString(elem) {
+	  var MAX_HEIGHT = 5, MAX_LENGTH = 80;
+	  var separator = ' > ', separatorLength = separator.length;
+	  var out = [], len = 0, nextStr, totalLength;
+	
+	  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+	    nextStr = elementToString(elem);
+	    if (nextStr === 'html') {
+	      break;
+	    }
+	    totalLength = len + (out.length * separatorLength) + nextStr.length;
+	    if (height > 1 && totalLength >= MAX_LENGTH) {
+	      break;
+	    }
+	    out.push(nextStr);
+	    len += nextStr.length;
+	    elem = elem.parentNode;
+	  }
+	  return out.reverse().join(separator);
+	}
+	
+	function elementToString(elem) {
+	  return descriptionToString(describeElement(elem));
+	}
+	 */
+	
+	function descriptionToString(desc) {
+	  if (!desc || !desc.tagName) {
+	    return '';
+	  }
+	  var out = [desc.tagName];
+	  if (desc.id) {
+	    out.push('#' + desc.id);
+	  }
+	  if (desc.classes) {
+	    out.push('.' + desc.classes.join('.'));
+	  }
+	  for (var i = 0; i < desc.attributes.length; i++) {
+	    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+	  }
+	
+	  return out.join('');
+	}
+	
+	/**
+	 * Input: a dom element
+	 * Output: null if tagName is falsey or input is falsey, else
+	 *  {
+	 *    tagName: String,
+	 *    id: String | undefined,
+	 *    classes: [String] | undefined,
+	 *    attributes: [
+	 *      {
+	 *        key: OneOf(type, name, title, alt),
+	 *        value: String
+	 *      }
+	 *    ]
+	 *  }
+	 */
+	function describeElement(elem) {
+	  if (!elem || !elem.tagName) {
+	    return null;
+	  }
+	  var out = {}, className, key, attr, i;
+	  out.tagName = elem.tagName.toLowerCase();
+	  if (elem.id) {
+	    out.id = elem.id;
+	  }
+	  className = elem.className;
+	  if (className && _.isType(className, 'string')) {
+	    out.classes = className.split(/\s+/);
+	  }
+	  var attributes = ['type', 'name', 'title', 'alt'];
+	  out.attributes = [];
+	  for (i = 0; i < attributes.length; i++) {
+	    key = attributes[i];
+	    attr = elem.getAttribute(key);
+	    if (attr) {
+	      out.attributes.push({key: key, value: attr});
+	    }
+	  }
+	  return out;
+	}
+	
+	Instrumenter.prototype.instrumentNavigation = function() {
+	  var chrome = this._window.chrome;
+	  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+	  // See https://github.com/angular/angular.js/pull/13945/files
+	  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+	  if (!hasPushState) {
+	    return;
+	  }
+	  var self = this;
+	  var oldOnPopState = this._window.onpopstate;
+	  this._window.onpopstate = function() {
+	    var current = self._location.href;
+	    self.handleUrlChange(self._lastHref, current);
+	    if (oldOnPopState) {
+	      oldOnPopState.apply(this, arguments);
+	    }
+	  };
+	
+	  replace(this._window.history, 'pushState', function(orig) {
+	    return function() {
+	      var url = arguments.length > 2 ? arguments[2] : undefined;
+	      if (url) {
+	        self.handleUrlChange(self._lastHref, url + '');
+	      }
+	      return orig.apply(this, arguments);
+	    };
+	  }, this.replacements);
+	};
+	
+	Instrumenter.prototype.handleUrlChange = function(from, to) {
+	  var parsedHref = urlparser.parse(this._location.href);
+	  var parsedTo = urlparser.parse(to);
+	  var parsedFrom = urlparser.parse(from);
+	  this._lastHref = to;
+	  if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
+	    to = parsedTo.path + (parsedTo.hash || '');
+	  }
+	  if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
+	    from = parsedFrom.path + (parsedFrom.hash || '');
+	  }
+	  this.telemeter.captureNavigation(from, to);
+	};
+	
+	Instrumenter.prototype.instrumentConnectivity = function() {
+	  if (!('addEventListener' in this._window || 'body' in this._document)) {
+	    return;
+	  }
+	  if (this._window.addEventListener) {
+	    this._window.addEventListener('online', function() {
+	      this.telemeter.captureConnectivityChange('online');
+	    }.bind(this), true);
+	    this._window.addEventListener('offline', function() {
+	      this.telemeter.captureConnectivityChange('offline');
+	    }.bind(this), true);
+	  } else {
+	    this._document.body.ononline = function() {
+	      this.telemeter.captureConnectivityChange('online');
+	    }.bind(this);
+	    this._document.body.onoffline = function() {
+	      this.telemeter.captureConnectivityChange('offline');
+	    }.bind(this);
+	  }
+	};
+	
+	Instrumenter.prototype.restore = function() {
+	  restore(this.replacements);
+	  this.replacements = [];
+	};
+	
+	module.exports = Instrumenter;
 
 
 /***/ }

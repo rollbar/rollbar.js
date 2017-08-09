@@ -337,7 +337,6 @@ function elementArrayToString(a) {
 /**
  * Old implementation
  * Should be equivalent to: elementArrayToString(treeToArray(elem))
- */
 function treeToString(elem) {
   var MAX_HEIGHT = 5, MAX_LENGTH = 80;
   var separator = ' > ', separatorLength = separator.length;
@@ -362,6 +361,7 @@ function treeToString(elem) {
 function elementToString(elem) {
   return descriptionToString(describeElement(elem));
 }
+ */
 
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {
