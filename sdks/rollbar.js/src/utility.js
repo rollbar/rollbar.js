@@ -138,7 +138,7 @@ function redact() {
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
-  var d = new Date().getTime();
+  var d = now();
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
@@ -401,7 +401,7 @@ function createItem(args, logger, notifier, requestKeys) {
     message: message,
     err: err,
     custom: custom,
-    timestamp: (new Date()).getTime(),
+    timestamp: now(),
     callback: callback,
     uuid: uuid4()
   };
@@ -534,6 +534,31 @@ function _getScrubQueryParamRegexs(scrubFields) {
   return ret;
 }
 
+function formatArgsAsString(args) {
+  var i, len, arg;
+  var result = [];
+  for (i = 0, len = args.length; i < len; i++) {
+    arg = args[i];
+    if (typeof arg === 'object') {
+      arg = stringify(arg);
+      arg = arg.error || arg.value;
+      if (arg.length > 500)
+        arg = arg.substr(0,500)+'...';
+    } else if (typeof arg === 'undefined') {
+      arg = 'undefined';
+    }
+    result.push(arg);
+  }
+  return result.join(' ');
+}
+
+function now() {
+  if (Date.now) {
+    return Date.now();
+  }
+  return +new Date();
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -554,5 +579,7 @@ module.exports = {
   createItem: createItem,
   get: get,
   set: set,
-  scrub: scrub
+  scrub: scrub,
+  formatArgsAsString: formatArgsAsString,
+  now: now
 };

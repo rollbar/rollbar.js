@@ -54,6 +54,14 @@ function setupShim(window, options) {
       globals.captureUnhandledRejections(window, handler, true);
     }
 
+    var ai = options.autoInstrument;
+    if (ai === undefined || ai === true || (typeof ai === 'object' && ai.network)) {
+      if (window.addEventListener) {
+        window.addEventListener('load', handler.captureLoad.bind(handler));
+        window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
+      }
+    }
+
     window[alias] = handler;
     return handler;
   })();
@@ -112,7 +120,7 @@ Shim.prototype.loadFull = function(window, document, immediate, options, callbac
   parentNode.insertBefore(s, f);
 };
 
-Shim.prototype.wrap = function(f, context) {
+Shim.prototype.wrap = function(f, context, _before) {
   try {
     var ctxFn;
     if (typeof context === 'function') {
@@ -131,6 +139,9 @@ Shim.prototype.wrap = function(f, context) {
 
     if (!f._rollbar_wrapped) {
       f._rollbar_wrapped = function () {
+        if (_before && typeof _before === 'function') {
+          _before.apply(this, arguments);
+        }
         try {
           return f.apply(this, arguments);
         } catch(exc) {
@@ -174,7 +185,7 @@ function stub(method) {
 }
 
 var _methods =
-  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection'.split(',');
+  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,captureDomContentLoaded,captureLoad'.split(',');
 
 for (var i = 0; i < _methods.length; ++i) {
   Shim.prototype[_methods[i]] = stub(_methods[i]);
