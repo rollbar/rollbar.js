@@ -24,7 +24,7 @@ function TestClientGen() {
 
 function itemFromArgs(args) {
   var client = new (TestClientGen())();
-  var rollbar = new Rollbar({}, client);
+  var rollbar = new Rollbar({autoInstrument: false}, client);
   var item = rollbar._createItem(args);
   item.level = 'debug';
   return item;

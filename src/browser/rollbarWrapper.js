@@ -14,7 +14,7 @@ function _setupForwarding(prototype) {
     };
   };
 
-  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId'.split(',');
+  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureDomContentLoaded,captureLoad'.split(',');
   for (var i=0; i<_methods.length; i++) {
     prototype[_methods[i]] = _forward(_methods[i]);
   }
@@ -27,7 +27,11 @@ RollbarWrap.prototype._swapAndProcessMessages = function(impl, messages) {
     method = msg.method;
     args = msg.args;
     if (this[method] && typeof this[method] === 'function') {
-      this[method].apply(this, args);
+      if (method === 'captureDomContentLoaded' || method === 'captureLoad') {
+        this[method].apply(this, [args[0], msg.ts]);
+      } else {
+        this[method].apply(this, args);
+      }
     }
   }
   return this;

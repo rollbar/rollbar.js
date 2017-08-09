@@ -40,3 +40,40 @@ describe('itemToPayload', function() {
     });
   });
 });
+
+describe('addTelemetryData', function() {
+  it('adds the data to the right place if events exist', function(done) {
+    var item = {
+      data: {
+        body: {
+          message: 'hello world'
+        }
+      },
+      telemetryEvents: [
+        {
+          type: 'log',
+          body: {
+            subtype: 'console',
+            message: 'bork'
+          },
+          timestamp_ms: 12345,
+          level: 'info'
+        },
+        {
+          type: 'manual',
+          body: {
+            hello: 'world'
+          },
+          timestamp_ms: 88889,
+          level: 'info'
+        }
+      ]
+    };
+    var options = {};
+    t.addTelemetryData(item, options, function(e, i) {
+      expect(i.data.body.telemetry.length).to.eql(2);
+      expect(i.data.body.telemetry[0].type).to.eql('log');
+      done(e);
+    });
+  });
+});

@@ -16,6 +16,10 @@ app.get('/test', function response(req, res) {
   res.sendFile(path.join(__dirname, 'test.html'));
 });
 
+app.get('/sample', function response(req, res) {
+  res.status(200).json({'hello': 'world'});
+});
+
 app.listen(port, '0.0.0.0', function onStart(err) {
   if (err) {
     console.log(err);
