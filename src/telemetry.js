@@ -51,8 +51,18 @@ Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp
 Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
   subtype = subtype || 'xhr';
   metadata.subtype = metadata.subtype || subtype;
-  var level = levelFromStatus(metadata.status_code);
+  var level = this.levelFromStatus(metadata.status_code);
   return this.capture('network', metadata, level, rollbarUUID);
+};
+
+Telemeter.prototype.levelFromStatus(statusCode) {
+  if (statusCode >= 200 && statusCode < 400) {
+    return 'info';
+  }
+  if (statusCode === 0 || statusCode >= 400) {
+    return 'error';
+  }
+  return 'info';
 };
 
 Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
@@ -121,16 +131,6 @@ function getLevel(type, level) {
     manual: 'info'
   };
   return defaultLevel[type] || 'info';
-}
-
-function levelFromStatus(statusCode) {
-  if (statusCode >= 200 && statusCode < 400) {
-    return 'info';
-  }
-  if (statusCode === 0 || statusCode >= 400) {
-    return 'error';
-  }
-  return 'info';
 }
 
 module.exports = Telemeter;

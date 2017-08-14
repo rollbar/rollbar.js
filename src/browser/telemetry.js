@@ -105,7 +105,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
             if (xhr.__rollbar_xhr.status_code === null) {
               xhr.__rollbar_xhr.status_code = 0;
-              self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
             }
             if (xhr.readyState === 1) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
@@ -114,7 +114,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
             }
             try {
               var code = xhr.status;
-              xhr.__rollbar_xhr.status_code = code === 1223 ? 204 : code;
+              code = code === 1223 ? 204 : code;
+              xhr.__rollbar_xhr.status_code = code;
+              xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
             } catch (e) {
               /* ignore possible exception from xhr.status */
             }
