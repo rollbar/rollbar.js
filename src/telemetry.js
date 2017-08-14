@@ -55,7 +55,7 @@ Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
   return this.capture('network', metadata, level, rollbarUUID);
 };
 
-Telemeter.prototype.levelFromStatus(statusCode) {
+Telemeter.prototype.levelFromStatus = function(statusCode) {
   if (statusCode >= 200 && statusCode < 400) {
     return 'info';
   }
