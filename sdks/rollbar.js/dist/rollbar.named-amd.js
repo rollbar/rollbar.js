@@ -463,7 +463,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.0-alpha.1"),
+	  version: ("2.2.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -2636,8 +2636,18 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
 	  subtype = subtype || 'xhr';
 	  metadata.subtype = metadata.subtype || subtype;
-	  var level = levelFromStatus(metadata.status_code);
+	  var level = this.levelFromStatus(metadata.status_code);
 	  return this.capture('network', metadata, level, rollbarUUID);
+	};
+	
+	Telemeter.prototype.levelFromStatus = function(statusCode) {
+	  if (statusCode >= 200 && statusCode < 400) {
+	    return 'info';
+	  }
+	  if (statusCode === 0 || statusCode >= 400) {
+	    return 'error';
+	  }
+	  return 'info';
 	};
 	
 	Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
@@ -2706,16 +2716,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    manual: 'info'
 	  };
 	  return defaultLevel[type] || 'info';
-	}
-	
-	function levelFromStatus(statusCode) {
-	  if (statusCode >= 200 && statusCode < 400) {
-	    return 'info';
-	  }
-	  if (statusCode === 0 || statusCode >= 400) {
-	    return 'error';
-	  }
-	  return 'info';
 	}
 	
 	module.exports = Telemeter;
@@ -4417,7 +4417,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
 	            if (xhr.__rollbar_xhr.status_code === null) {
 	              xhr.__rollbar_xhr.status_code = 0;
-	              self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+	              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
 	            }
 	            if (xhr.readyState === 1) {
 	              xhr.__rollbar_xhr.start_time_ms = _.now();
@@ -4426,7 +4426,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	            }
 	            try {
 	              var code = xhr.status;
-	              xhr.__rollbar_xhr.status_code = code === 1223 ? 204 : code;
+	              code = code === 1223 ? 204 : code;
+	              xhr.__rollbar_xhr.status_code = code;
+	              xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
 	            } catch (e) {
 	              /* ignore possible exception from xhr.status */
 	            }

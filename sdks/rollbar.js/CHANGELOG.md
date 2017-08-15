@@ -1,5 +1,11 @@
 # Change Log
 
+**v2.2.0**
+- Telemetry data is now collected by default in the browser. See
+  [README.md](https://github.com/rollbar/rollbar.js#telemetry)
+  for information and configuration details.
+- Fix some typos in the typescript declarations
+
 **v2.1.3**
 - Actually change version number in package.json and build all relevant files
 
