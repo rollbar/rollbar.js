@@ -33,10 +33,14 @@ Rollbar.prototype.global = function(options) {
   return this;
 };
 
-Rollbar.prototype.configure = function(options) {
+Rollbar.prototype.configure = function(options, payloadData) {
   this.notifier && this.notifier.configure(options);
   var oldOptions = this.options;
-  this.options = _.extend(true, {}, oldOptions, options);
+  var payload = {};
+  if (payloadData) {
+    payload = {payload: payloadData};
+  }
+  this.options = _.extend(true, {}, oldOptions, options, payload);
   return this;
 };
 

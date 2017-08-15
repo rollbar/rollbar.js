@@ -93,6 +93,53 @@ them in the configuration under the payload key:
 Rollbar.configure({payload: {fingerprint: "custom fingerprint to override grouping algorithm"}}).error(err);
 ```
 
+For convenience, the configure method also accepts a second parameter of data to be
+automatically nested under the paylaod key, for example:
+
+```js
+Rollbar.configure({enabled: true, payload: {somekey: 'somevalue'}}, {fingerprint: 'abc123'})
+```
+
+is equivalent to
+
+```js
+Rollbar.configure({enabled: true, payload: {somekey: 'somevalue', fingerprint: 'abc123'}})
+```
+
+Moreover, the values in the second parameter take precedence over any which have a duplicate key
+nested under the payload key in the first parameter. For example,
+
+```js
+Rollbar.configure(
+  {
+    enabled: true,
+    payload: {
+      a: 'b',
+      somekey: 'somevalue'
+    }
+  },
+  {
+    somekey: 'other',
+    fingerprint: 'abc123'
+  }
+)
+```
+
+is equivalent to
+
+```js
+Rollbar.configure(
+  {
+    enabled: true,
+    payload: {
+      a: 'b',
+      somekey: 'other',
+      fingerprint: 'abc123'
+    }
+  }
+)
+```
+
 ### Using Segment
 
 If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. To use them, you will need to include the Rollbar snippet directly in your <head>, rather than loading it through Segment.
