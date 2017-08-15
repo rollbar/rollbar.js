@@ -1,19 +1,19 @@
 # Change Log
 
-**v2.2.0**
+## v2.2.0
 - Telemetry data is now collected by default in the browser. See
   [README.md](https://github.com/rollbar/rollbar.js#telemetry)
   for information and configuration details.
 - Fix some typos in the typescript declarations
 
-**v2.1.3**
+## v2.1.3
 - Actually change version number in package.json and build all relevant files
 
-**v2.1.2**
+## v2.1.2
 - Actually send the client-side UUID with the item
 - Fix typos in typescript declaration
 
-**v2.1.1**
+## v2.1.1
 
 - Allow more flexibility of request objects 
 [#346](https://github.com/rollbar/rollbar.js/pull/346)
@@ -34,7 +34,7 @@
 - Fix #331 Verbose logging was using the wrong key structure 
 [#332](https://github.com/rollbar/rollbar.js/pull/332)
 
-**v2.1.0**
+## v2.1.0
 - Use the upstream version of console-polyfill: [#306](https://github.com/rollbar/rollbar.js/pull/306)
 - The verbose option still existed but didn't do anything, this adds back the functionality to
   output some information to the console: [#311](https://github.com/rollbar/rollbar.js/pull/311)
@@ -57,11 +57,11 @@
 - Allow environment to be nested inside the payload key in the configuration on the server side to
   match what we allow in the browser: [#329](https://github.com/rollbar/rollbar.js/pull/329)
 
-**v2.0.4**
+## v2.0.4
 - Fixes a small typo in the unhandled rejection handler. (pr#303)
 - Updated the no-conflict example to use the new noconflict bundle and updated docs. 
 
-**v2.0.3**
+## v2.0.3
 - Decreased NPM package size by removing examples and coverage directories. (pr#276)
 - Handle unordered params on the server side. (pr#286)
 - Fixes a server-side bug which failed to report an error if the request did not contain a `headers` key. (pr#288)
@@ -70,14 +70,14 @@
 - Fixes a bug which was causing subclasses of errors to not be treated as errors. (pr#293)
 - Added a no-conflict bundle for the browser. (pr#295)
 
-**v2.0.2**
+## v2.0.2
 - Added/updated docs on how to use rollbar.js with React, Angular 1 & 2, Ember, Backbone.js
 - Fixed a bug which was not respecting the `enabled` flag. (pr#280)
 
-**v2.0.1**
+## v2.0.1
 - Maintenance release - No new features or bugfixes
 
-**v2.0.0**
+## v2.0.0
 This release is the first where the library supports both browser and node environments from the
 same package. We decided to deprecate the `rollbar-browser` npm package in favor of using the
 `rollbar` npm package for all javascript environments. This single codebase now handles both
