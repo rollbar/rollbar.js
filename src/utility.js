@@ -103,13 +103,16 @@ function isError(e) {
   return isType(e, 'error');
 }
 
-function traverse(obj, func) {
-  var k;
-  var v;
-  var i;
+function traverse(obj, func, seen) {
+  var k, v, i;
   var isObj = isType(obj, 'object');
   var isArray = isType(obj, 'array');
   var keys = [];
+
+  if (isObj && seen.indexOf(obj) !== -1) {
+    return obj;
+  }
+  seen.push(obj);
 
   if (isObj) {
     for (k in obj) {
@@ -126,7 +129,7 @@ function traverse(obj, func) {
   for (i = 0; i < keys.length; ++i) {
     k = keys[i];
     v = obj[k];
-    obj[k] = func(k, v);
+    obj[k] = func(k, v, seen);
   }
 
   return obj;
@@ -497,11 +500,11 @@ function scrub(data, scrubFields) {
     return v;
   }
 
-  function scrubber(k, v) {
+  function scrubber(k, v, seen) {
     var tmpV = valScrubber(k, v);
     if (tmpV === v) {
       if (isType(v, 'object') || isType(v, 'array')) {
-        return traverse(v, scrubber);
+        return traverse(v, scrubber, seen);
       }
       return paramScrubber(tmpV);
     } else {
@@ -509,7 +512,7 @@ function scrub(data, scrubFields) {
     }
   }
 
-  traverse(data, scrubber);
+  traverse(data, scrubber, []);
   return data;
 }
 
