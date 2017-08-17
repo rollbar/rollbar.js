@@ -181,7 +181,7 @@ describe('traverse', function() {
       var result = _.traverse(obj, function(k, v) {
         callCount++;
         return v + 1;
-      });
+      }, []);
       expect(result).to.eql(expectedOutput);
       expect(callCount).to.eql(2);
 
@@ -197,7 +197,7 @@ describe('traverse', function() {
           return {ca: v.ca+1};
        }
         return v + 1;
-      });
+      }, []);
       expect(result).to.eql(expectedOutput);
       expect(callCount).to.eql(3);
 
@@ -210,7 +210,7 @@ describe('traverse', function() {
       var result = _.traverse(obj, function(k, v) {
         callCount++;
         return v - 1;
-      });
+      }, []);
       expect(result).to.eql(expected);
       expect(callCount).to.eql(3);
       done();
@@ -426,5 +426,72 @@ describe('set', function() {
     expect(o.foo.a).to.eql(98);
     expect(o.foo.bar.buzz).to.eql(97);
     expect(o.foo.bar.baz.fizz).to.eql(1);
+  });
+});
+
+describe('scrub', function() {
+  it('should not redact fields that are okay', function() {
+    var data = {
+      a: 'somestring',
+      password: 'abc123'
+    };
+    var scrubFields = ['password', 'b'];
+
+    var result = _.scrub(data, scrubFields);
+
+    expect(result.a).to.eql('somestring');
+  });
+  it('should redact fields that are in the field list', function() {
+    var data = {
+      a: 'somestring',
+      password: 'abc123'
+    };
+    var scrubFields = ['password', 'b'];
+
+    var result = _.scrub(data, scrubFields);
+
+    expect(result.password).to.not.eql('abc123');
+  });
+  it('should handle nested objects', function() {
+    var data = {
+      a: {
+        b: {
+          badthing: 'secret',
+          other: 'stuff'
+        },
+        c: 'bork',
+        password: 'abc123'
+      },
+      secret: 'blahblah'
+    };
+    var scrubFields = ['badthing', 'password', 'secret'];
+
+    var result = _.scrub(data, scrubFields);
+
+    expect(result.a.b.other).to.eql('stuff');
+    expect(result.a.badthing).to.not.eql('secret');
+    expect(result.a.c).to.eql('bork');
+    expect(result.a.password).to.not.eql('abc123');
+    expect(result.secret).to.not.eql('blahblah');
+  });
+  it('should do something sane for recursive objects', function() {
+    var inner = {
+      a: 'what',
+      b: 'yes'
+    };
+    var data = {
+      thing: 'stuff',
+      password: 'abc123'
+    };
+    data.inner = inner;
+    inner.outer = data;
+    var scrubFields = ['password', 'a'];
+
+    var result = _.scrub(data, scrubFields);
+
+    expect(result.thing).to.eql('stuff');
+    expect(result.password).to.not.eql('abc123');
+    expect(result.inner.a).to.not.eql('what');
+    expect(result.inner.b).to.eql('yes');
   });
 });
