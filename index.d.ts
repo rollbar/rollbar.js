@@ -30,7 +30,7 @@ declare namespace Rollbar {
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
-        accessToken: string;
+        accessToken?: string;
         version?: string;
         scrubFields?: string[];
         logLevel?: Level;
@@ -42,6 +42,11 @@ declare namespace Rollbar {
         captureUncaught?: boolean;
         captureUnhandledRejections?: boolean;
         payload?: object;
+        maxItems?: number;
+        itemsPerMinute?: number;
+        ignoredMessages?: string[];
+        hostWhiteList?: string[];
+        hostBlackList?: string[];
     }
     export type Callback = (err: MaybeError, response: object) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
