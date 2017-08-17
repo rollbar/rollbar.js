@@ -42,14 +42,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -74,9 +74,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = rollbar;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -476,9 +476,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -605,9 +605,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -741,9 +741,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = RateLimiter;
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -999,9 +999,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Queue;
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -1592,9 +1592,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -1684,9 +1684,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	//  json3.js
 	//  2017-02-21
@@ -2453,9 +2453,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = setupCustomJSON;
 
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2577,9 +2577,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Notifier;
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2721,9 +2721,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Telemeter;
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2795,9 +2795,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Api;
 
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2891,9 +2891,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2941,9 +2941,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
 	// https://github.com/paulmillr/console-polyfill
@@ -2966,9 +2966,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	})(typeof window === 'undefined' ? this : window);
 
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3004,9 +3004,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Detection;
 
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3119,9 +3119,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3331,9 +3331,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3418,9 +3418,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3681,9 +3681,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3777,9 +3777,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3976,15 +3976,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	
-	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -3998,7 +3996,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        return !isNaN(parseFloat(n)) && isFinite(n);
 	    }
 	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
 	        if (functionName !== undefined) {
 	            this.setFunctionName(functionName);
 	        }
@@ -4013,9 +4011,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        }
 	        if (columnNumber !== undefined) {
 	            this.setColumnNumber(columnNumber);
-	        }
-	        if (source !== undefined) {
-	            this.setSource(source);
 	        }
 	    }
 	
@@ -4068,13 +4063,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	            this.columnNumber = Number(v);
 	        },
 	
-	        getSource: function () {
-	            return this.source;
-	        },
-	        setSource: function (v) {
-	            this.source = String(v);
-	        },
-	
 	        toString: function() {
 	            var functionName = this.getFunctionName() || '{anonymous}';
 	            var args = '(' + (this.getArgs() || []).join(',') + ')';
@@ -4089,9 +4077,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}));
 
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4148,9 +4136,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4304,9 +4292,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 
 
-/***/ },
+/***/ }),
 /* 25 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4314,7 +4302,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	var urlparser = __webpack_require__(18);
 	
 	var defaults = {
-	  network: true,
+	  network: false,
 	  log: true,
 	  dom: true,
 	  navigation: true,
@@ -4807,5 +4795,5 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	module.exports = Instrumenter;
 
 
-/***/ }
+/***/ })
 /******/ ])});;
