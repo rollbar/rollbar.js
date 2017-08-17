@@ -69,15 +69,19 @@ Rollbar.global = function(options) {
   }
 };
 
-Rollbar.prototype.configure = function(options) {
+Rollbar.prototype.configure = function(options, payloadData) {
   var oldOptions = this.options;
-  this.options = _.extend(true, {}, oldOptions, options);
-  this.client.configure(options);
+  var payload = {};
+  if (payloadData) {
+    payload = {payload: payloadData};
+  }
+  this.options = _.extend(true, {}, oldOptions, options, payload);
+  this.client.configure(options, payloadData);
   return this;
 };
-Rollbar.configure = function(options) {
+Rollbar.configure = function(options, payloadData) {
   if (_instance) {
-    return _instance.configure(options);
+    return _instance.configure(options, payloadData);
   } else {
     handleUninitialized();
   }
