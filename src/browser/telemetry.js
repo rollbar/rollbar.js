@@ -129,7 +129,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
         if ('onreadystatechange' in xhr && _.isFunction(xhr.onreadystatechange)) {
           replace(xhr, 'onreadystatechange', function(orig) {
-            self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
+            return self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
           });
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;

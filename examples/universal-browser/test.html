@@ -45,6 +45,11 @@
         xhr.onload = function() {
           console.log('Got: ', xhr.response);
         };
+        xhr.onreadystatechange = function() {
+          if (this.readyState === 4) {
+            console.log('Done!');
+          }
+        };
         xhr.send(null);
       }
     </script>
