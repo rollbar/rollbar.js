@@ -363,6 +363,15 @@ _rollbarConfig = {
 }
 ```
 
+In addition to automatically captured events, it is possible to manually add events to the list of
+telemetry events via the `captureEvent` method:
+
+```js
+var metadata = {somekey: 'somevalue'}; // Any object that gets stored with the event
+var level = 'info'; // Possible values: 'debug', 'info', 'warning', 'error', 'critical'
+rollbar.captureEvent(metadata, level);
+```
+
 ## Configuration Reference
 
 ### Configuration types
