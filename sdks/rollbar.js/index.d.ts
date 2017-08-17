@@ -24,6 +24,8 @@ declare class Rollbar {
     public warning(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public error(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
+
+    public captureEvent(metadata: object, level: Rollbar.Level);
 }
 
 declare namespace Rollbar {
