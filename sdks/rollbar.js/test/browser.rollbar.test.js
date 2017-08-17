@@ -29,6 +29,12 @@ function TestClientGen() {
         this.logCalls.push({func: fn, item: item})
       }.bind(this, fn)
     }
+    this.options = {};
+    this.payloadData = {};
+    this.configure = function(o, payloadData) {
+      this.options = o;
+      this.payloadData = payloadData;
+    };
   };
 
   return TestClient;
@@ -103,6 +109,59 @@ describe('Rollbar()', function() {
       expect(client.logCalls[i].item.message).to.eql(msg)
     }
 
+    done();
+  });
+});
+
+describe('configure', function() {
+  it('should configure client', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      payload: {
+        a: 42,
+        environment: 'testtest'
+      }
+    };
+    var rollbar = new Rollbar(options, client);
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({payload: {environment: 'borkbork'}});
+    expect(rollbar.options.payload.environment).to.eql('borkbork');
+    expect(client.options.payload.environment).to.eql('borkbork');
+    done();
+  });
+  it('should accept a second parameter and use it as the payload value', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      payload: {
+        a: 42,
+        environment: 'testtest'
+      }
+    };
+    var rollbar = new Rollbar(options, client);
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({somekey: 'borkbork'}, {b: 97});
+    expect(rollbar.options.somekey).to.eql('borkbork');
+    expect(rollbar.options.payload.b).to.eql(97);
+    expect(client.payloadData.b).to.eql(97);
+    done();
+  });
+  it('should accept a second parameter and override the payload with it', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      payload: {
+        a: 42,
+        environment: 'testtest'
+      }
+    };
+    var rollbar = new Rollbar(options, client);
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({somekey: 'borkbork', payload: {b: 101}}, {b: 97});
+    expect(rollbar.options.somekey).to.eql('borkbork');
+    expect(rollbar.options.payload.b).to.eql(97);
+    expect(client.payloadData.b).to.eql(97);
     done();
   });
 });
