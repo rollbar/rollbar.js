@@ -1,5 +1,8 @@
 # Change Log
 
+## v2.2.1
+- Disable collection of network telemetry data by default
+
 ## v2.2.0
 - Telemetry data is now collected by default in the browser. See
   [README.md](https://github.com/rollbar/rollbar.js#telemetry)

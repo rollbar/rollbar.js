@@ -52,14 +52,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -72,9 +72,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = rollbar;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -474,9 +474,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -603,9 +603,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -739,9 +739,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = RateLimiter;
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -997,9 +997,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Queue;
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -1590,9 +1590,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -1682,9 +1682,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	//  json3.js
 	//  2017-02-21
@@ -2451,9 +2451,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = setupCustomJSON;
 
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2575,9 +2575,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Notifier;
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2719,9 +2719,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Telemeter;
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2793,9 +2793,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Api;
 
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2889,9 +2889,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2939,9 +2939,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
 	// https://github.com/paulmillr/console-polyfill
@@ -2964,9 +2964,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	})(typeof window === 'undefined' ? this : window);
 
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3002,9 +3002,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Detection;
 
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3117,9 +3117,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3329,9 +3329,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3416,9 +3416,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3679,9 +3679,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3775,9 +3775,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3974,15 +3974,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	
-	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -3996,7 +3994,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return !isNaN(parseFloat(n)) && isFinite(n);
 	    }
 	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
 	        if (functionName !== undefined) {
 	            this.setFunctionName(functionName);
 	        }
@@ -4011,9 +4009,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (columnNumber !== undefined) {
 	            this.setColumnNumber(columnNumber);
-	        }
-	        if (source !== undefined) {
-	            this.setSource(source);
 	        }
 	    }
 	
@@ -4066,13 +4061,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.columnNumber = Number(v);
 	        },
 	
-	        getSource: function () {
-	            return this.source;
-	        },
-	        setSource: function (v) {
-	            this.source = String(v);
-	        },
-	
 	        toString: function() {
 	            var functionName = this.getFunctionName() || '{anonymous}';
 	            var args = '(' + (this.getArgs() || []).join(',') + ')';
@@ -4087,9 +4075,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4146,9 +4134,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4302,9 +4290,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 
 
-/***/ },
+/***/ }),
 /* 25 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4312,7 +4300,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var urlparser = __webpack_require__(18);
 	
 	var defaults = {
-	  network: true,
+	  network: false,
 	  log: true,
 	  dom: true,
 	  navigation: true,
@@ -4805,7 +4793,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Instrumenter;
 
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

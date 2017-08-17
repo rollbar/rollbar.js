@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -67,9 +67,9 @@
 	module.exports = rollbar;
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -469,9 +469,9 @@
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -598,9 +598,9 @@
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -734,9 +734,9 @@
 	module.exports = RateLimiter;
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -992,9 +992,9 @@
 	module.exports = Queue;
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -1585,9 +1585,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -1677,9 +1677,9 @@
 	
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	//  json3.js
 	//  2017-02-21
@@ -2446,9 +2446,9 @@
 	module.exports = setupCustomJSON;
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2570,9 +2570,9 @@
 	module.exports = Notifier;
 
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2714,9 +2714,9 @@
 	module.exports = Telemeter;
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2788,9 +2788,9 @@
 	module.exports = Api;
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2884,9 +2884,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2934,9 +2934,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
 	// https://github.com/paulmillr/console-polyfill
@@ -2959,9 +2959,9 @@
 	})(typeof window === 'undefined' ? this : window);
 
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -2997,9 +2997,9 @@
 	module.exports = Detection;
 
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3112,9 +3112,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3324,9 +3324,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3411,9 +3411,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3674,9 +3674,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -3770,9 +3770,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3969,15 +3969,13 @@
 	
 
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
 	    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-	
-	    /* istanbul ignore next */
 	    if (true) {
 	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
@@ -3991,7 +3989,7 @@
 	        return !isNaN(parseFloat(n)) && isFinite(n);
 	    }
 	
-	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
+	    function StackFrame(functionName, args, fileName, lineNumber, columnNumber) {
 	        if (functionName !== undefined) {
 	            this.setFunctionName(functionName);
 	        }
@@ -4006,9 +4004,6 @@
 	        }
 	        if (columnNumber !== undefined) {
 	            this.setColumnNumber(columnNumber);
-	        }
-	        if (source !== undefined) {
-	            this.setSource(source);
 	        }
 	    }
 	
@@ -4061,13 +4056,6 @@
 	            this.columnNumber = Number(v);
 	        },
 	
-	        getSource: function () {
-	            return this.source;
-	        },
-	        setSource: function (v) {
-	            this.source = String(v);
-	        },
-	
 	        toString: function() {
 	            var functionName = this.getFunctionName() || '{anonymous}';
 	            var args = '(' + (this.getArgs() || []).join(',') + ')';
@@ -4082,9 +4070,9 @@
 	}));
 
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4141,9 +4129,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4297,9 +4285,9 @@
 	
 
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4307,7 +4295,7 @@
 	var urlparser = __webpack_require__(17);
 	
 	var defaults = {
-	  network: true,
+	  network: false,
 	  log: true,
 	  dom: true,
 	  navigation: true,
@@ -4800,5 +4788,5 @@
 	module.exports = Instrumenter;
 
 
-/***/ }
+/***/ })
 /******/ ]);
