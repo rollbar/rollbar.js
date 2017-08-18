@@ -363,6 +363,25 @@ _rollbarConfig = {
 }
 ```
 
+The different types of events that we automatically capture are: `network`, `log`, `dom`,
+`navigation`, and `connectivity`.
+
+Network events are XHR and fetch requests. We store the status code, the url, and some timing events
+to determine how long requests take.
+
+Log events are calls to `console` and we simple store which console method was called and the
+arguments.
+
+DOM events are roughly clicks and inputs that are user generated. We store what element was
+interacted with and values for certain types of inputs. We do not store the values of inputs of
+password type.
+
+Navigation events use the information from `pushState` on browsers that allow for this and gathers
+to and from information.
+
+Connectivity events try to capture changes in network connectivity status when this is exposed by
+the browser.
+
 In addition to automatically captured events, it is possible to manually add events to the list of
 telemetry events via the `captureEvent` method:
 
@@ -371,6 +390,43 @@ var metadata = {somekey: 'somevalue'}; // Any object that gets stored with the e
 var level = 'info'; // Possible values: 'debug', 'info', 'warning', 'error', 'critical'
 rollbar.captureEvent(metadata, level);
 ```
+
+There is an in-memory queue of telemetry events that gets built up over the lifecycle of a user
+interacting with your app. This queue is FIFO and has a fixed size. By default, we store the last
+100 events and send these as part of the item with each manual call to a rollbar method (log/info/warning/error) or with calls caused by an uncaught exception.
+You can configure the size of this queue using the option `maxTelemetryEvents`, however note that
+the size of the queue is fixed to be in the interval [0, 100], so while you can lower the size of
+the queue from 100, currently you can not increase the size of the queue beyond 100.
+
+Each event is stored as an object of the form
+
+```
+{
+  level: "debug" | "info" | "warning" | "error" | "critical"
+  type: string
+  timestamp_ms: number
+  body: object
+  source: string
+  uuid?: string
+}
+```
+
+The size of each of these events is mostly determined by the `body` field, however we attempt to
+store only the smallest amount of information necessary aide in understanding. Therefore, if you
+have concerns about memory usage, you can turn the collection of some or all events off, or limit
+the size of the queue of events that we store.
+
+The data that is collected is included in the payload and also goes through the same scrubbing
+process described elsewhere.
+
+The implementation requires us to wrap certain function calls as well as to setup some event
+listeners on the top level object. Because of this, there must necessarily be a performance impact
+as more code will be running in response to certain user interactions as well as interactions with
+your code. There is thus a tradeoff between gathering extra information for debugging purposes and
+execution time and memory footprint. Our suggestion is to benchmark and instrument your code and
+decide what is an acceptable tradeoff for your application. The configuration options to turn off
+some or all of the different instrumentation is provided to help you make these fine-grained
+decisions.
 
 ## Configuration Reference
 
