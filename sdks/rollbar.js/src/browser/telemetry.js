@@ -2,7 +2,7 @@ var _ = require('../utility');
 var urlparser = require('./url');
 
 var defaults = {
-  network: false,
+  network: true,
   log: true,
   dom: true,
   navigation: true,
