@@ -1,5 +1,8 @@
 # Change Log
 
+## v2.2.3
+- Actually make collecting network telemetry on by default
+
 ## v2.2.2
 - Fix bug in network telemetry that was wrapping onreadystatechage in correctly
 - Enable collecting network telemetry by default
