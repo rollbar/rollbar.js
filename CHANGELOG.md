@@ -1,5 +1,13 @@
 # Change Log
 
+## v2.2.2
+- Fix bug in network telemetry that was wrapping onreadystatechage in correctly
+- Enable collecting network telemetry by default
+- Fix stack overflow issue due to scrubbing of self-referential objects
+- Add optional second parameter to configure to make adding payload data easier
+  [#376](https://github.com/rollbar/rollbar.js/pull/376)
+- Make the typescript type declarations better
+
 ## v2.2.1
 - Disable collection of network telemetry data by default
 
