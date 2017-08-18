@@ -25,7 +25,7 @@ declare class Rollbar {
     public error(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
 
-    public captureEvent(metadata: object, level: Rollbar.Level);
+    public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 }
 
 declare namespace Rollbar {
@@ -54,5 +54,13 @@ declare namespace Rollbar {
     export type LogArgument = string | Error | object | Callback | Date | any[];
     export interface LogResult {
         uuid: string;
+    }
+    export interface TelemetryEvent {
+        level: Level;
+        type: string;
+        timestamp_ms: number;
+        body: object;
+        source: string;
+        uuid?: string;
     }
 }
