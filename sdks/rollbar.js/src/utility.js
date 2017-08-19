@@ -557,7 +557,7 @@ function formatArgsAsString(args) {
 
 function now() {
   if (Date.now) {
-    return Date.now();
+    return +Date.now();
   }
   return +new Date();
 }
