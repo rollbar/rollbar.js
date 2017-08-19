@@ -369,7 +369,7 @@ The different types of events that we automatically capture are: `network`, `log
 Network events are XHR and fetch requests. We store the status code, the url, and some timing events
 to determine how long requests take.
 
-Log events are calls to `console` and we simple store which console method was called and the
+Log events are calls to `console` and we simply store which console method was called and the
 arguments.
 
 DOM events are roughly clicks and inputs that are user generated. We store what element was
@@ -412,7 +412,7 @@ Each event is stored as an object of the form
 ```
 
 The size of each of these events is mostly determined by the `body` field, however we attempt to
-store only the smallest amount of information necessary aide in understanding. Therefore, if you
+store only the smallest amount of information necessary to aid in understanding. Therefore, if you
 have concerns about memory usage, you can turn the collection of some or all events off, or limit
 the size of the queue of events that we store.
 
