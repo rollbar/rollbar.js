@@ -144,11 +144,11 @@ Rollbar.configure(
 
 If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. To use them, you will need to include the Rollbar snippet directly in your <head>, rather than loading it through Segment.
 
-### Using rollbar.js in a Chrome Extension
+### Using in a Chrome Extension
 
 To use rollbar.js inside a Chrome extension, there are some very minor changes you need to make. You must ensure that when loading rollbar.js from the CDN, the URL is hardcoded as `https://`, rather than `//`. 
 
-If your source code is minified and you want to use our Source Maps feature, you need to follow the same steps as outlined in [using source maps on many domains](/source-maps/#using-source-maps-on-many-domains).
+If your source code is minified and you want to use our Source Maps feature, you need to follow the same steps as outlined in [using source maps on many domains](/docs/source-maps/#using-source-maps-on-many-domains).
 
 
 ## Javascript Framework Support
