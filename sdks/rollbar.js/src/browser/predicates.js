@@ -36,6 +36,10 @@ function urlIsBlacklisted(item, settings) {
   return urlIsOnAList(item, settings, 'blacklist');
 }
 
+function urlIsNotBlacklisted(item, settings) {
+  return !urlIsBlacklisted(item, settings);
+}
+
 function urlIsWhitelisted(item, settings) {
   return urlIsOnAList(item, settings, 'whitelist');
 }
@@ -142,6 +146,7 @@ module.exports = {
   checkIgnore: checkIgnore,
   userCheckIgnore: userCheckIgnore,
   urlIsBlacklisted: urlIsBlacklisted,
+  urlIsNotBlacklisted: urlIsNotBlacklisted,
   urlIsWhitelisted: urlIsWhitelisted,
   messageIsIgnored: messageIsIgnored
 };
