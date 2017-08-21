@@ -9,10 +9,10 @@ function setupJSON() {
   __initRollbarJSON = true;
 
   if (isDefined(JSON)) {
-    if (isFunction(JSON.stringify)) {
+    if (isNativeFunction(JSON.stringify)) {
       RollbarJSON.stringify = JSON.stringify;
     }
-    if (isFunction(JSON.parse)) {
+    if (isNativeFunction(JSON.parse)) {
       RollbarJSON.parse = JSON.parse;
     }
   }
@@ -69,6 +69,19 @@ function typeName(x) {
  */
 function isFunction(f) {
   return isType(f, 'function');
+}
+
+/* isNativeFunction - a convenience function for checking if a value is a native JS function
+ *
+ * @param f - any value
+ * @returns true if f is a native JS function, otherwise false
+ */
+function isNativeFunction(f) {
+  if (!isFunction(f)) {
+    return false;
+  }
+  var functionString = Function.prototype.toString.call(f);
+  return /\{\s+\[native code\]/.test(functionString);
 }
 
 /*
@@ -566,6 +579,7 @@ module.exports = {
   isType: isType,
   typeName: typeName,
   isFunction: isFunction,
+  isNativeFunction: isNativeFunction,
   isIterable: isIterable,
   isError: isError,
   extend: extend,
