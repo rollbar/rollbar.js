@@ -29,12 +29,12 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   var autoInstrument = options.autoInstrument;
   if (autoInstrument === false) {
     this.autoInstrument = {};
-    return;
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
   }
-  if (!_.isType(autoInstrument, 'object')) {
-    autoInstrument = defaults;
-  }
-  this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
   this.telemeter = telemeter;
   this.rollbar = rollbar;
   this._window = _window || {};
@@ -44,6 +44,21 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this._location = this._window.location;
   this._lastHref = this._location && this._location.href;
 }
+
+// TODO: this is not correct yet
+Instrumenter.prototype.configure = function(options) {
+  var autoInstrument = options.autoInstrument;
+  if (autoInstrument === false) {
+    this.autoInstrument = {};
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+  }
+  this.instrument();
+};
+
 
 Instrumenter.prototype.instrument = function() {
   if (this.autoInstrument.network) {
