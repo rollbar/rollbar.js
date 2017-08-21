@@ -69,6 +69,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   }
   this.options = _.extend(true, {}, oldOptions, options, payload);
   this.client.configure(options, payloadData);
+  this.instrumenter.configure(options);
   return this;
 };
 Rollbar.configure = function(options, payloadData) {
