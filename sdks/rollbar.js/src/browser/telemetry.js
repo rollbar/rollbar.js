@@ -35,6 +35,8 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
     autoInstrument = defaults;
   }
   this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+  this.telemetryScrubber = options.telemetryScrubber;
   this.telemeter = telemeter;
   this.rollbar = rollbar;
   this._window = _window || {};
@@ -267,8 +269,13 @@ Instrumenter.prototype.handleSelectInputChanged = function(elem) {
 };
 
 Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
-  if (getElementType(element) === 'password') {
+  if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
     value = undefined;
+  } else if (this.telemetryScrubber) {
+    var description = describeElement(element);
+    if (this.telemetryScrubber(description)) {
+      value = undefined;
+    }
   }
   var elementString = elementArrayToString(treeToArray(element));
   this.telemeter.captureDom(subtype, elementString, value, isChecked);
