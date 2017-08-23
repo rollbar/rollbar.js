@@ -32,12 +32,8 @@ function userCheckIgnore(item, settings) {
   return true;
 }
 
-function urlIsBlacklisted(item, settings) {
-  return urlIsOnAList(item, settings, 'blacklist');
-}
-
 function urlIsNotBlacklisted(item, settings) {
-  return !urlIsBlacklisted(item, settings);
+  return !urlIsOnAList(item, settings, 'blacklist');
 }
 
 function urlIsWhitelisted(item, settings) {
