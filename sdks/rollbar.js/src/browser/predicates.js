@@ -141,7 +141,6 @@ function messageIsIgnored(item, settings) {
 module.exports = {
   checkIgnore: checkIgnore,
   userCheckIgnore: userCheckIgnore,
-  urlIsBlacklisted: urlIsBlacklisted,
   urlIsNotBlacklisted: urlIsNotBlacklisted,
   urlIsWhitelisted: urlIsWhitelisted,
   messageIsIgnored: messageIsIgnored
