@@ -42,8 +42,11 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this.replacements = {
     network: [],
     log: [],
-    dom: [],
     navigation: [],
+    connectivity: []
+  };
+  this.eventRemovers = {
+    dom: [],
     connectivity: []
   };
 
@@ -66,33 +69,33 @@ Instrumenter.prototype.configure = function(options) {
 };
 
 Instrumenter.prototype.instrument = function(oldSettings) {
-  if (this.autoInstrument.network) {
+  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
     this.instrumentNetwork();
-  } else if (oldSettings && oldSettings.network) {
+  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
     this.deinstrumentNetwork();
   }
 
-  if (this.autoInstrument.log) {
+  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
     this.instrumentConsole();
-  } else if (oldSettings && oldSettings.log) {
+  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
     this.deinstrumentConsole();
   }
 
-  if (this.autoInstrument.dom) {
+  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
     this.instrumentDom();
-  } else if (oldSettings && oldSettings.dom) {
+  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
     this.deinstrumentDom();
   }
 
-  if (this.autoInstrument.navigation) {
+  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
     this.instrumentNavigation();
-  } else if (oldSettings && oldSettings.navigation) {
+  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
     this.deinstrumentNavigation();
   }
 
-  if (this.autoInstrument.connectivity) {
+  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
     this.instrumentConnectivity();
-  } else if (oldSettings && oldSettings.connectivity) {
+  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
     this.deinstrumentConnectivity();
   }
 };
@@ -257,15 +260,7 @@ Instrumenter.prototype.deinstrumentDom = function() {
   if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
     return;
   }
-  var clickHandler = this.handleClick.bind(this);
-  var blurHandler = this.handleBlur.bind(this);
-  if (this._window.addEventListener) {
-    this._window.removeEventListener('click', clickHandler, true);
-    this._window.removeEventListener('blur', blurHandler, true);
-  } else {
-    this._window.detachEvent('onclick', clickHandler);
-    this._window.detachEvent('onfocusout', blurHandler);
-  }
+  this.removeListeners('dom');
 };
 
 Instrumenter.prototype.instrumentDom = function() {
@@ -274,13 +269,8 @@ Instrumenter.prototype.instrumentDom = function() {
   }
   var clickHandler = this.handleClick.bind(this);
   var blurHandler = this.handleBlur.bind(this);
-  if (this._window.addEventListener) {
-    this._window.addEventListener('click', clickHandler, true);
-    this._window.addEventListener('blur', blurHandler, true);
-  } else {
-    this._window.attachEvent('onclick', clickHandler);
-    this._window.attachEvent('onfocusout', blurHandler);
-  }
+  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
+  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
 };
 
 Instrumenter.prototype.handleClick = function(evt) {
@@ -544,12 +534,7 @@ Instrumenter.prototype.deinstrumentConnectivity = function() {
     return;
   }
   if (this._window.addEventListener) {
-    this._window.removeEventListener('online', function() {
-      this.telemeter.captureConnectivityChange('online');
-    }.bind(this), true);
-    this._window.removeEventListener('offline', function() {
-      this.telemeter.captureConnectivityChange('offline');
-    }.bind(this), true);
+    this.removeListeners('connectivity');
   } else {
     restore(this.replacements, 'connectivity');
   }
@@ -560,10 +545,10 @@ Instrumenter.prototype.instrumentConnectivity = function() {
     return;
   }
   if (this._window.addEventListener) {
-    this._window.addEventListener('online', function() {
+    this.addListener('connectivity', this._window, 'online', undefined, function() {
       this.telemeter.captureConnectivityChange('online');
     }.bind(this), true);
-    this._window.addEventListener('offline', function() {
+    this.addListener('connectivity', this._window, 'offline', undefined, function() {
       this.telemeter.captureConnectivityChange('offline');
     }.bind(this), true);
   } else {
@@ -584,6 +569,28 @@ Instrumenter.prototype.instrumentConnectivity = function() {
         }
       }
     }, this.replacements, 'connectivity');
+  }
+};
+
+Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
+  if (obj.addEventListener) {
+    obj.addEventListener(type, handler, capture);
+    this.eventRemovers[section].push(function() {
+      obj.removeEventListener(type, handler, capture);
+    });
+  } else if (altType) {
+    obj.attachEvent(altType, handler);
+    this.eventRemovers[section].push(function() {
+      obj.detachEvent(altType, handler);
+    });
+  }
+};
+
+Instrumenter.prototype.removeListeners = function(section) {
+  var r;
+  while (this.eventRemovers[section].length) {
+    r = this.eventRemovers[section].shift();
+    r();
   }
 };
 
