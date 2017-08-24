@@ -321,11 +321,11 @@ Instrumenter.prototype.handleSelectInputChanged = function(elem) {
 
 Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
   if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
-    value = undefined;
+    value = '[scrubbed]';
   } else if (this.telemetryScrubber) {
     var description = describeElement(element);
     if (this.telemetryScrubber(description)) {
-      value = undefined;
+      value = '[scrubbed]';
     }
   }
   var elementString = elementArrayToString(treeToArray(element));
