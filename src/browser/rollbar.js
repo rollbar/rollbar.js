@@ -360,6 +360,7 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(predicates.checkIgnore)
     .addPredicate(predicates.userCheckIgnore)
+    .addPredicate(predicates.urlIsNotBlacklisted)
     .addPredicate(predicates.urlIsWhitelisted)
     .addPredicate(predicates.messageIsIgnored);
 }
