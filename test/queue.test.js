@@ -325,7 +325,7 @@ describe('addItem', function() {
           done();
         });
       });
-      it('should stop and callback if a wait callback is set', function(done) {
+      it('should call wait if set', function(done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
@@ -343,14 +343,11 @@ describe('addItem', function() {
           expect(false).to.be.ok();
           cb(null, serverResponse);
         };
-        var waitCalled = false;
         queue.wait(function() {
-          waitCalled = true;
+          done();
         });
         queue.addItem({mykey: 'myvalue'}, function(err, resp) {
-          expect(resp).to.not.be.ok();
-          expect(waitCalled).to.be.ok();
-          done(err);
+          expect(resp).to.be.ok();
         });
       });
       it('should work if wait is called with a non-function', function(done) {
