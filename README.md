@@ -423,7 +423,31 @@ have concerns about memory usage, you can turn the collection of some or all eve
 the size of the queue of events that we store.
 
 The data that is collected is included in the payload and also goes through the same scrubbing
-process described elsewhere.
+process described elsewhere. However, we also provide two additional options for scrubbing of
+telemetry specific data related to inputs in the dom. The first options is `scrubTelemetryInputs`.
+If this is set to `true` then no input values will be included in the telemetry events. This is a
+course grained on/off switch which you can use to ensure that no input data is leaked.
+
+The second options is a function `telemetryScrubber`. This function should take one argument which
+is a description of a dom node of the form:
+
+```
+{
+  tagName: string
+  id: string | undefined
+  classes: [string] | undefined
+  attributes: [
+    {
+      key: "type" | "name" | "title" | "alt"
+      value: string
+    }
+  ]
+}
+```
+
+Each time an input event is captured, your function will be called with the description of the node
+in the form above. If your function returns a truthy value then the value of the input will be
+scrubbed and not included in the event, otherwise the value will be included.
 
 The implementation requires us to wrap certain function calls as well as to setup some event
 listeners on the top level object. Because of this, there must necessarily be a performance impact
