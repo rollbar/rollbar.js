@@ -32,8 +32,8 @@ function userCheckIgnore(item, settings) {
   return true;
 }
 
-function urlIsBlacklisted(item, settings) {
-  return urlIsOnAList(item, settings, 'blacklist');
+function urlIsNotBlacklisted(item, settings) {
+  return !urlIsOnAList(item, settings, 'blacklist');
 }
 
 function urlIsWhitelisted(item, settings) {
@@ -141,7 +141,7 @@ function messageIsIgnored(item, settings) {
 module.exports = {
   checkIgnore: checkIgnore,
   userCheckIgnore: userCheckIgnore,
-  urlIsBlacklisted: urlIsBlacklisted,
+  urlIsNotBlacklisted: urlIsNotBlacklisted,
   urlIsWhitelisted: urlIsWhitelisted,
   messageIsIgnored: messageIsIgnored
 };
