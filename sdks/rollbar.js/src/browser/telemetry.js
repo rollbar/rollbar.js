@@ -9,18 +9,18 @@ var defaults = {
   connectivity: true
 };
 
-function replace(obj, name, replacement, replacements) {
+function replace(obj, name, replacement, replacements, type) {
   var orig = obj[name];
   obj[name] = replacement(orig);
   if (replacements) {
-    replacements.push([obj, name, orig]);
+    replacements[type].push([obj, name, orig]);
   }
 }
 
-function restore(replacements) {
+function restore(replacements, type) {
   var b;
-  while (replacements.length) {
-    b = replacements.shift();
+  while (replacements[type].length) {
+    b = replacements[type].shift();
     b[0][b[1]] = b[2];
   }
 }
@@ -29,42 +29,79 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   var autoInstrument = options.autoInstrument;
   if (autoInstrument === false) {
     this.autoInstrument = {};
-    return;
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
   }
-  if (!_.isType(autoInstrument, 'object')) {
-    autoInstrument = defaults;
-  }
-  this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
   this.telemeter = telemeter;
   this.rollbar = rollbar;
   this._window = _window || {};
   this._document = _document || {};
-  this.replacements = [];
+  this.replacements = {
+    network: [],
+    log: [],
+    navigation: [],
+    connectivity: []
+  };
+  this.eventRemovers = {
+    dom: [],
+    connectivity: []
+  };
 
   this._location = this._window.location;
   this._lastHref = this._location && this._location.href;
 }
 
-Instrumenter.prototype.instrument = function() {
-  if (this.autoInstrument.network) {
+Instrumenter.prototype.configure = function(options) {
+  var autoInstrument = options.autoInstrument;
+  var oldSettings = _.extend(true, {}, this.autoInstrument);
+  if (autoInstrument === false) {
+    this.autoInstrument = {};
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+  }
+  this.instrument(oldSettings);
+};
+
+Instrumenter.prototype.instrument = function(oldSettings) {
+  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
     this.instrumentNetwork();
+  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+    this.deinstrumentNetwork();
   }
 
-  if (this.autoInstrument.log) {
+  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
     this.instrumentConsole();
+  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
+    this.deinstrumentConsole();
   }
 
-  if (this.autoInstrument.dom) {
+  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
     this.instrumentDom();
+  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
+    this.deinstrumentDom();
   }
 
-  if (this.autoInstrument.navigation) {
+  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
     this.instrumentNavigation();
+  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
+    this.deinstrumentNavigation();
   }
 
-  if (this.autoInstrument.connectivity) {
+  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
     this.instrumentConnectivity();
+  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
+    this.deinstrumentConnectivity();
   }
+};
+
+Instrumenter.prototype.deinstrumentNetwork = function() {
+  restore(this.replacements, 'network');
 };
 
 Instrumenter.prototype.instrumentNetwork = function() {
@@ -74,7 +111,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     if (prop in xhr && _.isFunction(xhr[prop])) {
       replace(xhr, prop, function(orig) {
         return self.rollbar.wrap(orig);
-      }, self.replacements);
+      }, self.replacements, 'network');
     }
   }
 
@@ -93,7 +130,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         }
         return orig.apply(this, arguments);
       };
-    }, this.replacements);
+    }, this.replacements, 'network');
 
     replace(xhrp, 'send', function(orig) {
       /* eslint-disable no-unused-vars */
@@ -136,7 +173,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         }
         return orig.apply(this, arguments);
       }
-    }, this.replacements);
+    }, this.replacements, 'network');
   }
 
   if ('fetch' in this._window) {
@@ -176,7 +213,18 @@ Instrumenter.prototype.instrumentNetwork = function() {
           return resp;
         });
       };
-    }, this.replacements);
+    }, this.replacements, 'network');
+  }
+};
+
+Instrumenter.prototype.deinstrumentConsole = function() {
+  if (!('console' in this._window && this._window.console.log)) {
+    return;
+  }
+  var b;
+  while (this.replacements['log'].length) {
+    b = this.replacements['log'].shift();
+    this._window.console[b[0]] = b[1];
   }
 };
 
@@ -200,11 +248,19 @@ Instrumenter.prototype.instrumentConsole = function() {
         Function.prototype.apply.call(orig, origConsole, args);
       }
     };
+    self.replacements['log'].push([method, orig]);
   }
   var methods = ['debug','info','warn','error','log'];
   for (var i=0, len=methods.length; i < len; i++) {
     wrapConsole(methods[i]);
   }
+};
+
+Instrumenter.prototype.deinstrumentDom = function() {
+  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+    return;
+  }
+  this.removeListeners('dom');
 };
 
 Instrumenter.prototype.instrumentDom = function() {
@@ -213,13 +269,8 @@ Instrumenter.prototype.instrumentDom = function() {
   }
   var clickHandler = this.handleClick.bind(this);
   var blurHandler = this.handleBlur.bind(this);
-  if (this._window.addEventListener) {
-    this._window.addEventListener('click', clickHandler, true);
-    this._window.addEventListener('blur', blurHandler, true);
-  } else {
-    this._window.attachEvent('click', clickHandler);
-    this._window.attachEvent('onfocusout', blurHandler);
-  }
+  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
+  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
 };
 
 Instrumenter.prototype.handleClick = function(evt) {
@@ -423,6 +474,17 @@ function describeElement(elem) {
   return out;
 }
 
+Instrumenter.prototype.deinstrumentNavigation = function() {
+  var chrome = this._window.chrome;
+  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+  // See https://github.com/angular/angular.js/pull/13945/files
+  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+  if (!hasPushState) {
+    return;
+  }
+  restore(this.replacements, 'navigation');
+};
+
 Instrumenter.prototype.instrumentNavigation = function() {
   var chrome = this._window.chrome;
   var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
@@ -432,14 +494,15 @@ Instrumenter.prototype.instrumentNavigation = function() {
     return;
   }
   var self = this;
-  var oldOnPopState = this._window.onpopstate;
-  this._window.onpopstate = function() {
-    var current = self._location.href;
-    self.handleUrlChange(self._lastHref, current);
-    if (oldOnPopState) {
-      oldOnPopState.apply(this, arguments);
-    }
-  };
+  replace(this._window, 'onpopstate', function(orig) {
+    return function() {
+      var current = self._location.href;
+      self.handleUrlChange(self._lastHref, current);
+      if (orig) {
+        orig.apply(this, arguments);
+      }
+    };
+  }, this.replacements, 'navigation');
 
   replace(this._window.history, 'pushState', function(orig) {
     return function() {
@@ -449,7 +512,7 @@ Instrumenter.prototype.instrumentNavigation = function() {
       }
       return orig.apply(this, arguments);
     };
-  }, this.replacements);
+  }, this.replacements, 'navigation');
 };
 
 Instrumenter.prototype.handleUrlChange = function(from, to) {
@@ -466,30 +529,69 @@ Instrumenter.prototype.handleUrlChange = function(from, to) {
   this.telemeter.captureNavigation(from, to);
 };
 
+Instrumenter.prototype.deinstrumentConnectivity = function() {
+  if (!('addEventListener' in this._window || 'body' in this._document)) {
+    return;
+  }
+  if (this._window.addEventListener) {
+    this.removeListeners('connectivity');
+  } else {
+    restore(this.replacements, 'connectivity');
+  }
+};
+
 Instrumenter.prototype.instrumentConnectivity = function() {
   if (!('addEventListener' in this._window || 'body' in this._document)) {
     return;
   }
   if (this._window.addEventListener) {
-    this._window.addEventListener('online', function() {
+    this.addListener('connectivity', this._window, 'online', undefined, function() {
       this.telemeter.captureConnectivityChange('online');
     }.bind(this), true);
-    this._window.addEventListener('offline', function() {
+    this.addListener('connectivity', this._window, 'offline', undefined, function() {
       this.telemeter.captureConnectivityChange('offline');
     }.bind(this), true);
   } else {
-    this._document.body.ononline = function() {
-      this.telemeter.captureConnectivityChange('online');
-    }.bind(this);
-    this._document.body.onoffline = function() {
-      this.telemeter.captureConnectivityChange('offline');
-    }.bind(this);
+    var self = this;
+    replace(this._document.body, 'ononline', function(orig) {
+      return function() {
+        self.telemeter.captureConnectivityChange('online');
+        if (orig) {
+          orig.apply(this, arguments);
+        }
+      }
+    }, this.replacements, 'connectivity');
+    replace(this._document.body, 'onoffline', function(orig) {
+      return function() {
+        self.telemeter.captureConnectivityChange('offline');
+        if (orig) {
+          orig.apply(this, arguments);
+        }
+      }
+    }, this.replacements, 'connectivity');
   }
 };
 
-Instrumenter.prototype.restore = function() {
-  restore(this.replacements);
-  this.replacements = [];
+Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
+  if (obj.addEventListener) {
+    obj.addEventListener(type, handler, capture);
+    this.eventRemovers[section].push(function() {
+      obj.removeEventListener(type, handler, capture);
+    });
+  } else if (altType) {
+    obj.attachEvent(altType, handler);
+    this.eventRemovers[section].push(function() {
+      obj.detachEvent(altType, handler);
+    });
+  }
+};
+
+Instrumenter.prototype.removeListeners = function(section) {
+  var r;
+  while (this.eventRemovers[section].length) {
+    r = this.eventRemovers[section].shift();
+    r();
+  }
 };
 
 module.exports = Instrumenter;

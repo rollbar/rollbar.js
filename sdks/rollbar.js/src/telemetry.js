@@ -9,6 +9,18 @@ function Telemeter(options) {
   this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 }
 
+Telemeter.prototype.configure = function(options) {
+  this.options = _.extend(true, {}, options);
+  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+  var deleteCount = 0;
+  if (this.maxQueueSize > newMaxEvents) {
+    deleteCount = this.maxQueueSize - newMaxEvents;
+  }
+  this.maxQueueSize = newMaxEvents;
+  this.queue.splice(0, deleteCount);
+};
+
 Telemeter.prototype.copyEvents = function() {
   return Array.prototype.slice.call(this.queue, 0);
 };
