@@ -27,6 +27,7 @@ function Rollbar(options, client) {
   }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || 'unspecified';
+  this.lambdaContext = null;
   var api = new API(this.options, transport, urllib, jsonBackup);
   this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
@@ -225,7 +226,6 @@ Rollbar.wait = function(callback) {
   }
 };
 
-
 Rollbar.prototype.errorHandler = function() {
   return function(err, request, response, next) {
     var cb = function(rollbarError) {
@@ -247,6 +247,28 @@ Rollbar.prototype.errorHandler = function() {
 Rollbar.errorHandler = function() {
   if (_instance) {
     return _instance.errorHandler()
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.prototype.lambdaHandler = function(handler) {
+  var self = this;
+  return function(event, context, callback) {
+    self.lambdaContext = context;
+    return handler(event, context, function(err, resp) {
+      if (err) {
+        self.error(err);
+      }
+      self.wait(function() {
+        callback(err, resp);
+      });
+    });
+  };
+};
+Rollbar.lambdaHandler = function(handler) {
+  if (_instance) {
+    return _instance.lambdaHandler(handler);
   } else {
     handleUninitialized();
   }
@@ -380,6 +402,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(transforms.addRequestData)
+    .addTransform(transforms.addLambdaData)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.itemToPayload);
 }
@@ -392,7 +415,7 @@ function addPredicatesToQueue(queue) {
 
 Rollbar.prototype._createItem = function(args) {
   var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
-  return _.createItem(args, logger, this, requestKeys);
+  return _.createItem(args, logger, this, requestKeys, this.lambdaContext);
 };
 
 function _getFirstFunction(args) {

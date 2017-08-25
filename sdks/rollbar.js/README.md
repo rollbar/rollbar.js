@@ -1305,6 +1305,37 @@ const Rollbar = require('rollbar');
 Rollbar.log('hello world');
 ```
 
+## Lambda
+
+We provide a convenience function for working with AWS Lambda, namely `lambdaHandler`. This function
+takes one argument which is your lambda function and returns a semantically equivalent function with
+all of the details of interacting with Rollbar abstracted away. If you call your callback with an
+error, it will automatically be sent to Rollbar. Additionally, extra information will be added to
+the Rollbar item that is gathered from the Lambda environment. For example,
+
+```js
+exports.handler = rollbar.lambdahandler((event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+  console.log('Received event:', JSON.stringify(event, null, 2));
+  var err = new Error('bork bork');
+  callback(err, null);
+});
+```
+
+is roughly equivalent to
+
+```js
+exports.handler = (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+  console.log('Received event:', JSON.stringify(event, null, 2));
+  var err = new Error('bork bork');
+  rollbar.error(err);
+  rollbar.wait(function() {
+    callback(err, null);
+  });
+};
+```
+
 ## Help / Support
 
 If you run into any issues, please email us at [support@rollbar.com](mailto:support@rollbar.com)
