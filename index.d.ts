@@ -25,7 +25,7 @@ declare class Rollbar {
     public error(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
 
-    public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
+    public captureEvent(metadata: Object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 }
 
 declare namespace Rollbar {
@@ -43,15 +43,15 @@ declare namespace Rollbar {
         enabled?: boolean;
         captureUncaught?: boolean;
         captureUnhandledRejections?: boolean;
-        payload?: object;
+        payload?: Object;
         maxItems?: number;
         itemsPerMinute?: number;
         ignoredMessages?: string[];
         hostWhiteList?: string[];
         hostBlackList?: string[];
     }
-    export type Callback = (err: MaybeError, response: object) => void;
-    export type LogArgument = string | Error | object | Callback | Date | any[];
+    export type Callback = (err: MaybeError, response: Object) => void;
+    export type LogArgument = string | Error | Object | Callback | Date | any[];
     export interface LogResult {
         uuid: string;
     }
@@ -59,7 +59,7 @@ declare namespace Rollbar {
         level: Level;
         type: string;
         timestamp_ms: number;
-        body: object;
+        body: Object;
         source: string;
         uuid?: string;
     }
