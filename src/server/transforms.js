@@ -145,6 +145,29 @@ function addRequestData(item, options, callback) {
   callback(null, item);
 }
 
+function addLambdaData(item, options, callback) {
+  var c = item.lambdaContext;
+  if (!c) {
+    callback(null, item);
+    return;
+  }
+
+  var data = {
+    remainingTimeInMillis: c.getRemainingTimeInMillis(),
+    callbackWaitsForEmptyEventLoop: c.callbackWaitsForEmptyEventLoop,
+    functionName: c.functionName,
+    functionVersion: c.functionVersion,
+    arn: c.invokedFunctionArn,
+    requestId: c.awsRequestId
+  };
+
+  item.data = item.data || {};
+  item.data.custom = item.data.custom || {};
+  item.data.custom.lambda = data;
+
+  callback(null, item);
+}
+
 function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
@@ -230,6 +253,7 @@ module.exports = {
   addMessageData: addMessageData,
   addErrorData: addErrorData,
   addRequestData: addRequestData,
+  addLambdaData: addLambdaData,
   scrubPayload: scrubPayload
 };
 
