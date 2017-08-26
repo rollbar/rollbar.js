@@ -256,14 +256,21 @@ Rollbar.prototype.lambdaHandler = function(handler) {
   var self = this;
   return function(event, context, callback) {
     self.lambdaContext = context;
-    return handler(event, context, function(err, resp) {
-      if (err) {
-        self.error(err);
-      }
-      self.wait(function() {
-        callback(err, resp);
+    try {
+      return handler(event, context, function(err, resp) {
+        if (err) {
+          self.error(err);
+        }
+        self.wait(function() {
+          callback(err, resp);
+        });
       });
-    });
+    } catch (err) {
+      self.error(err);
+      self.wait(function() {
+        throw err;
+      });
+    }
   };
 };
 Rollbar.lambdaHandler = function(handler) {
