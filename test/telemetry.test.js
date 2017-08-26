@@ -33,3 +33,36 @@ describe('capture', function() {
     done();
   });
 });
+
+describe('configure', function() {
+  it('should truncate events to new max', function(done) {
+    var options = {maxTelemetryEvents: 5};
+    var t = new Telemeter(options);
+
+    for (var i = 0; i < 7; i++) {
+      t.capture('network', {url: 'a.com'}, 'debug');
+    }
+
+    expect(t.queue.length).to.equal(5);
+    t.configure({maxTelemetryEvents: 3});
+    expect(t.queue.length).to.equal(3);
+    done();
+  });
+  it('should lengthen events to allow new max', function(done) {
+    var options = {maxTelemetryEvents: 3};
+    var t = new Telemeter(options);
+
+    for (var i = 0; i < 7; i++) {
+      t.capture('network', {url: 'a.com'}, 'debug');
+    }
+
+    expect(t.queue.length).to.equal(3);
+    t.configure({maxTelemetryEvents: 5});
+    expect(t.queue.length).to.equal(3);
+    for (var i = 0; i < 7; i++) {
+      t.capture('network', {url: 'a.com'}, 'debug');
+    }
+    expect(t.queue.length).to.equal(5);
+    done();
+  });
+});
