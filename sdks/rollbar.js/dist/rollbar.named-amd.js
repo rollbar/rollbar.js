@@ -82,18 +82,18 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var Client = __webpack_require__(3);
 	var _ = __webpack_require__(6);
-	var API = __webpack_require__(26);
-	var logger = __webpack_require__(28);
-	var globals = __webpack_require__(31);
+	var API = __webpack_require__(11);
+	var logger = __webpack_require__(13);
+	var globals = __webpack_require__(16);
 	
-	var transport = __webpack_require__(32);
-	var urllib = __webpack_require__(33);
+	var transport = __webpack_require__(17);
+	var urllib = __webpack_require__(18);
 	
-	var transforms = __webpack_require__(34);
-	var sharedTransforms = __webpack_require__(38);
-	var predicates = __webpack_require__(39);
-	var errorParser = __webpack_require__(35);
-	var Instrumenter = __webpack_require__(40);
+	var transforms = __webpack_require__(19);
+	var sharedTransforms = __webpack_require__(23);
+	var predicates = __webpack_require__(24);
+	var errorParser = __webpack_require__(20);
+	var Instrumenter = __webpack_require__(25);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
@@ -469,7 +469,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.4"),
+	  version: ("2.2.5"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -490,8 +490,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var RateLimiter = __webpack_require__(4);
 	var Queue = __webpack_require__(5);
-	var Notifier = __webpack_require__(24);
-	var Telemeter = __webpack_require__(25);
+	var Notifier = __webpack_require__(9);
+	var Telemeter = __webpack_require__(10);
 	var _ = __webpack_require__(6);
 	
 	/*
@@ -1025,7 +1025,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	'use strict';
 	
 	var extend = __webpack_require__(7);
-	var isNativeFunction = __webpack_require__(8);
 	
 	var RollbarJSON = {};
 	var __initRollbarJSON = false;
@@ -1036,15 +1035,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  __initRollbarJSON = true;
 	
 	  if (isDefined(JSON)) {
-	    if (isNativeFunction(JSON.stringify)) {
+	    if (isFunction(JSON.stringify)) {
 	      RollbarJSON.stringify = JSON.stringify;
 	    }
-	    if (isNativeFunction(JSON.parse)) {
+	    if (isFunction(JSON.parse)) {
 	      RollbarJSON.parse = JSON.parse;
 	    }
 	  }
 	  if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-	    var setupCustomJSON = __webpack_require__(23);
+	    var setupCustomJSON = __webpack_require__(8);
 	    setupCustomJSON(RollbarJSON);
 	  }
 	}
@@ -1709,451 +1708,6 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var baseIsNative = __webpack_require__(9),
-	    isMaskable = __webpack_require__(21);
-	
-	/** Error message constants. */
-	var CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://npms.io/search?q=ponyfill.';
-	
-	/**
-	 * Checks if `value` is a pristine native function.
-	 *
-	 * **Note:** This method can't reliably detect native functions in the presence
-	 * of the core-js package because core-js circumvents this kind of detection.
-	 * Despite multiple requests, the core-js maintainer has made it clear: any
-	 * attempt to fix the detection will be obstructed. As a result, we're left
-	 * with little choice but to throw an error. Unfortunately, this also affects
-	 * packages, like [babel-polyfill](https://www.npmjs.com/package/babel-polyfill),
-	 * which rely on core-js.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 3.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a native function,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isNative(Array.prototype.push);
-	 * // => true
-	 *
-	 * _.isNative(_);
-	 * // => false
-	 */
-	function isNative(value) {
-	  if (isMaskable(value)) {
-	    throw new Error(CORE_ERROR_TEXT);
-	  }
-	  return baseIsNative(value);
-	}
-	
-	module.exports = isNative;
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var isFunction = __webpack_require__(10),
-	    isMasked = __webpack_require__(18),
-	    isObject = __webpack_require__(17),
-	    toSource = __webpack_require__(20);
-	
-	/**
-	 * Used to match `RegExp`
-	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
-	 */
-	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-	
-	/** Used to detect host constructors (Safari). */
-	var reIsHostCtor = /^\[object .+?Constructor\]$/;
-	
-	/** Used for built-in method references. */
-	var funcProto = Function.prototype,
-	    objectProto = Object.prototype;
-	
-	/** Used to resolve the decompiled source of functions. */
-	var funcToString = funcProto.toString;
-	
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-	
-	/** Used to detect if a method is native. */
-	var reIsNative = RegExp('^' +
-	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-	);
-	
-	/**
-	 * The base implementation of `_.isNative` without bad shim checks.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a native function,
-	 *  else `false`.
-	 */
-	function baseIsNative(value) {
-	  if (!isObject(value) || isMasked(value)) {
-	    return false;
-	  }
-	  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
-	  return pattern.test(toSource(value));
-	}
-	
-	module.exports = baseIsNative;
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var baseGetTag = __webpack_require__(11),
-	    isObject = __webpack_require__(17);
-	
-	/** `Object#toString` result references. */
-	var asyncTag = '[object AsyncFunction]',
-	    funcTag = '[object Function]',
-	    genTag = '[object GeneratorFunction]',
-	    proxyTag = '[object Proxy]';
-	
-	/**
-	 * Checks if `value` is classified as a `Function` object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
-	 * @example
-	 *
-	 * _.isFunction(_);
-	 * // => true
-	 *
-	 * _.isFunction(/abc/);
-	 * // => false
-	 */
-	function isFunction(value) {
-	  if (!isObject(value)) {
-	    return false;
-	  }
-	  // The use of `Object#toString` avoids issues with the `typeof` operator
-	  // in Safari 9 which returns 'object' for typed arrays and other constructors.
-	  var tag = baseGetTag(value);
-	  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
-	}
-	
-	module.exports = isFunction;
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var Symbol = __webpack_require__(12),
-	    getRawTag = __webpack_require__(15),
-	    objectToString = __webpack_require__(16);
-	
-	/** `Object#toString` result references. */
-	var nullTag = '[object Null]',
-	    undefinedTag = '[object Undefined]';
-	
-	/** Built-in value references. */
-	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-	
-	/**
-	 * The base implementation of `getTag` without fallbacks for buggy environments.
-	 *
-	 * @private
-	 * @param {*} value The value to query.
-	 * @returns {string} Returns the `toStringTag`.
-	 */
-	function baseGetTag(value) {
-	  if (value == null) {
-	    return value === undefined ? undefinedTag : nullTag;
-	  }
-	  return (symToStringTag && symToStringTag in Object(value))
-	    ? getRawTag(value)
-	    : objectToString(value);
-	}
-	
-	module.exports = baseGetTag;
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var root = __webpack_require__(13);
-	
-	/** Built-in value references. */
-	var Symbol = root.Symbol;
-	
-	module.exports = Symbol;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var freeGlobal = __webpack_require__(14);
-	
-	/** Detect free variable `self`. */
-	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-	
-	/** Used as a reference to the global object. */
-	var root = freeGlobal || freeSelf || Function('return this')();
-	
-	module.exports = root;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
-	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-	
-	module.exports = freeGlobal;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var Symbol = __webpack_require__(12);
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var nativeObjectToString = objectProto.toString;
-	
-	/** Built-in value references. */
-	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-	
-	/**
-	 * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
-	 *
-	 * @private
-	 * @param {*} value The value to query.
-	 * @returns {string} Returns the raw `toStringTag`.
-	 */
-	function getRawTag(value) {
-	  var isOwn = hasOwnProperty.call(value, symToStringTag),
-	      tag = value[symToStringTag];
-	
-	  try {
-	    value[symToStringTag] = undefined;
-	    var unmasked = true;
-	  } catch (e) {}
-	
-	  var result = nativeObjectToString.call(value);
-	  if (unmasked) {
-	    if (isOwn) {
-	      value[symToStringTag] = tag;
-	    } else {
-	      delete value[symToStringTag];
-	    }
-	  }
-	  return result;
-	}
-	
-	module.exports = getRawTag;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports) {
-
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var nativeObjectToString = objectProto.toString;
-	
-	/**
-	 * Converts `value` to a string using `Object.prototype.toString`.
-	 *
-	 * @private
-	 * @param {*} value The value to convert.
-	 * @returns {string} Returns the converted string.
-	 */
-	function objectToString(value) {
-	  return nativeObjectToString.call(value);
-	}
-	
-	module.exports = objectToString;
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports) {
-
-	/**
-	 * Checks if `value` is the
-	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
-	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
-	 * @example
-	 *
-	 * _.isObject({});
-	 * // => true
-	 *
-	 * _.isObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObject(_.noop);
-	 * // => true
-	 *
-	 * _.isObject(null);
-	 * // => false
-	 */
-	function isObject(value) {
-	  var type = typeof value;
-	  return value != null && (type == 'object' || type == 'function');
-	}
-	
-	module.exports = isObject;
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var coreJsData = __webpack_require__(19);
-	
-	/** Used to detect methods masquerading as native. */
-	var maskSrcKey = (function() {
-	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-	  return uid ? ('Symbol(src)_1.' + uid) : '';
-	}());
-	
-	/**
-	 * Checks if `func` has its source masked.
-	 *
-	 * @private
-	 * @param {Function} func The function to check.
-	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
-	 */
-	function isMasked(func) {
-	  return !!maskSrcKey && (maskSrcKey in func);
-	}
-	
-	module.exports = isMasked;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var root = __webpack_require__(13);
-	
-	/** Used to detect overreaching core-js shims. */
-	var coreJsData = root['__core-js_shared__'];
-	
-	module.exports = coreJsData;
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports) {
-
-	/** Used for built-in method references. */
-	var funcProto = Function.prototype;
-	
-	/** Used to resolve the decompiled source of functions. */
-	var funcToString = funcProto.toString;
-	
-	/**
-	 * Converts `func` to its source code.
-	 *
-	 * @private
-	 * @param {Function} func The function to convert.
-	 * @returns {string} Returns the source code.
-	 */
-	function toSource(func) {
-	  if (func != null) {
-	    try {
-	      return funcToString.call(func);
-	    } catch (e) {}
-	    try {
-	      return (func + '');
-	    } catch (e) {}
-	  }
-	  return '';
-	}
-	
-	module.exports = toSource;
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var coreJsData = __webpack_require__(19),
-	    isFunction = __webpack_require__(10),
-	    stubFalse = __webpack_require__(22);
-	
-	/**
-	 * Checks if `func` is capable of being masked.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `func` is maskable, else `false`.
-	 */
-	var isMaskable = coreJsData ? isFunction : stubFalse;
-	
-	module.exports = isMaskable;
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-	/**
-	 * This method returns `false`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.13.0
-	 * @category Util
-	 * @returns {boolean} Returns `false`.
-	 * @example
-	 *
-	 * _.times(2, _.stubFalse);
-	 * // => [false, false]
-	 */
-	function stubFalse() {
-	  return false;
-	}
-	
-	module.exports = stubFalse;
-
-
-/***/ }),
-/* 23 */
 /***/ (function(module, exports) {
 
 	//  json3.js
@@ -2922,7 +2476,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 24 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3048,7 +2602,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 25 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3204,13 +2758,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 26 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var helpers = __webpack_require__(27);
+	var helpers = __webpack_require__(12);
 	
 	var defaultOptions = {
 	  hostname: 'api.rollbar.com',
@@ -3278,7 +2832,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 27 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3374,14 +2928,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 28 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* eslint-disable no-console */
-	__webpack_require__(29);
-	var detection = __webpack_require__(30);
+	__webpack_require__(14);
+	var detection = __webpack_require__(15);
 	var _ = __webpack_require__(6);
 	
 	function error() {
@@ -3424,7 +2978,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 29 */
+/* 14 */
 /***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
@@ -3449,7 +3003,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 30 */
+/* 15 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3487,7 +3041,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 31 */
+/* 16 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3602,13 +3156,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 32 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var logger = __webpack_require__(28);
+	var logger = __webpack_require__(13);
 	
 	/*
 	 * accessToken may be embedded in payload but that should not
@@ -3814,7 +3368,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 33 */
+/* 18 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3901,14 +3455,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 34 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var errorParser = __webpack_require__(35);
-	var logger = __webpack_require__(28);
+	var errorParser = __webpack_require__(20);
+	var logger = __webpack_require__(13);
 	
 	function handleItemWithError(item, options, callback) {
 	  item.data = item.data || {};
@@ -4164,12 +3718,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 35 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(36);
+	var ErrorStackParser = __webpack_require__(21);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -4260,7 +3814,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 36 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -4269,7 +3823,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(37)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(22)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -4459,7 +4013,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 37 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -4572,7 +4126,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 38 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4631,13 +4185,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 39 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var logger = __webpack_require__(28);
+	var logger = __webpack_require__(13);
 	
 	function checkIgnore(item, settings) {
 	  var level = item.level;
@@ -4787,13 +4341,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 
 
 /***/ }),
-/* 40 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var urlparser = __webpack_require__(33);
+	var urlparser = __webpack_require__(18);
 	
 	var defaults = {
 	  network: true,

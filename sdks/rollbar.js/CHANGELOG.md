@@ -1,5 +1,8 @@
 # Change Log
 
+## v2.2.5
+- Revert `isNative` check for replacing JSON functions
+
 ## v2.2.4
 - Fix a "race" condition in how wait works
 - Add two options to control scrubbing of telemetry input events: `scrubTelemetryInputs` and
