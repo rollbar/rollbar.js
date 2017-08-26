@@ -1,5 +1,4 @@
 var extend = require('extend');
-var isNativeFunction = require('lodash/isNative');
 
 var RollbarJSON = {};
 var __initRollbarJSON = false;
@@ -10,10 +9,10 @@ function setupJSON() {
   __initRollbarJSON = true;
 
   if (isDefined(JSON)) {
-    if (isNativeFunction(JSON.stringify)) {
+    if (isFunction(JSON.stringify)) {
       RollbarJSON.stringify = JSON.stringify;
     }
-    if (isNativeFunction(JSON.parse)) {
+    if (isFunction(JSON.parse)) {
       RollbarJSON.parse = JSON.parse;
     }
   }
