@@ -19,6 +19,7 @@ function Queue(rateLimiter, api, logger, options) {
   this.logger = logger;
   this.options = options;
   this.predicates = [];
+  this.pendingItems = [];
   this.pendingRequests = [];
   this.retryQueue = [];
   this.retryHandle = null;
@@ -54,6 +55,17 @@ Queue.prototype.addPredicate = function(predicate) {
   return this;
 };
 
+Queue.prototype.addPendingItem = function(item) {
+  this.pendingItems.push(item);
+};
+
+Queue.prototype.removePendingItem = function(item) {
+  var idx = this.pendingItems.indexOf(item);
+  if (idx !== -1) {
+    this.pendingItems.splice(idx, 1);
+  }
+};
+
 /*
  * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
  *
@@ -64,20 +76,18 @@ Queue.prototype.addPredicate = function(predicate) {
  *  to be an error condition, but nonetheless did not send the item to the API.
  *  @param originalError - The original error before any transformations that is to be logged if any
  */
-Queue.prototype.addItem = function(item, callback, originalError) {
+Queue.prototype.addItem = function(item, callback, originalError, originalItem) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() { return; };
   }
   var predicateResult = this._applyPredicates(item);
   if (predicateResult.stop) {
+    this.removePendingItem(originalItem);
     callback(predicateResult.err);
     return;
   }
-  if (this.waitCallback) {
-    callback();
-    return;
-  }
   this._maybeLog(item, originalError);
+  this.removePendingItem(originalItem);
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(item, function(err, resp) {
@@ -211,12 +221,10 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  * @param item - the item previously added to the pending request queue
  */
 Queue.prototype._dequeuePendingRequest = function(item) {
-  for (var i = this.pendingRequests.length; i >= 0; i--) {
-    if (this.pendingRequests[i] == item) {
-      this.pendingRequests.splice(i, 1);
-      this._maybeCallWait();
-      return;
-    }
+  var idx = this.pendingRequests.indexOf(item);
+  if (idx !== -1) {
+    this.pendingRequests.splice(idx, 1);
+    this._maybeCallWait();
   }
 };
 
@@ -237,7 +245,7 @@ Queue.prototype._maybeLog = function(data, originalError) {
 };
 
 Queue.prototype._maybeCallWait = function() {
-  if (_.isFunction(this.waitCallback) && this.pendingRequests.length === 0) {
+  if (_.isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
     if (this.waitIntervalID) {
       this.waitIntervalID = clearInterval(this.waitIntervalID);
     }
