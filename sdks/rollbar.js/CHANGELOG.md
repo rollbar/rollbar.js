@@ -1,5 +1,16 @@
 # Change Log
 
+## v2.2.4
+- Fix a "race" condition in how wait works
+- Add two options to control scrubbing of telemetry input events: `scrubTelemetryInputs` and
+  `telemetryScrubber`.
+- Telemetry configuration was only considered at initialization time before, now allow things to be
+  turned on and off via calls to `rollbar.configure`
+- `hostBlackList` was added before to the code, but not actually added to the sequence of transforms
+  and predicates that run. Now it is actually used.
+- Fix bug related to Date.js and possibly other libraries overwriting `Date.now()` to return `new Date()`
+  rather than an integer.
+
 ## v2.2.3
 - Actually make collecting network telemetry on by default
 

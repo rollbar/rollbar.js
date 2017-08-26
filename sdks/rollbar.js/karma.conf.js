@@ -44,14 +44,13 @@ module.exports = function (config) {
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
       'test/!(requirejs).test.js': ['webpack'],
-      'src/**/*.js': ['coverage']
     },
 
     proxies: {
       '/dist/rollbar.js': '/base/dist/rollbar.js'
     },
 
-    reporters: ['progress', 'coverage'],
+    reporters: ['progress'],
 
     singleRun: true,
 

@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -67,26 +67,26 @@
 	module.exports = rollbar;
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var Client = __webpack_require__(2);
 	var _ = __webpack_require__(5);
-	var API = __webpack_require__(10);
-	var logger = __webpack_require__(12);
-	var globals = __webpack_require__(15);
+	var API = __webpack_require__(25);
+	var logger = __webpack_require__(27);
+	var globals = __webpack_require__(30);
 	
-	var transport = __webpack_require__(16);
-	var urllib = __webpack_require__(17);
+	var transport = __webpack_require__(31);
+	var urllib = __webpack_require__(32);
 	
-	var transforms = __webpack_require__(18);
-	var sharedTransforms = __webpack_require__(22);
-	var predicates = __webpack_require__(23);
-	var errorParser = __webpack_require__(19);
-	var Instrumenter = __webpack_require__(24);
+	var transforms = __webpack_require__(33);
+	var sharedTransforms = __webpack_require__(37);
+	var predicates = __webpack_require__(38);
+	var errorParser = __webpack_require__(34);
+	var Instrumenter = __webpack_require__(39);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
@@ -144,6 +144,7 @@
 	  }
 	  this.options = _.extend(true, {}, oldOptions, options, payload);
 	  this.client.configure(options, payloadData);
+	  this.instrumenter.configure(options);
 	  return this;
 	};
 	Rollbar.configure = function(options, payloadData) {
@@ -435,6 +436,7 @@
 	  queue
 	    .addPredicate(predicates.checkIgnore)
 	    .addPredicate(predicates.userCheckIgnore)
+	    .addPredicate(predicates.urlIsNotBlacklisted)
 	    .addPredicate(predicates.urlIsWhitelisted)
 	    .addPredicate(predicates.messageIsIgnored);
 	}
@@ -460,7 +462,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.3"),
+	  version: ("2.2.4"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -473,16 +475,16 @@
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var RateLimiter = __webpack_require__(3);
 	var Queue = __webpack_require__(4);
-	var Notifier = __webpack_require__(8);
-	var Telemeter = __webpack_require__(9);
+	var Notifier = __webpack_require__(23);
+	var Telemeter = __webpack_require__(24);
 	var _ = __webpack_require__(5);
 	
 	/*
@@ -516,6 +518,7 @@
 	
 	Rollbar.prototype.configure = function(options, payloadData) {
 	  this.notifier && this.notifier.configure(options);
+	  this.telemeter && this.telemeter.configure(options);
 	  var oldOptions = this.options;
 	  var payload = {};
 	  if (payloadData) {
@@ -606,9 +609,9 @@
 	module.exports = Rollbar;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -742,9 +745,9 @@
 	module.exports = RateLimiter;
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -769,6 +772,7 @@
 	  this.logger = logger;
 	  this.options = options;
 	  this.predicates = [];
+	  this.pendingItems = [];
 	  this.pendingRequests = [];
 	  this.retryQueue = [];
 	  this.retryHandle = null;
@@ -804,6 +808,17 @@
 	  return this;
 	};
 	
+	Queue.prototype.addPendingItem = function(item) {
+	  this.pendingItems.push(item);
+	};
+	
+	Queue.prototype.removePendingItem = function(item) {
+	  var idx = this.pendingItems.indexOf(item);
+	  if (idx !== -1) {
+	    this.pendingItems.splice(idx, 1);
+	  }
+	};
+	
 	/*
 	 * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
 	 *
@@ -814,20 +829,18 @@
 	 *  to be an error condition, but nonetheless did not send the item to the API.
 	 *  @param originalError - The original error before any transformations that is to be logged if any
 	 */
-	Queue.prototype.addItem = function(item, callback, originalError) {
+	Queue.prototype.addItem = function(item, callback, originalError, originalItem) {
 	  if (!callback || !_.isFunction(callback)) {
 	    callback = function() { return; };
 	  }
 	  var predicateResult = this._applyPredicates(item);
 	  if (predicateResult.stop) {
+	    this.removePendingItem(originalItem);
 	    callback(predicateResult.err);
 	    return;
 	  }
-	  if (this.waitCallback) {
-	    callback();
-	    return;
-	  }
 	  this._maybeLog(item, originalError);
+	  this.removePendingItem(originalItem);
 	  this.pendingRequests.push(item);
 	  try {
 	    this._makeApiRequest(item, function(err, resp) {
@@ -961,12 +974,10 @@
 	 * @param item - the item previously added to the pending request queue
 	 */
 	Queue.prototype._dequeuePendingRequest = function(item) {
-	  for (var i = this.pendingRequests.length; i >= 0; i--) {
-	    if (this.pendingRequests[i] == item) {
-	      this.pendingRequests.splice(i, 1);
-	      this._maybeCallWait();
-	      return;
-	    }
+	  var idx = this.pendingRequests.indexOf(item);
+	  if (idx !== -1) {
+	    this.pendingRequests.splice(idx, 1);
+	    this._maybeCallWait();
 	  }
 	};
 	
@@ -987,7 +998,7 @@
 	};
 	
 	Queue.prototype._maybeCallWait = function() {
-	  if (_.isFunction(this.waitCallback) && this.pendingRequests.length === 0) {
+	  if (_.isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
 	    if (this.waitIntervalID) {
 	      this.waitIntervalID = clearInterval(this.waitIntervalID);
 	    }
@@ -1000,13 +1011,14 @@
 	module.exports = Queue;
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var extend = __webpack_require__(6);
+	var isNativeFunction = __webpack_require__(7);
 	
 	var RollbarJSON = {};
 	var __initRollbarJSON = false;
@@ -1017,15 +1029,15 @@
 	  __initRollbarJSON = true;
 	
 	  if (isDefined(JSON)) {
-	    if (isFunction(JSON.stringify)) {
+	    if (isNativeFunction(JSON.stringify)) {
 	      RollbarJSON.stringify = JSON.stringify;
 	    }
-	    if (isFunction(JSON.parse)) {
+	    if (isNativeFunction(JSON.parse)) {
 	      RollbarJSON.parse = JSON.parse;
 	    }
 	  }
 	  if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-	    var setupCustomJSON = __webpack_require__(7);
+	    var setupCustomJSON = __webpack_require__(22);
 	    setupCustomJSON(RollbarJSON);
 	  }
 	}
@@ -1565,7 +1577,7 @@
 	
 	function now() {
 	  if (Date.now) {
-	    return Date.now();
+	    return +Date.now();
 	  }
 	  return +new Date();
 	}
@@ -1596,9 +1608,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -1688,9 +1700,454 @@
 	
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	var baseIsNative = __webpack_require__(8),
+	    isMaskable = __webpack_require__(20);
+	
+	/** Error message constants. */
+	var CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://npms.io/search?q=ponyfill.';
+	
+	/**
+	 * Checks if `value` is a pristine native function.
+	 *
+	 * **Note:** This method can't reliably detect native functions in the presence
+	 * of the core-js package because core-js circumvents this kind of detection.
+	 * Despite multiple requests, the core-js maintainer has made it clear: any
+	 * attempt to fix the detection will be obstructed. As a result, we're left
+	 * with little choice but to throw an error. Unfortunately, this also affects
+	 * packages, like [babel-polyfill](https://www.npmjs.com/package/babel-polyfill),
+	 * which rely on core-js.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 3.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isNative(Array.prototype.push);
+	 * // => true
+	 *
+	 * _.isNative(_);
+	 * // => false
+	 */
+	function isNative(value) {
+	  if (isMaskable(value)) {
+	    throw new Error(CORE_ERROR_TEXT);
+	  }
+	  return baseIsNative(value);
+	}
+	
+	module.exports = isNative;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var isFunction = __webpack_require__(9),
+	    isMasked = __webpack_require__(17),
+	    isObject = __webpack_require__(16),
+	    toSource = __webpack_require__(19);
+	
+	/**
+	 * Used to match `RegExp`
+	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+	 */
+	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+	
+	/** Used to detect host constructors (Safari). */
+	var reIsHostCtor = /^\[object .+?Constructor\]$/;
+	
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/** Used to detect if a method is native. */
+	var reIsNative = RegExp('^' +
+	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
+	
+	/**
+	 * The base implementation of `_.isNative` without bad shim checks.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function,
+	 *  else `false`.
+	 */
+	function baseIsNative(value) {
+	  if (!isObject(value) || isMasked(value)) {
+	    return false;
+	  }
+	  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+	  return pattern.test(toSource(value));
+	}
+	
+	module.exports = baseIsNative;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(10),
+	    isObject = __webpack_require__(16);
+	
+	/** `Object#toString` result references. */
+	var asyncTag = '[object AsyncFunction]',
+	    funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]',
+	    proxyTag = '[object Proxy]';
+	
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  if (!isObject(value)) {
+	    return false;
+	  }
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+	  var tag = baseGetTag(value);
+	  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+	}
+	
+	module.exports = isFunction;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(11),
+	    getRawTag = __webpack_require__(14),
+	    objectToString = __webpack_require__(15);
+	
+	/** `Object#toString` result references. */
+	var nullTag = '[object Null]',
+	    undefinedTag = '[object Undefined]';
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * The base implementation of `getTag` without fallbacks for buggy environments.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the `toStringTag`.
+	 */
+	function baseGetTag(value) {
+	  if (value == null) {
+	    return value === undefined ? undefinedTag : nullTag;
+	  }
+	  return (symToStringTag && symToStringTag in Object(value))
+	    ? getRawTag(value)
+	    : objectToString(value);
+	}
+	
+	module.exports = baseGetTag;
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(12);
+	
+	/** Built-in value references. */
+	var Symbol = root.Symbol;
+	
+	module.exports = Symbol;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var freeGlobal = __webpack_require__(13);
+	
+	/** Detect free variable `self`. */
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	
+	/** Used as a reference to the global object. */
+	var root = freeGlobal || freeSelf || Function('return this')();
+	
+	module.exports = root;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+	
+	module.exports = freeGlobal;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(11);
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the raw `toStringTag`.
+	 */
+	function getRawTag(value) {
+	  var isOwn = hasOwnProperty.call(value, symToStringTag),
+	      tag = value[symToStringTag];
+	
+	  try {
+	    value[symToStringTag] = undefined;
+	    var unmasked = true;
+	  } catch (e) {}
+	
+	  var result = nativeObjectToString.call(value);
+	  if (unmasked) {
+	    if (isOwn) {
+	      value[symToStringTag] = tag;
+	    } else {
+	      delete value[symToStringTag];
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = getRawTag;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/**
+	 * Converts `value` to a string using `Object.prototype.toString`.
+	 *
+	 * @private
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
+	 */
+	function objectToString(value) {
+	  return nativeObjectToString.call(value);
+	}
+	
+	module.exports = objectToString;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value;
+	  return value != null && (type == 'object' || type == 'function');
+	}
+	
+	module.exports = isObject;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var coreJsData = __webpack_require__(18);
+	
+	/** Used to detect methods masquerading as native. */
+	var maskSrcKey = (function() {
+	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+	  return uid ? ('Symbol(src)_1.' + uid) : '';
+	}());
+	
+	/**
+	 * Checks if `func` has its source masked.
+	 *
+	 * @private
+	 * @param {Function} func The function to check.
+	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+	 */
+	function isMasked(func) {
+	  return !!maskSrcKey && (maskSrcKey in func);
+	}
+	
+	module.exports = isMasked;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(12);
+	
+	/** Used to detect overreaching core-js shims. */
+	var coreJsData = root['__core-js_shared__'];
+	
+	module.exports = coreJsData;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/**
+	 * Converts `func` to its source code.
+	 *
+	 * @private
+	 * @param {Function} func The function to convert.
+	 * @returns {string} Returns the source code.
+	 */
+	function toSource(func) {
+	  if (func != null) {
+	    try {
+	      return funcToString.call(func);
+	    } catch (e) {}
+	    try {
+	      return (func + '');
+	    } catch (e) {}
+	  }
+	  return '';
+	}
+	
+	module.exports = toSource;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var coreJsData = __webpack_require__(18),
+	    isFunction = __webpack_require__(9),
+	    stubFalse = __webpack_require__(21);
+	
+	/**
+	 * Checks if `func` is capable of being masked.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `func` is maskable, else `false`.
+	 */
+	var isMaskable = coreJsData ? isFunction : stubFalse;
+	
+	module.exports = isMaskable;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+	/**
+	 * This method returns `false`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.13.0
+	 * @category Util
+	 * @returns {boolean} Returns `false`.
+	 * @example
+	 *
+	 * _.times(2, _.stubFalse);
+	 * // => [false, false]
+	 */
+	function stubFalse() {
+	  return false;
+	}
+	
+	module.exports = stubFalse;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
 
 	//  json3.js
 	//  2017-02-21
@@ -2457,9 +2914,9 @@
 	module.exports = setupCustomJSON;
 
 
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2533,12 +2990,14 @@
 	    return callback(new Error('Rollbar is not enabled'));
 	  }
 	
+	  this.queue.addPendingItem(item);
 	  var originalError = item.err;
 	  this._applyTransforms(item, function(err, i) {
 	    if (err) {
+	      this.queue.removePendingItem(item);
 	      return callback(err, null);
 	    }
-	    this.queue.addItem(i, callback, originalError);
+	    this.queue.addItem(i, callback, originalError, item);
 	  }.bind(this));
 	};
 	
@@ -2581,9 +3040,9 @@
 	module.exports = Notifier;
 
 
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2597,6 +3056,18 @@
 	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
 	  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 	}
+	
+	Telemeter.prototype.configure = function(options) {
+	  this.options = _.extend(true, {}, options);
+	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+	  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+	  var deleteCount = 0;
+	  if (this.maxQueueSize > newMaxEvents) {
+	    deleteCount = this.maxQueueSize - newMaxEvents;
+	  }
+	  this.maxQueueSize = newMaxEvents;
+	  this.queue.splice(0, deleteCount);
+	};
 	
 	Telemeter.prototype.copyEvents = function() {
 	  return Array.prototype.slice.call(this.queue, 0);
@@ -2725,14 +3196,14 @@
 	module.exports = Telemeter;
 
 
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var helpers = __webpack_require__(11);
+	var helpers = __webpack_require__(26);
 	
 	var defaultOptions = {
 	  hostname: 'api.rollbar.com',
@@ -2799,9 +3270,9 @@
 	module.exports = Api;
 
 
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2895,15 +3366,15 @@
 	};
 
 
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* eslint-disable no-console */
-	__webpack_require__(13);
-	var detection = __webpack_require__(14);
+	__webpack_require__(28);
+	var detection = __webpack_require__(29);
 	var _ = __webpack_require__(5);
 	
 	function error() {
@@ -2945,9 +3416,9 @@
 	};
 
 
-/***/ },
-/* 13 */
-/***/ function(module, exports) {
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
 	// https://github.com/paulmillr/console-polyfill
@@ -2970,9 +3441,9 @@
 	})(typeof window === 'undefined' ? this : window);
 
 
-/***/ },
-/* 14 */
-/***/ function(module, exports) {
+/***/ }),
+/* 29 */
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3008,9 +3479,9 @@
 	module.exports = Detection;
 
 
-/***/ },
-/* 15 */
-/***/ function(module, exports) {
+/***/ }),
+/* 30 */
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3123,14 +3594,14 @@
 	};
 
 
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var logger = __webpack_require__(12);
+	var logger = __webpack_require__(27);
 	
 	/*
 	 * accessToken may be embedded in payload but that should not
@@ -3335,9 +3806,9 @@
 	};
 
 
-/***/ },
-/* 17 */
-/***/ function(module, exports) {
+/***/ }),
+/* 32 */
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -3422,15 +3893,15 @@
 	};
 
 
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var errorParser = __webpack_require__(19);
-	var logger = __webpack_require__(12);
+	var errorParser = __webpack_require__(34);
+	var logger = __webpack_require__(27);
 	
 	function handleItemWithError(item, options, callback) {
 	  item.data = item.data || {};
@@ -3685,13 +4156,13 @@
 	};
 
 
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(20);
+	var ErrorStackParser = __webpack_require__(35);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -3781,9 +4252,9 @@
 	};
 
 
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -3791,7 +4262,7 @@
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(21)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(36)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -3980,9 +4451,9 @@
 	
 
 
-/***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	    'use strict';
@@ -4093,9 +4564,9 @@
 	}));
 
 
-/***/ },
-/* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -4152,14 +4623,14 @@
 	};
 
 
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var logger = __webpack_require__(12);
+	var logger = __webpack_require__(27);
 	
 	function checkIgnore(item, settings) {
 	  var level = item.level;
@@ -4192,8 +4663,8 @@
 	  return true;
 	}
 	
-	function urlIsBlacklisted(item, settings) {
-	  return urlIsOnAList(item, settings, 'blacklist');
+	function urlIsNotBlacklisted(item, settings) {
+	  return !urlIsOnAList(item, settings, 'blacklist');
 	}
 	
 	function urlIsWhitelisted(item, settings) {
@@ -4301,21 +4772,21 @@
 	module.exports = {
 	  checkIgnore: checkIgnore,
 	  userCheckIgnore: userCheckIgnore,
-	  urlIsBlacklisted: urlIsBlacklisted,
+	  urlIsNotBlacklisted: urlIsNotBlacklisted,
 	  urlIsWhitelisted: urlIsWhitelisted,
 	  messageIsIgnored: messageIsIgnored
 	};
 	
 
 
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var urlparser = __webpack_require__(17);
+	var urlparser = __webpack_require__(32);
 	
 	var defaults = {
 	  network: true,
@@ -4325,18 +4796,18 @@
 	  connectivity: true
 	};
 	
-	function replace(obj, name, replacement, replacements) {
+	function replace(obj, name, replacement, replacements, type) {
 	  var orig = obj[name];
 	  obj[name] = replacement(orig);
 	  if (replacements) {
-	    replacements.push([obj, name, orig]);
+	    replacements[type].push([obj, name, orig]);
 	  }
 	}
 	
-	function restore(replacements) {
+	function restore(replacements, type) {
 	  var b;
-	  while (replacements.length) {
-	    b = replacements.shift();
+	  while (replacements[type].length) {
+	    b = replacements[type].shift();
 	    b[0][b[1]] = b[2];
 	  }
 	}
@@ -4345,42 +4816,81 @@
 	  var autoInstrument = options.autoInstrument;
 	  if (autoInstrument === false) {
 	    this.autoInstrument = {};
-	    return;
+	  } else {
+	    if (!_.isType(autoInstrument, 'object')) {
+	      autoInstrument = defaults;
+	    }
+	    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
 	  }
-	  if (!_.isType(autoInstrument, 'object')) {
-	    autoInstrument = defaults;
-	  }
-	  this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+	  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+	  this.telemetryScrubber = options.telemetryScrubber;
 	  this.telemeter = telemeter;
 	  this.rollbar = rollbar;
 	  this._window = _window || {};
 	  this._document = _document || {};
-	  this.replacements = [];
+	  this.replacements = {
+	    network: [],
+	    log: [],
+	    navigation: [],
+	    connectivity: []
+	  };
+	  this.eventRemovers = {
+	    dom: [],
+	    connectivity: []
+	  };
 	
 	  this._location = this._window.location;
 	  this._lastHref = this._location && this._location.href;
 	}
 	
-	Instrumenter.prototype.instrument = function() {
-	  if (this.autoInstrument.network) {
+	Instrumenter.prototype.configure = function(options) {
+	  var autoInstrument = options.autoInstrument;
+	  var oldSettings = _.extend(true, {}, this.autoInstrument);
+	  if (autoInstrument === false) {
+	    this.autoInstrument = {};
+	  } else {
+	    if (!_.isType(autoInstrument, 'object')) {
+	      autoInstrument = defaults;
+	    }
+	    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+	  }
+	  this.instrument(oldSettings);
+	};
+	
+	Instrumenter.prototype.instrument = function(oldSettings) {
+	  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
 	    this.instrumentNetwork();
+	  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+	    this.deinstrumentNetwork();
 	  }
 	
-	  if (this.autoInstrument.log) {
+	  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
 	    this.instrumentConsole();
+	  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
+	    this.deinstrumentConsole();
 	  }
 	
-	  if (this.autoInstrument.dom) {
+	  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
 	    this.instrumentDom();
+	  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
+	    this.deinstrumentDom();
 	  }
 	
-	  if (this.autoInstrument.navigation) {
+	  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
 	    this.instrumentNavigation();
+	  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
+	    this.deinstrumentNavigation();
 	  }
 	
-	  if (this.autoInstrument.connectivity) {
+	  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
 	    this.instrumentConnectivity();
+	  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
+	    this.deinstrumentConnectivity();
 	  }
+	};
+	
+	Instrumenter.prototype.deinstrumentNetwork = function() {
+	  restore(this.replacements, 'network');
 	};
 	
 	Instrumenter.prototype.instrumentNetwork = function() {
@@ -4390,7 +4900,7 @@
 	    if (prop in xhr && _.isFunction(xhr[prop])) {
 	      replace(xhr, prop, function(orig) {
 	        return self.rollbar.wrap(orig);
-	      }, self.replacements);
+	      }, self.replacements, 'network');
 	    }
 	  }
 	
@@ -4409,7 +4919,7 @@
 	        }
 	        return orig.apply(this, arguments);
 	      };
-	    }, this.replacements);
+	    }, this.replacements, 'network');
 	
 	    replace(xhrp, 'send', function(orig) {
 	      /* eslint-disable no-unused-vars */
@@ -4452,7 +4962,7 @@
 	        }
 	        return orig.apply(this, arguments);
 	      }
-	    }, this.replacements);
+	    }, this.replacements, 'network');
 	  }
 	
 	  if ('fetch' in this._window) {
@@ -4492,7 +5002,18 @@
 	          return resp;
 	        });
 	      };
-	    }, this.replacements);
+	    }, this.replacements, 'network');
+	  }
+	};
+	
+	Instrumenter.prototype.deinstrumentConsole = function() {
+	  if (!('console' in this._window && this._window.console.log)) {
+	    return;
+	  }
+	  var b;
+	  while (this.replacements['log'].length) {
+	    b = this.replacements['log'].shift();
+	    this._window.console[b[0]] = b[1];
 	  }
 	};
 	
@@ -4516,11 +5037,19 @@
 	        Function.prototype.apply.call(orig, origConsole, args);
 	      }
 	    };
+	    self.replacements['log'].push([method, orig]);
 	  }
 	  var methods = ['debug','info','warn','error','log'];
 	  for (var i=0, len=methods.length; i < len; i++) {
 	    wrapConsole(methods[i]);
 	  }
+	};
+	
+	Instrumenter.prototype.deinstrumentDom = function() {
+	  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+	    return;
+	  }
+	  this.removeListeners('dom');
 	};
 	
 	Instrumenter.prototype.instrumentDom = function() {
@@ -4529,13 +5058,8 @@
 	  }
 	  var clickHandler = this.handleClick.bind(this);
 	  var blurHandler = this.handleBlur.bind(this);
-	  if (this._window.addEventListener) {
-	    this._window.addEventListener('click', clickHandler, true);
-	    this._window.addEventListener('blur', blurHandler, true);
-	  } else {
-	    this._window.attachEvent('click', clickHandler);
-	    this._window.attachEvent('onfocusout', blurHandler);
-	  }
+	  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
+	  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
 	};
 	
 	Instrumenter.prototype.handleClick = function(evt) {
@@ -4583,8 +5107,13 @@
 	};
 	
 	Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
-	  if (getElementType(element) === 'password') {
-	    value = undefined;
+	  if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
+	    value = '[scrubbed]';
+	  } else if (this.telemetryScrubber) {
+	    var description = describeElement(element);
+	    if (this.telemetryScrubber(description)) {
+	      value = '[scrubbed]';
+	    }
 	  }
 	  var elementString = elementArrayToString(treeToArray(element));
 	  this.telemeter.captureDom(subtype, elementString, value, isChecked);
@@ -4739,6 +5268,17 @@
 	  return out;
 	}
 	
+	Instrumenter.prototype.deinstrumentNavigation = function() {
+	  var chrome = this._window.chrome;
+	  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+	  // See https://github.com/angular/angular.js/pull/13945/files
+	  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+	  if (!hasPushState) {
+	    return;
+	  }
+	  restore(this.replacements, 'navigation');
+	};
+	
 	Instrumenter.prototype.instrumentNavigation = function() {
 	  var chrome = this._window.chrome;
 	  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
@@ -4748,14 +5288,15 @@
 	    return;
 	  }
 	  var self = this;
-	  var oldOnPopState = this._window.onpopstate;
-	  this._window.onpopstate = function() {
-	    var current = self._location.href;
-	    self.handleUrlChange(self._lastHref, current);
-	    if (oldOnPopState) {
-	      oldOnPopState.apply(this, arguments);
-	    }
-	  };
+	  replace(this._window, 'onpopstate', function(orig) {
+	    return function() {
+	      var current = self._location.href;
+	      self.handleUrlChange(self._lastHref, current);
+	      if (orig) {
+	        orig.apply(this, arguments);
+	      }
+	    };
+	  }, this.replacements, 'navigation');
 	
 	  replace(this._window.history, 'pushState', function(orig) {
 	    return function() {
@@ -4765,7 +5306,7 @@
 	      }
 	      return orig.apply(this, arguments);
 	    };
-	  }, this.replacements);
+	  }, this.replacements, 'navigation');
 	};
 	
 	Instrumenter.prototype.handleUrlChange = function(from, to) {
@@ -4782,34 +5323,73 @@
 	  this.telemeter.captureNavigation(from, to);
 	};
 	
+	Instrumenter.prototype.deinstrumentConnectivity = function() {
+	  if (!('addEventListener' in this._window || 'body' in this._document)) {
+	    return;
+	  }
+	  if (this._window.addEventListener) {
+	    this.removeListeners('connectivity');
+	  } else {
+	    restore(this.replacements, 'connectivity');
+	  }
+	};
+	
 	Instrumenter.prototype.instrumentConnectivity = function() {
 	  if (!('addEventListener' in this._window || 'body' in this._document)) {
 	    return;
 	  }
 	  if (this._window.addEventListener) {
-	    this._window.addEventListener('online', function() {
+	    this.addListener('connectivity', this._window, 'online', undefined, function() {
 	      this.telemeter.captureConnectivityChange('online');
 	    }.bind(this), true);
-	    this._window.addEventListener('offline', function() {
+	    this.addListener('connectivity', this._window, 'offline', undefined, function() {
 	      this.telemeter.captureConnectivityChange('offline');
 	    }.bind(this), true);
 	  } else {
-	    this._document.body.ononline = function() {
-	      this.telemeter.captureConnectivityChange('online');
-	    }.bind(this);
-	    this._document.body.onoffline = function() {
-	      this.telemeter.captureConnectivityChange('offline');
-	    }.bind(this);
+	    var self = this;
+	    replace(this._document.body, 'ononline', function(orig) {
+	      return function() {
+	        self.telemeter.captureConnectivityChange('online');
+	        if (orig) {
+	          orig.apply(this, arguments);
+	        }
+	      }
+	    }, this.replacements, 'connectivity');
+	    replace(this._document.body, 'onoffline', function(orig) {
+	      return function() {
+	        self.telemeter.captureConnectivityChange('offline');
+	        if (orig) {
+	          orig.apply(this, arguments);
+	        }
+	      }
+	    }, this.replacements, 'connectivity');
 	  }
 	};
 	
-	Instrumenter.prototype.restore = function() {
-	  restore(this.replacements);
-	  this.replacements = [];
+	Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
+	  if (obj.addEventListener) {
+	    obj.addEventListener(type, handler, capture);
+	    this.eventRemovers[section].push(function() {
+	      obj.removeEventListener(type, handler, capture);
+	    });
+	  } else if (altType) {
+	    obj.attachEvent(altType, handler);
+	    this.eventRemovers[section].push(function() {
+	      obj.detachEvent(altType, handler);
+	    });
+	  }
+	};
+	
+	Instrumenter.prototype.removeListeners = function(section) {
+	  var r;
+	  while (this.eventRemovers[section].length) {
+	    r = this.eventRemovers[section].shift();
+	    r();
+	  }
 	};
 	
 	module.exports = Instrumenter;
 
 
-/***/ }
+/***/ })
 /******/ ]);
