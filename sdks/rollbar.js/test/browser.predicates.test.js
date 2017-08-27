@@ -212,7 +212,7 @@ describe('urlIsWhitelisted', function() {
 });
 
 describe('urlIsNotBlacklisted', function() {
-  it('should return false with no blacklist', function() {
+  it('should return true with no blacklist', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: [
@@ -224,9 +224,9 @@ describe('urlIsNotBlacklisted', function() {
     var settings = {
       reportLevel: 'debug'
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
-  it('should return false with no trace', function() {
+  it('should return true with no trace', function() {
     var item = {
       level: 'critical',
       body: {message: 'hey'}
@@ -235,9 +235,9 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['fake.com', 'other.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
-  it('should return true if any regex matches at least one filename in the trace', function() {
+  it('should return false if any regex matches at least one filename in the trace', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: [
@@ -250,9 +250,9 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['example.com', 'other.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
   });
-  it('should return false if the filename is not a string', function() {
+  it('should return true if the filename is not a string', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: [
@@ -265,9 +265,9 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['example.com', 'other.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
-  it('should return false if there is no frames key', function() {
+  it('should return true if there is no frames key', function() {
     var item = {
       level: 'critical',
       body: {trace: {notframes: []}}
@@ -276,9 +276,9 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['nope.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
-  it('should return false if there are no frames', function() {
+  it('should return true if there are no frames', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: []}}
@@ -287,9 +287,9 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['nope.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
-  it('should return false if nothing in the blacklist matches', function() {
+  it('should return true if nothing in the blacklist matches', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: [
@@ -302,7 +302,7 @@ describe('urlIsNotBlacklisted', function() {
       reportLevel: 'debug',
       hostBlackList: ['baz\.com', 'foo\.com']
     };
-    expect(p.urlIsNotBlacklisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(item, settings)).to.be.ok();
   });
 });
 
