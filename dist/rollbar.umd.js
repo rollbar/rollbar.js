@@ -479,7 +479,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.5"),
+	  version: ("2.2.6"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -4259,10 +4259,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // These two checks are important to come first as they are defaults
 	    // in case the list is missing or the trace is missing or not well-formed
 	    if (!list || listLength === 0) {
-	      return true;
+	      return !black;
 	    }
 	    if (!trace || !trace.frames) {
-	      return true;
+	      return !black;
 	    }
 	
 	    frameLength = trace.frames.length;
@@ -4271,15 +4271,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      filename = frame.filename;
 	
 	      if (!_.isType(filename, 'string')) {
-	        return true;
+	        return !black;
 	      }
 	
 	      for (j = 0; j < listLength; j++) {
 	        url = list[j];
 	        urlRegex = new RegExp(url);
 	
-	        if (urlRegex.test(filename)){
-	          return !black;
+	        if (urlRegex.test(filename)) {
+	          return true;
 	        }
 	      }
 	    }
@@ -4293,9 +4293,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var listName = black ? 'hostBlackList' : 'hostWhiteList';
 	    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
-	    return true;
+	    return !black;
 	  }
-	  return black;
+	  return false;
 	}
 	
 	function messageIsIgnored(item, settings) {

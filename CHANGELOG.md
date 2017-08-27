@@ -1,5 +1,8 @@
 # Change Log
 
+## v2.2.6
+- Fix blacklist issue
+
 ## v2.2.5
 - Revert `isNative` check for replacing JSON functions
 
