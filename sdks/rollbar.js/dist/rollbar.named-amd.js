@@ -469,7 +469,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.5"),
+	  version: ("2.2.6"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -4249,10 +4249,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    // These two checks are important to come first as they are defaults
 	    // in case the list is missing or the trace is missing or not well-formed
 	    if (!list || listLength === 0) {
-	      return true;
+	      return !black;
 	    }
 	    if (!trace || !trace.frames) {
-	      return true;
+	      return !black;
 	    }
 	
 	    frameLength = trace.frames.length;
@@ -4261,15 +4261,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	      filename = frame.filename;
 	
 	      if (!_.isType(filename, 'string')) {
-	        return true;
+	        return !black;
 	      }
 	
 	      for (j = 0; j < listLength; j++) {
 	        url = list[j];
 	        urlRegex = new RegExp(url);
 	
-	        if (urlRegex.test(filename)){
-	          return !black;
+	        if (urlRegex.test(filename)) {
+	          return true;
 	        }
 	      }
 	    }
@@ -4283,9 +4283,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	    var listName = black ? 'hostBlackList' : 'hostWhiteList';
 	    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
-	    return true;
+	    return !black;
 	  }
-	  return black;
+	  return false;
 	}
 	
 	function messageIsIgnored(item, settings) {
