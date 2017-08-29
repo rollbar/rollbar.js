@@ -113,7 +113,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     if (prop in xhr && _.isFunction(xhr[prop])) {
       replace(xhr, prop, function(orig) {
         return self.rollbar.wrap(orig);
-      }, self.replacements, 'network');
+      });
     }
   }
 
