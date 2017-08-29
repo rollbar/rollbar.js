@@ -1317,7 +1317,7 @@ try/catch block, reports any uncaught exception if there is one, and then rethro
 the normal behaviour. For example,
 
 ```js
-exports.handler = rollbar.lambdahandler((event, context, callback) => {
+exports.handler = rollbar.lambdaHandler((event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
   console.log('Received event:', JSON.stringify(event, null, 2));
   var err = new Error('bork bork');
