@@ -341,7 +341,7 @@ function wrapCallback(logger, f) {
   };
 }
 
-function createItem(args, logger, notifier, requestKeys) {
+function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var message, err, custom, callback, request;
   var arg;
   var extraArgs = [];
@@ -414,6 +414,9 @@ function createItem(args, logger, notifier, requestKeys) {
   }
   if (requestKeys && request) {
     item.request = request;
+  }
+  if (lambdaContext) {
+    item.lambdaContext = lambdaContext;
   }
   item._originalArgs = args;
   return item;
