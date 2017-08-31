@@ -320,12 +320,14 @@ Instrumenter.prototype.handleSelectInputChanged = function(elem) {
 };
 
 Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
-  if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
-    value = '[scrubbed]';
-  } else if (this.telemetryScrubber) {
-    var description = describeElement(element);
-    if (this.telemetryScrubber(description)) {
+  if (value !== undefined) {
+    if (this.scrubTelemetryInputs || (getElementType(element) === 'password')) {
       value = '[scrubbed]';
+    } else if (this.telemetryScrubber) {
+      var description = describeElement(element);
+      if (this.telemetryScrubber(description)) {
+        value = '[scrubbed]';
+      }
     }
   }
   var elementString = elementArrayToString(treeToArray(element));
