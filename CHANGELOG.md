@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.2.7
+- Ensure scrubbing has the right value for telemetry inputs if `scrubTelemetryInputs` is true.
+- Fix memory leak related to network requests
+
 ## v2.2.6
 - Fix blacklist issue
 

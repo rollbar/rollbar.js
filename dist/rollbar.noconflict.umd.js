@@ -467,7 +467,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.6"),
+	  version: ("2.2.7"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -1365,7 +1365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	}
 	
-	function createItem(args, logger, notifier, requestKeys) {
+	function createItem(args, logger, notifier, requestKeys, lambdaContext) {
 	  var message, err, custom, callback, request;
 	  var arg;
 	  var extraArgs = [];
@@ -1438,6 +1438,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  if (requestKeys && request) {
 	    item.request = request;
+	  }
+	  if (lambdaContext) {
+	    item.lambdaContext = lambdaContext;
 	  }
 	  item._originalArgs = args;
 	  return item;
@@ -4459,7 +4462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (prop in xhr && _.isFunction(xhr[prop])) {
 	      replace(xhr, prop, function(orig) {
 	        return self.rollbar.wrap(orig);
-	      }, self.replacements, 'network');
+	      });
 	    }
 	  }
 	
@@ -4666,12 +4669,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
-	  if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
-	    value = '[scrubbed]';
-	  } else if (this.telemetryScrubber) {
-	    var description = describeElement(element);
-	    if (this.telemetryScrubber(description)) {
+	  if (value !== undefined) {
+	    if (this.scrubTelemetryInputs || (getElementType(element) === 'password')) {
 	      value = '[scrubbed]';
+	    } else if (this.telemetryScrubber) {
+	      var description = describeElement(element);
+	      if (this.telemetryScrubber(description)) {
+	        value = '[scrubbed]';
+	      }
 	    }
 	  }
 	  var elementString = elementArrayToString(treeToArray(element));
