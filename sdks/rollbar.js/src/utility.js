@@ -77,11 +77,22 @@ function isFunction(f) {
  * @returns true if f is a native JS function, otherwise false
  */
 function isNativeFunction(f) {
-  if (!isFunction(f)) {
-    return false;
-  }
-  var functionString = Function.prototype.toString.call(f);
-  return /\{\s+\[native code\]/.test(functionString);
+  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+  var funcMatchString = Function.prototype.toString.call(Object.prototype.hasOwnProperty)
+    .replace(reRegExpChar, '\\$&')
+    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?');
+  var reIsNative = RegExp('^' + funcMatchString + '$');
+  return isObject(f) && reIsNative.test(f);
+}
+
+/* isObject - Checks if the argument is an object
+ *
+ * @param value - any value
+ * @returns true is value is an object function is an object)
+*/
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
 }
 
 /*
