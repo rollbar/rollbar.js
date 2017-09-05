@@ -9,10 +9,10 @@ function setupJSON() {
   __initRollbarJSON = true;
 
   if (isDefined(JSON)) {
-    if (isFunction(JSON.stringify)) {
+    if (isNativeFunction(JSON.stringify)) {
       RollbarJSON.stringify = JSON.stringify;
     }
-    if (isFunction(JSON.parse)) {
+    if (isNativeFunction(JSON.parse)) {
       RollbarJSON.parse = JSON.parse;
     }
   }
@@ -69,6 +69,30 @@ function typeName(x) {
  */
 function isFunction(f) {
   return isType(f, 'function');
+}
+
+/* isNativeFunction - a convenience function for checking if a value is a native JS function
+ *
+ * @param f - any value
+ * @returns true if f is a native JS function, otherwise false
+ */
+function isNativeFunction(f) {
+  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+  var funcMatchString = Function.prototype.toString.call(Object.prototype.hasOwnProperty)
+    .replace(reRegExpChar, '\\$&')
+    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?');
+  var reIsNative = RegExp('^' + funcMatchString + '$');
+  return isObject(f) && reIsNative.test(f);
+}
+
+/* isObject - Checks if the argument is an object
+ *
+ * @param value - any value
+ * @returns true is value is an object function is an object)
+*/
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
 }
 
 /*
@@ -569,6 +593,7 @@ module.exports = {
   isType: isType,
   typeName: typeName,
   isFunction: isFunction,
+  isNativeFunction: isNativeFunction,
   isIterable: isIterable,
   isError: isError,
   extend: extend,
