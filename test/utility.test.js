@@ -90,6 +90,24 @@ describe('isFunction', function() {
     expect(_.isFunction(g)).to.be.ok();
     done();
   });
+
+});
+describe('isNativeFunction', function() {
+  it('should work for all native functions', function(done) {
+    var f = function() { return; };
+    var g = function(x) {
+      return f(x);
+    };
+    var h = String.prototype.substr;
+    var i = Array.prototype.indexOf;
+    expect(_.isNativeFunction({})).to.not.be.ok();
+    expect(_.isNativeFunction(null)).to.not.be.ok();
+    expect(_.isNativeFunction(f)).to.not.be.ok();
+    expect(_.isNativeFunction(g)).to.not.be.ok();
+    expect(_.isNativeFunction(h)).to.be.ok();
+    expect(_.isNativeFunction(i)).to.be.ok();
+    done();
+  });
 });
 
 describe('isIterable', function() {
