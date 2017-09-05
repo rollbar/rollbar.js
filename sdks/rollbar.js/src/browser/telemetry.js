@@ -27,7 +27,7 @@ function restore(replacements, type) {
 
 function Instrumenter(options, telemeter, rollbar, _window, _document) {
   var autoInstrument = options.autoInstrument;
-  if (autoInstrument === false) {
+  if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
   } else {
     if (!_.isType(autoInstrument, 'object')) {
@@ -59,7 +59,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
 Instrumenter.prototype.configure = function(options) {
   var autoInstrument = options.autoInstrument;
   var oldSettings = _.extend(true, {}, this.autoInstrument);
-  if (autoInstrument === false) {
+  if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
   } else {
     if (!_.isType(autoInstrument, 'object')) {

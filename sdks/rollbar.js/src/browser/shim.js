@@ -55,10 +55,12 @@ function setupShim(window, options) {
     }
 
     var ai = options.autoInstrument;
-    if (ai === undefined || ai === true || (typeof ai === 'object' && ai.network)) {
-      if (window.addEventListener) {
-        window.addEventListener('load', handler.captureLoad.bind(handler));
-        window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
+    if (options.enabled !== false) {
+      if (ai === undefined || ai === true || (typeof ai === 'object' && ai.network)) {
+        if (window.addEventListener) {
+          window.addEventListener('load', handler.captureLoad.bind(handler));
+          window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
+        }
       }
     }
 
