@@ -163,10 +163,10 @@ The [community library](https://github.com/tandibar/ng-rollbar) which provides t
 Angular 1 support has releases for the different versions of this Rollbar.js library. Those releases
 lag behind releases to this library, but they are usually in sync.
 
-### Angular 2
+### Angular 2 and Later
 
 Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
-Rollbar by default. Additionally, one can catch any Angular 2 specific exceptions reported through the
+Rollbar by default. Additionally, one can catch any Angular-specific exceptions reported through the
 `@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
 
 ```js
