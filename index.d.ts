@@ -26,9 +26,12 @@ declare class Rollbar {
     public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
 
     public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
+
+    public lambdaHandler(Rollbar.LambdaHandler): Rollbar.LambdaHandler;
 }
 
 declare namespace Rollbar {
+    export type LambdaHandler = (event: object, context: object, callback: Callback) => void;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
