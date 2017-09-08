@@ -2,6 +2,7 @@ node_modules
 bower_components
 .idea
 vendor/*.min.js
+vendor/JSON-js/.git
 test/*.bundle.js*
 sauce_connect.log
 release
