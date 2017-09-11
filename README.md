@@ -1391,6 +1391,11 @@ exports.handler = (event, context, callback) => {
 };
 ```
 
+## Supported Browsers
+
+The following browser versions and above are supported:
+IE 8, Firefox 40, Chrome 44, Edge 10, Opera 12, and Safari 8. 
+
 ## Help / Support
 
 If you run into any issues, please email us at [support@rollbar.com](mailto:support@rollbar.com)
