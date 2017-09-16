@@ -27,19 +27,6 @@ function baseData(item, options, callback) {
     }
   });
 
-  data.server = {
-    host: options.host,
-    argv: process.argv.concat(),
-    pid: process.pid
-  };
-
-  if (options.branch) {
-    data.server.branch = options.branch;
-  }
-  if (options.root) {
-    data.server.root = options.root;
-  }
-
   item.data = data;
   callback(null, item);
 }
@@ -141,29 +128,6 @@ function addRequestData(item, options, callback) {
     }
     item.data.person = {id: userId};
   }
-
-  callback(null, item);
-}
-
-function addLambdaData(item, options, callback) {
-  var c = item.lambdaContext;
-  if (!c) {
-    callback(null, item);
-    return;
-  }
-
-  var data = {
-    remainingTimeInMillis: c.getRemainingTimeInMillis(),
-    callbackWaitsForEmptyEventLoop: c.callbackWaitsForEmptyEventLoop,
-    functionName: c.functionName,
-    functionVersion: c.functionVersion,
-    arn: c.invokedFunctionArn,
-    requestId: c.awsRequestId
-  };
-
-  item.data = item.data || {};
-  item.data.custom = item.data.custom || {};
-  item.data.custom.lambda = data;
 
   callback(null, item);
 }

@@ -188,9 +188,12 @@ exports.parseStack = function (stack, callback) {
     if (err) {
       return callback(err);
     }
-    frames.reverse();
-    async.filter(frames, function (frame, callback) { callback(!!frame); }, function (results) {
-      callback(null, results);
-    });
+    var results = [];
+    for (var i = frames.length-1; i >= 0; i--) {
+      if (!!frames[i]) {
+        results.push(frames[i]);
+      }
+    }
+    callback(null, results);
   });
 };
