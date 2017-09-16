@@ -5,8 +5,7 @@ var API = require('../api');
 var logger = require('./logger');
 
 var transport = require('./transport');
-var urllib = require('url');
-var jsonBackup = require('json-stringify-safe');
+var urllib = require('../browser/url');
 
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
@@ -18,13 +17,9 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
-  if (options.minimumLevel !== undefined) {
-    options.reportLevel = options.minimumLevel;
-    delete options.minimumLevel;
-  }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
   this.options.environment = this.options.environment || 'unspecified';
-  var api = new API(this.options, transport, urllib, jsonBackup);
+  var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
@@ -261,15 +256,15 @@ function _getFirstFunction(args) {
 
 Rollbar.defaultOptions = {
   environment: process.env.NODE_ENV || 'development',
+  platform: 'client',
   framework: 'react-native',
   showReportedMessageTraces: false,
   notifier: {
-    name: 'node_rollbar',
+    name: 'rollbar-react-native',
     version: packageJson.version
   },
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
-  addRequestData: null,
   reportLevel: packageJson.defaults.reportLevel,
   verbose: false,
   enabled: true

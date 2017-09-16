@@ -1,24 +1,7 @@
 var _ = require('../utility');
 var logger = require('./logger');
 
-var jsonBackup = require('json-stringify-safe');
-
-/*
- * accessToken may be embedded in payload but that should not be assumed
- *
- * options: {
- *   hostname
- *   protocol
- *   path
- *   port
- *   method
- * }
- *
- * params is an object containing key/value pairs to be
- *    appended to the path as 'key=value&key=value'
- *
- * payload is an unserialized object
- */
+var Buffer = require('buffer/').Buffer;
 
 function get(accessToken, options, params, callback) {
   var t;
@@ -27,10 +10,10 @@ function get(accessToken, options, params, callback) {
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
-  options.headers = _headers(accessToken, options);
-  fetch(options.protocol + options.hostname + options.path, {
+  var headers = _headers(accessToken, options);
+  fetch(_.formatUrl(options), {
     method: 'GET',
-    headers: options.headers
+    headers: headers
   })
   .then(function(resp) {
     _handleResponse(resp, callback);
@@ -48,16 +31,16 @@ function post(accessToken, options, payload, callback) {
   if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
-  var stringifyResult = _.stringify(payload, jsonBackup);
+  var stringifyResult = _.stringify(payload);
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
   }
   var writeData = stringifyResult.value;
-  options.headers = _headers(accessToken, options, writeData);
-  fetch(options.protocol + options.hostname + options.path, {
+  var headers = _headers(accessToken, options, writeData);
+  fetch(_.formatUrl(options), {
     method: 'POST',
-    headers: options.headers,
+    headers: headers,
     body: writeData
   })
   .then(function (resp) {
@@ -85,25 +68,7 @@ function _headers(accessToken, options, data) {
 }
 
 function _handleResponse(resp, callback) {
-  var respData = [];
-  resp.setEncoding('utf8');
-  resp.on('data', function(chunk) {
-    respData.push(chunk);
-  });
-
-  resp.on('end', function() {
-    respData = respData.join('');
-    _parseApiResponse(respData, callback);
-  });
-}
-
-function _parseApiResponse(data, callback) {
-  var parsedData = _.jsonParse(data);
-  if (parsedData.error) {
-    logger.error('Could not parse api response, err: ' + parsedData.error);
-    return callback(parsedData.error);
-  }
-  data = parsedData.value;
+  var data = resp.json();
 
   if (data.err) {
     logger.error('Received error: ' + data.message);
