@@ -27,7 +27,7 @@ declare class Rollbar {
 
     public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 
-    public lambdaHandler(Rollbar.LambdaHandler): Rollbar.LambdaHandler;
+    public lambdaHandler(handler: Rollbar.LambdaHandler): Rollbar.LambdaHandler;
 }
 
 declare namespace Rollbar {
