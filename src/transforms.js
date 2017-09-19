@@ -10,6 +10,9 @@ function itemToPayload(item, options, callback) {
   if (item._isUncaught) {
     data._isUncaught = true;
   }
+  if (item._originalArgs) {
+    data._originalArgs = item._originalArgs;
+  }
   callback(null, data);
 }
 
