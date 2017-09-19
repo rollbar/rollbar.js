@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.2.8
+
+- Stop polluting the global namespace in the umd build
+- Don't use the maxItems configuration option on the server side
+- Fix the way telementry dom elements are truncated
+- Fix some typescript declaration issues
+
 ## v2.2.7
 - Ensure scrubbing has the right value for telemetry inputs if `scrubTelemetryInputs` is true.
 - Fix memory leak related to network requests
