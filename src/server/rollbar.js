@@ -26,6 +26,8 @@ function Rollbar(options, client) {
     delete options.minimumLevel;
   }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
+  // On the server we want to ignore any maxItems setting
+  delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
   this.lambdaContext = null;
   var api = new API(this.options, transport, urllib, jsonBackup);
@@ -59,6 +61,9 @@ function handleUninitialized(maybeCallback) {
 }
 
 Rollbar.prototype.global = function(options) {
+  options = _.extend(true, {}, options);
+  // On the server we want to ignore any maxItems setting
+  delete options.maxItems;
   this.client.global(options);
   return this;
 };
@@ -77,6 +82,8 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.extend(true, {}, oldOptions, options, payload);
+  // On the server we want to ignore any maxItems setting
+  delete this.options.maxItems;
   this.client.configure(options, payloadData);
   return this;
 };
