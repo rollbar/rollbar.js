@@ -469,7 +469,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.7"),
+	  version: ("2.2.8"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -1035,10 +1035,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  __initRollbarJSON = true;
 	
 	  if (isDefined(JSON)) {
-	    if (isFunction(JSON.stringify)) {
+	    if (isNativeFunction(JSON.stringify)) {
 	      RollbarJSON.stringify = JSON.stringify;
 	    }
-	    if (isFunction(JSON.parse)) {
+	    if (isNativeFunction(JSON.parse)) {
 	      RollbarJSON.parse = JSON.parse;
 	    }
 	  }
@@ -1095,6 +1095,30 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 */
 	function isFunction(f) {
 	  return isType(f, 'function');
+	}
+	
+	/* isNativeFunction - a convenience function for checking if a value is a native JS function
+	 *
+	 * @param f - any value
+	 * @returns true if f is a native JS function, otherwise false
+	 */
+	function isNativeFunction(f) {
+	  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+	  var funcMatchString = Function.prototype.toString.call(Object.prototype.hasOwnProperty)
+	    .replace(reRegExpChar, '\\$&')
+	    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?');
+	  var reIsNative = RegExp('^' + funcMatchString + '$');
+	  return isObject(f) && reIsNative.test(f);
+	}
+	
+	/* isObject - Checks if the argument is an object
+	 *
+	 * @param value - any value
+	 * @returns true is value is an object function is an object)
+	*/
+	function isObject(value) {
+	  var type = typeof value;
+	  return value != null && (type == 'object' || type == 'function');
 	}
 	
 	/*
@@ -1595,6 +1619,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  isType: isType,
 	  typeName: typeName,
 	  isFunction: isFunction,
+	  isNativeFunction: isNativeFunction,
 	  isIterable: isIterable,
 	  isError: isError,
 	  extend: extend,
@@ -4146,6 +4171,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  if (item._isUncaught) {
 	    data._isUncaught = true;
 	  }
+	  if (item._originalArgs) {
+	    data._originalArgs = item._originalArgs;
+	  }
 	  callback(null, data);
 	}
 	
@@ -4351,6 +4379,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var _ = __webpack_require__(6);
 	var urlparser = __webpack_require__(18);
+	var domUtil = __webpack_require__(26);
 	
 	var defaults = {
 	  network: true,
@@ -4378,7 +4407,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	function Instrumenter(options, telemeter, rollbar, _window, _document) {
 	  var autoInstrument = options.autoInstrument;
-	  if (autoInstrument === false) {
+	  if (options.enabled === false || autoInstrument === false) {
 	    this.autoInstrument = {};
 	  } else {
 	    if (!_.isType(autoInstrument, 'object')) {
@@ -4410,7 +4439,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	Instrumenter.prototype.configure = function(options) {
 	  var autoInstrument = options.autoInstrument;
 	  var oldSettings = _.extend(true, {}, this.autoInstrument);
-	  if (autoInstrument === false) {
+	  if (options.enabled === false || autoInstrument === false) {
 	    this.autoInstrument = {};
 	  } else {
 	    if (!_.isType(autoInstrument, 'object')) {
@@ -4628,12 +4657,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Instrumenter.prototype.handleClick = function(evt) {
 	  try {
-	    var e = getElementFromEvent(evt, this._document);
+	    var e = domUtil.getElementFromEvent(evt, this._document);
 	    var hasTag = e && e.tagName;
-	    var anchorOrButton = isDescribedElement(e, 'a') || isDescribedElement(e, 'button');
-	    if (hasTag && (anchorOrButton || isDescribedElement(e, 'input', ['button', 'submit']))) {
+	    var anchorOrButton = domUtil.isDescribedElement(e, 'a') || domUtil.isDescribedElement(e, 'button');
+	    if (hasTag && (anchorOrButton || domUtil.isDescribedElement(e, 'input', ['button', 'submit']))) {
 	        this.captureDomEvent('click', e);
-	    } else if (isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
+	    } else if (domUtil.isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
 	      this.captureDomEvent('input', e, e.value, e.checked);
 	    }
 	  } catch (exc) {
@@ -4643,13 +4672,13 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Instrumenter.prototype.handleBlur = function(evt) {
 	  try {
-	    var e = getElementFromEvent(evt, this._document);
+	    var e = domUtil.getElementFromEvent(evt, this._document);
 	    if (e && e.tagName) {
-	      if (isDescribedElement(e, 'textarea')) {
+	      if (domUtil.isDescribedElement(e, 'textarea')) {
 	        this.captureDomEvent('input', e, e.value);
-	      } else if (isDescribedElement(e, 'select') && e.options && e.options.length) {
+	      } else if (domUtil.isDescribedElement(e, 'select') && e.options && e.options.length) {
 	        this.handleSelectInputChanged(e);
-	      } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
+	      } else if (domUtil.isDescribedElement(e, 'input') && !domUtil.isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
 	        this.captureDomEvent('input', e, e.value);
 	      }
 	    }
@@ -4672,167 +4701,18 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
 	  if (value !== undefined) {
-	    if (this.scrubTelemetryInputs || (getElementType(element) === 'password')) {
+	    if (this.scrubTelemetryInputs || (domUtil.getElementType(element) === 'password')) {
 	      value = '[scrubbed]';
 	    } else if (this.telemetryScrubber) {
-	      var description = describeElement(element);
+	      var description = domUtil.describeElement(element);
 	      if (this.telemetryScrubber(description)) {
 	        value = '[scrubbed]';
 	      }
 	    }
 	  }
-	  var elementString = elementArrayToString(treeToArray(element));
+	  var elementString = domUtil.elementArrayToString(domUtil.treeToArray(element));
 	  this.telemeter.captureDom(subtype, elementString, value, isChecked);
 	};
-	
-	function getElementType(e) {
-	  return (e.getAttribute('type') || '').toLowerCase();
-	}
-	
-	function isDescribedElement(element, type, subtypes) {
-	  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
-	    return false;
-	  }
-	  if (!subtypes) {
-	    return true;
-	  }
-	  element = getElementType(element);
-	  for (var i = 0; i < subtypes.length; i++) {
-	    if (subtypes[i] === element) {
-	      return true;
-	    }
-	  }
-	  return false;
-	}
-	
-	function getElementFromEvent(evt, doc) {
-	  if (evt.target) {
-	    return evt.target;
-	  }
-	  if (doc && doc.elementFromPoint) {
-	    return doc.elementFromPoint(evt.clientX, evt.clientY);
-	  }
-	  return undefined;
-	}
-	
-	function treeToArray(elem) {
-	  var MAX_HEIGHT = 5;
-	  var out = [];
-	  var nextDescription;
-	  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
-	    nextDescription = describeElement(elem);
-	    if (nextDescription.tagName === 'html') {
-	      break;
-	    }
-	    out.push(nextDescription);
-	    elem = elem.parentNode;
-	  }
-	  return out.reverse();
-	}
-	
-	function elementArrayToString(a) {
-	  var MAX_LENGTH = 80;
-	  var separator = ' > ', separatorLength = separator.length;
-	  var out = [], len = 0, nextStr, totalLength;
-	
-	  for (var i = 0; i < a.length; i++) {
-	    nextStr = descriptionToString(a[i]);
-	    totalLength = len + (out.length * separatorLength) + nextStr.length;
-	    if (i > 0 && totalLength >= MAX_LENGTH) {
-	      break;
-	    }
-	    out.push(nextStr);
-	    len += nextStr.length;
-	  }
-	  return out.join(separator);
-	}
-	
-	/**
-	 * Old implementation
-	 * Should be equivalent to: elementArrayToString(treeToArray(elem))
-	function treeToString(elem) {
-	  var MAX_HEIGHT = 5, MAX_LENGTH = 80;
-	  var separator = ' > ', separatorLength = separator.length;
-	  var out = [], len = 0, nextStr, totalLength;
-	
-	  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
-	    nextStr = elementToString(elem);
-	    if (nextStr === 'html') {
-	      break;
-	    }
-	    totalLength = len + (out.length * separatorLength) + nextStr.length;
-	    if (height > 1 && totalLength >= MAX_LENGTH) {
-	      break;
-	    }
-	    out.push(nextStr);
-	    len += nextStr.length;
-	    elem = elem.parentNode;
-	  }
-	  return out.reverse().join(separator);
-	}
-	
-	function elementToString(elem) {
-	  return descriptionToString(describeElement(elem));
-	}
-	 */
-	
-	function descriptionToString(desc) {
-	  if (!desc || !desc.tagName) {
-	    return '';
-	  }
-	  var out = [desc.tagName];
-	  if (desc.id) {
-	    out.push('#' + desc.id);
-	  }
-	  if (desc.classes) {
-	    out.push('.' + desc.classes.join('.'));
-	  }
-	  for (var i = 0; i < desc.attributes.length; i++) {
-	    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
-	  }
-	
-	  return out.join('');
-	}
-	
-	/**
-	 * Input: a dom element
-	 * Output: null if tagName is falsey or input is falsey, else
-	 *  {
-	 *    tagName: String,
-	 *    id: String | undefined,
-	 *    classes: [String] | undefined,
-	 *    attributes: [
-	 *      {
-	 *        key: OneOf(type, name, title, alt),
-	 *        value: String
-	 *      }
-	 *    ]
-	 *  }
-	 */
-	function describeElement(elem) {
-	  if (!elem || !elem.tagName) {
-	    return null;
-	  }
-	  var out = {}, className, key, attr, i;
-	  out.tagName = elem.tagName.toLowerCase();
-	  if (elem.id) {
-	    out.id = elem.id;
-	  }
-	  className = elem.className;
-	  if (className && _.isType(className, 'string')) {
-	    out.classes = className.split(/\s+/);
-	  }
-	  var attributes = ['type', 'name', 'title', 'alt'];
-	  out.attributes = [];
-	  for (i = 0; i < attributes.length; i++) {
-	    key = attributes[i];
-	    attr = elem.getAttribute(key);
-	    if (attr) {
-	      out.attributes.push({key: key, value: attr});
-	    }
-	  }
-	  return out;
-	}
 	
 	Instrumenter.prototype.deinstrumentNavigation = function() {
 	  var chrome = this._window.chrome;
@@ -4955,6 +4835,144 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	};
 	
 	module.exports = Instrumenter;
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+	'use strict';
+	
+	function getElementType(e) {
+	  return (e.getAttribute('type') || '').toLowerCase();
+	}
+	
+	function isDescribedElement(element, type, subtypes) {
+	  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
+	    return false;
+	  }
+	  if (!subtypes) {
+	    return true;
+	  }
+	  element = getElementType(element);
+	  for (var i = 0; i < subtypes.length; i++) {
+	    if (subtypes[i] === element) {
+	      return true;
+	    }
+	  }
+	  return false;
+	}
+	
+	function getElementFromEvent(evt, doc) {
+	  if (evt.target) {
+	    return evt.target;
+	  }
+	  if (doc && doc.elementFromPoint) {
+	    return doc.elementFromPoint(evt.clientX, evt.clientY);
+	  }
+	  return undefined;
+	}
+	
+	function treeToArray(elem) {
+	  var MAX_HEIGHT = 5;
+	  var out = [];
+	  var nextDescription;
+	  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+	    nextDescription = describeElement(elem);
+	    if (nextDescription.tagName === 'html') {
+	      break;
+	    }
+	    out.unshift(nextDescription);
+	    elem = elem.parentNode;
+	  }
+	  return out;
+	}
+	
+	function elementArrayToString(a) {
+	  var MAX_LENGTH = 80;
+	  var separator = ' > ', separatorLength = separator.length;
+	  var out = [], len = 0, nextStr, totalLength;
+	
+	  for (var i = a.length - 1; i >= 0; i--) {
+	    nextStr = descriptionToString(a[i]);
+	    totalLength = len + (out.length * separatorLength) + nextStr.length;
+	    if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
+	      out.unshift('...');
+	      break;
+	    }
+	    out.unshift(nextStr);
+	    len += nextStr.length;
+	  }
+	  return out.join(separator);
+	}
+	
+	function descriptionToString(desc) {
+	  if (!desc || !desc.tagName) {
+	    return '';
+	  }
+	  var out = [desc.tagName];
+	  if (desc.id) {
+	    out.push('#' + desc.id);
+	  }
+	  if (desc.classes) {
+	    out.push('.' + desc.classes.join('.'));
+	  }
+	  for (var i = 0; i < desc.attributes.length; i++) {
+	    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+	  }
+	
+	  return out.join('');
+	}
+	
+	/**
+	 * Input: a dom element
+	 * Output: null if tagName is falsey or input is falsey, else
+	 *  {
+	 *    tagName: String,
+	 *    id: String | undefined,
+	 *    classes: [String] | undefined,
+	 *    attributes: [
+	 *      {
+	 *        key: OneOf(type, name, title, alt),
+	 *        value: String
+	 *      }
+	 *    ]
+	 *  }
+	 */
+	function describeElement(elem) {
+	  if (!elem || !elem.tagName) {
+	    return null;
+	  }
+	  var out = {}, className, key, attr, i;
+	  out.tagName = elem.tagName.toLowerCase();
+	  if (elem.id) {
+	    out.id = elem.id;
+	  }
+	  className = elem.className;
+	  if (className && (typeof className === 'string')) {
+	    out.classes = className.split(/\s+/);
+	  }
+	  var attributes = ['type', 'name', 'title', 'alt'];
+	  out.attributes = [];
+	  for (i = 0; i < attributes.length; i++) {
+	    key = attributes[i];
+	    attr = elem.getAttribute(key);
+	    if (attr) {
+	      out.attributes.push({key: key, value: attr});
+	    }
+	  }
+	  return out;
+	}
+	
+	module.exports = {
+	  describeElement: describeElement,
+	  descriptionToString: descriptionToString,
+	  elementArrayToString: elementArrayToString,
+	  treeToArray: treeToArray,
+	  getElementFromEvent: getElementFromEvent,
+	  isDescribedElement: isDescribedElement,
+	  getElementType: getElementType
+	};
 
 
 /***/ })
