@@ -476,7 +476,7 @@ There are 2 types of configuration data -- context and payload. Context provides
 
 ### Configuration levels
 
-Rollbar can be configured at 3 different levels -- global, notifier and scope. All configuration is inherited at each level, so global configuration affects all notifiers while notifier configuration only affects the notifier being configured and any child notifiers created after the call to `configure()`.
+Rollbar can be configured at 2 different levels -- global and notifier. All configuration is inherited at each level, so global configuration affects all notifiers while notifier configuration only affects the notifier being configured.
 
 #### Global configuration
 
@@ -519,8 +519,8 @@ Rollbar.info('this will not get reported to Rollbar since it\'s at the "info" le
 // Set the person information to be sent with all items to Rollbar
 Rollbar.configure({payload: {person: {id: 12345, email: 'stewie@familyguy.com'}}});
 
-// Add the following payload data to all items sent to Rollbar from this
-// notifier or any created using window.Rollbar.scope()
+// Add the following payload data to all items sent to Rollbar
+// from this notifier
 Rollbar.configure({payload: {sessionId: "asdf12345"}});
 
 // Scrub any payload keys/query parameters named 'creditCardNumber'
@@ -781,7 +781,7 @@ Rollbar.configure({
 
 ### More info
 
-Check out the API reference below for more information on how to use ```global/configure/scope()```.
+Check out the API reference below for more information on how to use ```global/configure```.
 
 
 ## API Reference
