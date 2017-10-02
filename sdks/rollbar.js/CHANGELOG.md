@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.2.9
+
+- Update debug package to v2.6.9 to address Node Security Warning
+- Fix calling captureEvent on the singleton
+- Clean up some references to our wrapper in stack traces
+
 ## v2.2.8
 
 - Stop polluting the global namespace in the umd build
