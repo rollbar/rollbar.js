@@ -14,7 +14,7 @@ function _setupForwarding(prototype) {
     };
   };
 
-  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureDomContentLoaded,captureLoad'.split(',');
+  var _methods = 'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,captureDomContentLoaded,captureLoad'.split(',');
   for (var i=0; i<_methods.length; i++) {
     prototype[_methods[i]] = _forward(_methods[i]);
   }
