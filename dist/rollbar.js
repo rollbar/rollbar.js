@@ -462,7 +462,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.8"),
+	  version: ("2.2.9"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -3656,7 +3656,7 @@
 	        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
 	        colno: stackFrame.column
 	      };
-	      if (frame.method && frame.method.endsWith && frame.method.endsWith('._rollbar_wrapped')) {
+	      if (frame.method && frame.method.endsWith && frame.method.endsWith('_rollbar_wrapped')) {
 	        continue;
 	      }
 	
