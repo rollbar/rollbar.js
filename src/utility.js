@@ -1,4 +1,5 @@
 var extend = require('extend');
+var path = require('path');
 
 var RollbarJSON = {};
 var __initRollbarJSON = false;
@@ -17,7 +18,7 @@ function setupJSON() {
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    var setupCustomJSON = require('../vendor/JSON-js/json3.js');
+    var setupCustomJSON = require(path.resolve('../vendor/JSON-js/json3.js'));
     setupCustomJSON(RollbarJSON);
   }
 }
