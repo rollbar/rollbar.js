@@ -165,43 +165,71 @@ lag behind releases to this library, but they are usually in sync.
 
 ### Angular 2 and Later
 
+Install rollbar with `npm` to get the lib and typings:
+```
+npm install --save rollbar
+```
+
 Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
 Rollbar by default. Additionally, one can catch any Angular-specific exceptions reported through the
 `@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
 
-```js
+```typescript
 import * as Rollbar from 'rollbar';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, ErrorHandler } from '@angular/core';
 import { AppComponent } from './app.component';
 
 const rollbarConfig = {
-  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
-  captureUncaught: true,
-  captureUnhandledRejections: true,
+    accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
 };
 
 @Injectable()
-export class RollbarErrorHandler implements ErrorHandler {
-  constructor(private injector: Injector) { }
-  handleError(err:any) : void {
-    var rollbar = this.injector.get(Rollbar);
-    rollbar.error(err.originalError || err);
-  }
+export class RollbarService {
+    public rollbar: Rollbar;
+
+    constructor(options?: Rollbar.Configuration) {
+        this.rollbar = Rollbar.init(options);
+    }
 }
 
-@NgModule({
-  imports: [ BrowserModule ],
-  declarations: [ AppComponent ],
-  bootstrap: [ AppComponent ],
-  providers: [
-    { provide: ErrorHandler, useClass: RollbarErrorHandler },
-    { provide: Rollbar,
-      useFactory: () => {
-        return new Rollbar(rollbarConfig)
-      }
+
+@Injectable()
+export class RollbarAwareErrorHandler implements ErrorHandler {
+
+    constructor(private rollbarService: RollbarService) {
     }
-  ]
+
+    handleError(error: any): void {
+        this.rollbarService.rollbar.error(error.originalError || error);
+        console.error(error);
+    }
+}
+
+
+//Required for AOT
+export function rollbarFactory(): RollbarService {
+    return new RollbarService(rollbarConfig);
+}
+
+
+@NgModule({
+    imports: [ BrowserModule ],
+    declarations: [ AppComponent ],
+    bootstrap: [ AppComponent ],
+    providers: [
+        {
+            provide: ErrorHandler,
+            useClass: RollbarAwareErrorHandler,
+
+        },
+        {
+            provide: RollbarService,
+            useFactory: rollbarFactory
+        }
+    ]
 })
 export class AppModule { }
 ```
