@@ -165,85 +165,74 @@ lag behind releases to this library, but they are usually in sync.
 
 ### Angular 2 and Later
 
+Install rollbar with `npm` to get the lib and typings:
+```
+npm install --save rollbar
+```
+
 Setting the `captureUncaught` option to true will result in reporting all uncaught exceptions to
 Rollbar by default. Additionally, one can catch any Angular-specific exceptions reported through the
 `@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
 
-
-```js
+```typescript
 import * as Rollbar from 'rollbar';
 import { BrowserModule } from '@angular/platform-browser';
-import {
-  Injectable,
-  Injector,
-  InjectionToken,
-  NgModule,
-  ErrorHandler
-} from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 import { AppComponent } from './app.component';
 
 const rollbarConfig = {
-  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
-  captureUncaught: true,
-  captureUnhandledRejections: true,
+    accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
 };
 
 @Injectable()
-export class RollbarErrorHandler implements ErrorHandler {
-  constructor(private injector: Injector) {}
+export class RollbarService {
+    public rollbar: Rollbar;
 
-  handleError(err:any) : void {
-    var rollbar = this.injector.get(RollbarService);
-    rollbar.error(err.originalError || err);
-  }
+    constructor(options?: Rollbar.Configuration) {
+        this.rollbar = Rollbar.init(options);
+    }
 }
 
-export function rollbarFactory() {
-    return new Rollbar(rollbarConfig);
+
+@Injectable()
+export class RollbarAwareErrorHandler implements ErrorHandler {
+
+    constructor(private rollbarService: RollbarService) {
+    }
+
+    handleError(error: any): void {
+        this.rollbarService.rollbar.error(error.originalError || error);
+        console.error(error);
+    }
 }
 
-export const RollbarService = new InjectionToken<Rollbar>('rollbar');
+
+//Required for AOT
+export function rollbarFactory(): RollbarService {
+    return new RollbarService(rollbarConfig);
+}
+
 
 @NgModule({
-  imports: [ BrowserModule ],
-  declarations: [ AppComponent ],
-  bootstrap: [ AppComponent ],
-  providers: [
-    { provide: ErrorHandler, useClass: RollbarErrorHandler },
-    { provide: RollbarService, useFactory: rollbarFactory }
-  ]
+    imports: [ BrowserModule ],
+    declarations: [ AppComponent ],
+    bootstrap: [ AppComponent ],
+    providers: [
+        {
+            provide: ErrorHandler,
+            useClass: RollbarAwareErrorHandler,
+
+        },
+        {
+            provide: RollbarService,
+            useFactory: rollbarFactory
+        }
+    ]
 })
 export class AppModule { }
 ```
-
-#### Troubleshooting
-
-If your system consists of the following
-
-```
-@angular/cli: 1.4.3
-node: 6.11.3
-os: darwin x64
-@angular/animations: 4.4.3
-@angular/cli: 1.4.3
-@angular/common: 4.4.3
-@angular/compiler: 4.4.3
-@angular/compiler-cli: 4.4.3
-@angular/core: 4.4.3
-@angular/forms: 4.4.3
-@angular/http: 4.4.3
-@angular/platform-browser: 4.4.3
-@angular/platform-browser-dynamic: 4.4.3
-@angular/router: 4.4.3
-@angular/language-service: 4.4.3
-typescript: 2.3.4
-```
-
-there are some further steps you may need to implement in order to get rollbar.js working for you. 
-
-When compiling, if you get the error `Error encountered resolving symbol values statically. Function calls are not supported. Consider replacing the function or lambda with a reference to an exported function`, then the inline factory function in providers should be an exported function.
-
-Another error you may encounter when compiling is `Property 'error' does not exist on type '{}'.` In this case, the RollbarErrorHandler `var rollbar` needs to have a type explicitly defined, i.e. `var rollbar: Rollbar`.
 
 ### Ember
 
