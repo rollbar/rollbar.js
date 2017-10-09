@@ -204,7 +204,7 @@ export class RollbarAwareErrorHandler implements ErrorHandler {
 
     handleError(error: any): void {
         this.rollbarService.rollbar.error(error.originalError || error);
-        console.error(error);
+        console.error(error.toString());
     }
 }
 
