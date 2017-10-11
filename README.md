@@ -169,10 +169,17 @@ Setting the `captureUncaught` option to true will result in reporting all uncaug
 Rollbar by default. Additionally, one can catch any Angular-specific exceptions reported through the
 `@angular/core/ErrorHandler` component by setting a custom `ErrorHandler` class:
 
+
 ```js
 import * as Rollbar from 'rollbar';
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, ErrorHandler } from '@angular/core';
+import {
+  Injectable,
+  Injector,
+  InjectionToken,
+  NgModule,
+  ErrorHandler
+} from '@angular/core';
 import { AppComponent } from './app.component';
 
 const rollbarConfig = {
@@ -183,12 +190,19 @@ const rollbarConfig = {
 
 @Injectable()
 export class RollbarErrorHandler implements ErrorHandler {
-  constructor(private injector: Injector) { }
+  constructor(private injector: Injector) {}
+
   handleError(err:any) : void {
-    var rollbar = this.injector.get(Rollbar);
+    var rollbar = this.injector.get(RollbarService);
     rollbar.error(err.originalError || err);
   }
 }
+
+export function rollbarFactory() {
+    return new Rollbar(rollbarConfig);
+}
+
+export const RollbarService = new InjectionToken<Rollbar>('rollbar');
 
 @NgModule({
   imports: [ BrowserModule ],
@@ -196,11 +210,7 @@ export class RollbarErrorHandler implements ErrorHandler {
   bootstrap: [ AppComponent ],
   providers: [
     { provide: ErrorHandler, useClass: RollbarErrorHandler },
-    { provide: Rollbar,
-      useFactory: () => {
-        return new Rollbar(rollbarConfig)
-      }
-    }
+    { provide: RollbarService, useFactory: rollbarFactory }
   ]
 })
 export class AppModule { }
