@@ -9,7 +9,11 @@ const app = express();
 
 app.use(express.static(path.join(__dirname)));
 app.get('/rollbar.js', function response(req, res) {
-  res.sendFile(path.join(__dirname, '../../dist/rollbar.umd.js'))
+  var t = (req.query.t || 0.01) * 100;
+  console.log("Waiting: ", t, "ms");
+  setTimeout(function() {
+    res.sendFile(path.join(__dirname, '../../dist/rollbar.umd.js'))
+  }, t);
 });
 
 app.get('/test', function response(req, res) {
