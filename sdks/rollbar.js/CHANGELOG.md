@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.2.10
+
+- Fix a bug relating to maxItems not being recognized in the initial configuration.
+
 ## v2.2.9
 
 - Update debug package to v2.6.9 to address Node Security Warning

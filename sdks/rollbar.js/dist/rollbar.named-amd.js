@@ -469,7 +469,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.9"),
+	  version: ("2.2.10"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -504,6 +504,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	function Rollbar(options, api, logger, platform) {
 	  this.options = _.extend(true, {}, options);
 	  this.logger = logger;
+	  Rollbar.rateLimiter.configureGlobal(this.options);
 	  Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
 	  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
 	  this.notifier = new Notifier(this.queue, this.options);
@@ -532,6 +533,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    payload = {payload: payloadData};
 	  }
 	  this.options = _.extend(true, {}, oldOptions, options, payload);
+	  this.global(this.options);
 	  return this;
 	};
 	
@@ -707,7 +709,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* Helpers */
 	
 	function checkRate(item, limit, counter) {
-	  return !item.ignoreRateLimit && limit >= 1 && counter >= limit;
+	  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 	}
 	
 	function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
