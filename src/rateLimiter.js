@@ -83,7 +83,7 @@ RateLimiter.prototype.setPlatformOptions = function(platform, options) {
 /* Helpers */
 
 function checkRate(item, limit, counter) {
-  return !item.ignoreRateLimit && limit >= 1 && counter >= limit;
+  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 }
 
 function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
