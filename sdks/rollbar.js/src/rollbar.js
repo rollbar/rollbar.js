@@ -14,6 +14,7 @@ var _ = require('./utility');
 function Rollbar(options, api, logger, platform) {
   this.options = _.extend(true, {}, options);
   this.logger = logger;
+  Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
@@ -42,6 +43,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.extend(true, {}, oldOptions, options, payload);
+  this.global(this.options);
   return this;
 };
 
