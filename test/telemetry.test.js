@@ -65,4 +65,21 @@ describe('configure', function() {
     expect(t.queue.length).to.equal(5);
     done();
   });
+  it('does not drop existing options that are not passed to configure', function(done) {
+    var options = {maxTelemetryEvents: 3};
+    var t = new Telemeter(options);
+
+    for (var i = 0; i < 7; i++) {
+      t.capture('network', {url: 'a.com'}, 'debug');
+    }
+
+    expect(t.queue.length).to.equal(3);
+    t.configure({});
+    expect(t.queue.length).to.equal(3);
+    for (var i = 0; i < 7; i++) {
+      t.capture('network', {url: 'a.com'}, 'debug');
+    }
+    expect(t.queue.length).to.equal(3);
+    done();
+  });
 });
