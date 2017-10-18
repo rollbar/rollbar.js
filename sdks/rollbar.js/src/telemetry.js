@@ -10,7 +10,8 @@ function Telemeter(options) {
 }
 
 Telemeter.prototype.configure = function(options) {
-  this.options = _.extend(true, {}, options);
+  var oldOptions = this.options;
+  this.options = _.extend(true, {}, oldOptions, options);
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
   var deleteCount = 0;
