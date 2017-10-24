@@ -142,7 +142,7 @@ Rollbar.configure(
 
 ### Using Segment
 
-If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. To use them, you will need to include the Rollbar snippet directly in your `<head>`, rather than loading it through Segment.
+If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available unless you use the Device-based Connection Mode option. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. If you use the Device-based Connection Mode option, Segment will be able to load the Rollbar script on the client and you can use Rollbar methods. To enable this, go to the destination settings pane in the app and select Device-based Connection Mode. Otherwise, in order to use Rollbar methods, you will need to include the Rollbar snippet directly in your `<head>`, rather than loading it through Segment. 
 
 ### Using in a Chrome Extension
 
