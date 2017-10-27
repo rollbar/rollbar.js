@@ -69,6 +69,12 @@ Instrumenter.prototype.configure = function(options) {
     this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
   }
   this.instrument(oldSettings);
+  if (options.scrubTelemetryInputs !== undefined) {
+    this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+  }
+  if (options.telemetryScrubber !== undefined) {
+    this.telemetryScrubber = options.telemetryScrubber;
+  }
 };
 
 Instrumenter.prototype.instrument = function(oldSettings) {
