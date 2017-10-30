@@ -83,55 +83,6 @@ function handleItemWithError(item, options, callback) {
   async.eachSeries(errors, _buildTraceData(chain), cb);
 }
 
-function addRequestData(item, options, callback) {
-  item.data = item.data || {};
-
-  var req = item.request;
-  if (!req) {
-    callback(null, item);
-    return;
-  }
-
-  if (options.addRequestData && _.isFunction(options.addRequestData)) {
-    options.addRequestData(item.data, req);
-    callback(null, item);
-    return;
-  }
-
-  var requestData = _buildRequestData(req);
-  item.data.request = requestData;
-
-  if (req.route) {
-    item.data.context = req.route.path;
-  } else {
-    try {
-      item.data.context = req.app._router.matchRequest(req).path;
-    } catch (ignore) {
-      // Ignored
-    }
-  }
-
-  if (req.rollbar_person) {
-    item.data.person = req.rollbar_person;
-  } else if (req.user) {
-    item.data.person = {id: req.user.id};
-    if (req.user.username) {
-      item.data.person.username = req.user.username;
-    }
-    if (req.user.email) {
-      item.data.person.email = req.user.email;
-    }
-  } else if (req.user_id || req.userId) {
-    var userId = req.user_id || req.userId;
-    if (_.isFunction(userId)) {
-      userId = userId();
-    }
-    item.data.person = {id: userId};
-  }
-
-  callback(null, item);
-}
-
 function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
@@ -162,62 +113,10 @@ function _buildTraceData(chain) {
   };
 }
 
-function _extractIp(req) {
-  var ip = req.ip;
-  if (!ip) {
-    ip = requestIp.getClientIp(req);
-  }
-  return ip;
-}
-
-function _buildRequestData(req) {
-  var headers = req.headers || {};
-  var host = headers.host || '<no host>';
-  var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
-  var parsedUrl;
-  if (_.isType(req.url, 'string')) {
-    parsedUrl = url.parse(req.url, true);
-  } else {
-    parsedUrl = req.url || {};
-  }
-  parsedUrl.protocol = parsedUrl.protocol || proto;
-  parsedUrl.host = parsedUrl.host || host;
-  var reqUrl = url.format(parsedUrl);
-  var data = {
-    url: reqUrl,
-    user_ip: _extractIp(req),
-    headers: headers,
-    method: req.method
-  };
-  if (parsedUrl.search && parsedUrl.search.length > 0) {
-    data.GET = parsedUrl.query;
-  }
-
-  var body = req.body || req.payload;
-  if (body) {
-    var bodyParams = {};
-    if (_.isIterable(body)) {
-      for (var k in body) {
-        if (Object.prototype.hasOwnProperty.call(body, k)) {
-          bodyParams[k] = body[k];
-        }
-      }
-      data[req.method] = bodyParams;
-    } else {
-      data.body = body;
-    }
-  }
-  return data;
-}
-
 module.exports = {
   baseData: baseData,
   handleItemWithError: handleItemWithError,
   addBody: addBody,
-  addMessageData: addMessageData,
-  addErrorData: addErrorData,
-  addRequestData: addRequestData,
-  addLambdaData: addLambdaData,
   scrubPayload: scrubPayload
 };
 
