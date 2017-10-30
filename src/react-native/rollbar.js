@@ -18,9 +18,11 @@ function Rollbar(options, client) {
     options.accessToken = accessToken;
   }
   this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
+  // This makes no sense in a long running app
+  delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
   var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'server');
+  this.client = client || new Client(this.options, api, logger, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 }
@@ -230,7 +232,6 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addBody)
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
-    .addTransform(transforms.addRequestData)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.itemToPayload);
 }

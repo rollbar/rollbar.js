@@ -121,6 +121,9 @@ function rateLimitPayload(platform, options, globalRateLimit) {
   } else if (platform === 'server') {
     item.framework = options.framework || 'node-js';
     item.notifier.name = options.notifier.name;
+  } else if (platform === 'react-native') {
+    item.framework = options.framework || 'react-native';
+    item.notifier.name = options.notifier.name;
   }
   return item;
 }
