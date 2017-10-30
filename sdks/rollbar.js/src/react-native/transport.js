@@ -44,7 +44,10 @@ function post(accessToken, options, payload, callback) {
     body: writeData
   })
   .then(function (resp) {
-    _handleResponse(resp, _wrapPostCallback(callback));
+    return resp.json();
+  })
+  .then(function (data) {
+    _handleResponse(data, _wrapPostCallback(callback));
   })
   .error(function(err) {
     callback(err);
@@ -67,9 +70,7 @@ function _headers(accessToken, options, data) {
   return headers;
 }
 
-function _handleResponse(resp, callback) {
-  var data = resp.json();
-
+function _handleResponse(data, callback) {
   if (data.err) {
     logger.error('Received error: ' + data.message);
     return callback(new Error('Api error: ' + (data.message || 'Unknown error')));

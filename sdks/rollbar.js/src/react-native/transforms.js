@@ -10,6 +10,7 @@ function baseData(item, options, callback) {
     timestamp: Math.round(item.timestamp / 1000),
     environment: item.environment || environment,
     level: item.level || 'error',
+    platform: options.platform || 'client',
     language: 'javascript',
     framework: item.framework || options.framework,
     uuid: item.uuid,
