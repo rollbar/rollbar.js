@@ -3,7 +3,7 @@ var helpers = require('./apiUtility');
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',
-  path: '/api/1',
+  path: '/api/1/item/',
   search: null,
   version: '1',
   protocol: 'https:',
@@ -21,7 +21,7 @@ var defaultOptions = {
  *    accessToken: the accessToken to use for posting items to rollbar
  *    endpoint: an alternative endpoint to send errors to
  *        must be a valid, fully qualified URL.
- *        The default is: https://api.rollbar.com/api/1
+ *        The default is: https://api.rollbar.com/api/1/item
  *    proxy: if you wish to proxy requests provide an object
  *        with the following keys:
  *          host or hostname (required): foo.example.com
@@ -44,7 +44,7 @@ function Api(options, t, u, j) {
  * @param callback
  */
 Api.prototype.postItem = function(data, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, '/item/', 'POST');
+  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
   this.transport.post(this.accessToken, transportOptions, payload, callback);
 };

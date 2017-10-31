@@ -72,6 +72,7 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   this.perMinCounter++;
 
   var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
   return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
 };
 
@@ -120,6 +121,9 @@ function rateLimitPayload(platform, options, globalRateLimit) {
     item.notifier.name = 'rollbar-browser-js';
   } else if (platform === 'server') {
     item.framework = options.framework || 'node-js';
+    item.notifier.name = options.notifier.name;
+  } else if (platform === 'react-native') {
+    item.framework = options.framework || 'react-native';
     item.notifier.name = options.notifier.name;
   }
   return item;
