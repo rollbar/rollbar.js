@@ -106,13 +106,12 @@ describe('transportOptions', function() {
   it('should use the given data if no proxy', function() {
     var transport = {
       hostname: 'a.com',
-      path: '/api/v1',
+      path: '/api/v1/item/',
       port: 5000
     };
-    var path = '/item/';
     var method = 'GET';
 
-    var o = u.transportOptions(transport, path, method);
+    var o = u.transportOptions(transport, method);
     expect(o.protocol).to.eql('https:');
     expect(o.hostname).to.eql('a.com');
     expect(o.path).to.eql('/api/v1/item/');
@@ -122,17 +121,16 @@ describe('transportOptions', function() {
   it('should use the proxy if given', function() {
     var transport = {
       hostname: 'a.com',
-      path: '/api/v1',
+      path: '/api/v1/item/',
       port: 5000,
       proxy: {
         host: 'b.com',
         port: 8080
       }
     };
-    var path = '/item/';
     var method = 'GET';
-    
-    var o = u.transportOptions(transport, path, method);
+
+    var o = u.transportOptions(transport, method);
     expect(o.protocol).to.eql('https:');
     expect(o.hostname).to.eql('b.com');
     expect(o.port).to.eql(8080);

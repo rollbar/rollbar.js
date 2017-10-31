@@ -672,7 +672,7 @@ Default: ```"error"```
 </dt>
 <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
 
-Default: ```'https://api.rollbar.com/api/1/'```
+Default: ```'https://api.rollbar.com/api/1/item'```
 </dd>
 
 <dt>autoInstrument
@@ -1159,7 +1159,7 @@ Other options can be passed into the constructor as a collection. E.g.:
 new Rollbar({
   accessToken: "POST_SERVER_ITEM_ACCESS_TOKEN",
   environment: "staging",
-  endpoint: "https://api.rollbar.com/api/1/"
+  endpoint: "https://api.rollbar.com/api/1/item"
 });
 ```
 
