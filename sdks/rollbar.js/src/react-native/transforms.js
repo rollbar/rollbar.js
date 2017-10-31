@@ -1,5 +1,4 @@
 var async = require('async');
-var parser = require('./parser');
 var requestIp = require('request-ip');
 var url = require('url');
 var _ = require('../utility');
@@ -46,7 +45,7 @@ function addErrorData(item, options, callback) {
   if (item.stackInfo) {
     item.data = item.data || {};
     item.data.body = item.data.body || {};
-    item.data.body.trace_chain = item.stackInfo;
+    item.data.body.trace = item.stackInfo;
   }
   callback(null, item);
 }
@@ -65,23 +64,19 @@ function handleItemWithError(item, options, callback) {
   }
 
   var err = item.err;
-  var errors = [];
-  var chain = [];
-  do {
-    errors.push(err);
-    err = err.nested;
-  } while (err !== undefined);
-  item.stackInfo = chain;
-
-  var cb = function(e) {
-    if (e) {
-      item.message = item.err.message || item.err.description || item.message || String(item.err);
-      delete item.err;
-      delete item.stackInfo;
+  var frames = _handleStack(err.stack);
+  var stackInfo = {
+    frames: frames,
+    exception: {
+      class: String(err.constructor.name || err.name || '<unknown>'),
+      message: String(err.message || '<no message>')
     }
-    callback(null, item);
   };
-  async.eachSeries(errors, _buildTraceData(chain), cb);
+  if (err.description) {
+    stackInfo.exception.description = String(err.description);
+  }
+  item.stackInfo = stackInfo;
+  callback(null, item);
 }
 
 function scrubPayload(item, options, callback) {
@@ -94,23 +89,42 @@ function scrubPayload(item, options, callback) {
 
 /** Helpers **/
 
-function _buildTraceData(chain) {
-  return function(ex, cb) {
-    parser.parseException(ex, function (err, errData) {
-      if (err) {
-        return cb(err);
-      }
+function _handleStack(stack) {
+  var lines = (stack || '').split('\n');
+  var results = [];
+  var frame;
+  for (var i = lines.length - 1; i >= 0; i--) {
+    frame = _parseRawFrame(lines[i]);
+    results.push(frame);
+  }
+  return results;
+}
 
-      chain.push({
-        frames: errData.frames,
-        exception: {
-          class: errData['class'],
-          message: errData.message
-        }
-      });
-
-      return cb(null);
-    });
+function _parseRawFrame(line) {
+  var methodAndRest = line.split('@');
+  var method, rest;
+  if (methodAndRest.length > 1) {
+    method = methodAndRest[0];
+    rest = methodAndRest[1];
+  } else {
+    rest = methodAndRest[0];
+  }
+  var colIdx = rest.lastIndexOf(':');
+  var colno, lineno;
+  if (colIdx > -1) {
+    colno = rest.substring(colIdx+1);
+    rest = rest.substring(0, colIdx);
+  }
+  var lineIdx = rest.lastIndexOf(':');
+  if (lineIdx > -1) {
+    lineno = rest.substring(lineIdx+1);
+    rest = rest.substring(0, lineIdx);
+  }
+  return {
+    method: method || '<unknown>',
+    filename: rest || '<unknown>',
+    lineno: Math.floor(lineno),
+    colno: Math.floor(colno)
   };
 }
 
