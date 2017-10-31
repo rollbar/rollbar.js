@@ -223,6 +223,28 @@ Rollbar.captureEvent = function(metadata, level) {
   }
 };
 
+Rollbar.prototype.setPerson = function(personInfo) {
+  this.configure({}, {person: personInfo});
+};
+Rollbar.setPerson = function(personInfo) {
+  if (_instance) {
+    return _instance.setPerson(personInfo);
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.prototype.clearPerson = function() {
+  this.configure({}, {person: {}});
+};
+Rollbar.clearPerson = function() {
+  if (_instance) {
+    return _instance.clearPerson();
+  } else {
+    handleUninitialized();
+  }
+};
+
 /** Internal **/
 
 function addTransformsToNotifier(notifier) {
