@@ -44,11 +44,11 @@ function getTransportFromOptions(options, defaults, url) {
   };
 }
 
-function transportOptions(transport, path, method) {
+function transportOptions(transport, method) {
   var protocol = transport.protocol || 'https:';
   var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
-  path = appendPathToPath(transport.path, path);
+  var path = transport.path;
   if (transport.search) {
     path = path + transport.search;
   }

@@ -67,7 +67,8 @@ describe('shouldSend', function() {
     expect(result2.shouldSend).to.be.ok();
 
     expect(result3.shouldSend).to.not.be.ok();
-    expect(result3.error).to.be.ok();
+    expect(result3.error).to.not.be.ok();
+    expect(result3.payload).to.be.ok();
 
     done();
   });
@@ -95,7 +96,7 @@ describe('shouldSend', function() {
 
   it('should not send and give us a payload when the maxItems limit is reached', function(done) {
     var now = (new Date()).getTime();
-    var options = {startTime: now, maxItems: 4, itemsPerMinute: 2};
+    var options = {startTime: now, maxItems: 3, itemsPerMinute: 2};
     var rateLimiter = new RateLimiter(options);
 
     var i1 = {a: 1};
@@ -129,21 +130,27 @@ describe('shouldSend', function() {
     var i2 = {a: 2};
     var i3 = {a: 3};
     var i4 = {a: 4};
+    var i5 = {a: 5};
     var result1 = rateLimiter.shouldSend(i1, now + 1);
     var result2 = rateLimiter.shouldSend(i2, now + 2);
     var result3 = rateLimiter.shouldSend(i3, now + 60000 + 1);
     var result4 = rateLimiter.shouldSend(i4, now + 60000 + 60000 + 1);
+    var result5 = rateLimiter.shouldSend(i5, now + 60000 + 60000 + 60000 + 1);
 
     expect(result1.shouldSend).to.be.ok();
     expect(result2.shouldSend).to.be.ok();
 
-    expect(result3.shouldSend).to.not.be.ok();
+    expect(result3.shouldSend).to.be.ok();
     expect(result3.error).to.not.be.ok();
-    expect(result3.payload).to.be.ok();
+    expect(result3.payload).to.not.be.ok();
 
     expect(result4.shouldSend).to.not.be.ok();
-    expect(result4.error).to.be.ok();
-    expect(result4.payload).to.not.be.ok();
+    expect(result4.error).to.not.be.ok();
+    expect(result4.payload).to.be.ok();
+
+    expect(result5.shouldSend).to.not.be.ok();
+    expect(result5.error).to.be.ok();
+    expect(result5.payload).to.not.be.ok();
 
     done();
   });
