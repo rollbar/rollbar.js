@@ -101,7 +101,7 @@
     "host": "cdnjs.cloudflare.com"
   },
   "defaults": {
-    "endpoint": "api.rollbar.com/api/1/",
+    "endpoint": "api.rollbar.com/api/1/item/",
     "browser": {
       "scrubFields": [
         "pw",
