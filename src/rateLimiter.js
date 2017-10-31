@@ -72,6 +72,7 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   this.perMinCounter++;
 
   var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
   return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
 };
 
