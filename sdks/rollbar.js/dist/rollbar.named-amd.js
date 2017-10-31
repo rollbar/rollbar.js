@@ -469,12 +469,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.2.10"),
+	  version: ("2.3.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
 	  uncaughtErrorLevel: ("error"),
-	  endpoint: ("api.rollbar.com/api/1/"),
+	  endpoint: ("api.rollbar.com/api/1/item/"),
 	  verbose: false,
 	  enabled: true
 	};
@@ -698,6 +698,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  this.perMinCounter++;
 	
 	  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+	  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
 	  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
 	};
 	
@@ -746,6 +747,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    item.notifier.name = 'rollbar-browser-js';
 	  } else if (platform === 'server') {
 	    item.framework = options.framework || 'node-js';
+	    item.notifier.name = options.notifier.name;
+	  } else if (platform === 'react-native') {
+	    item.framework = options.framework || 'react-native';
 	    item.notifier.name = options.notifier.name;
 	  }
 	  return item;
@@ -2649,7 +2653,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	}
 	
 	Telemeter.prototype.configure = function(options) {
-	  this.options = _.extend(true, {}, options);
+	  var oldOptions = this.options;
+	  this.options = _.extend(true, {}, oldOptions, options);
 	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
 	  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 	  var deleteCount = 0;
@@ -2798,7 +2803,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var defaultOptions = {
 	  hostname: 'api.rollbar.com',
-	  path: '/api/1',
+	  path: '/api/1/item/',
 	  search: null,
 	  version: '1',
 	  protocol: 'https:',
@@ -2816,7 +2821,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 *    accessToken: the accessToken to use for posting items to rollbar
 	 *    endpoint: an alternative endpoint to send errors to
 	 *        must be a valid, fully qualified URL.
-	 *        The default is: https://api.rollbar.com/api/1
+	 *        The default is: https://api.rollbar.com/api/1/item
 	 *    proxy: if you wish to proxy requests provide an object
 	 *        with the following keys:
 	 *          host or hostname (required): foo.example.com
@@ -2839,7 +2844,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 * @param callback
 	 */
 	Api.prototype.postItem = function(data, callback) {
-	  var transportOptions = helpers.transportOptions(this.transportOptions, '/item/', 'POST');
+	  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
 	  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
 	  this.transport.post(this.accessToken, transportOptions, payload, callback);
 	};
@@ -2913,11 +2918,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  };
 	}
 	
-	function transportOptions(transport, path, method) {
+	function transportOptions(transport, method) {
 	  var protocol = transport.protocol || 'https:';
 	  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
 	  var hostname = transport.hostname;
-	  path = appendPathToPath(transport.path, path);
+	  var path = transport.path;
 	  if (transport.search) {
 	    path = path + transport.search;
 	  }
@@ -4450,6 +4455,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
 	  }
 	  this.instrument(oldSettings);
+	  if (options.scrubTelemetryInputs !== undefined) {
+	    this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+	  }
+	  if (options.telemetryScrubber !== undefined) {
+	    this.telemetryScrubber = options.telemetryScrubber;
+	  }
 	};
 	
 	Instrumenter.prototype.instrument = function(oldSettings) {
