@@ -1,5 +1,21 @@
 # Change Log
 
+## v2.3.0
+
+- React Native support. This introduces a interface layer for handling Javascript errors from React
+  Native. This library is a dependency of https://github.com/rollbar/rollbar-react-native which is
+  intended to be the main entry point for interacting with Rollbar from React Native.
+
+- Fix a bug related to telemetry scrubbing configuration options not being properly set via calls to
+  `configure`
+
+- BREAKING: the endpoint configuration option used to default to `https://api.rollbar.com/api/1` and
+  we would append `/item/` to obtain the URL for posting items. Now the default configuration option
+  for endpoint is `https://api.rollbar.com/api/1/item/` and we no longer append `/item/` to whatever
+  value you set. Therefore, if you are currently setting this value, you will need to change your
+  setting to be equal to the exact URL you want items posted to, rather than the base URL that gets
+  `/item/` appended.
+
 ## v2.2.10
 
 - Fix a bug relating to maxItems not being recognized in the initial configuration.
