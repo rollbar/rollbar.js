@@ -64,8 +64,8 @@ Notifier.prototype.log = function(item, callback) {
     callback = function() {};
   }
 
-  if (!this.options.enabled) {
-    return callback(new Error('Rollbar is not enabled'));
+  if ([true, false].indexOf(this.options.enabled) === -1) {
+    return callback(new Error('Rollbar enabled not set'));
   }
 
   this.queue.addPendingItem(item);
