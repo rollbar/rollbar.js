@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.3.1
+
+- Attempt to get CDNJS to work
+
 ## v2.3.0
 
 - React Native support. This introduces a interface layer for handling Javascript errors from React
