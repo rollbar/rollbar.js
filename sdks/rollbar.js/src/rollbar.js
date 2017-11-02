@@ -96,7 +96,9 @@ Rollbar.prototype.captureLoad = function(ts) {
 
 Rollbar.prototype._log = function(defaultLevel, item) {
   if (this._sameAsLastError(item)) {
-    if (item.callback) item.callback();
+    if (item.callback) {
+      item.callback();
+    }
     return;
   }
   try {
