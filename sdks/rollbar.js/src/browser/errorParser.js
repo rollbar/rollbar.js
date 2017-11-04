@@ -63,7 +63,7 @@ function parse(e) {
 
 
 function guessErrorClass(errMsg) {
-  if (!errMsg) {
+  if (!errMsg || !errMsg.match) {
     return ['Unknown error. There was no error message to display.', ''];
   }
   var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
