@@ -47,8 +47,26 @@ function addMessageWithError(item, options, callback) {
   callback(null, item);
 }
 
+function userTransform(logger) {
+  return function(item, options, callback) {
+    var newItem = _.extend(true, {}, item);
+    try {
+      if (_.isFunction(options.transform)) {
+        options.transform(newItem.data);
+      }
+    } catch (e) {
+      options.transform = null;
+      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
+      callback(null, item);
+      return;
+    }
+    callback(null, newItem);
+  }
+}
+
 module.exports = {
   itemToPayload: itemToPayload,
   addTelemetryData: addTelemetryData,
-  addMessageWithError: addMessageWithError
+  addMessageWithError: addMessageWithError,
+  userTransform: userTransform
 };

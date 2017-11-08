@@ -418,6 +418,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.addLambdaData)
     .addTransform(transforms.scrubPayload)
+    .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.itemToPayload);
 }
 
