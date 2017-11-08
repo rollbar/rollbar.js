@@ -227,21 +227,6 @@ function scrubPayload(item, options, callback) {
   callback(null, item);
 }
 
-function userTransform(item, options, callback) {
-  var newItem = _.extend(true, {}, item);
-  try {
-    if (_.isFunction(options.transform)) {
-      options.transform(newItem.data);
-    }
-  } catch (e) {
-    options.transform = null;
-    logger.error('Error while calling custom transform() function. Removing custom transform().', e);
-    callback(null, item);
-    return;
-  }
-  callback(null, newItem);
-}
-
 module.exports = {
   handleItemWithError: handleItemWithError,
   ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
@@ -250,6 +235,5 @@ module.exports = {
   addClientInfo: addClientInfo,
   addPluginInfo: addPluginInfo,
   addBody: addBody,
-  scrubPayload: scrubPayload,
-  userTransform: userTransform
+  scrubPayload: scrubPayload
 };

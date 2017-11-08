@@ -11,6 +11,11 @@ function itemFromArgs(args) {
   return item;
 }
 
+var fakeLogger = {
+  error: function(){},
+  log: function(){}
+};
+
 describe('itemToPayload', function() {
   it('ignores options.payload.body but merges in other payload options', function(done) {
     var args = ['a message', {custom: 'stuff'}];
@@ -77,3 +82,64 @@ describe('addTelemetryData', function() {
     });
   });
 });
+
+describe('userTransform', function() {
+  it('calls user transform if is present and a function', function(done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: function(i) {
+        i.message = 'HELLO';
+      }
+    };
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    expect(payload.data.message).to.not.eql('HELLO');
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.eql('HELLO');
+      done(e);
+    });
+  });
+  it('does nothing if transform is not a function', function(done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: 'hi there'
+    };
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    expect(payload.data.message).to.not.eql('HELLO');
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.not.eql('HELLO');
+      done(e);
+    });
+  });
+  it('does nothing if transform throws', function(done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: function(i) {
+        i.data.message = 'HELLO';
+        throw 'bork';
+      }
+    };
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    expect(payload.data.message).to.not.eql('HELLO');
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.not.eql('HELLO');
+      expect(options.transform).to.not.be.ok();
+      done(e);
+    });
+  });
+});
+
