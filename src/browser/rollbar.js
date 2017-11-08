@@ -353,7 +353,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(transforms.scrubPayload)
-    .addTransform(transforms.userTransform)
+    .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.itemToPayload);
 }
 
