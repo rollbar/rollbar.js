@@ -79,7 +79,6 @@
     "request": "^2.62.0",
     "requirejs": "^2.1.20",
     "script-loader": "0.6.1",
-    "semver": "~2.2.1",
     "sinon": "~1.7.3",
     "stackframe": "^0.2.2",
     "strict-loader": "^0.1.2",
