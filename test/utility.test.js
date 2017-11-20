@@ -451,13 +451,15 @@ describe('scrub', function() {
   it('should not redact fields that are okay', function() {
     var data = {
       a: 'somestring',
-      password: 'abc123'
+      password: 'abc123',
+      tempWorker: 'cool'
     };
-    var scrubFields = ['password', 'b'];
+    var scrubFields = ['password', 'b', 'pw'];
 
     var result = _.scrub(data, scrubFields);
 
     expect(result.a).to.eql('somestring');
+    expect(result.tempWorker).to.eql('cool');
   });
   it('should redact fields that are in the field list', function() {
     var data = {

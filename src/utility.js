@@ -547,7 +547,7 @@ function _getScrubFieldRegexs(scrubFields) {
   var ret = [];
   var pat;
   for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
     ret.push(new RegExp(pat, 'i'));
   }
   return ret;
