@@ -41,14 +41,28 @@ function captureUnhandledRejections(window, handler, shim) {
     window.removeEventListener('unhandledrejection', window._rollbarURH);
   }
 
-  var rejectionHandler = function (event) {
-    var reason = event.reason;
-    var promise = event.promise;
-    var detail = event.detail;
-
-    if (!reason && detail) {
-      reason = detail.reason;
-      promise = detail.promise;
+  var rejectionHandler = function (evt) {
+    var reason, promise, detail;
+    try {
+      reason = evt.reason;
+    } catch (e) {
+    }
+    try {
+      promise = evt.promise;
+    } catch (e) {
+      promise = '[unhandledrejection] error getting `promise` from event';
+    }
+    try {
+      detail = evt.detail;
+      if (!reason && detail) {
+        reason = detail.reason;
+        promise = detail.promise;
+      }
+    } catch (e) {
+      detail = '[unhandledrejection] error getting `detail` from event';
+    }
+    if (!reason) {
+      reason = '[unhandledrejection] error getting `reason` from event';
     }
 
     if (handler && handler.handleUnhandledRejection) {
