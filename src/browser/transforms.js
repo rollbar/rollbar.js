@@ -223,7 +223,7 @@ function addBodyTrace(item, options, callback) {
 
 function scrubPayload(item, options, callback) {
   var scrubFields = options.scrubFields;
-  _.scrub(item.data, scrubFields);
+  item.data = _.scrub(item.data, scrubFields);
   callback(null, item);
 }
 
