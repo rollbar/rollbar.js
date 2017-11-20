@@ -493,6 +493,7 @@ describe('scrub', function() {
     expect(result.a.c).to.eql('bork');
     expect(result.a.password).to.not.eql('abc123');
     expect(result.secret).to.not.eql('blahblah');
+    expect(data.secret).to.eql('blahblah');
   });
   it('should do something sane for recursive objects', function() {
     var inner = {
@@ -512,6 +513,7 @@ describe('scrub', function() {
     expect(result.thing).to.eql('stuff');
     expect(result.password).to.not.eql('abc123');
     expect(result.inner.a).to.not.eql('what');
+    expect(result.inner.a).to.be.ok();
     expect(result.inner.b).to.eql('yes');
   });
 });
