@@ -94,7 +94,7 @@ Rollbar.configure({payload: {fingerprint: "custom fingerprint to override groupi
 ```
 
 For convenience, the configure method also accepts a second parameter of data to be
-automatically nested under the paylaod key, for example:
+automatically nested under the payload key, for example:
 
 ```js
 Rollbar.configure({enabled: true, payload: {somekey: 'somevalue'}}, {fingerprint: 'abc123'})
