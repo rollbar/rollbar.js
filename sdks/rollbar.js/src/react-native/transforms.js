@@ -83,7 +83,7 @@ function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
   scrubFields = scrubHeaders.concat(scrubFields);
-  _.scrub(item.data, scrubFields);
+  item.data = _.scrub(item.data, scrubFields);
   callback(null, item);
 }
 

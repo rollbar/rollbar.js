@@ -150,13 +150,14 @@ function traverse(obj, func, seen) {
     }
   }
 
+  var result = isObj ? {} : [];
   for (i = 0; i < keys.length; ++i) {
     k = keys[i];
     v = obj[k];
-    obj[k] = func(k, v, seen);
+    result[k] = func(k, v, seen);
   }
 
-  return obj;
+  return (keys.length != 0) ? result : obj;
 }
 
 function redact() {
@@ -539,15 +540,14 @@ function scrub(data, scrubFields) {
     }
   }
 
-  traverse(data, scrubber, []);
-  return data;
+  return traverse(data, scrubber, []);
 }
 
 function _getScrubFieldRegexs(scrubFields) {
   var ret = [];
   var pat;
   for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
     ret.push(new RegExp(pat, 'i'));
   }
   return ret;

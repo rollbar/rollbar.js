@@ -451,13 +451,15 @@ describe('scrub', function() {
   it('should not redact fields that are okay', function() {
     var data = {
       a: 'somestring',
-      password: 'abc123'
+      password: 'abc123',
+      tempWorker: 'cool'
     };
-    var scrubFields = ['password', 'b'];
+    var scrubFields = ['password', 'b', 'pw'];
 
     var result = _.scrub(data, scrubFields);
 
     expect(result.a).to.eql('somestring');
+    expect(result.tempWorker).to.eql('cool');
   });
   it('should redact fields that are in the field list', function() {
     var data = {
@@ -491,6 +493,7 @@ describe('scrub', function() {
     expect(result.a.c).to.eql('bork');
     expect(result.a.password).to.not.eql('abc123');
     expect(result.secret).to.not.eql('blahblah');
+    expect(data.secret).to.eql('blahblah');
   });
   it('should do something sane for recursive objects', function() {
     var inner = {
@@ -510,6 +513,7 @@ describe('scrub', function() {
     expect(result.thing).to.eql('stuff');
     expect(result.password).to.not.eql('abc123');
     expect(result.inner.a).to.not.eql('what');
+    expect(result.inner.a).to.be.ok();
     expect(result.inner.b).to.eql('yes');
   });
 });
