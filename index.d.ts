@@ -37,6 +37,7 @@ declare namespace Rollbar {
     export interface Configuration {
         accessToken?: string;
         version?: string;
+        environment?: string;
         scrubFields?: string[];
         logLevel?: Level;
         reportLevel?: Level;
