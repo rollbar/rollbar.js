@@ -63,16 +63,18 @@ function addClientInfo(window) {
     if (!window) {
       return callback(null, item);
     }
+    var nav = window.navigator || {};
+    var scr = window.screen || {};
     _.set(item, 'data.client', {
       runtime_ms: item.timestamp - window._rollbarStartTime,
       timestamp: Math.round(item.timestamp / 1000),
       javascript: {
-        browser: window.navigator.userAgent,
-        language: window.navigator.language,
-        cookie_enabled: window.navigator.cookieEnabled,
+        browser: nav.userAgent,
+        language: nav.language,
+        cookie_enabled: nav.cookieEnabled,
         screen: {
-          width: window.screen.width,
-          height: window.screen.height
+          width: scr.width,
+          height: scr.height
         }
       }
     });
