@@ -46,6 +46,7 @@ function captureUnhandledRejections(window, handler, shim) {
     try {
       reason = evt.reason;
     } catch (e) {
+      reason = undefined;
     }
     try {
       promise = evt.promise;

@@ -1,5 +1,28 @@
 # Change Log
 
+## v2.3.2
+
+- Be defensive about navigator not existing on window 
+[#514](https://github.com/rollbar/rollbar.js/pull/514)
+
+Proper scrubbing 
+[#510](https://github.com/rollbar/rollbar.js/pull/510)
+
+Be defensive when accessing event properties 
+[#503](https://github.com/rollbar/rollbar.js/pull/503)
+
+Add environment to options type enhancement
+[#499](https://github.com/rollbar/rollbar.js/pull/499)
+
+call the transform in the options on the server side too 
+[#498](https://github.com/rollbar/rollbar.js/pull/498)
+
+fixes errMsg.match is not a function error 
+[#492](https://github.com/rollbar/rollbar.js/pull/492)
+
+Call callback even if logging same as last error 
+[#490](https://github.com/rollbar/rollbar.js/pull/490)
+
 ## v2.3.1
 
 - Attempt to get CDNJS to work
