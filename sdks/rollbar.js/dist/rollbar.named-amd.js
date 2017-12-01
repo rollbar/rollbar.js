@@ -435,7 +435,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    .addTransform(sharedTransforms.addMessageWithError)
 	    .addTransform(sharedTransforms.addTelemetryData)
 	    .addTransform(transforms.scrubPayload)
-	    .addTransform(transforms.userTransform)
+	    .addTransform(sharedTransforms.userTransform(logger))
 	    .addTransform(sharedTransforms.itemToPayload);
 	}
 	
@@ -469,7 +469,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.1"),
+	  version: ("2.3.2"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -586,6 +586,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
 	  if (this._sameAsLastError(item)) {
+	    if (item.callback) {
+	      item.callback();
+	    }
 	    return;
 	  }
 	  try {
@@ -1182,13 +1185,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  }
 	
+	  var result = isObj ? {} : [];
 	  for (i = 0; i < keys.length; ++i) {
 	    k = keys[i];
 	    v = obj[k];
-	    obj[k] = func(k, v, seen);
+	    result[k] = func(k, v, seen);
 	  }
 	
-	  return obj;
+	  return (keys.length != 0) ? result : obj;
 	}
 	
 	function redact() {
@@ -1571,15 +1575,14 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    }
 	  }
 	
-	  traverse(data, scrubber, []);
-	  return data;
+	  return traverse(data, scrubber, []);
 	}
 	
 	function _getScrubFieldRegexs(scrubFields) {
 	  var ret = [];
 	  var pat;
 	  for (var i = 0; i < scrubFields.length; ++i) {
-	    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+	    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
 	    ret.push(new RegExp(pat, 'i'));
 	  }
 	  return ret;
@@ -3124,14 +3127,29 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    window.removeEventListener('unhandledrejection', window._rollbarURH);
 	  }
 	
-	  var rejectionHandler = function (event) {
-	    var reason = event.reason;
-	    var promise = event.promise;
-	    var detail = event.detail;
-	
-	    if (!reason && detail) {
-	      reason = detail.reason;
-	      promise = detail.promise;
+	  var rejectionHandler = function (evt) {
+	    var reason, promise, detail;
+	    try {
+	      reason = evt.reason;
+	    } catch (e) {
+	      reason = undefined;
+	    }
+	    try {
+	      promise = evt.promise;
+	    } catch (e) {
+	      promise = '[unhandledrejection] error getting `promise` from event';
+	    }
+	    try {
+	      detail = evt.detail;
+	      if (!reason && detail) {
+	        reason = detail.reason;
+	        promise = detail.promise;
+	      }
+	    } catch (e) {
+	      detail = '[unhandledrejection] error getting `detail` from event';
+	    }
+	    if (!reason) {
+	      reason = '[unhandledrejection] error getting `reason` from event';
 	    }
 	
 	    if (handler && handler.handleUnhandledRejection) {
@@ -3560,16 +3578,18 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    if (!window) {
 	      return callback(null, item);
 	    }
+	    var nav = window.navigator || {};
+	    var scr = window.screen || {};
 	    _.set(item, 'data.client', {
 	      runtime_ms: item.timestamp - window._rollbarStartTime,
 	      timestamp: Math.round(item.timestamp / 1000),
 	      javascript: {
-	        browser: window.navigator.userAgent,
-	        language: window.navigator.language,
-	        cookie_enabled: window.navigator.cookieEnabled,
+	        browser: nav.userAgent,
+	        language: nav.language,
+	        cookie_enabled: nav.cookieEnabled,
 	        screen: {
-	          width: window.screen.width,
-	          height: window.screen.height
+	          width: scr.width,
+	          height: scr.height
 	        }
 	      }
 	    });
@@ -3720,23 +3740,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	function scrubPayload(item, options, callback) {
 	  var scrubFields = options.scrubFields;
-	  _.scrub(item.data, scrubFields);
+	  item.data = _.scrub(item.data, scrubFields);
 	  callback(null, item);
-	}
-	
-	function userTransform(item, options, callback) {
-	  var newItem = _.extend(true, {}, item);
-	  try {
-	    if (_.isFunction(options.transform)) {
-	      options.transform(newItem.data);
-	    }
-	  } catch (e) {
-	    options.transform = null;
-	    logger.error('Error while calling custom transform() function. Removing custom transform().', e);
-	    callback(null, item);
-	    return;
-	  }
-	  callback(null, newItem);
 	}
 	
 	module.exports = {
@@ -3747,8 +3752,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  addClientInfo: addClientInfo,
 	  addPluginInfo: addPluginInfo,
 	  addBody: addBody,
-	  scrubPayload: scrubPayload,
-	  userTransform: userTransform
+	  scrubPayload: scrubPayload
 	};
 
 
@@ -3823,7 +3827,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	
 	function guessErrorClass(errMsg) {
-	  if (!errMsg) {
+	  if (!errMsg || !errMsg.match) {
 	    return ['Unknown error. There was no error message to display.', ''];
 	  }
 	  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
@@ -4215,10 +4219,28 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  callback(null, item);
 	}
 	
+	function userTransform(logger) {
+	  return function(item, options, callback) {
+	    var newItem = _.extend(true, {}, item);
+	    try {
+	      if (_.isFunction(options.transform)) {
+	        options.transform(newItem.data);
+	      }
+	    } catch (e) {
+	      options.transform = null;
+	      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
+	      callback(null, item);
+	      return;
+	    }
+	    callback(null, newItem);
+	  }
+	}
+	
 	module.exports = {
 	  itemToPayload: itemToPayload,
 	  addTelemetryData: addTelemetryData,
-	  addMessageWithError: addMessageWithError
+	  addMessageWithError: addMessageWithError,
+	  userTransform: userTransform
 	};
 
 
