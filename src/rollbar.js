@@ -108,8 +108,8 @@ Rollbar.prototype._log = function(defaultLevel, item) {
       delete item.callback;
     }
     item.level = item.level || defaultLevel;
-    item.telemetryEvents = this.telemeter.copyEvents();
     this.telemeter._captureRollbarItem(item);
+    item.telemetryEvents = this.telemeter.copyEvents();
     this.notifier.log(item, callback);
   } catch (e) {
     this.logger.error(e)
