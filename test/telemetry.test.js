@@ -34,6 +34,22 @@ describe('capture', function() {
   });
 });
 
+describe('filterNetworkTelemetry', function() {
+  it('should filter out events that don\'t match the test', function(done) {
+    var options = {
+      filterNetworkTelemetry: function(metadata) {
+        return metadata.url.indexOf('https://spammer.com') !== -1;
+      }
+    };
+
+    var t = new Telemeter(options);
+    var event = t.captureNetwork({url: 'https://spammer.com'});
+    expect(event).to.equal(false);
+    done();
+  });
+});
+
+
 describe('configure', function() {
   it('should truncate events to new max', function(done) {
     var options = {maxTelemetryEvents: 5};

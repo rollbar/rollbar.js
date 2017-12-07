@@ -64,6 +64,16 @@ Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp
 Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
   subtype = subtype || 'xhr';
   metadata.subtype = metadata.subtype || subtype;
+  try {
+    if ((subtype === 'xhr' || subtype === 'fetch')
+      && _.isFunction(this.options.filterNetworkTelemetry)
+      && this.options.filterNetworkTelemetry(metadata)) {
+      return false;
+    }
+  } catch (e) {
+    this.options.filterNetworkTelemetry = null;
+  }
+
   var level = this.levelFromStatus(metadata.status_code);
   return this.capture('network', metadata, level, rollbarUUID);
 };
