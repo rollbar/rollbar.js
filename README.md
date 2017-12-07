@@ -412,7 +412,15 @@ The different types of events that we automatically capture are: `network`, `log
 `navigation`, and `connectivity`.
 
 Network events are XHR and fetch requests. We store the status code, the url, and some timing events
-to determine how long requests take.
+to determine how long requests take. To filter out big and repetitive network requests define `filterNetworkTelemetry` callback in options:
+
+```js
+{
+  filterNetworkTelemetry: function(metadata) {
+    return metadata.url.indexOf('https://spammer.com') === 0;
+  }
+}
+```
 
 Log events are calls to `console` and we simply store which console method was called and the
 arguments.
