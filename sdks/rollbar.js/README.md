@@ -461,6 +461,18 @@ store only the smallest amount of information necessary to aid in understanding.
 have concerns about memory usage, you can turn the collection of some or all events off, or limit
 the size of the queue of events that we store.
 
+Also you can filter out telemetry events with an optional test function `filterTelemetry`. Telemetry event gets passed as the first argument and boolean return value is expected. Any event that matches the test is not added to the queue. One common use case is to filter out spammy XHR requests:
+
+```js
+{
+  filterTelemetry: function(e) {
+    return e.type === 'network'
+      && (e.body.subtype === 'xhr' || e.body.subtype === 'fetch')
+      && e.body.url.indexOf('https://spammer.com') === 0;
+  }
+}
+```
+
 The data that is collected is included in the payload and also goes through the same scrubbing
 process described elsewhere. However, we also provide two additional options for scrubbing of
 telemetry specific data related to inputs in the dom. The first options is `scrubTelemetryInputs`.
