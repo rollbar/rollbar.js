@@ -1,5 +1,10 @@
 # Change Log
 
+## v2.3.3
+
+- Rewrite filenames for React Native hosts to make source maps easier to work with.
+- Include current item in telemetry queue to mitigate a UI issue on the backend
+
 ## v2.3.2
 
 - Be defensive about navigator not existing on window 

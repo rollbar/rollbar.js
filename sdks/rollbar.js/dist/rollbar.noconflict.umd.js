@@ -467,7 +467,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.2"),
+	  version: ("2.3.3"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -596,8 +596,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      delete item.callback;
 	    }
 	    item.level = item.level || defaultLevel;
-	    item.telemetryEvents = this.telemeter.copyEvents();
 	    this.telemeter._captureRollbarItem(item);
+	    item.telemetryEvents = this.telemeter.copyEvents();
 	    this.notifier.log(item, callback);
 	  } catch (e) {
 	    this.logger.error(e)
