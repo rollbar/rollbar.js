@@ -7,7 +7,8 @@
  *~ file should be 'super-greeter/index.d.ts'
  */
 
-export = Rollbar;
+const rollbar: Rollbar;
+export = rollbar;
 
 declare class Rollbar {
     constructor(options?: Rollbar.Configuration);
