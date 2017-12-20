@@ -7,7 +7,7 @@
  *~ file should be 'super-greeter/index.d.ts'
  */
 
-const rollbar: Rollbar;
+declare const rollbar: Rollbar;
 export = rollbar;
 
 declare class Rollbar {
