@@ -7,11 +7,12 @@
  *~ file should be 'super-greeter/index.d.ts'
  */
 
-export = Rollbar;
+declare const rollbar: Rollbar;
+export = rollbar;
 
 declare class Rollbar {
     constructor(options?: Rollbar.Configuration);
-    static init(options: Rollbar.Configuration): Rollbar;
+    public init(options: Rollbar.Configuration): Rollbar;
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
