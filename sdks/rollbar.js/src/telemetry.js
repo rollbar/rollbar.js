@@ -37,6 +37,15 @@ Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, times
   if (rollbarUUID) {
     e.uuid = rollbarUUID;
   }
+
+  try {
+    if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
+      return false;
+    }
+  } catch (e) {
+    this.options.filterTelemetry = null;
+  }
+
   this.push(e);
   return e;
 };
