@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.3.4
+
+- Fix React Native undefined Regexp -> RegExp
+- Minor documentation changes
+- More typescript declarations
+
 ## v2.3.3
 
 - Rewrite filenames for React Native hosts to make source maps easier to work with.
