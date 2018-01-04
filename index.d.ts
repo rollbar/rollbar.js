@@ -1,17 +1,12 @@
-// Type definitions for rollbar 2.1.1
+// Type definitions for rollbar 2.3.3
 // Project: Rollbar
 
-/*~ This is the module template file for class modules.
- *~ You should rename it to index.d.ts and place it in a folder with the same name as the module.
- *~ For example, if you were writing a file for "super-greeter", this
- *~ file should be 'super-greeter/index.d.ts'
- */
-
-export = Rollbar;
+declare const rollbar: Rollbar;
+export = rollbar;
 
 declare class Rollbar {
     constructor(options?: Rollbar.Configuration);
-    static init(options: Rollbar.Configuration): Rollbar;
+    public init(options: Rollbar.Configuration): Rollbar;
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
@@ -53,6 +48,9 @@ declare namespace Rollbar {
         ignoredMessages?: string[];
         hostWhiteList?: string[];
         hostBlackList?: string[];
+        autoInstrument?: AutoInstrumentOptions;
+        telemetryScrubber?: TelemetryScrubber;
+        scrubTelemetryInputs?: boolean;
     }
     export type Callback = (err: MaybeError, response: object) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
@@ -66,5 +64,26 @@ declare namespace Rollbar {
         body: object;
         source: string;
         uuid?: string;
+    }
+    export type AutoInstrumentOptions = boolean | AutoInstrumentSettings;
+    export interface AutoInstrumentSettings {
+        network?: boolean;
+        log?: boolean;
+        dom?: boolean;
+        navigation?: boolean;
+        connectivity?: boolean;
+    }
+    export type TelemetryScrubber = (description: TelemetryScrubberInput) => boolean;
+    export type TelemetryScrubberInput = DomDescription | null;
+    export interface DomDescription {
+        tagName: string;
+        id: string | undefined;
+        classes: string[] | undefined;
+        attributes: DomAttribute[];
+    }
+    export type DomAttributeKey = "type" | "name" | "title" | "alt";
+    export interface DomAttribute {
+        key: DomAttributeKey;
+        value: string;
     }
 }
