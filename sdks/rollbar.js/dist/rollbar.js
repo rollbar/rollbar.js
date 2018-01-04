@@ -462,7 +462,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.3"),
+	  version: ("2.3.4"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -2676,6 +2676,15 @@
 	  if (rollbarUUID) {
 	    e.uuid = rollbarUUID;
 	  }
+	
+	  try {
+	    if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
+	      return false;
+	    }
+	  } catch (e) {
+	    this.options.filterTelemetry = null;
+	  }
+	
 	  this.push(e);
 	  return e;
 	};
