@@ -4,10 +4,10 @@
 
 ## Quick start Browser
 
-Copy-paste the following code into the ```<head>``` of every page you want to monitor. It should be as high as possible, before any other ```<script>``` tags.
+Copy-paste the following code into the `<head>` of every page you want to monitor. It should be as high as possible, before any other `<script>` tags.
 
 <!-- RemoveNextIfProject -->
-Be sure to replace ```POST_CLIENT_ITEM_ACCESS_TOKEN``` with your project's ```post_client_item``` access token, which you can find in the Rollbar.com interface. You can find this in your project settings ("Settings" link at the top of the Rollbar website) in the "Project Access Tokens" settings area.
+Be sure to replace `POST_CLIENT_ITEM_ACCESS_TOKEN` with your project's `post_client_item` access token, which you can find in the Rollbar.com interface. You can find this in your project settings ("Settings" link at the top of the Rollbar website) in the "Project Access Tokens" settings area.
 
 <!-- EditableTextAreaStart -->
 <!-- RemoveNext -->
@@ -29,18 +29,18 @@ var _rollbarConfig = {
 <!-- RemovePrev -->
 <!-- EditableTextAreaEnd -->
 
-If you're running Rollbar on an environment besides production, change the ```environment``` value to something else (e.g. "staging"). See below for more configuration options.
+If you're running Rollbar on an environment besides production, change the `environment` value to something else (e.g. "staging"). See below for more configuration options.
 
 ### Test your installation
 
 1. Navigate your browser to a page that has the above code installed
-2. Type the following code into the console and press enter: ```window.onerror("TestRollbarError: testing window.onerror", window.location.href)```
+2. Type the following code into the console and press enter: `window.onerror("TestRollbarError: testing window.onerror", window.location.href)`
 
 This simulates an uncaught error. It should appear in the Rollbar dashboard within a few seconds.
 
 ## Usage
 
-In addition to catching top-level errors, you can send caught errors or custom log messages. All of the following methods are fully-asynchronous and safe to call anywhere in your code after the ```<script>``` tag above.
+In addition to catching top-level errors, you can send caught errors or custom log messages. All of the following methods are fully-asynchronous and safe to call anywhere in your code after the `<script>` tag above.
 
 ```js
 // Caught errors
@@ -142,7 +142,7 @@ Rollbar.configure(
 
 ### Using Segment
 
-If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available unless you use the Device-based Connection Mode option. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. If you use the Device-based Connection Mode option, Segment will be able to load the Rollbar script on the client and you can use Rollbar methods. To enable this, go to the destination settings pane in the app and select Device-based Connection Mode. Otherwise, in order to use Rollbar methods, you will need to include the Rollbar snippet directly in your `<head>`, rather than loading it through Segment. 
+If you're using Rollbar via Segment, you will get automatic detection of uncaught errors, but Rollbar methods are not available unless you use the Device-based Connection Mode option. This is because Segment loads the Rollbar snippet asynchronously, so they may not be defined. If you use the Device-based Connection Mode option, Segment will be able to load the Rollbar script on the client and you can use Rollbar methods. To enable this, go to the destination settings pane in the app and select Device-based Connection Mode. Otherwise, in order to use Rollbar methods, you will need to include the Rollbar snippet directly in your `<head>`, rather than loading it through Segment.
 
 ### Using in a Chrome Extension
 
@@ -239,7 +239,7 @@ os: darwin x64
 typescript: 2.3.4
 ```
 
-there are some further steps you may need to implement in order to get rollbar.js working for you. 
+there are some further steps you may need to implement in order to get rollbar.js working for you.
 
 When compiling, if you get the error `Error encountered resolving symbol values statically. Function calls are not supported. Consider replacing the function or lambda with a reference to an exported function`, then the inline factory function in providers should be an exported function.
 
@@ -305,7 +305,7 @@ If you would like to see what is being sent to Rollbar in your console, use the
 ```js
 var _rollbarConfig = {
   accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
-  verbose: true, // This will now log to console.log, as well as Rollbar  
+  verbose: true, // This will now log to console.log, as well as Rollbar
   captureUncaught: true,
   captureUnhandledRejections: false,
   payload: {
@@ -355,7 +355,7 @@ is omitted, then we use the default value for that key. Setting
 `autoInstrument` to `true` is equivalent to passing all of these keys with the values of `true`.
 Hence,
 
-```
+```js
 _rollbarConfig = {
   ...
   autoInstrument: true
@@ -365,7 +365,7 @@ _rollbarConfig = {
 
 is equivalent to
 
-```
+```js
 _rollbarConfig = {
   ...
   autoInstrument: {
@@ -381,7 +381,7 @@ _rollbarConfig = {
 
 Likewise,
 
-```
+```js
 _rollbarConfig = {
   ...
   autoInstrument: {
@@ -394,7 +394,7 @@ _rollbarConfig = {
 
 is equivalent to
 
-```
+```js
 _rollbarConfig = {
   ...
   autoInstrument: {
@@ -445,7 +445,7 @@ the queue from 100, currently you can not increase the size of the queue beyond 
 
 Each event is stored as an object of the form
 
-```
+```json
 {
   level: "debug" | "info" | "warning" | "error" | "critical"
   type: string
@@ -482,7 +482,7 @@ course grained on/off switch which you can use to ensure that no input data is l
 The second options is a function `telemetryScrubber`. This function should take one argument which
 is a description of a dom node of the form:
 
-```
+```json
 {
   tagName: string
   id: string | undefined
@@ -596,9 +596,9 @@ Default: `60`
 
 <dt>maxItems
 </dt>
-<dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through ```window.onerror```) and any direct calls to ```Rollbar.log/debug/info/warning/error/critical()```.
+<dd>Max number of items to report per page load. When this limit is reached, an additional item will be reported stating that the limit was reached. Like `itemsPerMinute`, this limit counts uncaught errors (reported through `window.onerror`) and any direct calls to `Rollbar.log/debug/info/warning/error/critical()`.
 
-Default: ```0``` (no limit)
+Default: `0` (no limit)
 </dd>
 </dl>
 
@@ -608,21 +608,21 @@ Default: ```0``` (no limit)
 
 <dt>checkIgnore
 </dt>
-<dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: ```function checkIgnore(isUncaught, args, payload) { ... }``` and should return ```true``` if the error should be ignored.
+<dd>An optional function that will be used to ignore uncaught exceptions based on its return value. The function signature should be: `function checkIgnore(isUncaught, args, payload) { ... }` and should return `true` if the error should be ignored.
 
-Default: ```null```
+Default: `null`
 
-- isUncaught: ```true``` if the error being reported is from the ```window.onerror``` hook.
-- args: The arguments to ```Rollbar.log/debug/info/warning/error/critical()```.  In the case of unhandled rejections, the last parameter is originating `Promise`.
+- isUncaught: `true` if the error being reported is from the `window.onerror` hook.
+- args: The arguments to `Rollbar.log/debug/info/warning/error/critical()`.  In the case of unhandled rejections, the last parameter is originating `Promise`.
 - payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
 </dd>
 
 <dt>enabled
 </dt>
-<dd>If set to ```false```, no data will be sent to Rollbar for this notifier.
-  Note: callbacks for errors will not be called if this is set to ```false```.
+<dd>If set to `false`, no data will be sent to Rollbar for this notifier.
+  Note: callbacks for errors will not be called if this is set to `false`.
 
-Default: ```true```
+Default: `true`
 </dd>
 
 <dt>hostWhiteList
@@ -632,32 +632,32 @@ Default: ```true```
 
 <dt>logLevel
 </dt>
-<dd>The severity level used for calls to ```Rollbar.log()```. One of ```"critical"```, ```"error"```, ```"warning"```, ```"info"```, ```"debug"```.
+<dd>The severity level used for calls to `Rollbar.log()`. One of `"critical"`, `"error"`, `"warning"`, `"info"`, `"debug"`.
 
-Default: ```"debug"```
+Default: `"debug"`
 </dd>
 
 <dt>reportLevel
 </dt>
-<dd>Used to filter out which messages will get reported to Rollbar. If set to ```"error"```, only ```"error"``` or higher serverity level items will be sent to Rollbar.
+<dd>Used to filter out which messages will get reported to Rollbar. If set to `"error"`, only `"error"` or higher serverity level items will be sent to Rollbar.
 
-Default: ```"warning"```
+Default: `"warning"`
 </dd>
 
 <dt>scrubFields
 </dt>
 <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
 
-Default: ```["passwd", "password", "secret", "confirm_password", "password_confirmation"]```
+Default: `["passwd", "password", "secret", "confirm_password", "password_confirmation"]`
 </dd>
 
 <dt>transform
 </dt>
 <dd>Optional function to modify the payload before sending to Rollbar.
 
-Default: ```null```
+Default: `null`
 
-```javascript
+```js
 // For example:
 // Set a custom fingerprint
 var transformer = function(payload) {
@@ -677,14 +677,14 @@ var _rollbarConfig = {
 </dt>
 <dd>The severity level used when uncaught errors are reported to Rollbar.
 
-Default: ```"error"```
+Default: `"error"`
 </dd>
 
 <dt>endpoint
 </dt>
 <dd>The url to which items get POSTed. This is mostly relevant to our enterprise customers. You will, however, need this if you're proxying the requests through your own server, or you're an enterprise customer.
 
-Default: ```'https://api.rollbar.com/api/1/item'```
+Default: `'https://api.rollbar.com/api/1/item'`
 </dd>
 
 <dt>autoInstrument
@@ -693,7 +693,7 @@ Default: ```'https://api.rollbar.com/api/1/item'```
 then we collect nothing, if it is true we collect everything, otherwise we do not collect events for
 the keys with a false value. The default structure for this object is:
 
-```
+```json
 {
   network: true,
   log: true,
@@ -724,7 +724,7 @@ Rollbar.configure({
 
 <dt>person
 </dt>
-<dd>An object identifying the logged-in user, containing an ```id``` (required), and optionally a ```username``` and ```email``` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
+<dd>An object identifying the logged-in user, containing an `id` (required), and optionally a `username` and `email` (all strings). Passing this will allow you to see which users were affected by particular errors, as well as all the errors that a particular user experienced.
 </dd>
 
 <dt>context
@@ -737,9 +737,9 @@ Rollbar.configure({
 <dd>
   An object describing properties of the client device reporting the error.
 
-  This object should have a key that points to another object, ```javascript``` which describes properties of the javascript code/environment to Rollbar.
+  This object should have a key that points to another object, `javascript` which describes properties of the javascript code/environment to Rollbar.
 
-  ```client.javascript``` supports the following properties:
+  `client.javascript` supports the following properties:
 </dd>
 
   <dl>
@@ -754,7 +754,7 @@ Rollbar.configure({
 </dt>
 <dd>When `true`, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
 
-Default: ```false```
+Default: `false`
 
 </dd>
 
@@ -762,7 +762,7 @@ Default: ```false```
 </dt>
 <dd>When `true`, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers. Works best when the minified javascript file is generated using newlines instead of semicolons.
 
-Default: ```false```
+Default: `false`
 </dd>
 
   E.g.
@@ -796,7 +796,7 @@ Rollbar.configure({
 </dt>
 <dd>The name of the branch of the code that is running. Used for linking filenames in stacktraces to GitHub.
 
-Default: ```"master"```
+Default: `"master"`
 
 </dd>
 
@@ -804,9 +804,9 @@ Default: ```"master"```
 </dt>
 <dd>The hostname of the machine that rendered the page
 
-e.g. ```"web1.mysite.com"```
+e.g. `"web1.mysite.com"`
 
-e.g. in Python, use ```socket.gethostname()```
+e.g. in Python, use `socket.gethostname()`
 
 </dd>
 
@@ -834,7 +834,7 @@ Rollbar.configure({
 
 ### More info
 
-Check out the API reference below for more information on how to use ```global/configure```.
+Check out the API reference below for more information on how to use `global/configure`.
 
 
 ## API Reference
@@ -986,7 +986,7 @@ If you use jQuery 1.7 and up, you can include a plugin script that will instrume
 <!-- EditableTextAreaEnd -->
 
 The plugin will also automatically report any AJAX errors using jQuery's `ajaxError()` handler. You can disable this functionality by configuring the Rollbar notifier with the following:
-```javascript
+```js
 window.Rollbar.configure({
   plugins: {
     jquery: {
@@ -1060,14 +1060,14 @@ var rollbar = new Rollbar({
 // log a generic message and send to rollbar
 rollbar.log('Hello world!');
 ```
-Setting the ```captureUncaught``` option to true will register Rollbar as a handler for
+Setting the `captureUncaught` option to true will register Rollbar as a handler for
 any uncaught exceptions in your Node process.
 
-Similarly, setting the ```captureUnhandledRejections``` option to true will register Rollbar as a
+Similarly, setting the `captureUnhandledRejections` option to true will register Rollbar as a
 handler for any unhandled Promise rejections in your Node process.
 
 <!-- RemoveNextIfProject -->
-Be sure to replace ```POST_SERVER_ITEM_ACCESS_TOKEN``` with your project's ```post_server_item``` access token, which you can find in the Rollbar.com interface.
+Be sure to replace `POST_SERVER_ITEM_ACCESS_TOKEN` with your project's `post_server_item` access token, which you can find in the Rollbar.com interface.
 
 ## Server Installation
 
@@ -1448,7 +1448,7 @@ exports.handler = (event, context, callback) => {
 
 The following browser versions are supported on all major desktop and mobile operating systems:
 
-IE 8+, Firefox 40+, Chrome 44+, Edge 10+, Opera 12+, and Safari 8+. 
+IE 8+, Firefox 40+, Chrome 44+, Edge 10+, Opera 12+, and Safari 8+.
 
 ## Help / Support
 
@@ -1471,7 +1471,7 @@ To run the tests, run `make test`
 ## Contributing
 
 1. [Fork it](https://github.com/rollbar/rollbar.js)
-2. Create your feature branch (```git checkout -b my-new-feature```).
-3. Commit your changes (```git commit -am 'Added some feature'```)
-4. Push to the branch (```git push origin my-new-feature```)
+2. Create your feature branch (`git checkout -b my-new-feature`).
+3. Commit your changes (`git commit -am 'Added some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
