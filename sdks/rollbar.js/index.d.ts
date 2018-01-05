@@ -1,12 +1,11 @@
 // Type definitions for rollbar 2.3.3
 // Project: Rollbar
 
-declare const rollbar: Rollbar;
-export = rollbar;
+export = Rollbar;
 
 declare class Rollbar {
     constructor(options?: Rollbar.Configuration);
-    public init(options: Rollbar.Configuration): Rollbar;
+    static init(options: Rollbar.Configuration): Rollbar;
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
