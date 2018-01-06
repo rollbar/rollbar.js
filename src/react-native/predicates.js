@@ -9,7 +9,10 @@ function checkLevel(item, settings) {
   var reportLevelVal = _.LEVELS[reportLevel] || 0;
 
   if (levelVal < reportLevelVal) {
-    return false;
+    var msg = 'Level ' + level;
+    msg += ' is less than configured reporting level of ';
+    msg += reportLevel;
+    return {err: new Error(msg)};
   }
   return true;
 }
@@ -21,7 +24,7 @@ function userCheckIgnore(item, settings) {
   delete item._originalArgs;
   try {
     if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
-      return false;
+      return {err: new Error('Ignored by checkIgnore function')};
     }
   } catch (e) {
     settings.checkIgnore = null;
