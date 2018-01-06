@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.3.6
+
+- Updates for React Native
+
 ## v2.3.5
 
 - Correct error in typescript declarations
