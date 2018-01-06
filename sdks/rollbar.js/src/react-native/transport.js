@@ -49,7 +49,7 @@ function post(accessToken, options, payload, callback) {
   .then(function (data) {
     _handleResponse(data, _wrapPostCallback(callback));
   })
-  .error(function(err) {
+  .catch(function(err) {
     callback(err);
   });
 }
