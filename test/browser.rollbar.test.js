@@ -56,6 +56,24 @@ describe('Rollbar()', function() {
     done();
   });
 
+  describe('handleUnhandledRejection', function() {
+    describe('with a null reason', function() {
+      it('should produce a trace of the call for debugging purposes', function() {
+        var client = new (TestClientGen())();
+        var options = {};
+        var rollbar = new Rollbar(options, client);
+
+        rollbar.handleUnhandledRejection(null, { _rollbarContext: 1 });
+        var loggedItem = client.logCalls[0].item;
+
+        expect(client.logCalls.length).to.equal(1);
+
+        expect(loggedItem.err instanceof Error).to.equal(true);
+        expect(loggedItem.message).to.equal('Error: unhandled rejection was null or undefined!');
+      });
+    });
+  });
+
   it('should have all of the expected methods', function(done) {
     var client = new (TestClientGen())();
     var options = {};

@@ -224,26 +224,47 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
 };
 
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
-  var message = 'unhandled rejection was null or undefined!';
-  message = reason ? (reason.message || String(reason)) : message;
   var context = (reason && reason._rollbarContext) || (promise && promise._rollbarContext);
 
-  var item;
-  if (_.isError(reason)) {
-    item = this._createItem([message, reason, context]);
+  var message;
+  if (reason) {
+    message = reason.message || String(reason);
+    var item;
+    if (_.isError(reason)) {
+      item = this._createItem([message, reason, context]);
+    } else {
+      item = this._createItem([message, reason, context]);
+      item.stackInfo = _.makeUnhandledStackInfo(
+        message,
+        '',
+        0,
+        0,
+        null,
+        'unhandledrejection',
+        '',
+        errorParser
+      );
+    }
   } else {
-    item = this._createItem([message, reason, context]);
-    item.stackInfo = _.makeUnhandledStackInfo(
-      message,
-      '',
-      0,
-      0,
-      null,
-      'unhandledrejection',
-      '',
-      errorParser
-    );
+    // Produce a local stack trace to debug how this function may be called with null reason.
+    try {
+      throw new Error('unhandled rejection was null or undefined!');
+    } catch (error) {
+      message = String(error);
+      item = this._createItem([message, error, context]);
+      item.stackInfo = _.makeUnhandledStackInfo(
+        String(error),
+        '',
+        0,
+        0,
+        error,
+        'unhandledrejection',
+        '',
+        errorParser
+      );
+    }
   }
+
   item.level = this.options.uncaughtErrorLevel;
   item._isUncaught = true;
   item._originalArgs = item._originalArgs || [];

@@ -8,3 +8,5 @@ coverage
 .DS_Store
 *.swp
 npm-debug.log
+config.nix
+.provisioned
