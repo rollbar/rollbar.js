@@ -120,7 +120,7 @@ function _parseRawFrame(line) {
     rest = rest.substring(0, lineIdx);
   }
   var iosBundleFilename = new RegExp("^.*/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/[^/]*.app/(.*)$");
-  var match = iosBundleFilename.match(rest);
+  var match = rest && rest.match && rest.match(iosBundleFilename);
   if (match && match[1]) {
     rest = 'http://reactnativehost/' + match[1];
   } else {
