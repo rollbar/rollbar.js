@@ -352,6 +352,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addBody)
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
+    .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.itemToPayload);
@@ -394,7 +395,8 @@ var defaultOptions = {
   uncaughtErrorLevel: __DEFAULT_UNCAUGHT_ERROR_LEVEL,
   endpoint: __DEFAULT_ENDPOINT__,
   verbose: false,
-  enabled: true
+  enabled: true,
+  sendConfig: false
 };
 
 module.exports = Rollbar;

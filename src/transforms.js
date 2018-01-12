@@ -64,9 +64,21 @@ function userTransform(logger) {
   }
 }
 
+function addConfigToPayload(item, options, callback) {
+  if (!options.sendConfig) {
+    return callback(null, item);
+  }
+  var configKey = '_rollbarConfig';
+  var custom = _.get(item, 'data.custom') || {};
+  custom[configKey] = options;
+  item.data.custom = custom;
+  callback(null, item);
+}
+
 module.exports = {
   itemToPayload: itemToPayload,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
-  userTransform: userTransform
+  userTransform: userTransform,
+  addConfigToPayload: addConfigToPayload
 };
