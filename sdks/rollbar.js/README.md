@@ -604,7 +604,7 @@ Default: `0` (no limit)
 
 ### Context
 
-  <dl>
+<dl>
 
 <dt>checkIgnore
 </dt>
@@ -702,6 +702,13 @@ the keys with a false value. The default structure for this object is:
   connectivity: true
 }
 ```
+</dd>
+
+<dt>sendConfig</dt>
+<dd>Include the configuration for Rollbar with each item sent to Rollbar. This can aid in debugging
+configuration issues.
+
+Default: false
 </dd>
 </dl>
 
@@ -826,7 +833,6 @@ Rollbar.configure({
 });
 
 ```
-
 </dd>
 
 </dl>
