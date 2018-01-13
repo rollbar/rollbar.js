@@ -158,6 +158,10 @@ function addBodyTrace(item, options, callback) {
     stack = item._unhandledStackInfo.stack;
   }
   if (stack) {
+    if (stack.length === 0) {
+      trace.exception.stack = stackInfo.rawStack;
+      trace.exception.raw = String(stackInfo.rawException);
+    }
     var stackFrame;
     var frame;
     var code;
