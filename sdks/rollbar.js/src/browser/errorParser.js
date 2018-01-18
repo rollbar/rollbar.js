@@ -52,7 +52,9 @@ function Stack(exception) {
   return {
     stack: getStack(),
     message: exception.message,
-    name: exception.name
+    name: exception.name,
+    rawStack: exception.stack,
+    rawException: exception
   };
 }
 
