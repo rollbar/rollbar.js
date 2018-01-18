@@ -33,9 +33,20 @@ function Frame(stackFrame) {
 function Stack(exception) {
   function getStack() {
     var parserStack = [];
+    var exc;
+
+    if (!exception.stack) {
+      try {
+        throw exception;
+      } catch (e) {
+        exc = e;
+      }
+    } else {
+      exc = exception;
+    }
 
     try {
-      parserStack = ErrorStackParser.parse(exception);
+      parserStack = ErrorStackParser.parse(exc);
     } catch(e) {
       parserStack = [];
     }
