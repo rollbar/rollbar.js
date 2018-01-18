@@ -5,6 +5,7 @@
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
   },
+  "description": "Error tracking and logging from JS to Rollbar",
   "license": "MIT",
   "main": "src/server/rollbar.js",
   "browser": "dist/rollbar.umd.min.js",
