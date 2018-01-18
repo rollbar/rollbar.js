@@ -150,6 +150,20 @@ To use rollbar.js inside a Chrome extension, there are some very minor changes y
 
 If your source code is minified and you want to use our Source Maps feature, you need to follow the same steps as outlined in [using source maps on many domains](/docs/source-maps/#using-source-maps-on-many-domains).
 
+### Upgrading
+
+The simplest approach to upgrading from one version of to the next is to replace the snippet with
+the one in this document. Depending on the timing of the release and CDNJS latency, it is possible
+that the snippet has a URL pointing to the full Rollbar library which will return a 404. This
+happens because of how CDNJS operates. The URL in the snippet is of the form:
+
+```
+https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/X.X.X/rollbar.min.js
+```
+
+where `X.X.X` would be replaced with the version number of the latest release. Prior to pushing to
+production, we recommend ensuring that the URL with the version you are upgrading to returns a
+proper response.
 
 ## Javascript Framework Support
 
