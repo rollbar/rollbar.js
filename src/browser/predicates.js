@@ -59,7 +59,7 @@ function urlIsOnAList(item, settings, whiteOrBlack) {
     if (!list || listLength === 0) {
       return !black;
     }
-    if (!trace || !trace.frames) {
+    if (!trace || !trace.frames || trace.frames.length === 0) {
       return !black;
     }
 
