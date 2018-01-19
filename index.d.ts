@@ -70,6 +70,9 @@ declare namespace Rollbar {
     export type AutoInstrumentOptions = boolean | AutoInstrumentSettings;
     export interface AutoInstrumentSettings {
         network?: boolean;
+        networkResponseHeaders?: boolean | string[];
+        networkResponseBody?: boolean;
+        networkRequestBody?: boolean;
         log?: boolean;
         dom?: boolean;
         navigation?: boolean;
