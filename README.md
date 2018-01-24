@@ -646,7 +646,7 @@ Default: `true`
 
 <dt>hostWhiteList
 </dt>
-<dd>Check payload frames for whitelisted URL patterns. This is an array of strings, each of which get compiled to a `RegExp`. If a file in the trace matches one of these URL patterns, the payload is accepted.
+<dd>Check payload frames for whitelisted URL patterns. This is an array of strings, each of which get compiled to a `RegExp`. If a file in the trace matches one of these URL patterns, the payload is accepted. When you specify a domain, that will whitelist all subdomains of that domain.
 </dd>
 
 <dt>logLevel
