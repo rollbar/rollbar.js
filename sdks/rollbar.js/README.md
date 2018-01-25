@@ -36,6 +36,8 @@ If you're running Rollbar on an environment besides production, change the `envi
 1. Navigate your browser to a page that has the above code installed
 2. Type the following code into the console and press enter: `window.onerror("TestRollbarError: testing window.onerror", window.location.href)`
 
+If you're on Firefox, `window.onerror` is not accessible from the console, so you'll need to try this in your code instead: `setTimeout(function() {notThere();}, 1000);`.
+
 This simulates an uncaught error. It should appear in the Rollbar dashboard within a few seconds.
 
 ## Usage
