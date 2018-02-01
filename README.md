@@ -1491,6 +1491,24 @@ exports.handler = (event, context, callback) => {
 };
 ```
 
+There are often questions about the property `callbackWaitsForEmptyEventLoop`. The AWS docs on this
+value state:
+
+> The default value is true. This property is useful only to modify the default behavior of the
+> callback. By default, the callback will wait until the Node.js runtime event loop is empty
+> before freezing the process and returning the results to the caller. You can set this property
+> to false to request AWS Lambda to freeze the process soon after the callback is called, even
+> if there are events in the event loop.
+
+If you want to set this value to `false` for some reason, our handler will still work to report
+items to Rollbar by using the associated `wait` method before calling your callback. If we did not
+do this and you set the value to `false` it is possible for the process to get frozen before the
+network requests to Rollbar have completed. There are some suggestions to set this to `false` so
+that you do not pay for extra time spent if a rogue library keeps the event loop spinning. For that
+effect this is a strange band-aid and we don't recommend using this value for that purpose.
+Nonetheless, reports will be sent to Rollbar regardless of the value of this property provided you
+use our wrapper or you call `wait` yourself.
+
 ## Supported Browsers
 
 The following browser versions are supported on all major desktop and mobile operating systems:
