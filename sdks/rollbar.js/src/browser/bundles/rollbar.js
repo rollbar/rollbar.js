@@ -11,14 +11,12 @@ if ((typeof window !== 'undefined') && !window._rollbarStartTime) {
 if (!shimRunning && options) {
   var Rollbar = new rollbar(options);
   window[alias] = Rollbar;
-} else {
-  if (typeof window !== 'undefined') {
-    window.rollbar = rollbar;
-    window._rollbarDidLoad = true;
-  } else if (typeof self !== 'undefined') {
-    self.rollbar = rollbar;
-    self._rollbarDidLoad = true;
-  }
+} else if (typeof window !== 'undefined') {
+  window.rollbar = rollbar;
+  window._rollbarDidLoad = true;
+} else if (typeof self !== 'undefined') {
+  self.rollbar = rollbar;
+  self._rollbarDidLoad = true;
 }
 
 module.exports = rollbar;
