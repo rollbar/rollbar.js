@@ -4,6 +4,9 @@ var domUtil = require('./domUtility');
 
 var defaults = {
   network: true,
+  networkResponseHeaders: false,
+  networkResponseBody: false,
+  networkRequestBody: false,
   log: true,
   dom: true,
   navigation: true,
@@ -151,12 +154,67 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
             if (xhr.__rollbar_xhr.status_code === null) {
               xhr.__rollbar_xhr.status_code = 0;
-              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+              var requestData = null;
+              if (self.autoInstrument.networkRequestBody) {
+                requestData = data;
+              }
+              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
             }
             if (xhr.readyState === 1) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
             } else {
               xhr.__rollbar_xhr.end_time_ms = _.now();
+
+              var headers = null;
+              if (self.autoInstrument.networkResponseHeaders) {
+                var headersConfig = self.autoInstrument.networkResponseHeaders;
+                headers = {};
+                try {
+                  var header, i;
+                  if (headersConfig === true) {
+                    var allHeaders = xhr.getAllResponseHeaders();
+                    if (allHeaders) {
+                      var arr = allHeaders.trim().split(/[\r\n]+/);
+                      var parts, value;
+                      for (i=0; i < arr.length; i++) {
+                        parts = arr[i].split(': ');
+                        header = parts.shift();
+                        value = parts.join(': ');
+                        headers[header] = value;
+                      }
+                    }
+                  } else {
+                    for (i=0; i < headersConfig.length; i++) {
+                      header = headersConfig[i];
+                      headers[header] = xhr.getResponseHeader(header);
+                    }
+                  }
+                } catch (e) {
+                  /* we ignore the errors here that could come from different
+                   * browser issues with the xhr methods */
+                }
+              }
+              var body = null;
+              if (self.autoInstrument.networkResponseBody) {
+                try {
+                  body = xhr.responseText;
+                } catch (e) {
+                  /* ignore errors from reading responseText */
+                }
+              }
+              var response = null;
+              if (body || headers) {
+                response = {};
+                if (body) {
+                  response.body = body;
+                }
+                if (headers) {
+                  response.headers = headers;
+                }
+              }
+              if (response) {
+                xhr.__rollbar_xhr.response = response;
+              }
             }
             try {
               var code = xhr.status;
@@ -215,10 +273,50 @@ Instrumenter.prototype.instrumentNetwork = function() {
           start_time_ms: _.now(),
           end_time_ms: null
         };
-        self.telemeter.captureNetwork(metadata, 'fetch');
+        var requestData = null;
+        if (self.autoInstrument.networkRequestBody) {
+          if (args[1] && args[1].body) {
+            requestData = args[1].body;
+          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
+            requestData = args[0].body;
+          }
+        }
+        self.telemeter.captureNetwork(metadata, 'fetch', undefined, requestData);
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
+          var headers = null;
+          if (self.autoInstrument.networkResponseHeaders) {
+            var headersConfig = self.autoInstrument.networkResponseHeaders;
+            headers = {};
+            try {
+              if (headersConfig === true) {
+                // This is unsupported in IE so we can't do it
+                /*
+                var allHeaders = resp.headers.entries();
+                for (var pair of allHeaders) {
+                  headers[pair[0]] = pair[1];
+                }
+                */
+              } else {
+                for (var i=0; i < headersConfig.length; i++) {
+                  var header = headersConfig[i];
+                  headers[header] = resp.headers.get(header);
+                }
+              }
+            } catch (e) {
+              /* ignore probable IE errors */
+            }
+          }
+          var response = null;
+          if (headers) {
+            response = {
+              headers: headers
+            };
+          }
+          if (response) {
+            metadata.response = response;
+          }
           return resp;
         });
       };
