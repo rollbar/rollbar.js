@@ -22,7 +22,7 @@ function Shim(options, wrap) {
   this._rollbarOldOnError = null;
   var shimId = _shimIdCounter++;
   this.shimId = function() { return shimId; };
-  if (window && window._rollbarShims) {
+  if ((typeof window !== 'undefined') && window._rollbarShims) {
     window._rollbarShims[shimId] = {handler: wrap, messages: []};
   }
 }
@@ -34,6 +34,9 @@ var ShimImpl = function(options, wrap) {
 var Rollbar = Wrapper.bind(null, ShimImpl);
 
 function setupShim(window, options) {
+  if (!window) {
+    return;
+  }
   var alias = options.globalAlias || 'Rollbar';
   if (typeof window[alias] === 'object') {
     return window[alias];

@@ -18,17 +18,19 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
 
+  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var gDocument = (typeof document != 'undefined') && document;
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
-    globals.captureUncaughtExceptions(window, this);
-    globals.wrapGlobals(window, this);
+    globals.captureUncaughtExceptions(gWindow, this);
+    globals.wrapGlobals(gWindow, this);
   }
   if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
-    globals.captureUnhandledRejections(window, this);
+    globals.captureUnhandledRejections(gWindow, this);
   }
 
-  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, window, document);
+  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
   this.instrumenter.instrument();
 }
 
