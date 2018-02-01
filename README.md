@@ -369,6 +369,7 @@ If you set `autoInstrument` to `false` then we will not collect any events autom
 `navigation`, and `connectivity`. The values can be either `true` or `false`. If a key/value pair
 is omitted, then we use the default value for that key. Setting
 `autoInstrument` to `true` is equivalent to passing all of these keys with the values of `true`.
+
 Hence,
 
 ```js
@@ -429,6 +430,25 @@ The different types of events that we automatically capture are: `network`, `log
 
 Network events are XHR and fetch requests. We store the status code, the url, and some timing events
 to determine how long requests take.
+
+For network events, we also support the following keys in the `autoInstrument` object: `networkResponseHeaders`,
+`networkResponseBody`, and `networkRequestBody`. These are only relevant if `network` is set to
+`true`. By default they all take the value `false`.
+
+`networkResponseHeaders` can be `true`, `false`, or an array of strings. If it is false then
+nothing extra is captured. If it is true, then we include all of the response headers in the logged
+telemetry object. Note, capturing all the headers by setting this to true is not supported for
+fetch requests, only for XHR requests. If it is an array of strings, then we only include the
+response headers that match
+the strings in that array. The strings for these headers are used with the relevant header API, either
+[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getResponseHeader](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getResponseHeader) or
+[https://developer.mozilla.org/en-US/docs/Web/API/Headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers)
+depending on whether you are using XHR or
+fetch based requests. See that documentation for how to specify the relevant header strings.
+
+`networkResponseBody` and `networkRequestBody` specify whether to include the request/response body
+with the telemetry object. These are booleans. `networkResponseBody` is not supported for the fetch
+API.
 
 Log events are calls to `console` and we simply store which console method was called and the
 arguments.

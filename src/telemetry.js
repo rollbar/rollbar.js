@@ -70,9 +70,12 @@ Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp
   }, level, rollbarUUID, timestamp);
 };
 
-Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID, requestData) {
   subtype = subtype || 'xhr';
   metadata.subtype = metadata.subtype || subtype;
+  if (requestData) {
+    metadata.request = requestData;
+  }
   var level = this.levelFromStatus(metadata.status_code);
   return this.capture('network', metadata, level, rollbarUUID);
 };
