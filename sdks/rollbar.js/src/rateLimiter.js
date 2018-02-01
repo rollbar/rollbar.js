@@ -72,8 +72,9 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   this.perMinCounter++;
 
   var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+  var perMinute = shouldSend;
   shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
-  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
+  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
 };
 
 RateLimiter.prototype.setPlatformOptions = function(platform, options) {
@@ -87,25 +88,32 @@ function checkRate(item, limit, counter) {
   return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 }
 
-function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
+function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
   var payload = null;
   if (error) {
     error = new Error(error);
   }
   if (!error && !shouldSend) {
-    payload = rateLimitPayload(platform, options, globalRateLimit);
+    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
   }
   return {error: error, shouldSend: shouldSend, payload: payload};
 }
 
-function rateLimitPayload(platform, options, globalRateLimit) {
+function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
   var environment = options.environment || (options.payload && options.payload.environment);
+  var msg;
+  if (perMinute) {
+    msg = 'item per minute limit reached, ignoring errors until timeout';
+  } else {
+    msg = 'maxItems has been hit, ignoring errors until reset.';
+  }
   var item = {
     body: {
       message: {
-        body: 'maxItems has been hit. Ignoring errors until reset.',
+        body: msg,
         extra: {
-          maxItems: globalRateLimit
+          maxItems: globalRateLimit,
+          itemsPerMinute: limitPerMin
         }
       }
     },
