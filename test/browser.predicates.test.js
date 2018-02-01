@@ -183,7 +183,7 @@ describe('urlIsWhitelisted', function() {
     };
     expect(p.urlIsWhitelisted(item, settings)).to.be.ok();
   });
-  it('should return false if there are no frames', function() {
+  it('should return true if there are no frames', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: []}}
@@ -192,7 +192,7 @@ describe('urlIsWhitelisted', function() {
       reportLevel: 'debug',
       hostWhiteList: ['nope.com']
     };
-    expect(p.urlIsWhitelisted(item, settings)).to.not.be.ok();
+    expect(p.urlIsWhitelisted(item, settings)).to.be.ok();
   });
   it('should return false if nothing in the whitelist matches', function() {
     var item = {
