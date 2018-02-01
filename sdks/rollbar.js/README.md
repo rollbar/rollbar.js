@@ -437,7 +437,9 @@ For network events, we also support the following keys in the `autoInstrument` o
 
 `networkResponseHeaders` can be `true`, `false`, or an array of strings. If it is false then
 nothing extra is captured. If it is true, then we include all of the response headers in the logged
-telemetry object. If it is an array of strings, then we only include the response headers that match
+telemetry object. Note, capturing all the headers by setting this to true is not supported for
+fetch requests, only for XHR requests. If it is an array of strings, then we only include the
+response headers that match
 the strings in that array. The strings for these headers are used with the relevant header API, either
 [https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getResponseHeader](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getResponseHeader) or
 [https://developer.mozilla.org/en-US/docs/Web/API/Headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers)
@@ -445,7 +447,8 @@ depending on whether you are using XHR or
 fetch based requests. See that documentation for how to specify the relevant header strings.
 
 `networkResponseBody` and `networkRequestBody` specify whether to include the request/response body
-with the telemetry object. These are booleans.
+with the telemetry object. These are booleans. `networkResponseBody` is not supported for the fetch
+API.
 
 Log events are calls to `console` and we simply store which console method was called and the
 arguments.
