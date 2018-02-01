@@ -169,27 +169,38 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (self.autoInstrument.networkResponseHeaders) {
                 var headersConfig = self.autoInstrument.networkResponseHeaders;
                 headers = {};
-                if (headersConfig === true) {
-                  var allHeaders = xhr.getAllResponseHeaders();
-                  if (allHeaders) {
-                    var arr = allHeaders.trim().split(/[\r\n]+/);
-                    for (var i=0; i < arr.length; i++) {
-                      var parts = arr[i].split(': ');
-                      var header = parts.shift();
-                      var value = parts.join(': ');
-                      headers[header] = value;
+                try {
+                  var header, i;
+                  if (headersConfig === true) {
+                    var allHeaders = xhr.getAllResponseHeaders();
+                    if (allHeaders) {
+                      var arr = allHeaders.trim().split(/[\r\n]+/);
+                      var parts, value;
+                      for (i=0; i < arr.length; i++) {
+                        parts = arr[i].split(': ');
+                        header = parts.shift();
+                        value = parts.join(': ');
+                        headers[header] = value;
+                      }
+                    }
+                  } else {
+                    for (i=0; i < headersConfig.length; i++) {
+                      header = headersConfig[i];
+                      headers[header] = xhr.getResponseHeader(header);
                     }
                   }
-                } else {
-                  for (var i=0; i < headersConfig.length; i++) {
-                    var header = headersConfig[i];
-                    headers[header] = xhr.getResponseHeader(header);
-                  }
+                } catch (e) {
+                  /* we ignore the errors here that could come from different
+                   * browser issues with the xhr methods */
                 }
               }
               var body = null;
               if (self.autoInstrument.networkResponseBody) {
-                body = xhr.responseText;
+                try {
+                  body = xhr.responseText;
+                } catch (e) {
+                  /* ignore errors from reading responseText */
+                }
               }
               var response = null;
               if (body || headers) {
@@ -278,31 +289,30 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (self.autoInstrument.networkResponseHeaders) {
             var headersConfig = self.autoInstrument.networkResponseHeaders;
             headers = {};
-            if (headersConfig === true) {
-              var allHeaders = resp.headers.entries();
-              for (var pair of allHeaders) {
-                headers[pair[0]] = pair[1];
+            try {
+              if (headersConfig === true) {
+                // This is unsupported in IE so we can't do it
+                /*
+                var allHeaders = resp.headers.entries();
+                for (var pair of allHeaders) {
+                  headers[pair[0]] = pair[1];
+                }
+                */
+              } else {
+                for (var i=0; i < headersConfig.length; i++) {
+                  var header = headersConfig[i];
+                  headers[header] = resp.headers.get(header);
+                }
               }
-            } else {
-              for (var i=0; i < headersConfig.length; i++) {
-                var header = headersConfig[i];
-                headers[header] = resp.headers.get(header);
-              }
+            } catch (e) {
+              /* ignore probable IE errors */
             }
-          }
-          var body = null;
-          if (self.autoInstrument.networkResponseBody) {
-            body = resp.text();
           }
           var response = null;
-          if (body || headers) {
-            response = {};
-            if (body) {
-              body.then(function(text) { response.body = text; });
-            }
-            if (headers) {
-              response.headers = headers;
-            }
+          if (headers) {
+            response = {
+              headers: headers
+            };
           }
           if (response) {
             metadata.response = response;
