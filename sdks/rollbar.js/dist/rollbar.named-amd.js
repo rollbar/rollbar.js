@@ -55,20 +55,23 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var rollbar = __webpack_require__(2);
 	
-	var options = window && window._rollbarConfig;
+	var options = (typeof window !== 'undefined') && window._rollbarConfig;
 	var alias = options && options.globalAlias || 'Rollbar';
-	var shimRunning = window && window[alias] && typeof window[alias].shimId === 'function' && window[alias].shimId() !== undefined;
+	var shimRunning = (typeof window !== 'undefined') && window[alias] && typeof window[alias].shimId === 'function' && window[alias].shimId() !== undefined;
 	
-	if (window && !window._rollbarStartTime) {
+	if ((typeof window !== 'undefined') && !window._rollbarStartTime) {
 	  window._rollbarStartTime = (new Date()).getTime();
 	}
 	
 	if (!shimRunning && options) {
 	  var Rollbar = new rollbar(options);
 	  window[alias] = Rollbar;
-	} else {
+	} else if (typeof window !== 'undefined') {
 	  window.rollbar = rollbar;
 	  window._rollbarDidLoad = true;
+	} else if (typeof self !== 'undefined') {
+	  self.rollbar = rollbar;
+	  self._rollbarDidLoad = true;
 	}
 	
 	module.exports = rollbar;
@@ -100,17 +103,19 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  var api = new API(this.options, transport, urllib);
 	  this.client = client || new Client(this.options, api, logger, 'browser');
 	
+	  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+	  var gDocument = (typeof document != 'undefined') && document;
 	  addTransformsToNotifier(this.client.notifier);
 	  addPredicatesToQueue(this.client.queue);
 	  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
-	    globals.captureUncaughtExceptions(window, this);
-	    globals.wrapGlobals(window, this);
+	    globals.captureUncaughtExceptions(gWindow, this);
+	    globals.wrapGlobals(gWindow, this);
 	  }
 	  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
-	    globals.captureUnhandledRejections(window, this);
+	    globals.captureUnhandledRejections(gWindow, this);
 	  }
 	
-	  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, window, document);
+	  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
 	  this.instrumenter.instrument();
 	}
 	
@@ -434,6 +439,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    .addTransform(transforms.addBody)
 	    .addTransform(sharedTransforms.addMessageWithError)
 	    .addTransform(sharedTransforms.addTelemetryData)
+	    .addTransform(sharedTransforms.addConfigToPayload)
 	    .addTransform(transforms.scrubPayload)
 	    .addTransform(sharedTransforms.userTransform(logger))
 	    .addTransform(sharedTransforms.itemToPayload);
@@ -469,14 +475,15 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.7"),
+	  version: ("2.3.8"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
 	  uncaughtErrorLevel: ("error"),
 	  endpoint: ("api.rollbar.com/api/1/item/"),
 	  verbose: false,
-	  enabled: true
+	  enabled: true,
+	  sendConfig: false
 	};
 	
 	module.exports = Rollbar;
@@ -701,8 +708,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  this.perMinCounter++;
 	
 	  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+	  var perMinute = shouldSend;
 	  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
-	  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit);
+	  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
 	};
 	
 	RateLimiter.prototype.setPlatformOptions = function(platform, options) {
@@ -716,25 +724,32 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 	}
 	
-	function shouldSendValue(platform, options, error, shouldSend, globalRateLimit) {
+	function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
 	  var payload = null;
 	  if (error) {
 	    error = new Error(error);
 	  }
 	  if (!error && !shouldSend) {
-	    payload = rateLimitPayload(platform, options, globalRateLimit);
+	    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
 	  }
 	  return {error: error, shouldSend: shouldSend, payload: payload};
 	}
 	
-	function rateLimitPayload(platform, options, globalRateLimit) {
+	function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
 	  var environment = options.environment || (options.payload && options.payload.environment);
+	  var msg;
+	  if (perMinute) {
+	    msg = 'item per minute limit reached, ignoring errors until timeout';
+	  } else {
+	    msg = 'maxItems has been hit, ignoring errors until reset.';
+	  }
 	  var item = {
 	    body: {
 	      message: {
-	        body: 'maxItems has been hit. Ignoring errors until reset.',
+	        body: msg,
 	        extra: {
-	          maxItems: globalRateLimit
+	          maxItems: globalRateLimit,
+	          itemsPerMinute: limitPerMin
 	        }
 	      }
 	    },
@@ -2716,9 +2731,12 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }, level, rollbarUUID, timestamp);
 	};
 	
-	Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+	Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID, requestData) {
 	  subtype = subtype || 'xhr';
 	  metadata.subtype = metadata.subtype || subtype;
+	  if (requestData) {
+	    metadata.request = requestData;
+	  }
 	  var level = this.levelFromStatus(metadata.status_code);
 	  return this.capture('network', metadata, level, rollbarUUID);
 	};
@@ -3682,6 +3700,10 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    stack = item._unhandledStackInfo.stack;
 	  }
 	  if (stack) {
+	    if (stack.length === 0) {
+	      trace.exception.stack = stackInfo.rawStack;
+	      trace.exception.raw = String(stackInfo.rawException);
+	    }
 	    var stackFrame;
 	    var frame;
 	    var code;
@@ -3806,9 +3828,20 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	function Stack(exception) {
 	  function getStack() {
 	    var parserStack = [];
+	    var exc;
+	
+	    if (!exception.stack) {
+	      try {
+	        throw exception;
+	      } catch (e) {
+	        exc = e;
+	      }
+	    } else {
+	      exc = exception;
+	    }
 	
 	    try {
-	      parserStack = ErrorStackParser.parse(exception);
+	      parserStack = ErrorStackParser.parse(exc);
 	    } catch(e) {
 	      parserStack = [];
 	    }
@@ -3825,7 +3858,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  return {
 	    stack: getStack(),
 	    message: exception.message,
-	    name: exception.name
+	    name: exception.name,
+	    rawStack: exception.stack,
+	    rawException: exception
 	  };
 	}
 	
@@ -4245,11 +4280,23 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  }
 	}
 	
+	function addConfigToPayload(item, options, callback) {
+	  if (!options.sendConfig) {
+	    return callback(null, item);
+	  }
+	  var configKey = '_rollbarConfig';
+	  var custom = _.get(item, 'data.custom') || {};
+	  custom[configKey] = options;
+	  item.data.custom = custom;
+	  callback(null, item);
+	}
+	
 	module.exports = {
 	  itemToPayload: itemToPayload,
 	  addTelemetryData: addTelemetryData,
 	  addMessageWithError: addMessageWithError,
-	  userTransform: userTransform
+	  userTransform: userTransform,
+	  addConfigToPayload: addConfigToPayload
 	};
 
 
@@ -4320,7 +4367,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	    if (!list || listLength === 0) {
 	      return !black;
 	    }
-	    if (!trace || !trace.frames) {
+	    if (!trace || !trace.frames || trace.frames.length === 0) {
 	      return !black;
 	    }
 	
@@ -4421,6 +4468,9 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	var defaults = {
 	  network: true,
+	  networkResponseHeaders: false,
+	  networkResponseBody: false,
+	  networkRequestBody: false,
 	  log: true,
 	  dom: true,
 	  navigation: true,
@@ -4568,12 +4618,67 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
 	            if (xhr.__rollbar_xhr.status_code === null) {
 	              xhr.__rollbar_xhr.status_code = 0;
-	              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr');
+	              var requestData = null;
+	              if (self.autoInstrument.networkRequestBody) {
+	                requestData = data;
+	              }
+	              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
 	            }
 	            if (xhr.readyState === 1) {
 	              xhr.__rollbar_xhr.start_time_ms = _.now();
 	            } else {
 	              xhr.__rollbar_xhr.end_time_ms = _.now();
+	
+	              var headers = null;
+	              if (self.autoInstrument.networkResponseHeaders) {
+	                var headersConfig = self.autoInstrument.networkResponseHeaders;
+	                headers = {};
+	                try {
+	                  var header, i;
+	                  if (headersConfig === true) {
+	                    var allHeaders = xhr.getAllResponseHeaders();
+	                    if (allHeaders) {
+	                      var arr = allHeaders.trim().split(/[\r\n]+/);
+	                      var parts, value;
+	                      for (i=0; i < arr.length; i++) {
+	                        parts = arr[i].split(': ');
+	                        header = parts.shift();
+	                        value = parts.join(': ');
+	                        headers[header] = value;
+	                      }
+	                    }
+	                  } else {
+	                    for (i=0; i < headersConfig.length; i++) {
+	                      header = headersConfig[i];
+	                      headers[header] = xhr.getResponseHeader(header);
+	                    }
+	                  }
+	                } catch (e) {
+	                  /* we ignore the errors here that could come from different
+	                   * browser issues with the xhr methods */
+	                }
+	              }
+	              var body = null;
+	              if (self.autoInstrument.networkResponseBody) {
+	                try {
+	                  body = xhr.responseText;
+	                } catch (e) {
+	                  /* ignore errors from reading responseText */
+	                }
+	              }
+	              var response = null;
+	              if (body || headers) {
+	                response = {};
+	                if (body) {
+	                  response.body = body;
+	                }
+	                if (headers) {
+	                  response.headers = headers;
+	                }
+	              }
+	              if (response) {
+	                xhr.__rollbar_xhr.response = response;
+	              }
 	            }
 	            try {
 	              var code = xhr.status;
@@ -4632,10 +4737,50 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	          start_time_ms: _.now(),
 	          end_time_ms: null
 	        };
-	        self.telemeter.captureNetwork(metadata, 'fetch');
+	        var requestData = null;
+	        if (self.autoInstrument.networkRequestBody) {
+	          if (args[1] && args[1].body) {
+	            requestData = args[1].body;
+	          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
+	            requestData = args[0].body;
+	          }
+	        }
+	        self.telemeter.captureNetwork(metadata, 'fetch', undefined, requestData);
 	        return orig.apply(this, args).then(function (resp) {
 	          metadata.end_time_ms = _.now();
 	          metadata.status_code = resp.status;
+	          var headers = null;
+	          if (self.autoInstrument.networkResponseHeaders) {
+	            var headersConfig = self.autoInstrument.networkResponseHeaders;
+	            headers = {};
+	            try {
+	              if (headersConfig === true) {
+	                // This is unsupported in IE so we can't do it
+	                /*
+	                var allHeaders = resp.headers.entries();
+	                for (var pair of allHeaders) {
+	                  headers[pair[0]] = pair[1];
+	                }
+	                */
+	              } else {
+	                for (var i=0; i < headersConfig.length; i++) {
+	                  var header = headersConfig[i];
+	                  headers[header] = resp.headers.get(header);
+	                }
+	              }
+	            } catch (e) {
+	              /* ignore probable IE errors */
+	            }
+	          }
+	          var response = null;
+	          if (headers) {
+	            response = {
+	              headers: headers
+	            };
+	          }
+	          if (response) {
+	            metadata.response = response;
+	          }
 	          return resp;
 	        });
 	      };
