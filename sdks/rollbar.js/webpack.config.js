@@ -113,7 +113,7 @@ var UMDConfigBase = {
     libraryTarget: 'umd'
   },
   failOnError: true,
-  devtool: 'hidden-source-map',
+  devtool: 'source-map',
   module: {
     preLoaders: [
       {
