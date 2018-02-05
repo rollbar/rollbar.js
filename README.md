@@ -1168,7 +1168,7 @@ app.listen(3000);
 
 ### Using Hapi
 
-for Hapi v17+:
+For Hapi v17+:
 
 ```js
 import Rollbar from 'rollbar'
