@@ -1168,6 +1168,74 @@ app.listen(3000);
 
 ### Using Hapi
 
+For Hapi v17+:
+
+```js
+import Rollbar from 'rollbar'
+
+import Config from '../config'
+
+import Logger from '../helpers/logger'
+
+const config = Config.get('/rollbar')
+
+const log = Logger('Error').log
+
+const rollbar = new Rollbar(config)
+
+exports.register = function(server, options) {
+
+const preResponse = function(request, h) {
+
+const response = request.response
+
+if (!response.isBoom) {
+
+  return h.continue
+
+}
+
+const cb = function(rollbarErr) {
+
+  if (rollbarErr) {
+
+    log(`Error reporting to rollbar, ignoring: ${rollbarErr}`)
+
+  }
+
+}
+
+const error = response
+
+if (error instanceof Error) {
+
+rollbar.error(error, request, cb)
+
+} else {
+
+rollbar.error(`Error: ${error}`, request, cb)
+
+}
+
+return h.continue
+
+}
+
+server.ext('onPreResponse', preResponse)
+
+server.expose('rollbar', rollbar)
+
+log('Rollbar: next')
+
+return Promise.resolve()
+
+}
+
+exports.name = 'rollbar'
+```
+
+For older Hapi versions:
+
 ```js
 var Hapi = require('hapi');
 var server = new Hapi.Server();
