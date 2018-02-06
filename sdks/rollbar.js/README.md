@@ -689,7 +689,9 @@ Default: `"warning"`
 </dt>
 <dd>A list containing names of keys/fields/query parameters to scrub. Scrubbed fields will be normalized to all `*` before being reported to Rollbar. This is useful for sensitive information that you do not want to send to Rollbar. e.g. User tokens
 
-Default: `["passwd", "password", "secret", "confirm_password", "password_confirmation"]`
+Default scrubbed fields for servers: `["pw", "pass", "passwd", "password", "password_confirmation", "passwordConfirmation", "confirm_password", "confirmPassword", "secret", "secret_token", "secretToken", "secret_key", "secretKey", "api_key", "access_token", "accessToken", "authenticity_token", "oauth_token", "token", "user_session_secret", "request.session.csrf", "request.session._csrf", "request.params._csrf", "request.cookie", "request.cookies"]`
+
+Default scrubbed fields for browsers: `["pw", "pass", "passwd", "password", "secret", "confirm_password", "confirmPassword", "password_confirmation", "passwordConfirmation", "access_token", "accessToken", "secret_key", "secretKey", "secretToken"]`
 </dd>
 
 <dt>transform
