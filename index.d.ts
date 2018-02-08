@@ -52,7 +52,7 @@ declare namespace Rollbar {
         scrubTelemetryInputs?: boolean;
         sendConfig?: boolean;
         transform?: (data: object) => void;
-        checkIgnore?: (isUncaught: boolean, arguments: LogArgument[], item: object) => boolean;
+        checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
     }
     export type Callback = (err: MaybeError, response: object) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
