@@ -10,6 +10,7 @@ var urllib = require('./url');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
+var sharedPredicates = require('../predicates');
 var errorParser = require('./errorParser');
 var Instrumenter = require('./telemetry');
 
@@ -362,11 +363,12 @@ function addTransformsToNotifier(notifier) {
 
 function addPredicatesToQueue(queue) {
   queue
+    .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(predicates.checkIgnore)
-    .addPredicate(predicates.userCheckIgnore)
-    .addPredicate(predicates.urlIsNotBlacklisted)
-    .addPredicate(predicates.urlIsWhitelisted)
-    .addPredicate(predicates.messageIsIgnored);
+    .addPredicate(sharedPredicates.userCheckIgnore(logger))
+    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
+    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+    .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
 Rollbar.prototype._createItem = function(args) {

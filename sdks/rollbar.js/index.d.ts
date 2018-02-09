@@ -53,6 +53,7 @@ declare namespace Rollbar {
         sendConfig?: boolean;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
+        onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
     }
     export type Callback = (err: MaybeError, response: object) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
