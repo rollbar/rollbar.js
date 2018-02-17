@@ -129,6 +129,9 @@ Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
 
 // Only intended to be used internally by the notifier
 Telemeter.prototype._captureRollbarItem = function(item) {
+  if (!this.options.includeItemsInTelemetry) {
+    return;
+  }
   if (item.err) {
     return this.captureError(item.err, item.level, item.uuid, item.timestamp);
   }
