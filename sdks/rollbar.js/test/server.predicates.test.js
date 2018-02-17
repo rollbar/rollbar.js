@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var vows = require('vows');
-var p = require('../src/server/predicates');
+var p = require('../src/predicates');
 
 vows.describe('predicates')
   .addBatch({

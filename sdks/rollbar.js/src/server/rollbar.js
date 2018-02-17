@@ -13,7 +13,7 @@ var jsonBackup = require('json-stringify-safe');
 
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
-var predicates = require('./predicates');
+var sharedPredicates = require('../predicates');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -425,8 +425,11 @@ function addTransformsToNotifier(notifier) {
 
 function addPredicatesToQueue(queue) {
   queue
-    .addPredicate(predicates.checkLevel)
-    .addPredicate(predicates.userCheckIgnore);
+    .addPredicate(sharedPredicates.checkLevel)
+    .addPredicate(sharedPredicates.userCheckIgnore(logger))
+    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
+    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+    .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
 Rollbar.prototype._createItem = function(args) {

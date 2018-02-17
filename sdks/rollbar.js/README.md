@@ -678,6 +678,18 @@ Default: `true`
 Default: `"debug"`
 </dd>
 
+<dt>onSendCallback</dt>
+<dd>An optional function that will be called for every payload before it is sent to the API. The
+function signature is the same as that of the `checkIgnore` function, namely `function
+onSendCallback(isUncaught, args, payload)`. The return value is ignored.
+
+Default: `null`
+
+- isUncaught: `true` if the error being reported is from the `window.onerror` hook.
+- args: The arguments to `Rollbar.log/debug/info/warning/error/critical()`.  In the case of unhandled rejections, the last parameter is originating `Promise`.
+- payload: The javascript object that is about to be sent to Rollbar. This will contain all of the context and payload information for this notifier and error. This parameter is useful for advanced ignore functionality.
+</dd>
+
 <dt>reportLevel
 </dt>
 <dd>Used to filter out which messages will get reported to Rollbar. If set to `"error"`, only `"error"` or higher serverity level items will be sent to Rollbar.
