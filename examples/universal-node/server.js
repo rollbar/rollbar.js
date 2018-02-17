@@ -15,7 +15,8 @@ var token = 'POST_SERVER_ITEM_TOKEN';
 
 const rollbar = Rollbar.init({
   accessToken: token,
-  handleUncaughtExceptions: true
+  handleUncaughtExceptions: true,
+  verbose: false
 });
 const other = require('./other');
 
