@@ -29,6 +29,7 @@ function Rollbar(options, client) {
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
+  logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
   var api = new API(this.options, transport, urllib, jsonBackup);
   this.client = client || new Client(this.options, api, logger, 'server');
@@ -84,6 +85,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.extend(true, {}, oldOptions, options, payload);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
+  logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
   return this;
 };
@@ -352,7 +354,7 @@ Rollbar.reportMessageWithPayloadData = function(message, payloadData, request, c
 
 
 Rollbar.prototype.handleError = function(err, request, callback) {
-  logger.log('handleErrorWithPayloadData is deprecated');
+  logger.log('handleError is deprecated');
   return this.error(err, request, callback);
 };
 Rollbar.handleError = function(err, request, callback) {

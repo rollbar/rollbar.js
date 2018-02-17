@@ -1,7 +1,6 @@
-const rollbar = require('rollbar').instance;
+const rollbar = require('rollbar');
 
 exports.doSomeLog = function(message, req, custom, callback) {
-  console.log(rollbar);
   rollbar.log(message, req, custom, callback);
 };
 
