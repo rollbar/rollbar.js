@@ -88,8 +88,9 @@
 	var transforms = __webpack_require__(18);
 	var sharedTransforms = __webpack_require__(22);
 	var predicates = __webpack_require__(23);
+	var sharedPredicates = __webpack_require__(24);
 	var errorParser = __webpack_require__(19);
-	var Instrumenter = __webpack_require__(24);
+	var Instrumenter = __webpack_require__(25);
 	
 	function Rollbar(options, client) {
 	  this.options = _.extend(true, defaultOptions, options);
@@ -440,11 +441,12 @@
 	
 	function addPredicatesToQueue(queue) {
 	  queue
+	    .addPredicate(sharedPredicates.checkLevel)
 	    .addPredicate(predicates.checkIgnore)
-	    .addPredicate(predicates.userCheckIgnore)
-	    .addPredicate(predicates.urlIsNotBlacklisted)
-	    .addPredicate(predicates.urlIsWhitelisted)
-	    .addPredicate(predicates.messageIsIgnored);
+	    .addPredicate(sharedPredicates.userCheckIgnore(logger))
+	    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
+	    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+	    .addPredicate(sharedPredicates.messageIsIgnored(logger));
 	}
 	
 	Rollbar.prototype._createItem = function(args) {
@@ -468,7 +470,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.8"),
+	  version: ("2.3.9"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -476,7 +478,8 @@
 	  endpoint: ("api.rollbar.com/api/1/item/"),
 	  verbose: false,
 	  enabled: true,
-	  sendConfig: false
+	  sendConfig: false,
+	  includeItemsInTelemetry: true
 	};
 	
 	module.exports = Rollbar;
@@ -2783,6 +2786,9 @@
 	
 	// Only intended to be used internally by the notifier
 	Telemeter.prototype._captureRollbarItem = function(item) {
+	  if (!this.options.includeItemsInTelemetry) {
+	    return;
+	  }
 	  if (item.err) {
 	    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
 	  }
@@ -2898,7 +2904,7 @@
 	var _ = __webpack_require__(5);
 	
 	function buildPayload(accessToken, data, jsonBackup) {
-	  if (_.isType(data.context, 'object')) {
+	  if (!_.isType(data.context, 'string')) {
 	    var contextResult = _.stringify(data.context, jsonBackup);
 	    if (contextResult.error) {
 	      data.context = 'Error: could not serialize \'context\'';
@@ -4300,48 +4306,78 @@
 	'use strict';
 	
 	var _ = __webpack_require__(5);
-	var logger = __webpack_require__(12);
 	
 	function checkIgnore(item, settings) {
-	  var level = item.level;
-	  var levelVal = _.LEVELS[level] || 0;
-	  var reportLevel = _.LEVELS[settings.reportLevel] || 0;
-	
-	  if (levelVal < reportLevel) {
-	    return false;
-	  }
-	
 	  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
 	    return !_.get(item, 'body.message.extra.isAjax');
 	  }
 	  return true;
 	}
 	
-	function userCheckIgnore(item, settings) {
-	  var isUncaught = !!item._isUncaught;
-	  delete item._isUncaught;
-	  var args = item._originalArgs;
-	  delete item._originalArgs;
-	  try {
-	    if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
-	      return false;
-	    }
-	  } catch (e) {
-	    settings.checkIgnore = null;
-	    logger.error('Error while calling custom checkIgnore(), removing', e);
+	module.exports = {
+	  checkIgnore: checkIgnore
+	};
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _ = __webpack_require__(5);
+	
+	function checkLevel(item, settings) {
+	  var level = item.level;
+	  var levelVal = _.LEVELS[level] || 0;
+	  var reportLevel = settings.reportLevel;
+	  var reportLevelVal = _.LEVELS[reportLevel] || 0;
+	
+	  if (levelVal < reportLevelVal) {
+	    return false;
 	  }
 	  return true;
 	}
 	
-	function urlIsNotBlacklisted(item, settings) {
-	  return !urlIsOnAList(item, settings, 'blacklist');
+	function userCheckIgnore(logger) {
+	  return function(item, settings) {
+	    var isUncaught = !!item._isUncaught;
+	    delete item._isUncaught;
+	    var args = item._originalArgs;
+	    delete item._originalArgs;
+	    try {
+	      if (_.isFunction(settings.onSendCallback)) {
+	        settings.onSendCallback(isUncaught, args, item);
+	      }
+	    } catch (e) {
+	      settings.onSendCallback = null;
+	      logger.error('Error while calling onSendCallback, removing', e);
+	    }
+	    try {
+	      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+	        return false;
+	      }
+	    } catch (e) {
+	      settings.checkIgnore = null;
+	      logger.error('Error while calling custom checkIgnore(), removing', e);
+	    }
+	    return true;
+	  }
 	}
 	
-	function urlIsWhitelisted(item, settings) {
-	  return urlIsOnAList(item, settings, 'whitelist');
+	function urlIsNotBlacklisted(logger) {
+	  return function(item, settings) {
+	    return !urlIsOnAList(item, settings, 'blacklist', logger);
+	  }
 	}
 	
-	function urlIsOnAList(item, settings, whiteOrBlack) {
+	function urlIsWhitelisted(logger) {
+	  return function(item, settings) {
+	    return urlIsOnAList(item, settings, 'whitelist', logger);
+	  }
+	}
+	
+	function urlIsOnAList(item, settings, whiteOrBlack, logger) {
 	  // whitelist is the default
 	  var black = false;
 	  if (whiteOrBlack === 'blacklist') {
@@ -4397,67 +4433,68 @@
 	  return false;
 	}
 	
-	function messageIsIgnored(item, settings) {
-	  var exceptionMessage, i, ignoredMessages,
-	      len, messageIsIgnored, rIgnoredMessage,
-	      body, traceMessage, bodyMessage;
+	function messageIsIgnored(logger) {
+	  return function(item, settings) {
+	    var exceptionMessage, i, ignoredMessages,
+	        len, messageIsIgnored, rIgnoredMessage,
+	        body, traceMessage, bodyMessage;
 	
-	  try {
-	    messageIsIgnored = false;
-	    ignoredMessages = settings.ignoredMessages;
+	    try {
+	      messageIsIgnored = false;
+	      ignoredMessages = settings.ignoredMessages;
 	
-	    if (!ignoredMessages || ignoredMessages.length === 0) {
-	      return true;
-	    }
-	
-	    body = item.body;
-	    traceMessage = _.get(body, 'trace.exception.message');
-	    bodyMessage = _.get(body, 'message.body');
-	
-	    exceptionMessage = traceMessage || bodyMessage;
-	
-	    if (!exceptionMessage){
-	      return true;
-	    }
-	
-	    len = ignoredMessages.length;
-	    for (i = 0; i < len; i++) {
-	      rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-	      messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-	
-	      if (messageIsIgnored) {
-	        break;
+	      if (!ignoredMessages || ignoredMessages.length === 0) {
+	        return true;
 	      }
-	    }
-	  } catch(e)
-	  /* istanbul ignore next */
-	  {
-	    settings.ignoredMessages = null;
-	    logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
-	  }
 	
-	  return !messageIsIgnored;
+	      body = item.body;
+	      traceMessage = _.get(body, 'trace.exception.message');
+	      bodyMessage = _.get(body, 'message.body');
+	
+	      exceptionMessage = traceMessage || bodyMessage;
+	
+	      if (!exceptionMessage){
+	        return true;
+	      }
+	
+	      len = ignoredMessages.length;
+	      for (i = 0; i < len; i++) {
+	        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
+	        messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
+	
+	        if (messageIsIgnored) {
+	          break;
+	        }
+	      }
+	    } catch(e)
+	    /* istanbul ignore next */
+	    {
+	      settings.ignoredMessages = null;
+	      logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
+	    }
+	
+	    return !messageIsIgnored;
+	  }
 	}
 	
 	module.exports = {
-	  checkIgnore: checkIgnore,
+	  checkLevel: checkLevel,
 	  userCheckIgnore: userCheckIgnore,
 	  urlIsNotBlacklisted: urlIsNotBlacklisted,
 	  urlIsWhitelisted: urlIsWhitelisted,
 	  messageIsIgnored: messageIsIgnored
 	};
-	
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(5);
 	var urlparser = __webpack_require__(17);
-	var domUtil = __webpack_require__(25);
+	var domUtil = __webpack_require__(26);
 	
 	var defaults = {
 	  network: true,
@@ -4714,7 +4751,7 @@
 	        var url;
 	        if (_.isType(input, 'string')) {
 	          url = input;
-	        } else {
+	        } else if (input) {
 	          url = input.url;
 	          if (input.method) {
 	            method = input.method;
@@ -5020,7 +5057,7 @@
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports) {
 
 	'use strict';
