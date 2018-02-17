@@ -257,7 +257,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var url;
         if (_.isType(input, 'string')) {
           url = input;
-        } else {
+        } else if (input) {
           url = input.url;
           if (input.method) {
             method = input.method;

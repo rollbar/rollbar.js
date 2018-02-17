@@ -400,7 +400,8 @@ var defaultOptions = {
   endpoint: __DEFAULT_ENDPOINT__,
   verbose: false,
   enabled: true,
-  sendConfig: false
+  sendConfig: false,
+  includeItemsInTelemetry: true
 };
 
 module.exports = Rollbar;

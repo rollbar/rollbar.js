@@ -472,6 +472,12 @@ var level = 'info'; // Possible values: 'debug', 'info', 'warning', 'error', 'cr
 rollbar.captureEvent(metadata, level);
 ```
 
+We also provide the configuration option `includeItemsInTelemetry` which lives at the top level of
+the configuration object. This is set to `true` by default in the browser and React Native targets
+and to `false` for the server target. When this is true, we include previously logged items to
+Rollbar in the queue of telemetry events. This includes both direct calls and indirect calls via
+uncaught exceptions.
+
 There is an in-memory queue of telemetry events that gets built up over the lifecycle of a user
 interacting with your app. This queue is FIFO and has a fixed size. By default, we store the last
 100 events and send these as part of the item with each manual call to a rollbar method (log/info/warning/error) or with calls caused by an uncaught exception.
