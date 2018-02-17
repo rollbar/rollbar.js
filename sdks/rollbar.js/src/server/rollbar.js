@@ -519,7 +519,8 @@ Rollbar.defaultOptions = {
   reportLevel: packageJson.defaults.reportLevel,
   verbose: false,
   enabled: true,
-  sendConfig: false
+  sendConfig: false,
+  includeItemsInTelemetry: false
 };
 
 module.exports = Rollbar;
