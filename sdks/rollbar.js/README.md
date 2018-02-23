@@ -173,6 +173,14 @@ proper response.
 
 Rollbar.js supports React applications with no additional configuration required.  For apps using React 15.2 and later, production error messages are automatically decoded.
 
+### Create React App
+
+The easiest way to integrate with an app managed via
+[create-react-app](https://github.com/facebook/create-react-app) is to place our snippet from above
+in your `public/index.html` file. It is possible to enable reporting only in production by setting
+`enabled: ('%NODE_ENV%' === 'production')` in your `_rollbarConfig`. See the
+[section on environment variables](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#referencing-environment-variables-in-the-html) in the `create-react-app` documentation.
+
 ### Angular 1
 
 The [community library](https://github.com/tandibar/ng-rollbar) which provides the machinery for
