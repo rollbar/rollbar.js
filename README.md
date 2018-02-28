@@ -271,7 +271,10 @@ Another error you may encounter when compiling is `Property 'error' does not exi
 
 ### Ember
 
-[ember-cli-rollbar](https://github.com/davewasmer/ember-cli-rollbar) is a community-maintained library that enables `Ember.Logger.error()` to be reported to Rollbar.
+The following community-maintained libraries exist for Ember:
+
+* [ember-rollbar-client](https://github.com/Exelord/ember-rollbar-client) by [Maciej Kwaśniak](https://github.com/Exelord)
+* [ember-cli-rollbar](https://github.com/davewasmer/ember-cli-rollbar) by [Dave Wasmer](https://github.com/davewasmer)
 
 ### Backbone.js
 
