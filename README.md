@@ -1,4 +1,4 @@
-# Rollbar notifier for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.3.9)](https://travis-ci.org/rollbar/rollbar.js)
+# Rollbar for JavaScript [![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.3.9)](https://travis-ci.org/rollbar/rollbar.js)
 
 <!-- Sub:[TOC] -->
 
@@ -1203,63 +1203,42 @@ For Hapi v17+:
 
 ```js
 import Rollbar from 'rollbar'
-
 import Config from '../config'
-
 import Logger from '../helpers/logger'
 
 const config = Config.get('/rollbar')
-
 const log = Logger('Error').log
-
 const rollbar = new Rollbar(config)
 
 exports.register = function(server, options) {
+  const preResponse = function(request, h) {
+    const response = request.response
 
-const preResponse = function(request, h) {
+    if (!response.isBoom) {
+      return h.continue
+    }
 
-const response = request.response
+    const cb = function(rollbarErr) {
+      if (rollbarErr) {
+        log(`Error reporting to rollbar, ignoring: ${rollbarErr}`)
+      }
+    }
 
-if (!response.isBoom) {
+    const error = response
 
-  return h.continue
+    if (error instanceof Error) {
+      rollbar.error(error, request, cb)
+    } else {
+      rollbar.error(`Error: ${error}`, request, cb)
+    }
 
-}
-
-const cb = function(rollbarErr) {
-
-  if (rollbarErr) {
-
-    log(`Error reporting to rollbar, ignoring: ${rollbarErr}`)
-
+    return h.continue
   }
 
-}
-
-const error = response
-
-if (error instanceof Error) {
-
-rollbar.error(error, request, cb)
-
-} else {
-
-rollbar.error(`Error: ${error}`, request, cb)
-
-}
-
-return h.continue
-
-}
-
-server.ext('onPreResponse', preResponse)
-
-server.expose('rollbar', rollbar)
-
-log('Rollbar: next')
-
-return Promise.resolve()
-
+  server.ext('onPreResponse', preResponse)
+  server.expose('rollbar', rollbar)
+  log('Rollbar: next')
+  return Promise.resolve()
 }
 
 exports.name = 'rollbar'
