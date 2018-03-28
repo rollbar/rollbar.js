@@ -17,7 +17,7 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
-  this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
+  this.options = _.extend({}, Rollbar.defaultOptions, options);
   // This makes no sense in a long running app
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';

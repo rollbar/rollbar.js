@@ -24,7 +24,7 @@ function Notifier(queue, options) {
 Notifier.prototype.configure = function(options) {
   this.queue && this.queue.configure(options);
   var oldOptions = this.options;
-  this.options = _.extend(true, {}, oldOptions, options);
+  this.options = _.extend({}, oldOptions, options);
   return this;
 };
 
