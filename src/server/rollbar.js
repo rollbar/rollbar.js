@@ -25,7 +25,7 @@ function Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
-  this.options = _.extend(true, {}, Rollbar.defaultOptions, options);
+  this.options = _.extend({}, Rollbar.defaultOptions, options);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
