@@ -525,7 +525,8 @@ Rollbar.defaultOptions = {
   verbose: false,
   enabled: true,
   sendConfig: false,
-  includeItemsInTelemetry: false
+  includeItemsInTelemetry: false,
+  captureIp: true
 };
 
 module.exports = Rollbar;
