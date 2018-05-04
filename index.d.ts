@@ -52,6 +52,9 @@ declare namespace Rollbar {
         includeItemsInTelemetry?: boolean;
         scrubTelemetryInputs?: boolean;
         sendConfig?: boolean;
+        captureEmail?: boolean;
+        captureUsername?: boolean;
+        captureIp?: boolean;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
