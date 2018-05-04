@@ -589,6 +589,34 @@ function now() {
   return +new Date();
 }
 
+function filterIp(requestData, captureIp) {
+  if (!requestData || !requestData['user_ip'] || captureIp === true) {
+    return;
+  }
+  var newIp = requestData['user_ip'];
+  if (!captureIp) {
+    newIp = null;
+  } else {
+    try {
+      if (newIp.indexOf('.') !== -1) {
+        var parts = newIp.split('.');
+        parts.pop();
+        parts.push('0/24');
+        newIp = parts.join('.');
+      } else if (newIp.indexOf(':') !== -1) {
+        if (newIp.length > 12) {
+          newIp = newIp.substr(0, 12) + '...';
+        }
+      } else {
+        newIp = null;
+      }
+    } catch (e) {
+      newIp = null;
+    }
+  }
+  requestData['user_ip'] = newIp;
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -612,5 +640,6 @@ module.exports = {
   set: set,
   scrub: scrub,
   formatArgsAsString: formatArgsAsString,
-  now: now
+  now: now,
+  filterIp: filterIp
 };
