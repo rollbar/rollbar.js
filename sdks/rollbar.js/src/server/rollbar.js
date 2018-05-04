@@ -526,6 +526,8 @@ Rollbar.defaultOptions = {
   enabled: true,
   sendConfig: false,
   includeItemsInTelemetry: false,
+  captureEmail: false,
+  captureUsername: false,
   captureIp: true
 };
 
