@@ -345,6 +345,8 @@ vows.describe('transforms')
             topic: function() {
               return {
                 nothing: 'here',
+                captureEmail: true,
+                captureUsername: true,
                 captureIp: true
               };
             },
