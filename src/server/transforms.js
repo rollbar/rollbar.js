@@ -112,6 +112,7 @@ function addRequestData(item, options, callback) {
   }
 
   var requestData = _buildRequestData(req);
+  _.filterIp(requestData, options.captureIp);
   item.data.request = requestData;
 
   if (req.route) {
