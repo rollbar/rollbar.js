@@ -33,6 +33,7 @@ declare namespace Rollbar {
         version?: string;
         environment?: string;
         scrubFields?: string[];
+        scrubHeaders?: string[];
         logLevel?: Level;
         reportLevel?: Level;
         uncaughtErrorLevel?: Level;
