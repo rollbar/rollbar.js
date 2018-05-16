@@ -403,6 +403,55 @@ describe('get', function() {
   });
 });
 
+describe('filterIp', function() {
+  it('no user_ip', function() {
+    var requestData = {'something': 'but no ip'};
+    _.filterIp(requestData, false);
+    expect(requestData['user_ip']).to.not.be.ok();
+  });
+  it('capture true', function() {
+    var ip = '123.32.394.99';
+    var requestData = {'user_ip': ip};
+    _.filterIp(requestData, true);
+    expect(requestData['user_ip']).to.eql(ip);
+  });
+  it('anonymize ip4', function() {
+    var ip = '123.32.394.99';
+    var requestData = {'user_ip': ip};
+    _.filterIp(requestData, 'anonymize');
+    expect(requestData['user_ip']).to.not.eql(ip);
+    expect(requestData['user_ip']).to.be.ok();
+  });
+  it('capture false', function() {
+    var ip = '123.32.394.99';
+    var requestData = {'user_ip': ip};
+    _.filterIp(requestData, false);
+    expect(requestData['user_ip']).to.not.eql(ip);
+    expect(requestData['user_ip']).to.not.be.ok();
+  });
+  it('ipv6 capture false', function() {
+    var ip = '2607:f0d0:1002:51::4';
+    var requestData = {'user_ip': ip};
+    _.filterIp(requestData, false);
+    expect(requestData['user_ip']).to.not.eql(ip);
+    expect(requestData['user_ip']).to.not.be.ok();
+  });
+  it('ipv6 anonymize', function() {
+    var ips = [
+        'FE80:0000:0000:0000:0202:B3FF:FE1E:8329',
+        'FE80::0202:B3FF:FE1E:8329',
+        '2607:f0d0:1002:51::4',
+    ];
+    for (var i = 0; i < ips.length; i++) {
+      var ip = ips[i];
+      var requestData = {'user_ip': ip};
+      _.filterIp(requestData, 'anonymize');
+      expect(requestData['user_ip']).to.not.eql(ip);
+      expect(requestData['user_ip']).to.be.ok();
+    }
+  });
+});
+
 describe('set', function() {
   it('should handle a top level key', function() {
     var o = {a: 42};

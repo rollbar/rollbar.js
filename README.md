@@ -782,6 +782,20 @@ configuration issues.
 
 Default: false
 </dd>
+
+<dt>captureIp</dt>
+<dd>For browser settings, this determines how we attempt to capture IP addresses from the client
+that submits items. For server settings, this determines how we capture IP addresses from requests.
+
+Possible values are: `true`, `false`, or `anonymize`.
+
+If `true` then we will attempt to capture and store the full IP address of the client.
+If set to `anonymize` we will do a semi-anonymization on the captured IP address by masking out
+the least significant bits.
+If set to `false` we will not attempt to capture any IP address.
+
+Default: true
+</dd>
 </dl>
 
 ### Payload
@@ -1424,6 +1438,9 @@ If you're using the [Passport](http://passportjs.org/) authentication library, t
 - `user_id`: the user id as an integer or string, or a function which when called will return the user id
 
 Note: in Rollbar, the `id` is used to uniquely identify a person; `email` and `username` are supplemental and will be overwritten whenever a new value is received for an existing `id`. The `id` is a string up to 40 characters long.
+
+By default we only attempt to capture the `id` for a user. Use the boolean configuration options
+`captureEmail` and `captureUsername` to change this behaviour.
 
 ## Verbose Option
 

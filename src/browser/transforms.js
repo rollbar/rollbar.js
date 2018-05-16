@@ -49,10 +49,16 @@ function addRequestInfo(window) {
     if (!window || !window.location) {
       return callback(null, item);
     }
+    var remoteString = '$remote_ip';
+    if (!options.captureIp) {
+      remoteString = null;
+    } else if (options.captureIp !== true) {
+      remoteString += '_anonymize';
+    }
     _.set(item, 'data.request', {
       url: window.location.href,
       query_string: window.location.search,
-      user_ip: '$remote_ip'
+      user_ip: remoteString
     });
     callback(null, item);
   };

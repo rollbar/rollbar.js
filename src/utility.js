@@ -589,6 +589,42 @@ function now() {
   return +new Date();
 }
 
+function filterIp(requestData, captureIp) {
+  if (!requestData || !requestData['user_ip'] || captureIp === true) {
+    return;
+  }
+  var newIp = requestData['user_ip'];
+  if (!captureIp) {
+    newIp = null;
+  } else {
+    try {
+      var parts;
+      if (newIp.indexOf('.') !== -1) {
+        parts = newIp.split('.');
+        parts.pop();
+        parts.push('0');
+        newIp = parts.join('.');
+      } else if (newIp.indexOf(':') !== -1) {
+        parts = newIp.split(':');
+        if (parts.length > 2) {
+          var beginning = parts.slice(0, 3);
+          var slashIdx = beginning[2].indexOf('/');
+          if (slashIdx !== -1) {
+            beginning[2] = beginning[2].substring(0, slashIdx);
+          }
+          var terminal = '0000:0000:0000:0000:0000';
+          newIp = beginning.concat(terminal).join(':');
+        }
+      } else {
+        newIp = null;
+      }
+    } catch (e) {
+      newIp = null;
+    }
+  }
+  requestData['user_ip'] = newIp;
+}
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -612,5 +648,6 @@ module.exports = {
   set: set,
   scrub: scrub,
   formatArgsAsString: formatArgsAsString,
-  now: now
+  now: now,
+  filterIp: filterIp
 };

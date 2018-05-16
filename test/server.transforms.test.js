@@ -244,7 +244,10 @@ vows.describe('transforms')
       'options': {
         'anything': {
           topic: function() {
-            return {some: 'stuff'};
+            return {
+              some: 'stuff',
+              captureIp: true,
+            };
           },
           'item': {
             'no error': {
@@ -340,7 +343,12 @@ vows.describe('transforms')
         'without custom addRequestData method': {
           'without scrub fields': {
             topic: function() {
-              return {nothing: 'here'};
+              return {
+                nothing: 'here',
+                captureEmail: true,
+                captureUsername: true,
+                captureIp: true
+              };
             },
             'item': {
               'without a request': {
@@ -585,6 +593,7 @@ vows.describe('transforms')
                 i.myRequest = {body: r.body.token};
               };
               return {
+                captureIp: true,
                 addRequestData: customFn,
                 scrubFields: [
                   'passwd',
@@ -670,6 +679,7 @@ vows.describe('transforms')
         'with scrub fields': {
           topic: function() {
             return {
+              captureIp: true,
               scrubHeaders: [
                 'x-auth-token'
               ],
