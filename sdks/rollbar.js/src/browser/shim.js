@@ -151,13 +151,15 @@ Shim.prototype.wrap = function(f, context, _before) {
           return f.apply(this, arguments);
         } catch(exc) {
           var e = exc;
-          if (typeof e === 'string') {
-            e = new String(e);
-          }
-          e._rollbarContext = ctxFn() || {};
-          e._rollbarContext._wrappedSource = f.toString();
+          if (e) {
+            if (typeof e === 'string') {
+              e = new String(e);
+            }
+            e._rollbarContext = ctxFn() || {};
+            e._rollbarContext._wrappedSource = f.toString();
 
-          window._rollbarWrappedError = e;
+            window._rollbarWrappedError = e;
+          }
           throw e;
         }
       };
