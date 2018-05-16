@@ -1,5 +1,28 @@
 # Change Log
 
+## v2.4.0
+
+- Introduce the `captureIp` configuration settting.
+  For browser settings, this determines how we attempt to capture IP addresses from the client
+  that submits items. For server settings, this determines how we capture IP addresses from requests.
+
+  Possible values are: `true`, `false`, or `anonymize`.
+
+  If `true` then we will attempt to capture and store the full IP address of the client.
+  If set to `anonymize` we will do a semi-anonymization on the captured IP address by masking out
+  the least significant bits.
+  If set to `false` we will not attempt to capture any IP address.
+
+  Default: true
+
+- Introduce the `captureUsername` and `captureEmail` configuration settings.
+  In the server context, as described in the documentation, we attempt to gather information about
+  the current user. Prior to this release, we tried to gather the `id`, `username`, and `email`.
+  Starting with this release, by default we only attempt to capture the `id` for a user.
+  The boolean configuration options `captureEmail` and `captureUsername` can be used to change
+  this behaviour.
+
+
 ## v2.3.6
 
 - Updates for React Native
