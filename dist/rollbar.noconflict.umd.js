@@ -95,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Instrumenter = __webpack_require__(26);
 	
 	function Rollbar(options, client) {
-	  this.options = _.extend(true, defaultOptions, options);
+	  this.options = _.extend({}, defaultOptions, options);
 	  var api = new API(this.options, transport, urllib);
 	  this.client = client || new Client(this.options, api, logger, 'browser');
 	
@@ -150,7 +150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (payloadData) {
 	    payload = {payload: payloadData};
 	  }
-	  this.options = _.extend(true, {}, oldOptions, options, payload);
+	  this.options = _.extend({}, oldOptions, options, payload);
 	  this.client.configure(options, payloadData);
 	  this.instrumenter.configure(options);
 	  return this;
@@ -360,13 +360,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return f.apply(this, arguments);
 	        } catch(exc) {
 	          var e = exc;
-	          if (_.isType(e, 'string')) {
-	            e = new String(e);
-	          }
-	          e._rollbarContext = ctxFn() || {};
-	          e._rollbarContext._wrappedSource = f.toString();
+	          if (e) {
+	            if (_.isType(e, 'string')) {
+	              e = new String(e);
+	            }
+	            e._rollbarContext = ctxFn() || {};
+	            e._rollbarContext._wrappedSource = f.toString();
 	
-	          window._rollbarWrappedError = e;
+	            window._rollbarWrappedError = e;
+	          }
 	          throw e;
 	        }
 	      };
@@ -472,7 +474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.3.9"),
+	  version: ("2.4.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -481,7 +483,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  verbose: false,
 	  enabled: true,
 	  sendConfig: false,
-	  includeItemsInTelemetry: true
+	  includeItemsInTelemetry: true,
+	  captureIp: true
 	};
 	
 	module.exports = Rollbar;
@@ -1637,6 +1640,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return +new Date();
 	}
 	
+	function filterIp(requestData, captureIp) {
+	  if (!requestData || !requestData['user_ip'] || captureIp === true) {
+	    return;
+	  }
+	  var newIp = requestData['user_ip'];
+	  if (!captureIp) {
+	    newIp = null;
+	  } else {
+	    try {
+	      var parts;
+	      if (newIp.indexOf('.') !== -1) {
+	        parts = newIp.split('.');
+	        parts.pop();
+	        parts.push('0');
+	        newIp = parts.join('.');
+	      } else if (newIp.indexOf(':') !== -1) {
+	        parts = newIp.split(':');
+	        if (parts.length > 2) {
+	          var beginning = parts.slice(0, 3);
+	          var slashIdx = beginning[2].indexOf('/');
+	          if (slashIdx !== -1) {
+	            beginning[2] = beginning[2].substring(0, slashIdx);
+	          }
+	          var terminal = '0000:0000:0000:0000:0000';
+	          newIp = beginning.concat(terminal).join(':');
+	        }
+	      } else {
+	        newIp = null;
+	      }
+	    } catch (e) {
+	      newIp = null;
+	    }
+	  }
+	  requestData['user_ip'] = newIp;
+	}
+	
 	module.exports = {
 	  isType: isType,
 	  typeName: typeName,
@@ -1660,7 +1699,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  set: set,
 	  scrub: scrub,
 	  formatArgsAsString: formatArgsAsString,
-	  now: now
+	  now: now,
+	  filterIp: filterIp
 	};
 
 
@@ -2557,7 +2597,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Notifier.prototype.configure = function(options) {
 	  this.queue && this.queue.configure(options);
 	  var oldOptions = this.options;
-	  this.options = _.extend(true, {}, oldOptions, options);
+	  this.options = _.extend({}, oldOptions, options);
 	  return this;
 	};
 	
@@ -3592,10 +3632,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!window || !window.location) {
 	      return callback(null, item);
 	    }
+	    var remoteString = '$remote_ip';
+	    if (!options.captureIp) {
+	      remoteString = null;
+	    } else if (options.captureIp !== true) {
+	      remoteString += '_anonymize';
+	    }
 	    _.set(item, 'data.request', {
 	      url: window.location.href,
 	      query_string: window.location.search,
-	      user_ip: '$remote_ip'
+	      user_ip: remoteString
 	    });
 	    callback(null, item);
 	  };
