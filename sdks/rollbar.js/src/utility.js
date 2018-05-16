@@ -598,14 +598,22 @@ function filterIp(requestData, captureIp) {
     newIp = null;
   } else {
     try {
+      var parts;
       if (newIp.indexOf('.') !== -1) {
-        var parts = newIp.split('.');
+        parts = newIp.split('.');
         parts.pop();
-        parts.push('0/24');
+        parts.push('0');
         newIp = parts.join('.');
       } else if (newIp.indexOf(':') !== -1) {
-        if (newIp.length > 12) {
-          newIp = newIp.substr(0, 12) + '...';
+        parts = newIp.split(':');
+        if (parts.length > 2) {
+          var beginning = parts.slice(0, 3);
+          var slashIdx = beginning[2].indexOf('/');
+          if (slashIdx !== -1) {
+            beginning[2] = beginning[2].substring(0, slashIdx);
+          }
+          var terminal = '0000:0000:0000:0000:0000';
+          newIp = beginning.concat(terminal).join(':');
         }
       } else {
         newIp = null;
