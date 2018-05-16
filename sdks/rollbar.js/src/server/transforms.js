@@ -112,6 +112,7 @@ function addRequestData(item, options, callback) {
   }
 
   var requestData = _buildRequestData(req);
+  _.filterIp(requestData, options.captureIp);
   item.data.request = requestData;
 
   if (req.route) {
@@ -124,14 +125,23 @@ function addRequestData(item, options, callback) {
     }
   }
 
+  var captureEmail = options.captureEmail;
+  var captureUsername = options.captureUsername;
   if (req.rollbar_person) {
-    item.data.person = req.rollbar_person;
+    var person = req.rollbar_person;
+    if (!captureEmail && person.email) {
+      person.email = null;
+    }
+    if (!captureUsername && person.username) {
+      person.username = null;
+    }
+    item.data.person = person;
   } else if (req.user) {
     item.data.person = {id: req.user.id};
-    if (req.user.username) {
+    if (req.user.username && captureUsername) {
       item.data.person.username = req.user.username;
     }
-    if (req.user.email) {
+    if (req.user.email && captureEmail) {
       item.data.person.email = req.user.email;
     }
   } else if (req.user_id || req.userId) {
