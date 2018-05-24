@@ -51,7 +51,7 @@ Api.prototype.postItem = function(data, callback) {
 
 Api.prototype.configure = function(options) {
   var oldOptions = this.oldOptions;
-  this.options = _.extend(true, {}, oldOptions, options);
+  this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);
   if (this.options.accessToken !== undefined) {
     this.accessToken = this.options.accessToken;

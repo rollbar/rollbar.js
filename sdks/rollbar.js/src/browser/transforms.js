@@ -27,7 +27,7 @@ function ensureItemHasSomethingToSay(item, options, callback) {
 
 function addBaseInfo(item, options, callback) {
   var environment = (options.payload && options.payload.environment) || options.environment;
-  item.data = _.extend(true, {}, item.data, {
+  item.data = _.merge(item.data, {
     environment: environment,
     level: item.level,
     endpoint: options.endpoint,
@@ -131,7 +131,7 @@ function addBodyMessage(item, options, callback) {
   };
 
   if (custom) {
-    result.extra = _.extend(true, {}, custom);
+    result.extra = _.merge(custom);
   }
 
   _.set(item, 'data.body', {message: result});
@@ -223,7 +223,7 @@ function addBodyTrace(item, options, callback) {
     trace.frames.reverse();
 
     if (custom) {
-      trace.extra = _.extend(true, {}, custom);
+      trace.extra = _.merge(custom);
     }
     _.set(item, 'data.body', {trace: trace});
     callback(null, item);

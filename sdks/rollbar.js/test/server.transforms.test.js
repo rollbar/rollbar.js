@@ -85,7 +85,7 @@ vows.describe('transforms')
         },
         'with values': {
           topic: function() {
-            return _.extend(true, {}, rollbar.defaultOptions, {
+            return _.merge(rollbar.defaultOptions, {
               payload: {
                 environment: 'payload-prod',
               },

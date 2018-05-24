@@ -4,14 +4,14 @@ var MAX_EVENTS = 100;
 
 function Telemeter(options) {
   this.queue = [];
-  this.options = _.extend(true, {}, options);
+  this.options = _.merge(options);
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 }
 
 Telemeter.prototype.configure = function(options) {
   var oldOptions = this.options;
-  this.options = _.extend(true, {}, oldOptions, options);
+  this.options = _.merge(oldOptions, options);
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
   var deleteCount = 0;

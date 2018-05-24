@@ -1,4 +1,4 @@
-var extend = require('extend');
+var merge = require('./merge');
 
 var RollbarJSON = {};
 var __initRollbarJSON = false;
@@ -421,7 +421,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
 
   if (extraArgs.length > 0) {
     // if custom is an array this turns it into an object with integer keys
-    custom = extend(true, {}, custom);
+    custom = merge(custom);
     custom.extraArgs = extraArgs;
   }
 
@@ -625,6 +625,7 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
+
 module.exports = {
   isType: isType,
   typeName: typeName,
@@ -632,7 +633,7 @@ module.exports = {
   isNativeFunction: isNativeFunction,
   isIterable: isIterable,
   isError: isError,
-  extend: extend,
+  merge: merge,
   traverse: traverse,
   redact: redact,
   uuid4: uuid4,
