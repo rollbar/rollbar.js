@@ -1,5 +1,7 @@
 # Change Log
 
+The change log has moved to this repo's [GitHub Releases Page](https://github.com/rollbar/rollbar.js/releases).
+
 ## v2.4.0
 
 - Introduce the `captureIp` configuration settting.
