@@ -6,7 +6,7 @@ function itemToPayload(item, options, callback) {
     delete payloadOptions.body;
   }
 
-  var data = _.extend(true, {}, item.data, payloadOptions);
+  var data = _.merge(item.data, payloadOptions);
   if (item._isUncaught) {
     data._isUncaught = true;
   }
@@ -41,7 +41,7 @@ function addMessageWithError(item, options, callback) {
       return;
     }
     var extra = _.get(item, tracePath+'.extra') || {};
-    var newExtra =  _.extend(true, {}, extra, {message: item.message});
+    var newExtra =  _.merge(extra, {message: item.message});
     _.set(item, tracePath+'.extra', newExtra);
   }
   callback(null, item);
@@ -49,7 +49,7 @@ function addMessageWithError(item, options, callback) {
 
 function userTransform(logger) {
   return function(item, options, callback) {
-    var newItem = _.extend(true, {}, item);
+    var newItem = _.merge(item);
     try {
       if (_.isFunction(options.transform)) {
         options.transform(newItem.data);
