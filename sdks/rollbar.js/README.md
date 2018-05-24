@@ -840,7 +840,12 @@ Rollbar.configure({
 </dt>
 <dd>Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to GitHub.
 
-  Note: `codeVersion` will not work, you must use `code_version`.
+  Note: for the purposes of nesting under the payload key, only `code_version` will correctly set
+  the value in the final item. However, if you wish to set this code version at the top level of the
+  configuration object rather than nested under the payload key, we will accept both `codeVersion`
+  and `code_version` with `codeVersion` given preference if both happened to be defined.
+  Furthermore, if `code_version` is nested under the payload key this will have the final preference
+  over any value set at the top level.
 </dd>
 
 <dt>source_map_enabled
