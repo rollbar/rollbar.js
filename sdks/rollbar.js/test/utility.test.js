@@ -3,8 +3,6 @@
 /* globals it */
 /* globals sinon */
 
-var extend = require('extend');
-
 var _ = require('../src/utility');
 
 describe('typeName', function() {
@@ -174,18 +172,156 @@ describe('isError', function() {
   });
 });
 
-describe('extend', function() {
-  it('should be exported and work', function(done) {
-    var o1 = {a: 1};
-    var o2 = {a: 42};
-    var e1 = _.extend(true, {}, o1);
-    expect(e1.a).to.eql(1);
-    e1.a = 100;
+describe('merge', function() {
+  it('should work for simple objects', function(done) {
+    var o1 = {a: 1, b: 2};
+    var o2 = {a: 42, c: 101};
+    var e = _.merge(o1, o2);
+
+    expect(e.a).to.eql(42);
+    expect(e.b).to.eql(2);
+    expect(e.c).to.eql(101);
+
+    e.a = 100;
+
     expect(o1.a).to.eql(1);
+    expect(o2.a).to.eql(42);
 
-    var e2 = _.extend(true, o2, {b: 45});
-    expect(e2).to.eql({a: 42, b: 45});
+    done();
+  });
+  it('should not merge arrays', function(done) {
+    var o1 = {a: 1, b: ['hello', 'world']};
+    var o2 = {a: 42, b: ['goodbye']};
+    var e = _.merge(o1, o2);
 
+    expect(e.a).to.eql(42);
+    expect(e.b).to.contain('goodbye');
+    expect(e.b).not.to.contain('world');
+
+    expect(o1.b).to.contain('world');
+    expect(o1.b).not.to.contain('goodbye');
+    done();
+  });
+  it('should handle nested objects', function(done) {
+    var o1 = {
+      a: 1,
+      c: 100,
+      payload: {
+        person: {
+          id: 'xxx',
+          name: 'hello'
+        },
+        environment: 'foo'
+      }
+    };
+    var o2 = {
+      a: 42,
+      b: 2,
+      payload: {
+        person: {
+          id: 'yesyes',
+          email: 'cool'
+        },
+        other: 'bar'
+      }
+    };
+    var e = _.merge(o1, o2);
+
+    expect(e.a).to.eql(42);
+    expect(e.c).to.eql(100);
+    expect(e.b).to.eql(2);
+    expect(e.payload.person.id).to.eql('yesyes');
+    expect(e.payload.person.email).to.eql('cool');
+    expect(e.payload.person.name).to.eql('hello');
+    expect(e.payload.environment).to.eql('foo');
+    expect(e.payload.other).to.eql('bar');
+    done();
+  });
+  it('should handle nested arrays and objects, with non-matching structure', function(done) {
+    var o1 = {
+      a: 1,
+      c: {
+        arr: [3, 4, 5],
+        other: [99, 100, 101],
+        payload: {
+          foo: {
+            bar: 'baz'
+          },
+          hello: 'world',
+          keeper: 'yup'
+        }
+      }
+    };
+    var o2 = {
+      a: 32,
+      c: {
+        arr: [1],
+        other: { fuzz: 'buzz' },
+        payload: {
+          foo: 'hello',
+          hello: {
+            baz: 'bar'
+          }
+        }
+      }
+    };
+    var e = _.merge(o1, o2);
+
+    expect(e.a).to.eql(32);
+    expect(e.c.arr[0]).to.eql(1);
+    expect(e.c.arr).not.to.contain(4);
+    expect(e.c.other.fuzz).to.eql('buzz');
+    expect(e.c.payload.foo).to.eql('hello');
+    expect(e.c.payload.hello.baz).to.eql('bar');
+    expect(e.c.payload.keeper).to.eql('yup');
+
+    done();
+  });
+
+  it('should handle many nested objects', function(done) {
+    var o1 = {
+      a: 1,
+      c: 100,
+      payload: {
+        person: {
+          id: 'xxx',
+          name: 'hello'
+        },
+        environment: 'foo'
+      }
+    };
+    var o2 = {
+      a: 42,
+      b: 2,
+      payload: {
+        person: {
+          id: 'yesyes',
+          email: 'cool'
+        },
+        other: 'bar'
+      }
+    };
+    var o3 = {
+      payload: {
+        fuzz: 'buzz',
+        person: {
+          name: 'nope'
+        }
+      },
+      amihere: 'yes'
+    };
+    var e = _.merge(o1, o2, o3);
+
+    expect(e.a).to.eql(42);
+    expect(e.c).to.eql(100);
+    expect(e.b).to.eql(2);
+    expect(e.payload.person.id).to.eql('yesyes');
+    expect(e.payload.person.email).to.eql('cool');
+    expect(e.payload.person.name).to.eql('nope');
+    expect(e.payload.environment).to.eql('foo');
+    expect(e.payload.fuzz).to.eql('buzz');
+    expect(e.payload.other).to.eql('bar');
+    expect(e.amihere).to.eql('yes');
     done();
   });
 });

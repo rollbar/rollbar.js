@@ -25,7 +25,7 @@ function Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
-  this.options = _.extend({}, Rollbar.defaultOptions, options);
+  this.options = _.merge(Rollbar.defaultOptions, options);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
@@ -62,7 +62,7 @@ function handleUninitialized(maybeCallback) {
 }
 
 Rollbar.prototype.global = function(options) {
-  options = _.extend(true, {}, options);
+  options = _.merge(options);
   // On the server we want to ignore any maxItems setting
   delete options.maxItems;
   this.client.global(options);
@@ -82,7 +82,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.extend(true, {}, oldOptions, options, payload);
+  this.options = _.merge(oldOptions, options, payload);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   logger.setVerbose(this.options.verbose);
