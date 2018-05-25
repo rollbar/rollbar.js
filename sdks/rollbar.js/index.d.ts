@@ -22,6 +22,8 @@ declare class Rollbar {
     public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 
     public lambdaHandler(handler: Rollbar.LambdaHandler): Rollbar.LambdaHandler;
+
+    public errorHandler(): Rollbar.ExpressErrorHandler;
 }
 
 declare namespace Rollbar {
@@ -97,5 +99,9 @@ declare namespace Rollbar {
     export interface DomAttribute {
         key: DomAttributeKey;
         value: string;
+    }
+    export type ExpressErrorHandler = (err: any, request: any, response: any, next: ExpressNextFunction) => any;
+    export interface ExpressNextFunction {
+      (err?: any): void;
     }
 }
