@@ -17,6 +17,8 @@ function baseData(item, options, callback) {
 
   if (options.codeVersion) {
     data.code_version = options.codeVersion;
+  } else if (options.code_version) {
+    data.code_version = options.code_version;
   }
 
   var props = Object.getOwnPropertyNames(item.custom || {});

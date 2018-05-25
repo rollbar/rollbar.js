@@ -32,6 +32,7 @@ declare namespace Rollbar {
         accessToken?: string;
         version?: string;
         environment?: string;
+        codeVersion?: string;
         scrubFields?: string[];
         scrubHeaders?: string[];
         logLevel?: Level;
