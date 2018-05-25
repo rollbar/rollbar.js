@@ -35,7 +35,7 @@ function Queue(rateLimiter, api, logger, options) {
 Queue.prototype.configure = function(options) {
   this.api && this.api.configure(options);
   var oldOptions = this.options;
-  this.options = _.extend(true, {}, oldOptions, options);
+  this.options = _.merge(oldOptions, options);
   return this;
 };
 

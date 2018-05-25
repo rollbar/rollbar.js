@@ -3,8 +3,6 @@
 /* globals it */
 /* globals sinon */
 
-var extend = require('extend');
-
 var Notifier = require('../src/notifier');
 
 var rollbarConfig = {

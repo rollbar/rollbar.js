@@ -12,7 +12,7 @@ var _ = require('./utility');
  * @param logger
  */
 function Rollbar(options, api, logger, platform) {
-  this.options = _.extend(true, {}, options);
+  this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
@@ -42,7 +42,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.extend(true, {}, oldOptions, options, payload);
+  this.options = _.merge(oldOptions, options, payload);
   this.global(this.options);
   return this;
 };

@@ -37,7 +37,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
     if (!_.isType(autoInstrument, 'object')) {
       autoInstrument = defaults;
     }
-    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+    this.autoInstrument = _.merge(defaults, autoInstrument);
   }
   this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
   this.telemetryScrubber = options.telemetryScrubber;
@@ -62,14 +62,14 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
 
 Instrumenter.prototype.configure = function(options) {
   var autoInstrument = options.autoInstrument;
-  var oldSettings = _.extend(true, {}, this.autoInstrument);
+  var oldSettings = _.merge(this.autoInstrument);
   if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
   } else {
     if (!_.isType(autoInstrument, 'object')) {
       autoInstrument = defaults;
     }
-    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+    this.autoInstrument = _.merge(defaults, autoInstrument);
   }
   this.instrument(oldSettings);
   if (options.scrubTelemetryInputs !== undefined) {
