@@ -95,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Instrumenter = __webpack_require__(26);
 	
 	function Rollbar(options, client) {
-	  this.options = _.extend({}, defaultOptions, options);
+	  this.options = _.merge(defaultOptions, options);
 	  var api = new API(this.options, transport, urllib);
 	  this.client = client || new Client(this.options, api, logger, 'browser');
 	
@@ -150,7 +150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (payloadData) {
 	    payload = {payload: payloadData};
 	  }
-	  this.options = _.extend({}, oldOptions, options, payload);
+	  this.options = _.merge(oldOptions, options, payload);
 	  this.client.configure(options, payloadData);
 	  this.instrumenter.configure(options);
 	  return this;
@@ -474,7 +474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.4.0"),
+	  version: ("2.4.1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -510,7 +510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param logger
 	 */
 	function Rollbar(options, api, logger, platform) {
-	  this.options = _.extend(true, {}, options);
+	  this.options = _.merge(options);
 	  this.logger = logger;
 	  Rollbar.rateLimiter.configureGlobal(this.options);
 	  Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
@@ -540,7 +540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (payloadData) {
 	    payload = {payload: payloadData};
 	  }
-	  this.options = _.extend(true, {}, oldOptions, options, payload);
+	  this.options = _.merge(oldOptions, options, payload);
 	  this.global(this.options);
 	  return this;
 	};
@@ -820,7 +820,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Queue.prototype.configure = function(options) {
 	  this.api && this.api.configure(options);
 	  var oldOptions = this.options;
-	  this.options = _.extend(true, {}, oldOptions, options);
+	  this.options = _.merge(oldOptions, options);
 	  return this;
 	};
 	
@@ -1049,7 +1049,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var extend = __webpack_require__(7);
+	var merge = __webpack_require__(7);
 	
 	var RollbarJSON = {};
 	var __initRollbarJSON = false;
@@ -1472,7 +1472,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  if (extraArgs.length > 0) {
 	    // if custom is an array this turns it into an object with integer keys
-	    custom = extend(true, {}, custom);
+	    custom = merge(custom);
 	    custom.extraArgs = extraArgs;
 	  }
 	
@@ -1676,6 +1676,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  requestData['user_ip'] = newIp;
 	}
 	
+	
 	module.exports = {
 	  isType: isType,
 	  typeName: typeName,
@@ -1683,7 +1684,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  isNativeFunction: isNativeFunction,
 	  isIterable: isIterable,
 	  isError: isError,
-	  extend: extend,
+	  merge: merge,
 	  traverse: traverse,
 	  redact: redact,
 	  uuid4: uuid4,
@@ -1710,16 +1711,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
+	'use strict';
+	
 	var hasOwn = Object.prototype.hasOwnProperty;
 	var toStr = Object.prototype.toString;
-	
-	var isArray = function isArray(arr) {
-		if (typeof Array.isArray === 'function') {
-			return Array.isArray(arr);
-		}
-	
-		return toStr.call(arr) === '[object Array]';
-	};
 	
 	var isPlainObject = function isPlainObject(obj) {
 		if (!obj || toStr.call(obj) !== '[object Object]') {
@@ -1741,59 +1736,35 @@ return /******/ (function(modules) { // webpackBootstrap
 		return typeof key === 'undefined' || hasOwn.call(obj, key);
 	};
 	
-	module.exports = function extend() {
-		var options, name, src, copy, copyIsArray, clone,
-			target = arguments[0],
-			i = 1,
-			length = arguments.length,
-			deep = false;
+	function merge() {
+	  var i, src, copy, clone, name,
+	      result = {},
+	     current = null,
+	      length = arguments.length;
 	
-		// Handle a deep copy situation
-		if (typeof target === 'boolean') {
-			deep = target;
-			target = arguments[1] || {};
-			// skip the boolean and the target
-			i = 2;
-		} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
-			target = {};
-		}
+	  for (i=0; i < length; i++) {
+	    current = arguments[i];
+	    if (current == null) {
+	      continue;
+	    }
 	
-		for (; i < length; ++i) {
-			options = arguments[i];
-			// Only deal with non-null/undefined values
-			if (options != null) {
-				// Extend the base object
-				for (name in options) {
-					src = target[name];
-					copy = options[name];
+	    for (name in current) {
+	      src = result[name];
+	      copy = current[name];
+	      if (result !== copy) {
+	        if (copy && isPlainObject(copy)) {
+	          clone = src && isPlainObject(src) ? src : {};
+	          result[name] = merge(clone, copy);
+	        } else if (typeof copy !== 'undefined') {
+	          result[name] = copy
+	        }
+	      }
+	    }
+	  }
+	  return result;
+	}
 	
-					// Prevent never-ending loop
-					if (target !== copy) {
-						// Recurse if we're merging plain objects or arrays
-						if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
-							if (copyIsArray) {
-								copyIsArray = false;
-								clone = src && isArray(src) ? src : [];
-							} else {
-								clone = src && isPlainObject(src) ? src : {};
-							}
-	
-							// Never move original objects, clone them
-							target[name] = extend(deep, clone, copy);
-	
-						// Don't bring in undefined values
-						} else if (typeof copy !== 'undefined') {
-							target[name] = copy;
-						}
-					}
-				}
-			}
-		}
-	
-		// Return the modified object
-		return target;
-	};
-	
+	module.exports = merge;
 
 
 /***/ }),
@@ -2597,7 +2568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Notifier.prototype.configure = function(options) {
 	  this.queue && this.queue.configure(options);
 	  var oldOptions = this.options;
-	  this.options = _.extend({}, oldOptions, options);
+	  this.options = _.merge(oldOptions, options);
 	  return this;
 	};
 	
@@ -2703,14 +2674,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function Telemeter(options) {
 	  this.queue = [];
-	  this.options = _.extend(true, {}, options);
+	  this.options = _.merge(options);
 	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
 	  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 	}
 	
 	Telemeter.prototype.configure = function(options) {
 	  var oldOptions = this.options;
-	  this.options = _.extend(true, {}, oldOptions, options);
+	  this.options = _.merge(oldOptions, options);
 	  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
 	  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
 	  var deleteCount = 0;
@@ -2922,7 +2893,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Api.prototype.configure = function(options) {
 	  var oldOptions = this.oldOptions;
-	  this.options = _.extend(true, {}, oldOptions, options);
+	  this.options = _.merge(oldOptions, options);
 	  this.transportOptions = _getTransport(this.options, this.url);
 	  if (this.options.accessToken !== undefined) {
 	    this.accessToken = this.options.accessToken;
@@ -3610,7 +3581,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function addBaseInfo(item, options, callback) {
 	  var environment = (options.payload && options.payload.environment) || options.environment;
-	  item.data = _.extend(true, {}, item.data, {
+	  item.data = _.merge(item.data, {
 	    environment: environment,
 	    level: item.level,
 	    endpoint: options.endpoint,
@@ -3714,7 +3685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  if (custom) {
-	    result.extra = _.extend(true, {}, custom);
+	    result.extra = _.merge(custom);
 	  }
 	
 	  _.set(item, 'data.body', {message: result});
@@ -3806,7 +3777,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trace.frames.reverse();
 	
 	    if (custom) {
-	      trace.extra = _.extend(true, {}, custom);
+	      trace.extra = _.merge(custom);
 	    }
 	    _.set(item, 'data.body', {trace: trace});
 	    callback(null, item);
@@ -4269,7 +4240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    delete payloadOptions.body;
 	  }
 	
-	  var data = _.extend(true, {}, item.data, payloadOptions);
+	  var data = _.merge(item.data, payloadOptions);
 	  if (item._isUncaught) {
 	    data._isUncaught = true;
 	  }
@@ -4304,7 +4275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return;
 	    }
 	    var extra = _.get(item, tracePath+'.extra') || {};
-	    var newExtra =  _.extend(true, {}, extra, {message: item.message});
+	    var newExtra =  _.merge(extra, {message: item.message});
 	    _.set(item, tracePath+'.extra', newExtra);
 	  }
 	  callback(null, item);
@@ -4312,7 +4283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function userTransform(logger) {
 	  return function(item, options, callback) {
-	    var newItem = _.extend(true, {}, item);
+	    var newItem = _.merge(item);
 	    try {
 	      if (_.isFunction(options.transform)) {
 	        options.transform(newItem.data);
@@ -4579,7 +4550,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!_.isType(autoInstrument, 'object')) {
 	      autoInstrument = defaults;
 	    }
-	    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+	    this.autoInstrument = _.merge(defaults, autoInstrument);
 	  }
 	  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
 	  this.telemetryScrubber = options.telemetryScrubber;
@@ -4604,14 +4575,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Instrumenter.prototype.configure = function(options) {
 	  var autoInstrument = options.autoInstrument;
-	  var oldSettings = _.extend(true, {}, this.autoInstrument);
+	  var oldSettings = _.merge(this.autoInstrument);
 	  if (options.enabled === false || autoInstrument === false) {
 	    this.autoInstrument = {};
 	  } else {
 	    if (!_.isType(autoInstrument, 'object')) {
 	      autoInstrument = defaults;
 	    }
-	    this.autoInstrument = _.extend(true, {}, defaults, autoInstrument);
+	    this.autoInstrument = _.merge(defaults, autoInstrument);
 	  }
 	  this.instrument(oldSettings);
 	  if (options.scrubTelemetryInputs !== undefined) {
