@@ -6,7 +6,7 @@ Rollbar.js is the Javascript SDK for [Rollbar](https://rollbar.com).  It support
 ## Setup Instructions
 
 1. [Sign up for a Rollbar account](https://rollbar.com/signup).
-2. For client-side Javascript, follow the [Browser Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser) instructions.  For Node.js, follow the [Server Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser).
+2. For client-side Javascript, follow the [Browser Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser) instructions.  For Node.js, follow the [Server Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-server).
 
 ## Usage and Reference
 
