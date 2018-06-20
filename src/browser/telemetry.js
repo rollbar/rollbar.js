@@ -49,7 +49,7 @@ function defaultValueScrubber(scrubFields) {
     var name = nameFromDescription(description);
     if (!name) { return false; }
     for (var i = 0; i < patterns.length; ++i) {
-      if (patterns[i].test(key)) {
+      if (patterns[i].test(name)) {
         return true;
       }
     }
