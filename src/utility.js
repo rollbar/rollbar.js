@@ -185,6 +185,10 @@ var LEVELS = {
 
 function sanitizeUrl(url) {
   var baseUrlParts = parseUri(url);
+  if (!baseUrlParts) {
+    return '(unknown)';
+  }
+
   // remove a trailing # if there is no anchor
   if (baseUrlParts.anchor === '') {
     baseUrlParts.source = baseUrlParts.source.replace('#', '');
@@ -224,7 +228,7 @@ var parseUriOptions = {
 
 function parseUri(str) {
   if (!isType(str, 'string')) {
-    throw new Error('received invalid input');
+    return undefined;
   }
 
   var o = parseUriOptions;
