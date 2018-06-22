@@ -4,17 +4,19 @@ function raw(payload) {
   return [payload, _.stringify(payload)];
 }
 
-function truncateFrames(payload, range = 30) {
+function truncateFrames(payload, range) {
+  range = (typeof range !== 'undefined') ? range : 30;
   var body = payload.data.body;
+  var frames;
   if (body.trace_chain) {
     var chain = body.trace_chain;
     for (var i=0; i < chain.length; i++) {
-      var frames = chain[i].frames;
+      frames = chain[i].frames;
       frames = selectFrames(frames, range);
       chain[i].frames = frames;
     }
   } else if (body.trace) {
-    var frames = body.trace.frames;
+    frames = body.trace.frames;
     frames = selectFrames(frames, range);
     body.trace.frames = frames;
   }
@@ -73,11 +75,11 @@ function truncate(payload) {
     truncateStrings.bind(null, 1024),
     truncateStrings.bind(null, 512),
     truncateStrings.bind(null, 256),
-    minBody,
+    minBody
   ];
   var strategy, results, result;
 
-  while (strategy = strategies.shift()) {
+  while ((strategy = strategies.shift())) {
     results = strategy(payload);
     payload = results[0];
     result  = results[1];
