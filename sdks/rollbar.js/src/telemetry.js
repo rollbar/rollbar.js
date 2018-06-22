@@ -65,9 +65,9 @@ Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) 
 };
 
 Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp) {
-  return this.capture('log', {
+  return this.capture('log', _.truncate({
     message: message
-  }, level, rollbarUUID, timestamp);
+  }), level, rollbarUUID, timestamp);
 };
 
 Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID, requestData) {
