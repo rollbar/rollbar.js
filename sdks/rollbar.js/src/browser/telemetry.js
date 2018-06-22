@@ -29,6 +29,34 @@ function restore(replacements, type) {
   }
 }
 
+function nameFromDescription(description) {
+  if (!description || !description.attributes) { return null; }
+  var attrs = description.attributes;
+  for (var a = 0; a < attrs.length; ++a) {
+    if (attrs[a].key === 'name') {
+      return attrs[a].value;
+    }
+  }
+  return null;
+}
+
+function defaultValueScrubber(scrubFields) {
+  var patterns = [];
+  for (var i = 0; i < scrubFields.length; ++i) {
+    patterns.push(new RegExp(scrubFields[i], 'i'));
+  }
+  return function(description) {
+    var name = nameFromDescription(description);
+    if (!name) { return false; }
+    for (var i = 0; i < patterns.length; ++i) {
+      if (patterns[i].test(name)) {
+        return true;
+      }
+    }
+    return false;
+  };
+}
+
 function Instrumenter(options, telemeter, rollbar, _window, _document) {
   var autoInstrument = options.autoInstrument;
   if (options.enabled === false || autoInstrument === false) {
@@ -41,6 +69,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   }
   this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
   this.telemetryScrubber = options.telemetryScrubber;
+  this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
   this.telemeter = telemeter;
   this.rollbar = rollbar;
   this._window = _window || {};
@@ -428,9 +457,13 @@ Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChe
   if (value !== undefined) {
     if (this.scrubTelemetryInputs || (domUtil.getElementType(element) === 'password')) {
       value = '[scrubbed]';
-    } else if (this.telemetryScrubber) {
+    } else {
       var description = domUtil.describeElement(element);
-      if (this.telemetryScrubber(description)) {
+      if (this.telemetryScrubber) {
+        if (this.telemetryScrubber(description)) {
+          value = '[scrubbed]';
+        }
+      } else if (this.defaultValueScrubber(description)) {
         value = '[scrubbed]';
       }
     }
