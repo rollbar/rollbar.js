@@ -34,6 +34,39 @@ describe('capture', function() {
   });
 });
 
+describe('captureLog', function() {
+  it('should handle short messages', function(done) {
+    var options = {};
+    var t = new Telemeter(options);
+    var now = +new Date();
+    var event = t.captureLog('hello world', 'log')
+    expect(event.timestamp_ms - now).to.be.below(500);
+    expect(event.type).to.equal('log');
+    expect(event.level).to.equal('log');
+    expect(event.body.message).to.equal('hello world');
+
+    done();
+  });
+
+  it('should truncate long messages', function(done) {
+    var options = {};
+    var t = new Telemeter(options);
+    var now = +new Date();
+    var longString = 'hello world';
+    for (var i = 0; i < 4; i++) {
+      longString += longString;
+    }
+    var event = t.captureLog(longString, 'log')
+    expect(longString.length).to.be.above(150);
+    expect(event.timestamp_ms - now).to.be.below(500);
+    expect(event.type).to.equal('log');
+    expect(event.level).to.equal('log');
+    expect(event.body.message).to.not.equal(longString);
+    expect(event.body.message.length).to.be.below(130);
+
+    done();
+  });
+});
 
 describe('filterTelemetry', function() {
   it('should filter out events that don\'t match the test', function(done) {

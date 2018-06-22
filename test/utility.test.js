@@ -702,3 +702,58 @@ describe('scrub', function() {
     expect(result.inner.b).to.eql('yes');
   });
 });
+
+describe('truncate', function() {
+  it('should truncate all strings in an obj', function() {
+    var longString = 'hello world';
+    var otherLong = 'goodbye world';
+    for (var i = 0; i < 4; i++) {
+      longString += longString;
+      otherLong += otherLong;
+    }
+    var obj = {
+      a: longString,
+      b: 'short string',
+      c: otherLong,
+      d: 42,
+      e: [1, 2, 3],
+      f: {x: 42}
+    };
+
+    var result = _.truncate(obj);
+    expect(result.a).to.not.eql(longString);
+    expect(result.a.length).to.be.below(130);
+    expect(result.b).to.eql('short string');
+    expect(result.c).to.not.eql(otherLong);
+    expect(result.c.length).to.be.below(130);
+    expect(result.d).to.eql(42);
+    expect(result.e).to.eql([1, 2, 3]);
+    expect(result.f).to.eql({x: 42});
+  });
+  it('should truncate long arrays in an obj', function() {
+    var longString = 'hello world';
+    var longArray =  [1, 2, 3, 4];
+    for (var i = 0; i < 4; i++) {
+      longString += longString;
+      longArray = longArray.concat(longArray);
+    }
+    var obj = {
+      a: longString,
+      b: 'short string',
+      c: longArray,
+      d: 42,
+      e: [1, 2, 3],
+      f: {x: 42}
+    };
+
+    var result = _.truncate(obj);
+    expect(result.a).to.not.eql(longString);
+    expect(result.a.length).to.be.below(130);
+    expect(result.b).to.eql('short string');
+    expect(result.c).to.not.eql(longArray);
+    expect(result.c.length).to.be.below(15);
+    expect(result.d).to.eql(42);
+    expect(result.e).to.eql([1, 2, 3]);
+    expect(result.f).to.eql({x: 42});
+  });
+});

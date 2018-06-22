@@ -629,6 +629,45 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
+function truncate(obj) {
+  if (!obj || !isType(obj, 'object')) {
+    return obj;
+  }
+  var k, result = {};
+  for (k in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      var value = maybeTruncateValue(obj[k]);
+      result[k] = value;
+    }
+  }
+  return result;
+}
+
+function maybeTruncateValue(val) {
+  if (!val) {
+    return val;
+  }
+  var typ = typeName(val);
+  var truncationLength = null;
+  var truncationIndex = null;
+  switch (typ) {
+    case 'array':
+      truncationLength = 10;
+      truncationIndex = 9;
+      break;
+    case 'string':
+      truncationLength = 128;
+      truncationIndex = 125;
+      break;
+    default:
+      return val;
+  }
+
+  if (val.length > truncationLength) {
+    return val.slice(0, truncationIndex).concat('...');
+  }
+  return val;
+}
 
 module.exports = {
   isType: isType,
@@ -654,5 +693,6 @@ module.exports = {
   scrub: scrub,
   formatArgsAsString: formatArgsAsString,
   now: now,
-  filterIp: filterIp
+  filterIp: filterIp,
+  truncate: truncate
 };
