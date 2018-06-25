@@ -61,14 +61,16 @@ function minBody(payload) {
 }
 
 function truncateTraceData(traceData) {
-  delete traceData.exception.description;
-  traceData.exception.message = traceData.exception.message.substr(0, 255);
+  if (traceData.exception) {
+    delete traceData.exception.description;
+    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+  }
   traceData.frames = selectFrames(traceData.frames, 1);
   return traceData;
 }
 
-function truncate(payload) {
-  var maxSize = 512 * 1024;
+function truncate(payload, maxSize) {
+  maxSize = (typeof maxSize !== 'undefined') ? maxSize : (512 * 1024);
   var strategies = [
     raw,
     truncateFrames,
@@ -105,5 +107,11 @@ function maybeTruncateValue(len, val) {
 }
 
 module.exports = {
-  truncate: truncate
+  truncate: truncate,
+
+  /* for testing */
+  raw: raw,
+  truncateFrames: truncateFrames,
+  truncateStrings: truncateStrings,
+  maybeTruncateValue: maybeTruncateValue
 };
