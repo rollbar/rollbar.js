@@ -16,7 +16,7 @@ describe('truncate', function() {
 
   it('should try all strategies if payload too big', function() {
     var payload = tracePayload(10, repeat('a', 500));
-    var result = t.truncate(payload, 1);
+    var result = t.truncate(payload, undefined, 1);
     expect(result.value).to.be.ok();
 
     var resultValue = JSON.parse(result.value);
@@ -38,21 +38,21 @@ describe('raw', function() {
 describe('truncateFrames', function() {
   it('should do nothing with small number of frames', function() {
     var payload = tracePayload(5)
-    var result = t.truncateFrames(payload, 5);
+    var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace.frames.length).to.eql(5);
   });
 
   it('should cut out middle frames if too many', function() {
     var payload = tracePayload(20)
-    var result = t.truncateFrames(payload, 5);
+    var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace.frames.length).to.eql(10);
   });
 
   it('should do nothing with small number of frames trace_chain', function() {
     var payload = traceChainPayload(4, 5)
-    var result = t.truncateFrames(payload, 5);
+    var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace_chain[0].frames.length).to.eql(5);
     expect(resultP.data.body.trace_chain[3].frames.length).to.eql(5);
@@ -60,7 +60,7 @@ describe('truncateFrames', function() {
 
   it('should cut out middle frames if too many trace_chain', function() {
     var payload = traceChainPayload(4, 20)
-    var result = t.truncateFrames(payload, 5);
+    var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace_chain[0].frames.length).to.eql(10);
     expect(resultP.data.body.trace_chain[3].frames.length).to.eql(10);

@@ -1,10 +1,10 @@
 var _ = require('./utility');
 
-function raw(payload) {
-  return [payload, _.stringify(payload)];
+function raw(payload, jsonBackup) {
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function truncateFrames(payload, range) {
+function truncateFrames(payload, jsonBackup, range) {
   range = (typeof range !== 'undefined') ? range : 30;
   var body = payload.data.body;
   var frames;
@@ -20,7 +20,7 @@ function truncateFrames(payload, range) {
     frames = selectFrames(frames, range);
     body.trace.frames = frames;
   }
-  return [payload, _.stringify(payload)];
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
 function selectFrames(frames, range) {
@@ -31,7 +31,7 @@ function selectFrames(frames, range) {
   return frames.slice(0, range).concat(frames.slice(len-range));
 }
 
-function truncateStrings(len, payload) {
+function truncateStrings(len, payload, jsonBackup) {
   function truncator(k, v, seen) {
     switch (_.typeName(v)) {
       case 'string':
@@ -44,10 +44,10 @@ function truncateStrings(len, payload) {
     }
   }
   payload = _.traverse(payload, truncator, []);
-  return [payload, _.stringify(payload)];
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function minBody(payload) {
+function minBody(payload, jsonBackup) {
   var body = payload.data.body;
   if (body.trace_chain) {
     var chain = body.trace_chain;
@@ -57,7 +57,7 @@ function minBody(payload) {
   } else if (body.trace) {
     body.trace = truncateTraceData(body.trace);
   }
-  return [payload, _.stringify(payload)];
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
 function truncateTraceData(traceData) {
@@ -69,7 +69,7 @@ function truncateTraceData(traceData) {
   return traceData;
 }
 
-function truncate(payload, maxSize) {
+function truncate(payload, jsonBackup, maxSize) {
   maxSize = (typeof maxSize !== 'undefined') ? maxSize : (512 * 1024);
   var strategies = [
     raw,
@@ -82,7 +82,7 @@ function truncate(payload, maxSize) {
   var strategy, results, result;
 
   while ((strategy = strategies.shift())) {
-    results = strategy(payload);
+    results = strategy(payload, jsonBackup);
     payload = results[0];
     result  = results[1];
     if (result.error || !needsTruncation(result.value, maxSize)) {

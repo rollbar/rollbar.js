@@ -58,7 +58,7 @@ function post(accessToken, options, payload, callback, transportFactory) {
   if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
-  var stringifyResult = truncation.truncate(payload);
+  var stringifyResult = truncation.truncate(payload, jsonBackup);
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
