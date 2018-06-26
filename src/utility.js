@@ -629,7 +629,6 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
-
 module.exports = {
   isType: isType,
   typeName: typeName,

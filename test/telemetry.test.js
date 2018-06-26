@@ -34,7 +34,6 @@ describe('capture', function() {
   });
 });
 
-
 describe('filterTelemetry', function() {
   it('should filter out events that don\'t match the test', function(done) {
     var options = {
