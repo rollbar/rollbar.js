@@ -4,13 +4,21 @@ function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];
 }
 
+function selectFrames(frames, range) {
+  var len = frames.length;
+  if (len > range * 2) {
+    return frames.slice(0, range).concat(frames.slice(len - range));
+  }
+  return frames;
+}
+
 function truncateFrames(payload, jsonBackup, range) {
-  range = (typeof range !== 'undefined') ? range : 30;
+  range = (typeof range === 'undefined') ? 30 : range;
   var body = payload.data.body;
   var frames;
   if (body.trace_chain) {
     var chain = body.trace_chain;
-    for (var i=0; i < chain.length; i++) {
+    for (var i = 0; i < chain.length; i++) {
       frames = chain[i].frames;
       frames = selectFrames(frames, range);
       chain[i].frames = frames;
@@ -23,12 +31,14 @@ function truncateFrames(payload, jsonBackup, range) {
   return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function selectFrames(frames, range) {
-  var len = frames.length;
-  if (len <= range * 2) {
-    return frames;
+function maybeTruncateValue(len, val) {
+  if (!val) {
+    return val;
   }
-  return frames.slice(0, range).concat(frames.slice(len-range));
+  if (val.length > len) {
+    return val.slice(0, len - 3).concat('...');
+  }
+  return val;
 }
 
 function truncateStrings(len, payload, jsonBackup) {
@@ -47,19 +57,6 @@ function truncateStrings(len, payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function minBody(payload, jsonBackup) {
-  var body = payload.data.body;
-  if (body.trace_chain) {
-    var chain = body.trace_chain;
-    for (var i=0; i < chain.length; i++) {
-      chain[i] = truncateTraceData(chain[i]);
-    }
-  } else if (body.trace) {
-    body.trace = truncateTraceData(body.trace);
-  }
-  return [payload, _.stringify(payload, jsonBackup)];
-}
-
 function truncateTraceData(traceData) {
   if (traceData.exception) {
     delete traceData.exception.description;
@@ -69,8 +66,25 @@ function truncateTraceData(traceData) {
   return traceData;
 }
 
+function minBody(payload, jsonBackup) {
+  var body = payload.data.body;
+  if (body.trace_chain) {
+    var chain = body.trace_chain;
+    for (var i = 0; i < chain.length; i++) {
+      chain[i] = truncateTraceData(chain[i]);
+    }
+  } else if (body.trace) {
+    body.trace = truncateTraceData(body.trace);
+  }
+  return [payload, _.stringify(payload, jsonBackup)];
+}
+
+function needsTruncation(payload, maxSize) {
+  return payload.length > maxSize;
+}
+
 function truncate(payload, jsonBackup, maxSize) {
-  maxSize = (typeof maxSize !== 'undefined') ? maxSize : (512 * 1024);
+  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
   var strategies = [
     raw,
     truncateFrames,
@@ -84,26 +98,12 @@ function truncate(payload, jsonBackup, maxSize) {
   while ((strategy = strategies.shift())) {
     results = strategy(payload, jsonBackup);
     payload = results[0];
-    result  = results[1];
+    result = results[1];
     if (result.error || !needsTruncation(result.value, maxSize)) {
       return result;
     }
   }
   return result;
-}
-
-function needsTruncation(payload, maxSize) {
-  return payload.length > maxSize;
-}
-
-function maybeTruncateValue(len, val) {
-  if (!val) {
-    return val;
-  }
-  if (val.length > len) {
-    return val.slice(0, len - 3).concat('...');
-  }
-  return val;
 }
 
 module.exports = {
