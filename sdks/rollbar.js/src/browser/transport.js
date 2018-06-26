@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var truncation = require('../truncation');
 var logger = require('./logger');
 
 /*
@@ -39,7 +40,7 @@ function post(accessToken, options, payload, callback, requestFactory) {
     return callback(new Error('Cannot send empty request'));
   }
 
-  var stringifyResult = _.stringify(payload);
+  var stringifyResult = truncation.truncate(payload);
   if (stringifyResult.error) {
     return callback(stringifyResult.error);
   }
