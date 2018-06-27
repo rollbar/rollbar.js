@@ -702,3 +702,45 @@ describe('scrub', function() {
     expect(result.inner.b).to.eql('yes');
   });
 });
+
+describe('formatArgsAsString', function() {
+  it('should handle null', function() {
+    var args = [null, 1];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('null 1');
+  });
+  it('should handle undefined', function() {
+    var args = [null, 1, undefined];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('null 1 undefined');
+  });
+  it('should handle objects', function() {
+    var args = [1, {a: 42}];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('1 {"a":42}');
+  });
+  it('should handle strings', function() {
+    var args = [1, 'foo'];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('1 foo');
+  });
+  it('should handle empty args', function() {
+    var args = [];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('');
+  });
+  /*
+   * PhantomJS does not support Symbol yet
+  it('should handle symbols', function() {
+    var args = [1, Symbol('hello')];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('1 symbol(\'hello\')');
+  });
+  */
+});
