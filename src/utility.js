@@ -573,13 +573,23 @@ function formatArgsAsString(args) {
   var result = [];
   for (i = 0, len = args.length; i < len; i++) {
     arg = args[i];
-    if (typeof arg === 'object') {
-      arg = stringify(arg);
-      arg = arg.error || arg.value;
-      if (arg.length > 500)
-        arg = arg.substr(0,500)+'...';
-    } else if (typeof arg === 'undefined') {
-      arg = 'undefined';
+    switch (typeName(arg)) {
+      case 'object':
+        arg = stringify(arg);
+        arg = arg.error || arg.value;
+        if (arg.length > 500) {
+          arg = arg.substr(0, 497) + '...';
+        }
+        break;
+      case 'null':
+        arg = 'null';
+        break;
+      case 'undefined':
+        arg = 'undefined';
+        break;
+      case 'symbol':
+        arg = arg.toString();
+        break;
     }
     result.push(arg);
   }
