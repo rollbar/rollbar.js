@@ -20,6 +20,7 @@ function Rollbar(options, api, logger, platform) {
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
   this.lastError = null;
+  this.lastErrorHash = 'none';
 }
 
 var defaultOptions = {
@@ -97,7 +98,11 @@ Rollbar.prototype.captureLoad = function(ts) {
 Rollbar.prototype._log = function(defaultLevel, item) {
   if (this._sameAsLastError(item)) {
     if (item.callback) {
-      item.callback();
+      var callback = item.callback;
+      delete item.callback;
+      var error = new Error('ignored identical item');
+      error.item = item;
+      callback(error);
     }
     return;
   }
@@ -121,11 +126,22 @@ Rollbar.prototype._defaultLogLevel = function() {
 };
 
 Rollbar.prototype._sameAsLastError = function(item) {
-  if (this.lastError && this.lastError === item.err) {
+  if (!item._isUncaught) {
+    return false;
+  }
+  var itemHash = generateItemHash(item);
+  if (this.lastErrorHash === itemHash) {
     return true;
   }
   this.lastError = item.err;
+  this.lastErrorHash = itemHash;
   return false;
 };
+
+function generateItemHash(item) {
+  var message = item.message || '';
+  var stack = (item.err || {}).stack || String(item.err);
+  return message + '::' + stack;
+}
 
 module.exports = Rollbar;
