@@ -264,7 +264,7 @@ Rollbar.errorHandler = function() {
 
 Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
   var self = this;
-  var _timeoutHandler = function(event, context) {
+  var _timeoutHandler = function(event, context, cb) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
@@ -274,7 +274,7 @@ Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
   };
   return function(event, context, callback) {
     self.lambdaContext = context;
-    var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context);
+    var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
     self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     try {
       return handler(event, context, function(err, resp) {
