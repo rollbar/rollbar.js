@@ -1,4 +1,4 @@
-// Type definitions for rollbar 2.3.3
+// Type definitions for rollbar 2.4.2
 // Project: Rollbar
 
 export = Rollbar;
@@ -30,11 +30,13 @@ declare namespace Rollbar {
     export type LambdaHandler = (event: object, context: object, callback: Callback) => void;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
+    export type CaptureIp = boolean | "anonymize";
     export interface Configuration {
         accessToken?: string;
         version?: string;
         environment?: string;
         codeVersion?: string;
+        code_version?: string;
         scrubFields?: string[];
         scrubHeaders?: string[];
         logLevel?: Level;
@@ -58,7 +60,7 @@ declare namespace Rollbar {
         sendConfig?: boolean;
         captureEmail?: boolean;
         captureUsername?: boolean;
-        captureIp?: boolean;
+        captureIp?: CaptureIp;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
