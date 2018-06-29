@@ -31,6 +31,7 @@ function Rollbar(options, client) {
   this.options.environment = this.options.environment || 'unspecified';
   logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
+  this.lambdaTimeoutHandle = null;
   var api = new API(this.options, transport, urllib, jsonBackup);
   this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
@@ -261,22 +262,37 @@ Rollbar.errorHandler = function() {
   }
 };
 
-Rollbar.prototype.lambdaHandler = function(handler) {
+Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
   var self = this;
+  var _timeoutHandler = function(event, context, cb) {
+    var message = 'Function timed out';
+    var custom = {
+      originalEvent: event,
+      originalRequestId: context.awsRequestId,
+    };
+    self.error(message, custom);
+  };
+  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
   return function(event, context, callback) {
     self.lambdaContext = context;
+    if (shouldReportTimeouts) {
+      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
+      self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+    }
     try {
-      return handler(event, context, function(err, resp) {
+      handler(event, context, function(err, resp) {
         if (err) {
           self.error(err);
         }
         self.wait(function() {
+          clearTimeout(self.lambdaTimeoutHandle);
           callback(err, resp);
         });
       });
     } catch (err) {
       self.error(err);
       self.wait(function() {
+        clearTimeout(self.lambdaTimeoutHandle);
         throw err;
       });
     }
@@ -528,7 +544,8 @@ Rollbar.defaultOptions = {
   includeItemsInTelemetry: false,
   captureEmail: false,
   captureUsername: false,
-  captureIp: true
+  captureIp: true,
+  captureLambdaTimeouts: true
 };
 
 module.exports = Rollbar;

@@ -7,11 +7,13 @@ function handleItemWithError(item, options, callback) {
   if (item.err) {
     try {
       item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
-    } catch (e)
-    /* istanbul ignore next */
-    {
+    } catch (e) {
       logger.error('Error while parsing the error object.', e);
-      item.message = item.err.message || item.err.description || item.message || String(item.err);
+      try {
+        item.message = item.err.message || item.err.description || item.message || String(item.err);
+      } catch (e2) {
+        item.message = String(item.err) || String(e2);
+      }
       delete item.err;
     }
   }
