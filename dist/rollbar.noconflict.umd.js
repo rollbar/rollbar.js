@@ -85,14 +85,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var globals = __webpack_require__(16);
 	
 	var transport = __webpack_require__(17);
-	var urllib = __webpack_require__(18);
+	var urllib = __webpack_require__(19);
 	
-	var transforms = __webpack_require__(19);
-	var sharedTransforms = __webpack_require__(23);
-	var predicates = __webpack_require__(24);
-	var sharedPredicates = __webpack_require__(25);
-	var errorParser = __webpack_require__(20);
-	var Instrumenter = __webpack_require__(26);
+	var transforms = __webpack_require__(20);
+	var sharedTransforms = __webpack_require__(24);
+	var predicates = __webpack_require__(25);
+	var sharedPredicates = __webpack_require__(26);
+	var errorParser = __webpack_require__(21);
+	var Instrumenter = __webpack_require__(27);
 	
 	function Rollbar(options, client) {
 	  this.options = _.merge(defaultOptions, options);
@@ -474,8 +474,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.4.1"),
-	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken"]),
+	  version: ("2.4.2"),
+	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
 	  uncaughtErrorLevel: ("error"),
@@ -518,6 +518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.notifier = new Notifier(this.queue, this.options);
 	  this.telemeter = new Telemeter(this.options);
 	  this.lastError = null;
+	  this.lastErrorHash = 'none';
 	}
 	
 	var defaultOptions = {
@@ -593,18 +594,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* Internal */
 	
 	Rollbar.prototype._log = function(defaultLevel, item) {
+	  var callback;
+	  if (item.callback) {
+	    callback = item.callback;
+	    delete item.callback;
+	  }
 	  if (this._sameAsLastError(item)) {
-	    if (item.callback) {
-	      item.callback();
+	    if (callback) {
+	      var error = new Error('ignored identical item');
+	      error.item = item;
+	      callback(error);
 	    }
 	    return;
 	  }
 	  try {
-	    var callback = null;
-	    if (item.callback) {
-	      callback = item.callback;
-	      delete item.callback;
-	    }
 	    item.level = item.level || defaultLevel;
 	    this.telemeter._captureRollbarItem(item);
 	    item.telemetryEvents = this.telemeter.copyEvents();
@@ -619,12 +622,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	Rollbar.prototype._sameAsLastError = function(item) {
-	  if (this.lastError && this.lastError === item.err) {
+	  if (!item._isUncaught) {
+	    return false;
+	  }
+	  var itemHash = generateItemHash(item);
+	  if (this.lastErrorHash === itemHash) {
 	    return true;
 	  }
 	  this.lastError = item.err;
+	  this.lastErrorHash = itemHash;
 	  return false;
 	};
+	
+	function generateItemHash(item) {
+	  var message = item.message || '';
+	  var stack = (item.err || {}).stack || String(item.err);
+	  return message + '::' + stack;
+	}
 	
 	module.exports = Rollbar;
 
@@ -1236,6 +1250,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function sanitizeUrl(url) {
 	  var baseUrlParts = parseUri(url);
+	  if (!baseUrlParts) {
+	    return '(unknown)';
+	  }
+	
 	  // remove a trailing # if there is no anchor
 	  if (baseUrlParts.anchor === '') {
 	    baseUrlParts.source = baseUrlParts.source.replace('#', '');
@@ -1275,7 +1293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function parseUri(str) {
 	  if (!isType(str, 'string')) {
-	    throw new Error('received invalid input');
+	    return undefined;
 	  }
 	
 	  var o = parseUriOptions;
@@ -1620,13 +1638,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var result = [];
 	  for (i = 0, len = args.length; i < len; i++) {
 	    arg = args[i];
-	    if (typeof arg === 'object') {
-	      arg = stringify(arg);
-	      arg = arg.error || arg.value;
-	      if (arg.length > 500)
-	        arg = arg.substr(0,500)+'...';
-	    } else if (typeof arg === 'undefined') {
-	      arg = 'undefined';
+	    switch (typeName(arg)) {
+	      case 'object':
+	        arg = stringify(arg);
+	        arg = arg.error || arg.value;
+	        if (arg.length > 500) {
+	          arg = arg.substr(0, 497) + '...';
+	        }
+	        break;
+	      case 'null':
+	        arg = 'null';
+	        break;
+	      case 'undefined':
+	        arg = 'undefined';
+	        break;
+	      case 'symbol':
+	        arg = arg.toString();
+	        break;
 	    }
 	    result.push(arg);
 	  }
@@ -1675,7 +1703,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  requestData['user_ip'] = newIp;
 	}
-	
 	
 	module.exports = {
 	  isType: isType,
@@ -3254,6 +3281,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 	
 	var _ = __webpack_require__(6);
+	var truncation = __webpack_require__(18);
 	var logger = __webpack_require__(13);
 	
 	/*
@@ -3294,7 +3322,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return callback(new Error('Cannot send empty request'));
 	  }
 	
-	  var stringifyResult = _.stringify(payload);
+	  var stringifyResult = truncation.truncate(payload);
 	  if (stringifyResult.error) {
 	    return callback(stringifyResult.error);
 	  }
@@ -3461,6 +3489,131 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _ = __webpack_require__(6);
+	
+	function raw(payload, jsonBackup) {
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function selectFrames(frames, range) {
+	  var len = frames.length;
+	  if (len > range * 2) {
+	    return frames.slice(0, range).concat(frames.slice(len - range));
+	  }
+	  return frames;
+	}
+	
+	function truncateFrames(payload, jsonBackup, range) {
+	  range = (typeof range === 'undefined') ? 30 : range;
+	  var body = payload.data.body;
+	  var frames;
+	  if (body.trace_chain) {
+	    var chain = body.trace_chain;
+	    for (var i = 0; i < chain.length; i++) {
+	      frames = chain[i].frames;
+	      frames = selectFrames(frames, range);
+	      chain[i].frames = frames;
+	    }
+	  } else if (body.trace) {
+	    frames = body.trace.frames;
+	    frames = selectFrames(frames, range);
+	    body.trace.frames = frames;
+	  }
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function maybeTruncateValue(len, val) {
+	  if (!val) {
+	    return val;
+	  }
+	  if (val.length > len) {
+	    return val.slice(0, len - 3).concat('...');
+	  }
+	  return val;
+	}
+	
+	function truncateStrings(len, payload, jsonBackup) {
+	  function truncator(k, v, seen) {
+	    switch (_.typeName(v)) {
+	      case 'string':
+	        return maybeTruncateValue(len, v);
+	      case 'object':
+	      case 'array':
+	        return _.traverse(v, truncator, seen);
+	      default:
+	        return v;
+	    }
+	  }
+	  payload = _.traverse(payload, truncator, []);
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function truncateTraceData(traceData) {
+	  if (traceData.exception) {
+	    delete traceData.exception.description;
+	    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+	  }
+	  traceData.frames = selectFrames(traceData.frames, 1);
+	  return traceData;
+	}
+	
+	function minBody(payload, jsonBackup) {
+	  var body = payload.data.body;
+	  if (body.trace_chain) {
+	    var chain = body.trace_chain;
+	    for (var i = 0; i < chain.length; i++) {
+	      chain[i] = truncateTraceData(chain[i]);
+	    }
+	  } else if (body.trace) {
+	    body.trace = truncateTraceData(body.trace);
+	  }
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function needsTruncation(payload, maxSize) {
+	  return payload.length > maxSize;
+	}
+	
+	function truncate(payload, jsonBackup, maxSize) {
+	  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
+	  var strategies = [
+	    raw,
+	    truncateFrames,
+	    truncateStrings.bind(null, 1024),
+	    truncateStrings.bind(null, 512),
+	    truncateStrings.bind(null, 256),
+	    minBody
+	  ];
+	  var strategy, results, result;
+	
+	  while ((strategy = strategies.shift())) {
+	    results = strategy(payload, jsonBackup);
+	    payload = results[0];
+	    result = results[1];
+	    if (result.error || !needsTruncation(result.value, maxSize)) {
+	      return result;
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = {
+	  truncate: truncate,
+	
+	  /* for testing */
+	  raw: raw,
+	  truncateFrames: truncateFrames,
+	  truncateStrings: truncateStrings,
+	  maybeTruncateValue: maybeTruncateValue
+	};
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3547,13 +3700,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var errorParser = __webpack_require__(20);
+	var errorParser = __webpack_require__(21);
 	var logger = __webpack_require__(13);
 	
 	function handleItemWithError(item, options, callback) {
@@ -3561,11 +3714,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (item.err) {
 	    try {
 	      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
-	    } catch (e)
-	    /* istanbul ignore next */
-	    {
+	    } catch (e) {
 	      logger.error('Error while parsing the error object.', e);
-	      item.message = item.err.message || item.err.description || item.message || String(item.err);
+	      try {
+	        item.message = item.err.message || item.err.description || item.message || String(item.err);
+	      } catch (e2) {
+	        item.message = String(item.err) || String(e2);
+	      }
 	      delete item.err;
 	    }
 	  }
@@ -3806,12 +3961,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var ErrorStackParser = __webpack_require__(21);
+	var ErrorStackParser = __webpack_require__(22);
 	
 	var UNKNOWN_FUNCTION = '?';
 	var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -3915,7 +4070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -3924,7 +4079,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    /* istanbul ignore next */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(22)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(23)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof exports === 'object') {
 	        module.exports = factory(require('stackframe'));
 	    } else {
@@ -4114,7 +4269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -4227,7 +4382,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4319,7 +4474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4339,7 +4494,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4506,14 +4661,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _ = __webpack_require__(6);
-	var urlparser = __webpack_require__(18);
-	var domUtil = __webpack_require__(27);
+	var urlparser = __webpack_require__(19);
+	var domUtil = __webpack_require__(28);
 	
 	var defaults = {
 	  network: true,
@@ -4542,6 +4697,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 	
+	function nameFromDescription(description) {
+	  if (!description || !description.attributes) { return null; }
+	  var attrs = description.attributes;
+	  for (var a = 0; a < attrs.length; ++a) {
+	    if (attrs[a].key === 'name') {
+	      return attrs[a].value;
+	    }
+	  }
+	  return null;
+	}
+	
+	function defaultValueScrubber(scrubFields) {
+	  var patterns = [];
+	  for (var i = 0; i < scrubFields.length; ++i) {
+	    patterns.push(new RegExp(scrubFields[i], 'i'));
+	  }
+	  return function(description) {
+	    var name = nameFromDescription(description);
+	    if (!name) { return false; }
+	    for (var i = 0; i < patterns.length; ++i) {
+	      if (patterns[i].test(name)) {
+	        return true;
+	      }
+	    }
+	    return false;
+	  };
+	}
+	
 	function Instrumenter(options, telemeter, rollbar, _window, _document) {
 	  var autoInstrument = options.autoInstrument;
 	  if (options.enabled === false || autoInstrument === false) {
@@ -4554,6 +4737,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
 	  this.telemetryScrubber = options.telemetryScrubber;
+	  this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
 	  this.telemeter = telemeter;
 	  this.rollbar = rollbar;
 	  this._window = _window || {};
@@ -4941,9 +5125,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (value !== undefined) {
 	    if (this.scrubTelemetryInputs || (domUtil.getElementType(element) === 'password')) {
 	      value = '[scrubbed]';
-	    } else if (this.telemetryScrubber) {
+	    } else {
 	      var description = domUtil.describeElement(element);
-	      if (this.telemetryScrubber(description)) {
+	      if (this.telemetryScrubber) {
+	        if (this.telemetryScrubber(description)) {
+	          value = '[scrubbed]';
+	        }
+	      } else if (this.defaultValueScrubber(description)) {
 	        value = '[scrubbed]';
 	      }
 	    }
@@ -5076,7 +5264,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports) {
 
 	'use strict';
