@@ -43,7 +43,7 @@ module.exports = function (config) {
 
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
-      'test/!(requirejs).test.js': ['webpack'],
+      'test/!(requirejs).test.js': ['webpack', 'sourcemap'],
     },
 
     proxies: {
@@ -63,6 +63,7 @@ module.exports = function (config) {
         configFile: path.resolve(__dirname, ".eslintrc")
       },
       plugins: [defaultsPlugin],
+      devtool: 'inline-source-map',
       module: {
         preLoaders: [
           {
