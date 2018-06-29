@@ -266,7 +266,7 @@ Rollbar.prototype.lambdaHandler = function(handler) {
   return function(event, context, callback) {
     self.lambdaContext = context;
     try {
-      return handler(event, context, function(err, resp) {
+      handler(event, context, function(err, resp) {
         if (err) {
           self.error(err);
         }
