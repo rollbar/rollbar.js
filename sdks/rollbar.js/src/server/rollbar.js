@@ -280,7 +280,7 @@ Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
       self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     }
     try {
-      return handler(event, context, function(err, resp) {
+      handler(event, context, function(err, resp) {
         if (err) {
           self.error(err);
         }
