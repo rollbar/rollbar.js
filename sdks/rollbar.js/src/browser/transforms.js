@@ -12,7 +12,7 @@ function handleItemWithError(item, options, callback) {
       try {
         item.message = item.err.message || item.err.description || item.message || String(item.err);
       } catch (e2) {
-        item.message = String(item.err) || String(e2)
+        item.message = String(item.err) || String(e2);
       }
       delete item.err;
     }
