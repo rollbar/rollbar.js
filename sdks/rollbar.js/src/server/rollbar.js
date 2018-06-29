@@ -272,10 +272,13 @@ Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
     };
     self.error(message, custom);
   };
+  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
   return function(event, context, callback) {
     self.lambdaContext = context;
-    var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
-    self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+    if (shouldReportTimeouts) {
+      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
+      self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+    }
     try {
       return handler(event, context, function(err, resp) {
         if (err) {
@@ -541,7 +544,8 @@ Rollbar.defaultOptions = {
   includeItemsInTelemetry: false,
   captureEmail: false,
   captureUsername: false,
-  captureIp: true
+  captureIp: true,
+  captureLambdaTimeouts: true
 };
 
 module.exports = Rollbar;
