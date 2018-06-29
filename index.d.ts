@@ -59,6 +59,7 @@ declare namespace Rollbar {
         captureEmail?: boolean;
         captureUsername?: boolean;
         captureIp?: boolean;
+        captureLambdaTimeouts?: boolean;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
