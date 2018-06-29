@@ -1,4 +1,4 @@
-// Type definitions for rollbar 2.3.3
+// Type definitions for rollbar 2.4.2
 // Project: Rollbar
 
 export = Rollbar;
@@ -35,6 +35,7 @@ declare namespace Rollbar {
         version?: string;
         environment?: string;
         codeVersion?: string;
+        code_version?: string;
         scrubFields?: string[];
         scrubHeaders?: string[];
         logLevel?: Level;
@@ -58,7 +59,7 @@ declare namespace Rollbar {
         sendConfig?: boolean;
         captureEmail?: boolean;
         captureUsername?: boolean;
-        captureIp?: boolean;
+        captureIp?: boolean | "anonymize";
         captureLambdaTimeouts?: boolean;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
