@@ -96,10 +96,13 @@ Rollbar.prototype.captureLoad = function(ts) {
 /* Internal */
 
 Rollbar.prototype._log = function(defaultLevel, item) {
+  var callback;
+  if (item.callback) {
+    callback = item.callback;
+    delete item.callback;
+  }
   if (this._sameAsLastError(item)) {
-    if (item.callback) {
-      var callback = item.callback;
-      delete item.callback;
+    if (callback) {
       var error = new Error('ignored identical item');
       error.item = item;
       callback(error);
@@ -107,11 +110,6 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     return;
   }
   try {
-    var callback = null;
-    if (item.callback) {
-      callback = item.callback;
-      delete item.callback;
-    }
     item.level = item.level || defaultLevel;
     this.telemeter._captureRollbarItem(item);
     item.telemetryEvents = this.telemeter.copyEvents();
