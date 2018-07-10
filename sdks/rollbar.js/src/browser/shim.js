@@ -31,12 +31,9 @@ var Wrapper = require('./rollbarWrapper');
 var ShimImpl = function(options, wrap) {
   return new Shim(options, wrap);
 };
-var Rollbar;
-if (Wrapper.curry) {
-  Rollbar = Wrapper.curry(ShimImpl);
-} else {
-  Rollbar = Wrapper.bind(null, ShimImpl);
-}
+var Rollbar = function(options) {
+  return new Wrapper(ShimImpl, options);
+};
 
 function setupShim(window, options) {
   if (!window) {
