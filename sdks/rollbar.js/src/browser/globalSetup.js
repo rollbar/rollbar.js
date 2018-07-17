@@ -4,8 +4,11 @@ function captureUncaughtExceptions(window, handler, shim) {
 
   if (typeof handler._rollbarOldOnError === 'function') {
     oldOnError = handler._rollbarOldOnError;
-  } else if (window.onerror && !window.onerror.belongsToShim) {
+  } else if (window.onerror) {
     oldOnError = window.onerror;
+    while (oldOnError._rollbarOldOnError) {
+      oldOnError = oldOnError._rollbarOldOnError;
+    }
     handler._rollbarOldOnError = oldOnError;
   }
 
@@ -13,7 +16,9 @@ function captureUncaughtExceptions(window, handler, shim) {
     var args = Array.prototype.slice.call(arguments, 0);
     _rollbarWindowOnError(window, handler, oldOnError, args);
   };
-  fn.belongsToShim = shim;
+  if (shim) {
+    fn._rollbarOldOnError = oldOnError;
+  }
   window.onerror = fn;
 }
 
