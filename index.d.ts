@@ -52,6 +52,7 @@ declare namespace Rollbar {
         ignoredMessages?: string[];
         hostWhiteList?: string[];
         hostBlackList?: string[];
+        filterTelemetry?: (e: TelemetryEvent) => boolean;
         autoInstrument?: AutoInstrumentOptions;
         telemetryScrubber?: TelemetryScrubber;
         includeItemsInTelemetry?: boolean;
