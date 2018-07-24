@@ -1,10 +1,12 @@
+var _ = require('./utility');
+
 /*
  * RateLimiter - an object that encapsulates the logic for counting items sent to Rollbar
  *
  * @param options - the same options that are accepted by configureGlobal offered as a convenience
  */
 function RateLimiter(options) {
-  this.startTime = (new Date()).getTime();
+  this.startTime = _.now();
   this.counter = 0;
   this.perMinCounter = 0;
   this.platform = null;
@@ -13,7 +15,7 @@ function RateLimiter(options) {
 }
 
 RateLimiter.globalSettings = {
-  startTime: (new Date()).getTime(),
+  startTime: _.now(),
   maxItems: undefined,
   itemsPerMinute: undefined
 };
@@ -54,8 +56,9 @@ RateLimiter.prototype.configureGlobal = function(options) {
  *  place of the passed in item.
  */
 RateLimiter.prototype.shouldSend = function(item, now) {
-  now = now || (new Date()).getTime();
-  if (now - this.startTime >= 60000) {
+  now = now || _.now();
+  var elapsedTime = now - this.startTime;
+  if (elapsedTime < 0 || elapsedTime >= 60000) {
     this.startTime = now;
     this.perMinCounter = 0;
   }
