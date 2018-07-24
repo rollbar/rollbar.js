@@ -89,8 +89,9 @@ describe('userTransform', function() {
     var item = itemFromArgs(args);
     var options = {
       endpoint: 'api.rollbar.com',
-      transform: function(i) {
-        i.message = 'HELLO';
+      transform: function(newItem, item) {
+        newItem.origin = item;
+        newItem.message = 'HELLO';
       }
     };
     var payload = {
@@ -99,6 +100,7 @@ describe('userTransform', function() {
     };
     expect(payload.data.message).to.not.eql('HELLO');
     (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.origin).to.be.an('object');
       expect(i.data.message).to.eql('HELLO');
       done(e);
     });
