@@ -498,7 +498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.4.3"),
+	  version: ("2.4.4"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -4473,7 +4473,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var newItem = _.merge(item);
 	    try {
 	      if (_.isFunction(options.transform)) {
-	        options.transform(newItem.data);
+	        options.transform(newItem.data, item);
 	      }
 	    } catch (e) {
 	      options.transform = null;
