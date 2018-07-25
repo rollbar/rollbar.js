@@ -52,7 +52,7 @@ function userTransform(logger) {
     var newItem = _.merge(item);
     try {
       if (_.isFunction(options.transform)) {
-        options.transform(newItem.data);
+        options.transform(newItem.data, item);
       }
     } catch (e) {
       options.transform = null;
