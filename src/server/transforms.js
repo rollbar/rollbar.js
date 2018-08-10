@@ -139,7 +139,7 @@ function addRequestData(item, options, callback) {
     }
     item.data.person = person;
   } else if (req.user) {
-    item.data.person = {id: req.user.id};
+    item.data.person = {id: req.user.id || req.user.sub};
     if (req.user.username && captureUsername) {
       item.data.person.username = req.user.username;
     }
