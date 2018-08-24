@@ -36,13 +36,13 @@ Rollbar.prototype.global = function(options) {
 };
 
 Rollbar.prototype.configure = function(options, payloadData) {
-  this.notifier && this.notifier.configure({...options, payload: payloadData});
-  this.telemeter && this.telemeter.configure({...options, payload: payloadData});
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
     payload = {payload: payloadData};
   }
+  this.notifier && this.notifier.configure(_.merge(options, payload));
+  this.telemeter && this.telemeter.configure(_.merge(options, payload));
   this.options = _.merge(oldOptions, options, payload);
   this.global(this.options);
   return this;
