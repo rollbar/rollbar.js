@@ -36,8 +36,8 @@ Rollbar.prototype.global = function(options) {
 };
 
 Rollbar.prototype.configure = function(options, payloadData) {
-  this.notifier && this.notifier.configure(options);
-  this.telemeter && this.telemeter.configure(options);
+  this.notifier && this.notifier.configure({...options, payload: payloadData});
+  this.telemeter && this.telemeter.configure({...options, payload: payloadData});
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
