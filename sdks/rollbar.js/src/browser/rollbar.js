@@ -71,8 +71,8 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.merge(oldOptions, options, payload);
-  this.client.configure(options, payloadData);
-  this.instrumenter.configure(options);
+  this.client.configure(this.options, payloadData);
+  this.instrumenter.configure(this.options);
   return this;
 };
 Rollbar.configure = function(options, payloadData) {
