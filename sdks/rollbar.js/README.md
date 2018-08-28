@@ -1,5 +1,5 @@
 # Rollbar.js
-[![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.4.4)](https://travis-ci.org/rollbar/rollbar.js)
+[![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.4.5)](https://travis-ci.org/rollbar/rollbar.js)
 
 Rollbar.js is the Javascript SDK for [Rollbar](https://rollbar.com).  It supports both Node.js and client-side Javascript, including frameworks such as React, Angular, Ember, and more.
 
