@@ -149,8 +149,8 @@
 	    payload = {payload: payloadData};
 	  }
 	  this.options = _.merge(oldOptions, options, payload);
-	  this.client.configure(options, payloadData);
-	  this.instrumenter.configure(options);
+	  this.client.configure(this.options, payloadData);
+	  this.instrumenter.configure(this.options);
 	  return this;
 	};
 	Rollbar.configure = function(options, payloadData) {
@@ -481,7 +481,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.4.4"),
+	  version: ("2.4.5"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -541,14 +541,14 @@
 	};
 	
 	Rollbar.prototype.configure = function(options, payloadData) {
-	  this.notifier && this.notifier.configure(options);
-	  this.telemeter && this.telemeter.configure(options);
 	  var oldOptions = this.options;
 	  var payload = {};
 	  if (payloadData) {
 	    payload = {payload: payloadData};
 	  }
 	  this.options = _.merge(oldOptions, options, payload);
+	  this.notifier && this.notifier.configure(this.options);
+	  this.telemeter && this.telemeter.configure(this.options);
 	  this.global(this.options);
 	  return this;
 	};
