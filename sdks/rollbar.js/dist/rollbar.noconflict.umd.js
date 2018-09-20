@@ -962,13 +962,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  var result = isObj ? {} : [];
+	  var same = true;
 	  for (i = 0; i < keys.length; ++i) {
 	    k = keys[i];
 	    v = obj[k];
 	    result[k] = func(k, v, seen);
+	    same = same && result[k] === obj[k];
 	  }
 	
-	  return (keys.length != 0) ? result : obj;
+	  return (keys.length != 0 && !same) ? result : obj;
 	}
 	
 	function redact() {
