@@ -12,6 +12,7 @@ function RateLimiter(options) {
   this.platform = null;
   this.platformOptions = {};
   this.configureGlobal(options);
+  this.dupCache = {};
 }
 
 RateLimiter.globalSettings = {
@@ -38,6 +39,9 @@ RateLimiter.prototype.configureGlobal = function(options) {
   if (options.itemsPerMinute !== undefined) {
     RateLimiter.globalSettings.itemsPerMinute = options.itemsPerMinute;
   }
+  if (options.duplicateRateLimit !== undefined) {
+    RateLimiter.globalSettings.duplicateRateLimit = options.duplicateRateLimit;
+  }
 };
 
 /*
@@ -61,6 +65,28 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   if (elapsedTime < 0 || elapsedTime >= 60000) {
     this.startTime = now;
     this.perMinCounter = 0;
+  }
+
+  if (item._isUncaught) {
+    // var item = {
+    //   message: message,
+    //   err: err,
+    //   custom: custom,
+    //   timestamp: now(),
+    //   callback: callback,
+    //   uuid: uuid4()
+    // };
+    var exceptionMessage = item.message;
+    var exception = item.err;
+    var exceptionHash = exceptionMessage + '-' + (exception.stack || String(exception));
+
+    var lastOccurrenceMS = this.dupCache[exceptionHash];
+    this.dupCache[exceptionHash] = now;
+
+    var dupeRate = RateLimiter.globalSettings.duplicateRateLimit;
+    if (lastOccurrenceMS != null && (now - lastOccurrenceMS < dupeRate)) {
+      return shouldSendValue(this.platform, this.platformOptions, null, false, globalRateLimit);
+    }
   }
 
   var globalRateLimit = RateLimiter.globalSettings.maxItems;

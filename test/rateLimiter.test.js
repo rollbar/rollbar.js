@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var RateLimiter = require('../src/rateLimiter');
+var Rollbar = require('../src/browser/rollbar');
+var TestClientGen = require('./testClient');
 
 describe('RateLimiter()', function() {
   it('should have all of the expected methods', function(done) {
@@ -17,7 +19,7 @@ describe('RateLimiter()', function() {
 
   it('should have global properties', function(done) {
     var options = {};
-    var rateLimiter = new RateLimiter(options);
+    new RateLimiter(options);
     expect(RateLimiter).to.have.property('globalSettings');
     var now = (new Date()).getTime();
     expect(RateLimiter.globalSettings.startTime).to.be.within(now-1000, now+1000);
@@ -28,7 +30,7 @@ describe('RateLimiter()', function() {
 
   it('should set the global options', function(done) {
     var options = {startTime: 1, maxItems: 50, itemsPerMinute: 102, fake: 'stuff'};
-    var rateLimiter = new RateLimiter(options);
+    new RateLimiter(options);
     expect(RateLimiter.globalSettings.startTime).to.be.eql(1);
     expect(RateLimiter.globalSettings.maxItems).to.be.eql(50);
     expect(RateLimiter.globalSettings.itemsPerMinute).to.be.eql(102);
@@ -49,6 +51,61 @@ describe('shouldSend', function() {
     expect(result.shouldSend).to.be.ok();
 
     done();
+  });
+
+  var setupDedupeTest = function() {
+    var client = new (TestClientGen())();
+    var now = (new Date()).getTime();    
+    var options = { 
+      startTime: now,
+      duplicateRateLimit: 5,
+    };
+    var rollbar = new Rollbar(options, client);
+    var rateLimiter = new RateLimiter(options);
+
+    return { rollbar: rollbar, rateLimiter: rateLimiter, client: client };
+  };
+
+  var createItem = function(setup, message, exception) {
+    setup.rollbar.handleUncaughtException(message, '', 0, 0, exception, null);
+
+    return setup.client.logCalls[setup.client.logCalls.length - 1].item;
+  }
+
+  it.only('asdfasdf', function (done) {
+    var setup = setupDedupeTest();
+    var exception1 = new Error('exception');
+    var exception2 = new Error('exception');    
+    var item1 = createItem(setup, 'message', exception1);
+    var item2 = createItem(setup, 'message', exception2);
+    var item3 = createItem(setup, 'message2', exception1);
+
+    // control aka happy path
+    // console.log("1")
+    expect(setup.rateLimiter.shouldSend(item1, 123123).shouldSend).to.equal(true)
+
+    // same message within in the duplicateRateLimit time (<5ms), do not send
+    // console.log("1")
+    expect(setup.rateLimiter.shouldSend(item1, 123125).shouldSend).to.equal(false)
+
+    // if the exception and message are the same, but occurs outside the rate limit, send
+    // console.log("1")
+    expect(setup.rateLimiter.shouldSend(item1, 123130).shouldSend).to.equal(true) 
+    
+    // if exception is different, but message is the same, send
+    expect(setup.rateLimiter.shouldSend(item2, 123125).shouldSend).to.equal(true)
+    
+    // if exception is the same, but the message is different, send
+    expect(setup.rateLimiter.shouldSend(item3, 123125).shouldSend).to.equal(true)
+
+    done()
+
+    // tests: 
+    // dedupeErrors - on/off
+    // configurable dupe rate (how long are we cacheing error messages for)
+    // "happy path": should send is true and it sends the message
+    // send same error msg as happy path in a time frame < rate limit - MESSAGE SHOULD NOT SEND
+    // turn off dededupe errors. ^ run this one. message should send. 
   });
 
   it('should say not to send if over the per minute limit', function(done) {
