@@ -180,7 +180,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var xhr = this;
 
         function onreadystatechangeHandler() {
-          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
+          if (xhr.__rollbar_xhr) {
             if (xhr.__rollbar_xhr.status_code === null) {
               xhr.__rollbar_xhr.status_code = 0;
               var requestData = null;
@@ -189,9 +189,10 @@ Instrumenter.prototype.instrumentNetwork = function() {
               }
               xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
             }
-            if (xhr.readyState === 1) {
+            if (xhr.readyState < 2) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
-            } else {
+            }
+            if (xhr.readyState > 3) {
               xhr.__rollbar_xhr.end_time_ms = _.now();
 
               var headers = null;
@@ -244,14 +245,14 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (response) {
                 xhr.__rollbar_xhr.response = response;
               }
-            }
-            try {
-              var code = xhr.status;
-              code = code === 1223 ? 204 : code;
-              xhr.__rollbar_xhr.status_code = code;
-              xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
-            } catch (e) {
-              /* ignore possible exception from xhr.status */
+              try {
+                var code = xhr.status;
+                code = code === 1223 ? 204 : code;
+                xhr.__rollbar_xhr.status_code = code;
+                xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+              } catch (e) {
+                /* ignore possible exception from xhr.status */
+              }
             }
           }
         }
