@@ -504,8 +504,21 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields) {
+function scrub(data, scrubFields, whitelist) {
   scrubFields = scrubFields || [];
+  if (whitelist) {
+    var k, whitelistObj = {}, whitelistLength = whitelist.length;
+    for (k = 0; k < whitelistLength; k++) {
+      whitelistObj[whitelist[k]] = true;
+    }
+    var i = scrubFields.length;
+    while (i--) {
+      if (whitelistObj[scrubFields[i]]) {
+        scrubFields.splice(i, 1);
+      }
+    }
+  }
+
   var paramRes = _getScrubFieldRegexs(scrubFields);
   var queryRes = _getScrubQueryParamRegexs(scrubFields);
 

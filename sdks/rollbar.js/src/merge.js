@@ -3,6 +3,17 @@
 var hasOwn = Object.prototype.hasOwnProperty;
 var toStr = Object.prototype.toString;
 
+var isArray = function(obj) {
+  if (!obj) {
+    return false;
+  }
+  var typeName = typeof obj;
+  if (typeName !== 'object') {
+    return false;
+  }
+  return 'array' === ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+};
+
 var isPlainObject = function isPlainObject(obj) {
 	if (!obj || toStr.call(obj) !== '[object Object]') {
 		return false;
@@ -42,8 +53,10 @@ function merge() {
         if (copy && isPlainObject(copy)) {
           clone = src && isPlainObject(src) ? src : {};
           result[name] = merge(clone, copy);
+        } else if (isArray(copy) && isArray(src)) {
+          result[name] = src.concat(copy);
         } else if (typeof copy !== 'undefined') {
-          result[name] = copy
+          result[name] = copy;
         }
       }
     }
