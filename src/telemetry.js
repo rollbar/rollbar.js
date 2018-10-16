@@ -23,7 +23,20 @@ Telemeter.prototype.configure = function(options) {
 };
 
 Telemeter.prototype.copyEvents = function() {
-  return Array.prototype.slice.call(this.queue, 0);
+  var events = Array.prototype.slice.call(this.queue, 0);
+  if (_.isFunction(this.options.filterTelemetry)) {
+    try {
+      var i = events.length;
+      while (i--) {
+        if (this.options.filterTelemetry(events[i])) {
+          events.splice(i, 1);
+        }
+      }
+    } catch (e) {
+      this.options.filterTelemetry = null;
+    }
+  }
+  return events;
 };
 
 Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, timestamp) {
@@ -42,7 +55,7 @@ Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, times
     if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
       return false;
     }
-  } catch (e) {
+  } catch (exc) {
     this.options.filterTelemetry = null;
   }
 

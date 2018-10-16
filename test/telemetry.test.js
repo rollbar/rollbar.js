@@ -44,8 +44,32 @@ describe('filterTelemetry', function() {
       }
     };
     var t = new Telemeter(options);
-    var event = t.capture('network', {url: 'https://spammer.com'}, 'debug');
-    expect(event).to.be.false;
+    var evt = t.capture('network', {url: 'https://spammer.com', subtype: 'xhr'}, 'debug');
+    expect(evt).to.be(false);
+
+    done();
+  });
+
+  it('should filter out events in copy even if they are modified after capture', function(done) {
+    var options = {
+      filterTelemetry: function(e) {
+        return e.type === 'network'
+          && e.body.statusCode === 200;
+      }
+    };
+    var t = new Telemeter(options);
+    var evt = t.capture('network', {url: 'https://spammer.com'}, 'debug');
+    var evt2 = t.capture('network', {url: 'https://spammer.com', statusCode: 404}, 'debug');
+    expect(evt).not.to.be(false);
+    expect(evt2).not.to.be(false);
+    var events = t.copyEvents();
+    expect(events.length).to.equal(2);
+
+    evt.body.statusCode = 200;
+
+    events = t.copyEvents();
+    expect(events.length).to.equal(1);
+    expect(events[0].body.statusCode).to.equal(404);
 
     done();
   });
