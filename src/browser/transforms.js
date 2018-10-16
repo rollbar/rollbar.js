@@ -121,8 +121,8 @@ function addBodyMessage(item, options, callback) {
 
   if (!message) {
     if (custom) {
-      var scrubFields = options.scrubFields;
-      var messageResult = _.stringify(_.scrub(custom, scrubFields));
+      var scrubFields = (options.scrubFields || []).slice(0);
+      var messageResult = _.stringify(_.scrub(custom, scrubFields, options.scrubFieldsWhitelist));
       message = messageResult.error || messageResult.value || '';
     } else {
       message = '';
@@ -239,8 +239,8 @@ function addBodyTrace(item, options, callback) {
 }
 
 function scrubPayload(item, options, callback) {
-  var scrubFields = options.scrubFields;
-  item.data = _.scrub(item.data, scrubFields);
+  var scrubFields = (options.scrubFields || []).slice(0);
+  item.data = _.scrub(item.data, scrubFields, options.scrubFieldsWhitelist);
   callback(null, item);
 }
 
