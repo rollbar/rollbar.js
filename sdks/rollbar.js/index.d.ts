@@ -41,7 +41,7 @@ declare namespace Rollbar {
         codeVersion?: string;
         code_version?: string;
         scrubFields?: string[];
-        scrubFieldsWhitelist?: string[];
+        overwriteScrubFields?: boolean;
         scrubHeaders?: string[];
         logLevel?: Level;
         reportLevel?: Level;

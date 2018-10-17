@@ -196,8 +196,8 @@ describe('merge', function() {
 
     expect(e.a).to.eql(42);
     expect(e.b).to.contain('goodbye');
-    expect(e.b).to.contain('world');
-    expect(e.b.length).to.eql(3);
+    expect(e.b).to.not.contain('world');
+    expect(e.b.length).to.eql(1);
 
     expect(o1.b).to.contain('world');
     expect(o1.b).not.to.contain('goodbye');
@@ -269,9 +269,8 @@ describe('merge', function() {
     var e = _.merge(o1, o2);
 
     expect(e.a).to.eql(32);
-    expect(e.c.arr.length).to.eql(4);
-    expect(e.c.arr[0]).to.eql(3);
-    expect(e.c.arr[3]).to.eql(1);
+    expect(e.c.arr.length).to.eql(1);
+    expect(e.c.arr[0]).to.eql(1);
     expect(e.c.other.fuzz).to.eql('buzz');
     expect(e.c.payload.foo).to.eql('hello');
     expect(e.c.payload.hello.baz).to.eql('bar');
