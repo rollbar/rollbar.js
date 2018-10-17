@@ -95,6 +95,21 @@ describe('Rollbar()', function() {
     done();
   });
 
+  it ('should overwrite default if specified', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      scrubFields: [
+        'foobar'
+      ],
+      overwriteScrubFields: true,
+    };
+    var rollbar = new Rollbar(options, client);
+
+    expect(rollbar.options.scrubFields).to.contain('foobar');
+    expect(rollbar.options.scrubFields).to.not.contain('password');
+    done();
+  });
+
   it('should return a uuid when logging', function(done) {
     var client = new (TestClientGen())();
     var options = {};

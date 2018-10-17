@@ -504,21 +504,8 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields, whitelist) {
+function scrub(data, scrubFields) {
   scrubFields = scrubFields || [];
-  if (whitelist) {
-    var k, whitelistObj = {}, whitelistLength = whitelist.length;
-    for (k = 0; k < whitelistLength; k++) {
-      whitelistObj[whitelist[k]] = true;
-    }
-    var i = scrubFields.length;
-    while (i--) {
-      if (whitelistObj[scrubFields[i]]) {
-        scrubFields.splice(i, 1);
-      }
-    }
-  }
-
   var paramRes = _getScrubFieldRegexs(scrubFields);
   var queryRes = _getScrubQueryParamRegexs(scrubFields);
 
@@ -654,29 +641,41 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
+function handleOptions(current, input, payload) {
+  var result = merge(current, input, payload);
+  if (!input || input.overwriteScrubFields) {
+    return result;
+  }
+  if (input.scrubFields) {
+    result.scrubFields = (current.scrubFields || []).concat(input.scrubFields);
+  }
+  return result;
+}
+
 module.exports = {
-  isType: isType,
-  typeName: typeName,
-  isFunction: isFunction,
-  isNativeFunction: isNativeFunction,
-  isIterable: isIterable,
-  isError: isError,
-  merge: merge,
-  traverse: traverse,
-  redact: redact,
-  uuid4: uuid4,
-  LEVELS: LEVELS,
-  sanitizeUrl: sanitizeUrl,
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
-  formatUrl: formatUrl,
-  stringify: stringify,
-  jsonParse: jsonParse,
-  makeUnhandledStackInfo: makeUnhandledStackInfo,
   createItem: createItem,
-  get: get,
-  set: set,
-  scrub: scrub,
+  filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
+  formatUrl: formatUrl,
+  get: get,
+  handleOptions: handleOptions,
+  isError: isError,
+  isFunction: isFunction,
+  isIterable: isIterable,
+  isNativeFunction: isNativeFunction,
+  isType: isType,
+  jsonParse: jsonParse,
+  LEVELS: LEVELS,
+  makeUnhandledStackInfo: makeUnhandledStackInfo,
+  merge: merge,
   now: now,
-  filterIp: filterIp
+  redact: redact,
+  sanitizeUrl: sanitizeUrl,
+  scrub: scrub,
+  set: set,
+  stringify: stringify,
+  traverse: traverse,
+  typeName: typeName,
+  uuid4: uuid4
 };
