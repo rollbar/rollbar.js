@@ -1,4 +1,4 @@
-// Type definitions for rollbar 2.4.2
+// Type definitions for rollbar
 // Project: Rollbar
 
 export = Rollbar;
@@ -24,6 +24,10 @@ declare class Rollbar {
     public lambdaHandler(handler: Rollbar.LambdaHandler): Rollbar.LambdaHandler;
 
     public errorHandler(): Rollbar.ExpressErrorHandler;
+
+    // Exposed only for testing, should be changed via the configure method
+    // DO NOT MODIFY DIRECTLY
+    public options: Rollbar.Configuration;
 }
 
 declare namespace Rollbar {
@@ -37,6 +41,7 @@ declare namespace Rollbar {
         codeVersion?: string;
         code_version?: string;
         scrubFields?: string[];
+        overwriteScrubFields?: boolean;
         scrubHeaders?: string[];
         logLevel?: Level;
         reportLevel?: Level;

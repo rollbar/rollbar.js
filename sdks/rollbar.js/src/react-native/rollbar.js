@@ -17,7 +17,7 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
-  this.options = _.merge(Rollbar.defaultOptions, options);
+  this.options = _.handleOptions(Rollbar.defaultOptions, options);
   // This makes no sense in a long running app
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
@@ -62,7 +62,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.merge(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload);
   this.client.configure(options, payloadData);
   return this;
 };

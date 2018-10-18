@@ -43,7 +43,7 @@ function merge() {
           clone = src && isPlainObject(src) ? src : {};
           result[name] = merge(clone, copy);
         } else if (typeof copy !== 'undefined') {
-          result[name] = copy
+          result[name] = copy;
         }
       }
     }
