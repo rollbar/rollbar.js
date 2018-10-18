@@ -641,29 +641,41 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
+function handleOptions(current, input, payload) {
+  var result = merge(current, input, payload);
+  if (!input || input.overwriteScrubFields) {
+    return result;
+  }
+  if (input.scrubFields) {
+    result.scrubFields = (current.scrubFields || []).concat(input.scrubFields);
+  }
+  return result;
+}
+
 module.exports = {
-  isType: isType,
-  typeName: typeName,
-  isFunction: isFunction,
-  isNativeFunction: isNativeFunction,
-  isIterable: isIterable,
-  isError: isError,
-  merge: merge,
-  traverse: traverse,
-  redact: redact,
-  uuid4: uuid4,
-  LEVELS: LEVELS,
-  sanitizeUrl: sanitizeUrl,
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
-  formatUrl: formatUrl,
-  stringify: stringify,
-  jsonParse: jsonParse,
-  makeUnhandledStackInfo: makeUnhandledStackInfo,
   createItem: createItem,
-  get: get,
-  set: set,
-  scrub: scrub,
+  filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
+  formatUrl: formatUrl,
+  get: get,
+  handleOptions: handleOptions,
+  isError: isError,
+  isFunction: isFunction,
+  isIterable: isIterable,
+  isNativeFunction: isNativeFunction,
+  isType: isType,
+  jsonParse: jsonParse,
+  LEVELS: LEVELS,
+  makeUnhandledStackInfo: makeUnhandledStackInfo,
+  merge: merge,
   now: now,
-  filterIp: filterIp
+  redact: redact,
+  sanitizeUrl: sanitizeUrl,
+  scrub: scrub,
+  set: set,
+  stringify: stringify,
+  traverse: traverse,
+  typeName: typeName,
+  uuid4: uuid4
 };

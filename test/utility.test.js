@@ -189,14 +189,15 @@ describe('merge', function() {
 
     done();
   });
-  it('should not merge arrays', function(done) {
+  it('should not concat arrays', function(done) {
     var o1 = {a: 1, b: ['hello', 'world']};
     var o2 = {a: 42, b: ['goodbye']};
     var e = _.merge(o1, o2);
 
     expect(e.a).to.eql(42);
     expect(e.b).to.contain('goodbye');
-    expect(e.b).not.to.contain('world');
+    expect(e.b).to.not.contain('world');
+    expect(e.b.length).to.eql(1);
 
     expect(o1.b).to.contain('world');
     expect(o1.b).not.to.contain('goodbye');
@@ -268,8 +269,8 @@ describe('merge', function() {
     var e = _.merge(o1, o2);
 
     expect(e.a).to.eql(32);
+    expect(e.c.arr.length).to.eql(1);
     expect(e.c.arr[0]).to.eql(1);
-    expect(e.c.arr).not.to.contain(4);
     expect(e.c.other.fuzz).to.eql('buzz');
     expect(e.c.payload.foo).to.eql('hello');
     expect(e.c.payload.hello.baz).to.eql('bar');

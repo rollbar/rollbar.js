@@ -15,7 +15,7 @@ var errorParser = require('./errorParser');
 var Instrumenter = require('./telemetry');
 
 function Rollbar(options, client) {
-  this.options = _.merge(defaultOptions, options);
+  this.options = _.handleOptions(defaultOptions, options);
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
 
@@ -70,7 +70,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.merge(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter.configure(this.options);
   return this;

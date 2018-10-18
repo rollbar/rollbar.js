@@ -81,12 +81,27 @@ describe('Rollbar()', function() {
     done();
   });
 
-  it ('should override the defaults options', function(done) {
+  it ('should merge with the defaults options', function(done) {
     var client = new (TestClientGen())();
     var options = {
       scrubFields: [
         'foobar'
       ]
+    };
+    var rollbar = new Rollbar(options, client);
+
+    expect(rollbar.options.scrubFields).to.contain('foobar');
+    expect(rollbar.options.scrubFields).to.contain('password');
+    done();
+  });
+
+  it ('should overwrite default if specified', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      scrubFields: [
+        'foobar'
+      ],
+      overwriteScrubFields: true,
     };
     var rollbar = new Rollbar(options, client);
 
