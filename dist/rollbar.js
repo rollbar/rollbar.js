@@ -93,7 +93,7 @@
 	var Instrumenter = __webpack_require__(26);
 	
 	function Rollbar(options, client) {
-	  this.options = _.merge(defaultOptions, options);
+	  this.options = _.handleOptions(defaultOptions, options);
 	  var api = new API(this.options, transport, urllib);
 	  this.client = client || new Client(this.options, api, logger, 'browser');
 	
@@ -148,7 +148,7 @@
 	  if (payloadData) {
 	    payload = {payload: payloadData};
 	  }
-	  this.options = _.merge(oldOptions, options, payload);
+	  this.options = _.handleOptions(oldOptions, options, payload);
 	  this.client.configure(this.options, payloadData);
 	  this.instrumenter.configure(this.options);
 	  return this;
@@ -481,7 +481,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.4.6"),
+	  version: ("2.5.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -1450,31 +1450,43 @@
 	  requestData['user_ip'] = newIp;
 	}
 	
+	function handleOptions(current, input, payload) {
+	  var result = merge(current, input, payload);
+	  if (!input || input.overwriteScrubFields) {
+	    return result;
+	  }
+	  if (input.scrubFields) {
+	    result.scrubFields = (current.scrubFields || []).concat(input.scrubFields);
+	  }
+	  return result;
+	}
+	
 	module.exports = {
-	  isType: isType,
-	  typeName: typeName,
-	  isFunction: isFunction,
-	  isNativeFunction: isNativeFunction,
-	  isIterable: isIterable,
-	  isError: isError,
-	  merge: merge,
-	  traverse: traverse,
-	  redact: redact,
-	  uuid4: uuid4,
-	  LEVELS: LEVELS,
-	  sanitizeUrl: sanitizeUrl,
 	  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
-	  formatUrl: formatUrl,
-	  stringify: stringify,
-	  jsonParse: jsonParse,
-	  makeUnhandledStackInfo: makeUnhandledStackInfo,
 	  createItem: createItem,
-	  get: get,
-	  set: set,
-	  scrub: scrub,
+	  filterIp: filterIp,
 	  formatArgsAsString: formatArgsAsString,
+	  formatUrl: formatUrl,
+	  get: get,
+	  handleOptions: handleOptions,
+	  isError: isError,
+	  isFunction: isFunction,
+	  isIterable: isIterable,
+	  isNativeFunction: isNativeFunction,
+	  isType: isType,
+	  jsonParse: jsonParse,
+	  LEVELS: LEVELS,
+	  makeUnhandledStackInfo: makeUnhandledStackInfo,
+	  merge: merge,
 	  now: now,
-	  filterIp: filterIp
+	  redact: redact,
+	  sanitizeUrl: sanitizeUrl,
+	  scrub: scrub,
+	  set: set,
+	  stringify: stringify,
+	  traverse: traverse,
+	  typeName: typeName,
+	  uuid4: uuid4
 	};
 
 
@@ -1529,7 +1541,7 @@
 	          clone = src && isPlainObject(src) ? src : {};
 	          result[name] = merge(clone, copy);
 	        } else if (typeof copy !== 'undefined') {
-	          result[name] = copy
+	          result[name] = copy;
 	        }
 	      }
 	    }
@@ -2732,7 +2744,20 @@
 	};
 	
 	Telemeter.prototype.copyEvents = function() {
-	  return Array.prototype.slice.call(this.queue, 0);
+	  var events = Array.prototype.slice.call(this.queue, 0);
+	  if (_.isFunction(this.options.filterTelemetry)) {
+	    try {
+	      var i = events.length;
+	      while (i--) {
+	        if (this.options.filterTelemetry(events[i])) {
+	          events.splice(i, 1);
+	        }
+	      }
+	    } catch (e) {
+	      this.options.filterTelemetry = null;
+	    }
+	  }
+	  return events;
 	};
 	
 	Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, timestamp) {
@@ -2751,7 +2776,7 @@
 	    if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
 	      return false;
 	    }
-	  } catch (e) {
+	  } catch (exc) {
 	    this.options.filterTelemetry = null;
 	  }
 	
@@ -4868,7 +4893,7 @@
 	        var xhr = this;
 	
 	        function onreadystatechangeHandler() {
-	          if (xhr.__rollbar_xhr && (xhr.readyState === 1 || xhr.readyState === 4)) {
+	          if (xhr.__rollbar_xhr) {
 	            if (xhr.__rollbar_xhr.status_code === null) {
 	              xhr.__rollbar_xhr.status_code = 0;
 	              var requestData = null;
@@ -4877,9 +4902,10 @@
 	              }
 	              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
 	            }
-	            if (xhr.readyState === 1) {
+	            if (xhr.readyState < 2) {
 	              xhr.__rollbar_xhr.start_time_ms = _.now();
-	            } else {
+	            }
+	            if (xhr.readyState > 3) {
 	              xhr.__rollbar_xhr.end_time_ms = _.now();
 	
 	              var headers = null;
@@ -4932,14 +4958,14 @@
 	              if (response) {
 	                xhr.__rollbar_xhr.response = response;
 	              }
-	            }
-	            try {
-	              var code = xhr.status;
-	              code = code === 1223 ? 204 : code;
-	              xhr.__rollbar_xhr.status_code = code;
-	              xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
-	            } catch (e) {
-	              /* ignore possible exception from xhr.status */
+	              try {
+	                var code = xhr.status;
+	                code = code === 1223 ? 204 : code;
+	                xhr.__rollbar_xhr.status_code = code;
+	                xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+	              } catch (e) {
+	                /* ignore possible exception from xhr.status */
+	              }
 	            }
 	          }
 	        }
