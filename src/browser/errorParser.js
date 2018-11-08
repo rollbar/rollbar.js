@@ -60,10 +60,15 @@ function Stack(exception) {
     return stack;
   }
 
+  var name = exception.constructor && exception.constructor.name;
+  if (!name || !name.length || name.length < 3) {
+    name = exception.name;
+  }
+
   return {
     stack: getStack(),
     message: exception.message,
-    name: exception.name,
+    name: name,
     rawStack: exception.stack,
     rawException: exception
   };
