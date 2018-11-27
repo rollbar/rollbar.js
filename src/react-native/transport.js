@@ -5,7 +5,6 @@ var logger = require('./logger');
 var Buffer = require('buffer/').Buffer;
 
 function get(accessToken, options, params, callback) {
-  var t;
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
