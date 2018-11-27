@@ -498,7 +498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.5.0"),
+	  version: ("2.5.1"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -637,7 +637,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    item.telemetryEvents = this.telemeter.copyEvents();
 	    this.notifier.log(item, callback);
 	  } catch (e) {
-	    this.logger.error(e)
+	    this.logger.error(e);
 	  }
 	};
 	
@@ -1335,8 +1335,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var paramRes = _getScrubFieldRegexs(scrubFields);
 	  var queryRes = _getScrubQueryParamRegexs(scrubFields);
 	
-	  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
-	    return paramPart + redact(valPart);
+	  function redactQueryParam(dummy0, paramPart) {
+	    return paramPart + redact();
 	  }
 	
 	  function paramScrubber(v) {
@@ -1353,7 +1353,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var i;
 	    for (i = 0; i < paramRes.length; ++i) {
 	      if (paramRes[i].test(k)) {
-	        v = redact(v);
+	        v = redact();
 	        break;
 	      }
 	    }
@@ -3271,7 +3271,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        promise = detail.promise;
 	      }
 	    } catch (e) {
-	      detail = '[unhandledrejection] error getting `detail` from event';
+	      // Ignore
 	    }
 	    if (!reason) {
 	      reason = '[unhandledrejection] error getting `reason` from event';
@@ -4054,7 +4054,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  data.column = stackFrame.columnNumber;
 	  data.args = stackFrame.args;
 	
-	  data.context = gatherContext(data.url, data.line);
+	  data.context = gatherContext();
 	
 	  return data;
 	}
@@ -4090,10 +4090,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return stack;
 	  }
 	
+	  var name = exception.constructor && exception.constructor.name;
+	  if (!name || !name.length || name.length < 3) {
+	    name = exception.name;
+	  }
+	
 	  return {
 	    stack: getStack(),
 	    message: exception.message,
-	    name: exception.name,
+	    name: name,
 	    rawStack: exception.stack,
 	    rawException: exception
 	  };
