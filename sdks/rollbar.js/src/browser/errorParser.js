@@ -24,7 +24,7 @@ function Frame(stackFrame) {
   data.column = stackFrame.columnNumber;
   data.args = stackFrame.args;
 
-  data.context = gatherContext(data.url, data.line);
+  data.context = gatherContext();
 
   return data;
 }
