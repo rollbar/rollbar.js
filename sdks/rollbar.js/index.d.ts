@@ -59,6 +59,7 @@ declare namespace Rollbar {
         hostBlackList?: string[];
         filterTelemetry?: (e: TelemetryEvent) => boolean;
         autoInstrument?: AutoInstrumentOptions;
+        maxTelemetryEvents?: number;
         telemetryScrubber?: TelemetryScrubber;
         includeItemsInTelemetry?: boolean;
         scrubTelemetryInputs?: boolean;

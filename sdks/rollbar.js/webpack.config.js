@@ -55,27 +55,6 @@ var pluginConfig = {
   }
 };
 
-var testsConfig = {
-  name: 'tests',
-  entry: {
-    notifier: './test/notifier.test.js',
-  },
-  plugins: [defaultsPlugin],
-  output: {
-    path: 'test/',
-    filename: '[name].bundle.js',
-  },
-  module: {
-    preLoaders: [
-      {
-        test: /\.js$/,
-        loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/, /lib/, /dist/]
-      }
-    ],
-  }
-};
-
 var vanillaConfigBase = {
   eslint: {
     configFile: path.resolve(__dirname, ".eslintrc")
@@ -134,7 +113,7 @@ var namedAMDConfigBase = extend({}, UMDConfigBase);
 namedAMDConfigBase.entry = {
   'rollbar.named-amd': namedAMDConfigBase.entry['rollbar.umd']
 };
-namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output)
+namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output);
 namedAMDConfigBase.output.library = 'rollbar';
 namedAMDConfigBase.output.libraryTarget = 'amd';
 
@@ -146,7 +125,7 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
   var vanillaConfig = extend({}, vanillaConfigBase);
   vanillaConfig.name = filename;
 
-  plugins = basePlugins.concat(extraPlugins);
+  var plugins = basePlugins.concat(extraPlugins);
   vanillaConfig.plugins = plugins;
 
   vanillaConfig.output = extend({filename: filename}, vanillaConfig.output);
@@ -158,7 +137,7 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
   var UMDConfig = extend({}, UMDConfigBase);
 
-  plugins = basePlugins.concat(extraPlugins);
+  var plugins = basePlugins.concat(extraPlugins);
   UMDConfig.plugins = plugins;
 
   UMDConfig.output = extend({filename: filename}, UMDConfig.output);
@@ -171,7 +150,7 @@ function addNoConflictToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
   var noConflictConfig = extend({}, noConflictConfigBase);
 
-  plugins = basePlugins.concat(extraPlugins);
+  var plugins = basePlugins.concat(extraPlugins);
   noConflictConfig.plugins = plugins;
 
   noConflictConfig.output = extend({filename: filename}, noConflictConfig.output);
@@ -184,7 +163,7 @@ function addNamedAMDToConfig(webpackConfig, filename, extraPlugins) {
   var basePlugins = [defaultsPlugin];
   var AMDConfig = extend({}, namedAMDConfigBase);
 
-  plugins = basePlugins.concat(extraPlugins);
+  var plugins = basePlugins.concat(extraPlugins);
   AMDConfig.plugins = plugins;
 
   AMDConfig.output = extend({filename: filename}, AMDConfig.output);

@@ -1,5 +1,3 @@
-var async = require('async');
-var requestIp = require('request-ip');
 var _ = require('../utility');
 
 function baseData(item, options, callback) {
