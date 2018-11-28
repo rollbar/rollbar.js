@@ -509,8 +509,8 @@ function scrub(data, scrubFields) {
   var paramRes = _getScrubFieldRegexs(scrubFields);
   var queryRes = _getScrubQueryParamRegexs(scrubFields);
 
-  function redactQueryParam(dummy0, paramPart, dummy1, dummy2, dummy3, valPart) {
-    return paramPart + redact(valPart);
+  function redactQueryParam(dummy0, paramPart) {
+    return paramPart + redact();
   }
 
   function paramScrubber(v) {
@@ -527,7 +527,7 @@ function scrub(data, scrubFields) {
     var i;
     for (i = 0; i < paramRes.length; ++i) {
       if (paramRes[i].test(k)) {
-        v = redact(v);
+        v = redact();
         break;
       }
     }
