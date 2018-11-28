@@ -65,7 +65,7 @@ function captureUnhandledRejections(window, handler, shim) {
         promise = detail.promise;
       }
     } catch (e) {
-      detail = '[unhandledrejection] error getting `detail` from event';
+      // Ignore
     }
     if (!reason) {
       reason = '[unhandledrejection] error getting `reason` from event';
