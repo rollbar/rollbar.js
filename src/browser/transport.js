@@ -1,3 +1,5 @@
+/*global XDomainRequest*/
+
 var _ = require('../utility');
 var truncation = require('../truncation');
 var logger = require('./logger');
