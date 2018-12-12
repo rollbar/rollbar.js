@@ -1,8 +1,10 @@
 {
   "parser": "babel-eslint",
   "extends": "eslint:recommended",
-  "ecmafeatures": {
-    "modules": true
+  "parserOptions": {
+    "ecmafeatures": {
+      "modules": true
+    }
   },
   "env": {
     // I write for browser
@@ -16,6 +18,7 @@
     "strict": 0,
     "camelcase": [2, {"properties": "never"}],
     "quotes": [2, "single", "avoid-escape"],
-    "no-underscore-dangle": 0
+    "no-underscore-dangle": 0,
+    "no-useless-escape": 0
   }
 }
