@@ -280,15 +280,28 @@ Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
       self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     }
     try {
-      handler(event, context, function(err, resp) {
-        if (err) {
-          self.error(err);
-        }
-        self.wait(function() {
-          clearTimeout(self.lambdaTimeoutHandle);
-          callback(err, resp);
+      if (handler.length <= 2) {
+        // handler is async
+        handler(event, context)
+          .then(function(resp) { return callback(null, resp); })
+          .catch(function(err) {
+            self.error(err);
+            self.wait(function() {
+              clearTimeout(self.lambdaTimeoutHandle);
+              callback(err);
+            });
+          });
+      } else {
+        handler(event, context, function(err, resp) {
+          if (err) {
+            self.error(err);
+          }
+          self.wait(function() {
+            clearTimeout(self.lambdaTimeoutHandle);
+            callback(err, resp);
+          });
         });
-      });
+      }
     } catch (err) {
       self.error(err);
       self.wait(function() {
