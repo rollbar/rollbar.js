@@ -263,6 +263,43 @@ Rollbar.errorHandler = function() {
 };
 
 Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
+  if (handler.length <= 2) {
+    return this.asyncLambdaHandler(handler, timeoutHandler);
+  }
+  return this.syncLambdaHandler(handler, timeoutHandler);
+};
+
+Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
+  var self = this;
+  var _timeoutHandler = function(event, context) {
+    var message = 'Function timed out';
+    var custom = {
+      originalEvent: event,
+      originalRequestId: context.awsRequestId,
+    };
+    self.error(message, custom);
+  };
+  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
+  return function(event, context) {
+    return new Promise(function(resolve, reject) {
+      self.lambdaContext = context;
+      if (shouldReportTimeouts) {
+        var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context);
+        self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+      }
+      handler(event, context)
+        .then(function(resp) { resolve(resp); })
+        .catch(function(err) {
+          self.error(err);
+          self.wait(function() {
+            clearTimeout(self.lambdaTimeoutHandle);
+            reject(err);
+          });
+        });
+    });
+  };
+};
+Rollbar.prototype.syncLambdaHandler = function(handler, timeoutHandler) {
   var self = this;
   var _timeoutHandler = function(event, context, cb) {
     var message = 'Function timed out';
@@ -280,28 +317,15 @@ Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
       self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     }
     try {
-      if (handler.length <= 2) {
-        // handler is async
-        handler(event, context)
-          .then(function(resp) { return callback(null, resp); })
-          .catch(function(err) {
-            self.error(err);
-            self.wait(function() {
-              clearTimeout(self.lambdaTimeoutHandle);
-              callback(err);
-            });
-          });
-      } else {
-        handler(event, context, function(err, resp) {
-          if (err) {
-            self.error(err);
-          }
-          self.wait(function() {
-            clearTimeout(self.lambdaTimeoutHandle);
-            callback(err, resp);
-          });
+      handler(event, context, function(err, resp) {
+        if (err) {
+          self.error(err);
+        }
+        self.wait(function() {
+          clearTimeout(self.lambdaTimeoutHandle);
+          callback(err, resp);
         });
-      }
+      });
     } catch (err) {
       self.error(err);
       self.wait(function() {
