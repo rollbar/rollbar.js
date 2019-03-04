@@ -116,7 +116,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 	  var gDocument = (typeof document != 'undefined') && document;
-	  addTransformsToNotifier(this.client.notifier);
+	  addTransformsToNotifier(this.client.notifier, gWindow);
 	  addPredicatesToQueue(this.client.queue);
 	  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
 	    globals.captureUncaughtExceptions(gWindow, this);
@@ -450,14 +450,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	/* Internal */
 	
-	function addTransformsToNotifier(notifier) {
+	function addTransformsToNotifier(notifier, gWindow) {
 	  notifier
 	    .addTransform(transforms.handleItemWithError)
 	    .addTransform(transforms.ensureItemHasSomethingToSay)
 	    .addTransform(transforms.addBaseInfo)
-	    .addTransform(transforms.addRequestInfo(window))
-	    .addTransform(transforms.addClientInfo(window))
-	    .addTransform(transforms.addPluginInfo(window))
+	    .addTransform(transforms.addRequestInfo(gWindow))
+	    .addTransform(transforms.addClientInfo(gWindow))
+	    .addTransform(transforms.addPluginInfo(gWindow))
 	    .addTransform(transforms.addBody)
 	    .addTransform(sharedTransforms.addMessageWithError)
 	    .addTransform(sharedTransforms.addTelemetryData)
@@ -498,7 +498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.5.2"),
+	  version: ("2.5.3"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
