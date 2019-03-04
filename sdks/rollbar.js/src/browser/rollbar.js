@@ -21,7 +21,7 @@ function Rollbar(options, client) {
 
   var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
   var gDocument = (typeof document != 'undefined') && document;
-  addTransformsToNotifier(this.client.notifier);
+  addTransformsToNotifier(this.client.notifier, gWindow);
   addPredicatesToQueue(this.client.queue);
   if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
     globals.captureUncaughtExceptions(gWindow, this);
@@ -355,14 +355,14 @@ Rollbar.prototype.captureLoad = function(e, ts) {
 
 /* Internal */
 
-function addTransformsToNotifier(notifier) {
+function addTransformsToNotifier(notifier, gWindow) {
   notifier
     .addTransform(transforms.handleItemWithError)
     .addTransform(transforms.ensureItemHasSomethingToSay)
     .addTransform(transforms.addBaseInfo)
-    .addTransform(transforms.addRequestInfo(window))
-    .addTransform(transforms.addClientInfo(window))
-    .addTransform(transforms.addPluginInfo(window))
+    .addTransform(transforms.addRequestInfo(gWindow))
+    .addTransform(transforms.addClientInfo(gWindow))
+    .addTransform(transforms.addPluginInfo(gWindow))
     .addTransform(transforms.addBody)
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
