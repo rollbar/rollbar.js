@@ -81,8 +81,8 @@ Rollbar.prototype.wait = function(callback) {
   this.queue.wait(callback);
 };
 
-Rollbar.prototype.captureEvent = function(metadata, level) {
-  return this.telemeter.captureEvent(metadata, level);
+Rollbar.prototype.captureEvent = function(type, metadata, level) {
+  return this.telemeter.captureEvent(type, metadata, level);
 };
 
 Rollbar.prototype.captureDomContentLoaded = function(ts) {

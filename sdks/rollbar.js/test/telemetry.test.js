@@ -14,6 +14,7 @@ describe('Telemetry()', function() {
     expect(t).to.have.property('captureLog');
     expect(t).to.have.property('captureError');
     expect(t).to.have.property('captureNetwork');
+    expect(t).to.have.property('captureEvent');
 
     done();
   });
@@ -29,6 +30,18 @@ describe('capture', function() {
     expect(event.type).to.equal('network');
     expect(event.level).to.equal('debug');
     expect(event.body.url).to.equal('a.com');
+
+    done();
+  });
+});
+
+describe('captureEvent', function() {
+  it('should return a valid telemetry event', function(done) {
+    var t = new Telemeter();
+    var event = t.captureEvent('log', {message: 'bar'}, 'info');
+    expect(event.type).to.equal('log');
+    expect(event.level).to.equal('info');
+    expect(event.body.message).to.equal('bar');
 
     done();
   });
