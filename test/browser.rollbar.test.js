@@ -204,6 +204,42 @@ describe('configure', function() {
   });
 });
 
+describe('captureEvent', function() {
+  it('should handle missing/default type and level', function(done) {
+    var options = {};
+    var rollbar = new Rollbar(options);
+
+    var event = rollbar.captureEvent({foo: 'bar'});
+    expect(event.type).to.eql('manual');
+    expect(event.level).to.eql('info');
+    expect(event.body.foo).to.eql('bar');
+
+    done();
+  });
+  it('should handle specified type and level', function(done) {
+    var options = {};
+    var rollbar = new Rollbar(options);
+
+    var event = rollbar.captureEvent('log', {foo: 'bar'}, 'debug');
+    expect(event.type).to.eql('log');
+    expect(event.level).to.eql('debug');
+    expect(event.body.foo).to.eql('bar');
+
+    done();
+  });
+  it('should handle extra args', function(done) {
+    var options = {};
+    var rollbar = new Rollbar(options);
+
+    var event = rollbar.captureEvent('meaningless', {foo: 'bar'}, 23);
+    expect(event.type).to.eql('manual');
+    expect(event.level).to.eql('info');
+    expect(event.body.foo).to.eql('bar');
+
+    done();
+  });
+});
+
 describe('createItem', function() {
   it('should handle multiple strings', function(done) {
     var client = new (TestClientGen())();
