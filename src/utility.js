@@ -236,9 +236,8 @@ function parseUri(str) {
   var o = parseUriOptions;
   var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
   var uri = {};
-  var i = o.key.length;
 
-  while (i--) {
+  for (var i = 0, l = o.key.length; i < l; ++i) {
     uri[o.key[i]] = m[i] || '';
   }
 
@@ -457,14 +456,10 @@ var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual']
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
 function arrayIncludes(arr, val) {
-  var len = arr.length;
-  var k = 0;
-
-  while (k < len) {
+  for (var k = 0; k < arr.length; ++k) {
     if (arr[k] === val) {
       return true;
     }
-    k++;
   }
 
   return false;
