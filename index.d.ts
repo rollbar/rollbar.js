@@ -18,6 +18,7 @@ declare class Rollbar {
     public warning(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public error(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
     public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
+    public wait(callback: () => void): void;
 
     public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 
