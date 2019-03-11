@@ -537,7 +537,7 @@ function set(obj, path, value) {
   try {
     var temp = obj[keys[0]] || {};
     var replacement = temp;
-    for (var i = 1; i < len-1; i++) {
+    for (var i = 1; i < len - 1; ++i) {
       temp[keys[i]] = temp[keys[i]] || {};
       temp = temp[keys[i]];
     }
@@ -617,7 +617,7 @@ function _getScrubQueryParamRegexs(scrubFields) {
 function formatArgsAsString(args) {
   var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; i++) {
+  for (i = 0, len = args.length; i < len; ++i) {
     arg = args[i];
     switch (typeName(arg)) {
       case 'object':
