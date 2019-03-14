@@ -236,9 +236,8 @@ function parseUri(str) {
   var o = parseUriOptions;
   var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
   var uri = {};
-  var i = o.key.length;
 
-  while (i--) {
+  for (var i = 0, l = o.key.length; i < l; ++i) {
     uri[o.key[i]] = m[i] || '';
   }
 
@@ -453,6 +452,51 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   return item;
 }
 
+var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
+var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
+
+function arrayIncludes(arr, val) {
+  for (var k = 0; k < arr.length; ++k) {
+    if (arr[k] === val) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function createTelemetryEvent(args) {
+  var type, metadata, level;
+  var arg;
+
+  for (var i = 0, l = args.length; i < l; ++i) {
+    arg = args[i];
+
+    var typ = typeName(arg);
+    switch (typ) {
+      case 'string':
+        if (arrayIncludes(TELEMETRY_TYPES, arg)) {
+          type = arg;
+        } else if (arrayIncludes(TELEMETRY_LEVELS, arg)) {
+          level = arg;
+        }
+        break;
+      case 'object':
+        metadata = arg;
+        break;
+      default:
+        break;
+    }
+  }
+  var event = {
+    type: type || 'manual',
+    metadata: metadata || {},
+    level: level
+  };
+
+  return event;
+}
+
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
  *       undefined if not possible.
@@ -493,7 +537,7 @@ function set(obj, path, value) {
   try {
     var temp = obj[keys[0]] || {};
     var replacement = temp;
-    for (var i = 1; i < len-1; i++) {
+    for (var i = 1; i < len - 1; ++i) {
       temp[keys[i]] = temp[keys[i]] || {};
       temp = temp[keys[i]];
     }
@@ -573,7 +617,7 @@ function _getScrubQueryParamRegexs(scrubFields) {
 function formatArgsAsString(args) {
   var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; i++) {
+  for (i = 0, len = args.length; i < len; ++i) {
     arg = args[i];
     switch (typeName(arg)) {
       case 'object':
@@ -655,6 +699,7 @@ function handleOptions(current, input, payload) {
 module.exports = {
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   createItem: createItem,
+  createTelemetryEvent: createTelemetryEvent,
   filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
   formatUrl: formatUrl,

@@ -364,12 +364,13 @@ Rollbar.wrapCallback = function(f) {
   }
 };
 
-Rollbar.prototype.captureEvent = function(metadata, level) {
-  return this.client.captureEvent(metadata, level);
+Rollbar.prototype.captureEvent = function() {
+  var event = _.createTelemetryEvent(arguments);
+  return this.client.captureEvent(event.type, event.metadata, event.level);
 };
-Rollbar.captureEvent = function(metadata, level) {
+Rollbar.captureEvent = function() {
   if (_instance) {
-    return _instance.captureEvent(metadata, level);
+    return _instance.captureEvent.apply(_instance, arguments);
   } else {
     handleUninitialized();
   }
