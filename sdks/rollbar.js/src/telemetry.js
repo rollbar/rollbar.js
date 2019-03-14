@@ -63,8 +63,8 @@ Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, times
   return e;
 };
 
-Telemeter.prototype.captureEvent = function(metadata, level, rollbarUUID) {
-  return this.capture('manual', metadata, level, rollbarUUID);
+Telemeter.prototype.captureEvent = function(type, metadata, level, rollbarUUID) {
+  return this.capture(type, metadata, level, rollbarUUID);
 };
 
 Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) {
