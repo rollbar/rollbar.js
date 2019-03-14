@@ -289,7 +289,7 @@ Rollbar.prototype.wrap = function(f, context, _before) {
           return f.apply(this, arguments);
         } catch(exc) {
           var e = exc;
-          if (e) {
+          if (e && window._rollbarWrappedError !== e) {
             if (_.isType(e, 'string')) {
               e = new String(e);
             }
@@ -306,7 +306,7 @@ Rollbar.prototype.wrap = function(f, context, _before) {
 
       if (f.hasOwnProperty) {
         for (var prop in f) {
-          if (f.hasOwnProperty(prop)) {
+          if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
             f._rollbar_wrapped[prop] = f[prop];
           }
         }
