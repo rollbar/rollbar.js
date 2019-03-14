@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "Test Extension",
+  "version": "1.0.0",
+  "permissions": ["storage", "activeTab", "https://api.rollbar.com/"],
+  "content_security_policy": "default-src 'self' https://cdnjs.cloudflare.com https://api.rollbar.com;",
+  "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+  },
+ "content_scripts": [
+   {
+     "matches": ["*://*/*"],
+     "js": ["config.js", "rollbar.min.js", "content_script.js"]
+   }
+ ]
+}
