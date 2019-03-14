@@ -306,7 +306,7 @@ Rollbar.prototype.wrap = function(f, context, _before) {
 
       if (f.hasOwnProperty) {
         for (var prop in f) {
-          if (f.hasOwnProperty(prop)) {
+          if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
             f._rollbar_wrapped[prop] = f[prop];
           }
         }
