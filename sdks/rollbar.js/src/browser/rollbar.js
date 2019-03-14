@@ -289,7 +289,7 @@ Rollbar.prototype.wrap = function(f, context, _before) {
           return f.apply(this, arguments);
         } catch(exc) {
           var e = exc;
-          if (e) {
+          if (e && window._rollbarWrappedError !== e) {
             if (_.isType(e, 'string')) {
               e = new String(e);
             }
