@@ -367,7 +367,7 @@
 	          return f.apply(this, arguments);
 	        } catch(exc) {
 	          var e = exc;
-	          if (e) {
+	          if (e && window._rollbarWrappedError !== e) {
 	            if (_.isType(e, 'string')) {
 	              e = new String(e);
 	            }
@@ -384,7 +384,7 @@
 	
 	      if (f.hasOwnProperty) {
 	        for (var prop in f) {
-	          if (f.hasOwnProperty(prop)) {
+	          if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
 	            f._rollbar_wrapped[prop] = f[prop];
 	          }
 	        }
@@ -405,12 +405,13 @@
 	  }
 	};
 	
-	Rollbar.prototype.captureEvent = function(metadata, level) {
-	  return this.client.captureEvent(metadata, level);
+	Rollbar.prototype.captureEvent = function() {
+	  var event = _.createTelemetryEvent(arguments);
+	  return this.client.captureEvent(event.type, event.metadata, event.level);
 	};
-	Rollbar.captureEvent = function(metadata, level) {
+	Rollbar.captureEvent = function() {
 	  if (_instance) {
-	    return _instance.captureEvent(metadata, level);
+	    return _instance.captureEvent.apply(_instance, arguments);
 	  } else {
 	    handleUninitialized();
 	  }
@@ -481,7 +482,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.5.3"),
+	  version: ("2.5.4"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -586,8 +587,8 @@
 	  this.queue.wait(callback);
 	};
 	
-	Rollbar.prototype.captureEvent = function(metadata, level) {
-	  return this.telemeter.captureEvent(metadata, level);
+	Rollbar.prototype.captureEvent = function(type, metadata, level) {
+	  return this.telemeter.captureEvent(type, metadata, level);
 	};
 	
 	Rollbar.prototype.captureDomContentLoaded = function(ts) {
@@ -1045,9 +1046,8 @@
 	  var o = parseUriOptions;
 	  var m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
 	  var uri = {};
-	  var i = o.key.length;
 	
-	  while (i--) {
+	  for (var i = 0, l = o.key.length; i < l; ++i) {
 	    uri[o.key[i]] = m[i] || '';
 	  }
 	
@@ -1262,6 +1262,51 @@
 	  return item;
 	}
 	
+	var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
+	var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
+	
+	function arrayIncludes(arr, val) {
+	  for (var k = 0; k < arr.length; ++k) {
+	    if (arr[k] === val) {
+	      return true;
+	    }
+	  }
+	
+	  return false;
+	}
+	
+	function createTelemetryEvent(args) {
+	  var type, metadata, level;
+	  var arg;
+	
+	  for (var i = 0, l = args.length; i < l; ++i) {
+	    arg = args[i];
+	
+	    var typ = typeName(arg);
+	    switch (typ) {
+	      case 'string':
+	        if (arrayIncludes(TELEMETRY_TYPES, arg)) {
+	          type = arg;
+	        } else if (arrayIncludes(TELEMETRY_LEVELS, arg)) {
+	          level = arg;
+	        }
+	        break;
+	      case 'object':
+	        metadata = arg;
+	        break;
+	      default:
+	        break;
+	    }
+	  }
+	  var event = {
+	    type: type || 'manual',
+	    metadata: metadata || {},
+	    level: level
+	  };
+	
+	  return event;
+	}
+	
 	/*
 	 * get - given an obj/array and a keypath, return the value at that keypath or
 	 *       undefined if not possible.
@@ -1302,7 +1347,7 @@
 	  try {
 	    var temp = obj[keys[0]] || {};
 	    var replacement = temp;
-	    for (var i = 1; i < len-1; i++) {
+	    for (var i = 1; i < len - 1; ++i) {
 	      temp[keys[i]] = temp[keys[i]] || {};
 	      temp = temp[keys[i]];
 	    }
@@ -1382,7 +1427,7 @@
 	function formatArgsAsString(args) {
 	  var i, len, arg;
 	  var result = [];
-	  for (i = 0, len = args.length; i < len; i++) {
+	  for (i = 0, len = args.length; i < len; ++i) {
 	    arg = args[i];
 	    switch (typeName(arg)) {
 	      case 'object':
@@ -1464,6 +1509,7 @@
 	module.exports = {
 	  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
 	  createItem: createItem,
+	  createTelemetryEvent: createTelemetryEvent,
 	  filterIp: filterIp,
 	  formatArgsAsString: formatArgsAsString,
 	  formatUrl: formatUrl,
@@ -2784,8 +2830,8 @@
 	  return e;
 	};
 	
-	Telemeter.prototype.captureEvent = function(metadata, level, rollbarUUID) {
-	  return this.capture('manual', metadata, level, rollbarUUID);
+	Telemeter.prototype.captureEvent = function(type, metadata, level, rollbarUUID) {
+	  return this.capture(type, metadata, level, rollbarUUID);
 	};
 	
 	Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) {
