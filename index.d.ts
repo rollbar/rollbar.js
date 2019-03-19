@@ -21,7 +21,7 @@ declare class Rollbar {
 
     public captureEvent(metadata: object, level: Rollbar.Level): Rollbar.TelemetryEvent;
 
-    public lambdaHandler(handler: Rollbar.LambdaHandler): Rollbar.LambdaHandler;
+    public lambdaHandler<T = object>(handler: Rollbar.LambdaHandler<T>): Rollbar.LambdaHandler<T>;
 
     public errorHandler(): Rollbar.ExpressErrorHandler;
 
@@ -31,7 +31,7 @@ declare class Rollbar {
 }
 
 declare namespace Rollbar {
-    export type LambdaHandler = (event: object, context: object, callback: Callback) => void;
+    export type LambdaHandler<E = object> = (event: E, context: object, callback: Callback) => void;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
