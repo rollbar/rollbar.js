@@ -51,6 +51,15 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
           included: false,
           served: true,
           watched: false
+        },
+
+        // Examples HTML, set `included: true`, but they won't be executed or added
+        // to the DOM until loaded explicitly during a test.
+        {
+          pattern: 'examples/**/*.html',
+          included: true,
+          served: true,
+          watched: false
         }
       ]
     },
