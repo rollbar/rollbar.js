@@ -30,7 +30,7 @@ function get(accessToken, options, params, callback, requestFactory) {
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  _makeRequest(accessToken, url, method, null, callback, requestFactory);
+  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
 }
 
 function post(accessToken, options, payload, callback, requestFactory) {
@@ -50,7 +50,25 @@ function post(accessToken, options, payload, callback, requestFactory) {
   var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeRequest(accessToken, url, method, writeData, callback, requestFactory);
+  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
+}
+
+// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
+// so Angular change detection isn't triggered on each API call.
+// This is the equivalent of runOutsideAngular().
+//
+function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory) {
+  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+
+  if (currentZone && currentZone._name === 'angular') {
+    var rootZone = currentZone._parent;
+    rootZone.run(function () {
+      _makeRequest(accessToken, url, method, data, callback, requestFactory);
+    });
+  } else {
+    _makeRequest(accessToken, url, method, data, callback, requestFactory);
+  }
 }
 
 function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
