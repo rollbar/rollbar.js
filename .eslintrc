@@ -19,6 +19,7 @@
     "camelcase": [2, {"properties": "never"}],
     "quotes": [2, "single", "avoid-escape"],
     "no-underscore-dangle": 0,
-    "no-useless-escape": 0
+    "no-useless-escape": 0,
+    "no-use-before-define": [1, { "functions": false }]
   }
 }
