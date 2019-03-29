@@ -9,6 +9,14 @@ test:
 	@npm run test
 	@echo ""
 
+test-browser:
+	@npm run test-browser
+	@echo ""
+
+test-server:
+	@npm run test-server
+	@echo ""
+
 test_ci:
 	@npm run test_ci
 	@echo ""
