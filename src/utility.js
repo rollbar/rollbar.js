@@ -124,7 +124,8 @@ function isIterable(i) {
  * @returns true if e is an error
  */
 function isError(e) {
-  return isType(e, 'error');
+  // Detect both Error and Firefox Exception type
+  return isType(e, 'error') || isType(e, 'exception');
 }
 
 function traverse(obj, func, seen) {
@@ -394,6 +395,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
         break;
       case 'error':
       case 'domexception':
+      case 'exception': // Firefox Exception type
         err ? extraArgs.push(arg) : err = arg;
         break;
       case 'object':
