@@ -172,8 +172,9 @@ describe('log', function() {
     var notifier = new Notifier(queue, options);
 
     var initialItem = {a: 123, b: 'a string'};
+    var error = new Error('fizz buzz');
     notifier.addTransform(function(i, o, cb) {
-      cb(new Error('fizz buzz'), null);
+      cb(error, null);
     }).addTransform(function(i, o, cb) {
       expect(false).to.be.ok(); // assert this is not called
       cb(null, {a: 42, b: i.b});
@@ -182,7 +183,7 @@ describe('log', function() {
     notifier.log(initialItem, spy);
 
     expect(spy.called).to.be.ok();
-    expect(spy.calledWithExactly(new Error('fizz buzz'), null)).to.be.ok();
+    expect(spy.calledWithExactly(error, null)).to.be.ok();
     expect(queue.items.length).to.eql(0);
 
     done();
