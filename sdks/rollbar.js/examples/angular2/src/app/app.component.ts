@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, NgZone } from '@angular/core';
 import { RollbarService } from './rollbar';
 import * as Rollbar from 'rollbar';
 
@@ -8,13 +8,10 @@ import * as Rollbar from 'rollbar';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  constructor(@Inject(RollbarService) rollbar: Rollbar) {
-    this.rollbar = rollbar;
+  constructor(@Inject(RollbarService) private rollbar: Rollbar, private ngZone: NgZone) {
+    // Used by Karma tests
+    window['angularAppComponent'] = this;
   }
-
-  private rollbar: Rollbar;
-
-  title = 'my-app';
 
   rollbarInfo() {
     console.log('rollbarInfo', this);
@@ -24,5 +21,14 @@ export class AppComponent {
   throwError() {
     console.log('throwError', this);
     throw new Error('angular test error');
+  }
+
+  // Public functions used by Karma tests
+  publicRollbarInfo() {
+    this.ngZone.run(() => this.rollbarInfo());
+  }
+
+  publicThrowError() {
+    this.ngZone.run(() => this.throwError());
   }
 }
