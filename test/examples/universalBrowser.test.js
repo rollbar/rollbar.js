@@ -9,7 +9,7 @@ describe('Rollbar loaded by snippet', function() {
     document.write(window.__html__['examples/universal-browser/test.html']);
 
     // Stub the xhr interface.
-    server = sinon.createFakeServer();
+    window.server = sinon.createFakeServer();
 
     // Give the snippet time to load and init.
     setTimeout(function() {
@@ -18,10 +18,11 @@ describe('Rollbar loaded by snippet', function() {
   });
 
   after(function () {
-    server.restore();
+    window.server.restore();
   });
 
   it('should send a valid log event', function(done) {
+    var server = window.server;
     var rollbar = document.defaultView.Rollbar;
 
     server.respondWith('POST', 'api/1/item',
@@ -35,7 +36,7 @@ describe('Rollbar loaded by snippet', function() {
     var ret = rollbar.info('test');
     server.respond();
 
-    body = JSON.parse(server.requests[0].requestBody);
+    var body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.uuid).to.eql(ret.uuid);
