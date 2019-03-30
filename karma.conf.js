@@ -48,7 +48,8 @@ module.exports = function (config) {
     },
 
     proxies: {
-      '/dist/': '/base/dist/'
+      '/dist/': '/base/dist/',
+      '/examples/': '/base/examples/'
     },
 
     reporters: ['progress'],
