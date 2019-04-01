@@ -34,7 +34,7 @@ module.exports = function (config) {
     // Files are specified in the grunt-karma configuration in Gruntfile.js
     //files: []
 
-    frameworks: ['mocha', 'expect', 'sinon', 'jquery-1.9.0'],
+    frameworks: ['mocha', 'expect', 'chai', 'sinon', 'jquery-1.9.0'],
 
     logLevel: 'INFO',
 
