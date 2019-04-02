@@ -31,6 +31,27 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
+## Preparing for rollbar.js tests
+
+Rollbar.js test automation includes tests that load and exercise this example app.
+For those tests to work, the Angular AOT files must be available and up to date in ./examples/angular2/dist/.
+If the example app has changed or changes to rollbar.js need to be pulled in,
+update and commit new AOT files.
+
+```
+# Build the rollbar.js dist if needed.
+npm run build
+
+# Prepare the example's npm bundle.
+cd examples/angular2 && npm install
+
+# Build the AOT files with custom deployUrl.
+ng build --aot --deployUrl="/examples/angular2/dist/my-app/"
+
+# The rollbar.js dist is no longer needed, and can be reverted.
+cd ../.. && git checkout dist
+```
+
 ## Running unit tests
 
 Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).

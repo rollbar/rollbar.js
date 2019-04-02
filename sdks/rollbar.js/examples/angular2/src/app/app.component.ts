@@ -9,26 +9,34 @@ import * as Rollbar from 'rollbar';
 })
 export class AppComponent {
   constructor(@Inject(RollbarService) private rollbar: Rollbar, private ngZone: NgZone) {
-    // Used by Karma tests
+    // Used by rollbar.js tests
     window['angularAppComponent'] = this;
   }
 
+  // Example log event using the rollbar object.
   rollbarInfo() {
-    console.log('rollbarInfo', this);
     this.rollbar.info('angular test log');
   }
 
+  // Example error, which will be reported to rollbar.
   throwError() {
-    console.log('throwError', this);
     throw new Error('angular test error');
   }
 
-  // Public functions used by Karma tests
+  // Methods used by rollbar.js tests
+
   publicRollbarInfo() {
     this.ngZone.run(() => this.rollbarInfo());
   }
 
   publicThrowError() {
     this.ngZone.run(() => this.throwError());
+  }
+
+  doCheckCount: number = 0;
+
+  // Used to monitor change detection events
+  ngDoCheck() {
+    this.doCheckCount += 1;
   }
 }
