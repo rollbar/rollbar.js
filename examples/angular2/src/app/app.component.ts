@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, NgZone } from '@angular/core';
 import { RollbarService } from './rollbar';
 import * as Rollbar from 'rollbar';
 
@@ -8,21 +8,35 @@ import * as Rollbar from 'rollbar';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  constructor(@Inject(RollbarService) rollbar: Rollbar) {
-    this.rollbar = rollbar;
+  constructor(@Inject(RollbarService) private rollbar: Rollbar, private ngZone: NgZone) {
+    // Used by rollbar.js tests
+    window['angularAppComponent'] = this;
   }
 
-  private rollbar: Rollbar;
-
-  title = 'my-app';
-
+  // Example log event using the rollbar object.
   rollbarInfo() {
-    console.log('rollbarInfo', this);
     this.rollbar.info('angular test log');
   }
 
+  // Example error, which will be reported to rollbar.
   throwError() {
-    console.log('throwError', this);
     throw new Error('angular test error');
+  }
+
+  // Methods used by rollbar.js tests
+
+  publicRollbarInfo() {
+    this.ngZone.run(() => this.rollbarInfo());
+  }
+
+  publicThrowError() {
+    this.ngZone.run(() => this.throwError());
+  }
+
+  doCheckCount: number = 0;
+
+  // Used to monitor change detection events
+  ngDoCheck() {
+    this.doCheckCount += 1;
   }
 }
