@@ -34,7 +34,7 @@ module.exports = function (config) {
     // Files are specified in the grunt-karma configuration in Gruntfile.js
     //files: []
 
-    frameworks: ['mocha', 'expect', 'sinon', 'jquery-1.9.0'],
+    frameworks: ['mocha', 'expect', 'chai', 'sinon', 'jquery-1.9.0'],
 
     logLevel: 'INFO',
 
@@ -43,12 +43,13 @@ module.exports = function (config) {
 
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
-      'test/!(requirejs).test.js': ['webpack', 'sourcemap'],
+      'test/**/!(requirejs).test.js': ['webpack', 'sourcemap'],
       '**/*.html': ['html2js']
     },
 
     proxies: {
-      '/dist/': '/base/dist/'
+      '/dist/': '/base/dist/',
+      '/examples/': '/base/examples/'
     },
 
     reporters: ['progress'],
