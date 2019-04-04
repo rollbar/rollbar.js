@@ -6,7 +6,14 @@ var browserStackBrowsers = require('./browserstack.browsers');
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 
 var allBrowsers = browserStackBrowsers.filter('bs_all');
-var allBrowsersByBrowser = {};
+var allBrowsersByBrowser = {
+  // Travis needs the --no-sandbox option,
+  // so add as a custom launcher to be used as the default browser.
+  ChromeNoSandbox: {
+    base: 'ChromeHeadless',
+    flags: ['--no-sandbox']
+  }
+};
 allBrowsers.forEach(function(browser) {
   allBrowsersByBrowser[browser._alias] = browser;
 });
@@ -14,7 +21,7 @@ allBrowsers.forEach(function(browser) {
 
 module.exports = function (config) {
   config.set({
-    browsers: ['PhantomJS'],
+    browsers: ['ChromeNoSandbox'],
 
     // The Travis environment has these specified.
     // To run BrowserStack tests locally, specify the environment variables:
