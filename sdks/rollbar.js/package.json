@@ -60,7 +60,7 @@
     "karma": "^4.0.1",
     "karma-browserstack-launcher": "^0.1.5",
     "karma-chai": "^0.1.0",
-    "karma-chrome-launcher": "^0.2.0",
+    "karma-chrome-launcher": "^2.2.0",
     "karma-expect": "^1.1.0",
     "karma-firefox-launcher": "^0.1.6",
     "karma-html2js-preprocessor": "^1.1.0",
