@@ -489,7 +489,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.5.4"),
+	  version: ("2.5.5"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -941,7 +941,8 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	 * @returns true if e is an error
 	 */
 	function isError(e) {
-	  return isType(e, 'error');
+	  // Detect both Error and Firefox Exception type
+	  return isType(e, 'error') || isType(e, 'exception');
 	}
 	
 	function traverse(obj, func, seen) {
@@ -1211,6 +1212,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	        break;
 	      case 'error':
 	      case 'domexception':
+	      case 'exception': // Firefox Exception type
 	        err ? extraArgs.push(arg) : err = arg;
 	        break;
 	      case 'object':
@@ -3407,7 +3409,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	
 	  var method = 'GET';
 	  var url = _.formatUrl(options);
-	  _makeRequest(accessToken, url, method, null, callback, requestFactory);
+	  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
 	}
 	
 	function post(accessToken, options, payload, callback, requestFactory) {
@@ -3427,7 +3429,25 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 	  var writeData = stringifyResult.value;
 	  var method = 'POST';
 	  var url = _.formatUrl(options);
-	  _makeRequest(accessToken, url, method, writeData, callback, requestFactory);
+	  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
+	}
+	
+	// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
+	// so Angular change detection isn't triggered on each API call.
+	// This is the equivalent of runOutsideAngular().
+	//
+	function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory) {
+	  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+	  var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+	
+	  if (currentZone && currentZone._name === 'angular') {
+	    var rootZone = currentZone._parent;
+	    rootZone.run(function () {
+	      _makeRequest(accessToken, url, method, data, callback, requestFactory);
+	    });
+	  } else {
+	    _makeRequest(accessToken, url, method, data, callback, requestFactory);
+	  }
 	}
 	
 	function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
