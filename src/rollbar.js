@@ -16,6 +16,7 @@ function Rollbar(options, api, logger, platform) {
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
+  this.api = api;
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
@@ -91,6 +92,14 @@ Rollbar.prototype.captureDomContentLoaded = function(ts) {
 
 Rollbar.prototype.captureLoad = function(ts) {
   return this.telemeter.captureLoad(ts);
+};
+
+Rollbar.prototype.buildJsonPayload = function(item) {
+  return this.api.buildJsonPayload(item);
+};
+
+Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+  this.api.postJsonPayload(jsonPayload);
 };
 
 /* Internal */
