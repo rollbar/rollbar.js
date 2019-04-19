@@ -53,6 +53,16 @@ function post(accessToken, options, payload, callback, requestFactory) {
   _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
 }
 
+function postJsonPayload(accessToken, options, jsonPayload, callback, requestFactory) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+
+  var method = 'POST';
+  var url = _.formatUrl(options);
+  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory);
+}
+
 // Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
@@ -221,5 +231,6 @@ function _newRetriableError(message, code) {
 
 module.exports = {
   get: get,
-  post: post
+  post: post,
+  postJsonPayload: postJsonPayload
 };
