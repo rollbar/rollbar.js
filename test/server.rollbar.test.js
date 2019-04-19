@@ -22,6 +22,12 @@ function TestClientGen() {
         this.logCalls.push({func: fn, item: item});
       }.bind(this, fn)
     }
+    this.buildJsonPayload = function(obj) {
+      this.logCalls.push({item: obj});
+    };
+    this.sendJsonPayload = function(json) {
+      this.logCalls.push({item: json});
+    };
     this.clearLogCalls = function() {
       this.logCalls = [];
     };
@@ -42,6 +48,12 @@ vows.describe('rollbar')
         },
         'should have error method': function(r) {
           assert.isFunction(r.error);
+        },
+        'should have buildJsonPayload method': function(r) {
+          assert.isFunction(r.buildJsonPayload);
+        },
+        'should have sendJsonPayload method': function(r) {
+          assert.isFunction(r.sendJsonPayload);
         },
         'should have accessToken in options': function(r) {
           assert.equal('abc123', r.options.accessToken);
@@ -263,6 +275,32 @@ vows.describe('rollbar')
             assert.isTrue(callbackCalled);
           }
         }
+      }
+    },
+    'buildJsonPayload': {
+      topic: function() {
+        var client = new (TestClientGen())();
+        var rollbar = new Rollbar({accessToken: 'abc123'}, client);
+        return rollbar;
+      },
+      'should work': function(r) {
+        var obj = { foo: 'bar' };
+        r.buildJsonPayload(obj);
+        var item = r.client.logCalls[r.client.logCalls.length - 1].item;
+        assert.equal(obj, item);
+      }
+    },
+    'sendJsonPayload': {
+      topic: function() {
+        var client = new (TestClientGen())();
+        var rollbar = new Rollbar({accessToken: 'abc123'}, client);
+        return rollbar;
+      },
+      'should work': function(r) {
+        var json = "{ \"foo\": \"bar\" }";
+        r.sendJsonPayload(json);
+        var item = r.client.logCalls[r.client.logCalls.length - 1].item;
+        assert.equal(json, item);
       }
     },
     'singleton': {
