@@ -71,7 +71,23 @@ function _makeZoneRequest(accessToken, url, method, data, callback, requestFacto
   }
 }
 
+/* global RollbarProxy */
+function _proxyRequest(json, callback) {
+  var rollbarProxy = new RollbarProxy();
+  rollbarProxy.sendJsonPayload(
+    json,
+    function(_msg) { /* do nothing */ }, // eslint-disable-line no-unused-vars
+    function(err) {
+      callback(new Error(err));
+    }
+  );
+}
+
 function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
+  if (typeof RollbarProxy !== 'undefined') {
+    return _proxyRequest(data, callback);
+  }
+
   var request;
   if (requestFactory) {
     request = requestFactory();
