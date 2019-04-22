@@ -223,6 +223,27 @@ Rollbar.critical = function() {
   }
 };
 
+Rollbar.prototype.buildJsonPayload = function(item) {
+  return this.client.buildJsonPayload(item);
+};
+Rollbar.buildJsonPayload = function() {
+  if (_instance) {
+    return _instance.buildJsonPayload.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+  return this.client.sendJsonPayload(jsonPayload);
+};
+Rollbar.sendJsonPayload = function() {
+  if (_instance) {
+    return _instance.sendJsonPayload.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
 
 Rollbar.prototype.wait = function(callback) {
   this.client.wait(callback);
