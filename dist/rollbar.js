@@ -79,10 +79,10 @@
 	var Client = __webpack_require__(2);
 	var _ = __webpack_require__(4);
 	var API = __webpack_require__(10);
-	var logger = __webpack_require__(12);
-	var globals = __webpack_require__(15);
+	var logger = __webpack_require__(13);
+	var globals = __webpack_require__(16);
 	
-	var transport = __webpack_require__(16);
+	var transport = __webpack_require__(17);
 	var urllib = __webpack_require__(18);
 	
 	var transforms = __webpack_require__(19);
@@ -274,6 +274,28 @@
 	  } else {
 	    var maybeCallback = _getFirstFunction(arguments);
 	    handleUninitialized(maybeCallback);
+	  }
+	};
+	
+	Rollbar.prototype.buildJsonPayload = function(item) {
+	  return this.client.buildJsonPayload(item);
+	};
+	Rollbar.buildJsonPayload = function() {
+	  if (_instance) {
+	    return _instance.buildJsonPayload.apply(_instance, arguments);
+	  } else {
+	    handleUninitialized();
+	  }
+	};
+	
+	Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+	  return this.client.sendJsonPayload(jsonPayload);
+	};
+	Rollbar.sendJsonPayload = function() {
+	  if (_instance) {
+	    return _instance.sendJsonPayload.apply(_instance, arguments);
+	  } else {
+	    handleUninitialized();
 	  }
 	};
 	
@@ -482,7 +504,7 @@
 	/* global __DEFAULT_ENDPOINT__:false */
 	
 	var defaultOptions = {
-	  version: ("2.5.5"),
+	  version: ("2.6.0"),
 	  scrubFields: (["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"]),
 	  logLevel: ("debug"),
 	  reportLevel: ("debug"),
@@ -522,6 +544,7 @@
 	  this.logger = logger;
 	  Rollbar.rateLimiter.configureGlobal(this.options);
 	  Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
+	  this.api = api;
 	  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
 	  this.notifier = new Notifier(this.queue, this.options);
 	  this.telemeter = new Telemeter(this.options);
@@ -597,6 +620,14 @@
 	
 	Rollbar.prototype.captureLoad = function(ts) {
 	  return this.telemeter.captureLoad(ts);
+	};
+	
+	Rollbar.prototype.buildJsonPayload = function(item) {
+	  return this.api.buildJsonPayload(item);
+	};
+	
+	Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+	  this.api.postJsonPayload(jsonPayload);
 	};
 	
 	/* Internal */
@@ -2954,6 +2985,7 @@
 	
 	var _ = __webpack_require__(4);
 	var helpers = __webpack_require__(11);
+	var truncation = __webpack_require__(12);
 	
 	var defaultOptions = {
 	  hostname: 'api.rollbar.com',
@@ -3001,6 +3033,35 @@
 	  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
 	  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
 	  this.transport.post(this.accessToken, transportOptions, payload, callback);
+	};
+	
+	/**
+	 *
+	 * @param data
+	 * @param callback
+	 */
+	Api.prototype.buildJsonPayload = function(data, callback) {
+	  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+	
+	  var stringifyResult = truncation.truncate(payload);
+	  if (stringifyResult.error) {
+	    if (callback) {
+	      callback(stringifyResult.error);
+	    }
+	    return null;
+	  }
+	
+	  return stringifyResult.value;
+	};
+	
+	/**
+	 *
+	 * @param jsonPayload
+	 * @param callback
+	 */
+	Api.prototype.postJsonPayload = function(jsonPayload, callback) {
+	  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+	  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
 	};
 	
 	Api.prototype.configure = function(options) {
@@ -3122,9 +3183,134 @@
 
 	'use strict';
 	
+	var _ = __webpack_require__(4);
+	
+	function raw(payload, jsonBackup) {
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function selectFrames(frames, range) {
+	  var len = frames.length;
+	  if (len > range * 2) {
+	    return frames.slice(0, range).concat(frames.slice(len - range));
+	  }
+	  return frames;
+	}
+	
+	function truncateFrames(payload, jsonBackup, range) {
+	  range = (typeof range === 'undefined') ? 30 : range;
+	  var body = payload.data.body;
+	  var frames;
+	  if (body.trace_chain) {
+	    var chain = body.trace_chain;
+	    for (var i = 0; i < chain.length; i++) {
+	      frames = chain[i].frames;
+	      frames = selectFrames(frames, range);
+	      chain[i].frames = frames;
+	    }
+	  } else if (body.trace) {
+	    frames = body.trace.frames;
+	    frames = selectFrames(frames, range);
+	    body.trace.frames = frames;
+	  }
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function maybeTruncateValue(len, val) {
+	  if (!val) {
+	    return val;
+	  }
+	  if (val.length > len) {
+	    return val.slice(0, len - 3).concat('...');
+	  }
+	  return val;
+	}
+	
+	function truncateStrings(len, payload, jsonBackup) {
+	  function truncator(k, v, seen) {
+	    switch (_.typeName(v)) {
+	      case 'string':
+	        return maybeTruncateValue(len, v);
+	      case 'object':
+	      case 'array':
+	        return _.traverse(v, truncator, seen);
+	      default:
+	        return v;
+	    }
+	  }
+	  payload = _.traverse(payload, truncator, []);
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function truncateTraceData(traceData) {
+	  if (traceData.exception) {
+	    delete traceData.exception.description;
+	    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+	  }
+	  traceData.frames = selectFrames(traceData.frames, 1);
+	  return traceData;
+	}
+	
+	function minBody(payload, jsonBackup) {
+	  var body = payload.data.body;
+	  if (body.trace_chain) {
+	    var chain = body.trace_chain;
+	    for (var i = 0; i < chain.length; i++) {
+	      chain[i] = truncateTraceData(chain[i]);
+	    }
+	  } else if (body.trace) {
+	    body.trace = truncateTraceData(body.trace);
+	  }
+	  return [payload, _.stringify(payload, jsonBackup)];
+	}
+	
+	function needsTruncation(payload, maxSize) {
+	  return payload.length > maxSize;
+	}
+	
+	function truncate(payload, jsonBackup, maxSize) {
+	  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
+	  var strategies = [
+	    raw,
+	    truncateFrames,
+	    truncateStrings.bind(null, 1024),
+	    truncateStrings.bind(null, 512),
+	    truncateStrings.bind(null, 256),
+	    minBody
+	  ];
+	  var strategy, results, result;
+	
+	  while ((strategy = strategies.shift())) {
+	    results = strategy(payload, jsonBackup);
+	    payload = results[0];
+	    result = results[1];
+	    if (result.error || !needsTruncation(result.value, maxSize)) {
+	      return result;
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = {
+	  truncate: truncate,
+	
+	  /* for testing */
+	  raw: raw,
+	  truncateFrames: truncateFrames,
+	  truncateStrings: truncateStrings,
+	  maybeTruncateValue: maybeTruncateValue
+	};
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
 	/* eslint-disable no-console */
-	__webpack_require__(13);
-	var detection = __webpack_require__(14);
+	__webpack_require__(14);
+	var detection = __webpack_require__(15);
 	var _ = __webpack_require__(4);
 	
 	function error() {
@@ -3167,7 +3353,7 @@
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 	// Console-polyfill. MIT license.
@@ -3192,7 +3378,7 @@
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3230,7 +3416,7 @@
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -3365,7 +3551,7 @@
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3373,8 +3559,8 @@
 	/*global XDomainRequest*/
 	
 	var _ = __webpack_require__(4);
-	var truncation = __webpack_require__(17);
-	var logger = __webpack_require__(12);
+	var truncation = __webpack_require__(12);
+	var logger = __webpack_require__(13);
 	
 	/*
 	 * accessToken may be embedded in payload but that should not
@@ -3425,6 +3611,16 @@
 	  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
 	}
 	
+	function postJsonPayload(accessToken, options, jsonPayload, callback, requestFactory) {
+	  if (!callback || !_.isFunction(callback)) {
+	    callback = function() {};
+	  }
+	
+	  var method = 'POST';
+	  var url = _.formatUrl(options);
+	  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory);
+	}
+	
 	// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
 	// so Angular change detection isn't triggered on each API call.
 	// This is the equivalent of runOutsideAngular().
@@ -3443,7 +3639,23 @@
 	  }
 	}
 	
+	/* global RollbarProxy */
+	function _proxyRequest(json, callback) {
+	  var rollbarProxy = new RollbarProxy();
+	  rollbarProxy.sendJsonPayload(
+	    json,
+	    function(_msg) { /* do nothing */ }, // eslint-disable-line no-unused-vars
+	    function(err) {
+	      callback(new Error(err));
+	    }
+	  );
+	}
+	
 	function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
+	  if (typeof RollbarProxy !== 'undefined') {
+	    return _proxyRequest(data, callback);
+	  }
+	
 	  var request;
 	  if (requestFactory) {
 	    request = requestFactory();
@@ -3593,132 +3805,8 @@
 	
 	module.exports = {
 	  get: get,
-	  post: post
-	};
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var _ = __webpack_require__(4);
-	
-	function raw(payload, jsonBackup) {
-	  return [payload, _.stringify(payload, jsonBackup)];
-	}
-	
-	function selectFrames(frames, range) {
-	  var len = frames.length;
-	  if (len > range * 2) {
-	    return frames.slice(0, range).concat(frames.slice(len - range));
-	  }
-	  return frames;
-	}
-	
-	function truncateFrames(payload, jsonBackup, range) {
-	  range = (typeof range === 'undefined') ? 30 : range;
-	  var body = payload.data.body;
-	  var frames;
-	  if (body.trace_chain) {
-	    var chain = body.trace_chain;
-	    for (var i = 0; i < chain.length; i++) {
-	      frames = chain[i].frames;
-	      frames = selectFrames(frames, range);
-	      chain[i].frames = frames;
-	    }
-	  } else if (body.trace) {
-	    frames = body.trace.frames;
-	    frames = selectFrames(frames, range);
-	    body.trace.frames = frames;
-	  }
-	  return [payload, _.stringify(payload, jsonBackup)];
-	}
-	
-	function maybeTruncateValue(len, val) {
-	  if (!val) {
-	    return val;
-	  }
-	  if (val.length > len) {
-	    return val.slice(0, len - 3).concat('...');
-	  }
-	  return val;
-	}
-	
-	function truncateStrings(len, payload, jsonBackup) {
-	  function truncator(k, v, seen) {
-	    switch (_.typeName(v)) {
-	      case 'string':
-	        return maybeTruncateValue(len, v);
-	      case 'object':
-	      case 'array':
-	        return _.traverse(v, truncator, seen);
-	      default:
-	        return v;
-	    }
-	  }
-	  payload = _.traverse(payload, truncator, []);
-	  return [payload, _.stringify(payload, jsonBackup)];
-	}
-	
-	function truncateTraceData(traceData) {
-	  if (traceData.exception) {
-	    delete traceData.exception.description;
-	    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
-	  }
-	  traceData.frames = selectFrames(traceData.frames, 1);
-	  return traceData;
-	}
-	
-	function minBody(payload, jsonBackup) {
-	  var body = payload.data.body;
-	  if (body.trace_chain) {
-	    var chain = body.trace_chain;
-	    for (var i = 0; i < chain.length; i++) {
-	      chain[i] = truncateTraceData(chain[i]);
-	    }
-	  } else if (body.trace) {
-	    body.trace = truncateTraceData(body.trace);
-	  }
-	  return [payload, _.stringify(payload, jsonBackup)];
-	}
-	
-	function needsTruncation(payload, maxSize) {
-	  return payload.length > maxSize;
-	}
-	
-	function truncate(payload, jsonBackup, maxSize) {
-	  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
-	  var strategies = [
-	    raw,
-	    truncateFrames,
-	    truncateStrings.bind(null, 1024),
-	    truncateStrings.bind(null, 512),
-	    truncateStrings.bind(null, 256),
-	    minBody
-	  ];
-	  var strategy, results, result;
-	
-	  while ((strategy = strategies.shift())) {
-	    results = strategy(payload, jsonBackup);
-	    payload = results[0];
-	    result = results[1];
-	    if (result.error || !needsTruncation(result.value, maxSize)) {
-	      return result;
-	    }
-	  }
-	  return result;
-	}
-	
-	module.exports = {
-	  truncate: truncate,
-	
-	  /* for testing */
-	  raw: raw,
-	  truncateFrames: truncateFrames,
-	  truncateStrings: truncateStrings,
-	  maybeTruncateValue: maybeTruncateValue
+	  post: post,
+	  postJsonPayload: postJsonPayload
 	};
 
 
@@ -3817,7 +3905,7 @@
 	
 	var _ = __webpack_require__(4);
 	var errorParser = __webpack_require__(20);
-	var logger = __webpack_require__(12);
+	var logger = __webpack_require__(13);
 	
 	function handleItemWithError(item, options, callback) {
 	  item.data = item.data || {};
