@@ -199,6 +199,28 @@ Rollbar.critical = function() {
   }
 };
 
+Rollbar.prototype.buildJsonPayload = function(item) {
+  return this.client.buildJsonPayload(item);
+};
+Rollbar.buildJsonPayload = function() {
+  if (_instance) {
+    return _instance.buildJsonPayload.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
+Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+  return this.client.sendJsonPayload(jsonPayload);
+};
+Rollbar.sendJsonPayload = function() {
+  if (_instance) {
+    return _instance.sendJsonPayload.apply(_instance, arguments);
+  } else {
+    handleUninitialized();
+  }
+};
+
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
   var item;
   var stackInfo = _.makeUnhandledStackInfo(

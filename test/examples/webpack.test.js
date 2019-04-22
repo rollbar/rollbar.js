@@ -69,4 +69,33 @@ describe('webpack app', function() {
 
     done();
   });
+
+  it('should store a payload and send stored payload', function(done) {
+    var server = window.server;
+
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // Invoke rollbar event to be stored, not sent.
+    document.getElementById('rollbar-info-with-extra').click();
+    server.respond();
+
+    // Verify event is not sent to API
+    expect(server.requests.length).to.eql(0);
+
+    // Verify valid stored payload
+    var parsedJson = JSON.parse(window.jsonPayload);
+    expect(parsedJson.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(parsedJson.data.body.message.body).to.eql('webpack test log');
+
+    // Send stored payload
+    document.getElementById('send-json').click();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.message.body).to.eql('webpack test log');
+
+    done();
+  });
 });
