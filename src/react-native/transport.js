@@ -38,10 +38,30 @@ function post(accessToken, options, payload, callback) {
   }
   var writeData = stringifyResult.value;
   var headers = _headers(accessToken, options, writeData);
-  fetch(_.formatUrl(options), {
+
+  _makeRequest(headers, options, writeData, callback);
+}
+
+function postJsonPayload(accessToken, options, jsonPayload, callback) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+  options = options || {};
+  if (!jsonPayload) {
+    return callback(new Error('Cannot send empty request'));
+  }
+  var headers = _headers(accessToken, options, jsonPayload);
+
+  _makeRequest(headers, options, jsonPayload, callback)
+}
+
+/** Helpers **/
+function _makeRequest(headers, options, data, callback) {
+  var url = _.formatUrl(options);
+  fetch(url, {
     method: 'POST',
     headers: headers,
-    body: writeData
+    body: data
   })
   .then(function (resp) {
     return resp.json();
@@ -53,8 +73,6 @@ function post(accessToken, options, payload, callback) {
     callback(err);
   });
 }
-
-/** Helpers **/
 
 function _headers(accessToken, options, data) {
   var headers = (options && options.headers) || {};
@@ -98,5 +116,6 @@ function _wrapPostCallback(callback) {
 
 module.exports = {
   get: get,
-  post: post
+  post: post,
+  postJsonPayload: postJsonPayload
 };
