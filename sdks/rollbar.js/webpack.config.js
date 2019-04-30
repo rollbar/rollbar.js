@@ -2,13 +2,14 @@ var extend = require('util')._extend;
 var path = require('path');
 var webpack = require('webpack');
 var defaults = require('./defaults');
+var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-var outputPath = './dist/';
+var outputPath = path.resolve(__dirname, 'dist');
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
-var uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
+var uglifyPlugin = new UglifyJsPlugin({
   sourceMap: true,
-  compress: true
+  parallel: true
 });
 
 var snippetConfig = {
@@ -20,14 +21,18 @@ var snippetConfig = {
     path: outputPath,
     filename: '[name].js'
   },
-  plugins: [defaultsPlugin, uglifyPlugin],
-  failOnError: true,
+  plugins: [defaultsPlugin],
   module: {
-    preLoaders: [
+    rules: [
       {
+        enforce: 'pre',
         test: /\.js$/,
-        loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/]
+        loader: 'eslint-loader',
+        exclude: [/node_modules/, /vendor/],
+        options: {
+          failOnError: true,
+          configFile: path.resolve(__dirname, '.eslintrc')
+        }
       }
     ],
   }
@@ -42,47 +47,49 @@ var pluginConfig = {
     path: outputPath + '/plugins/',
     filename: '[name].min.js'
   },
-  plugins: [defaultsPlugin, uglifyPlugin],
-  failOnError: true,
+  plugins: [defaultsPlugin],
   module: {
-    preLoaders: [
+    rules: [
       {
+        enforce: 'pre',
         test: /\.js$/,
-        loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/]
+        loader: 'eslint-loader',
+        exclude: [/node_modules/, /vendor/],
+        options: {
+          failOnError: true,
+          configFile: path.resolve(__dirname, '.eslintrc')
+        }
       }
     ],
   }
 };
 
 var vanillaConfigBase = {
-  eslint: {
-    configFile: path.resolve(__dirname, ".eslintrc")
-  },
   entry: {
     'rollbar': './src/browser/bundles/rollbar.js'
   },
   output: {
     path: outputPath
   },
-  plugins: [defaultsPlugin, uglifyPlugin],
-  failOnError: true,
+  plugins: [defaultsPlugin],
   devtool: 'hidden-source-map',
   module: {
-    preLoaders: [
+    rules: [
       {
+        enforce: 'pre',
         test: /\.js$/,
-        loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/]
+        loader: 'eslint-loader',
+        exclude: [/node_modules/, /vendor/],
+        options: {
+          failOnError: true,
+          configFile: path.resolve(__dirname, '.eslintrc')
+        }
       }
     ],
   }
 };
 
 var UMDConfigBase = {
-  eslint: {
-    configFile: path.resolve(__dirname, ".eslintrc")
-  },
   entry: {
     'rollbar.umd': ['./src/browser/bundles/rollbar.js']
   },
@@ -91,14 +98,18 @@ var UMDConfigBase = {
     library: 'rollbar',
     libraryTarget: 'umd'
   },
-  failOnError: true,
   devtool: 'source-map',
   module: {
-    preLoaders: [
+    rules: [
       {
+        enforce: 'pre',
         test: /\.js$/,
-        loader: "strict!eslint",
-        exclude: [/node_modules/, /vendor/]
+        loader: 'eslint-loader',
+        exclude: [/node_modules/, /vendor/],
+        options: {
+          failOnError: true,
+          configFile: path.resolve(__dirname, '.eslintrc')
+        }
       }
     ],
   }
@@ -120,7 +131,14 @@ namedAMDConfigBase.output.libraryTarget = 'amd';
 
 var config = [snippetConfig, pluginConfig];
 
-function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
+function optimizationConfig(minimizer) {
+  return {
+    minimize: minimizer ? true : false,
+    minimizer: minimizer ? [minimizer] : []
+  }
+}
+
+function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
   var basePlugins = [defaultsPlugin];
   var vanillaConfig = extend({}, vanillaConfigBase);
   vanillaConfig.name = filename;
@@ -128,17 +146,21 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins) {
   var plugins = basePlugins.concat(extraPlugins);
   vanillaConfig.plugins = plugins;
 
+  vanillaConfig.optimization = optimizationConfig(minimizer);
+
   vanillaConfig.output = extend({filename: filename}, vanillaConfig.output);
 
   webpackConfig.push(vanillaConfig);
 }
 
-function addUMDToConfig(webpackConfig, filename, extraPlugins) {
+function addUMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
   var basePlugins = [defaultsPlugin];
   var UMDConfig = extend({}, UMDConfigBase);
 
   var plugins = basePlugins.concat(extraPlugins);
   UMDConfig.plugins = plugins;
+
+  UMDConfig.optimization = optimizationConfig(minimizer);
 
   UMDConfig.output = extend({filename: filename}, UMDConfig.output);
 
@@ -146,12 +168,14 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins) {
 }
 
 
-function addNoConflictToConfig(webpackConfig, filename, extraPlugins) {
+function addNoConflictToConfig(webpackConfig, filename, extraPlugins, minimizer) {
   var basePlugins = [defaultsPlugin];
   var noConflictConfig = extend({}, noConflictConfigBase);
 
   var plugins = basePlugins.concat(extraPlugins);
   noConflictConfig.plugins = plugins;
+
+  noConflictConfig.optimization = optimizationConfig(minimizer);
 
   noConflictConfig.output = extend({filename: filename}, noConflictConfig.output);
 
@@ -159,12 +183,14 @@ function addNoConflictToConfig(webpackConfig, filename, extraPlugins) {
 }
 
 
-function addNamedAMDToConfig(webpackConfig, filename, extraPlugins) {
+function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
   var basePlugins = [defaultsPlugin];
   var AMDConfig = extend({}, namedAMDConfigBase);
 
   var plugins = basePlugins.concat(extraPlugins);
   AMDConfig.plugins = plugins;
+
+  AMDConfig.optimization = optimizationConfig(minimizer);
 
   AMDConfig.output = extend({filename: filename}, AMDConfig.output);
 
@@ -172,14 +198,14 @@ function addNamedAMDToConfig(webpackConfig, filename, extraPlugins) {
 }
 
 
-function generateBuildConfig(name, plugins) {
-  addVanillaToConfig(config, name, plugins);
-  addUMDToConfig(config, name, plugins);
-  addNamedAMDToConfig(config, name, plugins);
-  addNoConflictToConfig(config, name, plugins);
+function generateBuildConfig(name, plugins, minimizer) {
+  addVanillaToConfig(config, name, plugins, minimizer);
+  addUMDToConfig(config, name, plugins, minimizer);
+  addNamedAMDToConfig(config, name, plugins, minimizer);
+  addNoConflictToConfig(config, name, plugins, minimizer);
 }
 
 generateBuildConfig('[name].js', []);
-generateBuildConfig('[name].min.js', [uglifyPlugin]);
+generateBuildConfig('[name].min.js', [], uglifyPlugin);
 
 module.exports = config;
