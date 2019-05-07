@@ -68,32 +68,30 @@ module.exports = function (config) {
     forceJSONP: true,
 
     webpack: {
-      eslint: {
-        configFile: path.resolve(__dirname, ".eslintrc")
-      },
       plugins: [defaultsPlugin],
       devtool: 'inline-source-map',
       module: {
-        preLoaders: [
+        rules: [
           {
+            enforce: 'pre',
             test: /\.js$/,
-            loader: "strict!eslint",
-            exclude: [/node_modules/, /vendor/, /lib/, /dist/]
-          }
-        ],
-        loaders: [
+            loader: 'eslint-loader',
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/],
+            options: {
+              configFile: path.resolve(__dirname, ".eslintrc")
+            }
+          },
           {
             test: /(mootootls|requirejs)\.js$/,
             loader: 'script'
-          }
-        ],
-        postLoaders: [
+          },
           {
+            enforce: 'post',
             test: /\.js$/,
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
-            loader: 'istanbul-instrumenter'
+            loader: 'istanbul-instrumenter-loader'
           }
-        ]
+        ],
       }
     },
 

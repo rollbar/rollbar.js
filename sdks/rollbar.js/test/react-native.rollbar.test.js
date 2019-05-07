@@ -12,20 +12,11 @@ var rollbarConfig = {
 var rollbar = new Rollbar(rollbarConfig);
 
 describe('sendJsonPayload', function() {
-  var accessToken = 'abc123';
-  var options = {
-    hostname: 'api.rollbar.com',
-    protocol: 'https',
-    path: '/api/1/item/'
-  };
-  var payload = {
-    access_token: accessToken,
-    data: {a: 1}
-  };
   var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
   before(function (done) {
-    sinon.stub(window, 'fetch');
+    // In react-native environment, stub fetch() instead of XMLHttpRequest
+    window.fetchStub = sinon.stub(window, 'fetch');
     done();
   });
 
@@ -43,7 +34,12 @@ describe('sendJsonPayload', function() {
   it('should callback with the right value on success', function(done) {
     stubResponse(200, 0, 'OK');
 
-    rollbar.sendJsonPayload(JSON.stringify({foo: 'baaar'}));
+    var json = JSON.stringify({foo: 'baaar'});
+
+    rollbar.sendJsonPayload(json);
+
+    expect(window.fetchStub.called).to.be.ok();
+    expect(window.fetchStub.getCall(0).args[1].body).to.eql(json);
 
     done();
   });
