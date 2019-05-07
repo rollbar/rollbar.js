@@ -19,6 +19,7 @@ describe('post', function() {
   var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
   before(function (done) {
+    // In react-native environment, stub fetch() instead of XMLHttpRequest
     sinon.stub(window, 'fetch');
     done();
   });
