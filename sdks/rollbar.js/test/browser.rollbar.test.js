@@ -204,6 +204,218 @@ describe('configure', function() {
   });
 });
 
+describe('options.captureUncaught', function() {
+  before(function (done) {
+    // Load the HTML page, so errors can be generated.
+    document.write(window.__html__['examples/error.html']);
+
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  after(function () {
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should capture when enabled in constructor', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true
+    };
+    var rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-error');
+    element.click();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    done();
+  });
+
+  it('should respond to enable/disable in configure', function(done) {
+    var server = window.server;
+    var element = document.getElementById('throw-error');
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: false
+    };
+    var rollbar = new Rollbar(options);
+
+    element.click();
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+    server.requests.length = 0;
+
+    rollbar.configure({
+      captureUncaught: true
+    });
+
+    element.click();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    server.requests.length = 0;
+
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    element.click();
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+
+    done();
+  });
+});
+
+describe('options.captureUnhandledRejections', function() {
+  before(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  after(function () {
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should capture when enabled in constructor', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true
+    };
+    var rollbar = new Rollbar(options);
+
+    Promise.reject(new Error('test reject'));
+
+    setTimeout(function() {
+      server.respond();
+
+      var body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('test reject');
+
+      rollbar.configure({
+        captureUnhandledRejections: false
+      });
+      window.removeEventListener('unhandledrejection', window._rollbarURH);
+
+      done();
+    }, 500);
+  });
+
+  it('should respond to enable in configure', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: false
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.configure({
+      captureUnhandledRejections: true
+    });
+
+    Promise.reject(new Error('test reject'));
+
+    setTimeout(function() {
+      server.respond();
+
+      var body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('test reject');
+
+      server.requests.length = 0;
+
+      rollbar.configure({
+        captureUnhandledRejections: false
+      });
+      window.removeEventListener('unhandledrejection', window._rollbarURH);
+
+      done();
+    }, 500);
+  });
+
+  it('should respond to disable in configure', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.configure({
+      captureUnhandledRejections: false
+    });
+
+    Promise.reject(new Error('test reject'));
+
+    setTimeout(function() {
+      server.respond();
+
+      expect(server.requests.length).to.eql(0); // Disabled, no event
+      server.requests.length = 0;
+
+      window.removeEventListener('unhandledrejection', window._rollbarURH);
+
+      done();
+    }, 500);
+  })
+});
+
 describe('captureEvent', function() {
   it('should handle missing/default type and level', function(done) {
     var options = {};

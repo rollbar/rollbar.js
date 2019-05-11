@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Generate errors for test automation</title>
+  <!-- Throwing inside karma test files won't work,
+    but you can do it here and let karma load this file. -->
+  <script>
+    window.throwError = function throwError() {
+      // Example error, which will be reported to rollbar when `captureUncaught`
+      // is true in the config.
+      throw new Error('test error');
+    };
+  </script>
+</head>
+<body>
+  <div style="text-align:center">
+    <h1>
+      Generate errors for test automation
+    </h1>
+  </div>
+  <button id="throw-error" onclick="throwError()">Throw Error</button>
+</html>
