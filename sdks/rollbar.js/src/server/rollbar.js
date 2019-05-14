@@ -7,7 +7,7 @@ var _ = require('../utility');
 var API = require('../api');
 var logger = require('./logger');
 
-var transport = require('./transport');
+var Transport = require('./transport');
 var urllib = require('url');
 var jsonBackup = require('json-stringify-safe');
 
@@ -32,6 +32,7 @@ function Rollbar(options, client) {
   logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
   this.lambdaTimeoutHandle = null;
+  var transport = new Transport();
   var api = new API(this.options, transport, urllib, jsonBackup);
   this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
