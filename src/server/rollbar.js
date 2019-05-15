@@ -305,7 +305,10 @@ Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
         self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
       }
       handler(event, context)
-        .then(function(resp) { resolve(resp); })
+        .then(function(resp) {
+          clearTimeout(self.lambdaTimeoutHandle);
+          resolve(resp);
+        })
         .catch(function(err) {
           self.error(err);
           self.wait(function() {
