@@ -19,18 +19,11 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
 
-  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;
   addTransformsToNotifier(this.client.notifier, gWindow);
   addPredicatesToQueue(this.client.queue);
-  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
-    globals.captureUncaughtExceptions(gWindow, this);
-    globals.wrapGlobals(gWindow, this);
-  }
-  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
-    globals.captureUnhandledRejections(gWindow, this);
-  }
-
+  this.setupUnhandledCapture();
   this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
   this.instrumenter.instrument();
 }
@@ -73,6 +66,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.handleOptions(oldOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter.configure(this.options);
+  this.setupUnhandledCapture();
   return this;
 };
 Rollbar.configure = function(options, payloadData) {
@@ -221,7 +215,29 @@ Rollbar.sendJsonPayload = function() {
   }
 };
 
+Rollbar.prototype.setupUnhandledCapture = function() {
+  var gWindow = _gWindow();
+
+  if (!this.unhandledExceptionsInitialized) {
+    if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+      globals.captureUncaughtExceptions(gWindow, this);
+      globals.wrapGlobals(gWindow, this);
+      this.unhandledExceptionsInitialized = true;
+    }
+  }
+  if (!this.unhandledRejectionsInitialized) {
+    if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+      globals.captureUnhandledRejections(gWindow, this);
+      this.unhandledRejectionsInitialized = true;
+    }
+  }
+};
+
 Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
+  if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
+    return;
+  }
+
   var item;
   var stackInfo = _.makeUnhandledStackInfo(
     message,
@@ -249,6 +265,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
 };
 
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
+  if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
+    return;
+  }
+
   var message = 'unhandled rejection was null or undefined!';
   if (reason) {
     if (reason.message) {
@@ -416,6 +436,10 @@ function _getFirstFunction(args) {
     }
   }
   return undefined;
+}
+
+function _gWindow() {
+  return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 }
 
 /* global __NOTIFIER_VERSION__:false */
