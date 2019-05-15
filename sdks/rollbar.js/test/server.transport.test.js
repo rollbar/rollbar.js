@@ -3,7 +3,8 @@
 var assert = require('assert');
 var util = require('util');
 var vows = require('vows');
-var t = require('../src/server/transport');
+var Transport = require('../src/server/transport');
+var t = new Transport();
 
 vows.describe('transport')
   .addBatch({
@@ -35,7 +36,7 @@ vows.describe('transport')
                   assert.equal(this.options.headers['Content-Type'], 'application/json');
                   assert.isNumber(this.options.headers['Content-Length']);
                   assert(this.options.headers['Content-Length'] > 0);
-                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken); 
+                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken);
                 });
             t.post(data.accessToken, data.options, data.payload, this.callback, factory);
           },
@@ -53,7 +54,7 @@ vows.describe('transport')
                   assert.equal(this.options.headers['Content-Type'], 'application/json');
                   assert.isNumber(this.options.headers['Content-Length']);
                   assert(this.options.headers['Content-Length'] > 0);
-                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken); 
+                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken);
                 });
             t.post(data.accessToken, data.options, data.payload, this.callback, factory);
           },
@@ -74,7 +75,7 @@ vows.describe('transport')
                   assert.equal(this.options.headers['Content-Type'], 'application/json');
                   assert.isNumber(this.options.headers['Content-Length']);
                   assert(this.options.headers['Content-Length'] > 0);
-                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken); 
+                  assert.equal(this.options.headers['X-Rollbar-Access-Token'], data.accessToken);
                 });
             t.post(data.accessToken, data.options, data.payload, this.callback, factory);
           },
@@ -87,6 +88,48 @@ vows.describe('transport')
           'should not have a response': function(err, resp) {
             assert.ifError(resp);
           }
+        }
+      },
+      'with rate limiting': {
+        topic: function() {
+          return new Transport();
+        },
+        'should transmit non-rate limited requests': function(t) {
+          var response = new TestResponse({
+            statusCode: 200,
+            headers: {
+              'x-rate-limit-remaining': '1',
+              'x-rate-limit-remaining-seconds': '100'
+            }
+          });
+          var error;
+
+          assert.equal(t.rateLimitExpires, 0);
+
+          t.handleResponse(response);
+
+          var factory = transportFactory(null, '{"err": null, "result": "all good"}');
+          t.post('token', {}, 'payload', function(err){ error = err; }, factory);
+
+          assert.equal(error, null);
+          assert.isTrue(Math.floor(Date.now() / 1000) >= t.rateLimitExpires);
+        },
+        'should drop rate limited requests and set timeout': function(t) {
+          var response = new TestResponse({
+            statusCode: 429,
+            headers: {
+              'x-rate-limit-remaining': '0',
+              'x-rate-limit-remaining-seconds': '100'
+            }
+          });
+          var error;
+
+          t.handleResponse(response);
+
+          t.post('token', {}, 'payload', function(err){ error = err; });
+
+          assert.match(error.message, /Exceeded rate limit/);
+          assert.isTrue(Math.floor(Date.now() / 1000) < t.rateLimitExpires);
         }
       }
     }
@@ -139,9 +182,11 @@ TestRequest.prototype.end = function() {
     }
   }
 };
-var TestResponse = function() {
+var TestResponse = function(options = {}) {
   this.encoding = null;
   this.events = {};
+  this.headers = options.headers || {};
+  this.statusCode = options.statusCode || 200;
 };
 TestResponse.prototype.setEncoding = function(s) {
   this.encoding = s;
@@ -154,4 +199,3 @@ var transportFactory = function(error, response, assertions) {
     return new TestTransport(options, error, response, assertions);
   };
 };
-
