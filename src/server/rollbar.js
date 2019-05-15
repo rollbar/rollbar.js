@@ -37,13 +37,7 @@ function Rollbar(options, client) {
   this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-
-  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
-    this.handleUncaughtExceptions();
-  }
-  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
-    this.handleUnhandledRejections();
-  }
+  this.setupUnhandledCapture();
 }
 
 var _instance = null;
@@ -89,6 +83,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   delete this.options.maxItems;
   logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
+  this.setupUnhandledCapture();
   return this;
 };
 Rollbar.configure = function(options, payloadData) {
@@ -524,11 +519,24 @@ function _getFirstFunction(args) {
   return undefined;
 }
 
+Rollbar.prototype.setupUnhandledCapture = function() {
+  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+    this.handleUncaughtExceptions();
+  }
+  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+    this.handleUnhandledRejections();
+  }
+};
+
 Rollbar.prototype.handleUncaughtExceptions = function() {
   var exitOnUncaught = !!this.options.exitOnUncaughtException;
   delete this.options.exitOnUncaughtException;
 
   addOrReplaceRollbarHandler('uncaughtException', function(err) {
+    if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
+      return;
+    }
+
     this._uncaughtError(err, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
@@ -547,6 +555,10 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
 
 Rollbar.prototype.handleUnhandledRejections = function() {
   addOrReplaceRollbarHandler('unhandledRejection', function(reason) {
+    if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
+      return;
+    }
+
     this._uncaughtError(reason, function(err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');

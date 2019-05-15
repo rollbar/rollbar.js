@@ -2,6 +2,7 @@
 
 var assert = require('assert');
 var vows = require('vows');
+var sinon = require('sinon');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
@@ -34,6 +35,26 @@ function TestClientGen() {
   };
 
   return TestClient;
+}
+
+async function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function nodeReject(rollbar, callback) {
+  Promise.reject(new Error('node reject'));
+  await wait(500);
+  callback(rollbar);
+}
+
+async function nodeThrow(rollbar, callback) {
+  setTimeout(function () {
+    throw new Error('node error');
+  }, 10);
+  await wait(500);
+  callback(rollbar);
 }
 
 vows.describe('rollbar')
@@ -273,6 +294,164 @@ vows.describe('rollbar')
             assert.equal(item.custom, custom)
             item.callback();
             assert.isTrue(callbackCalled);
+          }
+        }
+      }
+    },
+    // captureUncaught tests are set up using subtopics because Rollbar's node.js handlers
+    // are treated as global and concurrent access will lead to handlers being removed
+    // unexpectedly. (Subtopics execute sequentially.)
+    'captureUncaught': {
+      'enabled in constructor': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.logStub = sinon.stub(notifier, 'log');
+
+          nodeThrow(rollbar, this.callback);
+        },
+        'should log': function(r) {
+          var logStub = r.logStub;
+
+          assert.isTrue(logStub.called);
+          if (logStub.called) {
+            assert.equal(logStub.getCall(0).args[0].err.message, 'node error');
+          }
+          logStub.reset();
+        },
+        'disabled in configure': {
+          topic: function(r) {
+            r.configure({
+              captureUncaught: false
+            });
+
+            nodeThrow(r, this.callback);
+          },
+          'should not log': function(r) {
+            var notifier = r.client.notifier;
+            var logStub = r.logStub;
+
+            assert.isFalse(logStub.called);
+            notifier.log.restore();
+          },
+          'disabled in constructor': {
+            topic: function() {
+              var rollbar = new Rollbar({
+                accessToken: 'abc123',
+                captureUncaught: false
+              });
+              var notifier = rollbar.client.notifier;
+              rollbar.logStub = sinon.stub(notifier, 'log');
+
+              nodeThrow(rollbar, this.callback);
+            },
+            'should not log': function(r) {
+              var logStub = r.logStub;
+
+              assert.isFalse(logStub.called);
+              logStub.reset();
+            },
+            'enabled in configure': {
+              topic: function(r) {
+                r.configure({
+                  captureUncaught: true
+                });
+
+                nodeThrow(r, this.callback);
+              },
+              'should log': function(r) {
+                var notifier = r.client.notifier;
+                var logStub = r.logStub;
+
+                assert.isTrue(logStub.called);
+                if (logStub.called) {
+                  assert.equal(logStub.getCall(0).args[0].err.message, 'node error');
+                }
+                notifier.log.restore();
+              }
+            }
+          }
+        }
+      }
+    },
+    // captureUnhandledRejections tests are set up using subtopics because Rollbar's node.js handlers
+    // are treated as global and concurrent access will lead to handlers being removed
+    // unexpectedly. (Subtopics execute sequentially.)
+    'captureUnhandledRejections': {
+      'enabled in constructor': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUnhandledRejections: true
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.logStub = sinon.stub(notifier, 'log');
+
+          nodeReject(rollbar, this.callback);
+        },
+        'should log': function(r) {
+          var logStub = r.logStub;
+
+          assert.isTrue(logStub.called);
+          if (logStub.called) {
+            assert.equal(logStub.getCall(0).args[0].err.message, 'node reject');
+          }
+          logStub.reset();
+        },
+        'disabled in configure': {
+          topic: function(r) {
+            r.configure({
+              captureUnhandledRejections: false
+            });
+
+            nodeReject(r, this.callback);
+          },
+          'should not log': function(r) {
+            var notifier = r.client.notifier;
+            var logStub = r.logStub;
+
+            assert.isFalse(logStub.called);
+            notifier.log.restore();
+          },
+          'disabled in constructor': {
+            topic: function() {
+              var rollbar = new Rollbar({
+                accessToken: 'abc123',
+                captureUnhandledRejections: false
+              });
+              var notifier = rollbar.client.notifier;
+              rollbar.logStub = sinon.stub(notifier, 'log');
+
+              nodeReject(rollbar, this.callback);
+            },
+            'should not log': function(r) {
+              var logStub = r.logStub;
+
+              assert.isFalse(logStub.called);
+              logStub.reset();
+            },
+            'enabled in configure': {
+              topic: function(r) {
+                r.configure({
+                  captureUnhandledRejections: true
+                });
+
+                nodeReject(r, this.callback);
+              },
+              'should log': function(r) {
+                var notifier = r.client.notifier;
+                var logStub = r.logStub;
+
+                assert.isTrue(logStub.called);
+                if (logStub.called) {
+                  assert.equal(logStub.getCall(0).args[0].err.message, 'node reject');
+                }
+                notifier.log.restore();
+              }
+            }
           }
         }
       }
