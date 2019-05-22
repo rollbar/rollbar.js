@@ -96,7 +96,8 @@ var UMDConfigBase = {
   output: {
     path: outputPath,
     library: 'rollbar',
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
+    globalObject: 'this'
   },
   devtool: 'source-map',
   module: {
