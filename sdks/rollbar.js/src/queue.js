@@ -88,6 +88,9 @@ Queue.prototype.addItem = function(item, callback, originalError, originalItem) 
   }
   this._maybeLog(item, originalError);
   this.removePendingItem(originalItem);
+  if (!this.options.transmit) {
+    return;
+  }
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(item, function(err, resp) {
