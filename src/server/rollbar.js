@@ -615,6 +615,7 @@ Rollbar.defaultOptions = {
   reportLevel: packageJson.defaults.reportLevel,
   verbose: false,
   enabled: true,
+  transmit: true,
   sendConfig: false,
   includeItemsInTelemetry: false,
   captureEmail: false,
