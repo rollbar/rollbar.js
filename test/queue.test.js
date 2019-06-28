@@ -514,7 +514,9 @@ describe('addItem', function() {
         var queue = new Queue(rateLimiter, api, logger, options);
         var makeApiRequestStub = sinon.stub(queue, '_makeApiRequest');
 
-        queue.addItem({mykey: 'myvalue'});
+        queue.addItem({mykey: 'myvalue'}, function(err) {
+          expect(err.message).to.eql('Transmit disabled');
+        });
 
         expect(makeApiRequestStub.called).to.eql(0);
 
