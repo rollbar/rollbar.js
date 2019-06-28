@@ -298,6 +298,50 @@ describe('options.captureUncaught', function() {
 
     done();
   });
+
+  // Test case expects Chrome, which is the currently configured karma js/browser
+  // engine at the time of this comment. However, karma's Chrome and ChromeHeadless
+  // don't actually behave like real Chrome so we settle for stubbing some things.
+  it('should capture external error data when inspectAnonymousErrors is true', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // We're supposedly running on ChromeHeadless, but still need to spoof Chrome. :\
+    window.chrome = { runtime: true};
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      inspectAnonymousErrors: true
+    };
+    var rollbar = new Rollbar(options);
+
+    // Simulate receiving onerror without an error object.
+    rollbar.anonymousErrorsPending += 1;
+
+    try {
+      throw new Error('anon error')
+    } catch(e) {
+      Error.prepareStackTrace(e);
+    }
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('anon error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    done();
+  });
 });
 
 describe('options.captureUnhandledRejections', function() {
