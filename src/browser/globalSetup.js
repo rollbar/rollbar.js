@@ -12,6 +12,8 @@ function captureUncaughtExceptions(window, handler, shim) {
     handler._rollbarOldOnError = oldOnError;
   }
 
+  handler.handleAnonymousErrors();
+
   var fn = function() {
     var args = Array.prototype.slice.call(arguments, 0);
     _rollbarWindowOnError(window, handler, oldOnError, args);
