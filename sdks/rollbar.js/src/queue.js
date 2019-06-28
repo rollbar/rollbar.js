@@ -89,6 +89,7 @@ Queue.prototype.addItem = function(item, callback, originalError, originalItem) 
   this._maybeLog(item, originalError);
   this.removePendingItem(originalItem);
   if (!this.options.transmit) {
+    callback(new Error('Transmit disabled'));
     return;
   }
   this.pendingRequests.push(item);
