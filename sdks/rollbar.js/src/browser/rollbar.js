@@ -458,6 +458,7 @@ var defaultOptions = {
   endpoint: __DEFAULT_ENDPOINT__,
   verbose: false,
   enabled: true,
+  transmit: true,
   sendConfig: false,
   includeItemsInTelemetry: true,
   captureIp: true

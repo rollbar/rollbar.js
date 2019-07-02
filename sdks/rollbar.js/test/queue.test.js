@@ -106,7 +106,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -127,7 +127,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -148,7 +148,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -171,7 +171,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {verbose: true};
+        var options = {verbose: true, transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {body: {trace: {exception: {message: 'hello'}}}};
@@ -195,7 +195,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {verbose: true};
+        var options = {verbose: true, transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {body: {message: {body: 'hello'}}};
@@ -219,7 +219,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {verbose: false};
+        var options = {verbose: false, transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {body: {message: {body: 'hello'}}};
@@ -243,7 +243,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -269,7 +269,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -297,7 +297,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -329,7 +329,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -354,7 +354,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -376,7 +376,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -406,7 +406,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -434,7 +434,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {retryInterval: 1};
+        var options = {retryInterval: 1, transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -456,7 +456,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {};
+        var options = {transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -478,7 +478,7 @@ describe('addItem', function() {
         var rateLimiter = new (TestRateLimiterGenerator())();
         var api = new (TestApiGenerator())();
         var logger = new (TestLoggerGenerator())();
-        var options = {retryInterval: 1};
+        var options = {retryInterval: 1, transmit: true};
         var queue = new Queue(rateLimiter, api, logger, options);
 
         var item = {mykey: 'myvalue'};
@@ -505,13 +505,32 @@ describe('addItem', function() {
         });
       });
     });
+    describe('transmit disabled', function() {
+      it('should not attempt to send', function(done) {
+        var rateLimiter = new (TestRateLimiterGenerator())();
+        var api = new (TestApiGenerator())();
+        var logger = new (TestLoggerGenerator())();
+        var options = {transmit: false};
+        var queue = new Queue(rateLimiter, api, logger, options);
+        var makeApiRequestStub = sinon.stub(queue, '_makeApiRequest');
+
+        queue.addItem({mykey: 'myvalue'}, function(err) {
+          expect(err.message).to.eql('Transmit disabled');
+        });
+
+        expect(makeApiRequestStub.called).to.eql(0);
+
+        queue._makeApiRequest.restore();
+        done();
+      });
+    });
   });
   describe('rate limited', function() {
     it('should callback if the rate limiter says not to send and has an error', function(done) {
       var rateLimiter = new (TestRateLimiterGenerator())();
       var api = new (TestApiGenerator())();
       var logger = new (TestLoggerGenerator())();
-      var options = {};
+      var options = {transmit: true};
       var queue = new Queue(rateLimiter, api, logger, options);
 
       var item = {mykey: 'myvalue'};
@@ -539,7 +558,7 @@ describe('addItem', function() {
       var rateLimiter = new (TestRateLimiterGenerator())();
       var api = new (TestApiGenerator())();
       var logger = new (TestLoggerGenerator())();
-      var options = {};
+      var options = {transmit: true};
       var queue = new Queue(rateLimiter, api, logger, options);
 
       var item = {mykey: 'myvalue'};
@@ -567,4 +586,3 @@ describe('addItem', function() {
     });
   });
 });
-
