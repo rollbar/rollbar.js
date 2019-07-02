@@ -95,7 +95,7 @@ function handleItemWithError(item, options, callback) {
     }
     callback(null, item);
   };
-  async.eachSeries(errors, _buildTraceData(chain), cb);
+  async.eachSeries(errors, _buildTraceData(chain, options), cb);
 }
 
 function addRequestData(item, options, callback) {
@@ -190,9 +190,9 @@ function scrubPayload(item, options, callback) {
 
 /** Helpers **/
 
-function _buildTraceData(chain) {
+function _buildTraceData(chain, options) {
   return function(ex, cb) {
-    parser.parseException(ex, function (err, errData) {
+    parser.parseException(ex, options, function (err, errData) {
       if (err) {
         return cb(err);
       }
@@ -268,4 +268,3 @@ module.exports = {
   addLambdaData: addLambdaData,
   scrubPayload: scrubPayload
 };
-

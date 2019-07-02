@@ -5,6 +5,7 @@ var async = require('async');
 var fs = require('fs');
 var lru = require('lru-cache');
 var util = require('util');
+var stackTrace = require('./sourceMap/stackTrace');
 
 var linesOfContext = 3;
 var tracePattern =
@@ -115,6 +116,13 @@ function extractContextLines(frame, fileLines) {
   };
 }
 
+function mapPosition(position) {
+  return stackTrace.mapSourcePosition({
+      source: position.source,
+      line: position.line,
+      column: position.column
+  });
+}
 
 function parseFrameLine(line, callback) {
   var matched, curLine, data, frame;
@@ -124,17 +132,27 @@ function parseFrameLine(line, callback) {
   if (matched) {
     curLine = matched[1];
   }
+
   matched = curLine.match(tracePattern);
   if (!matched) {
     return callback(null, null);
   }
 
   data = matched.slice(1);
+  var position = {
+    source: data[1],
+    line: Math.floor(data[2]),
+    column: Math.floor(data[3]) - 1
+  };
+  if (this.useSourceMaps) {
+    position = mapPosition(position);
+  }
+
   frame = {
     method: data[0] || '<unknown>',
-    filename: data[1],
-    lineno: Math.floor(data[2]),
-    colno: Math.floor(data[3])
+    filename: position.source,
+    lineno: position.line,
+    colno: position.column
   };
 
   // For coffeescript, lineno and colno refer to the .coffee positions
@@ -252,10 +270,10 @@ function gatherContexts(frames, callback) {
  */
 
 
-exports.parseException = function (exc, callback) {
+exports.parseException = function (exc, options, callback) {
   var multipleErrs = getMultipleErrors(exc.errors);
 
-  return exports.parseStack(exc.stack, function (err, stack) {
+  return exports.parseStack(exc.stack, options, function (err, stack) {
     var message, clss, ret, firstErr, jadeMatch, jadeData;
 
     if (err) {
@@ -291,7 +309,7 @@ exports.parseException = function (exc, callback) {
 };
 
 
-exports.parseStack = function (stack, callback) {
+exports.parseStack = function (stack, options, callback) {
   var lines, _stack = stack;
 
   // Some JS frameworks (e.g. Meteor) might bury the stack property
@@ -303,7 +321,7 @@ exports.parseStack = function (stack, callback) {
   lines = (_stack || '').split('\n').slice(1);
 
   // Parse out all of the frame and filename info
-  async.map(lines, parseFrameLine, function (err, frames) {
+  async.map(lines, parseFrameLine.bind({ useSourceMaps: options.nodeSourceMaps }), function (err, frames) {
     if (err) {
       return callback(err);
     }

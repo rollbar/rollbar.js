@@ -3,6 +3,7 @@
 var assert = require('assert');
 var util = require('util');
 var vows = require('vows');
+var sinon = require('sinon');
 var t = require('../src/server/transforms');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
@@ -13,6 +14,21 @@ function CustomError(message, nested) {
   rollbar.Error.call(this, message, nested);
 }
 util.inherits(CustomError, rollbar.Error);
+
+async function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function throwInTypescriptFile(rollbar, callback) {
+  setTimeout(function () {
+    var error = require('../examples/node-typescript/dist/index');
+    error();
+  }, 10);
+  await wait(500);
+  callback(rollbar);
+}
 
 vows.describe('transforms')
   .addBatch({
@@ -241,6 +257,33 @@ vows.describe('transforms')
   })
   .addBatch({
     'handleItemWithError': {
+      'nodeSourceMaps': {
+        topic: function() {
+          var Rollbar = new rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            nodeSourceMaps: true
+          });
+          var queue = Rollbar.client.notifier.queue;
+          Rollbar.addItemStub = sinon.stub(queue, 'addItem');
+
+          throwInTypescriptFile(Rollbar, this.callback);
+        },
+        'should map the stack': function(r) {
+          var addItem = r.addItemStub;
+
+          assert.isTrue(addItem.called);
+          if (addItem.called) {
+            var frame = addItem.getCall(0).args[0].body.trace_chain[0].frames.pop();
+            console.log(frame);
+            assert.ok(frame.filename.includes('src/index.ts'));
+            assert.equal(frame.lineno, 10);
+            assert.equal(frame.colno, 22);
+            assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+          }
+          addItem.reset();
+        },
+      },
       'options': {
         'anything': {
           topic: function() {
