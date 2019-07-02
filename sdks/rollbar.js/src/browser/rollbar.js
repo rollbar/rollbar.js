@@ -316,7 +316,12 @@ Rollbar.prototype.handleAnonymousErrors = function() {
   }
 
   // https://v8.dev/docs/stack-trace-api
-  Error.prepareStackTrace = prepareStackTrace;
+  try {
+    Error.prepareStackTrace = prepareStackTrace;
+  } catch (e) {
+    this.options.inspectAnonymousErrors = false;
+    this.error('anonymous error handler failed', e);
+  }
 }
 
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
