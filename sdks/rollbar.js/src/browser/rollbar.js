@@ -21,6 +21,8 @@ function Rollbar(options, client) {
 
   var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;
+  this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
+  this.anonymousErrorsPending = 0;
   addTransformsToNotifier(this.client.notifier, gWindow);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
@@ -237,6 +239,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
     return;
   }
+  if (this.options.inspectAnonymousErrors && this.isChrome && !error) {
+    this.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+    return;
+  }
 
   var item;
   var stackInfo = _.makeUnhandledStackInfo(
@@ -263,6 +269,60 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   item._isUncaught = true;
   this.client.log(item);
 };
+
+/**
+ * Chrome only. Other browsers will ignore.
+ *
+ * Use Error.prepareStackTrace to extract information about errors that
+ * do not have a valid error object in onerror().
+ *
+ * In tested version of Chrome, onerror is called first but has no way
+ * to communicate with prepareStackTrace. Use a counter to let this
+ * handler know which errors to send to Rollbar.
+ *
+ * In config options, set inspectAnonymousErrors to enable.
+ */
+Rollbar.prototype.handleAnonymousErrors = function() {
+  if (!this.options.inspectAnonymousErrors || !this.isChrome) {
+    return;
+  }
+
+  var r = this;
+  function prepareStackTrace(error, _stack) { // eslint-disable-line no-unused-vars
+    if (r.options.inspectAnonymousErrors) {
+      if (r.anonymousErrorsPending) {
+        // This is the only known way to detect that onerror saw an anonymous error.
+        // It depends on onerror reliably being called before Error.prepareStackTrace,
+        // which so far holds true on tested versions of Chrome. If versions of Chrome
+        // are tested that behave differently, this logic will need to be updated
+        // accordingly.
+        r.anonymousErrorsPending -= 1;
+
+        if (!error) {
+          // Not likely to get here, but calling handleUncaughtException from here
+          // without an error object would throw off the anonymousErrorsPending counter,
+          // so return now.
+          return;
+        }
+
+        // url, lineno, colno shouldn't be needed for these errors.
+        // If that changes, update this accordingly, using the unused
+        // _stack param as needed (rather than parse error.toString()).
+        r.handleUncaughtException(error.message, null, null, null, error);
+      }
+    }
+
+    return error.toString();
+  }
+
+  // https://v8.dev/docs/stack-trace-api
+  try {
+    Error.prepareStackTrace = prepareStackTrace;
+  } catch (e) {
+    this.options.inspectAnonymousErrors = false;
+    this.error('anonymous error handler failed', e);
+  }
+}
 
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
@@ -461,7 +521,8 @@ var defaultOptions = {
   transmit: true,
   sendConfig: false,
   includeItemsInTelemetry: true,
-  captureIp: true
+  captureIp: true,
+  inspectAnonymousErrors: true
 };
 
 module.exports = Rollbar;
