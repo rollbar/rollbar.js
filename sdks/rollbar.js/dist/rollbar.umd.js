@@ -1258,6 +1258,8 @@ function Rollbar(options, client) {
 
   var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;
+  this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
+  this.anonymousErrorsPending = 0;
   addTransformsToNotifier(this.client.notifier, gWindow);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
@@ -1474,6 +1476,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
     return;
   }
+  if (this.options.inspectAnonymousErrors && this.isChrome && !error) {
+    this.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+    return;
+  }
 
   var item;
   var stackInfo = _.makeUnhandledStackInfo(
@@ -1500,6 +1506,60 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   item._isUncaught = true;
   this.client.log(item);
 };
+
+/**
+ * Chrome only. Other browsers will ignore.
+ *
+ * Use Error.prepareStackTrace to extract information about errors that
+ * do not have a valid error object in onerror().
+ *
+ * In tested version of Chrome, onerror is called first but has no way
+ * to communicate with prepareStackTrace. Use a counter to let this
+ * handler know which errors to send to Rollbar.
+ *
+ * In config options, set inspectAnonymousErrors to enable.
+ */
+Rollbar.prototype.handleAnonymousErrors = function() {
+  if (!this.options.inspectAnonymousErrors || !this.isChrome) {
+    return;
+  }
+
+  var r = this;
+  function prepareStackTrace(error, _stack) { // eslint-disable-line no-unused-vars
+    if (r.options.inspectAnonymousErrors) {
+      if (r.anonymousErrorsPending) {
+        // This is the only known way to detect that onerror saw an anonymous error.
+        // It depends on onerror reliably being called before Error.prepareStackTrace,
+        // which so far holds true on tested versions of Chrome. If versions of Chrome
+        // are tested that behave differently, this logic will need to be updated
+        // accordingly.
+        r.anonymousErrorsPending -= 1;
+
+        if (!error) {
+          // Not likely to get here, but calling handleUncaughtException from here
+          // without an error object would throw off the anonymousErrorsPending counter,
+          // so return now.
+          return;
+        }
+
+        // url, lineno, colno shouldn't be needed for these errors.
+        // If that changes, update this accordingly, using the unused
+        // _stack param as needed (rather than parse error.toString()).
+        r.handleUncaughtException(error.message, null, null, null, error);
+      }
+    }
+
+    return error.toString();
+  }
+
+  // https://v8.dev/docs/stack-trace-api
+  try {
+    Error.prepareStackTrace = prepareStackTrace;
+  } catch (e) {
+    this.options.inspectAnonymousErrors = false;
+    this.error('anonymous error handler failed', e);
+  }
+}
 
 Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
@@ -1687,7 +1747,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.7.1",
+  version: "2.8.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1695,9 +1755,11 @@ var defaultOptions = {
   endpoint: "api.rollbar.com/api/1/item/",
   verbose: false,
   enabled: true,
+  transmit: true,
   sendConfig: false,
   includeItemsInTelemetry: true,
-  captureIp: true
+  captureIp: true,
+  inspectAnonymousErrors: true
 };
 
 module.exports = Rollbar;
@@ -2936,6 +2998,10 @@ Queue.prototype.addItem = function(item, callback, originalError, originalItem) 
   }
   this._maybeLog(item, originalError);
   this.removePendingItem(originalItem);
+  if (!this.options.transmit) {
+    callback(new Error('Transmit disabled'));
+    return;
+  }
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(item, function(err, resp) {
@@ -3687,6 +3753,8 @@ function captureUncaughtExceptions(window, handler, shim) {
     }
     handler._rollbarOldOnError = oldOnError;
   }
+
+  handler.handleAnonymousErrors();
 
   var fn = function() {
     var args = Array.prototype.slice.call(arguments, 0);
