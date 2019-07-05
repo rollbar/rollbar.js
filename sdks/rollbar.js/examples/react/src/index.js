@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Rollbar from "rollbar";
 
+import ErrorBoundary from './ErrorBoundary';
+import TestError from './TestError';
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -31,9 +34,12 @@ class App extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <h1>Rollbar Example for React</h1>
-        <button id='rollbar-info' onClick={ this.logInfo }>Log Info</button>
-        <button id='throw-error' onClick={ this.throwError }>ThrowError</button>
+          <h1>Rollbar Example for React</h1>
+          <button id='rollbar-info' onClick={ this.logInfo }>Log Info</button>
+          <button id='throw-error' onClick={ this.throwError }>ThrowError</button>
+        <ErrorBoundary rollbar={ this.state.rollbar }>
+          <TestError/>
+        </ErrorBoundary>
       </React.Fragment>
     );
   }

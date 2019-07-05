@@ -69,4 +69,26 @@ describe('react app', function() {
 
     done();
   });
+
+  it('should not report error inside error boundary', function(done) {
+    var server = window.server;
+
+    stubResponse(server)
+    server.requests.length = 0;
+
+    var element = document.getElementById('child-error');
+    element.click();
+    server.respond();
+
+    // Should only produce one API request.
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+
+    // Should be a log event, not an uncaught exception
+    expect(body.data.body.message.body).to.eql('react child test error');
+
+    done();
+  });
 });

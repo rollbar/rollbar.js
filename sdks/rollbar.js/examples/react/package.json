@@ -2,7 +2,7 @@
   "name": "react-example",
   "version": "0.0.0",
   "scripts": {
-    "build": "webpack --mode development --build",
+    "build": "webpack --mode production --build",
     "start": "webpack-dev-server --mode development --open"
   },
   "private": true,

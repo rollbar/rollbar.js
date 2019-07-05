@@ -75,6 +75,7 @@
     "karma-webpack": "^3.0.5",
     "mocha": "^5.2.0",
     "mootools": "^1.5.1",
+    "natives": "^1.1.6",
     "nock": "^9.0.7",
     "node-libs-browser": "^0.5.2",
     "phantomjs": "^2.1.0",
