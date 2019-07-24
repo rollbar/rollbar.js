@@ -243,6 +243,24 @@ describe('configure', function() {
     expect(client.payloadData.b).to.eql(97);
     done();
   });
+  it('should store configured options', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      captureUncaught: true,
+      payload: {
+        a: 42,
+        environment: 'testtest'
+      }
+    };
+    var rollbar = new Rollbar(options, client);
+    expect(rollbar.options._configuredOptions.payload.environment).to.eql('testtest');
+    expect(rollbar.options._configuredOptions.captureUncaught).to.eql(true);
+
+    rollbar.configure({ captureUncaught: false, payload: {environment: 'borkbork'}});
+    expect(rollbar.options._configuredOptions.payload.environment).to.eql('borkbork');
+    expect(rollbar.options._configuredOptions.captureUncaught).to.eql(false);
+    done();
+  });
 });
 
 describe('captureEvent', function() {
