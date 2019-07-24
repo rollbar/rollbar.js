@@ -112,6 +112,22 @@ vows.describe('rollbar')
         },
         'should set environment based on options': function(r) {
           assert.equal('fake-env', r.options.environment);
+        },
+        'should set configured options': function(r) {
+          assert.equal('fake-env', r.options._configuredOptions.environment);
+        }
+      }
+    },
+    'configure': {
+      'with updated options': {
+        topic: function() {
+          var rollbar = new Rollbar({captureUncaught: true, environment: 'fake-env'});
+          rollbar.configure({captureUncaught: false, environment: 'new-env'});
+          return rollbar;
+        },
+        'should set configured options': function(r) {
+          assert.equal('new-env', r.options._configuredOptions.environment);
+          assert.equal(false, r.options._configuredOptions.captureUncaught);
         }
       }
     },

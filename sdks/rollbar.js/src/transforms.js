@@ -75,10 +75,17 @@ function addConfigToPayload(item, options, callback) {
   callback(null, item);
 }
 
+function addConfiguredOptions(item, options, callback) {
+  delete options._configuredOptions.accessToken;
+  item.data.notifier.configured_options = options._configuredOptions;
+  callback(null, item);
+}
+
 module.exports = {
   itemToPayload: itemToPayload,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
   userTransform: userTransform,
-  addConfigToPayload: addConfigToPayload
+  addConfigToPayload: addConfigToPayload,
+  addConfiguredOptions: addConfiguredOptions
 };
