@@ -307,6 +307,9 @@ Rollbar.prototype.handleAnonymousErrors = function() {
           return;
         }
 
+        // Allow this to be tracked later.
+        error._isAnonymous = true;
+
         // url, lineno, colno shouldn't be needed for these errors.
         // If that changes, update this accordingly, using the unused
         // _stack param as needed (rather than parse error.toString()).
@@ -475,6 +478,7 @@ function addTransformsToNotifier(notifier, gWindow) {
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
+    .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
 }
 
