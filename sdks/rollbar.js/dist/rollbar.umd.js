@@ -1253,6 +1253,7 @@ var Instrumenter = __webpack_require__(27);
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options);
+  this.options._configuredOptions = options;
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
 
@@ -1303,6 +1304,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.handleOptions(oldOptions, options, payload);
+  this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter.configure(this.options);
   this.setupUnhandledCapture();
@@ -1542,6 +1544,9 @@ Rollbar.prototype.handleAnonymousErrors = function() {
           return;
         }
 
+        // Allow this to be tracked later.
+        error._isAnonymous = true;
+
         // url, lineno, colno shouldn't be needed for these errors.
         // If that changes, update this accordingly, using the unused
         // _stack param as needed (rather than parse error.toString()).
@@ -1709,6 +1714,8 @@ function addTransformsToNotifier(notifier, gWindow) {
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.userTransform(logger))
+    .addTransform(sharedTransforms.addConfiguredOptions)
+    .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
 }
 
@@ -1747,7 +1754,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.8.1",
+  version: "2.9.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -4782,12 +4789,30 @@ function addConfigToPayload(item, options, callback) {
   callback(null, item);
 }
 
+function addConfiguredOptions(item, options, callback) {
+  delete options._configuredOptions.accessToken;
+  item.data.notifier.configured_options = options._configuredOptions;
+  callback(null, item);
+}
+
+function addDiagnosticKeys(item, options, callback) {
+  var diagnostic = {}
+
+  if (_.get(item, 'err._isAnonymous')) {
+    diagnostic.isAnonymous = true;
+  }
+  item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
+  callback(null, item);
+}
+
 module.exports = {
   itemToPayload: itemToPayload,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
   userTransform: userTransform,
-  addConfigToPayload: addConfigToPayload
+  addConfigToPayload: addConfigToPayload,
+  addConfiguredOptions: addConfiguredOptions,
+  addDiagnosticKeys: addDiagnosticKeys
 };
 
 
