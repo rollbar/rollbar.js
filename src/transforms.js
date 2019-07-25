@@ -81,11 +81,22 @@ function addConfiguredOptions(item, options, callback) {
   callback(null, item);
 }
 
+function addDiagnosticKeys(item, options, callback) {
+  var diagnostic = {}
+
+  if (_.get(item, 'err._isAnonymous')) {
+    diagnostic.isAnonymous = true;
+  }
+  item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
+  callback(null, item);
+}
+
 module.exports = {
   itemToPayload: itemToPayload,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
   userTransform: userTransform,
   addConfigToPayload: addConfigToPayload,
-  addConfiguredOptions: addConfiguredOptions
+  addConfiguredOptions: addConfiguredOptions,
+  addDiagnosticKeys: addDiagnosticKeys
 };
