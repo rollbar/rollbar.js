@@ -16,6 +16,7 @@ var Instrumenter = require('./telemetry');
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options);
+  this.options._configuredOptions = options;
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
 
@@ -66,6 +67,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.handleOptions(oldOptions, options, payload);
+  this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter.configure(this.options);
   this.setupUnhandledCapture();
@@ -472,6 +474,7 @@ function addTransformsToNotifier(notifier, gWindow) {
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.userTransform(logger))
+    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.itemToPayload);
 }
 

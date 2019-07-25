@@ -83,6 +83,34 @@ describe('addTelemetryData', function() {
   });
 });
 
+describe('addConfiguredOptions', function() {
+  it('adds the configured options', function(done) {
+    var item = {
+      data: {
+        body: {
+          message: 'hello world'
+        },
+        notifier: {
+          name: 'rollbar-js',
+        }
+      }
+    };
+    var options = {
+      accessToken: 'abc123',
+      foo: 'bar',
+      captureUncaught: true,
+      _configuredOptions: {
+        accessToken: 'abc123',
+        captureUncaught: true
+      }
+    };
+    t.addConfiguredOptions(item, options, function(e, i) {
+      expect(i.data.notifier.configured_options).to.eql({ captureUncaught: true });
+      done(e);
+    });
+  });
+});
+
 describe('userTransform', function() {
   it('calls user transform if is present and a function', function(done) {
     var args = ['a message'];
@@ -144,4 +172,3 @@ describe('userTransform', function() {
     });
   });
 });
-

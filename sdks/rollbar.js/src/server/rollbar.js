@@ -26,6 +26,7 @@ function Rollbar(options, client) {
     delete options.minimumLevel;
   }
   this.options = _.handleOptions(Rollbar.defaultOptions, options);
+  this.options._configuredOptions = options;
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
@@ -79,6 +80,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
     payload = {payload: payloadData};
   }
   this.options = _.handleOptions(oldOptions, options, payload);
+  this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   logger.setVerbose(this.options.verbose);
@@ -496,6 +498,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.userTransform(logger))
+    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.itemToPayload);
 }
 
