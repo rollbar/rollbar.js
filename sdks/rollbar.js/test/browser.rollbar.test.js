@@ -407,7 +407,7 @@ describe('options.captureUncaught', function() {
     var options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
-      transmitDuplicateErrors: true
+      ignoreDuplicateErrors: false
     };
     var rollbar = new Rollbar(options);
 
