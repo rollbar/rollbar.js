@@ -225,6 +225,39 @@ vows.describe('rollbar')
           }
         }
       },
+      'info': {
+        topic: function() {
+          // Uses real client and stubs queue.addItem so transforms can run.
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: false
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          return rollbar;
+        },
+        'should send message when called with only null argument': function(r) {
+          var addItemStub = r.addItemStub;
+
+          r.info(null);
+          assert.isTrue(addItemStub.called);
+          if (addItemStub.called) {
+            assert.equal(addItemStub.getCall(0).args[3].data.body.message.body, 'Item sent with null or missing arguments.');
+          }
+          addItemStub.reset();
+        },
+        'should send message when called with no arguments': function(r) {
+          var addItemStub = r.addItemStub;
+
+          r.info();
+          assert.isTrue(addItemStub.called);
+          if (addItemStub.called) {
+            assert.equal(addItemStub.getCall(0).args[3].data.body.message.body, 'Item sent with null or missing arguments.');
+          }
+          addItemStub.reset();
+        }
+      },
       'error': {
         'with unordered options': {
           'should work with custom, request, callback, message ': function(r) {

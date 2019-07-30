@@ -287,31 +287,12 @@ describe('addBody', function() {
         done(e);
       });
     });
-    it('should use custom as message without a message', function(done) {
+    it('should send message when sent without a message', function(done) {
       var args = [{custom: 'stuff'}];
       var item = itemFromArgs(args);
       var options = {};
       t.addBody(item, options, function(e, i) {
-        expect(i.data.body.message.body).to.be.ok();
-        done(e);
-      });
-    });
-    it('should use scrubbed custom as message without a message', function(done) {
-      var args = [{password: 'stuff'}];
-      var item = itemFromArgs(args);
-      var options = {scrubFields: ['password']};
-      t.addBody(item, options, function(e, i) {
-        expect(i.data.body.message.body).to.not.match(/stuff/);
-        expect(i.data.body.message.body).to.match(/\*+/);
-        done(e);
-      });
-    });
-    it('should have blank message without a message or custom', function(done) {
-      var args = [new Error('bork')];
-      var item = itemFromArgs(args);
-      var options = {};
-      t.addBody(item, options, function(e, i) {
-        expect(i.data.body.message.body).to.eql('');
+        expect(i.data.body.message.body).to.eql('Item sent with null or missing arguments.');
         done(e);
       });
     });
