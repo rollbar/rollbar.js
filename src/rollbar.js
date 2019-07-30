@@ -110,7 +110,7 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     callback = item.callback;
     delete item.callback;
   }
-  if (!this.options.transmitDuplicateErrors && this._sameAsLastError(item)) {
+  if (this.options.ignoreDuplicateErrors && this._sameAsLastError(item)) {
     if (callback) {
       var error = new Error('ignored identical item');
       error.item = item;

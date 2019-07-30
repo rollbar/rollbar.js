@@ -624,7 +624,8 @@ Rollbar.defaultOptions = {
   captureEmail: false,
   captureUsername: false,
   captureIp: true,
-  captureLambdaTimeouts: true
+  captureLambdaTimeouts: true,
+  ignoreDuplicateErrors: true
 };
 
 module.exports = Rollbar;

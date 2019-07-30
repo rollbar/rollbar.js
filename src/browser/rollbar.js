@@ -529,7 +529,8 @@ var defaultOptions = {
   sendConfig: false,
   includeItemsInTelemetry: true,
   captureIp: true,
-  inspectAnonymousErrors: true
+  inspectAnonymousErrors: true,
+  ignoreDuplicateErrors: true
 };
 
 module.exports = Rollbar;
