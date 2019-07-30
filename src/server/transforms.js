@@ -49,7 +49,7 @@ function baseData(item, options, callback) {
 function addMessageData(item, options, callback) {
   item.data = item.data || {};
   item.data.body = item.data.body || {};
-  var message = item.message || '';
+  var message = item.message || 'Item sent with null or missing arguments.';
   item.data.body.message = {
     body: message
   };
