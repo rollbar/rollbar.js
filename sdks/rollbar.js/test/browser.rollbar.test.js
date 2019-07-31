@@ -362,6 +362,79 @@ describe('options.captureUncaught', function() {
 
     done();
   });
+
+  it('should ignore duplicate errors by default', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true
+    };
+    var rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-error');
+
+    // generate same error twice
+    element.click();
+    element.click();
+    server.respond();
+
+    // transmit only once
+    expect(server.requests.length).to.eql(1);
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    done();
+  });
+
+    it('should transmit duplicate errors when set in config', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      ignoreDuplicateErrors: false
+    };
+    var rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-error');
+
+    // generate same error twice
+    element.click();
+    element.click();
+    server.respond();
+
+    // transmit both errors
+    expect(server.requests.length).to.eql(2);
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    done();
+  })
 });
 
 describe('options.captureUnhandledRejections', function() {

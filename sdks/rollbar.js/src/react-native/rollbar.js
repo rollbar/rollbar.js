@@ -319,7 +319,8 @@ Rollbar.defaultOptions = {
   enabled: true,
   transmit: true,
   sendConfig: false,
-  includeItemsInTelemetry: true
+  includeItemsInTelemetry: true,
+  ignoreDuplicateErrors: true
 };
 
 module.exports = Rollbar;
