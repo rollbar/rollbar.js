@@ -7,7 +7,7 @@
 // Will return undefined otherwise
 function getIEVersion() {
 	var undef;
-	if (!document) {
+	if (typeof document === 'undefined') {
 		return undef;
 	}
 
