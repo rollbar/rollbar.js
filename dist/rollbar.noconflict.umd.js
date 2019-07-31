@@ -1166,7 +1166,21 @@ function Stack(exception) {
 
 
 function parse(e) {
-  return new Stack(e);
+  var err = e;
+
+  if (err.nested) {
+    var traceChain = [];
+    while (err) {
+      traceChain.push(new Stack(err));
+      err = err.nested;
+    }
+
+    // Return primary error with full trace chain attached.
+    traceChain[0].traceChain = traceChain;
+    return traceChain[0];
+  } else {
+    return new Stack(err);
+  }
 }
 
 
@@ -1463,7 +1477,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
     return;
   }
-  if (this.options.inspectAnonymousErrors && this.isChrome && !error) {
+
+  // Chrome will always send 5+ arrguments and error will be valid or null, not undefined.
+  // If error is undefined, we have a different caller.
+  if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
     this.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
     return;
   }
@@ -1687,6 +1704,7 @@ Rollbar.prototype.captureLoad = function(e, ts) {
 
 function addTransformsToNotifier(notifier, gWindow) {
   notifier
+    .addTransform(transforms.handleDomException)
     .addTransform(transforms.handleItemWithError)
     .addTransform(transforms.ensureItemHasSomethingToSay)
     .addTransform(transforms.addBaseInfo)
@@ -1739,7 +1757,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.9.0",
+  version: "2.10.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1751,7 +1769,8 @@ var defaultOptions = {
   sendConfig: false,
   includeItemsInTelemetry: true,
   captureIp: true,
-  inspectAnonymousErrors: true
+  inspectAnonymousErrors: true,
+  ignoreDuplicateErrors: true
 };
 
 module.exports = Rollbar;
@@ -1873,7 +1892,7 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     callback = item.callback;
     delete item.callback;
   }
-  if (this._sameAsLastError(item)) {
+  if (this.options.ignoreDuplicateErrors && this._sameAsLastError(item)) {
     if (callback) {
       var error = new Error('ignored identical item');
       error.item = item;
@@ -3705,7 +3724,7 @@ module.exports = {
 // Will return undefined otherwise
 function getIEVersion() {
 	var undef;
-	if (!document) {
+	if (typeof document === 'undefined') {
 		return undef;
 	}
 
@@ -4129,6 +4148,18 @@ var _ = __webpack_require__(0);
 var errorParser = __webpack_require__(4);
 var logger = __webpack_require__(1);
 
+function handleDomException(item, options, callback) {
+  if(item.err && errorParser.Stack(item.err).name === 'DOMException') {
+    var originalError = new Error();
+    originalError.name = item.err.name;
+    originalError.message = item.err.message;
+    originalError.stack = item.err.stack;
+    originalError.nested = item.err;
+    item.err = originalError;
+  }
+  callback(null, item);
+}
+
 function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
   if (item.err) {
@@ -4236,7 +4267,11 @@ function addPluginInfo(window) {
 
 function addBody(item, options, callback) {
   if (item.stackInfo) {
-    addBodyTrace(item, options, callback);
+    if (item.stackInfo.traceChain) {
+      addBodyTraceChain(item, options, callback);
+    } else {
+      addBodyTrace(item, options, callback);
+    }
   } else {
     addBodyMessage(item, options, callback);
   }
@@ -4247,13 +4282,7 @@ function addBodyMessage(item, options, callback) {
   var custom = item.custom;
 
   if (!message) {
-    if (custom) {
-      var scrubFields = options.scrubFields;
-      var messageResult = _.stringify(_.scrub(custom, scrubFields));
-      message = messageResult.error || messageResult.value || '';
-    } else {
-      message = '';
-    }
+    message = 'Item sent with null or missing arguments.';
   }
   var result = {
     body: message
@@ -4267,11 +4296,51 @@ function addBodyMessage(item, options, callback) {
   callback(null, item);
 }
 
+function stackFromItem(item) {
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  var stack = item.stackInfo.stack;
+  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+    stack = item._unhandledStackInfo.stack;
+  }
+  return stack;
+}
+
+function addBodyTraceChain(item, options, callback) {
+  var traceChain = item.stackInfo.traceChain;
+  var traces = [];
+
+  var traceChainLength = traceChain.length;
+  for (var i = 0; i < traceChainLength; i++) {
+    var trace = buildTrace(item, traceChain[i], options);
+    traces.push(trace);
+  }
+
+  _.set(item, 'data.body', {trace_chain: traces});
+  callback(null, item);
+}
 
 function addBodyTrace(item, options, callback) {
-  var description = item.data.description;
-  var stackInfo = item.stackInfo;
-  var custom = item.custom;
+  var stack = stackFromItem(item);
+
+  if (stack) {
+    var trace = buildTrace(item, item.stackInfo, options);
+    _.set(item, 'data.body', {trace: trace});
+    callback(null, item);
+  } else {
+    var stackInfo = item.stackInfo;
+    var guess = errorParser.guessErrorClass(stackInfo.message);
+    var className = stackInfo.name || guess[0];
+    var message = guess[1];
+
+    item.message = className + ': ' + message;
+    addBodyMessage(item, options, callback);
+  }
+}
+
+function buildTrace(item, stackInfo, options) {
+  var description = item && item.data.description;
+  var custom = item && item.custom;
+  var stack = stackFromItem(item);
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
   var className = stackInfo.name || guess[0];
@@ -4287,11 +4356,6 @@ function addBodyTrace(item, options, callback) {
     trace.exception.description = description;
   }
 
-  // Transform a TraceKit stackInfo object into a Rollbar trace
-  var stack = stackInfo.stack;
-  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
-    stack = item._unhandledStackInfo.stack;
-  }
   if (stack) {
     if (stack.length === 0) {
       trace.exception.stack = stackInfo.rawStack;
@@ -4357,12 +4421,9 @@ function addBodyTrace(item, options, callback) {
     if (custom) {
       trace.extra = _.merge(custom);
     }
-    _.set(item, 'data.body', {trace: trace});
-    callback(null, item);
-  } else {
-    item.message = className + ': ' + message;
-    addBodyMessage(item, options, callback);
   }
+
+  return trace;
 }
 
 function scrubPayload(item, options, callback) {
@@ -4372,6 +4433,7 @@ function scrubPayload(item, options, callback) {
 }
 
 module.exports = {
+  handleDomException: handleDomException,
   handleItemWithError: handleItemWithError,
   ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
   addBaseInfo: addBaseInfo,
