@@ -399,7 +399,7 @@ describe('options.captureUncaught', function() {
     done();
   });
 
-    it('should transmit duplicate errors when set in config', function(done) {
+  it('should transmit duplicate errors when set in config', function(done) {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -434,7 +434,37 @@ describe('options.captureUncaught', function() {
     });
 
     done();
-  })
+  });
+  it('should send DOMException as trace_chain', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true
+    };
+    var rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-dom-exception');
+    element.click();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace_chain[0].exception.message).to.eql('test DOMException');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false
+    });
+
+    done();
+  });
+
 });
 
 describe('options.captureUnhandledRejections', function() {

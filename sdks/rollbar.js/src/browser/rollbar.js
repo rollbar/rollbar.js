@@ -468,6 +468,7 @@ Rollbar.prototype.captureLoad = function(e, ts) {
 
 function addTransformsToNotifier(notifier, gWindow) {
   notifier
+    .addTransform(transforms.handleDomException)
     .addTransform(transforms.handleItemWithError)
     .addTransform(transforms.ensureItemHasSomethingToSay)
     .addTransform(transforms.addBaseInfo)

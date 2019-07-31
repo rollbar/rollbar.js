@@ -30,6 +30,30 @@ function itemFromArgs(args) {
   return item;
 }
 
+describe('handleDomException', function() {
+  it('should do nothing if not a DOMException', function(done) {
+    var err = new Error('test');
+    var args = ['a message', err];
+    var item = itemFromArgs(args);
+    var options = {};
+    t.handleDomException(item, options, function(e, i) {
+      expect(item.err).to.eql(item.err);
+      expect(item.err.nested).to.not.be.ok();
+      done(e);
+    });
+  });
+  it('should create nested exception for DOMException', function(done) {
+    var err = new DOMException('dom error');
+    var args = ['a message', err];
+    var item = itemFromArgs(args);
+    var options = {};
+    t.handleDomException(item, options, function(e, i) {
+      expect(item.err.nested.constructor.name).to.eql('DOMException');
+      expect(item.err.constructor.name).to.eql('Error');
+      done(e);
+    });
+  });
+});
 describe('handleItemWithError', function() {
   it('should do nothing if there is no err', function(done) {
     var args = ['a message'];
@@ -293,6 +317,26 @@ describe('addBody', function() {
       var options = {};
       t.addBody(item, options, function(e, i) {
         expect(i.data.body.message.body).to.eql('Item sent with null or missing arguments.');
+        done(e);
+      });
+    });
+  });
+  describe('with nested error', function() {
+    it('should create trace_chain', function(done) {
+      var nestedErr = new Error('nested error');
+      var err = new Error('test error');
+      err.nested = nestedErr;
+      var args = ['a message', err];
+      var item = itemFromArgs(args);
+      var options = {};
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo).to.be.ok();
+      });
+      t.addBody(item, options, function(e, i) {
+        console.log('body:', i.data.body)
+        expect(i.data.body.trace_chain.length).to.eql(2);
+        expect(i.data.body.trace_chain[0].exception.message).to.eql('test error');
+        expect(i.data.body.trace_chain[1].exception.message).to.eql('nested error');
         done(e);
       });
     });
