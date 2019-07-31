@@ -241,7 +241,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
     return;
   }
-  if (this.options.inspectAnonymousErrors && this.isChrome && !error) {
+
+  // Chrome will always send 5+ arrguments and error will be valid or null, not undefined.
+  // If error is undefined, we have a different caller.
+  if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
     this.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
     return;
   }
