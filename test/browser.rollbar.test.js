@@ -595,6 +595,52 @@ describe('log', function() {
     done();
   })
 });
+
+// Test direct call to onerror, as used in verification of browser js install.
+describe('onerror', function() {
+  before(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  after(function () {
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should send message when calling onerror directly', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true
+    };
+    new Rollbar(options);
+
+    window.onerror("TestRollbarError: testing window.onerror", window.location.href);
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('testing window.onerror');
+
+    done();
+  })
+});
+
 describe('captureEvent', function() {
   it('should handle missing/default type and level', function(done) {
     var options = {};
