@@ -76,7 +76,21 @@ function Stack(exception) {
 
 
 function parse(e) {
-  return new Stack(e);
+  var err = e;
+
+  if (err.nested) {
+    var traceChain = [];
+    while (err) {
+      traceChain.push(new Stack(err));
+      err = err.nested;
+    }
+
+    // Return primary error with full trace chain attached.
+    traceChain[0].traceChain = traceChain;
+    return traceChain[0];
+  } else {
+    return new Stack(err);
+  }
 }
 
 

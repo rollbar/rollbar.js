@@ -11,6 +11,11 @@
       // is true in the config.
       throw new Error('test error');
     };
+    window.throwDomException = function throwDomException() {
+      // Example error, which will be reported to rollbar when `captureUncaught`
+      // is true in the config.
+      throw new DOMException('test DOMException');
+    };
   </script>
 </head>
 <body>
@@ -20,4 +25,5 @@
     </h1>
   </div>
   <button id="throw-error" onclick="throwError()">Throw Error</button>
+  <button id="throw-dom-exception" onclick="throwDomException()">Throw DOMException</button>
 </html>
