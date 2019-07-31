@@ -553,6 +553,48 @@ describe('options.captureUnhandledRejections', function() {
   })
 });
 
+describe('log', function() {
+  before(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  after(function () {
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should send message when called with only null arguments', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.log(null);
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.message.body).to.eql('Item sent with null or missing arguments.');
+
+    done();
+  })
+});
 describe('captureEvent', function() {
   it('should handle missing/default type and level', function(done) {
     var options = {};

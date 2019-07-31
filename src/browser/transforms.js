@@ -120,13 +120,7 @@ function addBodyMessage(item, options, callback) {
   var custom = item.custom;
 
   if (!message) {
-    if (custom) {
-      var scrubFields = options.scrubFields;
-      var messageResult = _.stringify(_.scrub(custom, scrubFields));
-      message = messageResult.error || messageResult.value || '';
-    } else {
-      message = '';
-    }
+    message = 'Item sent with null or missing arguments.';
   }
   var result = {
     body: message
