@@ -2,6 +2,18 @@ var _ = require('../utility');
 var errorParser = require('./errorParser');
 var logger = require('./logger');
 
+function handleDomException(item, options, callback) {
+  if(item.err && errorParser.Stack(item.err).name === 'DOMException') {
+    var originalError = new Error();
+    originalError.name = item.err.name;
+    originalError.message = item.err.message;
+    originalError.stack = item.err.stack;
+    originalError.nested = item.err;
+    item.err = originalError;
+  }
+  callback(null, item);
+}
+
 function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
   if (item.err) {
@@ -109,7 +121,11 @@ function addPluginInfo(window) {
 
 function addBody(item, options, callback) {
   if (item.stackInfo) {
-    addBodyTrace(item, options, callback);
+    if (item.stackInfo.traceChain) {
+      addBodyTraceChain(item, options, callback);
+    } else {
+      addBodyTrace(item, options, callback);
+    }
   } else {
     addBodyMessage(item, options, callback);
   }
@@ -134,11 +150,51 @@ function addBodyMessage(item, options, callback) {
   callback(null, item);
 }
 
+function stackFromItem(item) {
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  var stack = item.stackInfo.stack;
+  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+    stack = item._unhandledStackInfo.stack;
+  }
+  return stack;
+}
+
+function addBodyTraceChain(item, options, callback) {
+  var traceChain = item.stackInfo.traceChain;
+  var traces = [];
+
+  var traceChainLength = traceChain.length;
+  for (var i = 0; i < traceChainLength; i++) {
+    var trace = buildTrace(item, traceChain[i], options);
+    traces.push(trace);
+  }
+
+  _.set(item, 'data.body', {trace_chain: traces});
+  callback(null, item);
+}
 
 function addBodyTrace(item, options, callback) {
-  var description = item.data.description;
-  var stackInfo = item.stackInfo;
-  var custom = item.custom;
+  var stack = stackFromItem(item);
+
+  if (stack) {
+    var trace = buildTrace(item, item.stackInfo, options);
+    _.set(item, 'data.body', {trace: trace});
+    callback(null, item);
+  } else {
+    var stackInfo = item.stackInfo;
+    var guess = errorParser.guessErrorClass(stackInfo.message);
+    var className = stackInfo.name || guess[0];
+    var message = guess[1];
+
+    item.message = className + ': ' + message;
+    addBodyMessage(item, options, callback);
+  }
+}
+
+function buildTrace(item, stackInfo, options) {
+  var description = item && item.data.description;
+  var custom = item && item.custom;
+  var stack = stackFromItem(item);
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
   var className = stackInfo.name || guess[0];
@@ -154,11 +210,6 @@ function addBodyTrace(item, options, callback) {
     trace.exception.description = description;
   }
 
-  // Transform a TraceKit stackInfo object into a Rollbar trace
-  var stack = stackInfo.stack;
-  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
-    stack = item._unhandledStackInfo.stack;
-  }
   if (stack) {
     if (stack.length === 0) {
       trace.exception.stack = stackInfo.rawStack;
@@ -224,12 +275,9 @@ function addBodyTrace(item, options, callback) {
     if (custom) {
       trace.extra = _.merge(custom);
     }
-    _.set(item, 'data.body', {trace: trace});
-    callback(null, item);
-  } else {
-    item.message = className + ': ' + message;
-    addBodyMessage(item, options, callback);
   }
+
+  return trace;
 }
 
 function scrubPayload(item, options, callback) {
@@ -239,6 +287,7 @@ function scrubPayload(item, options, callback) {
 }
 
 module.exports = {
+  handleDomException: handleDomException,
   handleItemWithError: handleItemWithError,
   ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
   addBaseInfo: addBaseInfo,
