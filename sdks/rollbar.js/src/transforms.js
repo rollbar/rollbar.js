@@ -85,8 +85,25 @@ function addDiagnosticKeys(item, options, callback) {
   var diagnostic = {}
 
   if (_.get(item, 'err._isAnonymous')) {
-    diagnostic.isAnonymous = true;
+    diagnostic.is_anonymous = true;
   }
+
+  if (item.err) {
+    try {
+      diagnostic.raw_error = {
+        message: item.err.message,
+        name: item.err.name,
+        constructor_name: item.err.constructor && item.err.constructor.name,
+        filename: item.err.fileName,
+        line: item.err.lineNumber,
+        column: item.err.columnNumber,
+        stack: item.err.stack
+      };
+    } catch (e) {
+      diagnostic.raw_error = { failed: String(e) };
+    }
+  }
+
   item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
   callback(null, item);
 }
