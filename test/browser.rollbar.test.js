@@ -264,6 +264,7 @@ describe('options.captureUncaught', function() {
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.raw_error.message).to.eql('test error');
 
     // karma doesn't unload the browser between tests, so the onerror handler
     // will remain installed. Unset captureUncaught so the onerror handler
@@ -303,7 +304,7 @@ describe('options.captureUncaught', function() {
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('test error');
-    expect(body.data.notifier.diagnostic.isAnonymous).to.not.be.ok();
+    expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
 
     server.requests.length = 0;
 
@@ -351,7 +352,7 @@ describe('options.captureUncaught', function() {
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('anon error');
-    expect(body.data.notifier.diagnostic.isAnonymous).to.eql(true);
+    expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
 
     // karma doesn't unload the browser between tests, so the onerror handler
     // will remain installed. Unset captureUncaught so the onerror handler
