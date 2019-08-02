@@ -1459,7 +1459,9 @@ Rollbar.prototype.setupUnhandledCapture = function() {
   if (!this.unhandledExceptionsInitialized) {
     if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
       globals.captureUncaughtExceptions(gWindow, this);
-      globals.wrapGlobals(gWindow, this);
+      if (this.options.wrapGlobalEventHandlers) {
+        globals.wrapGlobals(gWindow, this);
+      }
       this.unhandledExceptionsInitialized = true;
     }
   }
@@ -1755,7 +1757,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.10.0",
+  version: "2.11.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1768,7 +1770,8 @@ var defaultOptions = {
   includeItemsInTelemetry: true,
   captureIp: true,
   inspectAnonymousErrors: true,
-  ignoreDuplicateErrors: true
+  ignoreDuplicateErrors: true,
+  wrapGlobalEventHandlers: true
 };
 
 module.exports = Rollbar;
@@ -4844,8 +4847,25 @@ function addDiagnosticKeys(item, options, callback) {
   var diagnostic = {}
 
   if (_.get(item, 'err._isAnonymous')) {
-    diagnostic.isAnonymous = true;
+    diagnostic.is_anonymous = true;
   }
+
+  if (item.err) {
+    try {
+      diagnostic.raw_error = {
+        message: item.err.message,
+        name: item.err.name,
+        constructor_name: item.err.constructor && item.err.constructor.name,
+        filename: item.err.fileName,
+        line: item.err.lineNumber,
+        column: item.err.columnNumber,
+        stack: item.err.stack
+      };
+    } catch (e) {
+      diagnostic.raw_error = { failed: String(e) };
+    }
+  }
+
   item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
   callback(null, item);
 }
