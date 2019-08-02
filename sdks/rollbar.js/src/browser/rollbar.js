@@ -225,7 +225,9 @@ Rollbar.prototype.setupUnhandledCapture = function() {
   if (!this.unhandledExceptionsInitialized) {
     if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
       globals.captureUncaughtExceptions(gWindow, this);
-      globals.wrapGlobals(gWindow, this);
+      if (this.options.wrapGlobalEventHandlers) {
+        globals.wrapGlobals(gWindow, this);
+      }
       this.unhandledExceptionsInitialized = true;
     }
   }
@@ -534,7 +536,8 @@ var defaultOptions = {
   includeItemsInTelemetry: true,
   captureIp: true,
   inspectAnonymousErrors: true,
-  ignoreDuplicateErrors: true
+  ignoreDuplicateErrors: true,
+  wrapGlobalEventHandlers: true
 };
 
 module.exports = Rollbar;
