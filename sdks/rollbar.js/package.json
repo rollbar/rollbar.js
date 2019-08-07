@@ -152,6 +152,7 @@
         "cardholder",
         "card holder",
         "name des karteninhabers",
+        "ccname",
         "card type",
         "cardtype",
         "cc type",
@@ -160,7 +161,9 @@
         "expiration date",
         "expirationdate",
         "expdate",
-        "cc-exp"
+        "cc-exp",
+        "ccmonth",
+        "ccyear"
       ]
     },
     "server": {
