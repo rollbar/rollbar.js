@@ -95,6 +95,15 @@ function isObject(value) {
   return value != null && (type == 'object' || type == 'function');
 }
 
+/* isString - Checks if the argument is a string
+ *
+ * @param value - any value
+ * @returns true if value is a string
+*/
+function isString(value) {
+  return typeof value === 'string' || value instanceof String
+}
+
 /*
  * isDefined - a convenience function for checking if a value is not equal to undefined
  *
@@ -712,6 +721,8 @@ module.exports = {
   isIterable: isIterable,
   isNativeFunction: isNativeFunction,
   isType: isType,
+  isObject: isObject,
+  isString: isString,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,

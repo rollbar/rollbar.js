@@ -184,11 +184,45 @@ function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
   scrubFields = scrubHeaders.concat(scrubFields);
+
+  parseRequestBody(item.data.request, options);
   item.data = _.scrub(item.data, scrubFields);
+  serializeRequestBody(item.data.request, options);
+
   callback(null, item);
 }
 
+function parseRequestBody(req, options) {
+  if (!req || !options.scrubRequestBody) { return }
+
+  try {
+    if (_.isString(req.body) && _isJsonContentType(req)) {
+      req.body = JSON.parse(req.body);
+    }
+  } catch (e) {
+    req.body = null;
+    req.error = 'request.body parse failed: ' + e.message;
+  }
+}
+
+function serializeRequestBody(req, options) {
+  if (!req || !options.scrubRequestBody) { return }
+
+  try {
+    if (_.isObject(req.body) && _isJsonContentType(req)) {
+      req.body = JSON.stringify(req.body);
+    }
+  } catch (e) {
+    req.body = null;
+    req.error = 'request.body serialization failed: ' + e.message;
+  }
+}
+
 /** Helpers **/
+
+function _isJsonContentType(req) {
+  return req.headers && req.headers['content-type'] && req.headers['content-type'].includes('json');
+}
 
 function _buildTraceData(chain, options) {
   return function(ex, cb) {
