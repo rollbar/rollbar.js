@@ -692,7 +692,7 @@ vows.describe('transforms')
       'options': {
         'without scrub fields': {
           topic: function() {
-            return {nothing: 'here'};
+            return rollbar.defaultOptions;
           },
           'item': {
             topic: function(options) {
@@ -714,8 +714,8 @@ vows.describe('transforms')
               assert.equal(item.data.body.message, 'hey');
             },
             'should scrub key/value based on defaults': function(err, item) {
-              assert.matches(item.data.body.password, /\**/);
-              assert.matches(item.data.body.secret, /\**/);
+              assert.matches(item.data.body.password, /\*+/);
+              assert.matches(item.data.body.secret, /\*+/);
             }
           }
         },
@@ -781,11 +781,11 @@ vows.describe('transforms')
               'should scrub based on the options': function(err, item) {
                 var r = item.data.request;
                 assert.equal(r.GET.token, 'abc123');
-                assert.match(r.headers['x-auth-token'], /\**/);
+                assert.match(r.headers['x-auth-token'], /\*+/);
                 assert.equal(r.headers['host'], 'example.com');
-                assert.match(item.data.sauce, /\**/);
+                assert.match(item.data.sauce, /\*+/);
                 assert.equal(item.data.other, 'thing');
-                assert.match(item.data.someParams, /foo=okay&passwd=\**/);
+                assert.match(item.data.someParams, /foo=okay&passwd=\*+/);
               }
             },
             'with a json request body': {
@@ -835,11 +835,11 @@ vows.describe('transforms')
               },
               'should scrub based on the options': function(err, item) {
                 var r = item.data.request;
-                assert.match(r.headers['x-auth-token'], /\**/);
+                assert.match(r.headers['x-auth-token'], /\*+/);
                 assert.equal(r.headers['host'], 'example.com');
-                assert.match(item.data.sauce, /\**/);
+                assert.match(item.data.sauce, /\*+/);
                 assert.equal(item.data.other, 'thing');
-                assert.match(item.data.someParams, /foo=okay&passwd=\**/);
+                assert.match(item.data.someParams, /foo=okay&passwd=\*+/);
 
                 var requestBody = JSON.parse(item.data.request.body);
                 assert.match(requestBody.passwd, /\*+/);
