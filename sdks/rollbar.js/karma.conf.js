@@ -70,6 +70,7 @@ module.exports = function (config) {
     webpack: {
       plugins: [defaultsPlugin],
       devtool: 'inline-source-map',
+      performance: { hints: false },
       module: {
         rules: [
           {
