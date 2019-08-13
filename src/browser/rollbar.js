@@ -537,7 +537,7 @@ var defaultOptions = {
   captureIp: true,
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
-  wrapGlobalEventHandlers: true
+  wrapGlobalEventHandlers: false
 };
 
 module.exports = Rollbar;
