@@ -692,7 +692,7 @@ vows.describe('transforms')
       'options': {
         'without scrub fields': {
           topic: function() {
-            return {nothing: 'here'};
+            return rollbar.defaultOptions;
           },
           'item': {
             topic: function(options) {
@@ -714,8 +714,8 @@ vows.describe('transforms')
               assert.equal(item.data.body.message, 'hey');
             },
             'should scrub key/value based on defaults': function(err, item) {
-              assert.matches(item.data.body.password, /\**/);
-              assert.matches(item.data.body.secret, /\**/);
+              assert.matches(item.data.body.password, /\*+/);
+              assert.matches(item.data.body.secret, /\*+/);
             }
           }
         },
@@ -731,7 +731,8 @@ vows.describe('transforms')
                 'access_token',
                 'request.cookie',
                 'sauce'
-              ]
+              ],
+              scrubRequestBody: true
             };
           },
           'item': {
@@ -780,11 +781,103 @@ vows.describe('transforms')
               'should scrub based on the options': function(err, item) {
                 var r = item.data.request;
                 assert.equal(r.GET.token, 'abc123');
-                assert.match(r.headers['x-auth-token'], /\**/);
+                assert.match(r.headers['x-auth-token'], /\*+/);
                 assert.equal(r.headers['host'], 'example.com');
-                assert.match(item.data.sauce, /\**/);
+                assert.match(item.data.sauce, /\*+/);
                 assert.equal(item.data.other, 'thing');
-                assert.match(item.data.someParams, /foo=okay&passwd=\**/);
+                assert.match(item.data.someParams, /foo=okay&passwd=\*+/);
+              }
+            },
+            'with a json request body': {
+              topic: function(options) {
+                var requestBody = JSON.stringify({
+                  token: 'abc123',
+                  something: 'else',
+                  passwd: '123456'
+                });
+                var item = {
+                  request: {
+                    headers: {
+                      host: 'example.com',
+                      'content-type': 'application/json',
+                      'x-auth-token': '12345'
+                    },
+                    protocol: 'https',
+                    url: '/some/endpoint',
+                    ip: '192.192.192.192',
+                    method: 'GET',
+                    body: requestBody,
+                    user: {
+                      id: 42,
+                      email: 'fake@example.com'
+                    }
+                  },
+                  stuff: 'hey',
+                  data: {
+                    other: 'thing',
+                    sauce: 'secrets',
+                    someParams: 'foo=okay&passwd=iamhere'
+                  }
+                };
+                t.addRequestData(item, options, function(e, i) {
+                  if (e) {
+                    this.callback(e);
+                    return;
+                  }
+                  t.scrubPayload(i, options, this.callback)
+                }.bind(this));
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should have a request object inside data': function(err, item) {
+                assert.ok(item.data.request);
+              },
+              'should scrub based on the options': function(err, item) {
+                var r = item.data.request;
+                assert.match(r.headers['x-auth-token'], /\*+/);
+                assert.equal(r.headers['host'], 'example.com');
+                assert.match(item.data.sauce, /\*+/);
+                assert.equal(item.data.other, 'thing');
+                assert.match(item.data.someParams, /foo=okay&passwd=\*+/);
+
+                var requestBody = JSON.parse(item.data.request.body);
+                assert.match(requestBody.passwd, /\*+/);
+              }
+            },
+            'with a bad json request body': {
+              topic: function(options) {
+                var requestBody = 'not valid json';
+                var item = {
+                  request: {
+                    headers: {
+                      'content-type': 'application/json'
+                    },
+                    protocol: 'https',
+                    url: '/some/endpoint',
+                    ip: '192.192.192.192',
+                    method: 'GET',
+                    body: requestBody
+                  }
+                };
+                t.addRequestData(item, options, function(e, i) {
+                  if (e) {
+                    this.callback(e);
+                    return;
+                  }
+                  t.scrubPayload(i, options, this.callback)
+                }.bind(this));
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should have a request object inside data': function(err, item) {
+                assert.ok(item.data.request);
+              },
+              'should delete the body and add a diagnostic error': function(err, item) {
+                var requestBody = JSON.parse(item.data.request.body);
+                assert.equal(requestBody, null);
+                assert.match(item.data.request.error, /request.body parse failed/);
               }
             }
           }
