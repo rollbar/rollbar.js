@@ -35,9 +35,17 @@ function _rollbarWindowOnError(window, r, old, args) {
     window._rollbarWrappedError = null;
   }
 
-  r.handleUncaughtException.apply(r, args);
+  var ret = r.handleUncaughtException.apply(r, args);
+
   if (old) {
     old.apply(window, args);
+  }
+
+  // Let other chained onerror handlers above run before setting this.
+  // If an error is thrown and caught within a chained onerror handler,
+  // Error.prepareStackTrace() will see that one before the one we want.
+  if (ret === 'anonymous') {
+    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
   }
 }
 
