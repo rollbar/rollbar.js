@@ -54,19 +54,34 @@ describe('userCheckIgnore', function() {
 });
 
 describe('urlIsWhitelisted', function() {
+  var item = {
+    level: 'critical',
+    body: {trace: {frames: [
+      {filename: 'http://api.fake.com/v1/something'},
+      {filename: 'http://api.example.com/v1/something'},
+      {filename: 'http://api.fake.com/v2/something'}
+    ]}}
+  };
+  var traceChainItem = {
+    level: 'critical',
+    body: {trace_chain: [{frames: [
+      {filename: 'http://api.fake.com/v1/something'},
+      {filename: 'http://api.example.com/v1/something'},
+      {filename: 'http://api.fake.com/v2/something'}
+    ]},
+    {frames: [
+      {filename: 'http://api.fake1.com/v2/something'},
+      {filename: 'http://api.example1.com/v2/something'},
+      {filename: 'http://api.fake1.com/v3/something'}
+    ]}
+    ]}
+  };
   it('should return true with no whitelist', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug'
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true with no trace', function() {
     var item = {
@@ -80,19 +95,12 @@ describe('urlIsWhitelisted', function() {
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
   });
   it('should return true if at least one regex matches at least one filename in the trace', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug',
       hostWhiteList: ['example.com']
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if the filename is not a string', function() {
     var item = {
@@ -103,65 +111,104 @@ describe('urlIsWhitelisted', function() {
         {filename: {url: 'http://api.fake.com/v2/something'}},
       ]}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [{frames: [
+        {filename: {url: 'http://api.fake.com/v1/something'}},
+        {filename: {url: 'http://api.example.com/v1/something'}},
+        {filename: {url: 'http://api.fake.com/v2/something'}},
+      ]},
+      {frames: [
+        {filename: {url: 'http://api.fake.com/v1/something'}},
+        {filename: {url: 'http://api.example.com/v1/something'}},
+        {filename: {url: 'http://api.fake.com/v2/something'}},
+      ]}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostWhiteList: ['nope.com']
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if there is no frames key', function() {
     var item = {
       level: 'critical',
       body: {trace: {notframes: []}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [
+        {notframes: []},
+        {notframes: []}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostWhiteList: ['nope.com']
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if there are no frames', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: []}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [
+        {frames: []},
+        {frames: []}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostWhiteList: ['nope.com']
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return false if nothing in the whitelist matches', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug',
       hostWhiteList: ['baz\.com', 'foo\.com']
     };
     expect(p.urlIsWhitelisted(logger)(item, settings)).to.not.be.ok();
+    expect(p.urlIsWhitelisted(logger)(traceChainItem, settings)).to.not.be.ok();
   });
 });
 
 describe('urlIsNotBlacklisted', function() {
+  var item = {
+    level: 'critical',
+    body: {trace: {frames: [
+      {filename: 'http://api.fake.com/v1/something'},
+      {filename: 'http://api.example.com/v1/something'},
+      {filename: 'http://api.fake.com/v2/something'}
+    ]}}
+  };
+  var traceChainItem = {
+    level: 'critical',
+    body: {trace_chain: [{frames: [
+      {filename: 'http://api.fake.com/v1/something'},
+      {filename: 'http://api.example.com/v1/something'},
+      {filename: 'http://api.fake.com/v2/something'}
+    ]},
+    {frames: [
+      {filename: 'http://api.fake1.com/v2/something'},
+      {filename: 'http://api.example1.com/v2/something'},
+      {filename: 'http://api.fake1.com/v3/something'}
+    ]}
+    ]}
+  };
   it('should return true with no blacklist', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug'
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true with no trace', function() {
     var item = {
@@ -175,19 +222,12 @@ describe('urlIsNotBlacklisted', function() {
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
   });
   it('should return false if any regex matches at least one filename in the trace', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug',
       hostBlackList: ['example.com', 'other.com']
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.not.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.not.be.ok();
   });
   it('should return true if the filename is not a string', function() {
     var item = {
@@ -198,48 +238,72 @@ describe('urlIsNotBlacklisted', function() {
         {filename: {url: 'http://api.fake.com/v2/something'}},
       ]}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [{frames: [
+        {filename: {url: 'http://api.fake.com/v1/something'}},
+        {filename: {url: 'http://api.example.com/v1/something'}},
+        {filename: {url: 'http://api.fake.com/v2/something'}},
+      ]},
+      {frames: [
+        {filename: {url: 'http://api.fake.com/v1/something'}},
+        {filename: {url: 'http://api.example.com/v1/something'}},
+        {filename: {url: 'http://api.fake.com/v2/something'}},
+      ]}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostBlackList: ['example.com', 'other.com']
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if there is no frames key', function() {
     var item = {
       level: 'critical',
       body: {trace: {notframes: []}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [
+        {notframes: []},
+        {notframes: []}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostBlackList: ['nope.com']
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if there are no frames', function() {
     var item = {
       level: 'critical',
       body: {trace: {frames: []}}
     };
+    var traceChainItem = {
+      level: 'critical',
+      body: {trace_chain: [
+        {frames: []},
+        {frames: []}
+      ]}
+    };
     var settings = {
       reportLevel: 'debug',
       hostBlackList: ['nope.com']
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.be.ok();
   });
   it('should return true if nothing in the blacklist matches', function() {
-    var item = {
-      level: 'critical',
-      body: {trace: {frames: [
-        {filename: 'http://api.fake.com/v1/something'},
-        {filename: 'http://api.example.com/v1/something'},
-        {filename: 'http://api.fake.com/v2/something'}
-      ]}}
-    };
     var settings = {
       reportLevel: 'debug',
       hostBlackList: ['baz\.com', 'foo\.com']
     };
     expect(p.urlIsNotBlacklisted(logger)(item, settings)).to.be.ok();
+    expect(p.urlIsNotBlacklisted(logger)(traceChainItem, settings)).to.be.ok();
   });
 });
 
