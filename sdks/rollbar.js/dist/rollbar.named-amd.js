@@ -185,6 +185,15 @@ function isObject(value) {
   return value != null && (type == 'object' || type == 'function');
 }
 
+/* isString - Checks if the argument is a string
+ *
+ * @param value - any value
+ * @returns true if value is a string
+*/
+function isString(value) {
+  return typeof value === 'string' || value instanceof String
+}
+
 /*
  * isDefined - a convenience function for checking if a value is not equal to undefined
  *
@@ -802,6 +811,8 @@ module.exports = {
   isIterable: isIterable,
   isNativeFunction: isNativeFunction,
   isType: isType,
+  isObject: isObject,
+  isString: isString,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
@@ -1485,11 +1496,10 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
     return;
   }
 
-  // Chrome will always send 5+ arrguments and error will be valid or null, not undefined.
+  // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
   // If error is undefined, we have a different caller.
   if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
-    this.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
-    return;
+    return 'anonymous';
   }
 
   var item;
@@ -1764,8 +1774,8 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.11.0",
-  scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp"],
+  version: "2.12.0",
+  scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
   uncaughtErrorLevel: "error",
@@ -1778,7 +1788,7 @@ var defaultOptions = {
   captureIp: true,
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
-  wrapGlobalEventHandlers: true
+  wrapGlobalEventHandlers: false
 };
 
 module.exports = Rollbar;
@@ -3796,9 +3806,17 @@ function _rollbarWindowOnError(window, r, old, args) {
     window._rollbarWrappedError = null;
   }
 
-  r.handleUncaughtException.apply(r, args);
+  var ret = r.handleUncaughtException.apply(r, args);
+
   if (old) {
     old.apply(window, args);
+  }
+
+  // Let other chained onerror handlers above run before setting this.
+  // If an error is thrown and caught within a chained onerror handler,
+  // Error.prepareStackTrace() will see that one before the one we want.
+  if (ret === 'anonymous') {
+    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
   }
 }
 
@@ -4962,45 +4980,59 @@ function urlIsWhitelisted(logger) {
   }
 }
 
+function matchFrames(trace, list, black) {
+  if (!trace) { return !black }
+
+  var frames = trace.frames;
+
+  if (!frames || frames.length === 0) { return !black; }
+
+  var frame, filename, url, urlRegex;
+  var listLength = list.length;
+  var frameLength = frames.length;
+  for (var i = 0; i < frameLength; i++) {
+    frame = frames[i];
+    filename = frame.filename;
+
+    if (!_.isType(filename, 'string')) { return !black; }
+
+    for (var j = 0; j < listLength; j++) {
+      url = list[j];
+      urlRegex = new RegExp(url);
+
+      if (urlRegex.test(filename)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function urlIsOnAList(item, settings, whiteOrBlack, logger) {
   // whitelist is the default
   var black = false;
   if (whiteOrBlack === 'blacklist') {
     black = true;
   }
-  var list, trace, frame, filename, frameLength, url, listLength, urlRegex;
-  var i, j;
 
+  var list, traces;
   try {
     list = black ? settings.hostBlackList : settings.hostWhiteList;
-    listLength = list && list.length;
-    trace = _.get(item, 'body.trace');
+    traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
 
     // These two checks are important to come first as they are defaults
     // in case the list is missing or the trace is missing or not well-formed
-    if (!list || listLength === 0) {
+    if (!list || list.length === 0) {
       return !black;
     }
-    if (!trace || !trace.frames || trace.frames.length === 0) {
+    if (traces.length === 0 || !traces[0]) {
       return !black;
     }
 
-    frameLength = trace.frames.length;
-    for (i = 0; i < frameLength; i++) {
-      frame = trace.frames[i];
-      filename = frame.filename;
-
-      if (!_.isType(filename, 'string')) {
-        return !black;
-      }
-
-      for (j = 0; j < listLength; j++) {
-        url = list[j];
-        urlRegex = new RegExp(url);
-
-        if (urlRegex.test(filename)) {
-          return true;
-        }
+    var tracesLength = traces.length;
+    for (var i = 0; i < tracesLength; i++) {
+      if(matchFrames(traces[i], list, black)) {
+        return true;
       }
     }
   } catch (e)
