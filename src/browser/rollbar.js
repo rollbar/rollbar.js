@@ -321,6 +321,9 @@ Rollbar.prototype.handleAnonymousErrors = function() {
       }
     }
 
+    // Workaround to ensure stack is preserved for normal errors.
+    error.stack;
+
     return error.toString();
   }
 
