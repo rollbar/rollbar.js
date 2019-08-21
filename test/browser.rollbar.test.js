@@ -378,8 +378,9 @@ describe('options.captureUncaught', function() {
     var element = document.getElementById('throw-error');
 
     // generate same error twice
-    element.click();
-    element.click();
+    for(var i = 0; i < 2; i++) {
+      element.click(); // use for loop to ensure the stack traces have identical line/col info
+    }
     server.respond();
 
     // transmit only once
@@ -415,8 +416,9 @@ describe('options.captureUncaught', function() {
     var element = document.getElementById('throw-error');
 
     // generate same error twice
-    element.click();
-    element.click();
+    for(var i = 0; i < 2; i++) {
+      element.click(); // use for loop to ensure the stack traces have identical line/col info
+    }
     server.respond();
 
     // transmit both errors
