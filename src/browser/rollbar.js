@@ -322,9 +322,7 @@ Rollbar.prototype.handleAnonymousErrors = function() {
     }
 
     // Workaround to ensure stack is preserved for normal errors.
-    error.stack;
-
-    return error.toString();
+    return error.stack;
   }
 
   // https://v8.dev/docs/stack-trace-api
