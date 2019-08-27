@@ -6,10 +6,15 @@ import {
   ErrorHandler
 } from '@angular/core';
 
-const rollbarConfig = {
+const rollbarConfig:Rollbar.Configuration = {
   accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
+  nodeSourceMaps: false,
+  inspectAnonymousErrors: true,
+  ignoreDuplicateErrors: true,
+  wrapGlobalEventHandlers: false,
+  scrubRequestBody: true
 };
 
 export const RollbarService = new InjectionToken<Rollbar>('rollbar');

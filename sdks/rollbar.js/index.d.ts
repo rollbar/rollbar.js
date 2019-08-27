@@ -69,6 +69,11 @@ declare namespace Rollbar {
         captureUsername?: boolean;
         captureIp?: boolean | "anonymize";
         captureLambdaTimeouts?: boolean;
+        nodeSourceMaps?: boolean;
+        inspectAnonymousErrors?: boolean;
+        ignoreDuplicateErrors?: boolean;
+        wrapGlobalEventHandlers?: boolean;
+        scrubRequestBody?: boolean;
         transform?: (data: object) => void;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
