@@ -104,7 +104,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @angular/core */ "./node_modules/@angular/core/fesm5/core.js");
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 /**
- * @license Angular v7.2.11
+ * @license Angular v7.2.15
  * (c) 2010-2019 Google LLC. https://angular.io/
  * License: MIT
  */
@@ -221,12 +221,12 @@ var APP_BASE_HREF = new _angular_core__WEBPACK_IMPORTED_MODULE_0__["InjectionTok
  *
  * A service that applications can use to interact with a browser's URL.
  *
- * Depending on which {@link LocationStrategy} is used, `Location` will either persist
+ * Depending on the {@link LocationStrategy} used, `Location` will either persist
  * to the URL's path or the URL's hash segment.
  *
  * @usageNotes
  *
- * It's better to use {@link Router#navigate} service to trigger route changes. Use
+ * It's better to use the {@link Router#navigate} service to trigger route changes. Use
  * `Location` only if you need to interact with or create normalized URLs outside of
  * routing.
  *
@@ -263,6 +263,10 @@ var Location = /** @class */ (function () {
     Location_1 = Location;
     /**
      * Returns the normalized URL path.
+     *
+     * @param includeHash Whether path has an anchor fragment.
+     *
+     * @returns The normalized URL path.
      */
     // TODO: vsavkin. Remove the boolean flag and always include hash once the deprecated router is
     // removed.
@@ -272,14 +276,24 @@ var Location = /** @class */ (function () {
     };
     /**
      * Normalizes the given path and compares to the current normalized path.
+     *
+     * @param path The given URL path
+     * @param query Query parameters
+     *
+     * @returns `true` if the given URL path is equal to the current normalized path, `false`
+     * otherwise.
      */
     Location.prototype.isCurrentPathEqualTo = function (path, query) {
         if (query === void 0) { query = ''; }
         return this.path() == this.normalize(path + Location_1.normalizeQueryParams(query));
     };
     /**
-     * Given a string representing a URL, returns the normalized URL path without leading or
+     * Given a string representing a URL, returns the URL path after stripping the
      * trailing slashes.
+     *
+     * @param url String representing a URL.
+     *
+     * @returns Normalized URL string.
      */
     Location.prototype.normalize = function (url) {
         return Location_1.stripTrailingSlash(_stripBaseHref(this._baseHref, _stripIndexHtml(url)));
@@ -287,8 +301,13 @@ var Location = /** @class */ (function () {
     /**
      * Given a string representing a URL, returns the platform-specific external URL path.
      * If the given URL doesn't begin with a leading slash (`'/'`), this method adds one
-     * before normalizing. This method will also add a hash if `HashLocationStrategy` is
+     * before normalizing. This method also adds a hash if `HashLocationStrategy` is
      * used, or the `APP_BASE_HREF` if the `PathLocationStrategy` is in use.
+     *
+     *
+     * @param url String representing a URL.
+     *
+     * @returns  A normalized platform-specific URL.
      */
     Location.prototype.prepareExternalUrl = function (url) {
         if (url && url[0] !== '/') {
@@ -298,8 +317,13 @@ var Location = /** @class */ (function () {
     };
     // TODO: rename this method to pushState
     /**
-     * Changes the browsers URL to the normalized version of the given URL, and pushes a
+     * Changes the browsers URL to a normalized version of the given URL, and pushes a
      * new item onto the platform's history.
+     *
+     * @param path  URL path to normalizze
+     * @param query Query parameters
+     * @param state Location history state
+     *
      */
     Location.prototype.go = function (path, query, state) {
         if (query === void 0) { query = ''; }
@@ -307,8 +331,12 @@ var Location = /** @class */ (function () {
         this._platformStrategy.pushState(state, '', path, query);
     };
     /**
-     * Changes the browsers URL to the normalized version of the given URL, and replaces
+     * Changes the browser's URL to a normalized version of the given URL, and replaces
      * the top item on the platform's history stack.
+     *
+     * @param path  URL path to normalizze
+     * @param query Query parameters
+     * @param state Location history state
      */
     Location.prototype.replaceState = function (path, query, state) {
         if (query === void 0) { query = ''; }
@@ -325,19 +353,34 @@ var Location = /** @class */ (function () {
     Location.prototype.back = function () { this._platformStrategy.back(); };
     /**
      * Subscribe to the platform's `popState` events.
+     *
+     * @param value Event that is triggered when the state history changes.
+     * @param exception The exception to throw.
+     *
+     * @returns Subscribed events.
      */
     Location.prototype.subscribe = function (onNext, onThrow, onReturn) {
         return this._subject.subscribe({ next: onNext, error: onThrow, complete: onReturn });
     };
     /**
-     * Given a string of url parameters, prepend with '?' if needed, otherwise return parameters as
-     * is.
+     * Given a string of url parameters, prepend with `?` if needed, otherwise return the
+     * parameters as is.
+     *
+     *  @param  params String of URL parameters
+     *
+     *  @returns URL parameters prepended with `?` or the parameters as is.
      */
     Location.normalizeQueryParams = function (params) {
         return params && params[0] !== '?' ? '?' + params : params;
     };
     /**
-     * Given 2 parts of a url, join them with a slash if needed.
+     * Given 2 parts of a URL, join them with a slash if needed.
+     *
+     * @param start  URL string
+     * @param end    URL string
+     *
+     *
+     * @returns Given URL strings joined with a slash, if needed.
      */
     Location.joinWithSlash = function (start, end) {
         if (start.length == 0) {
@@ -362,9 +405,14 @@ var Location = /** @class */ (function () {
         return start + '/' + end;
     };
     /**
-     * If url has a trailing slash, remove it, otherwise return url as is. This
-     * method looks for the first occurrence of either #, ?, or the end of the
-     * line as `/` characters after any of these should not be replaced.
+     * If URL has a trailing slash, remove it, otherwise return the URL as is. The
+     * method looks for the first occurrence of either `#`, `?`, or the end of the
+     * line as `/` characters and removes the trailing slash if one exists.
+     *
+     * @param url URL string
+     *
+     * @returns Returns a URL string after removing the trailing slash if one exists, otherwise
+     * returns the string as is.
      */
     Location.stripTrailingSlash = function (url) {
         var match = url.match(/#|\?|$/);
@@ -777,8 +825,9 @@ var CURRENCIES_EN = {
  * found in the LICENSE file at https://angular.io/license
  */
 /**
- * The different format styles that can be used to represent numbers.
- * Used by the function {@link getLocaleNumberFormat}.
+ * Format styles that can be used to represent numbers.
+ * @see `getLocaleNumberFormat()`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -789,7 +838,14 @@ var NumberFormatStyle;
     NumberFormatStyle[NumberFormatStyle["Currency"] = 2] = "Currency";
     NumberFormatStyle[NumberFormatStyle["Scientific"] = 3] = "Scientific";
 })(NumberFormatStyle || (NumberFormatStyle = {}));
-/** @publicApi */
+/**
+ * Plurality cases used for translating plurals to different languages.
+ *
+ * @see `NgPlural`
+ * @see `NgPluralCase`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
+ *
+ * @publicApi */
 var Plural;
 (function (Plural) {
     Plural[Plural["Zero"] = 0] = "Zero";
@@ -800,11 +856,11 @@ var Plural;
     Plural[Plural["Other"] = 5] = "Other";
 })(Plural || (Plural = {}));
 /**
- * Some languages use two different forms of strings (standalone and format) depending on the
- * context.
- * Typically the standalone version is the nominative form of the word, and the format version is in
- * the genitive.
- * See [the CLDR website](http://cldr.unicode.org/translation/date-time) for more information.
+ * Context-dependant translation forms for strings.
+ * Typically the standalone version is for the nominative form of the word,
+ * and the format version is used for the genitive case.
+ * @see [CLDR website](http://cldr.unicode.org/translation/date-time#TOC-Stand-Alone-vs.-Format-Styles)
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -814,85 +870,143 @@ var FormStyle;
     FormStyle[FormStyle["Standalone"] = 1] = "Standalone";
 })(FormStyle || (FormStyle = {}));
 /**
- * Multiple widths are available for translations: narrow (1 character), abbreviated (3 characters),
- * wide (full length), and short (2 characters, only for days).
- *
- * For example the day `Sunday` will be:
- * - Narrow: `S`
- * - Short: `Su`
- * - Abbreviated: `Sun`
- * - Wide: `Sunday`
+ * String widths available for translations.
+ * The specific character widths are locale-specific.
+ * Examples are given for the word "Sunday" in English.
  *
  * @publicApi
  */
 var TranslationWidth;
 (function (TranslationWidth) {
+    /** 1 character for `en-US`. For example: 'S' */
     TranslationWidth[TranslationWidth["Narrow"] = 0] = "Narrow";
+    /** 3 characters for `en-US`. For example: 'Sun' */
     TranslationWidth[TranslationWidth["Abbreviated"] = 1] = "Abbreviated";
+    /** Full length for `en-US`. For example: "Sunday" */
     TranslationWidth[TranslationWidth["Wide"] = 2] = "Wide";
+    /** 2 characters for `en-US`, For example: "Su" */
     TranslationWidth[TranslationWidth["Short"] = 3] = "Short";
 })(TranslationWidth || (TranslationWidth = {}));
 /**
- * Multiple widths are available for formats: short (minimal amount of data), medium (small amount
- * of data), long (complete amount of data), full (complete amount of data and extra information).
+ * String widths available for date-time formats.
+ * The specific character widths are locale-specific.
+ * Examples are given for `en-US`.
  *
- * For example the date-time formats for the english locale will be:
- *  - `'short'`: `'M/d/yy, h:mm a'` (e.g. `6/15/15, 9:03 AM`)
- *  - `'medium'`: `'MMM d, y, h:mm:ss a'` (e.g. `Jun 15, 2015, 9:03:01 AM`)
- *  - `'long'`: `'MMMM d, y, h:mm:ss a z'` (e.g. `June 15, 2015 at 9:03:01 AM GMT+1`)
- *  - `'full'`: `'EEEE, MMMM d, y, h:mm:ss a zzzz'` (e.g. `Monday, June 15, 2015 at
- * 9:03:01 AM GMT+01:00`)
- *
+ * @see `getLocaleDateFormat()`
+ * @see `getLocaleTimeFormat()``
+ * @see `getLocaleDateTimeFormat()`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  * @publicApi
  */
 var FormatWidth;
 (function (FormatWidth) {
+    /**
+     * For `en-US`, 'M/d/yy, h:mm a'`
+     * (Example: `6/15/15, 9:03 AM`)
+     */
     FormatWidth[FormatWidth["Short"] = 0] = "Short";
+    /**
+     * For `en-US`, `'MMM d, y, h:mm:ss a'`
+     * (Example: `Jun 15, 2015, 9:03:01 AM`)
+     */
     FormatWidth[FormatWidth["Medium"] = 1] = "Medium";
+    /**
+     * For `en-US`, `'MMMM d, y, h:mm:ss a z'`
+     * (Example: `June 15, 2015 at 9:03:01 AM GMT+1`)
+     */
     FormatWidth[FormatWidth["Long"] = 2] = "Long";
+    /**
+     * For `en-US`, `'EEEE, MMMM d, y, h:mm:ss a zzzz'`
+     * (Example: `Monday, June 15, 2015 at 9:03:01 AM GMT+01:00`)
+     */
     FormatWidth[FormatWidth["Full"] = 3] = "Full";
 })(FormatWidth || (FormatWidth = {}));
 /**
- * Number symbol that can be used to replace placeholders in number patterns.
- * The placeholders are based on english values:
+ * Symbols that can be used to replace placeholders in number patterns.
+ * Examples are based on `en-US` values.
  *
- * | Name                   | Example for en-US | Meaning                                     |
- * |------------------------|-------------------|---------------------------------------------|
- * | decimal                | 2,345`.`67        | decimal separator                           |
- * | group                  | 2`,`345.67        | grouping separator, typically for thousands |
- * | plusSign               | `+`23             | the plus sign used with numbers             |
- * | minusSign              | `-`23             | the minus sign used with numbers            |
- * | percentSign            | 23.4`%`           | the percent sign (out of 100)               |
- * | perMille               | 234`‰`            | the permille sign (out of 1000)             |
- * | exponential            | 1.2`E`3           | used in computers for 1.2×10³.              |
- * | superscriptingExponent | 1.2`×`103         | human-readable format of exponential        |
- * | infinity               | `∞`               | used in +∞ and -∞.                          |
- * | nan                    | `NaN`             | "not a number".                             |
- * | timeSeparator          | 10`:`52           | symbol used between time units              |
- * | currencyDecimal        | $2,345`.`67       | decimal separator, fallback to "decimal"    |
- * | currencyGroup          | $2`,`345.67       | grouping separator, fallback to "group"     |
+ * @see `getLocaleNumberSymbol()`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
 var NumberSymbol;
 (function (NumberSymbol) {
+    /**
+     * Decimal separator.
+     * For `en-US`, the dot character.
+     * Example : 2,345`.`67
+     */
     NumberSymbol[NumberSymbol["Decimal"] = 0] = "Decimal";
+    /**
+     * Grouping separator, typically for thousands.
+     * For `en-US`, the comma character.
+     * Example: 2`,`345.67
+     */
     NumberSymbol[NumberSymbol["Group"] = 1] = "Group";
+    /**
+     * List-item separator.
+     * Example: "one, two, and three"
+     */
     NumberSymbol[NumberSymbol["List"] = 2] = "List";
+    /**
+     * Sign for percentage (out of 100).
+     * Example: 23.4%
+     */
     NumberSymbol[NumberSymbol["PercentSign"] = 3] = "PercentSign";
+    /**
+     * Sign for positive numbers.
+     * Example: +23
+     */
     NumberSymbol[NumberSymbol["PlusSign"] = 4] = "PlusSign";
+    /**
+     * Sign for negative numbers.
+     * Example: -23
+     */
     NumberSymbol[NumberSymbol["MinusSign"] = 5] = "MinusSign";
+    /**
+     * Computer notation for exponential value (n times a power of 10).
+     * Example: 1.2E3
+     */
     NumberSymbol[NumberSymbol["Exponential"] = 6] = "Exponential";
+    /**
+     * Human-readable format of exponential.
+     * Example: 1.2x103
+     */
     NumberSymbol[NumberSymbol["SuperscriptingExponent"] = 7] = "SuperscriptingExponent";
+    /**
+     * Sign for permille (out of 1000).
+     * Example: 23.4‰
+     */
     NumberSymbol[NumberSymbol["PerMille"] = 8] = "PerMille";
+    /**
+     * Infinity, can be used with plus and minus.
+     * Example: ∞, +∞, -∞
+     */
     NumberSymbol[NumberSymbol["Infinity"] = 9] = "Infinity";
+    /**
+     * Not a number.
+     * Example: NaN
+     */
     NumberSymbol[NumberSymbol["NaN"] = 10] = "NaN";
+    /**
+     * Symbol used between time units.
+     * Example: 10:52
+     */
     NumberSymbol[NumberSymbol["TimeSeparator"] = 11] = "TimeSeparator";
+    /**
+     * Decimal separator for currency values (fallback to `Decimal`).
+     * Example: $2,345.67
+     */
     NumberSymbol[NumberSymbol["CurrencyDecimal"] = 12] = "CurrencyDecimal";
+    /**
+     * Group separator for currency values (fallback to `Group`).
+     * Example: $2,345.67
+     */
     NumberSymbol[NumberSymbol["CurrencyGroup"] = 13] = "CurrencyGroup";
 })(NumberSymbol || (NumberSymbol = {}));
 /**
- * The value for each day of the week, based on the en-US locale
+ * The value for each day of the week, based on the `en-US` locale
  *
  * @publicApi
  */
@@ -907,7 +1021,11 @@ var WeekDay;
     WeekDay[WeekDay["Saturday"] = 6] = "Saturday";
 })(WeekDay || (WeekDay = {}));
 /**
- * The locale id for the chosen locale (e.g `en-GB`).
+ * Retrieves the locale ID from the currently loaded locale.
+ * The loaded locale could be, for example, a global one rather than a regional one.
+ * @param locale A locale code, such as `fr-FR`.
+ * @returns The locale code. For example, `fr`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -915,7 +1033,13 @@ function getLocaleId(locale) {
     return findLocaleData(locale)[0 /* LocaleId */];
 }
 /**
- * Periods of the day (e.g. `[AM, PM]` for en-US).
+ * Retrieves day period strings for the given locale.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @param formStyle The required grammatical form.
+ * @param width The required character width.
+ * @returns An array of localized period strings. For example, `[AM, PM]` for `en-US`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -926,7 +1050,14 @@ function getLocaleDayPeriods(locale, formStyle, width) {
     return getLastDefinedValue(amPm, width);
 }
 /**
- * Days of the week for the Gregorian calendar (e.g. `[Sunday, Monday, ... Saturday]` for en-US).
+ * Retrieves days of the week for the given locale, using the Gregorian calendar.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @param formStyle The required grammatical form.
+ * @param width The required character width.
+ * @returns An array of localized name strings.
+ * For example,`[Sunday, Monday, ... Saturday]` for `en-US`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -937,7 +1068,14 @@ function getLocaleDayNames(locale, formStyle, width) {
     return getLastDefinedValue(days, width);
 }
 /**
- * Months of the year for the Gregorian calendar (e.g. `[January, February, ...]` for en-US).
+ * Retrieves months of the year for the given locale, using the Gregorian calendar.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @param formStyle The required grammatical form.
+ * @param width The required character width.
+ * @returns An array of localized name strings.
+ * For example,  `[January, February, ...]` for `en-US`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -948,7 +1086,14 @@ function getLocaleMonthNames(locale, formStyle, width) {
     return getLastDefinedValue(months, width);
 }
 /**
- * Eras for the Gregorian calendar (e.g. AD/BC).
+ * Retrieves Gregorian-calendar eras for the given locale.
+ * @param locale A locale code for the locale format rules to use.
+ * @param formStyle The required grammatical form.
+ * @param width The required character width.
+
+ * @returns An array of localized era strings.
+ * For example, `[AD, BC]` for `en-US`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -958,8 +1103,13 @@ function getLocaleEraNames(locale, width) {
     return getLastDefinedValue(erasData, width);
 }
 /**
- * First day of the week for this locale, based on english days (Sunday = 0, Monday = 1, ...).
- * For example in french the value would be 1 because the first day of the week is Monday.
+ * Retrieves the first day of the week for the given locale.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @returns A day index number, using the 0-based week-day index for `en-US`
+ * (Sunday = 0, Monday = 1, ...).
+ * For example, for `fr-FR`, returns 1 to indicate that the first day is Monday.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -968,9 +1118,11 @@ function getLocaleFirstDayOfWeek(locale) {
     return data[8 /* FirstDayOfWeek */];
 }
 /**
- * Range of days in the week that represent the week-end for this locale, based on english days
- * (Sunday = 0, Monday = 1, ...).
- * For example in english the value would be [6,0] for Saturday to Sunday.
+ * Range of week days that are considered the week-end for the given locale.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The range of day values, `[startDay, endDay]`.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -979,27 +1131,13 @@ function getLocaleWeekEndRange(locale) {
     return data[9 /* WeekendRange */];
 }
 /**
- * Date format that depends on the locale.
+ * Retrieves a localized date-value formating string.
  *
- * There are four basic date formats:
- * - `full` should contain long-weekday (EEEE), year (y), long-month (MMMM), day (d).
- *
- *  For example, English uses `EEEE, MMMM d, y`, corresponding to a date like
- *  "Tuesday, September 14, 1999".
- *
- * - `long` should contain year, long-month, day.
- *
- *  For example, `MMMM d, y`, corresponding to a date like "September 14, 1999".
- *
- * - `medium` should contain year, abbreviated-month (MMM), day.
- *
- *  For example, `MMM d, y`, corresponding to a date like "Sep 14, 1999".
- *  For languages that do not use abbreviated months, use the numeric month (MM/M). For example,
- *  `y/MM/dd`, corresponding to a date like "1999/09/14".
- *
- * - `short` should contain year, numeric-month (MM/M), and day.
- *
- *  For example, `M/d/yy`, corresponding to a date like "9/14/99".
+ * @param locale A locale code for the locale format rules to use.
+ * @param width The format type.
+ * @returns The localized formating string.
+ * @see `FormatWidth`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1008,23 +1146,14 @@ function getLocaleDateFormat(locale, width) {
     return getLastDefinedValue(data[10 /* DateFormat */], width);
 }
 /**
- * Time format that depends on the locale.
+ * Retrieves a localized time-value formatting string.
  *
- * The standard formats include four basic time formats:
- * - `full` should contain hour (h/H), minute (mm), second (ss), and zone (zzzz).
- * - `long` should contain hour, minute, second, and zone (z)
- * - `medium` should contain hour, minute, second.
- * - `short` should contain hour, minute.
- *
- * Note: The patterns depend on whether the main country using your language uses 12-hour time or
- * not:
- * - For 12-hour time, use a pattern like `hh:mm a` using h to mean a 12-hour clock cycle running
- * 1 through 12 (midnight plus 1 minute is 12:01), or using K to mean a 12-hour clock cycle
- * running 0 through 11 (midnight plus 1 minute is 0:01).
- * - For 24-hour time, use a pattern like `HH:mm` using H to mean a 24-hour clock cycle running 0
- * through 23 (midnight plus 1 minute is 0:01), or using k to mean a 24-hour clock cycle running
- * 1 through 24 (midnight plus 1 minute is 24:01).
- *
+ * @param locale A locale code for the locale format rules to use.
+ * @param width The format type.
+ * @returns The localized formatting string.
+ * @see `FormatWidth`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
+
  * @publicApi
  */
 function getLocaleTimeFormat(locale, width) {
@@ -1032,27 +1161,13 @@ function getLocaleTimeFormat(locale, width) {
     return getLastDefinedValue(data[11 /* TimeFormat */], width);
 }
 /**
- * Date-time format that depends on the locale.
+ * Retrieves a localized date-time formatting string.
  *
- * The date-time pattern shows how to combine separate patterns for date (represented by {1})
- * and time (represented by {0}) into a single pattern. It usually doesn't need to be changed.
- * What you want to pay attention to are:
- * - possibly removing a space for languages that don't use it, such as many East Asian languages
- * - possibly adding a comma, other punctuation, or a combining word
- *
- * For example:
- * - English uses `{1} 'at' {0}` or `{1}, {0}` (depending on date style), while Japanese uses
- *  `{1}{0}`.
- * - An English formatted date-time using the combining pattern `{1}, {0}` could be
- *  `Dec 10, 2010, 3:59:49 PM`. Notice the comma and space between the date portion and the time
- *  portion.
- *
- * There are four formats (`full`, `long`, `medium`, `short`); the determination of which to use
- * is normally based on the date style. For example, if the date has a full month and weekday
- * name, the full combining pattern will be used to combine that with a time. If the date has
- * numeric month, the short version of the combining pattern will be used to combine that with a
- * time. English uses `{1} 'at' {0}` for full and long styles, and `{1}, {0}` for medium and short
- * styles.
+ * @param locale A locale code for the locale format rules to use.
+ * @param width The format type.
+ * @returns The localized formatting string.
+ * @see `FormatWidth`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1062,8 +1177,12 @@ function getLocaleDateTimeFormat(locale, width) {
     return getLastDefinedValue(dateTimeFormatData, width);
 }
 /**
- * Number symbol that can be used to replace placeholders in number formats.
- * See {@link NumberSymbol} for more information.
+ * Retrieves a localized number symbol that can be used to replace placeholders in number formats.
+ * @param locale The locale code.
+ * @param symbol The symbol to localize.
+ * @returns The character for the localized symbol.
+ * @see `NumberSymbol`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1081,17 +1200,17 @@ function getLocaleNumberSymbol(locale, symbol) {
     return res;
 }
 /**
- * Number format that depends on the locale.
+ * Retrieves a number format for a given locale.
  *
  * Numbers are formatted using patterns, like `#,###.00`. For example, the pattern `#,###.00`
- * when used to format the number 12345.678 could result in "12'345,67". That would happen if the
+ * when used to format the number 12345.678 could result in "12'345,678". That would happen if the
  * grouping separator for your language is an apostrophe, and the decimal separator is a comma.
  *
- * <b>Important:</b> The characters `.` `,` `0` `#` (and others below) are special placeholders;
- * they stand for the decimal separator, and so on, and are NOT real characters.
- * You must NOT "translate" the placeholders; for example, don't change `.` to `,` even though in
+ * <b>Important:</b> The characters `.` `,` `0` `#` (and others below) are special placeholders
+ * that stand for the decimal separator, and so on, and are NOT real characters.
+ * You must NOT "translate" the placeholders. For example, don't change `.` to `,` even though in
  * your language the decimal point is written with a comma. The symbols should be replaced by the
- * local equivalents, using the Number Symbols for your language.
+ * local equivalents, using the appropriate `NumberSymbol` for your language.
  *
  * Here are the special characters used in number patterns:
  *
@@ -1101,13 +1220,17 @@ function getLocaleNumberSymbol(locale, symbol) {
  * | , | Replaced by the "grouping" (thousands) separator. |
  * | 0 | Replaced by a digit (or zero if there aren't enough digits). |
  * | # | Replaced by a digit (or nothing if there aren't enough). |
- * | ¤ | This will be replaced by a currency symbol, such as $ or USD. |
- * | % | This marks a percent format. The % symbol may change position, but must be retained. |
- * | E | This marks a scientific format. The E symbol may change position, but must be retained. |
+ * | ¤ | Replaced by a currency symbol, such as $ or USD. |
+ * | % | Marks a percent format. The % symbol may change position, but must be retained. |
+ * | E | Marks a scientific format. The E symbol may change position, but must be retained. |
  * | ' | Special characters used as literal characters are quoted with ASCII single quotes. |
  *
- * You can find more information
- * [on the CLDR website](http://cldr.unicode.org/translation/number-patterns)
+ * @param locale A locale code for the locale format rules to use.
+ * @param type The type of numeric value to be formatted (such as `Decimal` or `Currency`.)
+ * @returns The localized format string.
+ * @see `NumberFormatStyle`
+ * @see [CLDR website](http://cldr.unicode.org/translation/number-patterns)
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1116,9 +1239,13 @@ function getLocaleNumberFormat(locale, type) {
     return data[14 /* NumberFormats */][type];
 }
 /**
- * The symbol used to represent the currency for the main country using this locale (e.g. $ for
- * the locale en-US).
- * The symbol will be `null` if the main country cannot be determined.
+ * Retrieves the symbol used to represent the currency for the main country
+ * corresponding to a given locale. For example, '$' for `en-US`.
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The localized symbol character,
+ * or `null` if the main country cannot be determined.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1127,9 +1254,12 @@ function getLocaleCurrencySymbol(locale) {
     return data[15 /* CurrencySymbol */] || null;
 }
 /**
- * The name of the currency for the main country using this locale (e.g. 'US Dollar' for the locale
- * en-US).
- * The name will be `null` if the main country cannot be determined.
+ * Retrieves the name of the currency for the main country corresponding
+ * to a given locale. For example, 'US Dollar' for `en-US`.
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The currency name,
+ * or `null` if the main country cannot be determined.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1138,15 +1268,22 @@ function getLocaleCurrencyName(locale) {
     return data[16 /* CurrencyName */] || null;
 }
 /**
- * Returns the currency values for the locale
+ * Retrieves the currency values for a given locale.
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The currency values.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  */
 function getLocaleCurrencies(locale) {
     var data = findLocaleData(locale);
     return data[17 /* Currencies */];
 }
 /**
- * The locale plural function used by ICU expressions to determine the plural case to use.
- * See {@link NgPlural} for more information.
+ * Retrieves the plural function used by ICU expressions to determine the plural case to use
+ * for a given locale.
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The plural function for the locale.
+ * @see `NgPlural`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1160,17 +1297,24 @@ function checkFullData(data) {
     }
 }
 /**
- * Rules used to determine which day period to use (See `dayPeriods` below).
- * The rules can either be an array or a single value. If it's an array, consider it as "from"
- * and "to". If it's a single value then it means that the period is only valid at this exact
- * value.
- * There is always the same number of rules as the number of day periods, which means that the
- * first rule is applied to the first day period and so on.
- * You should fallback to AM/PM when there are no rules available.
+ * Retrieves locale-specific rules used to determine which day period to use
+ * when more than one period is defined for a locale.
  *
- * Note: this is only available if you load the full locale data.
- * See the ["I18n guide"](guide/i18n#i18n-pipes) to know how to import additional locale
- * data.
+ * There is a rule for each defined day period. The
+ * first rule is applied to the first day period and so on.
+ * Fall back to AM/PM when no rules are available.
+ *
+ * A rule can specify a period as time range, or as a single time value.
+ *
+ * This functionality is only available when you have loaded the full locale data.
+ * See the ["I18n guide"](guide/i18n#i18n-pipes).
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @returns The rules for the locale, a single time value or array of *from-time, to-time*,
+ * or null if no periods are available.
+ *
+ * @see `getLocaleExtraDayPeriods()`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1186,15 +1330,19 @@ function getLocaleExtraDayPeriodRules(locale) {
     });
 }
 /**
- * Day Periods indicate roughly how the day is broken up in different languages (e.g. morning,
- * noon, afternoon, midnight, ...).
- * You should use the function {@link getLocaleExtraDayPeriodRules} to determine which period to
- * use.
- * You should fallback to AM/PM when there are no day periods available.
+ * Retrieves locale-specific day periods, which indicate roughly how a day is broken up
+ * in different languages.
+ * For example, for `en-US`, periods are morning, noon, afternoon, evening, and midnight.
  *
- * Note: this is only available if you load the full locale data.
- * See the ["I18n guide"](guide/i18n#i18n-pipes) to know how to import additional locale
- * data.
+ * This functionality is only available when you have loaded the full locale data.
+ * See the ["I18n guide"](guide/i18n#i18n-pipes).
+ *
+ * @param locale A locale code for the locale format rules to use.
+ * @param formStyle The required grammatical form.
+ * @param width The required character width.
+ * @returns The translated day-period strings.
+ * @see `getLocaleExtraDayPeriodRules()`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1209,11 +1357,15 @@ function getLocaleExtraDayPeriods(locale, formStyle, width) {
     return getLastDefinedValue(dayPeriods, width) || [];
 }
 /**
- * Returns the first value that is defined in an array, going backwards.
+ * Retrieves the first value that is defined in an array, going backwards from an index position.
  *
- * To avoid repeating the same data (e.g. when "format" and "standalone" are the same) we only
- * add the first one to the locale data arrays, the other ones are only defined when different.
- * We use this function to retrieve the first defined value.
+ * To avoid repeating the same data (as when the "format" and "standalone" forms are the same)
+ * add the first value to the locale data arrays, and add other values only if they are different.
+ *
+ * @param data The data array to retrieve from.
+ * @param index A 0-based index into the array to start from.
+ * @returns The value immediately before the given index position.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1226,14 +1378,18 @@ function getLastDefinedValue(data, index) {
     throw new Error('Locale data API: locale data undefined');
 }
 /**
- * Extract the hours and minutes from a string like "15:45"
+ * Extracts the hours and minutes from a string like "15:45"
  */
 function extractTime(time) {
     var _a = Object(tslib__WEBPACK_IMPORTED_MODULE_1__["__read"])(time.split(':'), 2), h = _a[0], m = _a[1];
     return { hours: +h, minutes: +m };
 }
 /**
- * Finds the locale data for a locale id
+ * Finds the locale data for a given locale.
+ *
+ * @param locale The locale code.
+ * @returns The locale data.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1255,9 +1411,17 @@ function findLocaleData(locale) {
     throw new Error("Missing locale data for the locale \"" + locale + "\".");
 }
 /**
- * Returns the currency symbol for a given currency code, or the code if no symbol available
- * (e.g.: format narrow = $, format wide = US$, code = USD)
- * If no locale is provided, it uses the locale "en" by default
+ * Retrieves the currency symbol for a given currency code.
+ *
+ * For example, for the default `en-US` locale, the code `USD` can
+ * be represented by the narrow symbol `$` or the wide symbol `US$`.
+ *
+ * @param code The currency code.
+ * @param format The format, `wide` or `narrow`.
+ * @param locale A locale code for the locale format rules to use.
+ *
+ * @returns The symbol, or the currency code if no symbol is available.0
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1273,8 +1437,12 @@ function getCurrencySymbol(code, format, locale) {
 // Most currencies have cents, that's why the default is 2
 var DEFAULT_NB_OF_CURRENCY_DIGITS = 2;
 /**
- * Returns the number of decimal digits for the given currency.
- * Its value depends upon the presence of cents in that particular currency.
+ * Reports the number of decimal digits for a given currency.
+ * The value depends upon the presence of cents in that particular currency.
+ *
+ * @param code The currency code.
+ * @returns The number of decimal digits, typically 0 or 2.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1329,17 +1497,18 @@ var TranslationType;
  *
  * Formats a date according to locale rules.
  *
- * Where:
- * - `value` is a Date, a number (milliseconds since UTC epoch) or an ISO string
- *   (https://www.w3.org/TR/NOTE-datetime).
- * - `format` indicates which date/time components to include. See {@link DatePipe} for more
- *   details.
- * - `locale` is a `string` defining the locale to use.
- * - `timezone` to be used for formatting. It understands UTC/GMT and the continental US time zone
- *   abbreviations, but for general use, use a time zone offset (e.g. `'+0430'`).
- *   If not specified, host system settings are used.
+ * @param value The date to format, as a Date, or a number (milliseconds since UTC epoch)
+ * or an [ISO date-time string](https://www.w3.org/TR/NOTE-datetime).
+ * @param format The date-time components to include. See `DatePipe` for details.
+ * @param locale A locale code for the locale format rules to use.
+ * @param timezone The time zone. A time zone offset from GMT (such as `'+0430'`),
+ * or a standard UTC/GMT or continental US time zone abbreviation.
+ * If not specified, uses host system settings.
  *
- * See {@link DatePipe} for more details.
+ * @returns The formatted date string.
+ *
+ * @see `DatePipe`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -1961,7 +2130,7 @@ var DIGIT_CHAR = '#';
 var CURRENCY_CHAR = '¤';
 var PERCENT_CHAR = '%';
 /**
- * Transforms a number to a locale string based on a style and a format
+ * Transforms a number to a locale string based on a style and a format.
  */
 function formatNumberToLocaleString(value, pattern, locale, groupSymbol, decimalSymbol, digitsInfo, isPercent) {
     if (isPercent === void 0) { isPercent = false; }
@@ -2055,15 +2224,21 @@ function formatNumberToLocaleString(value, pattern, locale, groupSymbol, decimal
  *
  * Formats a number as currency using locale rules.
  *
- * Use `currency` to format a number as currency.
+ * @param value The number to format.
+ * @param locale A locale code for the locale format rules to use.
+ * @param currency A string containing the currency symbol or its name,
+ * such as "$" or "Canadian Dollar". Used in output string, but does not affect the operation
+ * of the function.
+ * @param currencyCode The [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)
+ * currency code to use in the result string, such as `USD` for the US dollar and `EUR` for the euro.
+ * @param digitInfo Decimal representation options, specified by a string in the following format:
+ * `{minIntegerDigits}.{minFractionDigits}-{maxFractionDigits}`. See `DecimalPipe` for more details.
  *
- * Where:
- * - `value` is a number.
- * - `locale` is a `string` defining the locale to use.
- * - `currency` is the string that represents the currency, it can be its symbol or its name.
- * - `currencyCode` is the [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code, such
- *    as `USD` for the US dollar and `EUR` for the euro.
- * - `digitInfo` See {@link DecimalPipe} for more details.
+ * @returns The formatted currency value.
+ *
+ * @see `formatNumber()`
+ * @see `DecimalPipe`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -2084,12 +2259,18 @@ function formatCurrency(value, locale, currency, currencyCode, digitsInfo) {
  *
  * Formats a number as a percentage according to locale rules.
  *
- * Where:
- * - `value` is a number.
- * - `locale` is a `string` defining the locale to use.
- * - `digitInfo` See {@link DecimalPipe} for more details.
+ * @param value The number to format.
+ * @param locale A locale code for the locale format rules to use.
+ * @param digitInfo Decimal representation options, specified by a string in the following format:
+ * `{minIntegerDigits}.{minFractionDigits}-{maxFractionDigits}`. See `DecimalPipe` for more details.
  *
+ * @returns The formatted percentage value.
+ *
+ * @see `formatNumber()`
+ * @see `DecimalPipe`
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  * @publicApi
+ *
  */
 function formatPercent(value, locale, digitsInfo) {
     var format = getLocaleNumberFormat(locale, NumberFormatStyle.Percent);
@@ -2101,13 +2282,16 @@ function formatPercent(value, locale, digitsInfo) {
  * @ngModule CommonModule
  * @description
  *
- * Formats a number as text. Group sizing and separator and other locale-specific
- * configurations are based on the locale.
+ * Formats a number as text, with group sizing, separator, and other
+ * parameters based on the locale.
  *
- * Where:
- * - `value` is a number.
- * - `locale` is a `string` defining the locale to use.
- * - `digitInfo` See {@link DecimalPipe} for more details.
+ * @param value The number to format.
+ * @param locale A locale code for the locale format rules to use.
+ * @param digitInfo Decimal representation options, specified by a string in the following format:
+ * `{minIntegerDigits}.{minFractionDigits}-{maxFractionDigits}`. See `DecimalPipe` for more details.
+ *
+ * @returns The formatted text string.
+ * @see [Internationalization (i18n) Guide](https://angular.io/guide/i18n)
  *
  * @publicApi
  */
@@ -5891,7 +6075,7 @@ function isPlatformWorkerUi(platformId) {
 /**
  * @publicApi
  */
-var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_0__["Version"]('7.2.11');
+var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_0__["Version"]('7.2.15');
 
 /**
  * @license
@@ -5911,16 +6095,20 @@ var ViewportScroller = /** @class */ (function () {
     // De-sugared tree-shakable injection
     // See #23917
     /** @nocollapse */
-    ViewportScroller.ngInjectableDef = Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["defineInjectable"])({ providedIn: 'root', factory: function () { return new BrowserViewportScroller(Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["inject"])(DOCUMENT), window); } });
+    ViewportScroller.ngInjectableDef = Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["defineInjectable"])({
+        providedIn: 'root',
+        factory: function () { return new BrowserViewportScroller(Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["inject"])(DOCUMENT), window, Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["inject"])(_angular_core__WEBPACK_IMPORTED_MODULE_0__["ErrorHandler"])); }
+    });
     return ViewportScroller;
 }());
 /**
  * Manages the scroll position for a browser window.
  */
 var BrowserViewportScroller = /** @class */ (function () {
-    function BrowserViewportScroller(document, window) {
+    function BrowserViewportScroller(document, window, errorHandler) {
         this.document = document;
         this.window = window;
+        this.errorHandler = errorHandler;
         this.offset = function () { return [0, 0]; };
     }
     /**
@@ -5964,15 +6152,28 @@ var BrowserViewportScroller = /** @class */ (function () {
      */
     BrowserViewportScroller.prototype.scrollToAnchor = function (anchor) {
         if (this.supportScrollRestoration()) {
-            var elSelectedById = this.document.querySelector("#" + anchor);
-            if (elSelectedById) {
-                this.scrollToElement(elSelectedById);
-                return;
+            // Escape anything passed to `querySelector` as it can throw errors and stop the application
+            // from working if invalid values are passed.
+            if (this.window.CSS && this.window.CSS.escape) {
+                anchor = this.window.CSS.escape(anchor);
             }
-            var elSelectedByName = this.document.querySelector("[name='" + anchor + "']");
-            if (elSelectedByName) {
-                this.scrollToElement(elSelectedByName);
-                return;
+            else {
+                anchor = anchor.replace(/(\"|\'\ |:|\.|\[|\]|,|=)/g, '\\$1');
+            }
+            try {
+                var elSelectedById = this.document.querySelector("#" + anchor);
+                if (elSelectedById) {
+                    this.scrollToElement(elSelectedById);
+                    return;
+                }
+                var elSelectedByName = this.document.querySelector("[name='" + anchor + "']");
+                if (elSelectedByName) {
+                    this.scrollToElement(elSelectedByName);
+                    return;
+                }
+            }
+            catch (e) {
+                this.errorHandler.handleError(e);
             }
         }
     };
@@ -6439,7 +6640,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! rxjs */ "./node_modules/rxjs/_esm5/index.js");
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm5/operators/index.js");
 /**
- * @license Angular v7.2.11
+ * @license Angular v7.2.15
  * (c) 2010-2019 Google LLC. https://angular.io/
  * License: MIT
  */
@@ -17184,7 +17385,7 @@ var Version = /** @class */ (function () {
 /**
  * @publicApi
  */
-var VERSION = new Version('7.2.11');
+var VERSION = new Version('7.2.15');
 
 /**
  * @license
@@ -17620,7 +17821,7 @@ function isDOMParserAvailable() {
  * execution if used in URL context within a HTML document. Specifically, this
  * regular expression matches if (comment from here on and regex copied from
  * Soy's EscapingConventions):
- * (1) Either a protocol in a whitelist (http, https, mailto or ftp).
+ * (1) Either an allowed protocol (http, https, mailto or ftp).
  * (2) or no protocol.  A protocol must be followed by a colon. The below
  *     allows that by allowing colons only after one of the characters [/?#].
  *     A colon after a hash (#) must be in the fragment.
@@ -30994,7 +31195,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _angular_common__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @angular/common */ "./node_modules/@angular/common/fesm5/common.js");
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @angular/core */ "./node_modules/@angular/core/fesm5/core.js");
 /**
- * @license Angular v7.2.11
+ * @license Angular v7.2.15
  * (c) 2010-2019 Google LLC. https://angular.io/
  * License: MIT
  */
@@ -31994,9 +32195,10 @@ function decoratePreventDefault(eventHandler) {
     };
 }
 var DomRendererFactory2 = /** @class */ (function () {
-    function DomRendererFactory2(eventManager, sharedStylesHost) {
+    function DomRendererFactory2(eventManager, sharedStylesHost, appId) {
         this.eventManager = eventManager;
         this.sharedStylesHost = sharedStylesHost;
+        this.appId = appId;
         this.rendererByCompId = new Map();
         this.defaultRenderer = new DefaultDomRenderer2(eventManager);
     }
@@ -32008,8 +32210,7 @@ var DomRendererFactory2 = /** @class */ (function () {
             case _angular_core__WEBPACK_IMPORTED_MODULE_2__["ViewEncapsulation"].Emulated: {
                 var renderer = this.rendererByCompId.get(type.id);
                 if (!renderer) {
-                    renderer =
-                        new EmulatedEncapsulationDomRenderer2(this.eventManager, this.sharedStylesHost, type);
+                    renderer = new EmulatedEncapsulationDomRenderer2(this.eventManager, this.sharedStylesHost, type, this.appId);
                     this.rendererByCompId.set(type.id, renderer);
                 }
                 renderer.applyToHost(element);
@@ -32032,7 +32233,8 @@ var DomRendererFactory2 = /** @class */ (function () {
     DomRendererFactory2.prototype.end = function () { };
     DomRendererFactory2 = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_2__["Injectable"])(),
-        Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__metadata"])("design:paramtypes", [EventManager, DomSharedStylesHost])
+        Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__param"])(2, Object(_angular_core__WEBPACK_IMPORTED_MODULE_2__["Inject"])(_angular_core__WEBPACK_IMPORTED_MODULE_2__["APP_ID"])),
+        Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__metadata"])("design:paramtypes", [EventManager, DomSharedStylesHost, String])
     ], DomRendererFactory2);
     return DomRendererFactory2;
 }());
@@ -32145,13 +32347,13 @@ function checkNoSyntheticProp(name, nameKind) {
 }
 var EmulatedEncapsulationDomRenderer2 = /** @class */ (function (_super) {
     Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(EmulatedEncapsulationDomRenderer2, _super);
-    function EmulatedEncapsulationDomRenderer2(eventManager, sharedStylesHost, component) {
+    function EmulatedEncapsulationDomRenderer2(eventManager, sharedStylesHost, component, appId) {
         var _this = _super.call(this, eventManager) || this;
         _this.component = component;
-        var styles = flattenStyles(component.id, component.styles, []);
+        var styles = flattenStyles(appId + '-' + component.id, component.styles, []);
         sharedStylesHost.addStyles(styles);
-        _this.contentAttr = shimContentAttribute(component.id);
-        _this.hostAttr = shimHostAttribute(component.id);
+        _this.contentAttr = shimContentAttribute(appId + '-' + component.id);
+        _this.hostAttr = shimHostAttribute(appId + '-' + component.id);
         return _this;
     }
     EmulatedEncapsulationDomRenderer2.prototype.applyToHost = function (element) { _super.prototype.setAttribute.call(this, element, this.hostAttr, ''); };
@@ -32950,7 +33152,7 @@ var BROWSER_MODULE_PROVIDERS = [
     {
         provide: DomRendererFactory2,
         useClass: DomRendererFactory2,
-        deps: [EventManager, DomSharedStylesHost]
+        deps: [EventManager, DomSharedStylesHost, _angular_core__WEBPACK_IMPORTED_MODULE_2__["APP_ID"]]
     },
     { provide: _angular_core__WEBPACK_IMPORTED_MODULE_2__["RendererFactory2"], useExisting: DomRendererFactory2 },
     { provide: SharedStylesHost, useExisting: DomSharedStylesHost },
@@ -33467,7 +33669,7 @@ var By = /** @class */ (function () {
 /**
  * @publicApi
  */
-var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_2__["Version"]('7.2.11');
+var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_2__["Version"]('7.2.15');
 
 /**
  * @license
@@ -33584,7 +33786,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm5/operators/index.js");
 /* harmony import */ var _angular_platform_browser__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @angular/platform-browser */ "./node_modules/@angular/platform-browser/fesm5/platform-browser.js");
 /**
- * @license Angular v7.2.11
+ * @license Angular v7.2.15
  * (c) 2010-2019 Google LLC. https://angular.io/
  * License: MIT
  */
@@ -35074,10 +35276,10 @@ function createEmptyStateSnapshot(urlTree, rootComponent) {
  * @Component({...})
  * class MyComponent {
  *   constructor(route: ActivatedRoute) {
- *     const id: Observable<string> = route.params.map(p => p.id);
- *     const url: Observable<string> = route.url.map(segments => segments.join(''));
+ *     const id: Observable<string> = route.params.pipe(map(p => p.id));
+ *     const url: Observable<string> = route.url.pipe(map(segments => segments.join('')));
  *     // route.data includes both `data` and `resolve`
- *     const user = route.data.map(d => d.user);
+ *     const user = route.data.pipe(map(d => d.user));
  *   }
  * }
  * ```
@@ -37401,23 +37603,23 @@ var Router = /** @class */ (function () {
         return transitions.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["filter"])(function (t) { return t.id !== 0; }), 
         // Extract URL
         Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["map"])(function (t) { return (Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, t, { extractedUrl: _this.urlHandlingStrategy.extract(t.rawUrl) })); }), 
-        // Store the Navigation object
-        Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["tap"])(function (t) {
-            _this.currentNavigation = {
-                id: t.id,
-                initialUrl: t.currentRawUrl,
-                extractedUrl: t.extractedUrl,
-                trigger: t.source,
-                extras: t.extras,
-                previousNavigation: _this.lastSuccessfulNavigation ? Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, _this.lastSuccessfulNavigation, { previousNavigation: null }) :
-                    null
-            };
-        }), 
         // Using switchMap so we cancel executing navigations when a new one comes in
         Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["switchMap"])(function (t) {
             var completed = false;
             var errored = false;
-            return Object(rxjs__WEBPACK_IMPORTED_MODULE_3__["of"])(t).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["switchMap"])(function (t) {
+            return Object(rxjs__WEBPACK_IMPORTED_MODULE_3__["of"])(t).pipe(
+            // Store the Navigation object
+            Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["tap"])(function (t) {
+                _this.currentNavigation = {
+                    id: t.id,
+                    initialUrl: t.currentRawUrl,
+                    extractedUrl: t.extractedUrl,
+                    trigger: t.source,
+                    extras: t.extras,
+                    previousNavigation: _this.lastSuccessfulNavigation ? Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, _this.lastSuccessfulNavigation, { previousNavigation: null }) :
+                        null
+                };
+            }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["switchMap"])(function (t) {
                 var urlTransition = !_this.navigated || t.extractedUrl.toString() !== _this.browserUrlTree.toString();
                 var processCurrentUrl = (_this.onSameUrlNavigation === 'reload' ? true : urlTransition) &&
                     _this.urlHandlingStrategy.shouldProcessUrl(t.rawUrl);
@@ -39042,18 +39244,32 @@ var RouterModule = /** @class */ (function () {
      * Creates a module with all the router providers and directives. It also optionally sets up an
      * application listener to perform an initial navigation.
      *
-     * Options (see `ExtraOptions`):
-     * * `enableTracing` makes the router log all its internal events to the console.
-     * * `useHash` enables the location strategy that uses the URL fragment instead of the history
+     * Configuration Options:
+     *
+     * * `enableTracing` Toggles whether the router should log all navigation events to the console.
+     * * `useHash` Enables the location strategy that uses the URL fragment instead of the history
      * API.
-     * * `initialNavigation` disables the initial navigation.
-     * * `errorHandler` provides a custom error handler.
-     * * `preloadingStrategy` configures a preloading strategy (see `PreloadAllModules`).
-     * * `onSameUrlNavigation` configures how the router handles navigation to the current URL. See
-     * `ExtraOptions` for more details.
-     * * `paramsInheritanceStrategy` defines how the router merges params, data and resolved data
-     * from parent to child routes.
-     */
+     * * `initialNavigation` Disables the initial navigation.
+     * * `errorHandler` Defines a custom error handler for failed navigations.
+     * * `preloadingStrategy` Configures a preloading strategy. See `PreloadAllModules`.
+     * * `onSameUrlNavigation` Define what the router should do if it receives a navigation request to
+     * the current URL.
+     * * `scrollPositionRestoration` Configures if the scroll position needs to be restored when
+     * navigating back.
+     * * `anchorScrolling` Configures if the router should scroll to the element when the url has a
+     * fragment.
+     * * `scrollOffset` Configures the scroll offset the router will use when scrolling to an element.
+     * * `paramsInheritanceStrategy` Defines how the router merges params, data and resolved data from
+     * parent to child routes.
+     * * `malformedUriErrorHandler` Defines a custom malformed uri error handler function. This
+     * handler is invoked when encodedURI contains invalid character sequences.
+     * * `urlUpdateStrategy` Defines when the router updates the browser URL. The default behavior is
+     * to update after successful navigation.
+     * * `relativeLinkResolution` Enables the correct relative link resolution in components with
+     * empty paths.
+     *
+     * See `ExtraOptions` for more details about the above options.
+    */
     RouterModule.forRoot = function (routes, config) {
         return {
             ngModule: RouterModule_1,
@@ -39311,7 +39527,7 @@ function provideRouterInitializer() {
 /**
  * @publicApi
  */
-var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_2__["Version"]('7.2.11');
+var VERSION = new _angular_core__WEBPACK_IMPORTED_MODULE_2__["Version"]('7.2.15');
 
 /**
  * @license
@@ -51869,7 +52085,7 @@ __webpack_require__.r(__webpack_exports__);
 /*!*****************************************!*\
   !*** ./node_modules/tslib/tslib.es6.js ***!
   \*****************************************/
-/*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault */
+/*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __spreadArrays, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -51886,6 +52102,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__values", function() { return __values; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__read", function() { return __read; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spread", function() { return __spread; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spreadArrays", function() { return __spreadArrays; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__await", function() { return __await; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncGenerator", function() { return __asyncGenerator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncDelegator", function() { return __asyncDelegator; });
@@ -51938,8 +52155,10 @@ function __rest(s, e) {
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
         t[p] = s[p];
     if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
-            t[p[i]] = s[p[i]];
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
     return t;
 }
 
@@ -52032,6 +52251,14 @@ function __spread() {
         ar = ar.concat(__read(arguments[i]));
     return ar;
 }
+
+function __spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 
 function __await(v) {
     return this instanceof __await ? (this.v = v, this) : new __await(v);
