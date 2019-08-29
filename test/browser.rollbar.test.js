@@ -41,9 +41,13 @@ function TestClientGen() {
 }
 
 describe('Rollbar()', function() {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+  });
+
   it('should have all of the expected methods with a real client', function(done) {
     var options = {};
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     expect(rollbar).to.have.property('log');
     expect(rollbar).to.have.property('debug');
@@ -59,7 +63,7 @@ describe('Rollbar()', function() {
   it('should have all of the expected methods', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     expect(rollbar).to.have.property('log');
     expect(rollbar).to.have.property('debug');
@@ -75,7 +79,7 @@ describe('Rollbar()', function() {
   it ('should have some default options', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     expect(rollbar.options.scrubFields).to.contain('password');
     done();
@@ -88,7 +92,7 @@ describe('Rollbar()', function() {
         'foobar'
       ]
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
@@ -103,7 +107,7 @@ describe('Rollbar()', function() {
       ],
       overwriteScrubFields: true,
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.not.contain('password');
@@ -113,7 +117,7 @@ describe('Rollbar()', function() {
   it('should return a uuid when logging', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var result = rollbar.log('a messasge', 'another one');
     expect(result.uuid).to.be.ok();
@@ -124,7 +128,7 @@ describe('Rollbar()', function() {
   it('should package up the inputs', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var result = rollbar.log('a message', 'another one');
     var loggedItem = client.logCalls[0].item;
@@ -137,7 +141,7 @@ describe('Rollbar()', function() {
   it('should call the client with the right method', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var methods = 'log,debug,info,warn,warning,error,critical'.split(',');
     for (var i=0; i < methods.length; i++) {
@@ -152,6 +156,10 @@ describe('Rollbar()', function() {
 });
 
 describe('configure', function() {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+  });
+
   it('should configure client', function(done) {
     var client = new (TestClientGen())();
     var options = {
@@ -160,7 +168,7 @@ describe('configure', function() {
         environment: 'testtest'
       }
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({payload: {environment: 'borkbork'}});
@@ -176,7 +184,7 @@ describe('configure', function() {
         environment: 'testtest'
       }
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({somekey: 'borkbork'}, {b: 97});
@@ -193,7 +201,7 @@ describe('configure', function() {
         environment: 'testtest'
       }
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({somekey: 'borkbork', payload: {b: 101}}, {b: 97});
@@ -211,7 +219,7 @@ describe('configure', function() {
         environment: 'testtest'
       }
     };
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
     expect(rollbar.options._configuredOptions.payload.environment).to.eql('testtest');
     expect(rollbar.options._configuredOptions.captureUncaught).to.eql(true);
 
@@ -223,7 +231,7 @@ describe('configure', function() {
 });
 
 describe('options.captureUncaught', function() {
-  before(function (done) {
+  beforeEach(function (done) {
     // Load the HTML page, so errors can be generated.
     document.write(window.__html__['examples/error.html']);
 
@@ -231,7 +239,8 @@ describe('options.captureUncaught', function() {
     done();
   });
 
-  after(function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
     window.server.restore();
   });
 
@@ -254,7 +263,7 @@ describe('options.captureUncaught', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var element = document.getElementById('throw-error');
     element.click();
@@ -286,7 +295,7 @@ describe('options.captureUncaught', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: false
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     element.click();
     server.respond();
@@ -335,7 +344,7 @@ describe('options.captureUncaught', function() {
       captureUncaught: true,
       inspectAnonymousErrors: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     // Simulate receiving onerror without an error object.
     rollbar.anonymousErrorsPending += 1;
@@ -373,7 +382,7 @@ describe('options.captureUncaught', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var element = document.getElementById('throw-error');
 
@@ -411,7 +420,7 @@ describe('options.captureUncaught', function() {
       captureUncaught: true,
       ignoreDuplicateErrors: false
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var element = document.getElementById('throw-error');
 
@@ -447,7 +456,7 @@ describe('options.captureUncaught', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var element = document.getElementById('throw-dom-exception');
     element.click();
@@ -471,12 +480,13 @@ describe('options.captureUncaught', function() {
 });
 
 describe('options.captureUnhandledRejections', function() {
-  before(function (done) {
+  beforeEach(function (done) {
     window.server = sinon.createFakeServer();
     done();
   });
 
-  after(function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
     window.server.restore();
   });
 
@@ -499,7 +509,7 @@ describe('options.captureUnhandledRejections', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     Promise.reject(new Error('test reject'));
 
@@ -529,7 +539,7 @@ describe('options.captureUnhandledRejections', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: false
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     rollbar.configure({
       captureUnhandledRejections: true
@@ -565,7 +575,7 @@ describe('options.captureUnhandledRejections', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     rollbar.configure({
       captureUnhandledRejections: false
@@ -587,12 +597,13 @@ describe('options.captureUnhandledRejections', function() {
 });
 
 describe('log', function() {
-  before(function (done) {
+  beforeEach(function (done) {
     window.server = sinon.createFakeServer();
     done();
   });
 
-  after(function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
     window.server.restore();
   });
 
@@ -615,7 +626,7 @@ describe('log', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true
     };
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     rollbar.log(null);
 
@@ -631,12 +642,13 @@ describe('log', function() {
 
 // Test direct call to onerror, as used in verification of browser js install.
 describe('onerror', function() {
-  before(function (done) {
+  beforeEach(function (done) {
     window.server = sinon.createFakeServer();
     done();
   });
 
-  after(function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
     window.server.restore();
   });
 
@@ -659,7 +671,7 @@ describe('onerror', function() {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true
     };
-    new Rollbar(options);
+    window.rollbar = new Rollbar(options);
 
     window.onerror("TestRollbarError: testing window.onerror", window.location.href);
 
@@ -674,10 +686,92 @@ describe('onerror', function() {
   })
 });
 
+describe('options.autoInstrument.log', function() {
+  beforeEach(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should add telemetry events when console.log is called', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    console.log('console test'); // generate a telemetry event
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.telemetry[0].body.message).to.eql('console test');
+
+    done();
+  });
+
+  it('should add a diagnostic message when wrapConsole fails', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var oldConsole = window.console;
+    var newConsole = {}
+    Object.defineProperty( newConsole, 'log', {
+      get: function () {
+        return function(message) { oldConsole.log(message); return message; };
+      }
+    });
+    window.console = newConsole;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    window.console = oldConsole;
+
+    expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.have.property('error');
+    expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property('error');
+
+    done();
+  });
+});
+
 describe('captureEvent', function() {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+  });
+
   it('should handle missing/default type and level', function(done) {
     var options = {};
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var event = rollbar.captureEvent({foo: 'bar'});
     expect(event.type).to.eql('manual');
@@ -688,7 +782,7 @@ describe('captureEvent', function() {
   });
   it('should handle specified type and level', function(done) {
     var options = {};
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var event = rollbar.captureEvent('log', {foo: 'bar'}, 'debug');
     expect(event.type).to.eql('log');
@@ -699,7 +793,7 @@ describe('captureEvent', function() {
   });
   it('should handle extra args', function(done) {
     var options = {};
-    var rollbar = new Rollbar(options);
+    var rollbar = window.rollbar = new Rollbar(options);
 
     var event = rollbar.captureEvent('meaningless', {foo: 'bar'}, 23);
     expect(event.type).to.eql('manual');
@@ -711,10 +805,14 @@ describe('captureEvent', function() {
 });
 
 describe('createItem', function() {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+  });
+
   it('should handle multiple strings', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = ['first', 'second'];
     var item = rollbar._createItem(args);
@@ -726,7 +824,7 @@ describe('createItem', function() {
   it('should handle errors', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', 'second'];
     var item = rollbar._createItem(args);
@@ -739,7 +837,7 @@ describe('createItem', function() {
   it('should handle a callback', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var myCallbackCalled = false;
     var myCallback = function() {
@@ -759,7 +857,7 @@ describe('createItem', function() {
   it('should handle arrays', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', [1, 2, 3], 'second'];
     var item = rollbar._createItem(args);
@@ -773,7 +871,7 @@ describe('createItem', function() {
   it('should handle objects', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', {a: 1, b: 2}, 'second'];
     var item = rollbar._createItem(args);
@@ -788,7 +886,7 @@ describe('createItem', function() {
   it('should have a timestamp', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', {a: 1, b: 2}, 'second'];
     var item = rollbar._createItem(args);
@@ -800,7 +898,7 @@ describe('createItem', function() {
   it('should have an uuid', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', {a: 1, b: 2}, 'second'];
     var item = rollbar._createItem(args);
@@ -816,7 +914,7 @@ describe('createItem', function() {
   it('should handle dates', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var y2k = new Date(2000, 0, 1)
     var args = [new Error('Whoa'), 'first', y2k, {a: 1, b: 2}, 'second'];
@@ -828,7 +926,7 @@ describe('createItem', function() {
   it('should handle numbers', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     var args = [new Error('Whoa'), 'first', 42, {a: 1, b: 2}, 'second'];
     var item = rollbar._createItem(args);
@@ -839,7 +937,7 @@ describe('createItem', function() {
   it('should handle domexceptions', function(done) {
     var client = new (TestClientGen())();
     var options = {};
-    var rollbar = new Rollbar(options, client);
+    var rollbar = window.rollbar = new Rollbar(options, client);
 
     if (document && document.querySelectorAll) {
       var e;

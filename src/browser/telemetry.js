@@ -72,6 +72,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
   this.telemeter = telemeter;
   this.rollbar = rollbar;
+  this.diagnostic = rollbar.client.notifier.diagnostic;
   this._window = _window || {};
   this._document = _document || {};
   this.replacements = {
@@ -374,6 +375,8 @@ Instrumenter.prototype.instrumentConsole = function() {
   var c = this._window.console;
 
   function wrapConsole(method) {
+    'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
+
     var orig = c[method];
     var origConsole = c;
     var level = method === 'warn' ? 'warning' : method;
@@ -388,8 +391,12 @@ Instrumenter.prototype.instrumentConsole = function() {
     self.replacements['log'].push([method, orig]);
   }
   var methods = ['debug','info','warn','error','log'];
-  for (var i=0, len=methods.length; i < len; i++) {
-    wrapConsole(methods[i]);
+  try {
+    for (var i=0, len=methods.length; i < len; i++) {
+      wrapConsole(methods[i]);
+    }
+  } catch (e) {
+    this.diagnostic.instrumentConsole = { error: e.message };
   }
 };
 
