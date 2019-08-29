@@ -13,6 +13,7 @@ function Notifier(queue, options) {
   this.queue = queue;
   this.options = options;
   this.transforms = [];
+  this.diagnostic = {};
 }
 
 /*
