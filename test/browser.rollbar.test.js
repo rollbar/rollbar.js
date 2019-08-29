@@ -686,6 +686,84 @@ describe('onerror', function() {
   })
 });
 
+describe('options.autoInstrument.log', function() {
+  beforeEach(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should add telemetry events when console.log is called', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    console.log('console test'); // generate a telemetry event
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.telemetry[0].body.message).to.eql('console test');
+
+    done();
+  });
+
+  it('should add a diagnostic message when wrapConsole fails', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var oldConsole = window.console;
+    var newConsole = {}
+    Object.defineProperty( newConsole, 'log', {
+      get: function () {
+        return function(message) { oldConsole.log(message); return message; };
+      }
+    });
+    window.console = newConsole;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    window.console = oldConsole;
+
+    expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.have.property('error');
+    expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property('error');
+
+    done();
+  });
+});
+
 describe('captureEvent', function() {
   afterEach(function () {
     window.rollbar.configure({ autoInstrument: false });

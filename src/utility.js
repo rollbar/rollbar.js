@@ -385,6 +385,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var message, err, custom, callback, request;
   var arg;
   var extraArgs = [];
+  var diagnostic = {};
 
   for (var i = 0, l = args.length; i < l; ++i) {
     arg = args[i];
@@ -447,6 +448,8 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     custom: custom,
     timestamp: now(),
     callback: callback,
+    notifier: notifier,
+    diagnostic: diagnostic,
     uuid: uuid4()
   };
   if (custom && custom.level !== undefined) {

@@ -82,7 +82,7 @@ function addConfiguredOptions(item, options, callback) {
 }
 
 function addDiagnosticKeys(item, options, callback) {
-  var diagnostic = {}
+  var diagnostic = _.merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
 
   if (_.get(item, 'err._isAnonymous')) {
     diagnostic.is_anonymous = true;
