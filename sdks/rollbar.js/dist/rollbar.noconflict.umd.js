@@ -485,6 +485,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var message, err, custom, callback, request;
   var arg;
   var extraArgs = [];
+  var diagnostic = {};
 
   for (var i = 0, l = args.length; i < l; ++i) {
     arg = args[i];
@@ -547,6 +548,8 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     custom: custom,
     timestamp: now(),
     callback: callback,
+    notifier: notifier,
+    diagnostic: diagnostic,
     uuid: uuid4()
   };
   if (custom && custom.level !== undefined) {
@@ -1770,7 +1773,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.12.2",
+  version: "2.12.3",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -3216,6 +3219,7 @@ function Notifier(queue, options) {
   this.queue = queue;
   this.options = options;
   this.transforms = [];
+  this.diagnostic = {};
 }
 
 /*
@@ -4865,7 +4869,7 @@ function addConfiguredOptions(item, options, callback) {
 }
 
 function addDiagnosticKeys(item, options, callback) {
-  var diagnostic = {}
+  var diagnostic = _.merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
 
   if (_.get(item, 'err._isAnonymous')) {
     diagnostic.is_anonymous = true;
@@ -5177,6 +5181,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
   this.telemeter = telemeter;
   this.rollbar = rollbar;
+  this.diagnostic = rollbar.client.notifier.diagnostic;
   this._window = _window || {};
   this._document = _document || {};
   this.replacements = {
@@ -5479,6 +5484,8 @@ Instrumenter.prototype.instrumentConsole = function() {
   var c = this._window.console;
 
   function wrapConsole(method) {
+    'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
+
     var orig = c[method];
     var origConsole = c;
     var level = method === 'warn' ? 'warning' : method;
@@ -5493,8 +5500,12 @@ Instrumenter.prototype.instrumentConsole = function() {
     self.replacements['log'].push([method, orig]);
   }
   var methods = ['debug','info','warn','error','log'];
-  for (var i=0, len=methods.length; i < len; i++) {
-    wrapConsole(methods[i]);
+  try {
+    for (var i=0, len=methods.length; i < len; i++) {
+      wrapConsole(methods[i]);
+    }
+  } catch (e) {
+    this.diagnostic.instrumentConsole = { error: e.message };
   }
 };
 

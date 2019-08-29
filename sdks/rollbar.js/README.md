@@ -1,6 +1,6 @@
 # Rollbar.js
 
-[![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.12.2)](https://travis-ci.org/rollbar/rollbar.js)
+[![Build Status](https://api.travis-ci.org/rollbar/rollbar.js.png?branch=v2.12.3)](https://travis-ci.org/rollbar/rollbar.js)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/context:javascript)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/alerts)
 
