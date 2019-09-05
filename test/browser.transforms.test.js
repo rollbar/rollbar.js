@@ -321,6 +321,73 @@ describe('addBody', function() {
       });
     });
   });
+  describe('without stackInfo.name', function() {
+    it('should set error class unknown', function(done) {
+      var err;
+      try {
+        throw new Error('bork');
+      } catch (e) {
+        err = e;
+      }
+      var args = ['a message', err, {custom: 'stuff'}];
+      var item = itemFromArgs(args);
+      item.description = 'borked';
+      var options = {};
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo).to.be.ok();
+        i.stackInfo.name = null; // force alternate path to determine error class.
+        t.addBody(i, options, function(e, i) {
+          expect(i.data.body.trace.exception.class).to.eql('(unknown)');
+          expect(i.data.body.trace.exception.message).to.eql('bork');
+          done(e);
+        });
+      });
+    });
+    describe('when config.guessErrorClass is set', function() {
+      it('should guess error class ', function(done) {
+        var err;
+        try {
+          throw new Error('GuessedError: bork');
+        } catch (e) {
+          err = e;
+        }
+        var args = [err, {custom: 'stuff'}];
+        var item = itemFromArgs(args);
+        item.description = 'borked';
+        var options = { guessErrorClass: true };
+        t.handleItemWithError(item, options, function(e, i) {
+          expect(i.stackInfo).to.be.ok();
+          i.stackInfo.name = null; // force alternate path to determine error class.
+          t.addBody(i, options, function(e, i) {
+            expect(i.data.body.trace.exception.class).to.eql('GuessedError');
+            expect(i.data.body.trace.exception.message).to.eql('bork');
+            done(e);
+          });
+        });
+      });
+      it('should set error class unknown', function(done) {
+        var err;
+        try {
+          throw new Error('bork');
+        } catch (e) {
+          err = e;
+        }
+        var args = [err, {custom: 'stuff'}];
+        var item = itemFromArgs(args);
+        item.description = 'borked';
+        var options = { guessErrorClass: true };
+        t.handleItemWithError(item, options, function(e, i) {
+          expect(i.stackInfo).to.be.ok();
+          i.stackInfo.name = null; // force alternate path to determine error class.
+          t.addBody(i, options, function(e, i) {
+            expect(i.data.body.trace.exception.class).to.eql('(unknown)');
+            expect(i.data.body.trace.exception.message).to.eql('bork');
+            done(e);
+          });
+        });
+      });
+    });
+  });
   describe('with nested error', function() {
     it('should create trace_chain', function(done) {
       var nestedErr = new Error('nested error');
