@@ -208,6 +208,13 @@
         "request.cookies"
       ]
     },
+    "reactNative": {
+      "rewriteFilenamePatterns": [
+        "^.*/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/[^/]*.app/(.*)$",
+        "^.*/[0-9A-Fa-f]{64}/codepush_ios/(.*)$",
+        "^.*/[0-9A-Fa-f]{64}/codepush_android/(.*)$"
+      ]
+    },
     "logLevel": "debug",
     "reportLevel": "debug",
     "uncaughtErrorLevel": "error",
