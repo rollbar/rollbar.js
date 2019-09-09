@@ -183,7 +183,7 @@ function addBodyTrace(item, options, callback) {
   } else {
     var stackInfo = item.stackInfo;
     var guess = errorParser.guessErrorClass(stackInfo.message);
-    var className = stackInfo.name || guess[0];
+    var className = errorClass(stackInfo, guess[0], options);
     var message = guess[1];
 
     item.message = className + ': ' + message;
@@ -197,7 +197,7 @@ function buildTrace(item, stackInfo, options) {
   var stack = stackFromItem(item);
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
-  var className = stackInfo.name || guess[0];
+  var className = errorClass(stackInfo, guess[0], options);
   var message = guess[1];
   var trace = {
     exception: {
@@ -278,6 +278,16 @@ function buildTrace(item, stackInfo, options) {
   }
 
   return trace;
+}
+
+function errorClass(stackInfo, guess, options) {
+  if (stackInfo.name) {
+    return stackInfo.name;
+  } else if (options.guessErrorClass) {
+    return guess;
+  } else {
+    return '(unknown)';
+  }
 }
 
 function scrubPayload(item, options, callback) {
