@@ -1164,15 +1164,10 @@ function Stack(exception) {
     return stack;
   }
 
-  var name = exception.constructor && exception.constructor.name;
-  if (!name || !name.length || name.length < 3) {
-    name = exception.name;
-  }
-
   return {
     stack: getStack(),
     message: exception.message,
-    name: name,
+    name: _mostSpecificErrorName(exception),
     rawStack: exception.stack,
     rawException: exception
   };
@@ -1213,6 +1208,22 @@ function guessErrorClass(errMsg) {
   return [errClass, errMsg];
 }
 
+// * Prefers any value over an empty string
+// * Prefers any value over 'Error' where possible
+// * Prefers name over constructor.name when both are more specific than 'Error'
+function _mostSpecificErrorName(error) {
+  var name = error.name && error.name.length && error.name;
+  var constructorName = error.constructor.name && error.constructor.name.length && error.constructor.name;
+
+  if (!name || !constructorName) {
+    return name || constructorName;
+  }
+
+  if (name === 'Error') {
+    return constructorName;
+  }
+  return name;
+}
 
 module.exports = {
   guessFunctionName: guessFunctionName,
@@ -1773,7 +1784,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.12.3",
+  version: "2.13.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -4355,7 +4366,7 @@ function addBodyTrace(item, options, callback) {
   } else {
     var stackInfo = item.stackInfo;
     var guess = errorParser.guessErrorClass(stackInfo.message);
-    var className = stackInfo.name || guess[0];
+    var className = errorClass(stackInfo, guess[0], options);
     var message = guess[1];
 
     item.message = className + ': ' + message;
@@ -4369,7 +4380,7 @@ function buildTrace(item, stackInfo, options) {
   var stack = stackFromItem(item);
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
-  var className = stackInfo.name || guess[0];
+  var className = errorClass(stackInfo, guess[0], options);
   var message = guess[1];
   var trace = {
     exception: {
@@ -4450,6 +4461,16 @@ function buildTrace(item, stackInfo, options) {
   }
 
   return trace;
+}
+
+function errorClass(stackInfo, guess, options) {
+  if (stackInfo.name) {
+    return stackInfo.name;
+  } else if (options.guessErrorClass) {
+    return guess;
+  } else {
+    return '(unknown)';
+  }
 }
 
 function scrubPayload(item, options, callback) {
