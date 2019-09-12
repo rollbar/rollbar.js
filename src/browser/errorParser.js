@@ -60,15 +60,10 @@ function Stack(exception) {
     return stack;
   }
 
-  var name = exception.constructor && exception.constructor.name;
-  if (!name || !name.length || name.length < 3) {
-    name = exception.name;
-  }
-
   return {
     stack: getStack(),
     message: exception.message,
-    name: name,
+    name: _mostSpecificErrorName(exception),
     rawStack: exception.stack,
     rawException: exception
   };
@@ -109,6 +104,22 @@ function guessErrorClass(errMsg) {
   return [errClass, errMsg];
 }
 
+// * Prefers any value over an empty string
+// * Prefers any value over 'Error' where possible
+// * Prefers name over constructor.name when both are more specific than 'Error'
+function _mostSpecificErrorName(error) {
+  var name = error.name && error.name.length && error.name;
+  var constructorName = error.constructor.name && error.constructor.name.length && error.constructor.name;
+
+  if (!name || !constructorName) {
+    return name || constructorName;
+  }
+
+  if (name === 'Error') {
+    return constructorName;
+  }
+  return name;
+}
 
 module.exports = {
   guessFunctionName: guessFunctionName,

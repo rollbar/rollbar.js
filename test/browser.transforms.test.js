@@ -104,6 +104,32 @@ describe('handleItemWithError', function() {
       done(e);
     });
   });
+  it('should use most specific error name', function(done) {
+    var err = new Error('bork');
+    var args = ['a message', err];
+    var options = {};
+
+    var names = [
+      {name: 'TypeError', constructor: 'EvalError', result: 'TypeError'},
+      {name: 'TypeError', constructor: 'Error', result: 'TypeError'},
+      {name: 'Error', constructor: 'TypeError', result: 'TypeError'},
+      {name: 'Error', constructor: '', result: 'Error'},
+      {name: '', constructor: 'Error', result: 'Error'},
+      {name: '', constructor: '', result: ''}
+    ];
+
+    for(var i = 0; i < names.length; i++) {
+      err.name = names[i].name;
+      err.constructor = { name: names[i].constructor };
+      var item = itemFromArgs(args);
+      var result = names[i].result;
+
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo.name).to.eql(result);
+      });
+    };
+    done();
+  });
 });
 
 describe('ensureItemHasSomethingToSay', function() {
