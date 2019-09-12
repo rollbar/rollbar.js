@@ -63,7 +63,7 @@ function handleItemWithError(item, options, callback) {
   }
 
   var err = item.err;
-  var frames = _handleStack(err.stack);
+  var frames = _handleStack(err.stack, options);
   var stackInfo = {
     frames: frames,
     exception: {
@@ -88,18 +88,18 @@ function scrubPayload(item, options, callback) {
 
 /** Helpers **/
 
-function _handleStack(stack) {
+function _handleStack(stack, options) {
   var lines = (stack || '').split('\n');
   var results = [];
   var frame;
   for (var i = lines.length - 1; i >= 0; i--) {
-    frame = _parseRawFrame(lines[i]);
+    frame = _parseRawFrame(lines[i], options);
     results.push(frame);
   }
   return results;
 }
 
-function _parseRawFrame(line) {
+function _parseRawFrame(line, options) {
   var methodAndRest = line.split('@');
   var method, rest;
   if (methodAndRest.length > 1) {
@@ -119,10 +119,9 @@ function _parseRawFrame(line) {
     lineno = rest.substring(lineIdx+1);
     rest = rest.substring(0, lineIdx);
   }
-  var iosBundleFilename = new RegExp('^.*/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/[^/]*.app/(.*)$');
-  var match = rest && rest.match && rest.match(iosBundleFilename);
-  if (match && match[1]) {
-    rest = 'http://reactnativehost/' + match[1];
+  var match = rest && rest.match && _matchFilename(rest, options);
+  if (match) {
+    rest = 'http://reactnativehost/' + match;
   } else {
     rest = 'http://reactnativehost/' + rest;
   }
@@ -134,9 +133,24 @@ function _parseRawFrame(line) {
   };
 }
 
+function _matchFilename(filename, options) {
+  var patterns = options.rewriteFilenamePatterns || [];
+  var length = patterns.length || 0;
+
+  for(var i = 0; i < length; i++) {
+    var pattern = new RegExp(patterns[i]);
+    var match = filename.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
 module.exports = {
   baseData: baseData,
   handleItemWithError: handleItemWithError,
   addBody: addBody,
-  scrubPayload: scrubPayload
+  scrubPayload: scrubPayload,
+  _matchFilename: _matchFilename // to enable unit test
 };

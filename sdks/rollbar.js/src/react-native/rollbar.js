@@ -315,6 +315,7 @@ Rollbar.defaultOptions = {
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
   reportLevel: packageJson.defaults.reportLevel,
+  rewriteFilenamePatterns: packageJson.defaults.reactNative.rewriteFilenamePatterns,
   verbose: false,
   enabled: true,
   transmit: true,
