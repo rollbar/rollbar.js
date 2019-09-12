@@ -65,7 +65,13 @@ describe('webpack app', function() {
     var body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('webpack test error');
+
+    // This has become necessary because Travis switched their Chrome stable
+    // version _down_ from 76 to 62, which handles this test case differently.
+    var version = parseInt(window.navigator.userAgent.match(new RegExp('^.*HeadlessChrome/([0-9]*).*$'))[1]);
+    var message = version > 62 ? 'webpack test error' : 'Script error.';
+
+    expect(body.data.body.trace.exception.message).to.eql(message);
 
     done();
   });
