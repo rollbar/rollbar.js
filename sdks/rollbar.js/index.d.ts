@@ -37,6 +37,7 @@ declare namespace Rollbar {
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
         accessToken?: string;
+        addRequestData?: (data: object, req: object) => void;
         autoInstrument?: AutoInstrumentOptions;
         captureEmail?: boolean;
         captureIp?: boolean | "anonymize";
@@ -49,6 +50,7 @@ declare namespace Rollbar {
         code_version?: string;
         enabled?: boolean;
         endpoint?: string;
+        exitOnUncaughtException?: boolean;
         environment?: string;
         filterTelemetry?: (e: TelemetryEvent) => boolean;
         hostBlackList?: string[];
@@ -66,6 +68,7 @@ declare namespace Rollbar {
         overwriteScrubFields?: boolean;
         payload?: object;
         reportLevel?: Level;
+        rewriteFilenamePatterns?: string[];
         scrubFields?: string[];
         scrubHeaders?: string[];
         scrubRequestBody?: boolean;
@@ -73,6 +76,7 @@ declare namespace Rollbar {
         sendConfig?: boolean;
         telemetryScrubber?: TelemetryScrubber;
         transform?: (data: object) => void;
+        transmit?: boolean;
         uncaughtErrorLevel?: Level;
         verbose?: boolean;
         version?: string;
