@@ -122,6 +122,7 @@
         "passwordConfirmation",
         "access_token",
         "accessToken",
+        "X-Rollbar-Access-Token",
         "secret_key",
         "secretKey",
         "secretToken",
