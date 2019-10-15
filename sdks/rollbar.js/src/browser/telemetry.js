@@ -6,6 +6,7 @@ var defaults = {
   network: true,
   networkResponseHeaders: false,
   networkResponseBody: false,
+  networkRequestHeaders: false,
   networkRequestBody: false,
   log: true,
   dom: true,
@@ -58,6 +59,7 @@ function defaultValueScrubber(scrubFields) {
 }
 
 function Instrumenter(options, telemeter, rollbar, _window, _document) {
+  this.options = options;
   var autoInstrument = options.autoInstrument;
   if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
@@ -91,6 +93,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
 }
 
 Instrumenter.prototype.configure = function(options) {
+  this.options = _.merge(this.options, options);
   var autoInstrument = options.autoInstrument;
   var oldSettings = _.merge(this.autoInstrument);
   if (options.enabled === false || autoInstrument === false) {
@@ -169,6 +172,22 @@ Instrumenter.prototype.instrumentNetwork = function() {
             start_time_ms: _.now(),
             end_time_ms: null
           };
+          if (self.autoInstrument.networkRequestHeaders) {
+            this.__rollbar_xhr.request_headers = {};
+          }
+        }
+        return orig.apply(this, arguments);
+      };
+    }, this.replacements, 'network');
+
+    replace(xhrp, 'setRequestHeader', function(orig) {
+      return function(header, value) {
+        if (self.autoInstrument.networkRequestHeaders && this.__rollbar_xhr &&
+          _.isType(header, 'string') && _.isType(value, 'string')) {
+          this.__rollbar_xhr.request_headers[header] = value;
+        }
+        if (header.toLowerCase() === 'content-type') {
+          this.__rollbar_xhr.request_content_type = value;
         }
         return orig.apply(this, arguments);
       };
@@ -184,11 +203,10 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (xhr.__rollbar_xhr) {
             if (xhr.__rollbar_xhr.status_code === null) {
               xhr.__rollbar_xhr.status_code = 0;
-              var requestData = null;
               if (self.autoInstrument.networkRequestBody) {
-                requestData = data;
+                xhr.__rollbar_xhr.request = data;
               }
-              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
+              xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
             }
             if (xhr.readyState < 2) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
@@ -197,6 +215,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               xhr.__rollbar_xhr.end_time_ms = _.now();
 
               var headers = null;
+              xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
               if (self.autoInstrument.networkResponseHeaders) {
                 var headersConfig = self.autoInstrument.networkResponseHeaders;
                 headers = {};
@@ -237,7 +256,11 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (body || headers) {
                 response = {};
                 if (body) {
-                  response.body = body;
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                    response.body = self.scrubJson(body);
+                  } else {
+                    response.body = body;
+                  }
                 }
                 if (headers) {
                   response.headers = headers;
@@ -304,49 +327,57 @@ Instrumenter.prototype.instrumentNetwork = function() {
           start_time_ms: _.now(),
           end_time_ms: null
         };
-        var requestData = null;
-        if (self.autoInstrument.networkRequestBody) {
-          if (args[1] && args[1].body) {
-            requestData = args[1].body;
-          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
-            requestData = args[0].body;
+        if (args[1] && args[1].headers) {
+          // Argument may be a Headers object, or plain object. Ensure here that
+          // we are working with a Headers object with case-insensitive keys.
+          var reqHeaders = new Headers(args[1].headers);
+
+          metadata.request_content_type = reqHeaders.get('Content-Type');
+
+          if (self.autoInstrument.networkRequestHeaders) {
+            metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders)
           }
         }
-        self.telemeter.captureNetwork(metadata, 'fetch', undefined, requestData);
+
+        if (self.autoInstrument.networkRequestBody) {
+          if (args[1] && args[1].body) {
+            metadata.request = args[1].body;
+          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
+            metadata.request = args[0].body;
+          }
+        }
+        self.captureNetwork(metadata, 'fetch', undefined);
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
+          metadata.response_content_type = resp.headers.get('Content-Type');
           var headers = null;
           if (self.autoInstrument.networkResponseHeaders) {
-            var headersConfig = self.autoInstrument.networkResponseHeaders;
-            headers = {};
-            try {
-              if (headersConfig === true) {
-                // This is unsupported in IE so we can't do it
-                /*
-                var allHeaders = resp.headers.entries();
-                for (var pair of allHeaders) {
-                  headers[pair[0]] = pair[1];
-                }
-                */
-              } else {
-                for (var i=0; i < headersConfig.length; i++) {
-                  var header = headersConfig[i];
-                  headers[header] = resp.headers.get(header);
-                }
-              }
-            } catch (e) {
-              /* ignore probable IE errors */
+            headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
+          }
+          var body = null;
+          if (self.autoInstrument.networkResponseBody) {
+            if (typeof resp.text === 'function') { // Response.text() is not implemented on multiple platforms
+              body = resp.text(); //returns a Promise
             }
           }
-          var response = null;
-          if (headers) {
-            response = {
-              headers: headers
-            };
-          }
-          if (response) {
-            metadata.response = response;
+          if (headers || body) {
+            metadata.response = {};
+            if (body) {
+              // Test to ensure body is a Promise, which it should always be.
+              if (typeof body.then === 'function') {
+                body.then(function (text) {
+                  if (self.isJsonContentType(metadata.response_content_type)) {
+                    metadata.response.body = self.scrubJson(text);
+                  }
+                });
+              } else {
+                metadata.response.body = body;
+              }
+            }
+            if (headers) {
+              metadata.response.headers = headers;
+            }
           }
           return resp;
         });
@@ -354,6 +385,46 @@ Instrumenter.prototype.instrumentNetwork = function() {
     }, this.replacements, 'network');
   }
 };
+
+Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+  if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
+    metadata.request = this.scrubJson(metadata.request);
+  }
+  return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
+};
+
+Instrumenter.prototype.isJsonContentType = function(contentType) {
+  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+}
+
+Instrumenter.prototype.scrubJson = function(json) {
+  return JSON.stringify(_.scrub(JSON.parse(json), this.options.scrubFields));
+}
+
+Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
+  var outHeaders = {};
+  try {
+    var i;
+    if (headersConfig === true) {
+      if (typeof inHeaders.entries === 'function') { // Headers.entries() is not implemented in IE
+        var allHeaders = inHeaders.entries();
+        var currentHeader = allHeaders.next();
+        while (!currentHeader.done) {
+          outHeaders[currentHeader.value[0]] = currentHeader.value[1];
+          currentHeader = allHeaders.next();
+        }
+      }
+    } else {
+      for (i=0; i < headersConfig.length; i++) {
+        var header = headersConfig[i];
+        outHeaders[header] = inHeaders.get(header);
+      }
+    }
+  } catch (e) {
+    /* ignore probable IE errors */
+  }
+  return outHeaders;
+}
 
 Instrumenter.prototype.deinstrumentConsole = function() {
   if (!('console' in this._window && this._window.console.log)) {

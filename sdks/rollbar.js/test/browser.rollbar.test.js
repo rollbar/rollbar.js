@@ -730,6 +730,133 @@ describe('options.autoInstrument.log', function() {
     done();
   });
 
+  it('should add telemetry events for xhr calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('POST', 'xhr-test',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        JSON.stringify({name: 'foo', password: '123456'})
+      ]
+    );
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkResponseHeaders: true,
+        networkResponseBody: true,
+        networkRequestBody: true,
+        networkRequestHeaders: true
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    // generate a telemetry event
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://example.com/xhr-test', true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.setRequestHeader('Secret', 'abcdef');
+    xhr.onreadystatechange = function () {
+      if(xhr.readyState === 4) {
+        try {
+          rollbar.log('test'); // generate a payload to inspect
+
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          // Sinon fake server doesn't generate response body or headers that are visible
+          // via the XMLHttpRequest properties and methods. So we settle for verifying
+          // the request only.
+
+          // Verify request capture and scrubbing
+          expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
+
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({'Content-type': 'application/json', Secret: '********'});
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }
+    };
+    xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
+    server.respond();
+  });
+
+  it('should add telemetry events for fetch calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    window.fetchStub = sinon.stub(window, 'fetch');
+    window.fetch.returns(Promise.resolve(new Response(
+      JSON.stringify({name: 'foo', password: '123456'}),
+      { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json', 'password': '123456' }}
+    )));
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkResponseHeaders: true,
+        networkResponseBody: true,
+        networkRequestBody: true,
+        networkRequestHeaders: true
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var fetchHeaders = new Headers();
+    fetchHeaders.append('Content-Type', 'application/json');
+    fetchHeaders.append('Secret', '123456');
+
+    const fetchInit = {
+      method: 'POST',
+      headers: fetchHeaders,
+      body: JSON.stringify({name: 'bar', secret: 'xhr post'})
+    };
+    var fetchRequest = new Request('https://example.com/xhr-test');
+    window,fetch(fetchRequest, fetchInit)
+    .then(function(_response) {
+      try {
+        rollbar.log('test'); // generate a payload to inspect
+        server.respond();
+
+        expect(server.requests.length).to.eql(1);
+        var body = JSON.parse(server.requests[0].requestBody);
+
+        // Verify request capture and scrubbing
+        expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
+
+        // Verify request headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
+
+        // When using the Sinon test stub, the response body is populated in Headless Chrome 73,
+        // but not in 77. When using the Fetch API normally, it is populated in all tested Chrome versions.
+        // Disable here due to the Sinon limitation.
+        //
+        // Verify response capture and scrubbing
+        // expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+
+        // Verify response headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        done();
+      } catch (e) {
+        done(e);
+      }
+    })
+  });
+
   it('should add a diagnostic message when wrapConsole fails', function(done) {
     var server = window.server;
     stubResponse(server);
