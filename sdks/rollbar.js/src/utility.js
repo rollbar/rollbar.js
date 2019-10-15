@@ -489,9 +489,9 @@ function createTelemetryEvent(args) {
     var typ = typeName(arg);
     switch (typ) {
       case 'string':
-        if (arrayIncludes(TELEMETRY_TYPES, arg)) {
+        if (!type && arrayIncludes(TELEMETRY_TYPES, arg)) {
           type = arg;
-        } else if (arrayIncludes(TELEMETRY_LEVELS, arg)) {
+        } else if (!level && arrayIncludes(TELEMETRY_LEVELS, arg)) {
           level = arg;
         }
         break;
