@@ -922,9 +922,21 @@ describe('captureEvent', function() {
     var options = {};
     var rollbar = window.rollbar = new Rollbar(options);
 
-    var event = rollbar.captureEvent('meaningless', {foo: 'bar'}, 23);
+    var event = rollbar.captureEvent('meaningless', 'info', {foo: 'bar'}, 23, 'debug');
     expect(event.type).to.eql('manual');
     expect(event.level).to.eql('info');
+    expect(event.body.foo).to.eql('bar');
+
+    done();
+  });
+  it('should handle level that matches a type string', function(done) {
+    var options = {};
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var event = rollbar.captureEvent('log', {foo: 'bar'}, 'error');
+    // ensure level 'error' doesn't overwrite type 'log'
+    expect(event.type).to.eql('log');
+    expect(event.level).to.eql('error');
     expect(event.body.foo).to.eql('bar');
 
     done();
