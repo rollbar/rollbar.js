@@ -90,7 +90,7 @@ function handleItemWithError(item, options, callback) {
   var cb = function(e) {
     if (e) {
       item.message = item.err.message || item.err.description || item.message || String(item.err);
-      delete item.err;
+      item.diagnostic.buildTraceData = e.message;
       delete item.stackInfo;
     }
     callback(null, item);
