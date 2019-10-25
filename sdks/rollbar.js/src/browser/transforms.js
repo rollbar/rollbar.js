@@ -1,5 +1,5 @@
 var _ = require('../utility');
-var errorParser = require('./errorParser');
+var errorParser = require('../errorParser');
 var logger = require('./logger');
 
 function handleDomException(item, options, callback) {
