@@ -270,7 +270,6 @@ Rollbar.clearPerson = function() {
 };
 
 /** Internal **/
-
 function addTransformsToNotifier(notifier) {
   notifier
     .addTransform(transforms.baseData)
@@ -281,6 +280,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.addConfiguredOptions)
+    .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
 }
 
