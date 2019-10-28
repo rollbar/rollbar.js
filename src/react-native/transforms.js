@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var errorParser = require('../errorParser');
 
 function baseData(item, options, callback) {
   var environment = (options.payload && options.payload.environment) || options.environment;
@@ -63,12 +64,14 @@ function handleItemWithError(item, options, callback) {
   }
 
   var err = item.err;
-  var frames = _handleStack(err.stack, options);
+  var parsedError = errorParser.parse(err);
+  var guess = errorParser.guessErrorClass(parsedError.message);
+  var message = guess[1];
   var stackInfo = {
-    frames: frames,
+    frames: _buildFrames(parsedError.stack, options),
     exception: {
-      class: String(err.constructor.name || err.name || '<unknown>'),
-      message: String(err.message || '<no message>')
+      class: _errorClass(parsedError.name, guess[0], options),
+      message: message
     }
   };
   if (err.description) {
@@ -88,49 +91,43 @@ function scrubPayload(item, options, callback) {
 
 /** Helpers **/
 
-function _handleStack(stack, options) {
-  var lines = (stack || '').split('\n');
-  var results = [];
-  var frame;
-  for (var i = lines.length - 1; i >= 0; i--) {
-    frame = _parseRawFrame(lines[i], options);
-    results.push(frame);
+function _errorClass(name, guess, options) {
+  if (name) {
+    return name;
+  } else if (options.guessErrorClass) {
+    return guess;
+  } else {
+    return '<unknown>';
   }
-  return results;
 }
 
-function _parseRawFrame(line, options) {
-  var methodAndRest = line.split('@');
-  var method, rest;
-  if (methodAndRest.length > 1) {
-    method = methodAndRest[0];
-    rest = methodAndRest[1];
-  } else {
-    rest = methodAndRest[0];
+function _buildFrames(stack, options) {
+  if (!stack) {
+    return [];
   }
-  var colIdx = rest.lastIndexOf(':');
-  var colno, lineno;
-  if (colIdx > -1) {
-    colno = rest.substring(colIdx+1);
-    rest = rest.substring(0, colIdx);
+
+  var frames = [];
+  for (var i = 0; i < stack.length; ++i) {
+    var stackFrame = stack[i];
+    var filename = stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '<unknown>';
+    var frame = {
+      filename: _rewriteFilename(filename, options),
+      lineno: stackFrame.line || null,
+      method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
+      colno: stackFrame.column
+    };
+    frames.push(frame);
   }
-  var lineIdx = rest.lastIndexOf(':');
-  if (lineIdx > -1) {
-    lineno = rest.substring(lineIdx+1);
-    rest = rest.substring(0, lineIdx);
-  }
-  var match = rest && rest.match && _matchFilename(rest, options);
+  return frames;
+}
+
+function _rewriteFilename(filename, options) {
+  var match = filename && filename.match && _matchFilename(filename, options);
   if (match) {
-    rest = 'http://reactnativehost/' + match;
+    return 'http://reactnativehost/' + match;
   } else {
-    rest = 'http://reactnativehost/' + rest;
+    return 'http://reactnativehost/' + filename;
   }
-  return {
-    method: method || '<unknown>',
-    filename: rest || '<unknown>',
-    lineno: Math.floor(lineno),
-    colno: Math.floor(colno)
-  };
 }
 
 function _matchFilename(filename, options) {
