@@ -579,9 +579,9 @@ function createTelemetryEvent(args) {
     var typ = typeName(arg);
     switch (typ) {
       case 'string':
-        if (arrayIncludes(TELEMETRY_TYPES, arg)) {
+        if (!type && arrayIncludes(TELEMETRY_TYPES, arg)) {
           type = arg;
-        } else if (arrayIncludes(TELEMETRY_LEVELS, arg)) {
+        } else if (!level && arrayIncludes(TELEMETRY_LEVELS, arg)) {
           level = arg;
         }
         break;
@@ -1782,8 +1782,8 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.13.0",
-  scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
+  version: "2.14.0",
+  scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
   uncaughtErrorLevel: "error",
@@ -4494,7 +4494,7 @@ module.exports = {
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
     'use strict';
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 
@@ -4512,37 +4512,12 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+\:\d+|\(native\))/m;
     var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code\])?$/;
 
-    function _map(array, fn, thisArg) {
-        if (typeof Array.prototype.map === 'function') {
-            return array.map(fn, thisArg);
-        } else {
-            var output = new Array(array.length);
-            for (var i = 0; i < array.length; i++) {
-                output[i] = fn.call(thisArg, array[i]);
-            }
-            return output;
-        }
-    }
-
-    function _filter(array, fn, thisArg) {
-        if (typeof Array.prototype.filter === 'function') {
-            return array.filter(fn, thisArg);
-        } else {
-            var output = [];
-            for (var i = 0; i < array.length; i++) {
-                if (fn.call(thisArg, array[i])) {
-                    output.push(array[i]);
-                }
-            }
-            return output;
-        }
-    }
-
     return {
         /**
          * Given an Error object, extract the most information from it.
-         * @param error {Error}
-         * @return Array[StackFrame]
+         *
+         * @param {Error} error object
+         * @return {Array} of StackFrames
          */
         parse: function ErrorStackParser$$parse(error) {
             if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
@@ -4556,53 +4531,59 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             }
         },
 
-        /**
-         * Separate line and column numbers from a URL-like string.
-         * @param urlLike String
-         * @return Array[String]
-         */
+        // Separate line and column numbers from a string of the form: (URI:Line:Column)
         extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
             // Fail-fast but return locations like "(native)"
             if (urlLike.indexOf(':') === -1) {
                 return [urlLike];
             }
 
-            var locationParts = urlLike.replace(/[\(\)\s]/g, '').split(':');
-            var lastNumber = locationParts.pop();
-            var possibleNumber = locationParts[locationParts.length - 1];
-            if (!isNaN(parseFloat(possibleNumber)) && isFinite(possibleNumber)) {
-                var lineNumber = locationParts.pop();
-                return [locationParts.join(':'), lineNumber, lastNumber];
-            } else {
-                return [locationParts.join(':'), lastNumber, undefined];
-            }
+            var regExp = /(.+?)(?:\:(\d+))?(?:\:(\d+))?$/;
+            var parts = regExp.exec(urlLike.replace(/[\(\)]/g, ''));
+            return [parts[1], parts[2] || undefined, parts[3] || undefined];
         },
 
         parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-            var filtered = _filter(error.stack.split('\n'), function (line) {
+            var filtered = error.stack.split('\n').filter(function(line) {
                 return !!line.match(CHROME_IE_STACK_REGEXP);
             }, this);
 
-            return _map(filtered, function (line) {
+            return filtered.map(function(line) {
                 if (line.indexOf('(eval ') > -1) {
                     // Throw away eval information until we implement stacktrace.js/stackframe#8
                     line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^\()]*)|(\)\,.*$)/g, '');
                 }
-                var tokens = line.replace(/^\s+/, '').replace(/\(eval code/g, '(').split(/\s+/).slice(1);
-                var locationParts = this.extractLocation(tokens.pop());
-                var functionName = tokens.join(' ') || undefined;
-                var fileName = locationParts[0] === 'eval' ? undefined : locationParts[0];
+                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
 
-                return new StackFrame(functionName, undefined, fileName, locationParts[1], locationParts[2], line);
+                // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
+                // case it has spaces in it, as the string is split on \s+ later on
+                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
+
+                // remove the parenthesized location from the line, if it was matched
+                sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
+
+                var tokens = sanitizedLine.split(/\s+/).slice(1);
+                // if a location was matched, pass it to extractLocation() otherwise pop the last token
+                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
+                var functionName = tokens.join(' ') || undefined;
+                var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
+
+                return new StackFrame({
+                    functionName: functionName,
+                    fileName: fileName,
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
             }, this);
         },
 
         parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-            var filtered = _filter(error.stack.split('\n'), function (line) {
+            var filtered = error.stack.split('\n').filter(function(line) {
                 return !line.match(SAFARI_NATIVE_CODE_REGEXP);
             }, this);
 
-            return _map(filtered, function (line) {
+            return filtered.map(function(line) {
                 // Throw away eval information until we implement stacktrace.js/stackframe#8
                 if (line.indexOf(' > eval') > -1) {
                     line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval\:\d+\:\d+/g, ':$1');
@@ -4610,12 +4591,22 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
                 if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
                     // Safari eval frames only have function names and nothing else
-                    return new StackFrame(line);
+                    return new StackFrame({
+                        functionName: line
+                    });
                 } else {
-                    var tokens = line.split('@');
-                    var locationParts = this.extractLocation(tokens.pop());
-                    var functionName = tokens.shift() || undefined;
-                    return new StackFrame(functionName, undefined, locationParts[0], locationParts[1], locationParts[2], line);
+                    var functionNameRegex = /((.*".+"[^@]*)?[^@]*)(?:@)/;
+                    var matches = line.match(functionNameRegex);
+                    var functionName = matches && matches[1] ? matches[1] : undefined;
+                    var locationParts = this.extractLocation(line.replace(functionNameRegex, ''));
+
+                    return new StackFrame({
+                        functionName: functionName,
+                        fileName: locationParts[0],
+                        lineNumber: locationParts[1],
+                        columnNumber: locationParts[2],
+                        source: line
+                    });
                 }
             }, this);
         },
@@ -4639,7 +4630,11 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             for (var i = 2, len = lines.length; i < len; i += 2) {
                 var match = lineRE.exec(lines[i]);
                 if (match) {
-                    result.push(new StackFrame(undefined, undefined, match[2], match[1], undefined, lines[i]));
+                    result.push(new StackFrame({
+                        fileName: match[2],
+                        lineNumber: match[1],
+                        source: lines[i]
+                    }));
                 }
             }
 
@@ -4654,7 +4649,14 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             for (var i = 0, len = lines.length; i < len; i += 2) {
                 var match = lineRE.exec(lines[i]);
                 if (match) {
-                    result.push(new StackFrame(match[3] || undefined, undefined, match[2], match[1], undefined, lines[i]));
+                    result.push(
+                        new StackFrame({
+                            functionName: match[3] || undefined,
+                            fileName: match[2],
+                            lineNumber: match[1],
+                            source: lines[i]
+                        })
+                    );
                 }
             }
 
@@ -4663,12 +4665,11 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
         // Opera 10.65+ Error.stack very similar to FF/Safari
         parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-            var filtered = _filter(error.stack.split('\n'), function (line) {
-                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) &&
-                    !line.match(/^Error created at/);
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
             }, this);
 
-            return _map(filtered, function (line) {
+            return filtered.map(function(line) {
                 var tokens = line.split('@');
                 var locationParts = this.extractLocation(tokens.pop());
                 var functionCall = (tokens.shift() || '');
@@ -4679,20 +4680,28 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                 if (functionCall.match(/\(([^\)]*)\)/)) {
                     argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
                 }
-                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ? undefined : argsRaw.split(',');
-                return new StackFrame(functionName, args, locationParts[0], locationParts[1], locationParts[2], line);
+                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
+                    undefined : argsRaw.split(',');
+
+                return new StackFrame({
+                    functionName: functionName,
+                    args: args,
+                    fileName: locationParts[0],
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
             }, this);
         }
     };
 }));
 
 
-
 /***/ }),
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
     'use strict';
     // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
 
@@ -4703,98 +4712,134 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     } else {}
-}(this, function () {
+}(this, function() {
     'use strict';
     function _isNumber(n) {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
-    function StackFrame(functionName, args, fileName, lineNumber, columnNumber, source) {
-        if (functionName !== undefined) {
-            this.setFunctionName(functionName);
-        }
-        if (args !== undefined) {
-            this.setArgs(args);
-        }
-        if (fileName !== undefined) {
-            this.setFileName(fileName);
-        }
-        if (lineNumber !== undefined) {
-            this.setLineNumber(lineNumber);
-        }
-        if (columnNumber !== undefined) {
-            this.setColumnNumber(columnNumber);
-        }
-        if (source !== undefined) {
-            this.setSource(source);
+    function _capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.substring(1);
+    }
+
+    function _getter(p) {
+        return function() {
+            return this[p];
+        };
+    }
+
+    var booleanProps = ['isConstructor', 'isEval', 'isNative', 'isToplevel'];
+    var numericProps = ['columnNumber', 'lineNumber'];
+    var stringProps = ['fileName', 'functionName', 'source'];
+    var arrayProps = ['args'];
+
+    var props = booleanProps.concat(numericProps, stringProps, arrayProps);
+
+    function StackFrame(obj) {
+        if (obj instanceof Object) {
+            for (var i = 0; i < props.length; i++) {
+                if (obj.hasOwnProperty(props[i]) && obj[props[i]] !== undefined) {
+                    this['set' + _capitalize(props[i])](obj[props[i]]);
+                }
+            }
         }
     }
 
     StackFrame.prototype = {
-        getFunctionName: function () {
-            return this.functionName;
-        },
-        setFunctionName: function (v) {
-            this.functionName = String(v);
-        },
-
-        getArgs: function () {
+        getArgs: function() {
             return this.args;
         },
-        setArgs: function (v) {
+        setArgs: function(v) {
             if (Object.prototype.toString.call(v) !== '[object Array]') {
                 throw new TypeError('Args must be an Array');
             }
             this.args = v;
         },
 
-        // NOTE: Property name may be misleading as it includes the path,
-        // but it somewhat mirrors V8's JavaScriptStackTraceApi
-        // https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi and Gecko's
-        // http://mxr.mozilla.org/mozilla-central/source/xpcom/base/nsIException.idl#14
-        getFileName: function () {
-            return this.fileName;
+        getEvalOrigin: function() {
+            return this.evalOrigin;
         },
-        setFileName: function (v) {
-            this.fileName = String(v);
-        },
-
-        getLineNumber: function () {
-            return this.lineNumber;
-        },
-        setLineNumber: function (v) {
-            if (!_isNumber(v)) {
-                throw new TypeError('Line Number must be a Number');
+        setEvalOrigin: function(v) {
+            if (v instanceof StackFrame) {
+                this.evalOrigin = v;
+            } else if (v instanceof Object) {
+                this.evalOrigin = new StackFrame(v);
+            } else {
+                throw new TypeError('Eval Origin must be an Object or StackFrame');
             }
-            this.lineNumber = Number(v);
-        },
-
-        getColumnNumber: function () {
-            return this.columnNumber;
-        },
-        setColumnNumber: function (v) {
-            if (!_isNumber(v)) {
-                throw new TypeError('Column Number must be a Number');
-            }
-            this.columnNumber = Number(v);
-        },
-
-        getSource: function () {
-            return this.source;
-        },
-        setSource: function (v) {
-            this.source = String(v);
         },
 
         toString: function() {
-            var functionName = this.getFunctionName() || '{anonymous}';
-            var args = '(' + (this.getArgs() || []).join(',') + ')';
-            var fileName = this.getFileName() ? ('@' + this.getFileName()) : '';
-            var lineNumber = _isNumber(this.getLineNumber()) ? (':' + this.getLineNumber()) : '';
-            var columnNumber = _isNumber(this.getColumnNumber()) ? (':' + this.getColumnNumber()) : '';
-            return functionName + args + fileName + lineNumber + columnNumber;
+            var fileName = this.getFileName() || '';
+            var lineNumber = this.getLineNumber() || '';
+            var columnNumber = this.getColumnNumber() || '';
+            var functionName = this.getFunctionName() || '';
+            if (this.getIsEval()) {
+                if (fileName) {
+                    return '[eval] (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+                }
+                return '[eval]:' + lineNumber + ':' + columnNumber;
+            }
+            if (functionName) {
+                return functionName + ' (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+            }
+            return fileName + ':' + lineNumber + ':' + columnNumber;
         }
     };
+
+    StackFrame.fromString = function StackFrame$$fromString(str) {
+        var argsStartIndex = str.indexOf('(');
+        var argsEndIndex = str.lastIndexOf(')');
+
+        var functionName = str.substring(0, argsStartIndex);
+        var args = str.substring(argsStartIndex + 1, argsEndIndex).split(',');
+        var locationString = str.substring(argsEndIndex + 1);
+
+        if (locationString.indexOf('@') === 0) {
+            var parts = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(locationString, '');
+            var fileName = parts[1];
+            var lineNumber = parts[2];
+            var columnNumber = parts[3];
+        }
+
+        return new StackFrame({
+            functionName: functionName,
+            args: args || undefined,
+            fileName: fileName,
+            lineNumber: lineNumber || undefined,
+            columnNumber: columnNumber || undefined
+        });
+    };
+
+    for (var i = 0; i < booleanProps.length; i++) {
+        StackFrame.prototype['get' + _capitalize(booleanProps[i])] = _getter(booleanProps[i]);
+        StackFrame.prototype['set' + _capitalize(booleanProps[i])] = (function(p) {
+            return function(v) {
+                this[p] = Boolean(v);
+            };
+        })(booleanProps[i]);
+    }
+
+    for (var j = 0; j < numericProps.length; j++) {
+        StackFrame.prototype['get' + _capitalize(numericProps[j])] = _getter(numericProps[j]);
+        StackFrame.prototype['set' + _capitalize(numericProps[j])] = (function(p) {
+            return function(v) {
+                if (!_isNumber(v)) {
+                    throw new TypeError(p + ' must be a Number');
+                }
+                this[p] = Number(v);
+            };
+        })(numericProps[j]);
+    }
+
+    for (var k = 0; k < stringProps.length; k++) {
+        StackFrame.prototype['get' + _capitalize(stringProps[k])] = _getter(stringProps[k]);
+        StackFrame.prototype['set' + _capitalize(stringProps[k])] = (function(p) {
+            return function(v) {
+                this[p] = String(v);
+            };
+        })(stringProps[k]);
+    }
 
     return StackFrame;
 }));
@@ -5134,6 +5179,7 @@ var defaults = {
   network: true,
   networkResponseHeaders: false,
   networkResponseBody: false,
+  networkRequestHeaders: false,
   networkRequestBody: false,
   log: true,
   dom: true,
@@ -5186,6 +5232,7 @@ function defaultValueScrubber(scrubFields) {
 }
 
 function Instrumenter(options, telemeter, rollbar, _window, _document) {
+  this.options = options;
   var autoInstrument = options.autoInstrument;
   if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
@@ -5219,6 +5266,7 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
 }
 
 Instrumenter.prototype.configure = function(options) {
+  this.options = _.merge(this.options, options);
   var autoInstrument = options.autoInstrument;
   var oldSettings = _.merge(this.autoInstrument);
   if (options.enabled === false || autoInstrument === false) {
@@ -5297,6 +5345,22 @@ Instrumenter.prototype.instrumentNetwork = function() {
             start_time_ms: _.now(),
             end_time_ms: null
           };
+          if (self.autoInstrument.networkRequestHeaders) {
+            this.__rollbar_xhr.request_headers = {};
+          }
+        }
+        return orig.apply(this, arguments);
+      };
+    }, this.replacements, 'network');
+
+    replace(xhrp, 'setRequestHeader', function(orig) {
+      return function(header, value) {
+        if (self.autoInstrument.networkRequestHeaders && this.__rollbar_xhr &&
+          _.isType(header, 'string') && _.isType(value, 'string')) {
+          this.__rollbar_xhr.request_headers[header] = value;
+        }
+        if (header.toLowerCase() === 'content-type') {
+          this.__rollbar_xhr.request_content_type = value;
         }
         return orig.apply(this, arguments);
       };
@@ -5312,11 +5376,10 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (xhr.__rollbar_xhr) {
             if (xhr.__rollbar_xhr.status_code === null) {
               xhr.__rollbar_xhr.status_code = 0;
-              var requestData = null;
               if (self.autoInstrument.networkRequestBody) {
-                requestData = data;
+                xhr.__rollbar_xhr.request = data;
               }
-              xhr.__rollbar_event = self.telemeter.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined, requestData);
+              xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
             }
             if (xhr.readyState < 2) {
               xhr.__rollbar_xhr.start_time_ms = _.now();
@@ -5325,6 +5388,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               xhr.__rollbar_xhr.end_time_ms = _.now();
 
               var headers = null;
+              xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
               if (self.autoInstrument.networkResponseHeaders) {
                 var headersConfig = self.autoInstrument.networkResponseHeaders;
                 headers = {};
@@ -5365,7 +5429,11 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (body || headers) {
                 response = {};
                 if (body) {
-                  response.body = body;
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                    response.body = self.scrubJson(body);
+                  } else {
+                    response.body = body;
+                  }
                 }
                 if (headers) {
                   response.headers = headers;
@@ -5432,49 +5500,57 @@ Instrumenter.prototype.instrumentNetwork = function() {
           start_time_ms: _.now(),
           end_time_ms: null
         };
-        var requestData = null;
-        if (self.autoInstrument.networkRequestBody) {
-          if (args[1] && args[1].body) {
-            requestData = args[1].body;
-          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
-            requestData = args[0].body;
+        if (args[1] && args[1].headers) {
+          // Argument may be a Headers object, or plain object. Ensure here that
+          // we are working with a Headers object with case-insensitive keys.
+          var reqHeaders = new Headers(args[1].headers);
+
+          metadata.request_content_type = reqHeaders.get('Content-Type');
+
+          if (self.autoInstrument.networkRequestHeaders) {
+            metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders)
           }
         }
-        self.telemeter.captureNetwork(metadata, 'fetch', undefined, requestData);
+
+        if (self.autoInstrument.networkRequestBody) {
+          if (args[1] && args[1].body) {
+            metadata.request = args[1].body;
+          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
+            metadata.request = args[0].body;
+          }
+        }
+        self.captureNetwork(metadata, 'fetch', undefined);
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
+          metadata.response_content_type = resp.headers.get('Content-Type');
           var headers = null;
           if (self.autoInstrument.networkResponseHeaders) {
-            var headersConfig = self.autoInstrument.networkResponseHeaders;
-            headers = {};
-            try {
-              if (headersConfig === true) {
-                // This is unsupported in IE so we can't do it
-                /*
-                var allHeaders = resp.headers.entries();
-                for (var pair of allHeaders) {
-                  headers[pair[0]] = pair[1];
-                }
-                */
-              } else {
-                for (var i=0; i < headersConfig.length; i++) {
-                  var header = headersConfig[i];
-                  headers[header] = resp.headers.get(header);
-                }
-              }
-            } catch (e) {
-              /* ignore probable IE errors */
+            headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
+          }
+          var body = null;
+          if (self.autoInstrument.networkResponseBody) {
+            if (typeof resp.text === 'function') { // Response.text() is not implemented on multiple platforms
+              body = resp.text(); //returns a Promise
             }
           }
-          var response = null;
-          if (headers) {
-            response = {
-              headers: headers
-            };
-          }
-          if (response) {
-            metadata.response = response;
+          if (headers || body) {
+            metadata.response = {};
+            if (body) {
+              // Test to ensure body is a Promise, which it should always be.
+              if (typeof body.then === 'function') {
+                body.then(function (text) {
+                  if (self.isJsonContentType(metadata.response_content_type)) {
+                    metadata.response.body = self.scrubJson(text);
+                  }
+                });
+              } else {
+                metadata.response.body = body;
+              }
+            }
+            if (headers) {
+              metadata.response.headers = headers;
+            }
           }
           return resp;
         });
@@ -5482,6 +5558,46 @@ Instrumenter.prototype.instrumentNetwork = function() {
     }, this.replacements, 'network');
   }
 };
+
+Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+  if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
+    metadata.request = this.scrubJson(metadata.request);
+  }
+  return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
+};
+
+Instrumenter.prototype.isJsonContentType = function(contentType) {
+  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+}
+
+Instrumenter.prototype.scrubJson = function(json) {
+  return JSON.stringify(_.scrub(JSON.parse(json), this.options.scrubFields));
+}
+
+Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
+  var outHeaders = {};
+  try {
+    var i;
+    if (headersConfig === true) {
+      if (typeof inHeaders.entries === 'function') { // Headers.entries() is not implemented in IE
+        var allHeaders = inHeaders.entries();
+        var currentHeader = allHeaders.next();
+        while (!currentHeader.done) {
+          outHeaders[currentHeader.value[0]] = currentHeader.value[1];
+          currentHeader = allHeaders.next();
+        }
+      }
+    } else {
+      for (i=0; i < headersConfig.length; i++) {
+        var header = headersConfig[i];
+        outHeaders[header] = inHeaders.get(header);
+      }
+    }
+  } catch (e) {
+    /* ignore probable IE errors */
+  }
+  return outHeaders;
+}
 
 Instrumenter.prototype.deinstrumentConsole = function() {
   if (!('console' in this._window && this._window.console.log)) {
