@@ -86,7 +86,7 @@
     "script-loader": "0.6.1",
     "sinon": "^7.3.0",
     "stackframe": "^0.2.2",
-    "strict-loader": "^0.1.2",
+    "strict-loader": "^1.2.0",
     "time-grunt": "^1.0.0",
     "uglifyjs-webpack-plugin": "^2.1.2",
     "vows": "~0.7.0",
