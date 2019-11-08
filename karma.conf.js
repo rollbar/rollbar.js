@@ -83,6 +83,11 @@ module.exports = function (config) {
             }
           },
           {
+            test: /\.js$/,
+            loader: 'strict-loader',
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/]
+          },
+          {
             test: /(mootootls|requirejs)\.js$/,
             loader: 'script'
           },
