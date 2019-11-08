@@ -33,6 +33,11 @@ var snippetConfig = {
           failOnError: true,
           configFile: path.resolve(__dirname, '.eslintrc')
         }
+      },
+      {
+        test: /\.js$/,
+        loader: 'strict-loader',
+        exclude: [/node_modules/, /vendor/]
       }
     ],
   }
@@ -59,6 +64,11 @@ var pluginConfig = {
           failOnError: true,
           configFile: path.resolve(__dirname, '.eslintrc')
         }
+      },
+      {
+        test: /\.js$/,
+        loader: 'strict-loader',
+        exclude: [/node_modules/, /vendor/]
       }
     ],
   }
@@ -84,6 +94,11 @@ var vanillaConfigBase = {
           failOnError: true,
           configFile: path.resolve(__dirname, '.eslintrc')
         }
+      },
+      {
+        test: /\.js$/,
+        loader: 'strict-loader',
+        exclude: [/node_modules/, /vendor/]
       }
     ],
   }
@@ -111,6 +126,11 @@ var UMDConfigBase = {
           failOnError: true,
           configFile: path.resolve(__dirname, '.eslintrc')
         }
+      },
+      {
+        test: /\.js$/,
+        loader: 'strict-loader',
+        exclude: [/node_modules/, /vendor/]
       }
     ],
   }
