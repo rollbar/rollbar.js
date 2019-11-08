@@ -98,6 +98,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var merge = __webpack_require__(10);
 
 var RollbarJSON = {};
@@ -846,6 +849,9 @@ module.exports = {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 /* eslint-disable no-console */
 __webpack_require__(17);
 var detection = __webpack_require__(18);
@@ -893,6 +899,9 @@ module.exports = {
 /***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 
@@ -1015,7 +1024,10 @@ module.exports = {
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 // See https://nodejs.org/docs/latest/api/url.html
 function parse(url) {
@@ -1101,6 +1113,9 @@ module.exports = {
 /***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var ErrorStackParser = __webpack_require__(22);
 
@@ -1246,6 +1261,9 @@ module.exports = __webpack_require__(6);
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var rollbar = __webpack_require__(7);
 
 var options = (typeof window !== 'undefined') && window._rollbarConfig;
@@ -1273,6 +1291,9 @@ module.exports = rollbar;
 /***/ }),
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var Client = __webpack_require__(8);
 var _ = __webpack_require__(0);
@@ -1799,7 +1820,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.14.2",
+  version: "2.14.3",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1822,6 +1843,9 @@ module.exports = Rollbar;
 /***/ }),
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var RateLimiter = __webpack_require__(9);
 var Queue = __webpack_require__(12);
@@ -1983,6 +2007,9 @@ module.exports = Rollbar;
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 
 /*
@@ -2134,6 +2161,8 @@ module.exports = RateLimiter;
 
 "use strict";
 
+
+'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toStr = Object.prototype.toString;
@@ -2962,6 +2991,9 @@ module.exports = setupCustomJSON;
 /* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 
 /*
@@ -3230,6 +3262,9 @@ module.exports = Queue;
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 
 /*
@@ -3354,6 +3389,9 @@ module.exports = Notifier;
 /***/ }),
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 
@@ -3538,6 +3576,9 @@ module.exports = Telemeter;
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 var helpers = __webpack_require__(16);
 var truncation = __webpack_require__(2);
@@ -3639,6 +3680,9 @@ module.exports = Api;
 /***/ }),
 /* 16 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 
@@ -3757,7 +3801,10 @@ module.exports = {
 
 /***/ }),
 /* 18 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 // This detection.js module is used to encapsulate any ugly browser/feature
 // detection we may need to do.
@@ -3793,7 +3840,10 @@ module.exports = Detection;
 
 /***/ }),
 /* 19 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 function captureUncaughtExceptions(window, handler, shim) {
   if (!window) { return; }
@@ -3937,6 +3987,9 @@ module.exports = {
 /***/ }),
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 /*global XDomainRequest*/
 
@@ -4195,6 +4248,9 @@ module.exports = {
 /***/ }),
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 var errorParser = __webpack_require__(4);
@@ -4866,6 +4922,9 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 
 function itemToPayload(item, options, callback) {
@@ -4991,6 +5050,9 @@ module.exports = {
 /* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
 var _ = __webpack_require__(0);
 
 function checkIgnore(item, settings) {
@@ -5008,6 +5070,9 @@ module.exports = {
 /***/ }),
 /* 26 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 
@@ -5187,6 +5252,9 @@ module.exports = {
 /***/ }),
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 var _ = __webpack_require__(0);
 var urlparser = __webpack_require__(3);
@@ -5866,7 +5934,10 @@ module.exports = Instrumenter;
 
 /***/ }),
 /* 28 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 
 function getElementType(e) {
   return (e.getAttribute('type') || '').toLowerCase();
