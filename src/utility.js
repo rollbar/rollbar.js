@@ -562,10 +562,12 @@ function set(obj, path, value) {
   }
 }
 
+var SCRUB_FIELDS_SCRUB_ALL_VALUE = '*';
+var SCRUB_ALL_REGEX = new RegExp('(.*)', 'i');
 function scrub(data, scrubFields) {
   scrubFields = scrubFields || [];
-  var paramRes = _getScrubFieldRegexs(scrubFields);
-  var queryRes = _getScrubQueryParamRegexs(scrubFields);
+  var paramRes = _getRegexForScrubFields(scrubFields, _makeScrubFieldRegex);
+  var queryRes = _getRegexForScrubFields(scrubFields, _makeScrubQueryParamRegex);
 
   function redactQueryParam(dummy0, paramPart) {
     return paramPart + redact();
@@ -607,23 +609,28 @@ function scrub(data, scrubFields) {
   return traverse(data, scrubber, []);
 }
 
-function _getScrubFieldRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
+function _makeScrubFieldRegex(scrubField) {
+  var pattern = '^\\[?(%5[bB])?' + scrubField + '\\[?(%5[bB])?\\]?(%5[dD])?$';
+  return new RegExp(pattern, 'i');
 }
 
 
-function _getScrubQueryParamRegexs(scrubFields) {
+function _makeScrubQueryParamRegex(scrubField) {
+  var pattern = '\\[?(%5[bB])?' + scrubField + '\\[?(%5[bB])?\\]?(%5[dD])?';
+  return new RegExp('(' + pattern + '=)([^&\\n]+)', 'igm');
+}
+
+// Checks for SCRUB_FIELDS_SCRUB_ALL_VALUE
+function _getRegexForScrubFields(scrubFields, makeRegex) {
   var ret = [];
-  var pat;
+  var regex;
+  var scrubField;
   for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+    scrubField = scrubFields[i];
+    regex = (scrubField === SCRUB_FIELDS_SCRUB_ALL_VALUE)
+      ? SCRUB_ALL_REGEX
+      : makeRegex(scrubField);
+    ret.push(regex);
   }
   return ret;
 }
