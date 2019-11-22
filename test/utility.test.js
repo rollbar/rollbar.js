@@ -634,6 +634,20 @@ describe('set', function() {
 });
 
 describe('scrub', function() {
+  it('supports * to scrub all', function() {
+    var data = {
+      a: 'somestring',
+      password: 'abc123',
+      tempWorker: 'cool'
+    };
+    var scrubFields = ['*'];
+
+    var result = _.scrub(data, scrubFields);
+
+    expect(result.a).to.not.eql('somestring');
+    expect(result.password).to.not.eql('abc123');
+    expect(result.tempWorker).to.not.eql('cool');
+  });
   it('should not redact fields that are okay', function() {
     var data = {
       a: 'somestring',
