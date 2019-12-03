@@ -323,7 +323,7 @@ Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
 };
 Rollbar.prototype.syncLambdaHandler = function(handler, timeoutHandler) {
   var self = this;
-  var _timeoutHandler = function(event, context, cb) {
+  var _timeoutHandler = function(event, context, _cb) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
