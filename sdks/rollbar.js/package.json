@@ -60,7 +60,7 @@
     "jasmine-core": "^2.3.4",
     "jquery-mockjax": "^2.0.1",
     "karma": "^4.0.1",
-    "karma-browserstack-launcher": "^0.1.5",
+    "karma-browserstack-launcher": "^1.5.1",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-expect": "^1.1.0",
