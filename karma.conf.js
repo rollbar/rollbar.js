@@ -79,7 +79,7 @@ module.exports = function (config) {
             loader: 'eslint-loader',
             exclude: [/node_modules/, /vendor/, /lib/, /dist/],
             options: {
-              configFile: path.resolve(__dirname, ".eslintrc")
+              configFile: path.resolve(__dirname, '.eslintrc')
             }
           },
           {
