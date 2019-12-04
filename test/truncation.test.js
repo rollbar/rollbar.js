@@ -25,6 +25,24 @@ describe('truncate', function() {
     expect(resultValue.data.body.trace.exception.message.length).to.be.below(256);
     expect(resultValue.data.body.trace.frames.length).to.be.below(3);
   });
+
+  it('should not truncate ascii payload close to max size', function() {
+    var payload = tracePayload(10, repeat('i', 500));
+    var result = t.truncate(payload, undefined, 1100); // payload will be 500 + 528
+    expect(result.value).to.be.ok();
+
+    var resultValue = JSON.parse(result.value);
+    expect(resultValue).to.eql(payload);
+  });
+
+  it('should truncate non-ascii payload when oversize', function() {
+    var payload = tracePayload(10, repeat('あ', 500)); // あ is 3 utf-8 bytes (U+3042)
+    var result = t.truncate(payload, undefined, 1100); // payload will be 1500 + 528
+    expect(result.value).to.be.ok();
+
+    var resultValue = JSON.parse(result.value);
+    expect(resultValue.data.body.trace.frames.length).to.be.below(3);
+  });
 });
 
 describe('raw', function() {
