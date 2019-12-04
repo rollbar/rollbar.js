@@ -80,7 +80,7 @@ function minBody(payload, jsonBackup) {
 }
 
 function needsTruncation(payload, maxSize) {
-  return payload.length > maxSize;
+  return _.maxByteSize(payload) > maxSize;
 }
 
 function truncate(payload, jsonBackup, maxSize) {
