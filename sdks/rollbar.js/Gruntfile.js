@@ -148,7 +148,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
-  grunt.loadNpmTasks("grunt-vows");
+  grunt.loadNpmTasks('grunt-vows');
 
 
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
@@ -160,9 +160,9 @@ module.exports = function(grunt) {
     vows: {
       all: {
         options: {
-          reporter: "spec"
+          reporter: 'spec'
         },
-        src: ["test/server.*.test.js"]
+        src: ['test/server.*.test.js']
       }
     },
 
@@ -175,7 +175,7 @@ module.exports = function(grunt) {
         replacements: [
           // Main rollbar snippet
           {
-            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)', 'm'),
+            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)', 'm'), // eslint-disable-line no-control-regex
             to: function(match, index, fullText, captures) {
               captures[1] = rollbarJsSnippet;
               return captures.join('\n');
@@ -183,7 +183,7 @@ module.exports = function(grunt) {
           },
           // jQuery rollbar plugin snippet
           {
-            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)', 'm'),
+            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)', 'm'), // eslint-disable-line no-control-regex
             to: function(match, index, fullText, captures) {
               captures[1] = rollbarjQuerySnippet;
               return captures.join('\n');
@@ -207,7 +207,7 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['test-server', 'test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  grunt.registerTask('test-server', function(target) {
+  grunt.registerTask('test-server', function(_target) {
     var tasks = ['vows'];
     grunt.task.run.apply(grunt.task, tasks);
   });
