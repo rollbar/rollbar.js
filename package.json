@@ -102,7 +102,7 @@
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "./node_modules/.bin/grunt test-server",
     "test_ci": "./node_modules/.bin/grunt test",
-    "lint": "./node_modules/.bin/eslint"
+    "lint": "./node_modules/.bin/eslint . --ext .js"
   },
   "cdn": {
     "host": "cdnjs.cloudflare.com"
