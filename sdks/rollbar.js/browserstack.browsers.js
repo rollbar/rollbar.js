@@ -39,7 +39,7 @@ var sortedByBrowser = {};
 try {
   loadBrowsers(require('./browserstack.browsers.json'));
 } catch (e) {
-  console.error('Could not read ./browserstack.browsers.json. Ignoring.', e);
+  console.error('Could not read ./browserstack.browsers.json. Ignoring.', e); // eslint-disable-line no-console
 }
 
 
@@ -109,7 +109,8 @@ function download(username, accessKey, callback) {
     // Save the downloaded browsers in memory
     loadBrowsers(body);
 
-    fs.writeFile('./browserstack.browsers.json', JSON.stringify(body, null, '  '), callback);
+    // TODO: Fix? fs is not defined here.
+    // fs.writeFile('./browserstack.browsers.json', JSON.stringify(body, null, '  '), callback);
   });
 }
 
