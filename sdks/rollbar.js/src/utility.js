@@ -333,6 +333,33 @@ function stringify(obj, backup) {
   return {error: error, value: value};
 }
 
+function maxByteSize(string) {
+  // The transport will use utf-8, so assume utf-8 encoding.
+  //
+  // This minimal implementation will accurately count bytes for all UCS-2 and
+  // single code point UTF-16. If presented with multi code point UTF-16,
+  // which should be rare, it will safely overcount, not undercount.
+  //
+  // While robust utf-8 encoders exist, this is far smaller and far more performant.
+  // For quickly counting payload size for truncation, smaller is better.
+
+  var count = 0;
+  var length = string.length;
+
+  for (var i = 0; i < length; i++) {
+    var code = string.charCodeAt(i);
+    if (code < 128) { // up to 7 bits
+      count = count + 1;
+    } else if (code < 2048) { // up to 11 bits
+      count = count + 2;
+    } else if (code < 65536) { // up to 16 bits
+      count = count + 3;
+    }
+  }
+
+  return count;
+}
+
 function jsonParse(s) {
   var value, error;
   try {
@@ -736,6 +763,7 @@ module.exports = {
   scrub: scrub,
   set: set,
   stringify: stringify,
+  maxByteSize: maxByteSize,
   traverse: traverse,
   typeName: typeName,
   uuid4: uuid4
