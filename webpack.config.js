@@ -2,12 +2,12 @@ var extend = require('util')._extend;
 var path = require('path');
 var webpack = require('webpack');
 var defaults = require('./defaults');
-var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var TerserPlugin = require('terser-webpack-plugin');
 
 var outputPath = path.resolve(__dirname, 'dist');
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
-var uglifyPlugin = new UglifyJsPlugin({
+var uglifyPlugin = new TerserPlugin({
   sourceMap: true,
   parallel: true
 });
