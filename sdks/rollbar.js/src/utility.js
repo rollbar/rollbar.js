@@ -479,10 +479,9 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     diagnostic: diagnostic,
     uuid: uuid4()
   };
-  if (custom && custom.level !== undefined) {
-    item.level = custom.level;
-    delete custom.level;
-  }
+
+  setCustomItemKeys(item, custom);
+
   if (requestKeys && request) {
     item.request = request;
   }
@@ -491,6 +490,17 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   }
   item._originalArgs = args;
   return item;
+}
+
+function setCustomItemKeys(item, custom) {
+  if (custom && custom.level !== undefined) {
+    item.level = custom.level;
+    delete custom.level;
+  }
+  if (custom && custom.skipFrames !== undefined) {
+    item.skipFrames = custom.skipFrames;
+    delete custom.skipFrames;
+  }
 }
 
 var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];

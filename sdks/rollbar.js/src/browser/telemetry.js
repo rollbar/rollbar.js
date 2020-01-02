@@ -8,6 +8,9 @@ var defaults = {
   networkResponseBody: false,
   networkRequestHeaders: false,
   networkRequestBody: false,
+  networkErrorOnHttp5xx: false,
+  networkErrorOnHttp4xx: false,
+  networkErrorOnHttp0: false,
   log: true,
   dom: true,
   navigation: true,
@@ -274,6 +277,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
                 code = code === 1223 ? 204 : code;
                 xhr.__rollbar_xhr.status_code = code;
                 xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+                self.errorOnHttpStatus(xhr.__rollbar_xhr);
               } catch (e) {
                 /* ignore possible exception from xhr.status */
               }
@@ -291,6 +295,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           });
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;
+        }
+        if (xhr.__rollbar_xhr) {
+          xhr.__rollbar_xhr.stack = (new Error()).stack;
         }
         return orig.apply(this, arguments);
       }
@@ -347,6 +354,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
         }
         self.captureNetwork(metadata, 'fetch', undefined);
+        metadata.stack = (new Error()).stack;
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -379,6 +387,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               metadata.response.headers = headers;
             }
           }
+          self.errorOnHttpStatus(metadata);
           return resp;
         });
       };
@@ -424,6 +433,18 @@ Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
     /* ignore probable IE errors */
   }
   return outHeaders;
+}
+
+Instrumenter.prototype.errorOnHttpStatus = function(metadata) {
+  var status = metadata.status_code;
+
+  if ((status >= 500 && this.autoInstrument.networkErrorOnHttp5xx) ||
+    (status >= 400 && this.autoInstrument.networkErrorOnHttp4xx) ||
+    (status === 0 && this.autoInstrument.networkErrorOnHttp0)) {
+    var error = new Error('HTTP request failed with Status ' + status);
+    error.stack = metadata.stack;
+    this.rollbar.error(error, { skipFrames: 1 });
+  }
 }
 
 Instrumenter.prototype.deinstrumentConsole = function() {
