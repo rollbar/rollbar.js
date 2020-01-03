@@ -18,7 +18,7 @@ function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
   if (item.err) {
     try {
-      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
+      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
     } catch (e) {
       logger.error('Error while parsing the error object.', e);
       try {
