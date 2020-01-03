@@ -30,30 +30,21 @@ function Frame(stackFrame) {
 }
 
 
-function Stack(exception) {
+function Stack(exception, skip) {
   function getStack() {
     var parserStack = [];
-    var exc;
 
-    if (!exception.stack) {
-      try {
-        throw exception;
-      } catch (e) {
-        exc = e;
-      }
-    } else {
-      exc = exception;
-    }
+    skip = skip || 0;
 
     try {
-      parserStack = ErrorStackParser.parse(exc);
+      parserStack = ErrorStackParser.parse(exception);
     } catch(e) {
       parserStack = [];
     }
 
     var stack = [];
 
-    for (var i = 0; i < parserStack.length; i++) {
+    for (var i = skip; i < parserStack.length; i++) {
       stack.push(new Frame(parserStack[i]));
     }
 
@@ -70,21 +61,23 @@ function Stack(exception) {
 }
 
 
-function parse(e) {
+function parse(e, skip) {
   var err = e;
 
   if (err.nested) {
     var traceChain = [];
     while (err) {
-      traceChain.push(new Stack(err));
+      traceChain.push(new Stack(err, skip));
       err = err.nested;
+
+      skip = 0; // Only apply skip value to primary error
     }
 
     // Return primary error with full trace chain attached.
     traceChain[0].traceChain = traceChain;
     return traceChain[0];
   } else {
-    return new Stack(err);
+    return new Stack(err, skip);
   }
 }
 

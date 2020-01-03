@@ -638,6 +638,33 @@ describe('log', function() {
 
     done();
   })
+
+  it('should skipFrames when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var error = new Error('error with stack');
+
+    rollbar.log(error);
+    rollbar.log(error, { skipFrames: 1 });
+
+    server.respond();
+
+    var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace.frames;
+    var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace.frames;
+
+    expect(frames1.length).to.eql(frames2.length + 1);
+    expect(frames1.slice(0,-1)).to.eql(frames2);
+
+    done();
+  })
 });
 
 // Test direct call to onerror, as used in verification of browser js install.
@@ -686,7 +713,7 @@ describe('onerror', function() {
   })
 });
 
-describe('options.autoInstrument.log', function() {
+describe('options.autoInstrument', function() {
   beforeEach(function (done) {
     window.server = sinon.createFakeServer();
     done();
@@ -1019,6 +1046,22 @@ describe('createItem', function() {
     expect(item.custom.a).to.eql(1);
     expect(item.custom.b).to.eql(2);
     expect(item.custom.extraArgs).to.eql(['second']);
+
+    done();
+  });
+  it('should handle custom arguments', function(done) {
+    var client = new (TestClientGen())();
+    var options = {};
+    var rollbar = window.rollbar = new Rollbar(options, client);
+
+    var args = [new Error('Whoa'), {level: 'info', skipFrames: 1, foo: 'bar'}];
+    var item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.level).to.eql('info');
+    expect(item.skipFrames).to.eql(1);
+    expect(item.custom.foo).to.eql('bar');
+    expect(item.custom.level).to.not.be.ok();
+    expect(item.custom.skipFrames).to.not.be.ok();
 
     done();
   });
