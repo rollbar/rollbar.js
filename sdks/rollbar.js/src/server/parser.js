@@ -9,7 +9,7 @@ var stackTrace = require('./sourceMap/stackTrace');
 
 var linesOfContext = 3;
 var tracePattern =
-  /^\s*at (?:([^(]+(?: \[\w\s+\])?) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
+  /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
 
 var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
