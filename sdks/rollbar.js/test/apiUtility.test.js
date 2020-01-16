@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var u = require('../src/apiUtility');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('buildPayload', function() {
   it('should package up the input into a payload', function() {
@@ -157,4 +159,3 @@ describe('appendPathToPath', function() {
     expect(u.appendPathToPath(base, 'item')).to.eql(expNoSlash);
   });
 });
-

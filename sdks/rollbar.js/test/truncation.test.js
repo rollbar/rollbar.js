@@ -3,6 +3,8 @@
 /* globals it */
 
 var t = require('../src/truncation');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('truncate', function() {
   it('should not truncate something small enough', function() {

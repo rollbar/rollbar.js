@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var _ = require('../src/utility');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('typeName', function() {
   it('should handle undefined', function(done) {
