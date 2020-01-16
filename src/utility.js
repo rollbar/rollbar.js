@@ -2,7 +2,7 @@ var merge = require('./merge');
 
 var RollbarJSON = {};
 var __initRollbarJSON = false;
-function setupJSON() {
+function setupJSON(polyfillJSON) {
   if (__initRollbarJSON) {
     return;
   }
@@ -17,11 +17,9 @@ function setupJSON() {
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    var setupCustomJSON = require('../vendor/JSON-js/json3.js');
-    setupCustomJSON(RollbarJSON);
+    polyfillJSON(RollbarJSON);
   }
 }
-setupJSON();
 
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
@@ -820,6 +818,7 @@ module.exports = {
   sanitizeUrl: sanitizeUrl,
   scrub: scrub,
   set: set,
+  setupJSON: setupJSON,
   stringify: stringify,
   maxByteSize: maxByteSize,
   traverse: traverse,

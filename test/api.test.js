@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var API = require('../src/api');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 function TestTransportGenerator() {
   var TestTransport = function(callbackError, callbackResponse) {

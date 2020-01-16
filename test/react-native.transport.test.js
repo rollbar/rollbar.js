@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var t = require('../src/react-native/transport');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('post', function() {
   var accessToken = 'abc123';
