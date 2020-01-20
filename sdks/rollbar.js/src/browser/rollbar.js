@@ -502,6 +502,10 @@ Rollbar.prototype._createItem = function(args) {
   return _.createItem(args, logger, this);
 };
 
+Rollbar.prototype.loadFull = function() {
+  logger.info('Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.');
+};
+
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
     if (_.isFunction(args[i])) {
