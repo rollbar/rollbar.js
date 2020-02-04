@@ -112,6 +112,9 @@ Shim.prototype.loadFull = function(window, document, immediate, options, callbac
   if (!immediate) {
     s.async = true;
   }
+  if (!options.integrity) {
+    s.integrity = options.integrity;
+  }
 
   s.onload = s.onreadystatechange = _wrapInternalErr(function() {
     if (!done && (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete')) {

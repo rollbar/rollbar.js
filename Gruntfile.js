@@ -13,8 +13,10 @@ var glob = require('glob');
 var path = require('path');
 var pkg = require('./package.json');
 var fs = require('fs');
+var webpack = require('webpack');
 
 var webpackConfig = require('./webpack.config.js');
+var webpackSnippetConfig = require('./webpack.config.snippet.js');
 var browserStackBrowsers = require('./browserstack.browsers');
 
 
@@ -156,7 +158,7 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: pkg,
-    webpack: webpackConfig,
+    webpack: [...webpackConfig, webpackSnippetConfig],
     vows: {
       all: {
         options: {
@@ -202,10 +204,21 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.registerTask('build', function build() {
+    var done = this.async();
+    webpack(webpackConfig, (error) => {
+      if (error) throw error;
+      
+      webpack(webpackSnippetConfig, (error) => {
+        if (error) throw error;
+        done();
+      })
+    })
+  })
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
   grunt.registerTask('test', ['test-server', 'test-browser']);
-  grunt.registerTask('release', ['build', 'copyrelease']);
+  grunt.registerTask('release', ['build', 'replace:snippets', 'copyrelease']);
 
   grunt.registerTask('test-server', function(_target) {
     var tasks = ['vows'];

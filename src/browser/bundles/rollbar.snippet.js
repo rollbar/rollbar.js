@@ -1,3 +1,4 @@
+/* global __DEFAULT_ROLLBARJS_HASH__:false */
 /* global __DEFAULT_ROLLBARJS_URL__:false */
 /* global _rollbarConfig:true */
 
@@ -6,6 +7,7 @@ var snippetCallback = require('../snippet_callback');
 
 _rollbarConfig = _rollbarConfig || {};
 _rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || __DEFAULT_ROLLBARJS_URL__;
+_rollbarConfig.integrity = _rollbarConfig.integrity || __DEFAULT_ROLLBARJS_HASH__;
 _rollbarConfig.async = _rollbarConfig.async === undefined || _rollbarConfig.async;
 
 var shim = Shim.setupShim(window, _rollbarConfig);
