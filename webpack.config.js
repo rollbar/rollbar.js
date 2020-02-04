@@ -3,6 +3,7 @@ var path = require('path');
 var webpack = require('webpack');
 var defaults = require('./defaults');
 var TerserPlugin = require('terser-webpack-plugin');
+var WebpackAssetsManifest = require('webpack-assets-manifest');
 
 var outputPath = path.resolve(__dirname, 'dist');
 
@@ -11,37 +12,6 @@ var uglifyPlugin = new TerserPlugin({
   sourceMap: true,
   parallel: true
 });
-
-var snippetConfig = {
-  name: 'snippet',
-  entry: {
-    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js'
-  },
-  output: {
-    path: outputPath,
-    filename: '[name].js'
-  },
-  plugins: [defaultsPlugin],
-  module: {
-    rules: [
-      {
-        enforce: 'pre',
-        test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/, /vendor/],
-        options: {
-          failOnError: true,
-          configFile: path.resolve(__dirname, '.eslintrc')
-        }
-      },
-      {
-        test: /\.js$/,
-        loader: 'strict-loader',
-        exclude: [/node_modules/, /vendor/]
-      }
-    ],
-  }
-};
 
 var pluginConfig = {
   name: 'plugins',
@@ -150,7 +120,7 @@ namedAMDConfigBase.output.library = 'rollbar';
 namedAMDConfigBase.output.libraryTarget = 'amd';
 
 
-var config = [snippetConfig, pluginConfig];
+var config = [pluginConfig];
 
 function optimizationConfig(minimizer) {
   return {
@@ -159,7 +129,7 @@ function optimizationConfig(minimizer) {
   }
 }
 
-function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
+function buildVanillaConfig(filename, extraPlugins, minimizer) {
   var basePlugins = [defaultsPlugin];
   var vanillaConfig = extend({}, vanillaConfigBase);
   vanillaConfig.name = filename;
@@ -171,7 +141,7 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 
   vanillaConfig.output = extend({filename: filename}, vanillaConfig.output);
 
-  webpackConfig.push(vanillaConfig);
+  return vanillaConfig;
 }
 
 function addUMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
@@ -220,7 +190,14 @@ function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 
 
 function generateBuildConfig(name, plugins, minimizer) {
-  addVanillaToConfig(config, name, plugins, minimizer);
+  config.push(buildVanillaConfig(name, [
+    ...plugins,
+    new WebpackAssetsManifest({
+      integrity: true,
+      integrityHashes: ['sha256'],
+      writeToDisk: true,
+    })
+  ], minimizer));
   addUMDToConfig(config, name, plugins, minimizer);
   addNamedAMDToConfig(config, name, plugins, minimizer);
   addNoConflictToConfig(config, name, plugins, minimizer);
