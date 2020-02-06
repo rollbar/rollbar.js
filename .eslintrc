@@ -23,6 +23,7 @@
     "no-useless-escape": 0,
     "complexity": [2, { "max": 35 }],
     "no-use-before-define": [0, { "functions": false }],
-    "no-unused-vars": [2, { "argsIgnorePattern": "^_" }]
+    "no-unused-vars": [2, { "argsIgnorePattern": "^_" }],
+    "no-prototype-builtins": 0
   }
 }
