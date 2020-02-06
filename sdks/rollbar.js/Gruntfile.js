@@ -144,7 +144,6 @@ module.exports = function(grunt) {
     reporters = reporters.split(',');
   }
 
-  grunt.loadNpmTasks('grunt-express');
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
