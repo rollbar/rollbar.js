@@ -377,6 +377,19 @@ describe('messageIsIgnored', function() {
     };
     expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
   });
+  it('false if ignoredMessages regex match', function() {
+    var item = {
+      level: 'critical',
+      body: {
+        message: {body: '{"data":{"messages":[{"message":"Unauthorized"}]}}'}
+      }
+    };
+    var settings = {
+      reportLevel: 'debug',
+      ignoredMessages: ['{"data":{"messages":\\[']
+    };
+    expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
+  });
   it('true if both trace and body message but ignoredMessages only match body', function() {
     var item = {
       level: 'critical',
