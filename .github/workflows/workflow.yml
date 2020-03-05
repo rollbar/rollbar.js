@@ -1,15 +1,20 @@
 name: Upload Rollbar.js release to S3
 
+# on:
+#   release:
+#     types: [published]
+
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+    - austen/ch62549/add-upload-to-s3-workflow
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - uses: jakejarvis/s3-sync-action@master
+    - uses: jakejarvis/s3-sync-action@v0.5.1
       with:
         args: --follow-symlinks --delete
       env:
@@ -18,4 +23,4 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: 'us-east-1'
         SOURCE_DIR: 'dist'
-        DEST_DIR: $GITHUB_REF # GITHUB_REF is the tag of the release
+        DEST_DIR: v1.0.0 #$GITHUB_REF # GITHUB_REF is the tag of the release
