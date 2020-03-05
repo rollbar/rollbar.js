@@ -281,6 +281,41 @@ Rollbar.errorHandler = function() {
   }
 };
 
+Rollbar.prototype.azureFunctionHandler = function(handler) {
+  const AsyncFunction = (async () => {}).constructor;
+  if (handler instanceof AsyncFunction) {
+    return this.asyncAzureFunctionHandler(handler);
+  }
+  return this.syncAzureFunctionHandler(handler);
+};
+
+Rollbar.prototype.asyncAzureFunctionHandler = function(handler) {
+  const self = this;
+  return async function(context, ...args) {
+    try {
+      return await handler(context, ...args);
+    } catch (error) {
+      self.error(error);
+      self.wait(function() {
+        throw error;
+      })
+    }
+  }
+}
+Rollbar.prototype.syncAzureFunctionHandler = function(handler) {
+  const self = this;
+  return async function(context, ...args) {
+    try {
+      return handler(context, ...args);
+    } catch (error) {
+      self.error(error);
+      self.wait(function() {
+        throw error;
+      })
+    }
+  }
+}
+
 Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
   if (handler.length <= 2) {
     return this.asyncLambdaHandler(handler, timeoutHandler);
