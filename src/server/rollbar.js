@@ -291,15 +291,19 @@ Rollbar.prototype.azureFunctionHandler = function(handler) {
 
 Rollbar.prototype.asyncAzureFunctionHandler = function(handler) {
   const self = this;
-  return async function(context, ...args) {
-    try {
-      return await handler(context, ...args);
-    } catch (error) {
-      self.error(error);
-      self.wait(function() {
-        throw error;
-      })
-    }
+  return function(context, ...args) {
+    return new Promise(function(resolve, reject) {
+      handler(context, ...args)
+        .then(function(result) {
+          resolve(result);
+        })
+        .catch(function(error) {
+          self.error(error);
+          self.wait(function() {
+            reject(error);
+          });
+        });
+    })
   }
 }
 Rollbar.prototype.syncAzureFunctionHandler = function(handler) {
