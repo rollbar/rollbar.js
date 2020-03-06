@@ -95,7 +95,7 @@
     "lint": "./node_modules/.bin/eslint . --ext .js"
   },
   "cdn": {
-    "host": "cdnjs.cloudflare.com"
+    "host": "cdn.rollbar.com"
   },
   "defaults": {
     "endpoint": "api.rollbar.com/api/1/item/",
