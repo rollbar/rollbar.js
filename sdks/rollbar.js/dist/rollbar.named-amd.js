@@ -572,10 +572,9 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     diagnostic: diagnostic,
     uuid: uuid4()
   };
-  if (custom && custom.level !== undefined) {
-    item.level = custom.level;
-    delete custom.level;
-  }
+
+  setCustomItemKeys(item, custom);
+
   if (requestKeys && request) {
     item.request = request;
   }
@@ -584,6 +583,17 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   }
   item._originalArgs = args;
   return item;
+}
+
+function setCustomItemKeys(item, custom) {
+  if (custom && custom.level !== undefined) {
+    item.level = custom.level;
+    delete custom.level;
+  }
+  if (custom && custom.skipFrames !== undefined) {
+    item.skipFrames = custom.skipFrames;
+    delete custom.skipFrames;
+  }
 }
 
 var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
@@ -1167,30 +1177,21 @@ function Frame(stackFrame) {
 }
 
 
-function Stack(exception) {
+function Stack(exception, skip) {
   function getStack() {
     var parserStack = [];
-    var exc;
 
-    if (!exception.stack) {
-      try {
-        throw exception;
-      } catch (e) {
-        exc = e;
-      }
-    } else {
-      exc = exception;
-    }
+    skip = skip || 0;
 
     try {
-      parserStack = ErrorStackParser.parse(exc);
+      parserStack = ErrorStackParser.parse(exception);
     } catch(e) {
       parserStack = [];
     }
 
     var stack = [];
 
-    for (var i = 0; i < parserStack.length; i++) {
+    for (var i = skip; i < parserStack.length; i++) {
       stack.push(new Frame(parserStack[i]));
     }
 
@@ -1207,21 +1208,23 @@ function Stack(exception) {
 }
 
 
-function parse(e) {
+function parse(e, skip) {
   var err = e;
 
   if (err.nested) {
     var traceChain = [];
     while (err) {
-      traceChain.push(new Stack(err));
+      traceChain.push(new Stack(err, skip));
       err = err.nested;
+
+      skip = 0; // Only apply skip value to primary error
     }
 
     // Return primary error with full trace chain attached.
     traceChain[0].traceChain = traceChain;
     return traceChain[0];
   } else {
-    return new Stack(err);
+    return new Stack(err, skip);
   }
 }
 
@@ -1817,6 +1820,10 @@ Rollbar.prototype._createItem = function(args) {
   return _.createItem(args, logger, this);
 };
 
+Rollbar.prototype.loadFull = function() {
+  logger.info('Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.');
+};
+
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
     if (_.isFunction(args[i])) {
@@ -1838,7 +1845,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.14.6",
+  version: "2.15.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -4290,7 +4297,7 @@ function handleItemWithError(item, options, callback) {
   item.data = item.data || {};
   if (item.err) {
     try {
-      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err);
+      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
     } catch (e) {
       logger.error('Error while parsing the error object.', e);
       try {
@@ -4599,9 +4606,9 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 }(this, function ErrorStackParser(StackFrame) {
     'use strict';
 
-    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+\:\d+/;
-    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+\:\d+|\(native\))/m;
-    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code\])?$/;
+    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+:\d+/;
+    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+:\d+|\(native\))/m;
+    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code])?$/;
 
     return {
         /**
@@ -4629,8 +4636,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                 return [urlLike];
             }
 
-            var regExp = /(.+?)(?:\:(\d+))?(?:\:(\d+))?$/;
-            var parts = regExp.exec(urlLike.replace(/[\(\)]/g, ''));
+            var regExp = /(.+?)(?::(\d+))?(?::(\d+))?$/;
+            var parts = regExp.exec(urlLike.replace(/[()]/g, ''));
             return [parts[1], parts[2] || undefined, parts[3] || undefined];
         },
 
@@ -4642,7 +4649,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             return filtered.map(function(line) {
                 if (line.indexOf('(eval ') > -1) {
                     // Throw away eval information until we implement stacktrace.js/stackframe#8
-                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^\()]*)|(\)\,.*$)/g, '');
+                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
                 }
                 var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
 
@@ -4677,7 +4684,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             return filtered.map(function(line) {
                 // Throw away eval information until we implement stacktrace.js/stackframe#8
                 if (line.indexOf(' > eval') > -1) {
-                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval\:\d+\:\d+/g, ':$1');
+                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ':$1');
                 }
 
                 if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
@@ -4765,11 +4772,11 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
                 var locationParts = this.extractLocation(tokens.pop());
                 var functionCall = (tokens.shift() || '');
                 var functionName = functionCall
-                        .replace(/<anonymous function(: (\w+))?>/, '$2')
-                        .replace(/\([^\)]*\)/g, '') || undefined;
+                    .replace(/<anonymous function(: (\w+))?>/, '$2')
+                    .replace(/\([^)]*\)/g, '') || undefined;
                 var argsRaw;
-                if (functionCall.match(/\(([^\)]*)\)/)) {
-                    argsRaw = functionCall.replace(/^[^\(]+\(([^\)]*)\)$/, '$1');
+                if (functionCall.match(/\(([^)]*)\)/)) {
+                    argsRaw = functionCall.replace(/^[^(]+\(([^)]*)\)$/, '$1');
                 }
                 var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
                     undefined : argsRaw.split(',');
@@ -4827,11 +4834,10 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     var props = booleanProps.concat(numericProps, stringProps, arrayProps);
 
     function StackFrame(obj) {
-        if (obj instanceof Object) {
-            for (var i = 0; i < props.length; i++) {
-                if (obj.hasOwnProperty(props[i]) && obj[props[i]] !== undefined) {
-                    this['set' + _capitalize(props[i])](obj[props[i]]);
-                }
+        if (!obj) return;
+        for (var i = 0; i < props.length; i++) {
+            if (obj[props[i]] !== undefined) {
+                this['set' + _capitalize(props[i])](obj[props[i]]);
             }
         }
     }
@@ -5284,6 +5290,9 @@ var defaults = {
   networkResponseBody: false,
   networkRequestHeaders: false,
   networkRequestBody: false,
+  networkErrorOnHttp5xx: false,
+  networkErrorOnHttp4xx: false,
+  networkErrorOnHttp0: false,
   log: true,
   dom: true,
   navigation: true,
@@ -5550,6 +5559,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
                 code = code === 1223 ? 204 : code;
                 xhr.__rollbar_xhr.status_code = code;
                 xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+                self.errorOnHttpStatus(xhr.__rollbar_xhr);
               } catch (e) {
                 /* ignore possible exception from xhr.status */
               }
@@ -5567,6 +5577,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           });
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;
+        }
+        if (xhr.__rollbar_xhr) {
+          xhr.__rollbar_xhr.stack = (new Error()).stack;
         }
         return orig.apply(this, arguments);
       }
@@ -5623,6 +5636,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
         }
         self.captureNetwork(metadata, 'fetch', undefined);
+        metadata.stack = (new Error()).stack;
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -5655,6 +5669,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               metadata.response.headers = headers;
             }
           }
+          self.errorOnHttpStatus(metadata);
           return resp;
         });
       };
@@ -5700,6 +5715,18 @@ Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
     /* ignore probable IE errors */
   }
   return outHeaders;
+}
+
+Instrumenter.prototype.errorOnHttpStatus = function(metadata) {
+  var status = metadata.status_code;
+
+  if ((status >= 500 && this.autoInstrument.networkErrorOnHttp5xx) ||
+    (status >= 400 && this.autoInstrument.networkErrorOnHttp4xx) ||
+    (status === 0 && this.autoInstrument.networkErrorOnHttp0)) {
+    var error = new Error('HTTP request failed with Status ' + status);
+    error.stack = metadata.stack;
+    this.rollbar.error(error, { skipFrames: 1 });
+  }
 }
 
 Instrumenter.prototype.deinstrumentConsole = function() {
