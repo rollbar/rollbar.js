@@ -44,7 +44,6 @@
     "grunt-contrib-uglify": "^4.0.0",
     "grunt-contrib-watch": "^1.1.0",
     "grunt-karma": "^3.0.2",
-    "grunt-mocha": "^1.2.0",
     "grunt-parallel": "^0.5.1",
     "grunt-text-replace": "^0.4.0",
     "grunt-vows": "^0.4.2",
