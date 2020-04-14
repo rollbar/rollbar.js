@@ -296,7 +296,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;
         }
-        if (xhr.__rollbar_xhr) {
+        if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
           xhr.__rollbar_xhr.stack = (new Error()).stack;
         }
         return orig.apply(this, arguments);
@@ -354,7 +354,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
         }
         self.captureNetwork(metadata, 'fetch', undefined);
-        metadata.stack = (new Error()).stack;
+        if (self.trackHttpErrors()) {
+          metadata.stack = (new Error()).stack;
+        }
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -433,6 +435,12 @@ Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
     /* ignore probable IE errors */
   }
   return outHeaders;
+}
+
+Instrumenter.prototype.trackHttpErrors = function() {
+  return this.autoInstrument.networkErrorOnHttp5xx ||
+    this.autoInstrument.networkErrorOnHttp4xx ||
+    this.autoInstrument.networkErrorOnHttp0;
 }
 
 Instrumenter.prototype.errorOnHttpStatus = function(metadata) {

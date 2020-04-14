@@ -816,6 +816,54 @@ describe('options.autoInstrument', function() {
     server.respond();
   });
 
+  it('should send errors for xhr http errors', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('POST', 'xhr-test',
+      [
+        404,
+        { 'Content-Type': 'application/json' },
+        JSON.stringify({foo: 'bar'})
+      ]
+    );
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkErrorOnHttp4xx: true
+      }
+    };
+    window.rollbar = new Rollbar(options);
+
+    // generate a telemetry event
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://example.com/xhr-test', true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.onreadystatechange = function () {
+      if(xhr.readyState === 4) {
+        try {
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+
+          // Just knowing a stack is present is enough for this test.
+          expect(body.data.body.trace.frames.length).to.be.above(1);
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }
+    };
+    xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
+    server.respond();
+  });
+
   it('should add telemetry events for fetch calls', function(done) {
     var server = window.server;
     stubResponse(server);
@@ -874,6 +922,57 @@ describe('options.autoInstrument', function() {
 
         // Verify response headers capture and case-insensitive scrubbing
         expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        done();
+      } catch (e) {
+        done(e);
+      }
+    })
+  });
+
+  it('should add telemetry events for fetch calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    window.fetchStub = sinon.stub(window, 'fetch');
+    window.fetch.returns(Promise.resolve(new Response(
+      JSON.stringify({foo: 'bar'}),
+      { status: 404, statusText: 'Not Found', headers: { 'content-type': 'application/json' }}
+    )));
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkErrorOnHttp4xx: true
+      }
+    };
+    window.rollbar = new Rollbar(options);
+
+    var fetchHeaders = new Headers();
+    fetchHeaders.append('Content-Type', 'application/json');
+
+    const fetchInit = {
+      method: 'POST',
+      headers: fetchHeaders,
+      body: JSON.stringify({foo: 'bar'})
+    };
+    var fetchRequest = new Request('https://example.com/xhr-test');
+    window.fetch(fetchRequest, fetchInit).then(function(_response) {
+      try {
+        server.respond();
+
+        expect(server.requests.length).to.eql(2);
+        var body = JSON.parse(server.requests[1].requestBody);
+
+        expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+
+        // Just knowing a stack is present is enough for this test.
+        expect(body.data.body.trace.frames.length).to.be.above(1);
 
         rollbar.configure({ autoInstrument: false });
         window.fetch.restore();
