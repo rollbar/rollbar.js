@@ -15,7 +15,7 @@ var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 
 
-var cache = lru({max: 100});
+var cache = new lru({max: 100});
 var pendingReads = {};
 
 exports.cache = cache;
