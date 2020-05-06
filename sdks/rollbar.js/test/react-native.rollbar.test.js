@@ -299,6 +299,85 @@ describe('captureEvent', function() {
   });
 });
 
+describe('callback options', function() {
+  beforeEach(function (done) {
+    // In react-native environment, stub fetch() instead of XMLHttpRequest
+    window.fetchStub = sinon.stub(window, 'fetch');
+    done();
+  });
+
+  afterEach(function () {
+    window.fetch.restore();
+  });
+
+  function stubResponse(code, err, message) {
+    var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
+
+    window.fetch.returns(Promise.resolve(new Response(
+      JSON.stringify({ err: err, message: message, result: { uuid: uuid }}),
+      { status: code, statusText: message, headers: { 'Content-Type': 'application/json' }}
+    )));
+  }
+
+  it('should use checkIgnore when set', function(done) {
+    stubResponse(200, 0, 'OK');
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, _args, _payload) {
+        return true;
+      }
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to ignore
+
+    expect(window.fetchStub.called).to.not.be.ok();
+
+    done();
+  });
+
+  it('should use onSendCallback when set', function(done) {
+    stubResponse(200, 0, 'OK');
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function(_isUncaught, _args, payload) {
+        payload.foo = 'bar';
+      }
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    expect(window.fetchStub.called).to.be.ok();
+    var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
+    expect(body.data.foo).to.eql('bar');
+
+    done();
+  });
+
+  it('should use transform when set', function(done) {
+    stubResponse(200, 0, 'OK');
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      transform: function(data, _item) {
+        data.foo = 'baz';
+      }
+    };
+    var rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    expect(window.fetchStub.called).to.be.ok();
+    var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
+    expect(body.data.foo).to.eql('baz');
+
+    done();
+  });
+});
+
 describe('createItem', function() {
   it('should handle multiple strings', function(done) {
     var client = new (TestClientGen())();
