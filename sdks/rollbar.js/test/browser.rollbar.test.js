@@ -713,6 +713,98 @@ describe('onerror', function() {
   })
 });
 
+describe('callback options', function() {
+  beforeEach(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should use checkIgnore when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, _args, _payload) {
+        return true;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to ignore
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(0);
+
+    done();
+  });
+
+  it('should use onSendCallback when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function(_isUncaught, _args, payload) {
+        payload.foo = 'bar';
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('bar');
+
+    done();
+  });
+
+  it('should use transform when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      transform: function(data, _item) {
+        data.foo = 'baz';
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('baz');
+
+    done();
+  });
+});
+
 describe('options.autoInstrument', function() {
   beforeEach(function (done) {
     window.server = sinon.createFakeServer();
