@@ -69,7 +69,7 @@ describe('webpack app', function() {
     // This has become necessary because Travis switched their Chrome stable
     // version _down_ from 76 to 62, which handles this test case differently.
     var version = parseInt(window.navigator.userAgent.match(new RegExp('^.*HeadlessChrome/([0-9]*).*$'))[1]);
-    var message = version > 62 ? 'webpack test error' : 'Script error.';
+    var message = version >= 62 ? 'webpack test error' : 'Script error.';
 
     expect(body.data.body.trace.exception.message).to.eql(message);
 
