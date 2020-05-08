@@ -274,6 +274,7 @@ describe('options.captureUncaught', function() {
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.notifier.diagnostic.raw_error.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
     // karma doesn't unload the browser between tests, so the onerror handler
     // will remain installed. Unset captureUncaught so the onerror handler
@@ -520,6 +521,7 @@ describe('options.captureUnhandledRejections', function() {
 
       expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test reject');
+      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
       rollbar.configure({
         captureUnhandledRejections: false
@@ -617,6 +619,54 @@ describe('log', function() {
     );
   }
 
+  it('should send message when called with message and extra args', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test message', { 'foo': 'bar' });
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.message.body).to.eql('test message');
+    expect(body.data.body.message.extra).to.eql({ 'foo': 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['string', 'object']);
+
+    done();
+  })
+
+  it('should send exception when called with error and extra args', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log(new Error('test error'), { 'foo': 'bar' });
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.body.trace.extra).to.eql({ 'foo': 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['error', 'object']);
+
+    done();
+  })
+
   it('should send message when called with only null arguments', function(done) {
     var server = window.server;
     stubResponse(server);
@@ -635,6 +685,7 @@ describe('log', function() {
     var body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.message.body).to.eql('Item sent with null or missing arguments.');
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
 
     done();
   })
@@ -756,6 +807,31 @@ describe('callback options', function() {
     done();
   });
 
+    it('should send when checkIgnore returns false', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, _args, _payload) {
+        return false;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.notifier.configured_options.checkIgnore.substr(0,8))
+      .to.eql('function');
+
+    done();
+  });
+
   it('should use onSendCallback when set', function(done) {
     var server = window.server;
     stubResponse(server);
@@ -776,6 +852,8 @@ describe('callback options', function() {
     expect(server.requests.length).to.eql(1);
     var body = JSON.parse(server.requests[0].requestBody);
     expect(body.data.foo).to.eql('bar');
+    expect(body.data.notifier.configured_options.onSendCallback.substr(0,8))
+      .to.eql('function');
 
     done();
   });
@@ -800,6 +878,8 @@ describe('callback options', function() {
     expect(server.requests.length).to.eql(1);
     var body = JSON.parse(server.requests[0].requestBody);
     expect(body.data.foo).to.eql('baz');
+    expect(body.data.notifier.configured_options.transform.substr(0,8))
+      .to.eql('function');
 
     done();
   });

@@ -75,9 +75,22 @@ function addConfigToPayload(item, options, callback) {
   callback(null, item);
 }
 
+function addFunctionOption(options, name) {
+  if(_.isFunction(options[name])) {
+    options[name] = options[name].toString();
+  }
+}
+
 function addConfiguredOptions(item, options, callback) {
-  delete options._configuredOptions.accessToken;
-  item.data.notifier.configured_options = options._configuredOptions;
+  var configuredOptions = options._configuredOptions;
+
+  // These must be stringified or they'll get dropped during serialization.
+  addFunctionOption(configuredOptions, 'transform');
+  addFunctionOption(configuredOptions, 'checkIgnore');
+  addFunctionOption(configuredOptions, 'onSendCallback');
+
+  delete configuredOptions.accessToken;
+  item.data.notifier.configured_options = configuredOptions;
   callback(null, item);
 }
 
@@ -86,6 +99,11 @@ function addDiagnosticKeys(item, options, callback) {
 
   if (_.get(item, 'err._isAnonymous')) {
     diagnostic.is_anonymous = true;
+  }
+
+  if (item._isUncaught) {
+    diagnostic.is_uncaught = item._isUncaught;
+    delete item._isUncaught;
   }
 
   if (item.err) {
