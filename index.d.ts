@@ -74,6 +74,7 @@ declare namespace Rollbar {
         scrubRequestBody?: boolean;
         scrubTelemetryInputs?: boolean;
         sendConfig?: boolean;
+        stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
         transform?: (data: object) => void;
         transmit?: boolean;
