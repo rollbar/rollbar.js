@@ -477,6 +477,39 @@ describe('options.captureUncaught', function() {
     done();
   });
 
+    it('should capture exta frames when stackTraceLimit is set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var oldLimit = Error.stackTraceLimit;
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      stackTraceLimit: 50
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-depp-stack-error');
+    element.click();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('deep stack error');
+    expect(body.data.body.trace.frames.length).to.be.above(20);
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      stackTraceLimit: oldLimit // reset to default
+    });
+
+    done();
+  });
 });
 
 describe('options.captureUnhandledRejections', function() {

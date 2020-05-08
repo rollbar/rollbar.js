@@ -15,7 +15,8 @@ const rollbarConfig:Rollbar.Configuration = {
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
   scrubRequestBody: true,
-  exitOnUncaughtException: false
+  exitOnUncaughtException: false,
+  stackTraceLimit: 20
 };
 
 export const RollbarService = new InjectionToken<Rollbar>('rollbar');
