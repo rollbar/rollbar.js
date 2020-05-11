@@ -275,11 +275,19 @@ vows.describe('transforms')
           assert.isTrue(addItem.called);
           if (addItem.called) {
             var frame = addItem.getCall(0).args[0].body.trace_chain[0].frames.pop();
-            console.log(frame);
             assert.ok(frame.filename.includes('src/index.ts'));
             assert.equal(frame.lineno, 10);
             assert.equal(frame.colno, 22);
             assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+
+            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic.node_source_maps.source_mapping_urls;
+            var urls = Object.keys(sourceMappingURLs);
+            assert.ok(urls[0].includes('index.js'));
+            assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
+            assert.ok(urls[1].includes('server.transforms.test.js'));
+            assert.ok(sourceMappingURLs[urls[1]].includes('not found'));
+            assert.ok(urls[2].includes('timers.js'));
+            assert.ok(sourceMappingURLs[urls[2]].includes('not found'));
           }
           addItem.reset();
         },

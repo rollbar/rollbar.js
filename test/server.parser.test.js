@@ -9,6 +9,7 @@ vows.describe('parser')
     'parseStack': {
       'a valid stack trace': {
         topic: function() {
+          var item = { diagnostic: {} }
           var stack = 'ReferenceError: foo is not defined\n' +
                       '  at MethodClass.method.<anonymous> (app/server.js:2:4)\n' +
                       '  at /app/node_modules/client.js:321:23\n' +
@@ -16,7 +17,7 @@ vows.describe('parser')
                       '  at MethodClass.method.(anonymous) (app/server.js:62:14)\n' +
                       '  at MethodClass.method (app/server.ts:52:4)\n' +
                       '  at MethodClass.method (app/server.js:62:14)\n';
-          p.parseStack(stack, {}, this.callback);
+          p.parseStack(stack, {}, item, this.callback);
         },
         'should parse valid js frame': function(err, frames) {
           var frame = frames[0];
