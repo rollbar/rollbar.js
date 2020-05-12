@@ -20,6 +20,7 @@ function Rollbar(options, api, logger, platform) {
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
+  setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
 }
@@ -45,6 +46,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.merge(oldOptions, options, payload);
   this.notifier && this.notifier.configure(this.options);
   this.telemeter && this.telemeter.configure(this.options);
+  setStackTraceLimit(options);
   this.global(this.options);
   return this;
 };
@@ -149,6 +151,15 @@ function generateItemHash(item) {
   var message = item.message || '';
   var stack = (item.err || {}).stack || String(item.err);
   return message + '::' + stack;
+}
+
+// Node.js, Chrome, Safari, and some other browsers support this property
+// which globally sets the number of stack frames returned in an Error object.
+// If a browser can't use it, no harm done.
+function setStackTraceLimit(options) {
+  if (options.stackTraceLimit) {
+    Error.stackTraceLimit = options.stackTraceLimit;
+  }
 }
 
 module.exports = Rollbar;
