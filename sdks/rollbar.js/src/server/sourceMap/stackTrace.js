@@ -112,7 +112,7 @@ function retrieveSourceMap(source) {
   };
 }
 
-exports.mapSourcePosition = function mapSourcePosition(position) {
+exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
   var sourceMap = sourceMapCache[position.source];
   if (!sourceMap) {
     // Call the (overrideable) retrieveSourceMap function to get the source map.
@@ -122,6 +122,7 @@ exports.mapSourcePosition = function mapSourcePosition(position) {
         url: urlAndMap.url,
         map: new SourceMapConsumer(urlAndMap.map)
       };
+      diagnostic.node_source_maps.source_mapping_urls[position.source] = urlAndMap.url;
 
       // Load all sources stored inline with the source map into the file cache
       // to pretend like they are already loaded. They may not exist on disk.
@@ -139,6 +140,7 @@ exports.mapSourcePosition = function mapSourcePosition(position) {
         url: null,
         map: null
       };
+      diagnostic.node_source_maps.source_mapping_urls[position.source] = 'not found';
     }
   }
 
