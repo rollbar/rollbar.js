@@ -32,7 +32,11 @@ declare class Rollbar {
 }
 
 declare namespace Rollbar {
-    export type LambdaHandler<E = object> = (event: E, context: object, callback: Callback) => void;
+    export type LambdaHandler<TEvent = any, TResult = any> = (
+        event: TEvent,
+        context: Context,
+        callback: Callback<TResult>,
+    ) => void | Promise<TResult>;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
