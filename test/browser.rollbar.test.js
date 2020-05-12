@@ -477,7 +477,7 @@ describe('options.captureUncaught', function() {
     done();
   });
 
-    it('should capture exta frames when stackTraceLimit is set', function(done) {
+  it('should capture exta frames when stackTraceLimit is set', function(done) {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
