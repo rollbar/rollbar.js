@@ -16,6 +16,14 @@
       // is true in the config.
       throw new DOMException('test DOMException');
     };
+    // Deep stack error
+    window.throwDeepStackError = function throwDeepStackError(curr, limit) {
+      if (curr < limit) {
+        throwDeepStackError(curr + 1, limit);
+      } else {
+        throw new Error('deep stack error');
+      }
+    };
   </script>
 </head>
 <body>
@@ -26,4 +34,5 @@
   </div>
   <button id="throw-error" onclick="throwError()">Throw Error</button>
   <button id="throw-dom-exception" onclick="throwDomException()">Throw DOMException</button>
+  <button id="throw-depp-stack-error" onclick="throwDeepStackError(0,20)">Throw deep stack Error</button>
 </html>
