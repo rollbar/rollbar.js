@@ -116,12 +116,14 @@ function extractContextLines(frame, fileLines) {
   };
 }
 
-function mapPosition(position) {
+function mapPosition(position, diagnostic) {
   return stackTrace.mapSourcePosition({
       source: position.source,
       line: position.line,
       column: position.column
-  });
+    },
+    diagnostic
+  );
 }
 
 function parseFrameLine(line, callback) {
@@ -145,7 +147,7 @@ function parseFrameLine(line, callback) {
     column: Math.floor(data[3]) - 1
   };
   if (this.useSourceMaps) {
-    position = mapPosition(position);
+    position = mapPosition(position, this.diagnostic);
   }
 
   frame = {
@@ -270,10 +272,10 @@ function gatherContexts(frames, callback) {
  */
 
 
-exports.parseException = function (exc, options, callback) {
+exports.parseException = function (exc, options, item, callback) {
   var multipleErrs = getMultipleErrors(exc.errors);
 
-  return exports.parseStack(exc.stack, options, function (err, stack) {
+  return exports.parseStack(exc.stack, options, item, function (err, stack) {
     var message, clss, ret, firstErr, jadeMatch, jadeData;
 
     if (err) {
@@ -309,7 +311,7 @@ exports.parseException = function (exc, options, callback) {
 };
 
 
-exports.parseStack = function (stack, options, callback) {
+exports.parseStack = function (stack, options, item, callback) {
   var lines, _stack = stack;
 
   // Some JS frameworks (e.g. Meteor) might bury the stack property
@@ -320,8 +322,13 @@ exports.parseStack = function (stack, options, callback) {
   // grab all lines except the first
   lines = (_stack || '').split('\n').slice(1);
 
+  if (options.nodeSourceMaps) {
+    item.diagnostic.node_source_maps = {};
+    item.diagnostic.node_source_maps.source_mapping_urls = {};
+  }
+
   // Parse out all of the frame and filename info
-  async.map(lines, parseFrameLine.bind({ useSourceMaps: options.nodeSourceMaps }), function (err, frames) {
+  async.map(lines, parseFrameLine.bind({ useSourceMaps: options.nodeSourceMaps, diagnostic: item.diagnostic }), function (err, frames) {
     if (err) {
       return callback(err);
     }
