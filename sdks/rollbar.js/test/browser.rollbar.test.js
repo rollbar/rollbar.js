@@ -840,7 +840,33 @@ describe('callback options', function() {
     done();
   });
 
-    it('should send when checkIgnore returns false', function(done) {
+  it('should receive valid arguments at checkIgnore', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, args, payload) {
+        if (_isUncaught === false && args[0] instanceof Error && payload.uuid) {
+          return true;
+        }
+        return false;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log(new Error('test'));
+
+    server.respond();
+
+    // Should be ignored if all checks pass.
+    expect(server.requests.length).to.eql(0);
+
+    done();
+  });
+
+  it('should send when checkIgnore returns false', function(done) {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
