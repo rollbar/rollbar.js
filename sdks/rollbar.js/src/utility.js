@@ -490,6 +490,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   if (lambdaContext) {
     item.lambdaContext = lambdaContext;
   }
+  item._originalArgs = args;
   item.diagnostic.original_arg_types = argTypes;
   return item;
 }
