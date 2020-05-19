@@ -295,9 +295,9 @@ function addPredicatesToQueue(queue) {
 
 Rollbar.prototype.addExceptionHandlers = function() {
   if (this.options.platform === 'ios' || this.options.platform === 'android') {
-    captureJavaScriptCoreUncaughtExceptions();
+    this.captureJavaScriptCoreUncaughtExceptions();
   } else {
-    captureBrowserUncaughtExceptions();
+    this.captureBrowserUncaughtExceptions();
   }
 }
 
