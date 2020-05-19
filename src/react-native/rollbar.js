@@ -349,6 +349,206 @@ Rollbar.prototype.captureBrowserUncaughtExceptions = function () {
   }
 }
 
+Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno, error, context) {
+  if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
+    return;
+  }
+
+  // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
+  // If error is undefined, we have a different caller.
+  if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
+    return 'anonymous';
+  }
+
+  var item;
+  var stackInfo = _.makeUnhandledStackInfo(
+    message,
+    url,
+    lineno,
+    colno,
+    error,
+    'onerror',
+    'uncaught exception',
+    errorParser
+  );
+  if (_.isError(error)) {
+    item = this._createItem([message, error, context]);
+    item._unhandledStackInfo = stackInfo;
+  } else if (_.isError(url)) {
+    item = this._createItem([message, url, context]);
+    item._unhandledStackInfo = stackInfo;
+  } else {
+    item = this._createItem([message, context]);
+    item.stackInfo = stackInfo;
+  }
+  item.level = this.options.uncaughtErrorLevel;
+  item._isUncaught = true;
+  this.client.log(item);
+};
+
+/**
+ * Chrome only. Other browsers will ignore.
+ *
+ * Use Error.prepareStackTrace to extract information about errors that
+ * do not have a valid error object in onerror().
+ *
+ * In tested version of Chrome, onerror is called first but has no way
+ * to communicate with prepareStackTrace. Use a counter to let this
+ * handler know which errors to send to Rollbar.
+ *
+ * In config options, set inspectAnonymousErrors to enable.
+ */
+Rollbar.prototype.handleAnonymousErrors = function() {
+  if (!this.options.inspectAnonymousErrors || !this.isChrome) {
+    return;
+  }
+
+  var r = this;
+  function prepareStackTrace(error, _stack) { // eslint-disable-line no-unused-vars
+    if (r.options.inspectAnonymousErrors) {
+      if (r.anonymousErrorsPending) {
+        // This is the only known way to detect that onerror saw an anonymous error.
+        // It depends on onerror reliably being called before Error.prepareStackTrace,
+        // which so far holds true on tested versions of Chrome. If versions of Chrome
+        // are tested that behave differently, this logic will need to be updated
+        // accordingly.
+        r.anonymousErrorsPending -= 1;
+
+        if (!error) {
+          // Not likely to get here, but calling handleUncaughtException from here
+          // without an error object would throw off the anonymousErrorsPending counter,
+          // so return now.
+          return;
+        }
+
+        // Allow this to be tracked later.
+        error._isAnonymous = true;
+
+        // url, lineno, colno shouldn't be needed for these errors.
+        // If that changes, update this accordingly, using the unused
+        // _stack param as needed (rather than parse error.toString()).
+        r.handleUncaughtException(error.message, null, null, null, error);
+      }
+    }
+
+    // Workaround to ensure stack is preserved for normal errors.
+    return error.stack;
+  }
+
+  // https://v8.dev/docs/stack-trace-api
+  try {
+    Error.prepareStackTrace = prepareStackTrace;
+  } catch (e) {
+    this.options.inspectAnonymousErrors = false;
+    this.error('anonymous error handler failed', e);
+  }
+}
+
+Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
+  if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
+    return;
+  }
+
+  var message = 'unhandled rejection was null or undefined!';
+  if (reason) {
+    if (reason.message) {
+      message = reason.message;
+    } else {
+      var reasonResult = _.stringify(reason);
+      if (reasonResult.value) {
+        message = reasonResult.value;
+      }
+    }
+  }
+  var context = (reason && reason._rollbarContext) || (promise && promise._rollbarContext);
+
+  var item;
+  if (_.isError(reason)) {
+    item = this._createItem([message, reason, context]);
+  } else {
+    item = this._createItem([message, reason, context]);
+    item.stackInfo = _.makeUnhandledStackInfo(
+      message,
+      '',
+      0,
+      0,
+      null,
+      'unhandledrejection',
+      '',
+      errorParser
+    );
+  }
+  item.level = this.options.uncaughtErrorLevel;
+  item._isUncaught = true;
+  item._originalArgs = item._originalArgs || [];
+  item._originalArgs.push(promise);
+  this.client.log(item);
+};
+
+Rollbar.prototype.wrap = function(f, context, _before) {
+  try {
+    var ctxFn;
+    if(_.isFunction(context)) {
+      ctxFn = context;
+    } else {
+      ctxFn = function() { return context || {}; };
+    }
+
+    if (!_.isFunction(f)) {
+      return f;
+    }
+
+    if (f._isWrap) {
+      return f;
+    }
+
+    if (!f._rollbar_wrapped) {
+      f._rollbar_wrapped = function () {
+        if (_before && _.isFunction(_before)) {
+          _before.apply(this, arguments);
+        }
+        try {
+          return f.apply(this, arguments);
+        } catch(exc) {
+          var e = exc;
+          if (e && window._rollbarWrappedError !== e) {
+            if (_.isType(e, 'string')) {
+              e = new String(e);
+            }
+            e._rollbarContext = ctxFn() || {};
+            e._rollbarContext._wrappedSource = f.toString();
+
+            window._rollbarWrappedError = e;
+          }
+          throw e;
+        }
+      };
+
+      f._rollbar_wrapped._isWrap = true;
+
+      if (f.hasOwnProperty) {
+        for (var prop in f) {
+          if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
+            f._rollbar_wrapped[prop] = f[prop];
+          }
+        }
+      }
+    }
+
+    return f._rollbar_wrapped;
+  } catch (e) {
+    // Return the original function if the wrap fails.
+    return f;
+  }
+};
+Rollbar.wrap = function(f, context) {
+  if (_instance) {
+    return _instance.wrap(f, context);
+  } else {
+    handleUninitialized();
+  }
+};
+
 Rollbar.prototype._createItem = function(args) {
   return _.createItem(args, logger, this);
 };
