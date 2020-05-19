@@ -307,7 +307,7 @@ Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
     const previousHandler = ErrorUtils.getGlobalHandler();
 
     ErrorUtils.setGlobalHandler((error, isFatal) => {
-      if (this.options.captureUncaught && this.options.shouldSend()) {
+      if (this.options.captureUncaught) {
         this.error(error, undefined, (_queued) => {
           if (previousHandler) {
             previousHandler(error, isFatal);
