@@ -1,5 +1,3 @@
-import { Platform } from 'react-native'
-
 var packageJson = require('../../package.json');
 var Client = require('../rollbar');
 var _ = require('../utility');
@@ -296,7 +294,7 @@ function addPredicatesToQueue(queue) {
 }
 
 function addExceptionHandlers() {
-  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+  if (this.options.platform === 'ios' || this.options.platform === 'android') {
     captureJavaScriptCoreUncaughtExceptions();
   } else {
     captureBrowserUncaughtExceptions();
