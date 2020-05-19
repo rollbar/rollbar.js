@@ -7,6 +7,7 @@ var logger = require('./logger');
 var transport = require('./transport');
 var urllib = require('../browser/url');
 var globals = require('../browser/globalSetup');
+var errorParser = require('../errorParser');
 
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
@@ -307,7 +308,7 @@ Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
 
     ErrorUtils.setGlobalHandler((error, isFatal) => {
       if (this.options.captureUncaught && this.options.shouldSend()) {
-        this.error(error, undefined, (queued) => {
+        this.error(error, undefined, (_queued) => {
           if (previousHandler) {
             previousHandler(error, isFatal);
           }
@@ -320,7 +321,6 @@ Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
   
   if (this.options.captureUnhandledRejections) {
     const tracking = require('promise/setimmediate/rejection-tracking');
-    const client = this;
     tracking.enable({
       allRejections: true,
       onUnhandled: function(id, error) { this.error(error); },
