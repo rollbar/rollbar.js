@@ -1,3 +1,5 @@
+import { Platform } from 'react-native'
+
 var packageJson = require('../../package.json');
 var Client = require('../rollbar');
 var _ = require('../utility');
@@ -6,6 +8,7 @@ var logger = require('./logger');
 
 var transport = require('./transport');
 var urllib = require('../browser/url');
+var globals = require('../browser/globalSetup');
 
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
@@ -26,6 +29,7 @@ function Rollbar(options, client) {
   this.client = client || new Client(this.options, api, logger, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  addExceptionHandlers();
 }
 
 var _instance = null;
@@ -289,6 +293,62 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(sharedPredicates.userCheckIgnore(logger));
+}
+
+function addExceptionHandlers() {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    captureJavaScriptCoreUncaughtExceptions();
+  } else {
+    captureBrowserUncaughtExceptions();
+  }
+}
+
+function captureJavaScriptCoreUncaughtExceptions() {
+  if (ErrorUtils) {
+    const previousHandler = ErrorUtils.getGlobalHandler();
+
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+      if (this.options.captureUncaught && this.options.shouldSend()) {
+        this.error(error, undefined, (queued) => {
+          if (previousHandler) {
+            previousHandler(error, isFatal);
+          }
+        });
+      } else if (previousHandler) {
+        previousHandler(error, isFatal);
+      }
+    });
+  }
+  
+  if (this.options.captureUnhandledRejections) {
+    const tracking = require('promise/setimmediate/rejection-tracking');
+    const client = this;
+    tracking.enable({
+      allRejections: true,
+      onUnhandled: function(id, error) { this.error(error); },
+      onHandled: function() {}
+    });
+  }
+}
+
+function captureBrowserUncaughtExceptions() {
+  var gWindow = _gWindow();
+
+  if (!this.unhandledExceptionsInitialized) {
+    if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+      globals.captureUncaughtExceptions(gWindow, this);
+      if (this.options.wrapGlobalEventHandlers) {
+        globals.wrapGlobals(gWindow, this);
+      }
+      this.unhandledExceptionsInitialized = true;
+    }
+  }
+  if (!this.unhandledRejectionsInitialized) {
+    if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+      globals.captureUnhandledRejections(gWindow, this);
+      this.unhandledRejectionsInitialized = true;
+    }
+  }
 }
 
 Rollbar.prototype._createItem = function(args) {
