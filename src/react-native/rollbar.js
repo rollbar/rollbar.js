@@ -305,10 +305,10 @@ Rollbar.prototype.addExceptionHandlers = function() {
 Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
   if (ErrorUtils) {
     const previousHandler = ErrorUtils.getGlobalHandler();
-
+    const client = this;
     ErrorUtils.setGlobalHandler((error, isFatal) => {
       if (this.options.captureUncaught) {
-        this.error(error, undefined, (_queued) => {
+        client.error(error, undefined, (_queued) => {
           if (previousHandler) {
             previousHandler(error, isFatal);
           }
@@ -321,9 +321,10 @@ Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
   
   if (this.options.captureUnhandledRejections) {
     const tracking = require('promise/setimmediate/rejection-tracking');
+    const client = this;
     tracking.enable({
       allRejections: true,
-      onUnhandled: function(id, error) { this.error(error); },
+      onUnhandled: function(id, error) { client.error(error); },
       onHandled: function() {}
     });
   }
