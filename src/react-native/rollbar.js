@@ -383,7 +383,7 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
   }
   item.level = this.options.uncaughtErrorLevel;
   item._isUncaught = true;
-  this.client.log(item);
+  this.client.error(item);
 };
 
 /**
@@ -482,7 +482,7 @@ Rollbar.prototype.handleUnhandledRejection = function(reason, promise) {
   item._isUncaught = true;
   item._originalArgs = item._originalArgs || [];
   item._originalArgs.push(promise);
-  this.client.log(item);
+  this.client.error(item);
 };
 
 Rollbar.prototype.wrap = function(f, context, _before) {
