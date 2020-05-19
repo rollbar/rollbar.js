@@ -27,7 +27,7 @@ function Rollbar(options, client) {
   this.client = client || new Client(this.options, api, logger, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-  addExceptionHandlers();
+  this.addExceptionHandlers();
 }
 
 var _instance = null;
@@ -293,7 +293,7 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.userCheckIgnore(logger));
 }
 
-function addExceptionHandlers() {
+Rollbar.prototype.addExceptionHandlers = function() {
   if (this.options.platform === 'ios' || this.options.platform === 'android') {
     captureJavaScriptCoreUncaughtExceptions();
   } else {
@@ -301,7 +301,7 @@ function addExceptionHandlers() {
   }
 }
 
-function captureJavaScriptCoreUncaughtExceptions() {
+Rollbar.prototype.captureJavaScriptCoreUncaughtExceptions = function () {
   if (ErrorUtils) {
     const previousHandler = ErrorUtils.getGlobalHandler();
 
@@ -329,7 +329,7 @@ function captureJavaScriptCoreUncaughtExceptions() {
   }
 }
 
-function captureBrowserUncaughtExceptions() {
+Rollbar.prototype.captureBrowserUncaughtExceptions = function () {
   var gWindow = _gWindow();
 
   if (!this.unhandledExceptionsInitialized) {
