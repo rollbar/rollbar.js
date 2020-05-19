@@ -362,6 +362,10 @@ function _getFirstFunction(args) {
   return undefined;
 }
 
+function _gWindow() {
+  return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+}
+
 Rollbar.defaultOptions = {
   environment: process.env.NODE_ENV || 'development',
   platform: 'client',
