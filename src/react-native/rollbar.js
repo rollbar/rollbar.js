@@ -13,7 +13,7 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
 
-var ErrorUtls = require('react-native').ErrorUtils;
+var ErrorUtils = require('react-native').ErrorUtils;
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
