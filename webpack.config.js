@@ -35,6 +35,21 @@ var snippetConfig = {
         }
       },
       {
+        test: /\.(tsx|ts|jsx|js|mjs)$/,
+        loader: 'babel-loader',
+        exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
+        options: {
+          presets: [
+            '@babel/preset-env',
+            '@babel/preset-react',
+            ['@babel/preset-typescript', {allExtensions: true, isTSX: true}],
+            {
+              plugins: ['@babel/plugin-proposal-class-properties'],
+            },
+          ],
+        },
+      },
+      {
         test: /\.js$/,
         loader: 'strict-loader',
         exclude: [/node_modules/, /vendor/]
@@ -96,6 +111,21 @@ var vanillaConfigBase = {
         }
       },
       {
+        test: /\.(tsx|ts|jsx|js|mjs)$/,
+        loader: 'babel-loader',
+        exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
+        options: {
+          presets: [
+            '@babel/preset-env',
+            '@babel/preset-react',
+            ['@babel/preset-typescript', {allExtensions: true, isTSX: true}],
+            {
+              plugins: ['@babel/plugin-proposal-class-properties'],
+            },
+          ],
+        },
+      },
+      {
         test: /\.js$/,
         loader: 'strict-loader',
         exclude: [/node_modules/, /vendor/]
@@ -126,6 +156,21 @@ var UMDConfigBase = {
           failOnError: true,
           configFile: path.resolve(__dirname, '.eslintrc')
         }
+      },
+      {
+        test: /\.(tsx|ts|jsx|js|mjs)$/,
+        loader: 'babel-loader',
+        exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
+        options: {
+          presets: [
+            '@babel/preset-env',
+            '@babel/preset-react',
+            ['@babel/preset-typescript', {allExtensions: true, isTSX: true}],
+            {
+              plugins: ['@babel/plugin-proposal-class-properties'],
+            },
+          ],
+        },
       },
       {
         test: /\.js$/,
