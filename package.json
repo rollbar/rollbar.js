@@ -26,6 +26,7 @@
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^8.0.4",
+    "babel-preset-react-native": "^4.0.1",
     "bluebird": "^3.3.5",
     "browserstack-api": "0.0.5",
     "chai": "^4.2.0",
