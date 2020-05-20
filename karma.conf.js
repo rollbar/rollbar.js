@@ -88,6 +88,17 @@ module.exports = function (config) {
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/]
           },
           {
+            test: /\.(tsx|ts|jsx|js|mjs)$/,
+            loader: 'babel-loader',
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
+            options: {
+              presets: [
+                '@babel/preset-env',
+                '@babel/preset-react',
+              ],
+            },
+          },
+          {
             test: /(mootootls|requirejs)\.js$/,
             loader: 'script'
           },
