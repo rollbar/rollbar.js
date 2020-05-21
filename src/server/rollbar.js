@@ -96,6 +96,13 @@ Rollbar.configure = function(options, payloadData) {
   }
 };
 
+
+
+Rollbar.prototype._createItem = function(args) {
+  var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
+  return _.createItem(args, logger, this, requestKeys, this.lambdaContext);
+};
+
 Rollbar.prototype.lastError = function() {
   return this.client.lastError;
 };
@@ -511,11 +518,6 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
-
-Rollbar.prototype._createItem = function(args) {
-  var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
-  return _.createItem(args, logger, this, requestKeys, this.lambdaContext);
-};
 
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
