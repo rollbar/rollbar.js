@@ -166,21 +166,24 @@ Rollbar.prototype._addTracingInfo = function (item) {
   if (this.tracer) {
     // add rollbar occurrence uuid to span
     var span = this.tracer.scope().active();
-    span.setTag('rollbar_uuid', item.uuid);
-    span.setTag('has_rollbar_error', true);
 
-    // add span ID & trace ID to occurrence
-    var opentracingSpanId = span.context().toSpanId();
-    var opentracingTraceId = span.context().toTraceId();
+    if (validateSpan(span)) {
+      span.setTag('rollbar_uuid', item.uuid);
+      span.setTag('has_rollbar_error', true);
 
-    if (item.custom) {
-      item.custom.opentracing_span_id = opentracingSpanId;
-      item.custom.opentracing_trace_id = opentracingTraceId;
-    } else {
-      item.custom = {
-        opentracing_span_id: opentracingSpanId,
-        opentracing_trace_id: opentracingTraceId
-      };
+      // add span ID & trace ID to occurrence
+      var opentracingSpanId = span.context().toSpanId();
+      var opentracingTraceId = span.context().toTraceId();
+
+      if (item.custom) {
+        item.custom.opentracing_span_id = opentracingSpanId;
+        item.custom.opentracing_trace_id = opentracingTraceId;
+      } else {
+        item.custom = {
+          opentracing_span_id: opentracingSpanId,
+          opentracing_trace_id: opentracingTraceId
+        };
+      }
     }
   }
 }
@@ -201,9 +204,9 @@ function setStackTraceLimit(options) {
 }
 
 /**
- * Validate the tracer object provided to the Client
+ * Validate the Tracer object provided to the Client
  * is valid for our Opentracing use case.
- * @param {ls-trace-js.Tracer} tracer
+ * @param {opentracer.Tracer} tracer
  */
 function validateTracer(tracer) {
   if (!tracer) {
@@ -220,13 +223,19 @@ function validateTracer(tracer) {
     return false;
   }
 
-  const activeSpan = scope.active();
+  return true;
+}
 
-  if (!activeSpan || !activeSpan.context || typeof activeSpan.context !== 'function') {
+/**
+ * Validate the Span object provided
+ * @param {opentracer.Span} span
+ */
+function validateSpan(span) {
+  if (!span || !span.context || typeof span.context !== 'function') {
     return false;
   }
 
-  const spanContext = activeSpan.context();
+  const spanContext = span.context();
 
   if (!spanContext
     || !spanContext.toSpanId
