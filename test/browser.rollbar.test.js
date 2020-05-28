@@ -5,6 +5,31 @@
 
 var Rollbar = require('../src/browser/rollbar');
 
+const DUMMY_TRACE_ID = 'some-trace-id';
+const DUMMY_SPAN_ID = 'some-span-id';
+
+const ValidOpenTracingTracerStub = {
+  scope: () => {
+    return {
+      active: () => {
+        return {
+          setTag: () => { },
+          context: () => {
+            return {
+              toTraceId: () => DUMMY_TRACE_ID,
+              toSpanId: () => DUMMY_SPAN_ID
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const InvalidOpenTracingTracerStub = {
+  foo: () => { }
+};
+
 function TestClientGen() {
   var TestClient = function() {
     this.transforms = [];
@@ -35,6 +60,7 @@ function TestClientGen() {
       this.options = o;
       this.payloadData = payloadData;
     };
+    this.tracer = ValidOpenTracingTracerStub;
   };
 
   return TestClient;
@@ -150,6 +176,24 @@ describe('Rollbar()', function() {
       expect(client.logCalls[i].func).to.eql(methods[i]);
       expect(client.logCalls[i].item.message).to.eql(msg)
     }
+
+    done();
+  });
+
+  it('should have a tracer if valid tracer is provided', function(done) {
+    var options = { tracer: ValidOpenTracingTracerStub };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    expect(rollbar.client.tracer).to.eql(ValidOpenTracingTracerStub);
+
+    done();
+  });
+
+  it('should not have a tracer if invalid tracer is provided', function(done) {
+    var options = { tracer: InvalidOpenTracingTracerStub };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    expect(rollbar.client.tracer).to.eql(null);
 
     done();
   });

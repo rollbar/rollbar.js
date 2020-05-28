@@ -18,7 +18,11 @@ function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options);
   this.options._configuredOptions = options;
   var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'browser');
+
+  // remove tracer object from options so we don't try to parse it
+  var tracer = options.tracer || null;
+  delete options.tracer;
+  this.client = client || new Client(this.options, api, logger, 'browser', tracer);
 
   var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;

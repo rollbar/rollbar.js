@@ -23,7 +23,12 @@ function Rollbar(options, client) {
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
   var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'react-native');
+
+  // remove tracer object from options so we don't try to parse it
+  var tracer = options.tracer || null;
+  delete options.tracer;
+  this.client = client || new Client(this.options, api, logger, 'react-native', tracer);
+
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
 }
