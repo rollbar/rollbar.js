@@ -326,7 +326,10 @@ exports.parseStack = function (stack, options, callback) {
       return callback(err);
     }
     frames.reverse();
-    async.filter(frames, function (frame, callback) { callback(!!frame); }, function (results) {
+    async.filter(frames, function (frame, callback) { callback(!!frame); }, function (err, results) {
+      if (err) {
+        return callback(err);
+      }
       gatherContexts(results, callback);
     });
   });
