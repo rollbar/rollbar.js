@@ -516,11 +516,13 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var arg;
   var extraArgs = [];
   var diagnostic = {};
+  var argTypes = [];
 
   for (var i = 0, l = args.length; i < l; ++i) {
     arg = args[i];
 
     var typ = typeName(arg);
+    argTypes.push(typ);
     switch (typ) {
       case 'undefined':
         break;
@@ -592,6 +594,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     item.lambdaContext = lambdaContext;
   }
   item._originalArgs = args;
+  item.diagnostic.original_arg_types = argTypes;
   return item;
 }
 
@@ -1840,7 +1843,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.15.0",
+  version: "2.16.2",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1889,6 +1892,7 @@ function Rollbar(options, api, logger, platform) {
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
+  setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
 }
@@ -1914,6 +1918,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.merge(oldOptions, options, payload);
   this.notifier && this.notifier.configure(this.options);
   this.telemeter && this.telemeter.configure(this.options);
+  setStackTraceLimit(options);
   this.global(this.options);
   return this;
 };
@@ -2018,6 +2023,15 @@ function generateItemHash(item) {
   var message = item.message || '';
   var stack = (item.err || {}).stack || String(item.err);
   return message + '::' + stack;
+}
+
+// Node.js, Chrome, Safari, and some other browsers support this property
+// which globally sets the number of stack frames returned in an Error object.
+// If a browser can't use it, no harm done.
+function setStackTraceLimit(options) {
+  if (options.stackTraceLimit) {
+    Error.stackTraceLimit = options.stackTraceLimit;
+  }
 }
 
 module.exports = Rollbar;
@@ -5021,9 +5035,22 @@ function addConfigToPayload(item, options, callback) {
   callback(null, item);
 }
 
+function addFunctionOption(options, name) {
+  if(_.isFunction(options[name])) {
+    options[name] = options[name].toString();
+  }
+}
+
 function addConfiguredOptions(item, options, callback) {
-  delete options._configuredOptions.accessToken;
-  item.data.notifier.configured_options = options._configuredOptions;
+  var configuredOptions = options._configuredOptions;
+
+  // These must be stringified or they'll get dropped during serialization.
+  addFunctionOption(configuredOptions, 'transform');
+  addFunctionOption(configuredOptions, 'checkIgnore');
+  addFunctionOption(configuredOptions, 'onSendCallback');
+
+  delete configuredOptions.accessToken;
+  item.data.notifier.configured_options = configuredOptions;
   callback(null, item);
 }
 
@@ -5032,6 +5059,11 @@ function addDiagnosticKeys(item, options, callback) {
 
   if (_.get(item, 'err._isAnonymous')) {
     diagnostic.is_anonymous = true;
+  }
+
+  if (item._isUncaught) {
+    diagnostic.is_uncaught = item._isUncaught;
+    delete item._isUncaught;
   }
 
   if (item.err) {
@@ -5110,7 +5142,6 @@ function checkLevel(item, settings) {
 function userCheckIgnore(logger) {
   return function(item, settings) {
     var isUncaught = !!item._isUncaught;
-    delete item._isUncaught;
     var args = item._originalArgs;
     delete item._originalArgs;
     try {
@@ -5573,7 +5604,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         } else {
           xhr.onreadystatechange = onreadystatechangeHandler;
         }
-        if (xhr.__rollbar_xhr) {
+        if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
           xhr.__rollbar_xhr.stack = (new Error()).stack;
         }
         return orig.apply(this, arguments);
@@ -5631,7 +5662,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
         }
         self.captureNetwork(metadata, 'fetch', undefined);
-        metadata.stack = (new Error()).stack;
+        if (self.trackHttpErrors()) {
+          metadata.stack = (new Error()).stack;
+        }
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -5710,6 +5743,12 @@ Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
     /* ignore probable IE errors */
   }
   return outHeaders;
+}
+
+Instrumenter.prototype.trackHttpErrors = function() {
+  return this.autoInstrument.networkErrorOnHttp5xx ||
+    this.autoInstrument.networkErrorOnHttp4xx ||
+    this.autoInstrument.networkErrorOnHttp0;
 }
 
 Instrumenter.prototype.errorOnHttpStatus = function(metadata) {

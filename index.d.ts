@@ -32,7 +32,11 @@ declare class Rollbar {
 }
 
 declare namespace Rollbar {
-    export type LambdaHandler<E = object> = (event: E, context: object, callback: Callback) => void;
+    export type LambdaHandler<TEvent = any, TResult = any, TContext = any> = (
+        event: TEvent,
+        context: TContext,
+        callback: Callback<TResult>,
+    ) => void | Promise<TResult>;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
@@ -74,6 +78,7 @@ declare namespace Rollbar {
         scrubRequestBody?: boolean;
         scrubTelemetryInputs?: boolean;
         sendConfig?: boolean;
+        stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
         transform?: (data: object) => void;
         transmit?: boolean;
@@ -82,7 +87,7 @@ declare namespace Rollbar {
         version?: string;
         wrapGlobalEventHandlers?: boolean;
     }
-    export type Callback = (err: MaybeError, response: object) => void;
+    export type Callback<TResponse = any> = (err: MaybeError, response: TResponse) => void;
     export type LogArgument = string | Error | object | Callback | Date | any[];
     export interface LogResult {
         uuid: string;

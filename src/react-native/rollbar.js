@@ -9,7 +9,7 @@ var urllib = require('../browser/url');
 
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
-var predicates = require('./predicates');
+var sharedPredicates = require('../predicates');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -279,6 +279,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
+    .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
@@ -286,8 +287,8 @@ function addTransformsToNotifier(notifier) {
 
 function addPredicatesToQueue(queue) {
   queue
-    .addPredicate(predicates.checkLevel)
-    .addPredicate(predicates.userCheckIgnore);
+    .addPredicate(sharedPredicates.checkLevel)
+    .addPredicate(sharedPredicates.userCheckIgnore(logger));
 }
 
 Rollbar.prototype._createItem = function(args) {

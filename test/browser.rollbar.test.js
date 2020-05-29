@@ -274,6 +274,7 @@ describe('options.captureUncaught', function() {
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.notifier.diagnostic.raw_error.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
     // karma doesn't unload the browser between tests, so the onerror handler
     // will remain installed. Unset captureUncaught so the onerror handler
@@ -477,6 +478,39 @@ describe('options.captureUncaught', function() {
     done();
   });
 
+  it('should capture exta frames when stackTraceLimit is set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var oldLimit = Error.stackTraceLimit;
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      stackTraceLimit: 50
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-depp-stack-error');
+    element.click();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.trace.exception.message).to.eql('deep stack error');
+    expect(body.data.body.trace.frames.length).to.be.above(20);
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      stackTraceLimit: oldLimit // reset to default
+    });
+
+    done();
+  });
 });
 
 describe('options.captureUnhandledRejections', function() {
@@ -520,6 +554,7 @@ describe('options.captureUnhandledRejections', function() {
 
       expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test reject');
+      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
       rollbar.configure({
         captureUnhandledRejections: false
@@ -617,6 +652,54 @@ describe('log', function() {
     );
   }
 
+  it('should send message when called with message and extra args', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test message', { 'foo': 'bar' });
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.message.body).to.eql('test message');
+    expect(body.data.body.message.extra).to.eql({ 'foo': 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['string', 'object']);
+
+    done();
+  })
+
+  it('should send exception when called with error and extra args', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN'
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log(new Error('test error'), { 'foo': 'bar' });
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.body.trace.extra).to.eql({ 'foo': 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['error', 'object']);
+
+    done();
+  })
+
   it('should send message when called with only null arguments', function(done) {
     var server = window.server;
     stubResponse(server);
@@ -635,6 +718,7 @@ describe('log', function() {
     var body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.message.body).to.eql('Item sent with null or missing arguments.');
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
 
     done();
   })
@@ -711,6 +795,153 @@ describe('onerror', function() {
 
     done();
   })
+});
+
+describe('callback options', function() {
+  beforeEach(function (done) {
+    window.server = sinon.createFakeServer();
+    done();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item',
+      [
+        200,
+        { 'Content-Type': 'application/json' },
+        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+      ]
+    );
+  }
+
+  it('should use checkIgnore when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, _args, _payload) {
+        return true;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to ignore
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(0);
+
+    done();
+  });
+
+  it('should receive valid arguments at checkIgnore', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, args, payload) {
+        if (_isUncaught === false && args[0] instanceof Error && payload.uuid) {
+          return true;
+        }
+        return false;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log(new Error('test'));
+
+    server.respond();
+
+    // Should be ignored if all checks pass.
+    expect(server.requests.length).to.eql(0);
+
+    done();
+  });
+
+  it('should send when checkIgnore returns false', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function(_isUncaught, _args, _payload) {
+        return false;
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.notifier.configured_options.checkIgnore.substr(0,8))
+      .to.eql('function');
+
+    done();
+  });
+
+  it('should use onSendCallback when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function(_isUncaught, _args, payload) {
+        payload.foo = 'bar';
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('bar');
+    expect(body.data.notifier.configured_options.onSendCallback.substr(0,8))
+      .to.eql('function');
+
+    done();
+  });
+
+  it('should use transform when set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      transform: function(data, _item) {
+        data.foo = 'baz';
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('baz');
+    expect(body.data.notifier.configured_options.transform.substr(0,8))
+      .to.eql('function');
+
+    done();
+  });
 });
 
 describe('options.autoInstrument', function() {
@@ -816,6 +1047,54 @@ describe('options.autoInstrument', function() {
     server.respond();
   });
 
+  it('should send errors for xhr http errors', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('POST', 'xhr-test',
+      [
+        404,
+        { 'Content-Type': 'application/json' },
+        JSON.stringify({foo: 'bar'})
+      ]
+    );
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkErrorOnHttp4xx: true
+      }
+    };
+    window.rollbar = new Rollbar(options);
+
+    // generate a telemetry event
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://example.com/xhr-test', true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.onreadystatechange = function () {
+      if(xhr.readyState === 4) {
+        try {
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+
+          // Just knowing a stack is present is enough for this test.
+          expect(body.data.body.trace.frames.length).to.be.above(1);
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }
+    };
+    xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
+    server.respond();
+  });
+
   it('should add telemetry events for fetch calls', function(done) {
     var server = window.server;
     stubResponse(server);
@@ -874,6 +1153,57 @@ describe('options.autoInstrument', function() {
 
         // Verify response headers capture and case-insensitive scrubbing
         expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        done();
+      } catch (e) {
+        done(e);
+      }
+    })
+  });
+
+  it('should add telemetry events for fetch calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    window.fetchStub = sinon.stub(window, 'fetch');
+    window.fetch.returns(Promise.resolve(new Response(
+      JSON.stringify({foo: 'bar'}),
+      { status: 404, statusText: 'Not Found', headers: { 'content-type': 'application/json' }}
+    )));
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkErrorOnHttp4xx: true
+      }
+    };
+    window.rollbar = new Rollbar(options);
+
+    var fetchHeaders = new Headers();
+    fetchHeaders.append('Content-Type', 'application/json');
+
+    const fetchInit = {
+      method: 'POST',
+      headers: fetchHeaders,
+      body: JSON.stringify({foo: 'bar'})
+    };
+    var fetchRequest = new Request('https://example.com/xhr-test');
+    window.fetch(fetchRequest, fetchInit).then(function(_response) {
+      try {
+        server.respond();
+
+        expect(server.requests.length).to.eql(2);
+        var body = JSON.parse(server.requests[1].requestBody);
+
+        expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+
+        // Just knowing a stack is present is enough for this test.
+        expect(body.data.body.trace.frames.length).to.be.above(1);
 
         rollbar.configure({ autoInstrument: false });
         window.fetch.restore();

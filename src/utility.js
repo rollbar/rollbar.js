@@ -413,11 +413,13 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var arg;
   var extraArgs = [];
   var diagnostic = {};
+  var argTypes = [];
 
   for (var i = 0, l = args.length; i < l; ++i) {
     arg = args[i];
 
     var typ = typeName(arg);
+    argTypes.push(typ);
     switch (typ) {
       case 'undefined':
         break;
@@ -489,6 +491,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     item.lambdaContext = lambdaContext;
   }
   item._originalArgs = args;
+  item.diagnostic.original_arg_types = argTypes;
   return item;
 }
 

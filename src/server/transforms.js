@@ -95,7 +95,7 @@ function handleItemWithError(item, options, callback) {
     }
     callback(null, item);
   };
-  async.eachSeries(errors, _buildTraceData(chain, options), cb);
+  async.eachSeries(errors, _buildTraceData(chain, options, item), cb);
 }
 
 function addRequestData(item, options, callback) {
@@ -224,9 +224,9 @@ function _isJsonContentType(req) {
   return req.headers && req.headers['content-type'] && req.headers['content-type'].includes('json');
 }
 
-function _buildTraceData(chain, options) {
+function _buildTraceData(chain, options, item) {
   return function(ex, cb) {
-    parser.parseException(ex, options, function (err, errData) {
+    parser.parseException(ex, options, item, function (err, errData) {
       if (err) {
         return cb(err);
       }
