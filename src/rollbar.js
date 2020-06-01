@@ -11,25 +11,30 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, platform, tracer) {
+function Rollbar(options, api, logger, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
+
+  // This must happen before the Notifier is created
+  var tracer = this.options.tracer || null;
+  if (validateTracer(tracer)) {
+    this.tracer = tracer;
+    // set to a string for api response serialization
+    this.options.tracer = 'opentracing-tracer-enabled';
+    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
+  } else {
+    this.tracer = null;
+  }
+
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
   setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
-
-  if (validateTracer(tracer)) {
-    this.tracer = tracer;
-  } else {
-    this.tracer = null;
-  }
-
 }
 
 var defaultOptions = {
@@ -50,7 +55,20 @@ Rollbar.prototype.configure = function (options, payloadData) {
   if (payloadData) {
     payload = { payload: payloadData };
   }
+
   this.options = _.merge(oldOptions, options, payload);
+
+  // This must happen before the Notifier is configured
+  var tracer = this.options.tracer || null;
+  if (validateTracer(tracer)) {
+    this.tracer = tracer;
+    // set to a string for api response serialization
+    this.options.tracer = 'opentracing-tracer-enabled';
+    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
+  } else {
+    this.tracer = null;
+  }
+
   this.notifier && this.notifier.configure(this.options);
   this.telemeter && this.telemeter.configure(this.options);
   setStackTraceLimit(options);

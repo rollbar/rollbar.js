@@ -149,7 +149,7 @@ vows.describe('rollbar')
           return rollbar;
         },
         'should configure tracer': function (r) {
-          assert.equal(ValidOpenTracingTracerStub, r.client.tracer);
+          assert.ok(typeof r.client.tracer === 'object');
         }
       },
       'with invalid tracer': {

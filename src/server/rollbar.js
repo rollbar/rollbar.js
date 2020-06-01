@@ -35,13 +35,7 @@ function Rollbar(options, client) {
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
   var api = new API(this.options, transport, urllib, jsonBackup);
-
-  // remove tracer object from options so we don't try to parse it
-  var tracer = options.tracer || null;
-  delete options.tracer;
-
-  this.client = client || new Client(this.options, api, logger, 'server', tracer);
-
+  this.client = client || new Client(this.options, api, logger, 'server');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
