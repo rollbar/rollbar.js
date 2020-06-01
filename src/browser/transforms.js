@@ -55,6 +55,14 @@ function addBaseInfo(item, options, callback) {
       version: options.version
     }
   });
+
+  const props = Object.getOwnPropertyNames(item.custom || {});
+  props.forEach(function (name) {
+    if (!item.data.hasOwnProperty(name)) {
+      item.data[name] = item.custom[name];
+    }
+  });
+
   callback(null, item);
 }
 
