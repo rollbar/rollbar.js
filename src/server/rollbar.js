@@ -42,7 +42,7 @@ function Rollbar(options, client) {
 }
 
 var _instance = null;
-Rollbar.init = function(options, client) {
+Rollbar.init = function (options, client) {
   if (_instance) {
     return _instance.global(options).configure(options);
   }
@@ -58,14 +58,14 @@ function handleUninitialized(maybeCallback) {
   }
 }
 
-Rollbar.prototype.global = function(options) {
+Rollbar.prototype.global = function (options) {
   options = _.handleOptions(options);
   // On the server we want to ignore any maxItems setting
   delete options.maxItems;
   this.client.global(options);
   return this;
 };
-Rollbar.global = function(options) {
+Rollbar.global = function (options) {
   if (_instance) {
     return _instance.global(options);
   } else {
@@ -73,11 +73,11 @@ Rollbar.global = function(options) {
   }
 };
 
-Rollbar.prototype.configure = function(options, payloadData) {
+Rollbar.prototype.configure = function (options, payloadData) {
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
-    payload = {payload: payloadData};
+    payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
@@ -88,7 +88,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.setupUnhandledCapture();
   return this;
 };
-Rollbar.configure = function(options, payloadData) {
+Rollbar.configure = function (options, payloadData) {
   if (_instance) {
     return _instance.configure(options, payloadData);
   } else {
@@ -96,10 +96,10 @@ Rollbar.configure = function(options, payloadData) {
   }
 };
 
-Rollbar.prototype.lastError = function() {
+Rollbar.prototype.lastError = function () {
   return this.client.lastError;
 };
-Rollbar.lastError = function() {
+Rollbar.lastError = function () {
   if (_instance) {
     return _instance.lastError();
   } else {
@@ -107,13 +107,13 @@ Rollbar.lastError = function() {
   }
 };
 
-Rollbar.prototype.log = function() {
+Rollbar.prototype.log = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.log(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.log = function() {
+Rollbar.log = function () {
   if (_instance) {
     return _instance.log.apply(_instance, arguments);
   } else {
@@ -122,13 +122,13 @@ Rollbar.log = function() {
   }
 };
 
-Rollbar.prototype.debug = function() {
+Rollbar.prototype.debug = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.debug(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.debug = function() {
+Rollbar.debug = function () {
   if (_instance) {
     return _instance.debug.apply(_instance, arguments);
   } else {
@@ -137,13 +137,13 @@ Rollbar.debug = function() {
   }
 };
 
-Rollbar.prototype.info = function() {
+Rollbar.prototype.info = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.info(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.info = function() {
+Rollbar.info = function () {
   if (_instance) {
     return _instance.info.apply(_instance, arguments);
   } else {
@@ -152,13 +152,13 @@ Rollbar.info = function() {
   }
 };
 
-Rollbar.prototype.warn = function() {
+Rollbar.prototype.warn = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.warn(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.warn = function() {
+Rollbar.warn = function () {
   if (_instance) {
     return _instance.warn.apply(_instance, arguments);
   } else {
@@ -168,13 +168,13 @@ Rollbar.warn = function() {
 };
 
 
-Rollbar.prototype.warning = function() {
+Rollbar.prototype.warning = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.warning(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.warning = function() {
+Rollbar.warning = function () {
   if (_instance) {
     return _instance.warning.apply(_instance, arguments);
   } else {
@@ -184,13 +184,13 @@ Rollbar.warning = function() {
 };
 
 
-Rollbar.prototype.error = function() {
+Rollbar.prototype.error = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.error(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.error = function() {
+Rollbar.error = function () {
   if (_instance) {
     return _instance.error.apply(_instance, arguments);
   } else {
@@ -198,21 +198,21 @@ Rollbar.error = function() {
     handleUninitialized(maybeCallback);
   }
 };
-Rollbar.prototype._uncaughtError = function() {
+Rollbar.prototype._uncaughtError = function () {
   var item = this._createItem(arguments);
   item._isUncaught = true;
   var uuid = item.uuid;
   this.client.error(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
 
-Rollbar.prototype.critical = function() {
+Rollbar.prototype.critical = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.critical(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.critical = function() {
+Rollbar.critical = function () {
   if (_instance) {
     return _instance.critical.apply(_instance, arguments);
   } else {
@@ -221,10 +221,10 @@ Rollbar.critical = function() {
   }
 };
 
-Rollbar.prototype.buildJsonPayload = function(item) {
+Rollbar.prototype.buildJsonPayload = function (item) {
   return this.client.buildJsonPayload(item);
 };
-Rollbar.buildJsonPayload = function() {
+Rollbar.buildJsonPayload = function () {
   if (_instance) {
     return _instance.buildJsonPayload.apply(_instance, arguments);
   } else {
@@ -232,10 +232,10 @@ Rollbar.buildJsonPayload = function() {
   }
 };
 
-Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+Rollbar.prototype.sendJsonPayload = function (jsonPayload) {
   return this.client.sendJsonPayload(jsonPayload);
 };
-Rollbar.sendJsonPayload = function() {
+Rollbar.sendJsonPayload = function () {
   if (_instance) {
     return _instance.sendJsonPayload.apply(_instance, arguments);
   } else {
@@ -243,10 +243,10 @@ Rollbar.sendJsonPayload = function() {
   }
 };
 
-Rollbar.prototype.wait = function(callback) {
+Rollbar.prototype.wait = function (callback) {
   this.client.wait(callback);
 };
-Rollbar.wait = function(callback) {
+Rollbar.wait = function (callback) {
   if (_instance) {
     return _instance.wait(callback)
   } else {
@@ -255,9 +255,9 @@ Rollbar.wait = function(callback) {
   }
 };
 
-Rollbar.prototype.errorHandler = function() {
-  return function(err, request, response, next) {
-    var cb = function(rollbarError) {
+Rollbar.prototype.errorHandler = function () {
+  return function (err, request, response, next) {
+    var cb = function (rollbarError) {
       if (rollbarError) {
         logger.error('Error reporting to rollbar, ignoring: ' + rollbarError);
       }
@@ -273,7 +273,7 @@ Rollbar.prototype.errorHandler = function() {
     return this.error('Error: ' + err, request, cb);
   }.bind(this);
 };
-Rollbar.errorHandler = function() {
+Rollbar.errorHandler = function () {
   if (_instance) {
     return _instance.errorHandler()
   } else {
@@ -281,16 +281,16 @@ Rollbar.errorHandler = function() {
   }
 };
 
-Rollbar.prototype.lambdaHandler = function(handler, timeoutHandler) {
+Rollbar.prototype.lambdaHandler = function (handler, timeoutHandler) {
   if (handler.length <= 2) {
     return this.asyncLambdaHandler(handler, timeoutHandler);
   }
   return this.syncLambdaHandler(handler, timeoutHandler);
 };
 
-Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
+Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
   var self = this;
-  var _timeoutHandler = function(event, context) {
+  var _timeoutHandler = function (event, context) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
@@ -299,21 +299,21 @@ Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
     self.error(message, custom);
   };
   var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function(event, context) {
-    return new Promise(function(resolve, reject) {
+  return function (event, context) {
+    return new Promise(function (resolve, reject) {
       self.lambdaContext = context;
       if (shouldReportTimeouts) {
         var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context);
         self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
       }
       handler(event, context)
-        .then(function(resp) {
+        .then(function (resp) {
           clearTimeout(self.lambdaTimeoutHandle);
           resolve(resp);
         })
-        .catch(function(err) {
+        .catch(function (err) {
           self.error(err);
-          self.wait(function() {
+          self.wait(function () {
             clearTimeout(self.lambdaTimeoutHandle);
             reject(err);
           });
@@ -321,9 +321,9 @@ Rollbar.prototype.asyncLambdaHandler = function(handler, timeoutHandler) {
     });
   };
 };
-Rollbar.prototype.syncLambdaHandler = function(handler, timeoutHandler) {
+Rollbar.prototype.syncLambdaHandler = function (handler, timeoutHandler) {
   var self = this;
-  var _timeoutHandler = function(event, context, _cb) {
+  var _timeoutHandler = function (event, context, _cb) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
@@ -332,32 +332,32 @@ Rollbar.prototype.syncLambdaHandler = function(handler, timeoutHandler) {
     self.error(message, custom);
   };
   var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function(event, context, callback) {
+  return function (event, context, callback) {
     self.lambdaContext = context;
     if (shouldReportTimeouts) {
       var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
       self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     }
     try {
-      handler(event, context, function(err, resp) {
+      handler(event, context, function (err, resp) {
         if (err) {
           self.error(err);
         }
-        self.wait(function() {
+        self.wait(function () {
           clearTimeout(self.lambdaTimeoutHandle);
           callback(err, resp);
         });
       });
     } catch (err) {
       self.error(err);
-      self.wait(function() {
+      self.wait(function () {
         clearTimeout(self.lambdaTimeoutHandle);
         throw err;
       });
     }
   };
 };
-Rollbar.lambdaHandler = function(handler) {
+Rollbar.lambdaHandler = function (handler) {
   if (_instance) {
     return _instance.lambdaHandler(handler);
   } else {
@@ -366,7 +366,7 @@ Rollbar.lambdaHandler = function(handler) {
 };
 
 function wrapCallback(r, f) {
-  return function() {
+  return function () {
     var err = arguments[0];
     if (err) {
       r.error(err);
@@ -375,10 +375,10 @@ function wrapCallback(r, f) {
   };
 }
 
-Rollbar.prototype.wrapCallback = function(f) {
+Rollbar.prototype.wrapCallback = function (f) {
   return wrapCallback(this, f);
 };
-Rollbar.wrapCallback = function(f) {
+Rollbar.wrapCallback = function (f) {
   if (_instance) {
     return _instance.wrapCallback(f);
   } else {
@@ -386,11 +386,11 @@ Rollbar.wrapCallback = function(f) {
   }
 };
 
-Rollbar.prototype.captureEvent = function() {
+Rollbar.prototype.captureEvent = function () {
   var event = _.createTelemetryEvent(arguments);
   return this.client.captureEvent(event.type, event.metadata, event.level);
 };
-Rollbar.captureEvent = function() {
+Rollbar.captureEvent = function () {
   if (_instance) {
     return _instance.captureEvent.apply(_instance, arguments);
   } else {
@@ -400,7 +400,7 @@ Rollbar.captureEvent = function() {
 
 /** DEPRECATED **/
 
-Rollbar.prototype.reportMessage = function(message, level, request, callback) {
+Rollbar.prototype.reportMessage = function (message, level, request, callback) {
   logger.log('reportMessage is deprecated');
   if (_.isFunction(this[level])) {
     return this[level](message, request, callback);
@@ -408,7 +408,7 @@ Rollbar.prototype.reportMessage = function(message, level, request, callback) {
     return this.error(message, request, callback);
   }
 };
-Rollbar.reportMessage = function(message, level, request, callback) {
+Rollbar.reportMessage = function (message, level, request, callback) {
   if (_instance) {
     return _instance.reportMessage(message, level, request, callback);
   } else {
@@ -416,11 +416,11 @@ Rollbar.reportMessage = function(message, level, request, callback) {
   }
 };
 
-Rollbar.prototype.reportMessageWithPayloadData = function(message, payloadData, request, callback) {
+Rollbar.prototype.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
   logger.log('reportMessageWithPayloadData is deprecated');
   return this.error(message, request, payloadData, callback);
 };
-Rollbar.reportMessageWithPayloadData = function(message, payloadData, request, callback) {
+Rollbar.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
   if (_instance) {
     return _instance.reportMessageWithPayloadData(message, payloadData, request, callback);
   } else {
@@ -429,11 +429,11 @@ Rollbar.reportMessageWithPayloadData = function(message, payloadData, request, c
 };
 
 
-Rollbar.prototype.handleError = function(err, request, callback) {
+Rollbar.prototype.handleError = function (err, request, callback) {
   logger.log('handleError is deprecated');
   return this.error(err, request, callback);
 };
-Rollbar.handleError = function(err, request, callback) {
+Rollbar.handleError = function (err, request, callback) {
   if (_instance) {
     return _instance.handleError(err, request, callback);
   } else {
@@ -442,11 +442,11 @@ Rollbar.handleError = function(err, request, callback) {
 };
 
 
-Rollbar.prototype.handleErrorWithPayloadData = function(err, payloadData, request, callback) {
+Rollbar.prototype.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
   logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, payloadData, callback);
 };
-Rollbar.handleErrorWithPayloadData = function(err, payloadData, request, callback) {
+Rollbar.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
   if (_instance) {
     return _instance.handleErrorWithPayloadData(err, payloadData, request, callback);
   } else {
@@ -454,7 +454,7 @@ Rollbar.handleErrorWithPayloadData = function(err, payloadData, request, callbac
   }
 };
 
-Rollbar.handleUncaughtExceptions = function(accessToken, options) {
+Rollbar.handleUncaughtExceptions = function (accessToken, options) {
   if (_instance) {
     options = options || {};
     options.accessToken = accessToken;
@@ -464,7 +464,7 @@ Rollbar.handleUncaughtExceptions = function(accessToken, options) {
   }
 };
 
-Rollbar.handleUnhandledRejections = function(accessToken, options) {
+Rollbar.handleUnhandledRejections = function (accessToken, options) {
   if (_instance) {
     options = options || {};
     options.accessToken = accessToken;
@@ -474,7 +474,7 @@ Rollbar.handleUnhandledRejections = function(accessToken, options) {
   }
 };
 
-Rollbar.handleUncaughtExceptionsAndRejections = function(accessToken, options) {
+Rollbar.handleUncaughtExceptionsAndRejections = function (accessToken, options) {
   if (_instance) {
     options = options || {};
     options.accessToken = accessToken;
@@ -512,7 +512,7 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
-Rollbar.prototype._createItem = function(args) {
+Rollbar.prototype._createItem = function (args) {
   var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
   return _.createItem(args, logger, this, requestKeys, this.lambdaContext);
 };
@@ -526,7 +526,7 @@ function _getFirstFunction(args) {
   return undefined;
 }
 
-Rollbar.prototype.setupUnhandledCapture = function() {
+Rollbar.prototype.setupUnhandledCapture = function () {
   if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
     this.handleUncaughtExceptions();
   }
@@ -535,24 +535,24 @@ Rollbar.prototype.setupUnhandledCapture = function() {
   }
 };
 
-Rollbar.prototype.handleUncaughtExceptions = function() {
+Rollbar.prototype.handleUncaughtExceptions = function () {
   var exitOnUncaught = !!this.options.exitOnUncaughtException;
   delete this.options.exitOnUncaughtException;
 
-  addOrReplaceRollbarHandler('uncaughtException', function(err) {
+  addOrReplaceRollbarHandler('uncaughtException', function (err) {
     if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
       return;
     }
 
-    this._uncaughtError(err, function(err) {
+    this._uncaughtError(err, function (err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
         logger.error(err);
       }
     });
     if (exitOnUncaught) {
-      setImmediate(function() {
-        this.wait(function() {
+      setImmediate(function () {
+        this.wait(function () {
           process.exit(1);
         });
       }.bind(this));
@@ -560,13 +560,13 @@ Rollbar.prototype.handleUncaughtExceptions = function() {
   }.bind(this));
 };
 
-Rollbar.prototype.handleUnhandledRejections = function() {
-  addOrReplaceRollbarHandler('unhandledRejection', function(reason) {
+Rollbar.prototype.handleUnhandledRejections = function () {
+  addOrReplaceRollbarHandler('unhandledRejection', function (reason) {
     if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
       return;
     }
 
-    this._uncaughtError(reason, function(err) {
+    this._uncaughtError(reason, function (err) {
       if (err) {
         logger.error('Encountered error while handling an uncaught exception.');
         logger.error(err);
@@ -578,7 +578,7 @@ Rollbar.prototype.handleUnhandledRejections = function() {
 function addOrReplaceRollbarHandler(event, action) {
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
-  var fn = function(a, b) {
+  var fn = function (a, b) {
     action(a, b);
   };
   fn._rollbarHandler = true;

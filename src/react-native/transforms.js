@@ -11,7 +11,8 @@ function baseData(item, options, callback) {
     language: 'javascript',
     framework: item.framework || options.framework,
     uuid: item.uuid,
-    notifier: JSON.parse(JSON.stringify(options.notifier))
+    notifier: JSON.parse(JSON.stringify(options.notifier)),
+    custom: item.custom
   };
 
   if (options.codeVersion) {

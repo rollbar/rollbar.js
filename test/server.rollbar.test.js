@@ -7,8 +7,33 @@ var sinon = require('sinon');
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
 
+const DUMMY_TRACE_ID = 'some-trace-id';
+const DUMMY_SPAN_ID = 'some-span-id';
+
+const ValidOpenTracingTracerStub = {
+  scope: () => {
+    return {
+      active: () => {
+        return {
+          setTag: () => {},
+          context: () => {
+            return {
+              toTraceId: () => DUMMY_TRACE_ID,
+              toSpanId: () => DUMMY_SPAN_ID
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const InvalidOpenTracingTracerStub = {
+  foo: () => {}
+};
+
 function TestClientGen() {
-  var TestClient = function() {
+  var TestClient = function () {
     this.notifier = {
       addTransform: function() { return this; }
     };
@@ -16,7 +41,7 @@ function TestClientGen() {
       addPredicate: function() { return this; }
     };
     this.logCalls = [];
-    var logs = 'log,debug,info,warn,wanring,error,critical'.split(',');
+    var logs = 'log,debug,info,warn,warning,error,critical'.split(',');
     for(var i=0, len=logs.length; i < len; i++) {
       var fn = logs[i].slice(0);
       this[fn] = function(fn, item) {
@@ -32,6 +57,7 @@ function TestClientGen() {
     this.clearLogCalls = function() {
       this.logCalls = [];
     };
+    this.tracer = ValidOpenTracingTracerStub;
   };
 
   return TestClient;
@@ -116,6 +142,24 @@ vows.describe('rollbar')
         'should set configured options': function(r) {
           assert.equal('fake-env', r.options._configuredOptions.environment);
         }
+      },
+      'with valid tracer': {
+        topic: function () {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env', tracer: ValidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should configure tracer': function (r) {
+          assert.ok(typeof r.client.tracer === 'object');
+        }
+      },
+      'with invalid tracer': {
+        topic: function () {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env', tracer: InvalidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should configure tracer': function (r) {
+          assert.equal(null, r.client.tracer);
+        }
       }
     },
     'configure': {
@@ -129,12 +173,65 @@ vows.describe('rollbar')
           assert.equal('new-env', r.options._configuredOptions.environment);
           assert.equal(false, r.options._configuredOptions.captureUncaught);
         }
+      },
+      'with valid tracer': {
+        topic: function() {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env' });
+          rollbar.configure({ tracer: ValidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should configure tracer': function(r) {
+          assert.equal(ValidOpenTracingTracerStub, r.client.tracer);
+        }
+      },
+      'with invalid tracer': {
+        topic: function() {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env' });
+          rollbar.configure({ tracer: InvalidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should configure tracer': function(r) {
+          assert.equal(null, r.client.tracer);
+        }
       }
+    },
+    'addTracingInfo': {
+      'with valid tracer': {
+        topic: function() {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env', tracer: ValidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should add trace ID and span ID to custom field on item if no custom field set': function (r) {
+          const item = { uuid: 'some-uuid', custom: null };
+          r.client._addTracingInfo(item);
+          assert.equal(DUMMY_TRACE_ID, item.custom.opentracing_trace_id);
+          assert.equal(DUMMY_SPAN_ID, item.custom.opentracing_span_id);
+        },
+        'should add trace ID and span ID to custom field on item even if already has some custom fields': function(r) {
+          const item = { uuid: 'some-uuid', custom: { foo: 'foo' } };
+          r.client._addTracingInfo(item);
+          assert.equal(DUMMY_TRACE_ID, item.custom.opentracing_trace_id);
+          assert.equal(DUMMY_SPAN_ID, item.custom.opentracing_span_id);
+          assert.equal('foo', item.custom.foo);
+        }
+      },
+      'with invalid tracer': {
+        topic: function() {
+          var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env', tracer: InvalidOpenTracingTracerStub });
+          return rollbar;
+        },
+        'should add trace ID and span ID to custom field on item': function (r) {
+          const item = { uuid: 'some-uuid', custom: {} };
+          r.client._addTracingInfo(item);
+          assert.equal(undefined, item.custom.opentracing_trace_id);
+          assert.equal(undefined, item.custom.opentracing_span_id);
+        }
+      },
     },
     'log': {
       topic: function() {
         var client = new (TestClientGen())();
-        var rollbar = new Rollbar({accessToken: 'abc123'}, client);
+        var rollbar = new Rollbar({ accessToken: 'abc123' }, client);
         return rollbar;
       },
       'message': {
