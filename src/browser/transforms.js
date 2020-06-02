@@ -53,7 +53,8 @@ function addBaseInfo(item, options, callback) {
     notifier: {
       name: 'rollbar-browser-js',
       version: options.version
-    }
+    },
+    custom: item.custom
   });
   callback(null, item);
 }
