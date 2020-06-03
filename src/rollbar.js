@@ -186,8 +186,8 @@ Rollbar.prototype._addTracingInfo = function (item) {
     var span = this.tracer.scope().active();
 
     if (validateSpan(span)) {
-      span.setTag('rollbar_uuid', item.uuid);
-      span.setTag('has_rollbar_error', true);
+      span.setTag('rollbar.occurrence_uuid', item.uuid);
+      span.setTag('rollbar.has_error', true);
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
