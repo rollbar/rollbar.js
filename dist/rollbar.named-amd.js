@@ -1340,7 +1340,6 @@ function Rollbar(options, client) {
   this.options._configuredOptions = options;
   var api = new API(this.options, transport, urllib);
   this.client = client || new Client(this.options, api, logger, 'browser');
-
   var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
@@ -1848,7 +1847,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.16.2",
+  version: "2.17.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -1895,6 +1894,18 @@ function Rollbar(options, api, logger, platform) {
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
+
+  // This must happen before the Notifier is created
+  var tracer = this.options.tracer || null;
+  if (validateTracer(tracer)) {
+    this.tracer = tracer;
+    // set to a string for api response serialization
+    this.options.tracer = 'opentracing-tracer-enabled';
+    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
+  } else {
+    this.tracer = null;
+  }
+
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = new Telemeter(this.options);
   setStackTraceLimit(options);
@@ -1909,81 +1920,99 @@ var defaultOptions = {
 
 Rollbar.rateLimiter = new RateLimiter(defaultOptions);
 
-Rollbar.prototype.global = function(options) {
+Rollbar.prototype.global = function (options) {
   Rollbar.rateLimiter.configureGlobal(options);
   return this;
 };
 
-Rollbar.prototype.configure = function(options, payloadData) {
+Rollbar.prototype.configure = function (options, payloadData) {
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
-    payload = {payload: payloadData};
+    payload = { payload: payloadData };
   }
+
   this.options = _.merge(oldOptions, options, payload);
+
+  // This must happen before the Notifier is configured
+  var tracer = this.options.tracer || null;
+  if (validateTracer(tracer)) {
+    this.tracer = tracer;
+    // set to a string for api response serialization
+    this.options.tracer = 'opentracing-tracer-enabled';
+    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
+  } else {
+    this.tracer = null;
+  }
+
   this.notifier && this.notifier.configure(this.options);
   this.telemeter && this.telemeter.configure(this.options);
   setStackTraceLimit(options);
   this.global(this.options);
+
+  if (validateTracer(options.tracer)) {
+    this.tracer = options.tracer
+  }
+
   return this;
 };
 
-Rollbar.prototype.log = function(item) {
+Rollbar.prototype.log = function (item) {
   var level = this._defaultLogLevel();
   return this._log(level, item);
 };
 
-Rollbar.prototype.debug = function(item) {
+Rollbar.prototype.debug = function (item) {
   this._log('debug', item);
 };
 
-Rollbar.prototype.info = function(item) {
+Rollbar.prototype.info = function (item) {
   this._log('info', item);
 };
 
-Rollbar.prototype.warn = function(item) {
+Rollbar.prototype.warn = function (item) {
   this._log('warning', item);
 };
 
-Rollbar.prototype.warning = function(item) {
+Rollbar.prototype.warning = function (item) {
   this._log('warning', item);
 };
 
-Rollbar.prototype.error = function(item) {
+Rollbar.prototype.error = function (item) {
   this._log('error', item);
 };
 
-Rollbar.prototype.critical = function(item) {
+Rollbar.prototype.critical = function (item) {
   this._log('critical', item);
 };
 
-Rollbar.prototype.wait = function(callback) {
+Rollbar.prototype.wait = function (callback) {
   this.queue.wait(callback);
 };
 
-Rollbar.prototype.captureEvent = function(type, metadata, level) {
+Rollbar.prototype.captureEvent = function (type, metadata, level) {
   return this.telemeter.captureEvent(type, metadata, level);
 };
 
-Rollbar.prototype.captureDomContentLoaded = function(ts) {
+Rollbar.prototype.captureDomContentLoaded = function (ts) {
   return this.telemeter.captureDomContentLoaded(ts);
 };
 
-Rollbar.prototype.captureLoad = function(ts) {
+Rollbar.prototype.captureLoad = function (ts) {
   return this.telemeter.captureLoad(ts);
 };
 
-Rollbar.prototype.buildJsonPayload = function(item) {
+Rollbar.prototype.buildJsonPayload = function (item) {
   return this.api.buildJsonPayload(item);
 };
 
-Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+Rollbar.prototype.sendJsonPayload = function (jsonPayload) {
   this.api.postJsonPayload(jsonPayload);
 };
 
 /* Internal */
 
-Rollbar.prototype._log = function(defaultLevel, item) {
+Rollbar.prototype._log = function (defaultLevel, item) {
   var callback;
   if (item.callback) {
     callback = item.callback;
@@ -1998,6 +2027,7 @@ Rollbar.prototype._log = function(defaultLevel, item) {
     return;
   }
   try {
+    this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
     this.telemeter._captureRollbarItem(item);
     item.telemetryEvents = this.telemeter.copyEvents();
@@ -2007,11 +2037,11 @@ Rollbar.prototype._log = function(defaultLevel, item) {
   }
 };
 
-Rollbar.prototype._defaultLogLevel = function() {
+Rollbar.prototype._defaultLogLevel = function () {
   return this.options.logLevel || 'debug';
 };
 
-Rollbar.prototype._sameAsLastError = function(item) {
+Rollbar.prototype._sameAsLastError = function (item) {
   if (!item._isUncaught) {
     return false;
   }
@@ -2023,6 +2053,34 @@ Rollbar.prototype._sameAsLastError = function(item) {
   this.lastErrorHash = itemHash;
   return false;
 };
+
+Rollbar.prototype._addTracingInfo = function (item) {
+  // Tracer validation occurs in the constructor
+  // or in the Rollbar.prototype.configure methods
+  if (this.tracer) {
+    // add rollbar occurrence uuid to span
+    var span = this.tracer.scope().active();
+
+    if (validateSpan(span)) {
+      span.setTag('rollbar.error_uuid', item.uuid);
+      span.setTag('rollbar.has_error', true);
+
+      // add span ID & trace ID to occurrence
+      var opentracingSpanId = span.context().toSpanId();
+      var opentracingTraceId = span.context().toTraceId();
+
+      if (item.custom) {
+        item.custom.opentracing_span_id = opentracingSpanId;
+        item.custom.opentracing_trace_id = opentracingTraceId;
+      } else {
+        item.custom = {
+          opentracing_span_id: opentracingSpanId,
+          opentracing_trace_id: opentracingTraceId
+        };
+      }
+    }
+  }
+}
 
 function generateItemHash(item) {
   var message = item.message || '';
@@ -2037,6 +2095,51 @@ function setStackTraceLimit(options) {
   if (options.stackTraceLimit) {
     Error.stackTraceLimit = options.stackTraceLimit;
   }
+}
+
+/**
+ * Validate the Tracer object provided to the Client
+ * is valid for our Opentracing use case.
+ * @param {opentracer.Tracer} tracer
+ */
+function validateTracer(tracer) {
+  if (!tracer) {
+    return false;
+  }
+
+  if (!tracer.scope || typeof tracer.scope !== 'function') {
+    return false;
+  }
+
+  const scope = tracer.scope();
+
+  if (!scope || !scope.active || typeof scope.active !== 'function') {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Validate the Span object provided
+ * @param {opentracer.Span} span
+ */
+function validateSpan(span) {
+  if (!span || !span.context || typeof span.context !== 'function') {
+    return false;
+  }
+
+  const spanContext = span.context();
+
+  if (!spanContext
+    || !spanContext.toSpanId
+    || !spanContext.toTraceId
+    || typeof spanContext.toSpanId !== 'function'
+    || typeof spanContext.toTraceId !== 'function') {
+    return false
+  }
+
+  return true;
 }
 
 module.exports = Rollbar;
@@ -4346,7 +4449,8 @@ function addBaseInfo(item, options, callback) {
     notifier: {
       name: 'rollbar-browser-js',
       version: options.version
-    }
+    },
+    custom: item.custom
   });
   callback(null, item);
 }
