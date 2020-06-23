@@ -367,8 +367,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
           var body = null;
           if (self.autoInstrument.networkResponseBody) {
-            if (typeof resp.text === 'function') { // Response.text() is not implemented on multiple platforms
-              body = resp.text(); //returns a Promise
+            if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
+              // The response must be cloned to prevent reading (and locking) the original stream.
+              body = resp.clone().text(); //returns a Promise
             }
           }
           if (headers || body) {
