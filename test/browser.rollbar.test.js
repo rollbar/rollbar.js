@@ -1145,8 +1145,16 @@ describe('options.autoInstrument', function() {
     server.requests.length = 0;
 
     window.fetchStub = sinon.stub(window, 'fetch');
+
+    var readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(JSON.stringify({name: 'foo', password: '123456'}));
+        controller.close();
+      }
+    });
+
     window.fetch.returns(Promise.resolve(new Response(
-      JSON.stringify({name: 'foo', password: '123456'}),
+      readableStream,
       { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json', 'password': '123456' }}
     )));
 
@@ -1173,8 +1181,8 @@ describe('options.autoInstrument', function() {
       body: JSON.stringify({name: 'bar', secret: 'xhr post'})
     };
     var fetchRequest = new Request('https://example.com/xhr-test');
-    window,fetch(fetchRequest, fetchInit)
-    .then(function(_response) {
+    window.fetch(fetchRequest, fetchInit)
+    .then(function(response) {
       try {
         rollbar.log('test'); // generate a payload to inspect
         server.respond();
@@ -1197,6 +1205,9 @@ describe('options.autoInstrument', function() {
 
         // Verify response headers capture and case-insensitive scrubbing
         expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+        // Assert that the original stream reader hasn't been read.
+        expect(response.bodyUsed).to.eql(false);
 
         rollbar.configure({ autoInstrument: false });
         window.fetch.restore();
