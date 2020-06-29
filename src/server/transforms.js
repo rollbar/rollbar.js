@@ -184,10 +184,11 @@ function addLambdaData(item, options, callback) {
 function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
+  var scrubPaths = options.scrubPaths || [];
   scrubFields = scrubHeaders.concat(scrubFields);
 
   parseRequestBody(item.data.request, options);
-  item.data = _.scrub(item.data, scrubFields);
+  item.data = _.scrub(item.data, scrubFields, scrubPaths);
   serializeRequestBody(item.data.request, options);
 
   callback(null, item);

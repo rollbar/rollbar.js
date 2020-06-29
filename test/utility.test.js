@@ -702,6 +702,33 @@ describe('scrub', function() {
     expect(result.inner.a).to.be.ok();
     expect(result.inner.b).to.eql('yes');
   });
+  it('should handle scrubPaths', function() {
+    var data = {
+      a: {
+        b: {
+          foo: 'secret',
+          bar: 'stuff'
+        },
+        c: 'bork',
+        password: 'abc123'
+      },
+      secret: 'blahblah'
+    };
+    var scrubPaths = [
+      'nowhere', // path not found
+      'a.b.foo', // nested path
+      'a.password', // nested path
+      'secret' // root path
+    ];
+
+    var result = _.scrub(data, [], scrubPaths);
+
+    expect(result.a.b.bar).to.eql('stuff');
+    expect(result.a.b.foo).to.not.eql('secret');
+    expect(result.a.c).to.eql('bork');
+    expect(result.a.password).to.not.eql('abc123');
+    expect(result.secret).to.not.eql('blahblah');
+  });
 });
 
 describe('formatArgsAsString', function() {
