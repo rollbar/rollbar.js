@@ -656,7 +656,7 @@ describe('scrub', function() {
 
     var result = _.scrub(data, scrubFields);
 
-    expect(result.password).to.not.eql('abc123');
+    expect(result.password).to.eql(_.redact());
   });
   it('should handle nested objects', function() {
     var data = {
@@ -675,10 +675,10 @@ describe('scrub', function() {
     var result = _.scrub(data, scrubFields);
 
     expect(result.a.b.other).to.eql('stuff');
-    expect(result.a.badthing).to.not.eql('secret');
+    expect(result.a.b.badthing).to.eql(_.redact());
     expect(result.a.c).to.eql('bork');
-    expect(result.a.password).to.not.eql('abc123');
-    expect(result.secret).to.not.eql('blahblah');
+    expect(result.a.password).to.eql(_.redact());
+    expect(result.secret).to.eql(_.redact());
     expect(data.secret).to.eql('blahblah');
   });
   it('should do something sane for recursive objects', function() {
@@ -697,8 +697,8 @@ describe('scrub', function() {
     var result = _.scrub(data, scrubFields);
 
     expect(result.thing).to.eql('stuff');
-    expect(result.password).to.not.eql('abc123');
-    expect(result.inner.a).to.not.eql('what');
+    expect(result.password).to.eql(_.redact());
+    expect(result.inner.a).to.eql(_.redact());
     expect(result.inner.a).to.be.ok();
     expect(result.inner.b).to.eql('yes');
   });
@@ -724,10 +724,10 @@ describe('scrub', function() {
     var result = _.scrub(data, [], scrubPaths);
 
     expect(result.a.b.bar).to.eql('stuff');
-    expect(result.a.b.foo).to.not.eql('secret');
+    expect(result.a.b.foo).to.eql(_.redact());
     expect(result.a.c).to.eql('bork');
-    expect(result.a.password).to.not.eql('abc123');
-    expect(result.secret).to.not.eql('blahblah');
+    expect(result.a.password).to.eql(_.redact());
+    expect(result.secret).to.eql(_.redact());
   });
 });
 
