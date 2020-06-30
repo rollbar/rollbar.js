@@ -602,8 +602,15 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields) {
+function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
+
+  if (scrubPaths) {
+    for (var i = 0; i < scrubPaths.length; ++i) {
+      scrubPath(data, scrubPaths[i]);
+    }
+  }
+
   var paramRes = _getScrubFieldRegexs(scrubFields);
   var queryRes = _getScrubQueryParamRegexs(scrubFields);
 
@@ -645,6 +652,22 @@ function scrub(data, scrubFields) {
   }
 
   return traverse(data, scrubber, []);
+}
+
+function scrubPath(obj, path) {
+  var keys = path.split('.');
+  var last = keys.length - 1;
+  try {
+    for (var i = 0; i <= last; ++i) {
+      if (i < last) {
+        obj = obj[keys[i]];
+      } else {
+        obj[keys[i]] = redact();
+      }
+    }
+  } catch (e) {
+    // Missing key is OK;
+  }
 }
 
 function _getScrubFieldRegexs(scrubFields) {

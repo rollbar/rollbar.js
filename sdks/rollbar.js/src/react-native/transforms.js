@@ -85,8 +85,9 @@ function handleItemWithError(item, options, callback) {
 function scrubPayload(item, options, callback) {
   var scrubHeaders = options.scrubHeaders || [];
   var scrubFields = options.scrubFields || [];
+  var scrubPaths = options.scrubPaths || [];
   scrubFields = scrubHeaders.concat(scrubFields);
-  item.data = _.scrub(item.data, scrubFields);
+  item.data = _.scrub(item.data, scrubFields, scrubPaths);
   callback(null, item);
 }
 

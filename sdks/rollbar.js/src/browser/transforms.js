@@ -292,8 +292,9 @@ function errorClass(stackInfo, guess, options) {
 }
 
 function scrubPayload(item, options, callback) {
-  var scrubFields = options.scrubFields;
-  item.data = _.scrub(item.data, scrubFields);
+  var scrubFields = options.scrubFields || [];
+  var scrubPaths = options.scrubPaths || [];
+  item.data = _.scrub(item.data, scrubFields, scrubPaths);
   callback(null, item);
 }
 
