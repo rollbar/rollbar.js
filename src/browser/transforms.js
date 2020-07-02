@@ -19,6 +19,10 @@ function handleItemWithError(item, options, callback) {
   if (item.err) {
     try {
       item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
+
+      if (options.addErrorContext) {
+        addErrorContext(item);
+      }
     } catch (e) {
       logger.error('Error while parsing the error object.', e);
       try {
@@ -30,6 +34,20 @@ function handleItemWithError(item, options, callback) {
     }
   }
   callback(null, item);
+}
+
+function addErrorContext(item) {
+  var chain = [];
+  var err = item.err;
+
+  chain.push(err);
+
+  while (err.nested) {
+    err = err.nested;
+    chain.push(err);
+  }
+
+  _.addErrorContext(item, chain);
 }
 
 function ensureItemHasSomethingToSay(item, options, callback) {

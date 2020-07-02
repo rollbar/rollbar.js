@@ -64,6 +64,10 @@ function handleItemWithError(item, options, callback) {
     return callback(null, item);
   }
 
+  if (options.addErrorContext) {
+    _.addErrorContext(item, [item.err]);
+  }
+
   var err = item.err;
   var parsedError = errorParser.parse(err);
   var guess = errorParser.guessErrorClass(parsedError.message);
