@@ -609,6 +609,27 @@ function setCustomItemKeys(item, custom) {
   }
 }
 
+function addErrorContext(item, errors) {
+  var custom = item.data.custom || {};
+  var contextAdded = false;
+
+  try {
+    for (var i = 0; i < errors.length; ++i) {
+      if (errors[i].hasOwnProperty('rollbarContext')) {
+        custom = merge(custom, errors[i].rollbarContext);
+        contextAdded = true;
+      }
+    }
+
+    // Avoid adding an empty object to the data.
+    if (contextAdded) {
+      item.data.custom = custom;
+    }
+  } catch (e) {
+    item.diagnostic.error_context = 'Failed: ' + e.message;
+  }
+}
+
 var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
@@ -705,8 +726,15 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields) {
+function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
+
+  if (scrubPaths) {
+    for (var i = 0; i < scrubPaths.length; ++i) {
+      scrubPath(data, scrubPaths[i]);
+    }
+  }
+
   var paramRes = _getScrubFieldRegexs(scrubFields);
   var queryRes = _getScrubQueryParamRegexs(scrubFields);
 
@@ -748,6 +776,22 @@ function scrub(data, scrubFields) {
   }
 
   return traverse(data, scrubber, []);
+}
+
+function scrubPath(obj, path) {
+  var keys = path.split('.');
+  var last = keys.length - 1;
+  try {
+    for (var i = 0; i <= last; ++i) {
+      if (i < last) {
+        obj = obj[keys[i]];
+      } else {
+        obj[keys[i]] = redact();
+      }
+    }
+  } catch (e) {
+    // Missing key is OK;
+  }
 }
 
 function _getScrubFieldRegexs(scrubFields) {
@@ -856,6 +900,7 @@ function handleOptions(current, input, payload) {
 module.exports = {
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   createItem: createItem,
+  addErrorContext: addErrorContext,
   createTelemetryEvent: createTelemetryEvent,
   filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
@@ -1857,7 +1902,7 @@ function _gWindow() {
 /* global __DEFAULT_ENDPOINT__:false */
 
 var defaultOptions = {
-  version: "2.17.0",
+  version: "2.18.0",
   scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
   logLevel: "debug",
   reportLevel: "debug",
@@ -4425,6 +4470,10 @@ function handleItemWithError(item, options, callback) {
   if (item.err) {
     try {
       item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
+
+      if (options.addErrorContext) {
+        addErrorContext(item);
+      }
     } catch (e) {
       logger.error('Error while parsing the error object.', e);
       try {
@@ -4436,6 +4485,20 @@ function handleItemWithError(item, options, callback) {
     }
   }
   callback(null, item);
+}
+
+function addErrorContext(item) {
+  var chain = [];
+  var err = item.err;
+
+  chain.push(err);
+
+  while (err.nested) {
+    err = err.nested;
+    chain.push(err);
+  }
+
+  _.addErrorContext(item, chain);
 }
 
 function ensureItemHasSomethingToSay(item, options, callback) {
@@ -4698,8 +4761,9 @@ function errorClass(stackInfo, guess, options) {
 }
 
 function scrubPayload(item, options, callback) {
-  var scrubFields = options.scrubFields;
-  item.data = _.scrub(item.data, scrubFields);
+  var scrubFields = options.scrubFields || [];
+  var scrubPaths = options.scrubPaths || [];
+  item.data = _.scrub(item.data, scrubFields, scrubPaths);
   callback(null, item);
 }
 
@@ -5794,8 +5858,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           }
           var body = null;
           if (self.autoInstrument.networkResponseBody) {
-            if (typeof resp.text === 'function') { // Response.text() is not implemented on multiple platforms
-              body = resp.text(); //returns a Promise
+            if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
+              // The response must be cloned to prevent reading (and locking) the original stream.
+              body = resp.clone().text(); //returns a Promise
             }
           }
           if (headers || body) {
