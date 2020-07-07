@@ -11,6 +11,7 @@ var Transport = require('./transport');
 var urllib = require('url');
 var jsonBackup = require('json-stringify-safe');
 
+var Telemeter = require('../telemetry');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
@@ -35,10 +36,12 @@ function Rollbar(options, client) {
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
   var api = new API(this.options, transport, urllib, jsonBackup);
-  this.client = client || new Client(this.options, api, logger, 'server');
+  var telemeter = new Telemeter(this.options)
+  this.client = client || new Client(this.options, api, logger, telemeter, 'server');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
+  _.setupJSON();
 }
 
 var _instance = null;

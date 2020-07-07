@@ -1,7 +1,6 @@
 var RateLimiter = require('./rateLimiter');
 var Queue = require('./queue');
 var Notifier = require('./notifier');
-var Telemeter = require('./telemetry');
 var _ = require('./utility');
 
 /*
@@ -11,7 +10,7 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, platform) {
+function Rollbar(options, api, logger, telemeter, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
@@ -31,7 +30,7 @@ function Rollbar(options, api, logger, platform) {
   }
 
   this.notifier = new Notifier(this.queue, this.options);
-  this.telemeter = new Telemeter(this.options);
+  this.telemeter = telemeter;
   setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
@@ -115,15 +114,15 @@ Rollbar.prototype.wait = function (callback) {
 };
 
 Rollbar.prototype.captureEvent = function (type, metadata, level) {
-  return this.telemeter.captureEvent(type, metadata, level);
+  return this.telemeter && this.telemeter.captureEvent(type, metadata, level);
 };
 
 Rollbar.prototype.captureDomContentLoaded = function (ts) {
-  return this.telemeter.captureDomContentLoaded(ts);
+  return this.telemeter && this.telemeter.captureDomContentLoaded(ts);
 };
 
 Rollbar.prototype.captureLoad = function (ts) {
-  return this.telemeter.captureLoad(ts);
+  return this.telemeter && this.telemeter.captureLoad(ts);
 };
 
 Rollbar.prototype.buildJsonPayload = function (item) {
@@ -153,8 +152,8 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   try {
     this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
-    this.telemeter._captureRollbarItem(item);
-    item.telemetryEvents = this.telemeter.copyEvents();
+    this.telemeter && this.telemeter._captureRollbarItem(item);
+    item.telemetryEvents = (this.telemeter && this.telemeter.copyEvents()) || [];
     this.notifier.log(item, callback);
   } catch (e) {
     this.logger.error(e);
