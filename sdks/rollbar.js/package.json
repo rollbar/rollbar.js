@@ -14,7 +14,6 @@
     "async": "~1.2.1",
     "buffer-from": "~1.1.1",
     "console-polyfill": "0.3.0",
-    "debug": "2.6.9",
     "error-stack-parser": "^2.0.4",
     "json-stringify-safe": "~5.0.0",
     "lru-cache": "~2.2.1",
