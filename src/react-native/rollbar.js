@@ -7,6 +7,7 @@ var logger = require('./logger');
 var transport = require('./transport');
 var urllib = require('../browser/url');
 
+var Telemeter = require('../telemetry');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
@@ -23,9 +24,11 @@ function Rollbar(options, client) {
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
   var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'react-native');
+  var telemeter = new Telemeter(this.options)
+  this.client = client || new Client(this.options, api, logger, telemeter, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  _.setupJSON();
 }
 
 var _instance = null;
