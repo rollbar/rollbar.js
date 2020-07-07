@@ -382,6 +382,36 @@ vows.describe('transforms')
                 assert.equal(trace_chain[0].exception.message, 'nested-message');
                 assert.equal(trace_chain[1].exception.class, 'ReferenceError');
               }
+            },
+            'with error context': {
+              topic: function (options) {
+                var test = function() {
+                  var x = thisVariableIsNotDefined;
+                };
+                var err;
+                try {
+                  test();
+                } catch (e) {
+                  err = new CustomError('nested-message', e);
+                  e.rollbarContext = { err1: 'nested context' };
+                  err.rollbarContext = { err2: 'error context' };
+                }
+                var item = {
+                  data: {body: {}},
+                  err: err
+                };
+                options.addErrorContext = true;
+                t.handleItemWithError(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should add the error context': function(err, item) {
+                var trace_chain = item.stackInfo;
+                assert.lengthOf(trace_chain, 2);
+                assert.equal(item.data.custom.err1, 'nested context');
+                assert.equal(item.data.custom.err2, 'error context');
+              }
             }
           }
         }

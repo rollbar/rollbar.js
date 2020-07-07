@@ -744,6 +744,33 @@ describe('log', function() {
     done();
   })
 
+  it('should add custom data when called with error context', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      addErrorContext: true
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var err = new Error('test error');
+    err.rollbarContext = { err: 'test' };
+
+    rollbar.error(err, { 'foo': 'bar' });
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.custom.foo).to.eql('bar');
+    expect(body.data.custom.err).to.eql('test');
+
+    done();
+  })
+
   it('should send message when called with only null arguments', function(done) {
     var server = window.server;
     stubResponse(server);
