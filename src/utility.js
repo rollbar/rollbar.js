@@ -506,6 +506,27 @@ function setCustomItemKeys(item, custom) {
   }
 }
 
+function addErrorContext(item, errors) {
+  var custom = item.data.custom || {};
+  var contextAdded = false;
+
+  try {
+    for (var i = 0; i < errors.length; ++i) {
+      if (errors[i].hasOwnProperty('rollbarContext')) {
+        custom = merge(custom, errors[i].rollbarContext);
+        contextAdded = true;
+      }
+    }
+
+    // Avoid adding an empty object to the data.
+    if (contextAdded) {
+      item.data.custom = custom;
+    }
+  } catch (e) {
+    item.diagnostic.error_context = 'Failed: ' + e.message;
+  }
+}
+
 var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
@@ -776,6 +797,7 @@ function handleOptions(current, input, payload) {
 module.exports = {
   addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
   createItem: createItem,
+  addErrorContext: addErrorContext,
   createTelemetryEvent: createTelemetryEvent,
   filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,

@@ -88,6 +88,10 @@ function handleItemWithError(item, options, callback) {
   } while (err !== undefined);
   item.stackInfo = chain;
 
+  if (options.addErrorContext) {
+    _.addErrorContext(item, errors);
+  }
+
   var cb = function(e) {
     if (e) {
       item.message = item.err.message || item.err.description || item.message || String(item.err);

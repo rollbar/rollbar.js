@@ -426,10 +426,28 @@ describe('addBody', function() {
         expect(i.stackInfo).to.be.ok();
       });
       t.addBody(item, options, function(e, i) {
-        console.log('body:', i.data.body)
         expect(i.data.body.trace_chain.length).to.eql(2);
         expect(i.data.body.trace_chain[0].exception.message).to.eql('test error');
         expect(i.data.body.trace_chain[1].exception.message).to.eql('nested error');
+        done(e);
+      });
+    });
+    it('should create add error context as custom data', function(done) {
+      var nestedErr = new Error('nested error');
+      nestedErr.rollbarContext = { err1: 'nested context' };
+      var err = new Error('test error');
+      err.rollbarContext = { err2: 'error context' };
+      err.nested = nestedErr;
+      var args = ['a message', err];
+      var item = itemFromArgs(args);
+      var options = { addErrorContext: true };
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo).to.be.ok();
+      });
+      t.addBody(item, options, function(e, i) {
+        expect(i.data.body.trace_chain.length).to.eql(2);
+        expect(i.data.custom.err1).to.eql('nested context');
+        expect(i.data.custom.err2).to.eql('error context');
         done(e);
       });
     });
