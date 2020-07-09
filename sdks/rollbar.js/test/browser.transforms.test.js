@@ -471,7 +471,9 @@ describe('scrubPayload', function() {
     expect(payload.data.custom.scooby).to.eql('doo');
     expect(payload.data.custom.okay).to.eql('fizz=buzz&fuzz=baz');
     expect(payload.data.custom.user.id).to.eql(42);
-    t.scrubPayload(payload, options, function(e, i) {
+
+    var scrub = require('../src/scrub');
+    (t.addScrubber(scrub))(payload, options, function(e, i) {
       expect(i.access_token).to.eql(accessToken);
       expect(i.data.custom.scooby).to.not.eql('doo');
       expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');

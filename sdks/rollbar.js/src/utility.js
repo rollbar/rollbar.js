@@ -135,41 +135,6 @@ function isError(e) {
   return isType(e, 'error') || isType(e, 'exception');
 }
 
-function traverse(obj, func, seen) {
-  var k, v, i;
-  var isObj = isType(obj, 'object');
-  var isArray = isType(obj, 'array');
-  var keys = [];
-
-  if (isObj && seen.indexOf(obj) !== -1) {
-    return obj;
-  }
-  seen.push(obj);
-
-  if (isObj) {
-    for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
-        keys.push(k);
-      }
-    }
-  } else if (isArray) {
-    for (i = 0; i < obj.length; ++i) {
-      keys.push(i);
-    }
-  }
-
-  var result = isObj ? {} : [];
-  var same = true;
-  for (i = 0; i < keys.length; ++i) {
-    k = keys[i];
-    v = obj[k];
-    result[k] = func(k, v, seen);
-    same = same && result[k] === obj[k];
-  }
-
-  return (keys.length != 0 && !same) ? result : obj;
-}
-
 function redact() {
   return '********';
 }
@@ -621,95 +586,6 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields, scrubPaths) {
-  scrubFields = scrubFields || [];
-
-  if (scrubPaths) {
-    for (var i = 0; i < scrubPaths.length; ++i) {
-      scrubPath(data, scrubPaths[i]);
-    }
-  }
-
-  var paramRes = _getScrubFieldRegexs(scrubFields);
-  var queryRes = _getScrubQueryParamRegexs(scrubFields);
-
-  function redactQueryParam(dummy0, paramPart) {
-    return paramPart + redact();
-  }
-
-  function paramScrubber(v) {
-    var i;
-    if (isType(v, 'string')) {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
-      }
-    }
-    return v;
-  }
-
-  function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
-        v = redact();
-        break;
-      }
-    }
-    return v;
-  }
-
-  function scrubber(k, v, seen) {
-    var tmpV = valScrubber(k, v);
-    if (tmpV === v) {
-      if (isType(v, 'object') || isType(v, 'array')) {
-        return traverse(v, scrubber, seen);
-      }
-      return paramScrubber(tmpV);
-    } else {
-      return tmpV;
-    }
-  }
-
-  return traverse(data, scrubber, []);
-}
-
-function scrubPath(obj, path) {
-  var keys = path.split('.');
-  var last = keys.length - 1;
-  try {
-    for (var i = 0; i <= last; ++i) {
-      if (i < last) {
-        obj = obj[keys[i]];
-      } else {
-        obj[keys[i]] = redact();
-      }
-    }
-  } catch (e) {
-    // Missing key is OK;
-  }
-}
-
-function _getScrubFieldRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
-}
-
-
-function _getScrubQueryParamRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-  }
-  return ret;
-}
-
 function formatArgsAsString(args) {
   var i, len, arg;
   var result = [];
@@ -816,12 +692,10 @@ module.exports = {
   now: now,
   redact: redact,
   sanitizeUrl: sanitizeUrl,
-  scrub: scrub,
   set: set,
   setupJSON: setupJSON,
   stringify: stringify,
   maxByteSize: maxByteSize,
-  traverse: traverse,
   typeName: typeName,
   uuid4: uuid4
 };

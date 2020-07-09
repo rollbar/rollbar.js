@@ -20,6 +20,7 @@ function Rollbar(options, client) {
   var Instrumenter = this.components.instrumenter;
   var polyfillJSON = this.components.polyfillJSON;
   this.wrapGlobals = this.components.wrapGlobals;
+  this.scrub = this.components.scrub;
 
   var api = new API(this.options, transport, urllib);
   if (Telemeter) {
@@ -30,7 +31,7 @@ function Rollbar(options, client) {
   var gDocument = (typeof document != 'undefined') && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
   this.anonymousErrorsPending = 0;
-  addTransformsToNotifier(this.client.notifier, gWindow);
+  addTransformsToNotifier(this.client.notifier, this, gWindow);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
   if (Instrumenter) {
@@ -483,7 +484,7 @@ Rollbar.prototype.captureLoad = function(e, ts) {
 
 /* Internal */
 
-function addTransformsToNotifier(notifier, gWindow) {
+function addTransformsToNotifier(notifier, rollbar, gWindow) {
   notifier
     .addTransform(transforms.handleDomException)
     .addTransform(transforms.handleItemWithError)
@@ -496,7 +497,7 @@ function addTransformsToNotifier(notifier, gWindow) {
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
-    .addTransform(transforms.scrubPayload)
+    .addTransform(transforms.addScrubber(rollbar.scrub))
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
