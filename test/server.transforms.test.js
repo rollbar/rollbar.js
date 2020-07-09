@@ -508,6 +508,46 @@ vows.describe('transforms')
                   assert.equal(item.data.context, '/api/:bork');
                 },
               },
+              'with a request for a nested router with a baseURL': {
+                topic: function(options) {
+                  var item = {
+                    request: {
+                      headers: {
+                        host: 'example.com',
+                        'x-auth-token': '12345'
+                      },
+                      protocol: 'https',
+                      url: '/some/endpoint',
+                      baseUrl: '/nested',
+                      ip: '192.192.192.1',
+                      method: 'GET',
+                      body: {
+                        token: 'abc123',
+                        something: 'else'
+                      },
+                      route: { path: '/api/:bork' },
+                      user: {
+                        id: 42,
+                        email: 'fake@example.com'
+                      }
+                    },
+                    stuff: 'hey',
+                    data: {other: 'thing'}
+                  };
+                  t.addRequestData(item, options, this.callback);
+                },
+                'should not error': function(err, item) {
+                  assert.ifError(err);
+                },
+                'should have a request object inside data': function(err, item) {
+                  assert.ok(item.data.request);
+                },
+                'should set some fields based on request data': function(err, item) {
+                  var r = item.data.request;
+                  assert.equal(r.url, 'https://example.com/nested/some/endpoint');
+                  assert.equal(item.data.context, '/nested/api/:bork');
+                },
+              },
               'with a request like from hapi': {
                 topic: function(options) {
                   var item = {
