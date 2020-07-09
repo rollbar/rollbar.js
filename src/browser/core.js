@@ -19,6 +19,7 @@ function Rollbar(options, client) {
   var Telemeter = this.components.telemeter;
   var Instrumenter = this.components.instrumenter;
   var polyfillJSON = this.components.polyfillJSON;
+  this.wrapGlobals = this.components.wrapGlobals;
 
   var api = new API(this.options, transport, urllib);
   if (Telemeter) {
@@ -239,8 +240,8 @@ Rollbar.prototype.setupUnhandledCapture = function() {
   if (!this.unhandledExceptionsInitialized) {
     if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
       globals.captureUncaughtExceptions(gWindow, this);
-      if (this.options.wrapGlobalEventHandlers) {
-        globals.wrapGlobals(gWindow, this);
+      if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
+        this.wrapGlobals(gWindow, this);
       }
       this.unhandledExceptionsInitialized = true;
     }
