@@ -112,6 +112,8 @@ function addRequestData(item, options, callback) {
     return;
   }
 
+  var baseUrl = req.baseUrl || '';
+
   if (options.addRequestData && _.isFunction(options.addRequestData)) {
     options.addRequestData(item.data, req);
     callback(null, item);
@@ -122,11 +124,15 @@ function addRequestData(item, options, callback) {
   _.filterIp(requestData, options.captureIp);
   item.data.request = requestData;
 
+  var routePath;
+
   if (req.route) {
-    item.data.context = req.route.path;
+    routePath = req.route.path;
+    item.data.context = baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
   } else {
     try {
-      item.data.context = req.app._router.matchRequest(req).path;
+      routePath = req.app._router.matchRequest(req).path;
+      item.data.context = baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
     } catch (ignore) {
       // Ignored
     }
@@ -263,8 +269,10 @@ function _buildRequestData(req) {
   var host = headers.host || '<no host>';
   var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
   var parsedUrl;
+  var baseUrl = req.baseUrl || '';
   if (_.isType(req.url, 'string')) {
-    parsedUrl = url.parse(req.url, true);
+    var fullUrl = baseUrl && baseUrl.length ? baseUrl + req.url : req.url
+    parsedUrl = url.parse(fullUrl, true);
   } else {
     parsedUrl = req.url || {};
   }
