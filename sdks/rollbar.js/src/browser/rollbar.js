@@ -4,13 +4,15 @@ var instrumenter = require('./telemetry');
 var polyfillJSON = require('../../vendor/JSON-js/json3');
 var wrapGlobals = require('./wrapGlobals');
 var scrub = require('../scrub');
+var truncation = require('../truncation');
 
 Rollbar.setComponents({
   telemeter: telemeter,
   instrumenter: instrumenter,
   polyfillJSON: polyfillJSON,
   wrapGlobals: wrapGlobals,
-  scrub: scrub
+  scrub: scrub,
+  truncation: truncation
 });
 
 module.exports = Rollbar;

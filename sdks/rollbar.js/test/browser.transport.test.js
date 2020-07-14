@@ -3,7 +3,9 @@
 /* globals it */
 /* globals sinon */
 
-var t = require('../src/browser/transport');
+var truncation = require('../src/truncation');
+var Transport = require('../src/browser/transport');
+var t = new Transport(truncation);
 var utility = require('../src/utility');
 utility.setupJSON();
 

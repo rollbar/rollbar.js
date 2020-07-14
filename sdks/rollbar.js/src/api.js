@@ -1,6 +1,5 @@
 var _ = require('./utility');
 var helpers = require('./apiUtility');
-var truncation = require('./truncation');
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',
@@ -30,13 +29,14 @@ var defaultOptions = {
  *          protocol (optional): https
  * }
  */
-function Api(options, t, u, j) {
+function Api(options, transport, urllib, truncation, jsonBackup) {
   this.options = options;
-  this.transport = t;
-  this.url = u;
-  this.jsonBackup = j;
+  this.transport = transport;
+  this.url = urllib;
+  this.truncation = truncation;
+  this.jsonBackup = jsonBackup;
   this.accessToken = options.accessToken;
-  this.transportOptions = _getTransport(options, u);
+  this.transportOptions = _getTransport(options, urllib);
 }
 
 /**
@@ -58,7 +58,13 @@ Api.prototype.postItem = function(data, callback) {
 Api.prototype.buildJsonPayload = function(data, callback) {
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
 
-  var stringifyResult = truncation.truncate(payload);
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload)
+  }
+
   if (stringifyResult.error) {
     if (callback) {
       callback(stringifyResult.error);
