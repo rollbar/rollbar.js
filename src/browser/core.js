@@ -4,7 +4,7 @@ var API = require('../api');
 var logger = require('./logger');
 var globals = require('./globalSetup');
 
-var transport = require('./transport');
+var Transport = require('./transport');
 var urllib = require('./url');
 
 var transforms = require('./transforms');
@@ -21,8 +21,10 @@ function Rollbar(options, client) {
   var polyfillJSON = this.components.polyfillJSON;
   this.wrapGlobals = this.components.wrapGlobals;
   this.scrub = this.components.scrub;
+  var truncation = this.components.truncation;
 
-  var api = new API(this.options, transport, urllib);
+  var transport = new Transport(truncation);
+  var api = new API(this.options, transport, urllib, truncation);
   if (Telemeter) {
     this.telemeter = new Telemeter(this.options);
   }

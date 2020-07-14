@@ -1,7 +1,6 @@
 /*global XDomainRequest*/
 
 var _ = require('../utility');
-var truncation = require('../truncation');
 var logger = require('./logger');
 
 /*
@@ -21,8 +20,11 @@ var logger = require('./logger');
  *
  * payload is an unserialized object
  */
+function Transport(truncation) {
+  this.truncation = truncation;
+}
 
-function get(accessToken, options, params, callback, requestFactory) {
+Transport.prototype.get = function(accessToken, options, params, callback, requestFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -33,7 +35,7 @@ function get(accessToken, options, params, callback, requestFactory) {
   _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
 }
 
-function post(accessToken, options, payload, callback, requestFactory) {
+Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -42,7 +44,12 @@ function post(accessToken, options, payload, callback, requestFactory) {
     return callback(new Error('Cannot send empty request'));
   }
 
-  var stringifyResult = truncation.truncate(payload);
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload)
+  }
   if (stringifyResult.error) {
     return callback(stringifyResult.error);
   }
@@ -53,7 +60,7 @@ function post(accessToken, options, payload, callback, requestFactory) {
   _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
 }
 
-function postJsonPayload(accessToken, options, jsonPayload, callback, requestFactory) {
+Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -245,8 +252,4 @@ function _newRetriableError(message, code) {
   return err;
 }
 
-module.exports = {
-  get: get,
-  post: post,
-  postJsonPayload: postJsonPayload
-};
+module.exports = Transport;

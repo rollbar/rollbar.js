@@ -15,6 +15,7 @@ var Telemeter = require('../telemetry');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
+var truncation = require('../truncation');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -35,7 +36,7 @@ function Rollbar(options, client) {
   this.lambdaContext = null;
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
-  var api = new API(this.options, transport, urllib, jsonBackup);
+  var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options)
   this.client = client || new Client(this.options, api, logger, telemeter, 'server');
   addTransformsToNotifier(this.client.notifier);

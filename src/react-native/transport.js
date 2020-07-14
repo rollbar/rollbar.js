@@ -1,10 +1,14 @@
 var _ = require('../utility');
-var truncation = require('../truncation');
 var logger = require('./logger');
 
 var Buffer = require('buffer/').Buffer;
 
-function get(accessToken, options, params, callback) {
+function Transport(truncation) {
+  this.rateLimitExpires = 0;
+  this.truncation = truncation;
+}
+
+Transport.prototype.get = function(accessToken, options, params, callback) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -23,7 +27,7 @@ function get(accessToken, options, params, callback) {
   });
 }
 
-function post(accessToken, options, payload, callback) {
+Transport.prototype.post = function(accessToken, options, payload, callback) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -31,7 +35,13 @@ function post(accessToken, options, payload, callback) {
   if (!payload) {
     return callback(new Error('Cannot send empty request'));
   }
-  var stringifyResult = truncation.truncate(payload);
+
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload)
+  }
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
@@ -42,7 +52,7 @@ function post(accessToken, options, payload, callback) {
   _makeRequest(headers, options, writeData, callback);
 }
 
-function postJsonPayload(accessToken, options, jsonPayload, callback) {
+Transport.prototype.postJsonPayload = function(accessToken, options, jsonPayload, callback) {
   if (!callback || !_.isFunction(callback)) {
     callback = function() {};
   }
@@ -114,8 +124,4 @@ function _wrapPostCallback(callback) {
   }
 }
 
-module.exports = {
-  get: get,
-  post: post,
-  postJsonPayload: postJsonPayload
-};
+module.exports = Transport;
