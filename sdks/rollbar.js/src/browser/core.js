@@ -537,15 +537,16 @@ function _gWindow() {
   return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 }
 
-var pkg = require('../../package.json');
+var defaults = require('../defaults');
+var scrubFields = require('./defaults/scrubFields');
 
 var defaultOptions = {
-  version: pkg.version,
-  scrubFields: pkg.defaults.browser.scrubFields,
-  logLevel: pkg.defaults.logLevel,
-  reportLevel: pkg.defaults.reportLevel,
-  uncaughtErrorLevel: pkg.defaults.uncaughtErrorLevel,
-  endpoint: pkg.defaults.endpoint,
+  version: defaults.version,
+  scrubFields: scrubFields.scrubFields,
+  logLevel: defaults.logLevel,
+  reportLevel: defaults.reportLevel,
+  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
+  endpoint: defaults.endpoint,
   verbose: false,
   enabled: true,
   transmit: true,
