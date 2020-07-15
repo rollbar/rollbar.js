@@ -87,7 +87,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.handleOptions(oldOptions, options, payload);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
-  this.instrumenter.configure(this.options);
+  this.instrumenter && this.instrumenter.configure(this.options);
   this.setupUnhandledCapture();
   return this;
 };
