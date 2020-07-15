@@ -41,6 +41,7 @@ declare namespace Rollbar {
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
     export interface Configuration {
         accessToken?: string;
+        addErrorContext?: boolean;
         addRequestData?: (data: object, req: object) => void;
         autoInstrument?: AutoInstrumentOptions;
         captureEmail?: boolean;
