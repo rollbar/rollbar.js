@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var scrub = require('../scrub');
 var urlparser = require('./url');
 var domUtil = require('./domUtility');
 
@@ -410,7 +411,7 @@ Instrumenter.prototype.isJsonContentType = function(contentType) {
 }
 
 Instrumenter.prototype.scrubJson = function(json) {
-  return JSON.stringify(_.scrub(JSON.parse(json), this.options.scrubFields));
+  return JSON.stringify(scrub(JSON.parse(json), this.options.scrubFields));
 }
 
 Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {

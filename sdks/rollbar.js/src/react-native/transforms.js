@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var scrub = require('../scrub');
 var errorParser = require('../errorParser');
 
 function baseData(item, options, callback) {
@@ -91,7 +92,7 @@ function scrubPayload(item, options, callback) {
   var scrubFields = options.scrubFields || [];
   var scrubPaths = options.scrubPaths || [];
   scrubFields = scrubHeaders.concat(scrubFields);
-  item.data = _.scrub(item.data, scrubFields, scrubPaths);
+  item.data = scrub(item.data, scrubFields, scrubPaths);
   callback(null, item);
 }
 

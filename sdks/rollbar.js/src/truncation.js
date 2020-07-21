@@ -1,4 +1,5 @@
 var _ = require('./utility');
+var traverse = require('./utility/traverse');
 
 function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];
@@ -48,12 +49,12 @@ function truncateStrings(len, payload, jsonBackup) {
         return maybeTruncateValue(len, v);
       case 'object':
       case 'array':
-        return _.traverse(v, truncator, seen);
+        return traverse(v, truncator, seen);
       default:
         return v;
     }
   }
-  payload = _.traverse(payload, truncator, []);
+  payload = traverse(payload, truncator, []);
   return [payload, _.stringify(payload, jsonBackup)];
 }
 

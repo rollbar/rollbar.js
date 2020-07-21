@@ -5,7 +5,6 @@ var version = pkg.version;
 module.exports = {
   __NOTIFIER_VERSION__: JSON.stringify(pkg.version),
   __JQUERY_PLUGIN_VERSION__: JSON.stringify(pkg.plugins.jquery.version),
-  __DEFAULT_BROWSER_SCRUB_FIELDS__: JSON.stringify(pkg.defaults.browser.scrubFields),
   __DEFAULT_SERVER_SCRUB_FIELDS__: JSON.stringify(pkg.defaults.server.scrubFields),
   __DEFAULT_SERVER_SCRUB_HEADERS__: JSON.stringify(pkg.defaults.server.scrubHeaders),
   __DEFAULT_ENDPOINT__: JSON.stringify(pkg.defaults.endpoint),

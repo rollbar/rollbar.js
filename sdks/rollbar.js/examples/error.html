@@ -24,6 +24,16 @@
         throw new Error('deep stack error');
       }
     };
+    window.throwEventHandlerError = function throwError() {
+      // Set error to throw inside an event handler,
+      // and then trigger the event.
+      window.addEventListener('hashchange', function() {
+        throw new Error('event handler error');
+      }, false);
+
+      // set hash location
+      window.location.hash = 'test';
+    };
   </script>
 </head>
 <body>
@@ -35,4 +45,5 @@
   <button id="throw-error" onclick="throwError()">Throw Error</button>
   <button id="throw-dom-exception" onclick="throwDomException()">Throw DOMException</button>
   <button id="throw-depp-stack-error" onclick="throwDeepStackError(0,20)">Throw deep stack Error</button>
+  <button id="throw-event-handler-error" onclick="throwEventHandlerError(0,20)">Throw event handler Error</button>
 </html>

@@ -309,11 +309,15 @@ function errorClass(stackInfo, guess, options) {
   }
 }
 
-function scrubPayload(item, options, callback) {
-  var scrubFields = options.scrubFields || [];
-  var scrubPaths = options.scrubPaths || [];
-  item.data = _.scrub(item.data, scrubFields, scrubPaths);
-  callback(null, item);
+function addScrubber(scrubFn) {
+  return function (item, options, callback) {
+    if (scrubFn) {
+      var scrubFields = options.scrubFields || [];
+      var scrubPaths = options.scrubPaths || [];
+      item.data = scrubFn(item.data, scrubFields, scrubPaths);
+    }
+    callback(null, item);
+  }
 }
 
 module.exports = {
@@ -325,5 +329,5 @@ module.exports = {
   addClientInfo: addClientInfo,
   addPluginInfo: addPluginInfo,
   addBody: addBody,
-  scrubPayload: scrubPayload
+  addScrubber: addScrubber
 };
