@@ -4,12 +4,14 @@ var _ = require('../utility');
 var API = require('../api');
 var logger = require('./logger');
 
-var transport = require('./transport');
+var Transport = require('./transport');
 var urllib = require('../browser/url');
 
+var Telemeter = require('../telemetry');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
+var truncation = require('../truncation');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -22,10 +24,14 @@ function Rollbar(options, client) {
   // This makes no sense in a long running app
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
-  var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'react-native');
+
+  var transport = new Transport(truncation);
+  var api = new API(this.options, transport, urllib, truncation);
+  var telemeter = new Telemeter(this.options)
+  this.client = client || new Client(this.options, api, logger, telemeter, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  _.setupJSON();
 }
 
 var _instance = null;

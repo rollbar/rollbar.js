@@ -555,6 +555,43 @@ describe('options.captureUncaught', function() {
 
     done();
   });
+
+  it('should add _wrappedSource when wrapGlobalEventHandlers is set', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      wrapGlobalEventHandlers: true
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-event-handler-error');
+    element.click();
+
+    setTimeout(function() {
+
+      server.respond();
+
+      var body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('event handler error');
+      expect(body.data.body.trace.extra).to.have.property('_wrappedSource');
+
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false,
+        wrapGlobalEventHandlers: false
+      });
+
+      done();
+    }, 100);
+  });
 });
 
 describe('options.captureUnhandledRejections', function() {

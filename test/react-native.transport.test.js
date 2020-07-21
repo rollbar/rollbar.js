@@ -3,7 +3,11 @@
 /* globals it */
 /* globals sinon */
 
-var t = require('../src/react-native/transport');
+var truncation = require('../src/truncation');
+var Transport = require('../src/react-native/transport');
+var t = new Transport(truncation);
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('post', function() {
   var accessToken = 'abc123';

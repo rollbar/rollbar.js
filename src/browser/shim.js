@@ -1,4 +1,5 @@
 var globals = require('./globalSetup');
+var wrapGlobals = require('./wrapGlobals');
 
 function _wrapInternalErr(f) {
   return function() {
@@ -53,7 +54,7 @@ function setupShim(window, options) {
       handler._rollbarOldOnError = window.onerror;
       globals.captureUncaughtExceptions(window, handler, true);
       if (options.wrapGlobalEventHandlers) {
-        globals.wrapGlobals(window, handler, true);
+        wrapGlobals(window, handler, true);
       }
     }
 

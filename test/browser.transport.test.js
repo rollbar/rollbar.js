@@ -3,7 +3,11 @@
 /* globals it */
 /* globals sinon */
 
-var t = require('../src/browser/transport');
+var truncation = require('../src/truncation');
+var Transport = require('../src/browser/transport');
+var t = new Transport(truncation);
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('post', function() {
   var accessToken = 'abc123';
@@ -113,4 +117,3 @@ var requestGenerator = function(response, status, shouldThrow) {
     return new TestRequest(response, status, shouldThrow);
   };
 };
-

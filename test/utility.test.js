@@ -4,6 +4,8 @@
 /* globals sinon */
 
 var _ = require('../src/utility');
+var utility = require('../src/utility');
+utility.setupJSON();
 
 describe('typeName', function() {
   it('should handle undefined', function(done) {
@@ -327,13 +329,14 @@ describe('merge', function() {
   });
 });
 
+var traverse = require('../src/utility/traverse');
 describe('traverse', function() {
   describe('should call the func for every key,value', function() {
     it('simple object', function(done) {
       var obj = {a: 1, b: 2};
       var expectedOutput = {a: 2, b: 3};
       var callCount = 0;
-      var result = _.traverse(obj, function(k, v) {
+      var result = traverse(obj, function(k, v) {
         callCount++;
         return v + 1;
       }, []);
@@ -346,7 +349,7 @@ describe('traverse', function() {
       var obj = {a: 1, b: 2, c: {ca: 11}};
       var expectedOutput = {a: 2, b: 3, c: {ca: 12}};
       var callCount = 0;
-      var result = _.traverse(obj, function(k, v) {
+      var result = traverse(obj, function(k, v) {
         callCount++;
         if (k === 'c') {
           return {ca: v.ca+1};
@@ -362,7 +365,7 @@ describe('traverse', function() {
       var obj = [1, 2, 3];
       var expected = [0, 1, 2];
       var callCount = 0;
-      var result = _.traverse(obj, function(k, v) {
+      var result = traverse(obj, function(k, v) {
         callCount++;
         return v - 1;
       }, []);
@@ -633,6 +636,7 @@ describe('set', function() {
   });
 });
 
+var scrub = require('../src/scrub');
 describe('scrub', function() {
   it('should not redact fields that are okay', function() {
     var data = {
@@ -642,7 +646,7 @@ describe('scrub', function() {
     };
     var scrubFields = ['password', 'b', 'pw'];
 
-    var result = _.scrub(data, scrubFields);
+    var result = scrub(data, scrubFields);
 
     expect(result.a).to.eql('somestring');
     expect(result.tempWorker).to.eql('cool');
@@ -654,7 +658,7 @@ describe('scrub', function() {
     };
     var scrubFields = ['password', 'b'];
 
-    var result = _.scrub(data, scrubFields);
+    var result = scrub(data, scrubFields);
 
     expect(result.password).to.eql(_.redact());
   });
@@ -672,7 +676,7 @@ describe('scrub', function() {
     };
     var scrubFields = ['badthing', 'password', 'secret'];
 
-    var result = _.scrub(data, scrubFields);
+    var result = scrub(data, scrubFields);
 
     expect(result.a.b.other).to.eql('stuff');
     expect(result.a.b.badthing).to.eql(_.redact());
@@ -694,7 +698,7 @@ describe('scrub', function() {
     inner.outer = data;
     var scrubFields = ['password', 'a'];
 
-    var result = _.scrub(data, scrubFields);
+    var result = scrub(data, scrubFields);
 
     expect(result.thing).to.eql('stuff');
     expect(result.password).to.eql(_.redact());
@@ -721,7 +725,7 @@ describe('scrub', function() {
       'secret' // root path
     ];
 
-    var result = _.scrub(data, [], scrubPaths);
+    var result = scrub(data, [], scrubPaths);
 
     expect(result.a.b.bar).to.eql('stuff');
     expect(result.a.b.foo).to.eql(_.redact());

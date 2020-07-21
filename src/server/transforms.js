@@ -3,6 +3,7 @@ var parser = require('./parser');
 var requestIp = require('request-ip');
 var url = require('url');
 var _ = require('../utility');
+var scrub = require('../scrub');
 
 function baseData(item, options, callback) {
   var environment = (options.payload && options.payload.environment) || options.environment;
@@ -198,7 +199,7 @@ function scrubPayload(item, options, callback) {
   scrubFields = scrubHeaders.concat(scrubFields);
 
   parseRequestBody(item.data.request, options);
-  item.data = _.scrub(item.data, scrubFields, scrubPaths);
+  item.data = scrub(item.data, scrubFields, scrubPaths);
   serializeRequestBody(item.data.request, options);
 
   callback(null, item);
