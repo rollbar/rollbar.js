@@ -309,12 +309,12 @@ function errorClass(stackInfo, guess, options) {
   }
 }
 
-function addScrubber(scrub) {
+function addScrubber(scrubFn) {
   return function (item, options, callback) {
-    if (scrub) {
+    if (scrubFn) {
       var scrubFields = options.scrubFields || [];
       var scrubPaths = options.scrubPaths || [];
-      item.data = scrub(item.data, scrubFields, scrubPaths);
+      item.data = scrubFn(item.data, scrubFields, scrubPaths);
     }
     callback(null, item);
   }
