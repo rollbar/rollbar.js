@@ -234,7 +234,7 @@ function validateTracer(tracer) {
     return false;
   }
 
-  const scope = tracer.scope();
+  var scope = tracer.scope();
 
   if (!scope || !scope.active || typeof scope.active !== 'function') {
     return false;
@@ -252,7 +252,7 @@ function validateSpan(span) {
     return false;
   }
 
-  const spanContext = span.context();
+  var spanContext = span.context();
 
   if (!spanContext
     || !spanContext.toSpanId
