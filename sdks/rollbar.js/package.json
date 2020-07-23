@@ -12,7 +12,6 @@
   "types": "./index.d.ts",
   "dependencies": {
     "async": "~1.2.1",
-    "buffer-from": "~1.1.1",
     "console-polyfill": "0.3.0",
     "error-stack-parser": "^2.0.4",
     "json-stringify-safe": "~5.0.0",
