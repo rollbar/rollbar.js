@@ -58,6 +58,7 @@ declare namespace Rollbar {
         exitOnUncaughtException?: boolean;
         environment?: string;
         filterTelemetry?: (e: TelemetryEvent) => boolean;
+        host?: string; // used in node only
         hostBlackList?: string[];
         hostWhiteList?: string[];
         ignoredMessages?: string[];
