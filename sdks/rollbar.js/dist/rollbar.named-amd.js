@@ -81,7 +81,7 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -91,11 +91,11 @@ define("rollbar", [], function() { return /******/ (function(modules) { // webpa
 "use strict";
 
 
-var merge = __webpack_require__(10);
+var merge = __webpack_require__(12);
 
 var RollbarJSON = {};
 var __initRollbarJSON = false;
-function setupJSON() {
+function setupJSON(polyfillJSON) {
   if (__initRollbarJSON) {
     return;
   }
@@ -110,11 +110,9 @@ function setupJSON() {
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    var setupCustomJSON = __webpack_require__(11);
-    setupCustomJSON(RollbarJSON);
+    polyfillJSON(RollbarJSON);
   }
 }
-setupJSON();
 
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
@@ -228,41 +226,6 @@ function isIterable(i) {
 function isError(e) {
   // Detect both Error and Firefox Exception type
   return isType(e, 'error') || isType(e, 'exception');
-}
-
-function traverse(obj, func, seen) {
-  var k, v, i;
-  var isObj = isType(obj, 'object');
-  var isArray = isType(obj, 'array');
-  var keys = [];
-
-  if (isObj && seen.indexOf(obj) !== -1) {
-    return obj;
-  }
-  seen.push(obj);
-
-  if (isObj) {
-    for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
-        keys.push(k);
-      }
-    }
-  } else if (isArray) {
-    for (i = 0; i < obj.length; ++i) {
-      keys.push(i);
-    }
-  }
-
-  var result = isObj ? {} : [];
-  var same = true;
-  for (i = 0; i < keys.length; ++i) {
-    k = keys[i];
-    v = obj[k];
-    result[k] = func(k, v, seen);
-    same = same && result[k] === obj[k];
-  }
-
-  return (keys.length != 0 && !same) ? result : obj;
 }
 
 function redact() {
@@ -716,95 +679,6 @@ function set(obj, path, value) {
   }
 }
 
-function scrub(data, scrubFields, scrubPaths) {
-  scrubFields = scrubFields || [];
-
-  if (scrubPaths) {
-    for (var i = 0; i < scrubPaths.length; ++i) {
-      scrubPath(data, scrubPaths[i]);
-    }
-  }
-
-  var paramRes = _getScrubFieldRegexs(scrubFields);
-  var queryRes = _getScrubQueryParamRegexs(scrubFields);
-
-  function redactQueryParam(dummy0, paramPart) {
-    return paramPart + redact();
-  }
-
-  function paramScrubber(v) {
-    var i;
-    if (isType(v, 'string')) {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
-      }
-    }
-    return v;
-  }
-
-  function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
-        v = redact();
-        break;
-      }
-    }
-    return v;
-  }
-
-  function scrubber(k, v, seen) {
-    var tmpV = valScrubber(k, v);
-    if (tmpV === v) {
-      if (isType(v, 'object') || isType(v, 'array')) {
-        return traverse(v, scrubber, seen);
-      }
-      return paramScrubber(tmpV);
-    } else {
-      return tmpV;
-    }
-  }
-
-  return traverse(data, scrubber, []);
-}
-
-function scrubPath(obj, path) {
-  var keys = path.split('.');
-  var last = keys.length - 1;
-  try {
-    for (var i = 0; i <= last; ++i) {
-      if (i < last) {
-        obj = obj[keys[i]];
-      } else {
-        obj[keys[i]] = redact();
-      }
-    }
-  } catch (e) {
-    // Missing key is OK;
-  }
-}
-
-function _getScrubFieldRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
-}
-
-
-function _getScrubQueryParamRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-  }
-  return ret;
-}
-
 function formatArgsAsString(args) {
   var i, len, arg;
   var result = [];
@@ -911,11 +785,10 @@ module.exports = {
   now: now,
   redact: redact,
   sanitizeUrl: sanitizeUrl,
-  scrub: scrub,
   set: set,
+  setupJSON: setupJSON,
   stringify: stringify,
   maxByteSize: maxByteSize,
-  traverse: traverse,
   typeName: typeName,
   uuid4: uuid4
 };
@@ -974,132 +847,6 @@ module.exports = {
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-function raw(payload, jsonBackup) {
-  return [payload, _.stringify(payload, jsonBackup)];
-}
-
-function selectFrames(frames, range) {
-  var len = frames.length;
-  if (len > range * 2) {
-    return frames.slice(0, range).concat(frames.slice(len - range));
-  }
-  return frames;
-}
-
-function truncateFrames(payload, jsonBackup, range) {
-  range = (typeof range === 'undefined') ? 30 : range;
-  var body = payload.data.body;
-  var frames;
-  if (body.trace_chain) {
-    var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      frames = chain[i].frames;
-      frames = selectFrames(frames, range);
-      chain[i].frames = frames;
-    }
-  } else if (body.trace) {
-    frames = body.trace.frames;
-    frames = selectFrames(frames, range);
-    body.trace.frames = frames;
-  }
-  return [payload, _.stringify(payload, jsonBackup)];
-}
-
-function maybeTruncateValue(len, val) {
-  if (!val) {
-    return val;
-  }
-  if (val.length > len) {
-    return val.slice(0, len - 3).concat('...');
-  }
-  return val;
-}
-
-function truncateStrings(len, payload, jsonBackup) {
-  function truncator(k, v, seen) {
-    switch (_.typeName(v)) {
-      case 'string':
-        return maybeTruncateValue(len, v);
-      case 'object':
-      case 'array':
-        return _.traverse(v, truncator, seen);
-      default:
-        return v;
-    }
-  }
-  payload = _.traverse(payload, truncator, []);
-  return [payload, _.stringify(payload, jsonBackup)];
-}
-
-function truncateTraceData(traceData) {
-  if (traceData.exception) {
-    delete traceData.exception.description;
-    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
-  }
-  traceData.frames = selectFrames(traceData.frames, 1);
-  return traceData;
-}
-
-function minBody(payload, jsonBackup) {
-  var body = payload.data.body;
-  if (body.trace_chain) {
-    var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      chain[i] = truncateTraceData(chain[i]);
-    }
-  } else if (body.trace) {
-    body.trace = truncateTraceData(body.trace);
-  }
-  return [payload, _.stringify(payload, jsonBackup)];
-}
-
-function needsTruncation(payload, maxSize) {
-  return _.maxByteSize(payload) > maxSize;
-}
-
-function truncate(payload, jsonBackup, maxSize) {
-  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
-  var strategies = [
-    raw,
-    truncateFrames,
-    truncateStrings.bind(null, 1024),
-    truncateStrings.bind(null, 512),
-    truncateStrings.bind(null, 256),
-    minBody
-  ];
-  var strategy, results, result;
-
-  while ((strategy = strategies.shift())) {
-    results = strategy(payload, jsonBackup);
-    payload = results[0];
-    result = results[1];
-    if (result.error || !needsTruncation(result.value, maxSize)) {
-      return result;
-    }
-  }
-  return result;
-}
-
-module.exports = {
-  truncate: truncate,
-
-  /* for testing */
-  raw: raw,
-  truncateFrames: truncateFrames,
-  truncateStrings: truncateStrings,
-  maybeTruncateValue: maybeTruncateValue
-};
-
-
-/***/ }),
-/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1187,7 +934,7 @@ module.exports = {
 
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1320,20 +1067,169 @@ module.exports = {
 
 
 /***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+var traverse = __webpack_require__(5);
+
+function scrub(data, scrubFields, scrubPaths) {
+  scrubFields = scrubFields || [];
+
+  if (scrubPaths) {
+    for (var i = 0; i < scrubPaths.length; ++i) {
+      scrubPath(data, scrubPaths[i]);
+    }
+  }
+
+  var paramRes = _getScrubFieldRegexs(scrubFields);
+  var queryRes = _getScrubQueryParamRegexs(scrubFields);
+
+  function redactQueryParam(dummy0, paramPart) {
+    return paramPart + _.redact();
+  }
+
+  function paramScrubber(v) {
+    var i;
+    if (_.isType(v, 'string')) {
+      for (i = 0; i < queryRes.length; ++i) {
+        v = v.replace(queryRes[i], redactQueryParam);
+      }
+    }
+    return v;
+  }
+
+  function valScrubber(k, v) {
+    var i;
+    for (i = 0; i < paramRes.length; ++i) {
+      if (paramRes[i].test(k)) {
+        v = _.redact();
+        break;
+      }
+    }
+    return v;
+  }
+
+  function scrubber(k, v, seen) {
+    var tmpV = valScrubber(k, v);
+    if (tmpV === v) {
+      if (_.isType(v, 'object') || _.isType(v, 'array')) {
+        return traverse(v, scrubber, seen);
+      }
+      return paramScrubber(tmpV);
+    } else {
+      return tmpV;
+    }
+  }
+
+  return traverse(data, scrubber, []);
+}
+
+function scrubPath(obj, path) {
+  var keys = path.split('.');
+  var last = keys.length - 1;
+  try {
+    for (var i = 0; i <= last; ++i) {
+      if (i < last) {
+        obj = obj[keys[i]];
+      } else {
+        obj[keys[i]] = _.redact();
+      }
+    }
+  } catch (e) {
+    // Missing key is OK;
+  }
+}
+
+function _getScrubFieldRegexs(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
+    ret.push(new RegExp(pat, 'i'));
+  }
+  return ret;
+}
+
+
+function _getScrubQueryParamRegexs(scrubFields) {
+  var ret = [];
+  var pat;
+  for (var i = 0; i < scrubFields.length; ++i) {
+    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+  }
+  return ret;
+}
+
+module.exports = scrub;
+
+
+/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(6);
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+function traverse(obj, func, seen) {
+  var k, v, i;
+  var isObj = _.isType(obj, 'object');
+  var isArray = _.isType(obj, 'array');
+  var keys = [];
+
+  if (isObj && seen.indexOf(obj) !== -1) {
+    return obj;
+  }
+  seen.push(obj);
+
+  if (isObj) {
+    for (k in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+        keys.push(k);
+      }
+    }
+  } else if (isArray) {
+    for (i = 0; i < obj.length; ++i) {
+      keys.push(i);
+    }
+  }
+
+  var result = isObj ? {} : [];
+  var same = true;
+  for (i = 0; i < keys.length; ++i) {
+    k = keys[i];
+    v = obj[k];
+    result[k] = func(k, v, seen);
+    same = same && result[k] === obj[k];
+  }
+
+  return (keys.length != 0 && !same) ? result : obj;
+}
+
+module.exports = traverse;
 
 
 /***/ }),
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
+module.exports = __webpack_require__(7);
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
-var rollbar = __webpack_require__(7);
+var rollbar = __webpack_require__(8);
 
 var options = (typeof window !== 'undefined') && window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';
@@ -1358,42 +1254,82 @@ module.exports = rollbar;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Client = __webpack_require__(8);
+var Rollbar = __webpack_require__(9);
+var telemeter = __webpack_require__(29);
+var instrumenter = __webpack_require__(30);
+var polyfillJSON = __webpack_require__(32);
+var wrapGlobals = __webpack_require__(33);
+var scrub = __webpack_require__(4);
+var truncation = __webpack_require__(34);
+
+Rollbar.setComponents({
+  telemeter: telemeter,
+  instrumenter: instrumenter,
+  polyfillJSON: polyfillJSON,
+  wrapGlobals: wrapGlobals,
+  scrub: scrub,
+  truncation: truncation
+});
+
+module.exports = Rollbar;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Client = __webpack_require__(10);
 var _ = __webpack_require__(0);
 var API = __webpack_require__(15);
 var logger = __webpack_require__(1);
 var globals = __webpack_require__(19);
 
-var transport = __webpack_require__(20);
-var urllib = __webpack_require__(3);
+var Transport = __webpack_require__(20);
+var urllib = __webpack_require__(2);
 
 var transforms = __webpack_require__(21);
 var sharedTransforms = __webpack_require__(24);
 var predicates = __webpack_require__(25);
 var sharedPredicates = __webpack_require__(26);
-var errorParser = __webpack_require__(4);
-var Instrumenter = __webpack_require__(27);
+var errorParser = __webpack_require__(3);
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options);
   this.options._configuredOptions = options;
-  var api = new API(this.options, transport, urllib);
-  this.client = client || new Client(this.options, api, logger, 'browser');
+  var Telemeter = this.components.telemeter;
+  var Instrumenter = this.components.instrumenter;
+  var polyfillJSON = this.components.polyfillJSON;
+  this.wrapGlobals = this.components.wrapGlobals;
+  this.scrub = this.components.scrub;
+  var truncation = this.components.truncation;
+
+  var transport = new Transport(truncation);
+  var api = new API(this.options, transport, urllib, truncation);
+  if (Telemeter) {
+    this.telemeter = new Telemeter(this.options);
+  }
+  this.client = client || new Client(this.options, api, logger, this.telemeter, 'browser');
   var gWindow = _gWindow();
   var gDocument = (typeof document != 'undefined') && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
   this.anonymousErrorsPending = 0;
-  addTransformsToNotifier(this.client.notifier, gWindow);
+  addTransformsToNotifier(this.client.notifier, this, gWindow);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
-  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
-  this.instrumenter.instrument();
+  if (Instrumenter) {
+    this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
+    this.instrumenter.instrument();
+  }
+  _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;
@@ -1404,6 +1340,12 @@ Rollbar.init = function(options, client) {
   _instance = new Rollbar(options, client);
   return _instance;
 };
+
+Rollbar.prototype.components = {};
+
+Rollbar.setComponents = function(components) {
+  Rollbar.prototype.components = components;
+}
 
 function handleUninitialized(maybeCallback) {
   var message = 'Rollbar is not initialized';
@@ -1434,7 +1376,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   this.options = _.handleOptions(oldOptions, options, payload);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
-  this.instrumenter.configure(this.options);
+  this.instrumenter && this.instrumenter.configure(this.options);
   this.setupUnhandledCapture();
   return this;
 };
@@ -1590,8 +1532,8 @@ Rollbar.prototype.setupUnhandledCapture = function() {
   if (!this.unhandledExceptionsInitialized) {
     if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
       globals.captureUncaughtExceptions(gWindow, this);
-      if (this.options.wrapGlobalEventHandlers) {
-        globals.wrapGlobals(gWindow, this);
+      if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
+        this.wrapGlobals(gWindow, this);
       }
       this.unhandledExceptionsInitialized = true;
     }
@@ -1833,7 +1775,7 @@ Rollbar.prototype.captureLoad = function(e, ts) {
 
 /* Internal */
 
-function addTransformsToNotifier(notifier, gWindow) {
+function addTransformsToNotifier(notifier, rollbar, gWindow) {
   notifier
     .addTransform(transforms.handleDomException)
     .addTransform(transforms.handleItemWithError)
@@ -1846,7 +1788,7 @@ function addTransformsToNotifier(notifier, gWindow) {
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
-    .addTransform(transforms.scrubPayload)
+    .addTransform(transforms.addScrubber(rollbar.scrub))
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
@@ -1863,12 +1805,12 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
-Rollbar.prototype._createItem = function(args) {
-  return _.createItem(args, logger, this);
-};
-
 Rollbar.prototype.loadFull = function() {
   logger.info('Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.');
+};
+
+Rollbar.prototype._createItem = function(args) {
+  return _.createItem(args, logger, this);
 };
 
 function _getFirstFunction(args) {
@@ -1884,20 +1826,16 @@ function _gWindow() {
   return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 }
 
-/* global __NOTIFIER_VERSION__:false */
-/* global __DEFAULT_BROWSER_SCRUB_FIELDS__:false */
-/* global __DEFAULT_LOG_LEVEL__:false */
-/* global __DEFAULT_REPORT_LEVEL__:false */
-/* global __DEFAULT_UNCAUGHT_ERROR_LEVEL:false */
-/* global __DEFAULT_ENDPOINT__:false */
+var defaults = __webpack_require__(27);
+var scrubFields = __webpack_require__(28);
 
 var defaultOptions = {
-  version: "2.18.0",
-  scrubFields: ["pw","pass","passwd","password","secret","confirm_password","confirmPassword","password_confirmation","passwordConfirmation","access_token","accessToken","X-Rollbar-Access-Token","secret_key","secretKey","secretToken","cc-number","card number","cardnumber","cardnum","ccnum","ccnumber","cc num","creditcardnumber","credit card number","newcreditcardnumber","new credit card","creditcardno","credit card no","card#","card #","cc-csc","cvc","cvc2","cvv2","ccv2","security code","card verification","name on credit card","name on card","nameoncard","cardholder","card holder","name des karteninhabers","ccname","card type","cardtype","cc type","cctype","payment type","expiration date","expirationdate","expdate","cc-exp","ccmonth","ccyear"],
-  logLevel: "debug",
-  reportLevel: "debug",
-  uncaughtErrorLevel: "error",
-  endpoint: "api.rollbar.com/api/1/item/",
+  version: defaults.version,
+  scrubFields: scrubFields.scrubFields,
+  logLevel: defaults.logLevel,
+  reportLevel: defaults.reportLevel,
+  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
+  endpoint: defaults.endpoint,
   verbose: false,
   enabled: true,
   transmit: true,
@@ -1913,16 +1851,15 @@ module.exports = Rollbar;
 
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var RateLimiter = __webpack_require__(9);
-var Queue = __webpack_require__(12);
-var Notifier = __webpack_require__(13);
-var Telemeter = __webpack_require__(14);
+var RateLimiter = __webpack_require__(11);
+var Queue = __webpack_require__(13);
+var Notifier = __webpack_require__(14);
 var _ = __webpack_require__(0);
 
 /*
@@ -1932,7 +1869,7 @@ var _ = __webpack_require__(0);
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, platform) {
+function Rollbar(options, api, logger, telemeter, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
@@ -1952,7 +1889,7 @@ function Rollbar(options, api, logger, platform) {
   }
 
   this.notifier = new Notifier(this.queue, this.options);
-  this.telemeter = new Telemeter(this.options);
+  this.telemeter = telemeter;
   setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
@@ -2036,15 +1973,15 @@ Rollbar.prototype.wait = function (callback) {
 };
 
 Rollbar.prototype.captureEvent = function (type, metadata, level) {
-  return this.telemeter.captureEvent(type, metadata, level);
+  return this.telemeter && this.telemeter.captureEvent(type, metadata, level);
 };
 
 Rollbar.prototype.captureDomContentLoaded = function (ts) {
-  return this.telemeter.captureDomContentLoaded(ts);
+  return this.telemeter && this.telemeter.captureDomContentLoaded(ts);
 };
 
 Rollbar.prototype.captureLoad = function (ts) {
-  return this.telemeter.captureLoad(ts);
+  return this.telemeter && this.telemeter.captureLoad(ts);
 };
 
 Rollbar.prototype.buildJsonPayload = function (item) {
@@ -2074,8 +2011,8 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   try {
     this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
-    this.telemeter._captureRollbarItem(item);
-    item.telemetryEvents = this.telemeter.copyEvents();
+    this.telemeter && this.telemeter._captureRollbarItem(item);
+    item.telemetryEvents = (this.telemeter && this.telemeter.copyEvents()) || [];
     this.notifier.log(item, callback);
   } catch (e) {
     this.logger.error(e);
@@ -2156,7 +2093,7 @@ function validateTracer(tracer) {
     return false;
   }
 
-  const scope = tracer.scope();
+  var scope = tracer.scope();
 
   if (!scope || !scope.active || typeof scope.active !== 'function') {
     return false;
@@ -2174,7 +2111,7 @@ function validateSpan(span) {
     return false;
   }
 
-  const spanContext = span.context();
+  var spanContext = span.context();
 
   if (!spanContext
     || !spanContext.toSpanId
@@ -2191,7 +2128,7 @@ module.exports = Rollbar;
 
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2343,7 +2280,7 @@ module.exports = RateLimiter;
 
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2406,7 +2343,3218 @@ module.exports = merge;
 
 
 /***/ }),
-/* 11 */
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+/*
+ * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
+ *   This object handles rate limiting via a passed in rate limiter, retries based on connection
+ *   errors, and filtering of items based on a set of configurable predicates. The communication to
+ *   the backend is performed via a given API object.
+ *
+ * @param rateLimiter - An object which conforms to the interface
+ *    rateLimiter.shouldSend(item) -> bool
+ * @param api - An object which conforms to the interface
+ *    api.postItem(payload, function(err, response))
+ * @param logger - An object used to log verbose messages if desired
+ * @param options - see Queue.prototype.configure
+ */
+function Queue(rateLimiter, api, logger, options) {
+  this.rateLimiter = rateLimiter;
+  this.api = api;
+  this.logger = logger;
+  this.options = options;
+  this.predicates = [];
+  this.pendingItems = [];
+  this.pendingRequests = [];
+  this.retryQueue = [];
+  this.retryHandle = null;
+  this.waitCallback = null;
+  this.waitIntervalID = null;
+}
+
+/*
+ * configure - updates the options this queue uses
+ *
+ * @param options
+ */
+Queue.prototype.configure = function(options) {
+  this.api && this.api.configure(options);
+  var oldOptions = this.options;
+  this.options = _.merge(oldOptions, options);
+  return this;
+};
+
+/*
+ * addPredicate - adds a predicate to the end of the list of predicates for this queue
+ *
+ * @param predicate - function(item, options) -> (bool|{err: Error})
+ *  Returning true means that this predicate passes and the item is okay to go on the queue
+ *  Returning false means do not add the item to the queue, but it is not an error
+ *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
+ *  Returning {err: undefined} is equivalent to returning true but don't do that
+ */
+Queue.prototype.addPredicate = function(predicate) {
+  if (_.isFunction(predicate)) {
+    this.predicates.push(predicate);
+  }
+  return this;
+};
+
+Queue.prototype.addPendingItem = function(item) {
+  this.pendingItems.push(item);
+};
+
+Queue.prototype.removePendingItem = function(item) {
+  var idx = this.pendingItems.indexOf(item);
+  if (idx !== -1) {
+    this.pendingItems.splice(idx, 1);
+  }
+};
+
+/*
+ * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
+ *
+ * @param item - The payload to send to the backend
+ * @param callback - function(error, repsonse) which will be called with the response from the API
+ *  in the case of a success, otherwise response will be null and error will have a value. If both
+ *  error and response are null then the item was stopped by a predicate which did not consider this
+ *  to be an error condition, but nonetheless did not send the item to the API.
+ *  @param originalError - The original error before any transformations that is to be logged if any
+ */
+Queue.prototype.addItem = function(item, callback, originalError, originalItem) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() { return; };
+  }
+  var predicateResult = this._applyPredicates(item);
+  if (predicateResult.stop) {
+    this.removePendingItem(originalItem);
+    callback(predicateResult.err);
+    return;
+  }
+  this._maybeLog(item, originalError);
+  this.removePendingItem(originalItem);
+  if (!this.options.transmit) {
+    callback(new Error('Transmit disabled'));
+    return;
+  }
+  this.pendingRequests.push(item);
+  try {
+    this._makeApiRequest(item, function(err, resp) {
+      this._dequeuePendingRequest(item);
+      callback(err, resp);
+    }.bind(this));
+  } catch (e) {
+    this._dequeuePendingRequest(item);
+    callback(e);
+  }
+};
+
+/*
+ * wait - Stop any further errors from being added to the queue, and get called back when all items
+ *   currently processing have finished sending to the backend.
+ *
+ * @param callback - function() called when all pending items have been sent
+ */
+Queue.prototype.wait = function(callback) {
+  if (!_.isFunction(callback)) {
+    return;
+  }
+  this.waitCallback = callback;
+  if (this._maybeCallWait()) {
+    return;
+  }
+  if (this.waitIntervalID) {
+    this.waitIntervalID = clearInterval(this.waitIntervalID);
+  }
+  this.waitIntervalID = setInterval(function() {
+    this._maybeCallWait();
+  }.bind(this), 500);
+};
+
+/* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
+ *   given item with the currently configured options.
+ *
+ * @param item - An item in the queue
+ * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
+ *   the error value should be passed up to a callbak if we are stopping.
+ */
+Queue.prototype._applyPredicates = function(item) {
+  var p = null;
+  for (var i = 0, len = this.predicates.length; i < len; i++) {
+    p = this.predicates[i](item, this.options);
+    if (!p || p.err !== undefined) {
+      return {stop: true, err: p.err};
+    }
+  }
+  return {stop: false, err: null};
+};
+
+/*
+ * _makeApiRequest - Send an item to Rollbar, callback when done, if there is an error make an
+ *   effort to retry if we are configured to do so.
+ *
+ * @param item - an item ready to send to the backend
+ * @param callback - function(err, response)
+ */
+Queue.prototype._makeApiRequest = function(item, callback) {
+  var rateLimitResponse = this.rateLimiter.shouldSend(item);
+  if (rateLimitResponse.shouldSend) {
+    this.api.postItem(item, function(err, resp) {
+      if (err) {
+        this._maybeRetry(err, item, callback);
+      } else {
+        callback(err, resp);
+      }
+    }.bind(this));
+  } else if (rateLimitResponse.error) {
+    callback(rateLimitResponse.error);
+  } else {
+    this.api.postItem(rateLimitResponse.payload, callback);
+  }
+};
+
+// These are errors basically mean there is no internet connection
+var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN'];
+
+/*
+ * _maybeRetry - Given the error returned by the API, decide if we should retry or just callback
+ *   with the error.
+ *
+ * @param err - an error returned by the API transport
+ * @param item - the item that was trying to be sent when this error occured
+ * @param callback - function(err, response)
+ */
+Queue.prototype._maybeRetry = function(err, item, callback) {
+  var shouldRetry = false;
+  if (this.options.retryInterval) {
+    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
+      if (err.code === RETRIABLE_ERRORS[i]) {
+        shouldRetry = true;
+        break;
+      }
+    }
+  }
+  if (shouldRetry) {
+    this._retryApiRequest(item, callback);
+  } else {
+    callback(err);
+  }
+};
+
+/*
+ * _retryApiRequest - Add an item and a callback to a queue and possibly start a timer to process
+ *   that queue based on the retryInterval in the options for this queue.
+ *
+ * @param item - an item that failed to send due to an error we deem retriable
+ * @param callback - function(err, response)
+ */
+Queue.prototype._retryApiRequest = function(item, callback) {
+  this.retryQueue.push({item: item, callback: callback});
+
+  if (!this.retryHandle) {
+    this.retryHandle = setInterval(function() {
+      while (this.retryQueue.length) {
+        var retryObject = this.retryQueue.shift();
+        this._makeApiRequest(retryObject.item, retryObject.callback);
+      }
+    }.bind(this), this.options.retryInterval);
+  }
+};
+
+/*
+ * _dequeuePendingRequest - Removes the item from the pending request queue, this queue is used to
+ *   enable to functionality of providing a callback that clients can pass to `wait` to be notified
+ *   when the pending request queue has been emptied. This must be called when the API finishes
+ *   processing this item. If a `wait` callback is configured, it is called by this function.
+ *
+ * @param item - the item previously added to the pending request queue
+ */
+Queue.prototype._dequeuePendingRequest = function(item) {
+  var idx = this.pendingRequests.indexOf(item);
+  if (idx !== -1) {
+    this.pendingRequests.splice(idx, 1);
+    this._maybeCallWait();
+  }
+};
+
+Queue.prototype._maybeLog = function(data, originalError) {
+  if (this.logger && this.options.verbose) {
+    var message = originalError;
+    message = message || _.get(data, 'body.trace.exception.message');
+    message = message || _.get(data, 'body.trace_chain.0.exception.message');
+    if (message) {
+      this.logger.error(message);
+      return;
+    }
+    message = _.get(data, 'body.message.body');
+    if (message) {
+      this.logger.log(message);
+    }
+  }
+};
+
+Queue.prototype._maybeCallWait = function() {
+  if (_.isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
+    if (this.waitIntervalID) {
+      this.waitIntervalID = clearInterval(this.waitIntervalID);
+    }
+    this.waitCallback();
+    return true;
+  }
+  return false;
+};
+
+module.exports = Queue;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+/*
+ * Notifier - the internal object responsible for delegating between the client exposed API, the
+ * chain of transforms necessary to turn an item into something that can be sent to Rollbar, and the
+ * queue which handles the communcation with the Rollbar API servers.
+ *
+ * @param queue - an object that conforms to the interface: addItem(item, callback)
+ * @param options - an object representing the options to be set for this notifier, this should have
+ * any defaults already set by the caller
+ */
+function Notifier(queue, options) {
+  this.queue = queue;
+  this.options = options;
+  this.transforms = [];
+  this.diagnostic = {};
+}
+
+/*
+ * configure - updates the options for this notifier with the passed in object
+ *
+ * @param options - an object which gets merged with the current options set on this notifier
+ * @returns this
+ */
+Notifier.prototype.configure = function(options) {
+  this.queue && this.queue.configure(options);
+  var oldOptions = this.options;
+  this.options = _.merge(oldOptions, options);
+  return this;
+};
+
+/*
+ * addTransform - adds a transform onto the end of the queue of transforms for this notifier
+ *
+ * @param transform - a function which takes three arguments:
+ *    * item: An Object representing the data to eventually be sent to Rollbar
+ *    * options: The current value of the options for this notifier
+ *    * callback: function(err: (Null|Error), item: (Null|Object)) the transform must call this
+ *    callback with a null value for error if it wants the processing chain to continue, otherwise
+ *    with an error to terminate the processing. The item should be the updated item after this
+ *    transform is finished modifying it.
+ */
+Notifier.prototype.addTransform = function(transform) {
+  if (_.isFunction(transform)) {
+    this.transforms.push(transform);
+  }
+  return this;
+};
+
+/*
+ * log - the internal log function which applies the configured transforms and then pushes onto the
+ * queue to be sent to the backend.
+ *
+ * @param item - An object with the following structure:
+ *    message [String] - An optional string to be sent to rollbar
+ *    error [Error] - An optional error
+ *
+ * @param callback - A function of type function(err, resp) which will be called with exactly one
+ * null argument and one non-null argument. The callback will be called once, either during the
+ * transform stage if an error occurs inside a transform, or in response to the communication with
+ * the backend. The second argument will be the response from the backend in case of success.
+ */
+Notifier.prototype.log = function(item, callback) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+
+  if (!this.options.enabled) {
+    return callback(new Error('Rollbar is not enabled'));
+  }
+
+  this.queue.addPendingItem(item);
+  var originalError = item.err;
+  this._applyTransforms(item, function(err, i) {
+    if (err) {
+      this.queue.removePendingItem(item);
+      return callback(err, null);
+    }
+    this.queue.addItem(i, callback, originalError, item);
+  }.bind(this));
+};
+
+/* Internal */
+
+/*
+ * _applyTransforms - Applies the transforms that have been added to this notifier sequentially. See
+ * `addTransform` for more information.
+ *
+ * @param item - An item to be transformed
+ * @param callback - A function of type function(err, item) which will be called with a non-null
+ * error and a null item in the case of a transform failure, or a null error and non-null item after
+ * all transforms have been applied.
+ */
+Notifier.prototype._applyTransforms = function(item, callback) {
+  var transformIndex = -1;
+  var transformsLength = this.transforms.length;
+  var transforms = this.transforms;
+  var options = this.options;
+
+  var cb = function(err, i) {
+    if (err) {
+      callback(err, null);
+      return;
+    }
+
+    transformIndex++;
+
+    if (transformIndex === transformsLength) {
+      callback(null, i);
+      return;
+    }
+
+    transforms[transformIndex](i, options, cb);
+  };
+
+  cb(null, item);
+};
+
+module.exports = Notifier;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+var helpers = __webpack_require__(16);
+
+var defaultOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/item/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443
+};
+
+/**
+ * Api is an object that encapsulates methods of communicating with
+ * the Rollbar API.  It is a standard interface with some parts implemented
+ * differently for server or browser contexts.  It is an object that should
+ * be instantiated when used so it can contain non-global options that may
+ * be different for another instance of RollbarApi.
+ *
+ * @param options {
+ *    accessToken: the accessToken to use for posting items to rollbar
+ *    endpoint: an alternative endpoint to send errors to
+ *        must be a valid, fully qualified URL.
+ *        The default is: https://api.rollbar.com/api/1/item
+ *    proxy: if you wish to proxy requests provide an object
+ *        with the following keys:
+ *          host or hostname (required): foo.example.com
+ *          port (optional): 123
+ *          protocol (optional): https
+ * }
+ */
+function Api(options, transport, urllib, truncation, jsonBackup) {
+  this.options = options;
+  this.transport = transport;
+  this.url = urllib;
+  this.truncation = truncation;
+  this.jsonBackup = jsonBackup;
+  this.accessToken = options.accessToken;
+  this.transportOptions = _getTransport(options, urllib);
+}
+
+/**
+ *
+ * @param data
+ * @param callback
+ */
+Api.prototype.postItem = function(data, callback) {
+  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  this.transport.post(this.accessToken, transportOptions, payload, callback);
+};
+
+/**
+ *
+ * @param data
+ * @param callback
+ */
+Api.prototype.buildJsonPayload = function(data, callback) {
+  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload)
+  }
+
+  if (stringifyResult.error) {
+    if (callback) {
+      callback(stringifyResult.error);
+    }
+    return null;
+  }
+
+  return stringifyResult.value;
+};
+
+/**
+ *
+ * @param jsonPayload
+ * @param callback
+ */
+Api.prototype.postJsonPayload = function(jsonPayload, callback) {
+  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
+};
+
+Api.prototype.configure = function(options) {
+  var oldOptions = this.oldOptions;
+  this.options = _.merge(oldOptions, options);
+  this.transportOptions = _getTransport(this.options, this.url);
+  if (this.options.accessToken !== undefined) {
+    this.accessToken = this.options.accessToken;
+  }
+  return this;
+};
+
+function _getTransport(options, url) {
+  return helpers.getTransportFromOptions(options, defaultOptions, url);
+}
+
+module.exports = Api;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+function buildPayload(accessToken, data, jsonBackup) {
+  if (!_.isType(data.context, 'string')) {
+    var contextResult = _.stringify(data.context, jsonBackup);
+    if (contextResult.error) {
+      data.context = 'Error: could not serialize \'context\'';
+    } else {
+      data.context = contextResult.value || '';
+    }
+    if (data.context.length > 255) {
+      data.context = data.context.substr(0, 255);
+    }
+  }
+  return {
+    access_token: accessToken,
+    data: data
+  };
+}
+
+function getTransportFromOptions(options, defaults, url) {
+  var hostname = defaults.hostname;
+  var protocol = defaults.protocol;
+  var port = defaults.port;
+  var path = defaults.path;
+  var search = defaults.search;
+
+  var proxy = options.proxy;
+  if (options.endpoint) {
+    var opts = url.parse(options.endpoint);
+    hostname = opts.hostname;
+    protocol = opts.protocol;
+    port = opts.port;
+    path = opts.pathname;
+    search = opts.search;
+  }
+  return {
+    hostname: hostname,
+    protocol: protocol,
+    port: port,
+    path: path,
+    search: search,
+    proxy: proxy
+  };
+}
+
+function transportOptions(transport, method) {
+  var protocol = transport.protocol || 'https:';
+  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
+  var hostname = transport.hostname;
+  var path = transport.path;
+  if (transport.search) {
+    path = path + transport.search;
+  }
+  if (transport.proxy) {
+    path = protocol + '//' + hostname + path;
+    hostname = transport.proxy.host || transport.proxy.hostname;
+    port = transport.proxy.port;
+    protocol = transport.proxy.protocol || protocol;
+  }
+  return {
+    protocol: protocol,
+    hostname: hostname,
+    path: path,
+    port: port,
+    method: method
+  };
+}
+
+function appendPathToPath(base, path) {
+  var baseTrailingSlash = /\/$/.test(base);
+  var pathBeginningSlash = /^\//.test(path);
+
+  if (baseTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!baseTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+
+  return base + path;
+}
+
+module.exports = {
+  buildPayload: buildPayload,
+  getTransportFromOptions: getTransportFromOptions,
+  transportOptions: transportOptions,
+  appendPathToPath: appendPathToPath
+};
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+// Console-polyfill. MIT license.
+// https://github.com/paulmillr/console-polyfill
+// Make it safe to do console.log() always.
+(function(global) {
+  'use strict';
+  if (!global.console) {
+    global.console = {};
+  }
+  var con = global.console;
+  var prop, method;
+  var dummy = function() {};
+  var properties = ['memory'];
+  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
+  while (prop = properties.pop()) if (!con[prop]) con[prop] = {};
+  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
+  // Using `this` for web workers & supports Browserify / Webpack.
+})(typeof window === 'undefined' ? this : window);
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// This detection.js module is used to encapsulate any ugly browser/feature
+// detection we may need to do.
+
+// Figure out which version of IE we're using, if any.
+// This is gleaned from http://stackoverflow.com/questions/5574842/best-way-to-check-for-ie-less-than-9-in-javascript-without-library
+// Will return an integer on IE (i.e. 8)
+// Will return undefined otherwise
+function getIEVersion() {
+	var undef;
+	if (typeof document === 'undefined') {
+		return undef;
+	}
+
+  var v = 3,
+    div = document.createElement('div'),
+    all = div.getElementsByTagName('i');
+
+  while (
+    div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->',
+      all[0]
+    );
+
+  return v > 4 ? v : undef;
+}
+
+var Detection = {
+  ieVersion: getIEVersion
+};
+
+module.exports = Detection;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function captureUncaughtExceptions(window, handler, shim) {
+  if (!window) { return; }
+  var oldOnError;
+
+  if (typeof handler._rollbarOldOnError === 'function') {
+    oldOnError = handler._rollbarOldOnError;
+  } else if (window.onerror) {
+    oldOnError = window.onerror;
+    while (oldOnError._rollbarOldOnError) {
+      oldOnError = oldOnError._rollbarOldOnError;
+    }
+    handler._rollbarOldOnError = oldOnError;
+  }
+
+  handler.handleAnonymousErrors();
+
+  var fn = function() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    _rollbarWindowOnError(window, handler, oldOnError, args);
+  };
+  if (shim) {
+    fn._rollbarOldOnError = oldOnError;
+  }
+  window.onerror = fn;
+}
+
+function _rollbarWindowOnError(window, r, old, args) {
+  if (window._rollbarWrappedError) {
+    if (!args[4]) {
+      args[4] = window._rollbarWrappedError;
+    }
+    if (!args[5]) {
+      args[5] = window._rollbarWrappedError._rollbarContext;
+    }
+    window._rollbarWrappedError = null;
+  }
+
+  var ret = r.handleUncaughtException.apply(r, args);
+
+  if (old) {
+    old.apply(window, args);
+  }
+
+  // Let other chained onerror handlers above run before setting this.
+  // If an error is thrown and caught within a chained onerror handler,
+  // Error.prepareStackTrace() will see that one before the one we want.
+  if (ret === 'anonymous') {
+    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+  }
+}
+
+function captureUnhandledRejections(window, handler, shim) {
+  if (!window) { return; }
+
+  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
+  }
+
+  var rejectionHandler = function (evt) {
+    var reason, promise, detail;
+    try {
+      reason = evt.reason;
+    } catch (e) {
+      reason = undefined;
+    }
+    try {
+      promise = evt.promise;
+    } catch (e) {
+      promise = '[unhandledrejection] error getting `promise` from event';
+    }
+    try {
+      detail = evt.detail;
+      if (!reason && detail) {
+        reason = detail.reason;
+        promise = detail.promise;
+      }
+    } catch (e) {
+      // Ignore
+    }
+    if (!reason) {
+      reason = '[unhandledrejection] error getting `reason` from event';
+    }
+
+    if (handler && handler.handleUnhandledRejection) {
+      handler.handleUnhandledRejection(reason, promise);
+    }
+  };
+  rejectionHandler.belongsToShim = shim;
+  window._rollbarURH = rejectionHandler;
+  window.addEventListener('unhandledrejection', rejectionHandler);
+}
+
+
+module.exports = {
+  captureUncaughtExceptions: captureUncaughtExceptions,
+  captureUnhandledRejections: captureUnhandledRejections
+};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/*global XDomainRequest*/
+
+var _ = __webpack_require__(0);
+var logger = __webpack_require__(1);
+
+/*
+ * accessToken may be embedded in payload but that should not
+ *   be assumed
+ *
+ * options: {
+ *   hostname
+ *   protocol
+ *   path
+ *   port
+ *   method
+ * }
+ *
+ *  params is an object containing key/value pairs. These
+ *    will be appended to the path as 'key=value&key=value'
+ *
+ * payload is an unserialized object
+ */
+function Transport(truncation) {
+  this.truncation = truncation;
+}
+
+Transport.prototype.get = function(accessToken, options, params, callback, requestFactory) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+  _.addParamsAndAccessTokenToPath(accessToken, options, params);
+
+  var method = 'GET';
+  var url = _.formatUrl(options);
+  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
+}
+
+Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+
+  if (!payload) {
+    return callback(new Error('Cannot send empty request'));
+  }
+
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload)
+  }
+  if (stringifyResult.error) {
+    return callback(stringifyResult.error);
+  }
+
+  var writeData = stringifyResult.value;
+  var method = 'POST';
+  var url = _.formatUrl(options);
+  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
+}
+
+Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
+  if (!callback || !_.isFunction(callback)) {
+    callback = function() {};
+  }
+
+  var method = 'POST';
+  var url = _.formatUrl(options);
+  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory);
+}
+
+// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
+// so Angular change detection isn't triggered on each API call.
+// This is the equivalent of runOutsideAngular().
+//
+function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory) {
+  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+
+  if (currentZone && currentZone._name === 'angular') {
+    var rootZone = currentZone._parent;
+    rootZone.run(function () {
+      _makeRequest(accessToken, url, method, data, callback, requestFactory);
+    });
+  } else {
+    _makeRequest(accessToken, url, method, data, callback, requestFactory);
+  }
+}
+
+/* global RollbarProxy */
+function _proxyRequest(json, callback) {
+  var rollbarProxy = new RollbarProxy();
+  rollbarProxy.sendJsonPayload(
+    json,
+    function(_msg) { /* do nothing */ }, // eslint-disable-line no-unused-vars
+    function(err) {
+      callback(new Error(err));
+    }
+  );
+}
+
+function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
+  if (typeof RollbarProxy !== 'undefined') {
+    return _proxyRequest(data, callback);
+  }
+
+  var request;
+  if (requestFactory) {
+    request = requestFactory();
+  } else {
+    request = _createXMLHTTPObject();
+  }
+  if (!request) {
+    // Give up, no way to send requests
+    return callback(new Error('No way to send a request'));
+  }
+  try {
+    try {
+      var onreadystatechange = function() {
+        try {
+          if (onreadystatechange && request.readyState === 4) {
+            onreadystatechange = undefined;
+
+            var parseResponse = _.jsonParse(request.responseText);
+            if (_isSuccess(request)) {
+              callback(parseResponse.error, parseResponse.value);
+              return;
+            } else if (_isNormalFailure(request)) {
+              if (request.status === 403) {
+                // likely caused by using a server access token
+                var message = parseResponse.value && parseResponse.value.message;
+                logger.error(message);
+              }
+              // return valid http status codes
+              callback(new Error(String(request.status)));
+            } else {
+              // IE will return a status 12000+ on some sort of connection failure,
+              // so we return a blank error
+              // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
+              var msg = 'XHR response had no status code (likely connection failure)';
+              callback(_newRetriableError(msg));
+            }
+          }
+        } catch (ex) {
+          //jquery source mentions firefox may error out while accessing the
+          //request members if there is a network error
+          //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
+          var exc;
+          if (ex && ex.stack) {
+            exc = ex;
+          } else {
+            exc = new Error(ex);
+          }
+          callback(exc);
+        }
+      };
+
+      request.open(method, url, true);
+      if (request.setRequestHeader) {
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
+      }
+      request.onreadystatechange = onreadystatechange;
+      request.send(data);
+    } catch (e1) {
+      // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
+      if (typeof XDomainRequest !== 'undefined') {
+
+        // Assume we are in a really old browser which has a bunch of limitations:
+        // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+
+        // Extreme paranoia: if we have XDomainRequest then we have a window, but just in case
+        if (!window || !window.location) {
+          return callback(new Error('No window available during request, unknown environment'));
+        }
+
+        // If the current page is http, try and send over http
+        if (window.location.href.substring(0, 5) === 'http:' && url.substring(0, 5) === 'https') {
+          url = 'http' + url.substring(5);
+        }
+
+        var xdomainrequest = new XDomainRequest();
+        xdomainrequest.onprogress = function() {};
+        xdomainrequest.ontimeout = function() {
+          var msg = 'Request timed out';
+          var code = 'ETIMEDOUT';
+          callback(_newRetriableError(msg, code));
+        };
+        xdomainrequest.onerror = function() {
+          callback(new Error('Error during request'));
+        };
+        xdomainrequest.onload = function() {
+          var parseResponse = _.jsonParse(xdomainrequest.responseText);
+          callback(parseResponse.error, parseResponse.value);
+        };
+        xdomainrequest.open(method, url, true);
+        xdomainrequest.send(data);
+      } else {
+        callback(new Error('Cannot find a method to transport a request'));
+      }
+    }
+  } catch (e2) {
+    callback(e2);
+  }
+}
+
+function _createXMLHTTPObject() {
+  /* global ActiveXObject:false */
+
+  var factories = [
+    function () {
+      return new XMLHttpRequest();
+    },
+    function () {
+      return new ActiveXObject('Msxml2.XMLHTTP');
+    },
+    function () {
+      return new ActiveXObject('Msxml3.XMLHTTP');
+    },
+    function () {
+      return new ActiveXObject('Microsoft.XMLHTTP');
+    }
+  ];
+  var xmlhttp;
+  var i;
+  var numFactories = factories.length;
+  for (i = 0; i < numFactories; i++) {
+    /* eslint-disable no-empty */
+    try {
+      xmlhttp = factories[i]();
+      break;
+    } catch (e) {
+      // pass
+    }
+    /* eslint-enable no-empty */
+  }
+  return xmlhttp;
+}
+
+function _isSuccess(r) {
+  return r && r.status && r.status === 200;
+}
+
+function _isNormalFailure(r) {
+  return r && _.isType(r.status, 'number') && r.status >= 400 && r.status < 600;
+}
+
+function _newRetriableError(message, code) {
+  var err = new Error(message);
+  err.code = code || 'ENOTFOUND';
+  return err;
+}
+
+module.exports = Transport;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+var errorParser = __webpack_require__(3);
+var logger = __webpack_require__(1);
+
+function handleDomException(item, options, callback) {
+  if(item.err && errorParser.Stack(item.err).name === 'DOMException') {
+    var originalError = new Error();
+    originalError.name = item.err.name;
+    originalError.message = item.err.message;
+    originalError.stack = item.err.stack;
+    originalError.nested = item.err;
+    item.err = originalError;
+  }
+  callback(null, item);
+}
+
+function handleItemWithError(item, options, callback) {
+  item.data = item.data || {};
+  if (item.err) {
+    try {
+      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
+
+      if (options.addErrorContext) {
+        addErrorContext(item);
+      }
+    } catch (e) {
+      logger.error('Error while parsing the error object.', e);
+      try {
+        item.message = item.err.message || item.err.description || item.message || String(item.err);
+      } catch (e2) {
+        item.message = String(item.err) || String(e2);
+      }
+      delete item.err;
+    }
+  }
+  callback(null, item);
+}
+
+function addErrorContext(item) {
+  var chain = [];
+  var err = item.err;
+
+  chain.push(err);
+
+  while (err.nested) {
+    err = err.nested;
+    chain.push(err);
+  }
+
+  _.addErrorContext(item, chain);
+}
+
+function ensureItemHasSomethingToSay(item, options, callback) {
+  if (!item.message && !item.stackInfo && !item.custom) {
+    callback(new Error('No message, stack info, or custom data'), null);
+  }
+  callback(null, item);
+}
+
+function addBaseInfo(item, options, callback) {
+  var environment = (options.payload && options.payload.environment) || options.environment;
+  item.data = _.merge(item.data, {
+    environment: environment,
+    level: item.level,
+    endpoint: options.endpoint,
+    platform: 'browser',
+    framework: 'browser-js',
+    language: 'javascript',
+    server: {},
+    uuid: item.uuid,
+    notifier: {
+      name: 'rollbar-browser-js',
+      version: options.version
+    },
+    custom: item.custom
+  });
+  callback(null, item);
+}
+
+function addRequestInfo(window) {
+  return function(item, options, callback) {
+    if (!window || !window.location) {
+      return callback(null, item);
+    }
+    var remoteString = '$remote_ip';
+    if (!options.captureIp) {
+      remoteString = null;
+    } else if (options.captureIp !== true) {
+      remoteString += '_anonymize';
+    }
+    _.set(item, 'data.request', {
+      url: window.location.href,
+      query_string: window.location.search,
+      user_ip: remoteString
+    });
+    callback(null, item);
+  };
+}
+
+function addClientInfo(window) {
+  return function(item, options, callback) {
+    if (!window) {
+      return callback(null, item);
+    }
+    var nav = window.navigator || {};
+    var scr = window.screen || {};
+    _.set(item, 'data.client', {
+      runtime_ms: item.timestamp - window._rollbarStartTime,
+      timestamp: Math.round(item.timestamp / 1000),
+      javascript: {
+        browser: nav.userAgent,
+        language: nav.language,
+        cookie_enabled: nav.cookieEnabled,
+        screen: {
+          width: scr.width,
+          height: scr.height
+        }
+      }
+    });
+    callback(null, item);
+  };
+}
+
+function addPluginInfo(window) {
+  return function(item, options, callback) {
+    if (!window || !window.navigator) {
+      return callback(null, item);
+    }
+    var plugins = [];
+    var navPlugins = window.navigator.plugins || [];
+    var cur;
+    for (var i=0, l=navPlugins.length; i < l; ++i) {
+      cur = navPlugins[i];
+      plugins.push({name: cur.name, description: cur.description});
+    }
+    _.set(item, 'data.client.javascript.plugins', plugins);
+    callback(null, item);
+  };
+}
+
+function addBody(item, options, callback) {
+  if (item.stackInfo) {
+    if (item.stackInfo.traceChain) {
+      addBodyTraceChain(item, options, callback);
+    } else {
+      addBodyTrace(item, options, callback);
+    }
+  } else {
+    addBodyMessage(item, options, callback);
+  }
+}
+
+function addBodyMessage(item, options, callback) {
+  var message = item.message;
+  var custom = item.custom;
+
+  if (!message) {
+    message = 'Item sent with null or missing arguments.';
+  }
+  var result = {
+    body: message
+  };
+
+  if (custom) {
+    result.extra = _.merge(custom);
+  }
+
+  _.set(item, 'data.body', {message: result});
+  callback(null, item);
+}
+
+function stackFromItem(item) {
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  var stack = item.stackInfo.stack;
+  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+    stack = item._unhandledStackInfo.stack;
+  }
+  return stack;
+}
+
+function addBodyTraceChain(item, options, callback) {
+  var traceChain = item.stackInfo.traceChain;
+  var traces = [];
+
+  var traceChainLength = traceChain.length;
+  for (var i = 0; i < traceChainLength; i++) {
+    var trace = buildTrace(item, traceChain[i], options);
+    traces.push(trace);
+  }
+
+  _.set(item, 'data.body', {trace_chain: traces});
+  callback(null, item);
+}
+
+function addBodyTrace(item, options, callback) {
+  var stack = stackFromItem(item);
+
+  if (stack) {
+    var trace = buildTrace(item, item.stackInfo, options);
+    _.set(item, 'data.body', {trace: trace});
+    callback(null, item);
+  } else {
+    var stackInfo = item.stackInfo;
+    var guess = errorParser.guessErrorClass(stackInfo.message);
+    var className = errorClass(stackInfo, guess[0], options);
+    var message = guess[1];
+
+    item.message = className + ': ' + message;
+    addBodyMessage(item, options, callback);
+  }
+}
+
+function buildTrace(item, stackInfo, options) {
+  var description = item && item.data.description;
+  var custom = item && item.custom;
+  var stack = stackFromItem(item);
+
+  var guess = errorParser.guessErrorClass(stackInfo.message);
+  var className = errorClass(stackInfo, guess[0], options);
+  var message = guess[1];
+  var trace = {
+    exception: {
+      'class': className,
+      message: message
+    }
+  };
+
+  if (description) {
+    trace.exception.description = description;
+  }
+
+  if (stack) {
+    if (stack.length === 0) {
+      trace.exception.stack = stackInfo.rawStack;
+      trace.exception.raw = String(stackInfo.rawException);
+    }
+    var stackFrame;
+    var frame;
+    var code;
+    var pre;
+    var post;
+    var contextLength;
+    var i, mid;
+
+    trace.frames = [];
+    for (i = 0; i < stack.length; ++i) {
+      stackFrame = stack[i];
+      frame = {
+        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
+        lineno: stackFrame.line || null,
+        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
+        colno: stackFrame.column
+      };
+      if (options.sendFrameUrl) {
+        frame.url = stackFrame.url;
+      }
+      if (frame.method && frame.method.endsWith && frame.method.endsWith('_rollbar_wrapped')) {
+        continue;
+      }
+
+      code = pre = post = null;
+      contextLength = stackFrame.context ? stackFrame.context.length : 0;
+      if (contextLength) {
+        mid = Math.floor(contextLength / 2);
+        pre = stackFrame.context.slice(0, mid);
+        code = stackFrame.context[mid];
+        post = stackFrame.context.slice(mid);
+      }
+
+      if (code) {
+        frame.code = code;
+      }
+
+      if (pre || post) {
+        frame.context = {};
+        if (pre && pre.length) {
+          frame.context.pre = pre;
+        }
+        if (post && post.length) {
+          frame.context.post = post;
+        }
+      }
+
+      if (stackFrame.args) {
+        frame.args = stackFrame.args;
+      }
+
+      trace.frames.push(frame);
+    }
+
+    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
+    trace.frames.reverse();
+
+    if (custom) {
+      trace.extra = _.merge(custom);
+    }
+  }
+
+  return trace;
+}
+
+function errorClass(stackInfo, guess, options) {
+  if (stackInfo.name) {
+    return stackInfo.name;
+  } else if (options.guessErrorClass) {
+    return guess;
+  } else {
+    return '(unknown)';
+  }
+}
+
+function addScrubber(scrubFn) {
+  return function (item, options, callback) {
+    if (scrubFn) {
+      var scrubFields = options.scrubFields || [];
+      var scrubPaths = options.scrubPaths || [];
+      item.data = scrubFn(item.data, scrubFields, scrubPaths);
+    }
+    callback(null, item);
+  }
+}
+
+module.exports = {
+  handleDomException: handleDomException,
+  handleItemWithError: handleItemWithError,
+  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
+  addBaseInfo: addBaseInfo,
+  addRequestInfo: addRequestInfo,
+  addClientInfo: addClientInfo,
+  addPluginInfo: addPluginInfo,
+  addBody: addBody,
+  addScrubber: addScrubber
+};
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
+    'use strict';
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+
+    /* istanbul ignore next */
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(23)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else {}
+}(this, function ErrorStackParser(StackFrame) {
+    'use strict';
+
+    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+:\d+/;
+    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+:\d+|\(native\))/m;
+    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code])?$/;
+
+    return {
+        /**
+         * Given an Error object, extract the most information from it.
+         *
+         * @param {Error} error object
+         * @return {Array} of StackFrames
+         */
+        parse: function ErrorStackParser$$parse(error) {
+            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
+                return this.parseOpera(error);
+            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
+                return this.parseV8OrIE(error);
+            } else if (error.stack) {
+                return this.parseFFOrSafari(error);
+            } else {
+                throw new Error('Cannot parse given Error object');
+            }
+        },
+
+        // Separate line and column numbers from a string of the form: (URI:Line:Column)
+        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
+            // Fail-fast but return locations like "(native)"
+            if (urlLike.indexOf(':') === -1) {
+                return [urlLike];
+            }
+
+            var regExp = /(.+?)(?::(\d+))?(?::(\d+))?$/;
+            var parts = regExp.exec(urlLike.replace(/[()]/g, ''));
+            return [parts[1], parts[2] || undefined, parts[3] || undefined];
+        },
+
+        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !!line.match(CHROME_IE_STACK_REGEXP);
+            }, this);
+
+            return filtered.map(function(line) {
+                if (line.indexOf('(eval ') > -1) {
+                    // Throw away eval information until we implement stacktrace.js/stackframe#8
+                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
+                }
+                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
+
+                // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
+                // case it has spaces in it, as the string is split on \s+ later on
+                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
+
+                // remove the parenthesized location from the line, if it was matched
+                sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
+
+                var tokens = sanitizedLine.split(/\s+/).slice(1);
+                // if a location was matched, pass it to extractLocation() otherwise pop the last token
+                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
+                var functionName = tokens.join(' ') || undefined;
+                var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
+
+                return new StackFrame({
+                    functionName: functionName,
+                    fileName: fileName,
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
+            }, this);
+        },
+
+        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
+            }, this);
+
+            return filtered.map(function(line) {
+                // Throw away eval information until we implement stacktrace.js/stackframe#8
+                if (line.indexOf(' > eval') > -1) {
+                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ':$1');
+                }
+
+                if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
+                    // Safari eval frames only have function names and nothing else
+                    return new StackFrame({
+                        functionName: line
+                    });
+                } else {
+                    var functionNameRegex = /((.*".+"[^@]*)?[^@]*)(?:@)/;
+                    var matches = line.match(functionNameRegex);
+                    var functionName = matches && matches[1] ? matches[1] : undefined;
+                    var locationParts = this.extractLocation(line.replace(functionNameRegex, ''));
+
+                    return new StackFrame({
+                        functionName: functionName,
+                        fileName: locationParts[0],
+                        lineNumber: locationParts[1],
+                        columnNumber: locationParts[2],
+                        source: line
+                    });
+                }
+            }, this);
+        },
+
+        parseOpera: function ErrorStackParser$$parseOpera(e) {
+            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
+                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
+                return this.parseOpera9(e);
+            } else if (!e.stack) {
+                return this.parseOpera10(e);
+            } else {
+                return this.parseOpera11(e);
+            }
+        },
+
+        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
+            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
+            var lines = e.message.split('\n');
+            var result = [];
+
+            for (var i = 2, len = lines.length; i < len; i += 2) {
+                var match = lineRE.exec(lines[i]);
+                if (match) {
+                    result.push(new StackFrame({
+                        fileName: match[2],
+                        lineNumber: match[1],
+                        source: lines[i]
+                    }));
+                }
+            }
+
+            return result;
+        },
+
+        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
+            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
+            var lines = e.stacktrace.split('\n');
+            var result = [];
+
+            for (var i = 0, len = lines.length; i < len; i += 2) {
+                var match = lineRE.exec(lines[i]);
+                if (match) {
+                    result.push(
+                        new StackFrame({
+                            functionName: match[3] || undefined,
+                            fileName: match[2],
+                            lineNumber: match[1],
+                            source: lines[i]
+                        })
+                    );
+                }
+            }
+
+            return result;
+        },
+
+        // Opera 10.65+ Error.stack very similar to FF/Safari
+        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
+            }, this);
+
+            return filtered.map(function(line) {
+                var tokens = line.split('@');
+                var locationParts = this.extractLocation(tokens.pop());
+                var functionCall = (tokens.shift() || '');
+                var functionName = functionCall
+                    .replace(/<anonymous function(: (\w+))?>/, '$2')
+                    .replace(/\([^)]*\)/g, '') || undefined;
+                var argsRaw;
+                if (functionCall.match(/\(([^)]*)\)/)) {
+                    argsRaw = functionCall.replace(/^[^(]+\(([^)]*)\)$/, '$1');
+                }
+                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
+                    undefined : argsRaw.split(',');
+
+                return new StackFrame({
+                    functionName: functionName,
+                    args: args,
+                    fileName: locationParts[0],
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
+            }, this);
+        }
+    };
+}));
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
+    'use strict';
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+
+    /* istanbul ignore next */
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else {}
+}(this, function() {
+    'use strict';
+    function _isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
+
+    function _capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.substring(1);
+    }
+
+    function _getter(p) {
+        return function() {
+            return this[p];
+        };
+    }
+
+    var booleanProps = ['isConstructor', 'isEval', 'isNative', 'isToplevel'];
+    var numericProps = ['columnNumber', 'lineNumber'];
+    var stringProps = ['fileName', 'functionName', 'source'];
+    var arrayProps = ['args'];
+    var objectProps = ['evalOrigin'];
+
+    var props = booleanProps.concat(numericProps, stringProps, arrayProps, objectProps);
+
+    function StackFrame(obj) {
+        if (!obj) return;
+        for (var i = 0; i < props.length; i++) {
+            if (obj[props[i]] !== undefined) {
+                this['set' + _capitalize(props[i])](obj[props[i]]);
+            }
+        }
+    }
+
+    StackFrame.prototype = {
+        getArgs: function() {
+            return this.args;
+        },
+        setArgs: function(v) {
+            if (Object.prototype.toString.call(v) !== '[object Array]') {
+                throw new TypeError('Args must be an Array');
+            }
+            this.args = v;
+        },
+
+        getEvalOrigin: function() {
+            return this.evalOrigin;
+        },
+        setEvalOrigin: function(v) {
+            if (v instanceof StackFrame) {
+                this.evalOrigin = v;
+            } else if (v instanceof Object) {
+                this.evalOrigin = new StackFrame(v);
+            } else {
+                throw new TypeError('Eval Origin must be an Object or StackFrame');
+            }
+        },
+
+        toString: function() {
+            var fileName = this.getFileName() || '';
+            var lineNumber = this.getLineNumber() || '';
+            var columnNumber = this.getColumnNumber() || '';
+            var functionName = this.getFunctionName() || '';
+            if (this.getIsEval()) {
+                if (fileName) {
+                    return '[eval] (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+                }
+                return '[eval]:' + lineNumber + ':' + columnNumber;
+            }
+            if (functionName) {
+                return functionName + ' (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+            }
+            return fileName + ':' + lineNumber + ':' + columnNumber;
+        }
+    };
+
+    StackFrame.fromString = function StackFrame$$fromString(str) {
+        var argsStartIndex = str.indexOf('(');
+        var argsEndIndex = str.lastIndexOf(')');
+
+        var functionName = str.substring(0, argsStartIndex);
+        var args = str.substring(argsStartIndex + 1, argsEndIndex).split(',');
+        var locationString = str.substring(argsEndIndex + 1);
+
+        if (locationString.indexOf('@') === 0) {
+            var parts = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(locationString, '');
+            var fileName = parts[1];
+            var lineNumber = parts[2];
+            var columnNumber = parts[3];
+        }
+
+        return new StackFrame({
+            functionName: functionName,
+            args: args || undefined,
+            fileName: fileName,
+            lineNumber: lineNumber || undefined,
+            columnNumber: columnNumber || undefined
+        });
+    };
+
+    for (var i = 0; i < booleanProps.length; i++) {
+        StackFrame.prototype['get' + _capitalize(booleanProps[i])] = _getter(booleanProps[i]);
+        StackFrame.prototype['set' + _capitalize(booleanProps[i])] = (function(p) {
+            return function(v) {
+                this[p] = Boolean(v);
+            };
+        })(booleanProps[i]);
+    }
+
+    for (var j = 0; j < numericProps.length; j++) {
+        StackFrame.prototype['get' + _capitalize(numericProps[j])] = _getter(numericProps[j]);
+        StackFrame.prototype['set' + _capitalize(numericProps[j])] = (function(p) {
+            return function(v) {
+                if (!_isNumber(v)) {
+                    throw new TypeError(p + ' must be a Number');
+                }
+                this[p] = Number(v);
+            };
+        })(numericProps[j]);
+    }
+
+    for (var k = 0; k < stringProps.length; k++) {
+        StackFrame.prototype['get' + _capitalize(stringProps[k])] = _getter(stringProps[k]);
+        StackFrame.prototype['set' + _capitalize(stringProps[k])] = (function(p) {
+            return function(v) {
+                this[p] = String(v);
+            };
+        })(stringProps[k]);
+    }
+
+    return StackFrame;
+}));
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+function itemToPayload(item, options, callback) {
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+
+  var data = _.merge(item.data, payloadOptions);
+  if (item._isUncaught) {
+    data._isUncaught = true;
+  }
+  if (item._originalArgs) {
+    data._originalArgs = item._originalArgs;
+  }
+  callback(null, data);
+}
+
+function addTelemetryData(item, options, callback) {
+  if (item.telemetryEvents) {
+    _.set(item, 'data.body.telemetry', item.telemetryEvents);
+  }
+  callback(null, item);
+}
+
+function addMessageWithError(item, options, callback) {
+  if (!item.message) {
+    callback(null, item);
+    return;
+  }
+  var tracePath = 'data.body.trace_chain.0';
+  var trace = _.get(item, tracePath);
+  if (!trace) {
+    tracePath = 'data.body.trace';
+    trace = _.get(item, tracePath);
+  }
+  if (trace) {
+    if (!(trace.exception && trace.exception.description)) {
+      _.set(item, tracePath+'.exception.description', item.message);
+      callback(null, item);
+      return;
+    }
+    var extra = _.get(item, tracePath+'.extra') || {};
+    var newExtra =  _.merge(extra, {message: item.message});
+    _.set(item, tracePath+'.extra', newExtra);
+  }
+  callback(null, item);
+}
+
+function userTransform(logger) {
+  return function(item, options, callback) {
+    var newItem = _.merge(item);
+    try {
+      if (_.isFunction(options.transform)) {
+        options.transform(newItem.data, item);
+      }
+    } catch (e) {
+      options.transform = null;
+      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
+      callback(null, item);
+      return;
+    }
+    callback(null, newItem);
+  }
+}
+
+function addConfigToPayload(item, options, callback) {
+  if (!options.sendConfig) {
+    return callback(null, item);
+  }
+  var configKey = '_rollbarConfig';
+  var custom = _.get(item, 'data.custom') || {};
+  custom[configKey] = options;
+  item.data.custom = custom;
+  callback(null, item);
+}
+
+function addFunctionOption(options, name) {
+  if(_.isFunction(options[name])) {
+    options[name] = options[name].toString();
+  }
+}
+
+function addConfiguredOptions(item, options, callback) {
+  var configuredOptions = options._configuredOptions;
+
+  // These must be stringified or they'll get dropped during serialization.
+  addFunctionOption(configuredOptions, 'transform');
+  addFunctionOption(configuredOptions, 'checkIgnore');
+  addFunctionOption(configuredOptions, 'onSendCallback');
+
+  delete configuredOptions.accessToken;
+  item.data.notifier.configured_options = configuredOptions;
+  callback(null, item);
+}
+
+function addDiagnosticKeys(item, options, callback) {
+  var diagnostic = _.merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
+
+  if (_.get(item, 'err._isAnonymous')) {
+    diagnostic.is_anonymous = true;
+  }
+
+  if (item._isUncaught) {
+    diagnostic.is_uncaught = item._isUncaught;
+    delete item._isUncaught;
+  }
+
+  if (item.err) {
+    try {
+      diagnostic.raw_error = {
+        message: item.err.message,
+        name: item.err.name,
+        constructor_name: item.err.constructor && item.err.constructor.name,
+        filename: item.err.fileName,
+        line: item.err.lineNumber,
+        column: item.err.columnNumber,
+        stack: item.err.stack
+      };
+    } catch (e) {
+      diagnostic.raw_error = { failed: String(e) };
+    }
+  }
+
+  item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
+  callback(null, item);
+}
+
+module.exports = {
+  itemToPayload: itemToPayload,
+  addTelemetryData: addTelemetryData,
+  addMessageWithError: addMessageWithError,
+  userTransform: userTransform,
+  addConfigToPayload: addConfigToPayload,
+  addConfiguredOptions: addConfiguredOptions,
+  addDiagnosticKeys: addDiagnosticKeys
+};
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+function checkIgnore(item, settings) {
+  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
+    return !_.get(item, 'body.message.extra.isAjax');
+  }
+  return true;
+}
+
+module.exports = {
+  checkIgnore: checkIgnore
+};
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+function checkLevel(item, settings) {
+  var level = item.level;
+  var levelVal = _.LEVELS[level] || 0;
+  var reportLevel = settings.reportLevel;
+  var reportLevelVal = _.LEVELS[reportLevel] || 0;
+
+  if (levelVal < reportLevelVal) {
+    return false;
+  }
+  return true;
+}
+
+function userCheckIgnore(logger) {
+  return function(item, settings) {
+    var isUncaught = !!item._isUncaught;
+    var args = item._originalArgs;
+    delete item._originalArgs;
+    try {
+      if (_.isFunction(settings.onSendCallback)) {
+        settings.onSendCallback(isUncaught, args, item);
+      }
+    } catch (e) {
+      settings.onSendCallback = null;
+      logger.error('Error while calling onSendCallback, removing', e);
+    }
+    try {
+      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+        return false;
+      }
+    } catch (e) {
+      settings.checkIgnore = null;
+      logger.error('Error while calling custom checkIgnore(), removing', e);
+    }
+    return true;
+  }
+}
+
+function urlIsNotBlacklisted(logger) {
+  return function(item, settings) {
+    return !urlIsOnAList(item, settings, 'blacklist', logger);
+  }
+}
+
+function urlIsWhitelisted(logger) {
+  return function(item, settings) {
+    return urlIsOnAList(item, settings, 'whitelist', logger);
+  }
+}
+
+function matchFrames(trace, list, black) {
+  if (!trace) { return !black }
+
+  var frames = trace.frames;
+
+  if (!frames || frames.length === 0) { return !black; }
+
+  var frame, filename, url, urlRegex;
+  var listLength = list.length;
+  var frameLength = frames.length;
+  for (var i = 0; i < frameLength; i++) {
+    frame = frames[i];
+    filename = frame.filename;
+
+    if (!_.isType(filename, 'string')) { return !black; }
+
+    for (var j = 0; j < listLength; j++) {
+      url = list[j];
+      urlRegex = new RegExp(url);
+
+      if (urlRegex.test(filename)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function urlIsOnAList(item, settings, whiteOrBlack, logger) {
+  // whitelist is the default
+  var black = false;
+  if (whiteOrBlack === 'blacklist') {
+    black = true;
+  }
+
+  var list, traces;
+  try {
+    list = black ? settings.hostBlackList : settings.hostWhiteList;
+    traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
+
+    // These two checks are important to come first as they are defaults
+    // in case the list is missing or the trace is missing or not well-formed
+    if (!list || list.length === 0) {
+      return !black;
+    }
+    if (traces.length === 0 || !traces[0]) {
+      return !black;
+    }
+
+    var tracesLength = traces.length;
+    for (var i = 0; i < tracesLength; i++) {
+      if(matchFrames(traces[i], list, black)) {
+        return true;
+      }
+    }
+  } catch (e)
+  /* istanbul ignore next */
+  {
+    if (black) {
+      settings.hostBlackList = null;
+    } else {
+      settings.hostWhiteList = null;
+    }
+    var listName = black ? 'hostBlackList' : 'hostWhiteList';
+    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
+    return !black;
+  }
+  return false;
+}
+
+function messageIsIgnored(logger) {
+  return function(item, settings) {
+    var exceptionMessage, i, ignoredMessages,
+        len, messageIsIgnored, rIgnoredMessage,
+        body, traceMessage, bodyMessage;
+
+    try {
+      messageIsIgnored = false;
+      ignoredMessages = settings.ignoredMessages;
+
+      if (!ignoredMessages || ignoredMessages.length === 0) {
+        return true;
+      }
+
+      body = item.body;
+      traceMessage = _.get(body, 'trace.exception.message');
+      bodyMessage = _.get(body, 'message.body');
+
+      exceptionMessage = traceMessage || bodyMessage;
+
+      if (!exceptionMessage){
+        return true;
+      }
+
+      len = ignoredMessages.length;
+      for (i = 0; i < len; i++) {
+        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
+        messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
+
+        if (messageIsIgnored) {
+          break;
+        }
+      }
+    } catch(e)
+    /* istanbul ignore next */
+    {
+      settings.ignoredMessages = null;
+      logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
+    }
+
+    return !messageIsIgnored;
+  }
+}
+
+module.exports = {
+  checkLevel: checkLevel,
+  userCheckIgnore: userCheckIgnore,
+  urlIsNotBlacklisted: urlIsNotBlacklisted,
+  urlIsWhitelisted: urlIsWhitelisted,
+  messageIsIgnored: messageIsIgnored
+};
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = {
+  version: '2.18.0',
+  endpoint: 'api.rollbar.com/api/1/item/',
+  logLevel: 'debug',
+  reportLevel: 'debug',
+  uncaughtErrorLevel: 'error',
+  maxItems: 0,
+  itemsPerMin: 60
+}
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = {
+  scrubFields: [
+    'pw',
+    'pass',
+    'passwd',
+    'password',
+    'secret',
+    'confirm_password',
+    'confirmPassword',
+    'password_confirmation',
+    'passwordConfirmation',
+    'access_token',
+    'accessToken',
+    'X-Rollbar-Access-Token',
+    'secret_key',
+    'secretKey',
+    'secretToken',
+    'cc-number',
+    'card number',
+    'cardnumber',
+    'cardnum',
+    'ccnum',
+    'ccnumber',
+    'cc num',
+    'creditcardnumber',
+    'credit card number',
+    'newcreditcardnumber',
+    'new credit card',
+    'creditcardno',
+    'credit card no',
+    'card#',
+    'card #',
+    'cc-csc',
+    'cvc',
+    'cvc2',
+    'cvv2',
+    'ccv2',
+    'security code',
+    'card verification',
+    'name on credit card',
+    'name on card',
+    'nameoncard',
+    'cardholder',
+    'card holder',
+    'name des karteninhabers',
+    'ccname',
+    'card type',
+    'cardtype',
+    'cc type',
+    'cctype',
+    'payment type',
+    'expiration date',
+    'expirationdate',
+    'expdate',
+    'cc-exp',
+    'ccmonth',
+    'ccyear'
+  ]
+}
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+
+var MAX_EVENTS = 100;
+
+function Telemeter(options) {
+  this.queue = [];
+  this.options = _.merge(options);
+  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+}
+
+Telemeter.prototype.configure = function(options) {
+  var oldOptions = this.options;
+  this.options = _.merge(oldOptions, options);
+  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+  var deleteCount = 0;
+  if (this.maxQueueSize > newMaxEvents) {
+    deleteCount = this.maxQueueSize - newMaxEvents;
+  }
+  this.maxQueueSize = newMaxEvents;
+  this.queue.splice(0, deleteCount);
+};
+
+Telemeter.prototype.copyEvents = function() {
+  var events = Array.prototype.slice.call(this.queue, 0);
+  if (_.isFunction(this.options.filterTelemetry)) {
+    try {
+      var i = events.length;
+      while (i--) {
+        if (this.options.filterTelemetry(events[i])) {
+          events.splice(i, 1);
+        }
+      }
+    } catch (e) {
+      this.options.filterTelemetry = null;
+    }
+  }
+  return events;
+};
+
+Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, timestamp) {
+  var e = {
+    level: getLevel(type, level),
+    type: type,
+    timestamp_ms: timestamp || _.now(),
+    body: metadata,
+    source: 'client'
+  };
+  if (rollbarUUID) {
+    e.uuid = rollbarUUID;
+  }
+
+  try {
+    if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
+      return false;
+    }
+  } catch (exc) {
+    this.options.filterTelemetry = null;
+  }
+
+  this.push(e);
+  return e;
+};
+
+Telemeter.prototype.captureEvent = function(type, metadata, level, rollbarUUID) {
+  return this.capture(type, metadata, level, rollbarUUID);
+};
+
+Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) {
+  var metadata = {
+    message: err.message || String(err)
+  };
+  if (err.stack) {
+    metadata.stack = err.stack;
+  }
+  return this.capture('error', metadata, level, rollbarUUID, timestamp);
+};
+
+Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp) {
+  return this.capture('log', {
+    message: message
+  }, level, rollbarUUID, timestamp);
+};
+
+Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID, requestData) {
+  subtype = subtype || 'xhr';
+  metadata.subtype = metadata.subtype || subtype;
+  if (requestData) {
+    metadata.request = requestData;
+  }
+  var level = this.levelFromStatus(metadata.status_code);
+  return this.capture('network', metadata, level, rollbarUUID);
+};
+
+Telemeter.prototype.levelFromStatus = function(statusCode) {
+  if (statusCode >= 200 && statusCode < 400) {
+    return 'info';
+  }
+  if (statusCode === 0 || statusCode >= 400) {
+    return 'error';
+  }
+  return 'info';
+};
+
+Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
+  var metadata = {
+    subtype: subtype,
+    element: element
+  };
+  if (value !== undefined) {
+    metadata.value = value;
+  }
+  if (checked !== undefined) {
+    metadata.checked = checked;
+  }
+  return this.capture('dom', metadata, 'info', rollbarUUID);
+};
+
+Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
+  return this.capture('navigation', {from: from, to: to}, 'info', rollbarUUID);
+};
+
+Telemeter.prototype.captureDomContentLoaded = function(ts) {
+  return this.capture('navigation', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+  /**
+   * If we decide to make this a dom event instead, then use the line below:
+  return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+  */
+};
+Telemeter.prototype.captureLoad = function(ts) {
+  return this.capture('navigation', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+  /**
+   * If we decide to make this a dom event instead, then use the line below:
+  return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+  */
+};
+
+Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
+  return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
+};
+
+// Only intended to be used internally by the notifier
+Telemeter.prototype._captureRollbarItem = function(item) {
+  if (!this.options.includeItemsInTelemetry) {
+    return;
+  }
+  if (item.err) {
+    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
+  }
+  if (item.message) {
+    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
+  }
+  if (item.custom) {
+    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
+  }
+};
+
+Telemeter.prototype.push = function(e) {
+  this.queue.push(e);
+  if (this.queue.length > this.maxQueueSize) {
+    this.queue.shift();
+  }
+};
+
+function getLevel(type, level) {
+  if (level) {
+    return level;
+  }
+  var defaultLevel = {
+    error: 'error',
+    manual: 'info'
+  };
+  return defaultLevel[type] || 'info';
+}
+
+module.exports = Telemeter;
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _ = __webpack_require__(0);
+var scrub = __webpack_require__(4);
+var urlparser = __webpack_require__(2);
+var domUtil = __webpack_require__(31);
+
+var defaults = {
+  network: true,
+  networkResponseHeaders: false,
+  networkResponseBody: false,
+  networkRequestHeaders: false,
+  networkRequestBody: false,
+  networkErrorOnHttp5xx: false,
+  networkErrorOnHttp4xx: false,
+  networkErrorOnHttp0: false,
+  log: true,
+  dom: true,
+  navigation: true,
+  connectivity: true
+};
+
+function replace(obj, name, replacement, replacements, type) {
+  var orig = obj[name];
+  obj[name] = replacement(orig);
+  if (replacements) {
+    replacements[type].push([obj, name, orig]);
+  }
+}
+
+function restore(replacements, type) {
+  var b;
+  while (replacements[type].length) {
+    b = replacements[type].shift();
+    b[0][b[1]] = b[2];
+  }
+}
+
+function nameFromDescription(description) {
+  if (!description || !description.attributes) { return null; }
+  var attrs = description.attributes;
+  for (var a = 0; a < attrs.length; ++a) {
+    if (attrs[a].key === 'name') {
+      return attrs[a].value;
+    }
+  }
+  return null;
+}
+
+function defaultValueScrubber(scrubFields) {
+  var patterns = [];
+  for (var i = 0; i < scrubFields.length; ++i) {
+    patterns.push(new RegExp(scrubFields[i], 'i'));
+  }
+  return function(description) {
+    var name = nameFromDescription(description);
+    if (!name) { return false; }
+    for (var i = 0; i < patterns.length; ++i) {
+      if (patterns[i].test(name)) {
+        return true;
+      }
+    }
+    return false;
+  };
+}
+
+function Instrumenter(options, telemeter, rollbar, _window, _document) {
+  this.options = options;
+  var autoInstrument = options.autoInstrument;
+  if (options.enabled === false || autoInstrument === false) {
+    this.autoInstrument = {};
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.merge(defaults, autoInstrument);
+  }
+  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+  this.telemetryScrubber = options.telemetryScrubber;
+  this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
+  this.telemeter = telemeter;
+  this.rollbar = rollbar;
+  this.diagnostic = rollbar.client.notifier.diagnostic;
+  this._window = _window || {};
+  this._document = _document || {};
+  this.replacements = {
+    network: [],
+    log: [],
+    navigation: [],
+    connectivity: []
+  };
+  this.eventRemovers = {
+    dom: [],
+    connectivity: []
+  };
+
+  this._location = this._window.location;
+  this._lastHref = this._location && this._location.href;
+}
+
+Instrumenter.prototype.configure = function(options) {
+  this.options = _.merge(this.options, options);
+  var autoInstrument = options.autoInstrument;
+  var oldSettings = _.merge(this.autoInstrument);
+  if (options.enabled === false || autoInstrument === false) {
+    this.autoInstrument = {};
+  } else {
+    if (!_.isType(autoInstrument, 'object')) {
+      autoInstrument = defaults;
+    }
+    this.autoInstrument = _.merge(defaults, autoInstrument);
+  }
+  this.instrument(oldSettings);
+  if (options.scrubTelemetryInputs !== undefined) {
+    this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+  }
+  if (options.telemetryScrubber !== undefined) {
+    this.telemetryScrubber = options.telemetryScrubber;
+  }
+};
+
+Instrumenter.prototype.instrument = function(oldSettings) {
+  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
+    this.instrumentNetwork();
+  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+    this.deinstrumentNetwork();
+  }
+
+  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
+    this.instrumentConsole();
+  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
+    this.deinstrumentConsole();
+  }
+
+  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
+    this.instrumentDom();
+  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
+    this.deinstrumentDom();
+  }
+
+  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
+    this.instrumentNavigation();
+  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
+    this.deinstrumentNavigation();
+  }
+
+  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
+    this.instrumentConnectivity();
+  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
+    this.deinstrumentConnectivity();
+  }
+};
+
+Instrumenter.prototype.deinstrumentNetwork = function() {
+  restore(this.replacements, 'network');
+};
+
+Instrumenter.prototype.instrumentNetwork = function() {
+  var self = this;
+
+  function wrapProp(prop, xhr) {
+    if (prop in xhr && _.isFunction(xhr[prop])) {
+      replace(xhr, prop, function(orig) {
+        return self.rollbar.wrap(orig);
+      });
+    }
+  }
+
+  if ('XMLHttpRequest' in this._window) {
+    var xhrp = this._window.XMLHttpRequest.prototype;
+    replace(xhrp, 'open', function(orig) {
+      return function(method, url) {
+        if (_.isType(url, 'string')) {
+          this.__rollbar_xhr = {
+            method: method,
+            url: url,
+            status_code: null,
+            start_time_ms: _.now(),
+            end_time_ms: null
+          };
+          if (self.autoInstrument.networkRequestHeaders) {
+            this.__rollbar_xhr.request_headers = {};
+          }
+        }
+        return orig.apply(this, arguments);
+      };
+    }, this.replacements, 'network');
+
+    replace(xhrp, 'setRequestHeader', function(orig) {
+      return function(header, value) {
+        if (self.autoInstrument.networkRequestHeaders && this.__rollbar_xhr &&
+          _.isType(header, 'string') && _.isType(value, 'string')) {
+          this.__rollbar_xhr.request_headers[header] = value;
+        }
+        if (header.toLowerCase() === 'content-type') {
+          this.__rollbar_xhr.request_content_type = value;
+        }
+        return orig.apply(this, arguments);
+      };
+    }, this.replacements, 'network');
+
+    replace(xhrp, 'send', function(orig) {
+      /* eslint-disable no-unused-vars */
+      return function(data) {
+      /* eslint-enable no-unused-vars */
+        var xhr = this;
+
+        function onreadystatechangeHandler() {
+          if (xhr.__rollbar_xhr) {
+            if (xhr.__rollbar_xhr.status_code === null) {
+              xhr.__rollbar_xhr.status_code = 0;
+              if (self.autoInstrument.networkRequestBody) {
+                xhr.__rollbar_xhr.request = data;
+              }
+              xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
+            }
+            if (xhr.readyState < 2) {
+              xhr.__rollbar_xhr.start_time_ms = _.now();
+            }
+            if (xhr.readyState > 3) {
+              xhr.__rollbar_xhr.end_time_ms = _.now();
+
+              var headers = null;
+              xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
+              if (self.autoInstrument.networkResponseHeaders) {
+                var headersConfig = self.autoInstrument.networkResponseHeaders;
+                headers = {};
+                try {
+                  var header, i;
+                  if (headersConfig === true) {
+                    var allHeaders = xhr.getAllResponseHeaders();
+                    if (allHeaders) {
+                      var arr = allHeaders.trim().split(/[\r\n]+/);
+                      var parts, value;
+                      for (i=0; i < arr.length; i++) {
+                        parts = arr[i].split(': ');
+                        header = parts.shift();
+                        value = parts.join(': ');
+                        headers[header] = value;
+                      }
+                    }
+                  } else {
+                    for (i=0; i < headersConfig.length; i++) {
+                      header = headersConfig[i];
+                      headers[header] = xhr.getResponseHeader(header);
+                    }
+                  }
+                } catch (e) {
+                  /* we ignore the errors here that could come from different
+                   * browser issues with the xhr methods */
+                }
+              }
+              var body = null;
+              if (self.autoInstrument.networkResponseBody) {
+                try {
+                  body = xhr.responseText;
+                } catch (e) {
+                  /* ignore errors from reading responseText */
+                }
+              }
+              var response = null;
+              if (body || headers) {
+                response = {};
+                if (body) {
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                    response.body = self.scrubJson(body);
+                  } else {
+                    response.body = body;
+                  }
+                }
+                if (headers) {
+                  response.headers = headers;
+                }
+              }
+              if (response) {
+                xhr.__rollbar_xhr.response = response;
+              }
+              try {
+                var code = xhr.status;
+                code = code === 1223 ? 204 : code;
+                xhr.__rollbar_xhr.status_code = code;
+                xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+                self.errorOnHttpStatus(xhr.__rollbar_xhr);
+              } catch (e) {
+                /* ignore possible exception from xhr.status */
+              }
+            }
+          }
+        }
+
+        wrapProp('onload', xhr);
+        wrapProp('onerror', xhr);
+        wrapProp('onprogress', xhr);
+
+        if ('onreadystatechange' in xhr && _.isFunction(xhr.onreadystatechange)) {
+          replace(xhr, 'onreadystatechange', function(orig) {
+            return self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
+          });
+        } else {
+          xhr.onreadystatechange = onreadystatechangeHandler;
+        }
+        if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
+          xhr.__rollbar_xhr.stack = (new Error()).stack;
+        }
+        return orig.apply(this, arguments);
+      }
+    }, this.replacements, 'network');
+  }
+
+  if ('fetch' in this._window) {
+    replace(this._window, 'fetch', function(orig) {
+      /* eslint-disable no-unused-vars */
+      return function(fn, t) {
+      /* eslint-enable no-unused-vars */
+        var args = new Array(arguments.length);
+        for (var i=0, len=args.length; i < len; i++) {
+          args[i] = arguments[i];
+        }
+        var input = args[0];
+        var method = 'GET';
+        var url;
+        if (_.isType(input, 'string')) {
+          url = input;
+        } else if (input) {
+          url = input.url;
+          if (input.method) {
+            method = input.method;
+          }
+        }
+        if (args[1] && args[1].method) {
+          method = args[1].method;
+        }
+        var metadata = {
+          method: method,
+          url: url,
+          status_code: null,
+          start_time_ms: _.now(),
+          end_time_ms: null
+        };
+        if (args[1] && args[1].headers) {
+          // Argument may be a Headers object, or plain object. Ensure here that
+          // we are working with a Headers object with case-insensitive keys.
+          var reqHeaders = new Headers(args[1].headers);
+
+          metadata.request_content_type = reqHeaders.get('Content-Type');
+
+          if (self.autoInstrument.networkRequestHeaders) {
+            metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders)
+          }
+        }
+
+        if (self.autoInstrument.networkRequestBody) {
+          if (args[1] && args[1].body) {
+            metadata.request = args[1].body;
+          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
+            metadata.request = args[0].body;
+          }
+        }
+        self.captureNetwork(metadata, 'fetch', undefined);
+        if (self.trackHttpErrors()) {
+          metadata.stack = (new Error()).stack;
+        }
+        return orig.apply(this, args).then(function (resp) {
+          metadata.end_time_ms = _.now();
+          metadata.status_code = resp.status;
+          metadata.response_content_type = resp.headers.get('Content-Type');
+          var headers = null;
+          if (self.autoInstrument.networkResponseHeaders) {
+            headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
+          }
+          var body = null;
+          if (self.autoInstrument.networkResponseBody) {
+            if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
+              // The response must be cloned to prevent reading (and locking) the original stream.
+              body = resp.clone().text(); //returns a Promise
+            }
+          }
+          if (headers || body) {
+            metadata.response = {};
+            if (body) {
+              // Test to ensure body is a Promise, which it should always be.
+              if (typeof body.then === 'function') {
+                body.then(function (text) {
+                  if (self.isJsonContentType(metadata.response_content_type)) {
+                    metadata.response.body = self.scrubJson(text);
+                  }
+                });
+              } else {
+                metadata.response.body = body;
+              }
+            }
+            if (headers) {
+              metadata.response.headers = headers;
+            }
+          }
+          self.errorOnHttpStatus(metadata);
+          return resp;
+        });
+      };
+    }, this.replacements, 'network');
+  }
+};
+
+Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+  if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
+    metadata.request = this.scrubJson(metadata.request);
+  }
+  return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
+};
+
+Instrumenter.prototype.isJsonContentType = function(contentType) {
+  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+}
+
+Instrumenter.prototype.scrubJson = function(json) {
+  return JSON.stringify(scrub(JSON.parse(json), this.options.scrubFields));
+}
+
+Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
+  var outHeaders = {};
+  try {
+    var i;
+    if (headersConfig === true) {
+      if (typeof inHeaders.entries === 'function') { // Headers.entries() is not implemented in IE
+        var allHeaders = inHeaders.entries();
+        var currentHeader = allHeaders.next();
+        while (!currentHeader.done) {
+          outHeaders[currentHeader.value[0]] = currentHeader.value[1];
+          currentHeader = allHeaders.next();
+        }
+      }
+    } else {
+      for (i=0; i < headersConfig.length; i++) {
+        var header = headersConfig[i];
+        outHeaders[header] = inHeaders.get(header);
+      }
+    }
+  } catch (e) {
+    /* ignore probable IE errors */
+  }
+  return outHeaders;
+}
+
+Instrumenter.prototype.trackHttpErrors = function() {
+  return this.autoInstrument.networkErrorOnHttp5xx ||
+    this.autoInstrument.networkErrorOnHttp4xx ||
+    this.autoInstrument.networkErrorOnHttp0;
+}
+
+Instrumenter.prototype.errorOnHttpStatus = function(metadata) {
+  var status = metadata.status_code;
+
+  if ((status >= 500 && this.autoInstrument.networkErrorOnHttp5xx) ||
+    (status >= 400 && this.autoInstrument.networkErrorOnHttp4xx) ||
+    (status === 0 && this.autoInstrument.networkErrorOnHttp0)) {
+    var error = new Error('HTTP request failed with Status ' + status);
+    error.stack = metadata.stack;
+    this.rollbar.error(error, { skipFrames: 1 });
+  }
+}
+
+Instrumenter.prototype.deinstrumentConsole = function() {
+  if (!('console' in this._window && this._window.console.log)) {
+    return;
+  }
+  var b;
+  while (this.replacements['log'].length) {
+    b = this.replacements['log'].shift();
+    this._window.console[b[0]] = b[1];
+  }
+};
+
+Instrumenter.prototype.instrumentConsole = function() {
+  if (!('console' in this._window && this._window.console.log)) {
+    return;
+  }
+
+  var self = this;
+  var c = this._window.console;
+
+  function wrapConsole(method) {
+    'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
+
+    var orig = c[method];
+    var origConsole = c;
+    var level = method === 'warn' ? 'warning' : method;
+    c[method] = function() {
+      var args = Array.prototype.slice.call(arguments);
+      var message = _.formatArgsAsString(args);
+      self.telemeter.captureLog(message, level);
+      if (orig) {
+        Function.prototype.apply.call(orig, origConsole, args);
+      }
+    };
+    self.replacements['log'].push([method, orig]);
+  }
+  var methods = ['debug','info','warn','error','log'];
+  try {
+    for (var i=0, len=methods.length; i < len; i++) {
+      wrapConsole(methods[i]);
+    }
+  } catch (e) {
+    this.diagnostic.instrumentConsole = { error: e.message };
+  }
+};
+
+Instrumenter.prototype.deinstrumentDom = function() {
+  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+    return;
+  }
+  this.removeListeners('dom');
+};
+
+Instrumenter.prototype.instrumentDom = function() {
+  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
+    return;
+  }
+  var clickHandler = this.handleClick.bind(this);
+  var blurHandler = this.handleBlur.bind(this);
+  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
+  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
+};
+
+Instrumenter.prototype.handleClick = function(evt) {
+  try {
+    var e = domUtil.getElementFromEvent(evt, this._document);
+    var hasTag = e && e.tagName;
+    var anchorOrButton = domUtil.isDescribedElement(e, 'a') || domUtil.isDescribedElement(e, 'button');
+    if (hasTag && (anchorOrButton || domUtil.isDescribedElement(e, 'input', ['button', 'submit']))) {
+        this.captureDomEvent('click', e);
+    } else if (domUtil.isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
+      this.captureDomEvent('input', e, e.value, e.checked);
+    }
+  } catch (exc) {
+    // TODO: Not sure what to do here
+  }
+};
+
+Instrumenter.prototype.handleBlur = function(evt) {
+  try {
+    var e = domUtil.getElementFromEvent(evt, this._document);
+    if (e && e.tagName) {
+      if (domUtil.isDescribedElement(e, 'textarea')) {
+        this.captureDomEvent('input', e, e.value);
+      } else if (domUtil.isDescribedElement(e, 'select') && e.options && e.options.length) {
+        this.handleSelectInputChanged(e);
+      } else if (domUtil.isDescribedElement(e, 'input') && !domUtil.isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
+        this.captureDomEvent('input', e, e.value);
+      }
+    }
+  } catch (exc) {
+    // TODO: Not sure what to do here
+  }
+};
+
+Instrumenter.prototype.handleSelectInputChanged = function(elem) {
+  if (elem.multiple) {
+    for (var i = 0; i < elem.options.length; i++) {
+      if (elem.options[i].selected) {
+        this.captureDomEvent('input', elem, elem.options[i].value);
+      }
+    }
+  } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
+    this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
+  }
+};
+
+Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
+  if (value !== undefined) {
+    if (this.scrubTelemetryInputs || (domUtil.getElementType(element) === 'password')) {
+      value = '[scrubbed]';
+    } else {
+      var description = domUtil.describeElement(element);
+      if (this.telemetryScrubber) {
+        if (this.telemetryScrubber(description)) {
+          value = '[scrubbed]';
+        }
+      } else if (this.defaultValueScrubber(description)) {
+        value = '[scrubbed]';
+      }
+    }
+  }
+  var elementString = domUtil.elementArrayToString(domUtil.treeToArray(element));
+  this.telemeter.captureDom(subtype, elementString, value, isChecked);
+};
+
+Instrumenter.prototype.deinstrumentNavigation = function() {
+  var chrome = this._window.chrome;
+  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+  // See https://github.com/angular/angular.js/pull/13945/files
+  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+  if (!hasPushState) {
+    return;
+  }
+  restore(this.replacements, 'navigation');
+};
+
+Instrumenter.prototype.instrumentNavigation = function() {
+  var chrome = this._window.chrome;
+  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+  // See https://github.com/angular/angular.js/pull/13945/files
+  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+  if (!hasPushState) {
+    return;
+  }
+  var self = this;
+  replace(this._window, 'onpopstate', function(orig) {
+    return function() {
+      var current = self._location.href;
+      self.handleUrlChange(self._lastHref, current);
+      if (orig) {
+        orig.apply(this, arguments);
+      }
+    };
+  }, this.replacements, 'navigation');
+
+  replace(this._window.history, 'pushState', function(orig) {
+    return function() {
+      var url = arguments.length > 2 ? arguments[2] : undefined;
+      if (url) {
+        self.handleUrlChange(self._lastHref, url + '');
+      }
+      return orig.apply(this, arguments);
+    };
+  }, this.replacements, 'navigation');
+};
+
+Instrumenter.prototype.handleUrlChange = function(from, to) {
+  var parsedHref = urlparser.parse(this._location.href);
+  var parsedTo = urlparser.parse(to);
+  var parsedFrom = urlparser.parse(from);
+  this._lastHref = to;
+  if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
+    to = parsedTo.path + (parsedTo.hash || '');
+  }
+  if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
+    from = parsedFrom.path + (parsedFrom.hash || '');
+  }
+  this.telemeter.captureNavigation(from, to);
+};
+
+Instrumenter.prototype.deinstrumentConnectivity = function() {
+  if (!('addEventListener' in this._window || 'body' in this._document)) {
+    return;
+  }
+  if (this._window.addEventListener) {
+    this.removeListeners('connectivity');
+  } else {
+    restore(this.replacements, 'connectivity');
+  }
+};
+
+Instrumenter.prototype.instrumentConnectivity = function() {
+  if (!('addEventListener' in this._window || 'body' in this._document)) {
+    return;
+  }
+  if (this._window.addEventListener) {
+    this.addListener('connectivity', this._window, 'online', undefined, function() {
+      this.telemeter.captureConnectivityChange('online');
+    }.bind(this), true);
+    this.addListener('connectivity', this._window, 'offline', undefined, function() {
+      this.telemeter.captureConnectivityChange('offline');
+    }.bind(this), true);
+  } else {
+    var self = this;
+    replace(this._document.body, 'ononline', function(orig) {
+      return function() {
+        self.telemeter.captureConnectivityChange('online');
+        if (orig) {
+          orig.apply(this, arguments);
+        }
+      }
+    }, this.replacements, 'connectivity');
+    replace(this._document.body, 'onoffline', function(orig) {
+      return function() {
+        self.telemeter.captureConnectivityChange('offline');
+        if (orig) {
+          orig.apply(this, arguments);
+        }
+      }
+    }, this.replacements, 'connectivity');
+  }
+};
+
+Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
+  if (obj.addEventListener) {
+    obj.addEventListener(type, handler, capture);
+    this.eventRemovers[section].push(function() {
+      obj.removeEventListener(type, handler, capture);
+    });
+  } else if (altType) {
+    obj.attachEvent(altType, handler);
+    this.eventRemovers[section].push(function() {
+      obj.detachEvent(altType, handler);
+    });
+  }
+};
+
+Instrumenter.prototype.removeListeners = function(section) {
+  var r;
+  while (this.eventRemovers[section].length) {
+    r = this.eventRemovers[section].shift();
+    r();
+  }
+};
+
+module.exports = Instrumenter;
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function getElementType(e) {
+  return (e.getAttribute('type') || '').toLowerCase();
+}
+
+function isDescribedElement(element, type, subtypes) {
+  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
+    return false;
+  }
+  if (!subtypes) {
+    return true;
+  }
+  element = getElementType(element);
+  for (var i = 0; i < subtypes.length; i++) {
+    if (subtypes[i] === element) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getElementFromEvent(evt, doc) {
+  if (evt.target) {
+    return evt.target;
+  }
+  if (doc && doc.elementFromPoint) {
+    return doc.elementFromPoint(evt.clientX, evt.clientY);
+  }
+  return undefined;
+}
+
+function treeToArray(elem) {
+  var MAX_HEIGHT = 5;
+  var out = [];
+  var nextDescription;
+  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+    nextDescription = describeElement(elem);
+    if (nextDescription.tagName === 'html') {
+      break;
+    }
+    out.unshift(nextDescription);
+    elem = elem.parentNode;
+  }
+  return out;
+}
+
+function elementArrayToString(a) {
+  var MAX_LENGTH = 80;
+  var separator = ' > ', separatorLength = separator.length;
+  var out = [], len = 0, nextStr, totalLength;
+
+  for (var i = a.length - 1; i >= 0; i--) {
+    nextStr = descriptionToString(a[i]);
+    totalLength = len + (out.length * separatorLength) + nextStr.length;
+    if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
+      out.unshift('...');
+      break;
+    }
+    out.unshift(nextStr);
+    len += nextStr.length;
+  }
+  return out.join(separator);
+}
+
+function descriptionToString(desc) {
+  if (!desc || !desc.tagName) {
+    return '';
+  }
+  var out = [desc.tagName];
+  if (desc.id) {
+    out.push('#' + desc.id);
+  }
+  if (desc.classes) {
+    out.push('.' + desc.classes.join('.'));
+  }
+  for (var i = 0; i < desc.attributes.length; i++) {
+    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+  }
+
+  return out.join('');
+}
+
+/**
+ * Input: a dom element
+ * Output: null if tagName is falsey or input is falsey, else
+ *  {
+ *    tagName: String,
+ *    id: String | undefined,
+ *    classes: [String] | undefined,
+ *    attributes: [
+ *      {
+ *        key: OneOf(type, name, title, alt),
+ *        value: String
+ *      }
+ *    ]
+ *  }
+ */
+function describeElement(elem) {
+  if (!elem || !elem.tagName) {
+    return null;
+  }
+  var out = {}, className, key, attr, i;
+  out.tagName = elem.tagName.toLowerCase();
+  if (elem.id) {
+    out.id = elem.id;
+  }
+  className = elem.className;
+  if (className && (typeof className === 'string')) {
+    out.classes = className.split(/\s+/);
+  }
+  var attributes = ['type', 'name', 'title', 'alt'];
+  out.attributes = [];
+  for (i = 0; i < attributes.length; i++) {
+    key = attributes[i];
+    attr = elem.getAttribute(key);
+    if (attr) {
+      out.attributes.push({key: key, value: attr});
+    }
+  }
+  return out;
+}
+
+module.exports = {
+  describeElement: describeElement,
+  descriptionToString: descriptionToString,
+  elementArrayToString: elementArrayToString,
+  treeToArray: treeToArray,
+  getElementFromEvent: getElementFromEvent,
+  isDescribedElement: isDescribedElement,
+  getElementType: getElementType
+};
+
+
+/***/ }),
+/* 32 */
 /***/ (function(module, exports) {
 
 //  json3.js
@@ -3175,954 +6323,11 @@ module.exports = setupCustomJSON;
 
 
 /***/ }),
-/* 12 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-
-var _ = __webpack_require__(0);
-
-/*
- * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
- *   This object handles rate limiting via a passed in rate limiter, retries based on connection
- *   errors, and filtering of items based on a set of configurable predicates. The communication to
- *   the backend is performed via a given API object.
- *
- * @param rateLimiter - An object which conforms to the interface
- *    rateLimiter.shouldSend(item) -> bool
- * @param api - An object which conforms to the interface
- *    api.postItem(payload, function(err, response))
- * @param logger - An object used to log verbose messages if desired
- * @param options - see Queue.prototype.configure
- */
-function Queue(rateLimiter, api, logger, options) {
-  this.rateLimiter = rateLimiter;
-  this.api = api;
-  this.logger = logger;
-  this.options = options;
-  this.predicates = [];
-  this.pendingItems = [];
-  this.pendingRequests = [];
-  this.retryQueue = [];
-  this.retryHandle = null;
-  this.waitCallback = null;
-  this.waitIntervalID = null;
-}
-
-/*
- * configure - updates the options this queue uses
- *
- * @param options
- */
-Queue.prototype.configure = function(options) {
-  this.api && this.api.configure(options);
-  var oldOptions = this.options;
-  this.options = _.merge(oldOptions, options);
-  return this;
-};
-
-/*
- * addPredicate - adds a predicate to the end of the list of predicates for this queue
- *
- * @param predicate - function(item, options) -> (bool|{err: Error})
- *  Returning true means that this predicate passes and the item is okay to go on the queue
- *  Returning false means do not add the item to the queue, but it is not an error
- *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
- *  Returning {err: undefined} is equivalent to returning true but don't do that
- */
-Queue.prototype.addPredicate = function(predicate) {
-  if (_.isFunction(predicate)) {
-    this.predicates.push(predicate);
-  }
-  return this;
-};
-
-Queue.prototype.addPendingItem = function(item) {
-  this.pendingItems.push(item);
-};
-
-Queue.prototype.removePendingItem = function(item) {
-  var idx = this.pendingItems.indexOf(item);
-  if (idx !== -1) {
-    this.pendingItems.splice(idx, 1);
-  }
-};
-
-/*
- * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
- *
- * @param item - The payload to send to the backend
- * @param callback - function(error, repsonse) which will be called with the response from the API
- *  in the case of a success, otherwise response will be null and error will have a value. If both
- *  error and response are null then the item was stopped by a predicate which did not consider this
- *  to be an error condition, but nonetheless did not send the item to the API.
- *  @param originalError - The original error before any transformations that is to be logged if any
- */
-Queue.prototype.addItem = function(item, callback, originalError, originalItem) {
-  if (!callback || !_.isFunction(callback)) {
-    callback = function() { return; };
-  }
-  var predicateResult = this._applyPredicates(item);
-  if (predicateResult.stop) {
-    this.removePendingItem(originalItem);
-    callback(predicateResult.err);
-    return;
-  }
-  this._maybeLog(item, originalError);
-  this.removePendingItem(originalItem);
-  if (!this.options.transmit) {
-    callback(new Error('Transmit disabled'));
-    return;
-  }
-  this.pendingRequests.push(item);
-  try {
-    this._makeApiRequest(item, function(err, resp) {
-      this._dequeuePendingRequest(item);
-      callback(err, resp);
-    }.bind(this));
-  } catch (e) {
-    this._dequeuePendingRequest(item);
-    callback(e);
-  }
-};
-
-/*
- * wait - Stop any further errors from being added to the queue, and get called back when all items
- *   currently processing have finished sending to the backend.
- *
- * @param callback - function() called when all pending items have been sent
- */
-Queue.prototype.wait = function(callback) {
-  if (!_.isFunction(callback)) {
-    return;
-  }
-  this.waitCallback = callback;
-  if (this._maybeCallWait()) {
-    return;
-  }
-  if (this.waitIntervalID) {
-    this.waitIntervalID = clearInterval(this.waitIntervalID);
-  }
-  this.waitIntervalID = setInterval(function() {
-    this._maybeCallWait();
-  }.bind(this), 500);
-};
-
-/* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
- *   given item with the currently configured options.
- *
- * @param item - An item in the queue
- * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
- *   the error value should be passed up to a callbak if we are stopping.
- */
-Queue.prototype._applyPredicates = function(item) {
-  var p = null;
-  for (var i = 0, len = this.predicates.length; i < len; i++) {
-    p = this.predicates[i](item, this.options);
-    if (!p || p.err !== undefined) {
-      return {stop: true, err: p.err};
-    }
-  }
-  return {stop: false, err: null};
-};
-
-/*
- * _makeApiRequest - Send an item to Rollbar, callback when done, if there is an error make an
- *   effort to retry if we are configured to do so.
- *
- * @param item - an item ready to send to the backend
- * @param callback - function(err, response)
- */
-Queue.prototype._makeApiRequest = function(item, callback) {
-  var rateLimitResponse = this.rateLimiter.shouldSend(item);
-  if (rateLimitResponse.shouldSend) {
-    this.api.postItem(item, function(err, resp) {
-      if (err) {
-        this._maybeRetry(err, item, callback);
-      } else {
-        callback(err, resp);
-      }
-    }.bind(this));
-  } else if (rateLimitResponse.error) {
-    callback(rateLimitResponse.error);
-  } else {
-    this.api.postItem(rateLimitResponse.payload, callback);
-  }
-};
-
-// These are errors basically mean there is no internet connection
-var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN'];
-
-/*
- * _maybeRetry - Given the error returned by the API, decide if we should retry or just callback
- *   with the error.
- *
- * @param err - an error returned by the API transport
- * @param item - the item that was trying to be sent when this error occured
- * @param callback - function(err, response)
- */
-Queue.prototype._maybeRetry = function(err, item, callback) {
-  var shouldRetry = false;
-  if (this.options.retryInterval) {
-    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
-      if (err.code === RETRIABLE_ERRORS[i]) {
-        shouldRetry = true;
-        break;
-      }
-    }
-  }
-  if (shouldRetry) {
-    this._retryApiRequest(item, callback);
-  } else {
-    callback(err);
-  }
-};
-
-/*
- * _retryApiRequest - Add an item and a callback to a queue and possibly start a timer to process
- *   that queue based on the retryInterval in the options for this queue.
- *
- * @param item - an item that failed to send due to an error we deem retriable
- * @param callback - function(err, response)
- */
-Queue.prototype._retryApiRequest = function(item, callback) {
-  this.retryQueue.push({item: item, callback: callback});
-
-  if (!this.retryHandle) {
-    this.retryHandle = setInterval(function() {
-      while (this.retryQueue.length) {
-        var retryObject = this.retryQueue.shift();
-        this._makeApiRequest(retryObject.item, retryObject.callback);
-      }
-    }.bind(this), this.options.retryInterval);
-  }
-};
-
-/*
- * _dequeuePendingRequest - Removes the item from the pending request queue, this queue is used to
- *   enable to functionality of providing a callback that clients can pass to `wait` to be notified
- *   when the pending request queue has been emptied. This must be called when the API finishes
- *   processing this item. If a `wait` callback is configured, it is called by this function.
- *
- * @param item - the item previously added to the pending request queue
- */
-Queue.prototype._dequeuePendingRequest = function(item) {
-  var idx = this.pendingRequests.indexOf(item);
-  if (idx !== -1) {
-    this.pendingRequests.splice(idx, 1);
-    this._maybeCallWait();
-  }
-};
-
-Queue.prototype._maybeLog = function(data, originalError) {
-  if (this.logger && this.options.verbose) {
-    var message = originalError;
-    message = message || _.get(data, 'body.trace.exception.message');
-    message = message || _.get(data, 'body.trace_chain.0.exception.message');
-    if (message) {
-      this.logger.error(message);
-      return;
-    }
-    message = _.get(data, 'body.message.body');
-    if (message) {
-      this.logger.log(message);
-    }
-  }
-};
-
-Queue.prototype._maybeCallWait = function() {
-  if (_.isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
-    if (this.waitIntervalID) {
-      this.waitIntervalID = clearInterval(this.waitIntervalID);
-    }
-    this.waitCallback();
-    return true;
-  }
-  return false;
-};
-
-module.exports = Queue;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-/*
- * Notifier - the internal object responsible for delegating between the client exposed API, the
- * chain of transforms necessary to turn an item into something that can be sent to Rollbar, and the
- * queue which handles the communcation with the Rollbar API servers.
- *
- * @param queue - an object that conforms to the interface: addItem(item, callback)
- * @param options - an object representing the options to be set for this notifier, this should have
- * any defaults already set by the caller
- */
-function Notifier(queue, options) {
-  this.queue = queue;
-  this.options = options;
-  this.transforms = [];
-  this.diagnostic = {};
-}
-
-/*
- * configure - updates the options for this notifier with the passed in object
- *
- * @param options - an object which gets merged with the current options set on this notifier
- * @returns this
- */
-Notifier.prototype.configure = function(options) {
-  this.queue && this.queue.configure(options);
-  var oldOptions = this.options;
-  this.options = _.merge(oldOptions, options);
-  return this;
-};
-
-/*
- * addTransform - adds a transform onto the end of the queue of transforms for this notifier
- *
- * @param transform - a function which takes three arguments:
- *    * item: An Object representing the data to eventually be sent to Rollbar
- *    * options: The current value of the options for this notifier
- *    * callback: function(err: (Null|Error), item: (Null|Object)) the transform must call this
- *    callback with a null value for error if it wants the processing chain to continue, otherwise
- *    with an error to terminate the processing. The item should be the updated item after this
- *    transform is finished modifying it.
- */
-Notifier.prototype.addTransform = function(transform) {
-  if (_.isFunction(transform)) {
-    this.transforms.push(transform);
-  }
-  return this;
-};
-
-/*
- * log - the internal log function which applies the configured transforms and then pushes onto the
- * queue to be sent to the backend.
- *
- * @param item - An object with the following structure:
- *    message [String] - An optional string to be sent to rollbar
- *    error [Error] - An optional error
- *
- * @param callback - A function of type function(err, resp) which will be called with exactly one
- * null argument and one non-null argument. The callback will be called once, either during the
- * transform stage if an error occurs inside a transform, or in response to the communication with
- * the backend. The second argument will be the response from the backend in case of success.
- */
-Notifier.prototype.log = function(item, callback) {
-  if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
-  }
-
-  if (!this.options.enabled) {
-    return callback(new Error('Rollbar is not enabled'));
-  }
-
-  this.queue.addPendingItem(item);
-  var originalError = item.err;
-  this._applyTransforms(item, function(err, i) {
-    if (err) {
-      this.queue.removePendingItem(item);
-      return callback(err, null);
-    }
-    this.queue.addItem(i, callback, originalError, item);
-  }.bind(this));
-};
-
-/* Internal */
-
-/*
- * _applyTransforms - Applies the transforms that have been added to this notifier sequentially. See
- * `addTransform` for more information.
- *
- * @param item - An item to be transformed
- * @param callback - A function of type function(err, item) which will be called with a non-null
- * error and a null item in the case of a transform failure, or a null error and non-null item after
- * all transforms have been applied.
- */
-Notifier.prototype._applyTransforms = function(item, callback) {
-  var transformIndex = -1;
-  var transformsLength = this.transforms.length;
-  var transforms = this.transforms;
-  var options = this.options;
-
-  var cb = function(err, i) {
-    if (err) {
-      callback(err, null);
-      return;
-    }
-
-    transformIndex++;
-
-    if (transformIndex === transformsLength) {
-      callback(null, i);
-      return;
-    }
-
-    transforms[transformIndex](i, options, cb);
-  };
-
-  cb(null, item);
-};
-
-module.exports = Notifier;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-var MAX_EVENTS = 100;
-
-function Telemeter(options) {
-  this.queue = [];
-  this.options = _.merge(options);
-  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
-  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
-}
-
-Telemeter.prototype.configure = function(options) {
-  var oldOptions = this.options;
-  this.options = _.merge(oldOptions, options);
-  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
-  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
-  var deleteCount = 0;
-  if (this.maxQueueSize > newMaxEvents) {
-    deleteCount = this.maxQueueSize - newMaxEvents;
-  }
-  this.maxQueueSize = newMaxEvents;
-  this.queue.splice(0, deleteCount);
-};
-
-Telemeter.prototype.copyEvents = function() {
-  var events = Array.prototype.slice.call(this.queue, 0);
-  if (_.isFunction(this.options.filterTelemetry)) {
-    try {
-      var i = events.length;
-      while (i--) {
-        if (this.options.filterTelemetry(events[i])) {
-          events.splice(i, 1);
-        }
-      }
-    } catch (e) {
-      this.options.filterTelemetry = null;
-    }
-  }
-  return events;
-};
-
-Telemeter.prototype.capture = function(type, metadata, level, rollbarUUID, timestamp) {
-  var e = {
-    level: getLevel(type, level),
-    type: type,
-    timestamp_ms: timestamp || _.now(),
-    body: metadata,
-    source: 'client'
-  };
-  if (rollbarUUID) {
-    e.uuid = rollbarUUID;
-  }
-
-  try {
-    if (_.isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
-      return false;
-    }
-  } catch (exc) {
-    this.options.filterTelemetry = null;
-  }
-
-  this.push(e);
-  return e;
-};
-
-Telemeter.prototype.captureEvent = function(type, metadata, level, rollbarUUID) {
-  return this.capture(type, metadata, level, rollbarUUID);
-};
-
-Telemeter.prototype.captureError = function(err, level, rollbarUUID, timestamp) {
-  var metadata = {
-    message: err.message || String(err)
-  };
-  if (err.stack) {
-    metadata.stack = err.stack;
-  }
-  return this.capture('error', metadata, level, rollbarUUID, timestamp);
-};
-
-Telemeter.prototype.captureLog = function(message, level, rollbarUUID, timestamp) {
-  return this.capture('log', {
-    message: message
-  }, level, rollbarUUID, timestamp);
-};
-
-Telemeter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID, requestData) {
-  subtype = subtype || 'xhr';
-  metadata.subtype = metadata.subtype || subtype;
-  if (requestData) {
-    metadata.request = requestData;
-  }
-  var level = this.levelFromStatus(metadata.status_code);
-  return this.capture('network', metadata, level, rollbarUUID);
-};
-
-Telemeter.prototype.levelFromStatus = function(statusCode) {
-  if (statusCode >= 200 && statusCode < 400) {
-    return 'info';
-  }
-  if (statusCode === 0 || statusCode >= 400) {
-    return 'error';
-  }
-  return 'info';
-};
-
-Telemeter.prototype.captureDom = function(subtype, element, value, checked, rollbarUUID) {
-  var metadata = {
-    subtype: subtype,
-    element: element
-  };
-  if (value !== undefined) {
-    metadata.value = value;
-  }
-  if (checked !== undefined) {
-    metadata.checked = checked;
-  }
-  return this.capture('dom', metadata, 'info', rollbarUUID);
-};
-
-Telemeter.prototype.captureNavigation = function(from, to, rollbarUUID) {
-  return this.capture('navigation', {from: from, to: to}, 'info', rollbarUUID);
-};
-
-Telemeter.prototype.captureDomContentLoaded = function(ts) {
-  return this.capture('navigation', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
-  /**
-   * If we decide to make this a dom event instead, then use the line below:
-  return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
-  */
-};
-Telemeter.prototype.captureLoad = function(ts) {
-  return this.capture('navigation', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
-  /**
-   * If we decide to make this a dom event instead, then use the line below:
-  return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
-  */
-};
-
-Telemeter.prototype.captureConnectivityChange = function(type, rollbarUUID) {
-  return this.captureNetwork({change: type}, 'connectivity', rollbarUUID);
-};
-
-// Only intended to be used internally by the notifier
-Telemeter.prototype._captureRollbarItem = function(item) {
-  if (!this.options.includeItemsInTelemetry) {
-    return;
-  }
-  if (item.err) {
-    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
-  }
-  if (item.message) {
-    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
-  }
-  if (item.custom) {
-    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
-  }
-};
-
-Telemeter.prototype.push = function(e) {
-  this.queue.push(e);
-  if (this.queue.length > this.maxQueueSize) {
-    this.queue.shift();
-  }
-};
-
-function getLevel(type, level) {
-  if (level) {
-    return level;
-  }
-  var defaultLevel = {
-    error: 'error',
-    manual: 'info'
-  };
-  return defaultLevel[type] || 'info';
-}
-
-module.exports = Telemeter;
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-var helpers = __webpack_require__(16);
-var truncation = __webpack_require__(2);
-
-var defaultOptions = {
-  hostname: 'api.rollbar.com',
-  path: '/api/1/item/',
-  search: null,
-  version: '1',
-  protocol: 'https:',
-  port: 443
-};
-
-/**
- * Api is an object that encapsulates methods of communicating with
- * the Rollbar API.  It is a standard interface with some parts implemented
- * differently for server or browser contexts.  It is an object that should
- * be instantiated when used so it can contain non-global options that may
- * be different for another instance of RollbarApi.
- *
- * @param options {
- *    accessToken: the accessToken to use for posting items to rollbar
- *    endpoint: an alternative endpoint to send errors to
- *        must be a valid, fully qualified URL.
- *        The default is: https://api.rollbar.com/api/1/item
- *    proxy: if you wish to proxy requests provide an object
- *        with the following keys:
- *          host or hostname (required): foo.example.com
- *          port (optional): 123
- *          protocol (optional): https
- * }
- */
-function Api(options, t, u, j) {
-  this.options = options;
-  this.transport = t;
-  this.url = u;
-  this.jsonBackup = j;
-  this.accessToken = options.accessToken;
-  this.transportOptions = _getTransport(options, u);
-}
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.postItem = function(data, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
-  this.transport.post(this.accessToken, transportOptions, payload, callback);
-};
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.buildJsonPayload = function(data, callback) {
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
-
-  var stringifyResult = truncation.truncate(payload);
-  if (stringifyResult.error) {
-    if (callback) {
-      callback(stringifyResult.error);
-    }
-    return null;
-  }
-
-  return stringifyResult.value;
-};
-
-/**
- *
- * @param jsonPayload
- * @param callback
- */
-Api.prototype.postJsonPayload = function(jsonPayload, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
-  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
-};
-
-Api.prototype.configure = function(options) {
-  var oldOptions = this.oldOptions;
-  this.options = _.merge(oldOptions, options);
-  this.transportOptions = _getTransport(this.options, this.url);
-  if (this.options.accessToken !== undefined) {
-    this.accessToken = this.options.accessToken;
-  }
-  return this;
-};
-
-function _getTransport(options, url) {
-  return helpers.getTransportFromOptions(options, defaultOptions, url);
-}
-
-module.exports = Api;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-function buildPayload(accessToken, data, jsonBackup) {
-  if (!_.isType(data.context, 'string')) {
-    var contextResult = _.stringify(data.context, jsonBackup);
-    if (contextResult.error) {
-      data.context = 'Error: could not serialize \'context\'';
-    } else {
-      data.context = contextResult.value || '';
-    }
-    if (data.context.length > 255) {
-      data.context = data.context.substr(0, 255);
-    }
-  }
-  return {
-    access_token: accessToken,
-    data: data
-  };
-}
-
-function getTransportFromOptions(options, defaults, url) {
-  var hostname = defaults.hostname;
-  var protocol = defaults.protocol;
-  var port = defaults.port;
-  var path = defaults.path;
-  var search = defaults.search;
-
-  var proxy = options.proxy;
-  if (options.endpoint) {
-    var opts = url.parse(options.endpoint);
-    hostname = opts.hostname;
-    protocol = opts.protocol;
-    port = opts.port;
-    path = opts.pathname;
-    search = opts.search;
-  }
-  return {
-    hostname: hostname,
-    protocol: protocol,
-    port: port,
-    path: path,
-    search: search,
-    proxy: proxy
-  };
-}
-
-function transportOptions(transport, method) {
-  var protocol = transport.protocol || 'https:';
-  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
-  var hostname = transport.hostname;
-  var path = transport.path;
-  if (transport.search) {
-    path = path + transport.search;
-  }
-  if (transport.proxy) {
-    path = protocol + '//' + hostname + path;
-    hostname = transport.proxy.host || transport.proxy.hostname;
-    port = transport.proxy.port;
-    protocol = transport.proxy.protocol || protocol;
-  }
-  return {
-    protocol: protocol,
-    hostname: hostname,
-    path: path,
-    port: port,
-    method: method
-  };
-}
-
-function appendPathToPath(base, path) {
-  var baseTrailingSlash = /\/$/.test(base);
-  var pathBeginningSlash = /^\//.test(path);
-
-  if (baseTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!baseTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-
-  return base + path;
-}
-
-module.exports = {
-  buildPayload: buildPayload,
-  getTransportFromOptions: getTransportFromOptions,
-  transportOptions: transportOptions,
-  appendPathToPath: appendPathToPath
-};
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports) {
-
-// Console-polyfill. MIT license.
-// https://github.com/paulmillr/console-polyfill
-// Make it safe to do console.log() always.
-(function(global) {
-  'use strict';
-  if (!global.console) {
-    global.console = {};
-  }
-  var con = global.console;
-  var prop, method;
-  var dummy = function() {};
-  var properties = ['memory'];
-  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
-     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
-     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
-  while (prop = properties.pop()) if (!con[prop]) con[prop] = {};
-  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
-  // Using `this` for web workers & supports Browserify / Webpack.
-})(typeof window === 'undefined' ? this : window);
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-// This detection.js module is used to encapsulate any ugly browser/feature
-// detection we may need to do.
-
-// Figure out which version of IE we're using, if any.
-// This is gleaned from http://stackoverflow.com/questions/5574842/best-way-to-check-for-ie-less-than-9-in-javascript-without-library
-// Will return an integer on IE (i.e. 8)
-// Will return undefined otherwise
-function getIEVersion() {
-	var undef;
-	if (typeof document === 'undefined') {
-		return undef;
-	}
-
-  var v = 3,
-    div = document.createElement('div'),
-    all = div.getElementsByTagName('i');
-
-  while (
-    div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->',
-      all[0]
-    );
-
-  return v > 4 ? v : undef;
-}
-
-var Detection = {
-  ieVersion: getIEVersion
-};
-
-module.exports = Detection;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function captureUncaughtExceptions(window, handler, shim) {
-  if (!window) { return; }
-  var oldOnError;
-
-  if (typeof handler._rollbarOldOnError === 'function') {
-    oldOnError = handler._rollbarOldOnError;
-  } else if (window.onerror) {
-    oldOnError = window.onerror;
-    while (oldOnError._rollbarOldOnError) {
-      oldOnError = oldOnError._rollbarOldOnError;
-    }
-    handler._rollbarOldOnError = oldOnError;
-  }
-
-  handler.handleAnonymousErrors();
-
-  var fn = function() {
-    var args = Array.prototype.slice.call(arguments, 0);
-    _rollbarWindowOnError(window, handler, oldOnError, args);
-  };
-  if (shim) {
-    fn._rollbarOldOnError = oldOnError;
-  }
-  window.onerror = fn;
-}
-
-function _rollbarWindowOnError(window, r, old, args) {
-  if (window._rollbarWrappedError) {
-    if (!args[4]) {
-      args[4] = window._rollbarWrappedError;
-    }
-    if (!args[5]) {
-      args[5] = window._rollbarWrappedError._rollbarContext;
-    }
-    window._rollbarWrappedError = null;
-  }
-
-  var ret = r.handleUncaughtException.apply(r, args);
-
-  if (old) {
-    old.apply(window, args);
-  }
-
-  // Let other chained onerror handlers above run before setting this.
-  // If an error is thrown and caught within a chained onerror handler,
-  // Error.prepareStackTrace() will see that one before the one we want.
-  if (ret === 'anonymous') {
-    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
-  }
-}
-
-function captureUnhandledRejections(window, handler, shim) {
-  if (!window) { return; }
-
-  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
-    window.removeEventListener('unhandledrejection', window._rollbarURH);
-  }
-
-  var rejectionHandler = function (evt) {
-    var reason, promise, detail;
-    try {
-      reason = evt.reason;
-    } catch (e) {
-      reason = undefined;
-    }
-    try {
-      promise = evt.promise;
-    } catch (e) {
-      promise = '[unhandledrejection] error getting `promise` from event';
-    }
-    try {
-      detail = evt.detail;
-      if (!reason && detail) {
-        reason = detail.reason;
-        promise = detail.promise;
-      }
-    } catch (e) {
-      // Ignore
-    }
-    if (!reason) {
-      reason = '[unhandledrejection] error getting `reason` from event';
-    }
-
-    if (handler && handler.handleUnhandledRejection) {
-      handler.handleUnhandledRejection(reason, promise);
-    }
-  };
-  rejectionHandler.belongsToShim = shim;
-  window._rollbarURH = rejectionHandler;
-  window.addEventListener('unhandledrejection', rejectionHandler);
-}
 
 function wrapGlobals(window, handler, shim) {
   if (!window) { return; }
@@ -4164,2163 +6369,133 @@ function _extendListenerPrototype(handler, prototype, shim) {
   }
 }
 
-module.exports = {
-  captureUncaughtExceptions: captureUncaughtExceptions,
-  captureUnhandledRejections: captureUnhandledRejections,
-  wrapGlobals: wrapGlobals
-};
+module.exports = wrapGlobals;
 
 
 /***/ }),
-/* 20 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-/*global XDomainRequest*/
-
 var _ = __webpack_require__(0);
-var truncation = __webpack_require__(2);
-var logger = __webpack_require__(1);
+var traverse = __webpack_require__(5);
 
-/*
- * accessToken may be embedded in payload but that should not
- *   be assumed
- *
- * options: {
- *   hostname
- *   protocol
- *   path
- *   port
- *   method
- * }
- *
- *  params is an object containing key/value pairs. These
- *    will be appended to the path as 'key=value&key=value'
- *
- * payload is an unserialized object
- */
-
-function get(accessToken, options, params, callback, requestFactory) {
-  if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
-  }
-  _.addParamsAndAccessTokenToPath(accessToken, options, params);
-
-  var method = 'GET';
-  var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
+function raw(payload, jsonBackup) {
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function post(accessToken, options, payload, callback, requestFactory) {
-  if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+function selectFrames(frames, range) {
+  var len = frames.length;
+  if (len > range * 2) {
+    return frames.slice(0, range).concat(frames.slice(len - range));
   }
-
-  if (!payload) {
-    return callback(new Error('Cannot send empty request'));
-  }
-
-  var stringifyResult = truncation.truncate(payload);
-  if (stringifyResult.error) {
-    return callback(stringifyResult.error);
-  }
-
-  var writeData = stringifyResult.value;
-  var method = 'POST';
-  var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
+  return frames;
 }
 
-function postJsonPayload(accessToken, options, jsonPayload, callback, requestFactory) {
-  if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
-  }
-
-  var method = 'POST';
-  var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory);
-}
-
-// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
-// so Angular change detection isn't triggered on each API call.
-// This is the equivalent of runOutsideAngular().
-//
-function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory) {
-  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
-  var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
-
-  if (currentZone && currentZone._name === 'angular') {
-    var rootZone = currentZone._parent;
-    rootZone.run(function () {
-      _makeRequest(accessToken, url, method, data, callback, requestFactory);
-    });
-  } else {
-    _makeRequest(accessToken, url, method, data, callback, requestFactory);
-  }
-}
-
-/* global RollbarProxy */
-function _proxyRequest(json, callback) {
-  var rollbarProxy = new RollbarProxy();
-  rollbarProxy.sendJsonPayload(
-    json,
-    function(_msg) { /* do nothing */ }, // eslint-disable-line no-unused-vars
-    function(err) {
-      callback(new Error(err));
+function truncateFrames(payload, jsonBackup, range) {
+  range = (typeof range === 'undefined') ? 30 : range;
+  var body = payload.data.body;
+  var frames;
+  if (body.trace_chain) {
+    var chain = body.trace_chain;
+    for (var i = 0; i < chain.length; i++) {
+      frames = chain[i].frames;
+      frames = selectFrames(frames, range);
+      chain[i].frames = frames;
     }
-  );
+  } else if (body.trace) {
+    frames = body.trace.frames;
+    frames = selectFrames(frames, range);
+    body.trace.frames = frames;
+  }
+  return [payload, _.stringify(payload, jsonBackup)];
 }
 
-function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
-  if (typeof RollbarProxy !== 'undefined') {
-    return _proxyRequest(data, callback);
+function maybeTruncateValue(len, val) {
+  if (!val) {
+    return val;
   }
-
-  var request;
-  if (requestFactory) {
-    request = requestFactory();
-  } else {
-    request = _createXMLHTTPObject();
+  if (val.length > len) {
+    return val.slice(0, len - 3).concat('...');
   }
-  if (!request) {
-    // Give up, no way to send requests
-    return callback(new Error('No way to send a request'));
-  }
-  try {
-    try {
-      var onreadystatechange = function() {
-        try {
-          if (onreadystatechange && request.readyState === 4) {
-            onreadystatechange = undefined;
-
-            var parseResponse = _.jsonParse(request.responseText);
-            if (_isSuccess(request)) {
-              callback(parseResponse.error, parseResponse.value);
-              return;
-            } else if (_isNormalFailure(request)) {
-              if (request.status === 403) {
-                // likely caused by using a server access token
-                var message = parseResponse.value && parseResponse.value.message;
-                logger.error(message);
-              }
-              // return valid http status codes
-              callback(new Error(String(request.status)));
-            } else {
-              // IE will return a status 12000+ on some sort of connection failure,
-              // so we return a blank error
-              // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-              var msg = 'XHR response had no status code (likely connection failure)';
-              callback(_newRetriableError(msg));
-            }
-          }
-        } catch (ex) {
-          //jquery source mentions firefox may error out while accessing the
-          //request members if there is a network error
-          //https://github.com/jquery/jquery/blob/a938d7b1282fc0e5c52502c225ae8f0cef219f0a/src/ajax/xhr.js#L111
-          var exc;
-          if (ex && ex.stack) {
-            exc = ex;
-          } else {
-            exc = new Error(ex);
-          }
-          callback(exc);
-        }
-      };
-
-      request.open(method, url, true);
-      if (request.setRequestHeader) {
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
-      }
-      request.onreadystatechange = onreadystatechange;
-      request.send(data);
-    } catch (e1) {
-      // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
-      if (typeof XDomainRequest !== 'undefined') {
-
-        // Assume we are in a really old browser which has a bunch of limitations:
-        // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-
-        // Extreme paranoia: if we have XDomainRequest then we have a window, but just in case
-        if (!window || !window.location) {
-          return callback(new Error('No window available during request, unknown environment'));
-        }
-
-        // If the current page is http, try and send over http
-        if (window.location.href.substring(0, 5) === 'http:' && url.substring(0, 5) === 'https') {
-          url = 'http' + url.substring(5);
-        }
-
-        var xdomainrequest = new XDomainRequest();
-        xdomainrequest.onprogress = function() {};
-        xdomainrequest.ontimeout = function() {
-          var msg = 'Request timed out';
-          var code = 'ETIMEDOUT';
-          callback(_newRetriableError(msg, code));
-        };
-        xdomainrequest.onerror = function() {
-          callback(new Error('Error during request'));
-        };
-        xdomainrequest.onload = function() {
-          var parseResponse = _.jsonParse(xdomainrequest.responseText);
-          callback(parseResponse.error, parseResponse.value);
-        };
-        xdomainrequest.open(method, url, true);
-        xdomainrequest.send(data);
-      } else {
-        callback(new Error('Cannot find a method to transport a request'));
-      }
-    }
-  } catch (e2) {
-    callback(e2);
-  }
+  return val;
 }
 
-function _createXMLHTTPObject() {
-  /* global ActiveXObject:false */
-
-  var factories = [
-    function () {
-      return new XMLHttpRequest();
-    },
-    function () {
-      return new ActiveXObject('Msxml2.XMLHTTP');
-    },
-    function () {
-      return new ActiveXObject('Msxml3.XMLHTTP');
-    },
-    function () {
-      return new ActiveXObject('Microsoft.XMLHTTP');
+function truncateStrings(len, payload, jsonBackup) {
+  function truncator(k, v, seen) {
+    switch (_.typeName(v)) {
+      case 'string':
+        return maybeTruncateValue(len, v);
+      case 'object':
+      case 'array':
+        return traverse(v, truncator, seen);
+      default:
+        return v;
     }
+  }
+  payload = traverse(payload, truncator, []);
+  return [payload, _.stringify(payload, jsonBackup)];
+}
+
+function truncateTraceData(traceData) {
+  if (traceData.exception) {
+    delete traceData.exception.description;
+    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+  }
+  traceData.frames = selectFrames(traceData.frames, 1);
+  return traceData;
+}
+
+function minBody(payload, jsonBackup) {
+  var body = payload.data.body;
+  if (body.trace_chain) {
+    var chain = body.trace_chain;
+    for (var i = 0; i < chain.length; i++) {
+      chain[i] = truncateTraceData(chain[i]);
+    }
+  } else if (body.trace) {
+    body.trace = truncateTraceData(body.trace);
+  }
+  return [payload, _.stringify(payload, jsonBackup)];
+}
+
+function needsTruncation(payload, maxSize) {
+  return _.maxByteSize(payload) > maxSize;
+}
+
+function truncate(payload, jsonBackup, maxSize) {
+  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
+  var strategies = [
+    raw,
+    truncateFrames,
+    truncateStrings.bind(null, 1024),
+    truncateStrings.bind(null, 512),
+    truncateStrings.bind(null, 256),
+    minBody
   ];
-  var xmlhttp;
-  var i;
-  var numFactories = factories.length;
-  for (i = 0; i < numFactories; i++) {
-    /* eslint-disable no-empty */
-    try {
-      xmlhttp = factories[i]();
-      break;
-    } catch (e) {
-      // pass
+  var strategy, results, result;
+
+  while ((strategy = strategies.shift())) {
+    results = strategy(payload, jsonBackup);
+    payload = results[0];
+    result = results[1];
+    if (result.error || !needsTruncation(result.value, maxSize)) {
+      return result;
     }
-    /* eslint-enable no-empty */
   }
-  return xmlhttp;
-}
-
-function _isSuccess(r) {
-  return r && r.status && r.status === 200;
-}
-
-function _isNormalFailure(r) {
-  return r && _.isType(r.status, 'number') && r.status >= 400 && r.status < 600;
-}
-
-function _newRetriableError(message, code) {
-  var err = new Error(message);
-  err.code = code || 'ENOTFOUND';
-  return err;
+  return result;
 }
 
 module.exports = {
-  get: get,
-  post: post,
-  postJsonPayload: postJsonPayload
-};
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-var errorParser = __webpack_require__(4);
-var logger = __webpack_require__(1);
-
-function handleDomException(item, options, callback) {
-  if(item.err && errorParser.Stack(item.err).name === 'DOMException') {
-    var originalError = new Error();
-    originalError.name = item.err.name;
-    originalError.message = item.err.message;
-    originalError.stack = item.err.stack;
-    originalError.nested = item.err;
-    item.err = originalError;
-  }
-  callback(null, item);
-}
-
-function handleItemWithError(item, options, callback) {
-  item.data = item.data || {};
-  if (item.err) {
-    try {
-      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
-
-      if (options.addErrorContext) {
-        addErrorContext(item);
-      }
-    } catch (e) {
-      logger.error('Error while parsing the error object.', e);
-      try {
-        item.message = item.err.message || item.err.description || item.message || String(item.err);
-      } catch (e2) {
-        item.message = String(item.err) || String(e2);
-      }
-      delete item.err;
-    }
-  }
-  callback(null, item);
-}
-
-function addErrorContext(item) {
-  var chain = [];
-  var err = item.err;
-
-  chain.push(err);
-
-  while (err.nested) {
-    err = err.nested;
-    chain.push(err);
-  }
-
-  _.addErrorContext(item, chain);
-}
-
-function ensureItemHasSomethingToSay(item, options, callback) {
-  if (!item.message && !item.stackInfo && !item.custom) {
-    callback(new Error('No message, stack info, or custom data'), null);
-  }
-  callback(null, item);
-}
-
-function addBaseInfo(item, options, callback) {
-  var environment = (options.payload && options.payload.environment) || options.environment;
-  item.data = _.merge(item.data, {
-    environment: environment,
-    level: item.level,
-    endpoint: options.endpoint,
-    platform: 'browser',
-    framework: 'browser-js',
-    language: 'javascript',
-    server: {},
-    uuid: item.uuid,
-    notifier: {
-      name: 'rollbar-browser-js',
-      version: options.version
-    },
-    custom: item.custom
-  });
-  callback(null, item);
-}
-
-function addRequestInfo(window) {
-  return function(item, options, callback) {
-    if (!window || !window.location) {
-      return callback(null, item);
-    }
-    var remoteString = '$remote_ip';
-    if (!options.captureIp) {
-      remoteString = null;
-    } else if (options.captureIp !== true) {
-      remoteString += '_anonymize';
-    }
-    _.set(item, 'data.request', {
-      url: window.location.href,
-      query_string: window.location.search,
-      user_ip: remoteString
-    });
-    callback(null, item);
-  };
-}
-
-function addClientInfo(window) {
-  return function(item, options, callback) {
-    if (!window) {
-      return callback(null, item);
-    }
-    var nav = window.navigator || {};
-    var scr = window.screen || {};
-    _.set(item, 'data.client', {
-      runtime_ms: item.timestamp - window._rollbarStartTime,
-      timestamp: Math.round(item.timestamp / 1000),
-      javascript: {
-        browser: nav.userAgent,
-        language: nav.language,
-        cookie_enabled: nav.cookieEnabled,
-        screen: {
-          width: scr.width,
-          height: scr.height
-        }
-      }
-    });
-    callback(null, item);
-  };
-}
-
-function addPluginInfo(window) {
-  return function(item, options, callback) {
-    if (!window || !window.navigator) {
-      return callback(null, item);
-    }
-    var plugins = [];
-    var navPlugins = window.navigator.plugins || [];
-    var cur;
-    for (var i=0, l=navPlugins.length; i < l; ++i) {
-      cur = navPlugins[i];
-      plugins.push({name: cur.name, description: cur.description});
-    }
-    _.set(item, 'data.client.javascript.plugins', plugins);
-    callback(null, item);
-  };
-}
-
-function addBody(item, options, callback) {
-  if (item.stackInfo) {
-    if (item.stackInfo.traceChain) {
-      addBodyTraceChain(item, options, callback);
-    } else {
-      addBodyTrace(item, options, callback);
-    }
-  } else {
-    addBodyMessage(item, options, callback);
-  }
-}
-
-function addBodyMessage(item, options, callback) {
-  var message = item.message;
-  var custom = item.custom;
-
-  if (!message) {
-    message = 'Item sent with null or missing arguments.';
-  }
-  var result = {
-    body: message
-  };
-
-  if (custom) {
-    result.extra = _.merge(custom);
-  }
-
-  _.set(item, 'data.body', {message: result});
-  callback(null, item);
-}
-
-function stackFromItem(item) {
-  // Transform a TraceKit stackInfo object into a Rollbar trace
-  var stack = item.stackInfo.stack;
-  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
-    stack = item._unhandledStackInfo.stack;
-  }
-  return stack;
-}
-
-function addBodyTraceChain(item, options, callback) {
-  var traceChain = item.stackInfo.traceChain;
-  var traces = [];
-
-  var traceChainLength = traceChain.length;
-  for (var i = 0; i < traceChainLength; i++) {
-    var trace = buildTrace(item, traceChain[i], options);
-    traces.push(trace);
-  }
-
-  _.set(item, 'data.body', {trace_chain: traces});
-  callback(null, item);
-}
-
-function addBodyTrace(item, options, callback) {
-  var stack = stackFromItem(item);
-
-  if (stack) {
-    var trace = buildTrace(item, item.stackInfo, options);
-    _.set(item, 'data.body', {trace: trace});
-    callback(null, item);
-  } else {
-    var stackInfo = item.stackInfo;
-    var guess = errorParser.guessErrorClass(stackInfo.message);
-    var className = errorClass(stackInfo, guess[0], options);
-    var message = guess[1];
-
-    item.message = className + ': ' + message;
-    addBodyMessage(item, options, callback);
-  }
-}
-
-function buildTrace(item, stackInfo, options) {
-  var description = item && item.data.description;
-  var custom = item && item.custom;
-  var stack = stackFromItem(item);
-
-  var guess = errorParser.guessErrorClass(stackInfo.message);
-  var className = errorClass(stackInfo, guess[0], options);
-  var message = guess[1];
-  var trace = {
-    exception: {
-      'class': className,
-      message: message
-    }
-  };
-
-  if (description) {
-    trace.exception.description = description;
-  }
-
-  if (stack) {
-    if (stack.length === 0) {
-      trace.exception.stack = stackInfo.rawStack;
-      trace.exception.raw = String(stackInfo.rawException);
-    }
-    var stackFrame;
-    var frame;
-    var code;
-    var pre;
-    var post;
-    var contextLength;
-    var i, mid;
-
-    trace.frames = [];
-    for (i = 0; i < stack.length; ++i) {
-      stackFrame = stack[i];
-      frame = {
-        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
-        lineno: stackFrame.line || null,
-        method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
-        colno: stackFrame.column
-      };
-      if (options.sendFrameUrl) {
-        frame.url = stackFrame.url;
-      }
-      if (frame.method && frame.method.endsWith && frame.method.endsWith('_rollbar_wrapped')) {
-        continue;
-      }
-
-      code = pre = post = null;
-      contextLength = stackFrame.context ? stackFrame.context.length : 0;
-      if (contextLength) {
-        mid = Math.floor(contextLength / 2);
-        pre = stackFrame.context.slice(0, mid);
-        code = stackFrame.context[mid];
-        post = stackFrame.context.slice(mid);
-      }
-
-      if (code) {
-        frame.code = code;
-      }
-
-      if (pre || post) {
-        frame.context = {};
-        if (pre && pre.length) {
-          frame.context.pre = pre;
-        }
-        if (post && post.length) {
-          frame.context.post = post;
-        }
-      }
-
-      if (stackFrame.args) {
-        frame.args = stackFrame.args;
-      }
-
-      trace.frames.push(frame);
-    }
-
-    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
-    trace.frames.reverse();
-
-    if (custom) {
-      trace.extra = _.merge(custom);
-    }
-  }
-
-  return trace;
-}
-
-function errorClass(stackInfo, guess, options) {
-  if (stackInfo.name) {
-    return stackInfo.name;
-  } else if (options.guessErrorClass) {
-    return guess;
-  } else {
-    return '(unknown)';
-  }
-}
-
-function scrubPayload(item, options, callback) {
-  var scrubFields = options.scrubFields || [];
-  var scrubPaths = options.scrubPaths || [];
-  item.data = _.scrub(item.data, scrubFields, scrubPaths);
-  callback(null, item);
-}
-
-module.exports = {
-  handleDomException: handleDomException,
-  handleItemWithError: handleItemWithError,
-  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
-  addBaseInfo: addBaseInfo,
-  addRequestInfo: addRequestInfo,
-  addClientInfo: addClientInfo,
-  addPluginInfo: addPluginInfo,
-  addBody: addBody,
-  scrubPayload: scrubPayload
-};
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
-    'use strict';
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-
-    /* istanbul ignore next */
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(23)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else {}
-}(this, function ErrorStackParser(StackFrame) {
-    'use strict';
-
-    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+:\d+/;
-    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+:\d+|\(native\))/m;
-    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code])?$/;
-
-    return {
-        /**
-         * Given an Error object, extract the most information from it.
-         *
-         * @param {Error} error object
-         * @return {Array} of StackFrames
-         */
-        parse: function ErrorStackParser$$parse(error) {
-            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
-                return this.parseOpera(error);
-            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
-                return this.parseV8OrIE(error);
-            } else if (error.stack) {
-                return this.parseFFOrSafari(error);
-            } else {
-                throw new Error('Cannot parse given Error object');
-            }
-        },
-
-        // Separate line and column numbers from a string of the form: (URI:Line:Column)
-        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
-            // Fail-fast but return locations like "(native)"
-            if (urlLike.indexOf(':') === -1) {
-                return [urlLike];
-            }
-
-            var regExp = /(.+?)(?::(\d+))?(?::(\d+))?$/;
-            var parts = regExp.exec(urlLike.replace(/[()]/g, ''));
-            return [parts[1], parts[2] || undefined, parts[3] || undefined];
-        },
-
-        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !!line.match(CHROME_IE_STACK_REGEXP);
-            }, this);
-
-            return filtered.map(function(line) {
-                if (line.indexOf('(eval ') > -1) {
-                    // Throw away eval information until we implement stacktrace.js/stackframe#8
-                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
-                }
-                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
-
-                // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
-                // case it has spaces in it, as the string is split on \s+ later on
-                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
-
-                // remove the parenthesized location from the line, if it was matched
-                sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
-
-                var tokens = sanitizedLine.split(/\s+/).slice(1);
-                // if a location was matched, pass it to extractLocation() otherwise pop the last token
-                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
-                var functionName = tokens.join(' ') || undefined;
-                var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
-
-                return new StackFrame({
-                    functionName: functionName,
-                    fileName: fileName,
-                    lineNumber: locationParts[1],
-                    columnNumber: locationParts[2],
-                    source: line
-                });
-            }, this);
-        },
-
-        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
-            }, this);
-
-            return filtered.map(function(line) {
-                // Throw away eval information until we implement stacktrace.js/stackframe#8
-                if (line.indexOf(' > eval') > -1) {
-                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ':$1');
-                }
-
-                if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
-                    // Safari eval frames only have function names and nothing else
-                    return new StackFrame({
-                        functionName: line
-                    });
-                } else {
-                    var functionNameRegex = /((.*".+"[^@]*)?[^@]*)(?:@)/;
-                    var matches = line.match(functionNameRegex);
-                    var functionName = matches && matches[1] ? matches[1] : undefined;
-                    var locationParts = this.extractLocation(line.replace(functionNameRegex, ''));
-
-                    return new StackFrame({
-                        functionName: functionName,
-                        fileName: locationParts[0],
-                        lineNumber: locationParts[1],
-                        columnNumber: locationParts[2],
-                        source: line
-                    });
-                }
-            }, this);
-        },
-
-        parseOpera: function ErrorStackParser$$parseOpera(e) {
-            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
-                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
-                return this.parseOpera9(e);
-            } else if (!e.stack) {
-                return this.parseOpera10(e);
-            } else {
-                return this.parseOpera11(e);
-            }
-        },
-
-        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
-            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
-            var lines = e.message.split('\n');
-            var result = [];
-
-            for (var i = 2, len = lines.length; i < len; i += 2) {
-                var match = lineRE.exec(lines[i]);
-                if (match) {
-                    result.push(new StackFrame({
-                        fileName: match[2],
-                        lineNumber: match[1],
-                        source: lines[i]
-                    }));
-                }
-            }
-
-            return result;
-        },
-
-        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
-            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
-            var lines = e.stacktrace.split('\n');
-            var result = [];
-
-            for (var i = 0, len = lines.length; i < len; i += 2) {
-                var match = lineRE.exec(lines[i]);
-                if (match) {
-                    result.push(
-                        new StackFrame({
-                            functionName: match[3] || undefined,
-                            fileName: match[2],
-                            lineNumber: match[1],
-                            source: lines[i]
-                        })
-                    );
-                }
-            }
-
-            return result;
-        },
-
-        // Opera 10.65+ Error.stack very similar to FF/Safari
-        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
-            }, this);
-
-            return filtered.map(function(line) {
-                var tokens = line.split('@');
-                var locationParts = this.extractLocation(tokens.pop());
-                var functionCall = (tokens.shift() || '');
-                var functionName = functionCall
-                    .replace(/<anonymous function(: (\w+))?>/, '$2')
-                    .replace(/\([^)]*\)/g, '') || undefined;
-                var argsRaw;
-                if (functionCall.match(/\(([^)]*)\)/)) {
-                    argsRaw = functionCall.replace(/^[^(]+\(([^)]*)\)$/, '$1');
-                }
-                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
-                    undefined : argsRaw.split(',');
-
-                return new StackFrame({
-                    functionName: functionName,
-                    args: args,
-                    fileName: locationParts[0],
-                    lineNumber: locationParts[1],
-                    columnNumber: locationParts[2],
-                    source: line
-                });
-            }, this);
-        }
-    };
-}));
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
-    'use strict';
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-
-    /* istanbul ignore next */
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else {}
-}(this, function() {
-    'use strict';
-    function _isNumber(n) {
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
-
-    function _capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.substring(1);
-    }
-
-    function _getter(p) {
-        return function() {
-            return this[p];
-        };
-    }
-
-    var booleanProps = ['isConstructor', 'isEval', 'isNative', 'isToplevel'];
-    var numericProps = ['columnNumber', 'lineNumber'];
-    var stringProps = ['fileName', 'functionName', 'source'];
-    var arrayProps = ['args'];
-
-    var props = booleanProps.concat(numericProps, stringProps, arrayProps);
-
-    function StackFrame(obj) {
-        if (!obj) return;
-        for (var i = 0; i < props.length; i++) {
-            if (obj[props[i]] !== undefined) {
-                this['set' + _capitalize(props[i])](obj[props[i]]);
-            }
-        }
-    }
-
-    StackFrame.prototype = {
-        getArgs: function() {
-            return this.args;
-        },
-        setArgs: function(v) {
-            if (Object.prototype.toString.call(v) !== '[object Array]') {
-                throw new TypeError('Args must be an Array');
-            }
-            this.args = v;
-        },
-
-        getEvalOrigin: function() {
-            return this.evalOrigin;
-        },
-        setEvalOrigin: function(v) {
-            if (v instanceof StackFrame) {
-                this.evalOrigin = v;
-            } else if (v instanceof Object) {
-                this.evalOrigin = new StackFrame(v);
-            } else {
-                throw new TypeError('Eval Origin must be an Object or StackFrame');
-            }
-        },
-
-        toString: function() {
-            var fileName = this.getFileName() || '';
-            var lineNumber = this.getLineNumber() || '';
-            var columnNumber = this.getColumnNumber() || '';
-            var functionName = this.getFunctionName() || '';
-            if (this.getIsEval()) {
-                if (fileName) {
-                    return '[eval] (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
-                }
-                return '[eval]:' + lineNumber + ':' + columnNumber;
-            }
-            if (functionName) {
-                return functionName + ' (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
-            }
-            return fileName + ':' + lineNumber + ':' + columnNumber;
-        }
-    };
-
-    StackFrame.fromString = function StackFrame$$fromString(str) {
-        var argsStartIndex = str.indexOf('(');
-        var argsEndIndex = str.lastIndexOf(')');
-
-        var functionName = str.substring(0, argsStartIndex);
-        var args = str.substring(argsStartIndex + 1, argsEndIndex).split(',');
-        var locationString = str.substring(argsEndIndex + 1);
-
-        if (locationString.indexOf('@') === 0) {
-            var parts = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(locationString, '');
-            var fileName = parts[1];
-            var lineNumber = parts[2];
-            var columnNumber = parts[3];
-        }
-
-        return new StackFrame({
-            functionName: functionName,
-            args: args || undefined,
-            fileName: fileName,
-            lineNumber: lineNumber || undefined,
-            columnNumber: columnNumber || undefined
-        });
-    };
-
-    for (var i = 0; i < booleanProps.length; i++) {
-        StackFrame.prototype['get' + _capitalize(booleanProps[i])] = _getter(booleanProps[i]);
-        StackFrame.prototype['set' + _capitalize(booleanProps[i])] = (function(p) {
-            return function(v) {
-                this[p] = Boolean(v);
-            };
-        })(booleanProps[i]);
-    }
-
-    for (var j = 0; j < numericProps.length; j++) {
-        StackFrame.prototype['get' + _capitalize(numericProps[j])] = _getter(numericProps[j]);
-        StackFrame.prototype['set' + _capitalize(numericProps[j])] = (function(p) {
-            return function(v) {
-                if (!_isNumber(v)) {
-                    throw new TypeError(p + ' must be a Number');
-                }
-                this[p] = Number(v);
-            };
-        })(numericProps[j]);
-    }
-
-    for (var k = 0; k < stringProps.length; k++) {
-        StackFrame.prototype['get' + _capitalize(stringProps[k])] = _getter(stringProps[k]);
-        StackFrame.prototype['set' + _capitalize(stringProps[k])] = (function(p) {
-            return function(v) {
-                this[p] = String(v);
-            };
-        })(stringProps[k]);
-    }
-
-    return StackFrame;
-}));
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-function itemToPayload(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
-  }
-
-  var data = _.merge(item.data, payloadOptions);
-  if (item._isUncaught) {
-    data._isUncaught = true;
-  }
-  if (item._originalArgs) {
-    data._originalArgs = item._originalArgs;
-  }
-  callback(null, data);
-}
-
-function addTelemetryData(item, options, callback) {
-  if (item.telemetryEvents) {
-    _.set(item, 'data.body.telemetry', item.telemetryEvents);
-  }
-  callback(null, item);
-}
-
-function addMessageWithError(item, options, callback) {
-  if (!item.message) {
-    callback(null, item);
-    return;
-  }
-  var tracePath = 'data.body.trace_chain.0';
-  var trace = _.get(item, tracePath);
-  if (!trace) {
-    tracePath = 'data.body.trace';
-    trace = _.get(item, tracePath);
-  }
-  if (trace) {
-    if (!(trace.exception && trace.exception.description)) {
-      _.set(item, tracePath+'.exception.description', item.message);
-      callback(null, item);
-      return;
-    }
-    var extra = _.get(item, tracePath+'.extra') || {};
-    var newExtra =  _.merge(extra, {message: item.message});
-    _.set(item, tracePath+'.extra', newExtra);
-  }
-  callback(null, item);
-}
-
-function userTransform(logger) {
-  return function(item, options, callback) {
-    var newItem = _.merge(item);
-    try {
-      if (_.isFunction(options.transform)) {
-        options.transform(newItem.data, item);
-      }
-    } catch (e) {
-      options.transform = null;
-      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
-      callback(null, item);
-      return;
-    }
-    callback(null, newItem);
-  }
-}
-
-function addConfigToPayload(item, options, callback) {
-  if (!options.sendConfig) {
-    return callback(null, item);
-  }
-  var configKey = '_rollbarConfig';
-  var custom = _.get(item, 'data.custom') || {};
-  custom[configKey] = options;
-  item.data.custom = custom;
-  callback(null, item);
-}
-
-function addFunctionOption(options, name) {
-  if(_.isFunction(options[name])) {
-    options[name] = options[name].toString();
-  }
-}
-
-function addConfiguredOptions(item, options, callback) {
-  var configuredOptions = options._configuredOptions;
-
-  // These must be stringified or they'll get dropped during serialization.
-  addFunctionOption(configuredOptions, 'transform');
-  addFunctionOption(configuredOptions, 'checkIgnore');
-  addFunctionOption(configuredOptions, 'onSendCallback');
-
-  delete configuredOptions.accessToken;
-  item.data.notifier.configured_options = configuredOptions;
-  callback(null, item);
-}
-
-function addDiagnosticKeys(item, options, callback) {
-  var diagnostic = _.merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
-
-  if (_.get(item, 'err._isAnonymous')) {
-    diagnostic.is_anonymous = true;
-  }
-
-  if (item._isUncaught) {
-    diagnostic.is_uncaught = item._isUncaught;
-    delete item._isUncaught;
-  }
-
-  if (item.err) {
-    try {
-      diagnostic.raw_error = {
-        message: item.err.message,
-        name: item.err.name,
-        constructor_name: item.err.constructor && item.err.constructor.name,
-        filename: item.err.fileName,
-        line: item.err.lineNumber,
-        column: item.err.columnNumber,
-        stack: item.err.stack
-      };
-    } catch (e) {
-      diagnostic.raw_error = { failed: String(e) };
-    }
-  }
-
-  item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
-  callback(null, item);
-}
-
-module.exports = {
-  itemToPayload: itemToPayload,
-  addTelemetryData: addTelemetryData,
-  addMessageWithError: addMessageWithError,
-  userTransform: userTransform,
-  addConfigToPayload: addConfigToPayload,
-  addConfiguredOptions: addConfiguredOptions,
-  addDiagnosticKeys: addDiagnosticKeys
-};
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-function checkIgnore(item, settings) {
-  if (_.get(settings, 'plugins.jquery.ignoreAjaxErrors')) {
-    return !_.get(item, 'body.message.extra.isAjax');
-  }
-  return true;
-}
-
-module.exports = {
-  checkIgnore: checkIgnore
-};
-
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-
-function checkLevel(item, settings) {
-  var level = item.level;
-  var levelVal = _.LEVELS[level] || 0;
-  var reportLevel = settings.reportLevel;
-  var reportLevelVal = _.LEVELS[reportLevel] || 0;
-
-  if (levelVal < reportLevelVal) {
-    return false;
-  }
-  return true;
-}
-
-function userCheckIgnore(logger) {
-  return function(item, settings) {
-    var isUncaught = !!item._isUncaught;
-    var args = item._originalArgs;
-    delete item._originalArgs;
-    try {
-      if (_.isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
-      }
-    } catch (e) {
-      settings.onSendCallback = null;
-      logger.error('Error while calling onSendCallback, removing', e);
-    }
-    try {
-      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
-        return false;
-      }
-    } catch (e) {
-      settings.checkIgnore = null;
-      logger.error('Error while calling custom checkIgnore(), removing', e);
-    }
-    return true;
-  }
-}
-
-function urlIsNotBlacklisted(logger) {
-  return function(item, settings) {
-    return !urlIsOnAList(item, settings, 'blacklist', logger);
-  }
-}
-
-function urlIsWhitelisted(logger) {
-  return function(item, settings) {
-    return urlIsOnAList(item, settings, 'whitelist', logger);
-  }
-}
-
-function matchFrames(trace, list, black) {
-  if (!trace) { return !black }
-
-  var frames = trace.frames;
-
-  if (!frames || frames.length === 0) { return !black; }
-
-  var frame, filename, url, urlRegex;
-  var listLength = list.length;
-  var frameLength = frames.length;
-  for (var i = 0; i < frameLength; i++) {
-    frame = frames[i];
-    filename = frame.filename;
-
-    if (!_.isType(filename, 'string')) { return !black; }
-
-    for (var j = 0; j < listLength; j++) {
-      url = list[j];
-      urlRegex = new RegExp(url);
-
-      if (urlRegex.test(filename)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function urlIsOnAList(item, settings, whiteOrBlack, logger) {
-  // whitelist is the default
-  var black = false;
-  if (whiteOrBlack === 'blacklist') {
-    black = true;
-  }
-
-  var list, traces;
-  try {
-    list = black ? settings.hostBlackList : settings.hostWhiteList;
-    traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
-
-    // These two checks are important to come first as they are defaults
-    // in case the list is missing or the trace is missing or not well-formed
-    if (!list || list.length === 0) {
-      return !black;
-    }
-    if (traces.length === 0 || !traces[0]) {
-      return !black;
-    }
-
-    var tracesLength = traces.length;
-    for (var i = 0; i < tracesLength; i++) {
-      if(matchFrames(traces[i], list, black)) {
-        return true;
-      }
-    }
-  } catch (e)
-  /* istanbul ignore next */
-  {
-    if (black) {
-      settings.hostBlackList = null;
-    } else {
-      settings.hostWhiteList = null;
-    }
-    var listName = black ? 'hostBlackList' : 'hostWhiteList';
-    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
-    return !black;
-  }
-  return false;
-}
-
-function messageIsIgnored(logger) {
-  return function(item, settings) {
-    var exceptionMessage, i, ignoredMessages,
-        len, messageIsIgnored, rIgnoredMessage,
-        body, traceMessage, bodyMessage;
-
-    try {
-      messageIsIgnored = false;
-      ignoredMessages = settings.ignoredMessages;
-
-      if (!ignoredMessages || ignoredMessages.length === 0) {
-        return true;
-      }
-
-      body = item.body;
-      traceMessage = _.get(body, 'trace.exception.message');
-      bodyMessage = _.get(body, 'message.body');
-
-      exceptionMessage = traceMessage || bodyMessage;
-
-      if (!exceptionMessage){
-        return true;
-      }
-
-      len = ignoredMessages.length;
-      for (i = 0; i < len; i++) {
-        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-        messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
-
-        if (messageIsIgnored) {
-          break;
-        }
-      }
-    } catch(e)
-    /* istanbul ignore next */
-    {
-      settings.ignoredMessages = null;
-      logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
-    }
-
-    return !messageIsIgnored;
-  }
-}
-
-module.exports = {
-  checkLevel: checkLevel,
-  userCheckIgnore: userCheckIgnore,
-  urlIsNotBlacklisted: urlIsNotBlacklisted,
-  urlIsWhitelisted: urlIsWhitelisted,
-  messageIsIgnored: messageIsIgnored
-};
-
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _ = __webpack_require__(0);
-var urlparser = __webpack_require__(3);
-var domUtil = __webpack_require__(28);
-
-var defaults = {
-  network: true,
-  networkResponseHeaders: false,
-  networkResponseBody: false,
-  networkRequestHeaders: false,
-  networkRequestBody: false,
-  networkErrorOnHttp5xx: false,
-  networkErrorOnHttp4xx: false,
-  networkErrorOnHttp0: false,
-  log: true,
-  dom: true,
-  navigation: true,
-  connectivity: true
-};
-
-function replace(obj, name, replacement, replacements, type) {
-  var orig = obj[name];
-  obj[name] = replacement(orig);
-  if (replacements) {
-    replacements[type].push([obj, name, orig]);
-  }
-}
-
-function restore(replacements, type) {
-  var b;
-  while (replacements[type].length) {
-    b = replacements[type].shift();
-    b[0][b[1]] = b[2];
-  }
-}
-
-function nameFromDescription(description) {
-  if (!description || !description.attributes) { return null; }
-  var attrs = description.attributes;
-  for (var a = 0; a < attrs.length; ++a) {
-    if (attrs[a].key === 'name') {
-      return attrs[a].value;
-    }
-  }
-  return null;
-}
-
-function defaultValueScrubber(scrubFields) {
-  var patterns = [];
-  for (var i = 0; i < scrubFields.length; ++i) {
-    patterns.push(new RegExp(scrubFields[i], 'i'));
-  }
-  return function(description) {
-    var name = nameFromDescription(description);
-    if (!name) { return false; }
-    for (var i = 0; i < patterns.length; ++i) {
-      if (patterns[i].test(name)) {
-        return true;
-      }
-    }
-    return false;
-  };
-}
-
-function Instrumenter(options, telemeter, rollbar, _window, _document) {
-  this.options = options;
-  var autoInstrument = options.autoInstrument;
-  if (options.enabled === false || autoInstrument === false) {
-    this.autoInstrument = {};
-  } else {
-    if (!_.isType(autoInstrument, 'object')) {
-      autoInstrument = defaults;
-    }
-    this.autoInstrument = _.merge(defaults, autoInstrument);
-  }
-  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-  this.telemetryScrubber = options.telemetryScrubber;
-  this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
-  this.telemeter = telemeter;
-  this.rollbar = rollbar;
-  this.diagnostic = rollbar.client.notifier.diagnostic;
-  this._window = _window || {};
-  this._document = _document || {};
-  this.replacements = {
-    network: [],
-    log: [],
-    navigation: [],
-    connectivity: []
-  };
-  this.eventRemovers = {
-    dom: [],
-    connectivity: []
-  };
-
-  this._location = this._window.location;
-  this._lastHref = this._location && this._location.href;
-}
-
-Instrumenter.prototype.configure = function(options) {
-  this.options = _.merge(this.options, options);
-  var autoInstrument = options.autoInstrument;
-  var oldSettings = _.merge(this.autoInstrument);
-  if (options.enabled === false || autoInstrument === false) {
-    this.autoInstrument = {};
-  } else {
-    if (!_.isType(autoInstrument, 'object')) {
-      autoInstrument = defaults;
-    }
-    this.autoInstrument = _.merge(defaults, autoInstrument);
-  }
-  this.instrument(oldSettings);
-  if (options.scrubTelemetryInputs !== undefined) {
-    this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-  }
-  if (options.telemetryScrubber !== undefined) {
-    this.telemetryScrubber = options.telemetryScrubber;
-  }
-};
-
-Instrumenter.prototype.instrument = function(oldSettings) {
-  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
-    this.instrumentNetwork();
-  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
-    this.deinstrumentNetwork();
-  }
-
-  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
-    this.instrumentConsole();
-  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
-    this.deinstrumentConsole();
-  }
-
-  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
-    this.instrumentDom();
-  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
-    this.deinstrumentDom();
-  }
-
-  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
-    this.instrumentNavigation();
-  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
-    this.deinstrumentNavigation();
-  }
-
-  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
-    this.instrumentConnectivity();
-  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
-    this.deinstrumentConnectivity();
-  }
-};
-
-Instrumenter.prototype.deinstrumentNetwork = function() {
-  restore(this.replacements, 'network');
-};
-
-Instrumenter.prototype.instrumentNetwork = function() {
-  var self = this;
-
-  function wrapProp(prop, xhr) {
-    if (prop in xhr && _.isFunction(xhr[prop])) {
-      replace(xhr, prop, function(orig) {
-        return self.rollbar.wrap(orig);
-      });
-    }
-  }
-
-  if ('XMLHttpRequest' in this._window) {
-    var xhrp = this._window.XMLHttpRequest.prototype;
-    replace(xhrp, 'open', function(orig) {
-      return function(method, url) {
-        if (_.isType(url, 'string')) {
-          this.__rollbar_xhr = {
-            method: method,
-            url: url,
-            status_code: null,
-            start_time_ms: _.now(),
-            end_time_ms: null
-          };
-          if (self.autoInstrument.networkRequestHeaders) {
-            this.__rollbar_xhr.request_headers = {};
-          }
-        }
-        return orig.apply(this, arguments);
-      };
-    }, this.replacements, 'network');
-
-    replace(xhrp, 'setRequestHeader', function(orig) {
-      return function(header, value) {
-        if (self.autoInstrument.networkRequestHeaders && this.__rollbar_xhr &&
-          _.isType(header, 'string') && _.isType(value, 'string')) {
-          this.__rollbar_xhr.request_headers[header] = value;
-        }
-        if (header.toLowerCase() === 'content-type') {
-          this.__rollbar_xhr.request_content_type = value;
-        }
-        return orig.apply(this, arguments);
-      };
-    }, this.replacements, 'network');
-
-    replace(xhrp, 'send', function(orig) {
-      /* eslint-disable no-unused-vars */
-      return function(data) {
-      /* eslint-enable no-unused-vars */
-        var xhr = this;
-
-        function onreadystatechangeHandler() {
-          if (xhr.__rollbar_xhr) {
-            if (xhr.__rollbar_xhr.status_code === null) {
-              xhr.__rollbar_xhr.status_code = 0;
-              if (self.autoInstrument.networkRequestBody) {
-                xhr.__rollbar_xhr.request = data;
-              }
-              xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
-            }
-            if (xhr.readyState < 2) {
-              xhr.__rollbar_xhr.start_time_ms = _.now();
-            }
-            if (xhr.readyState > 3) {
-              xhr.__rollbar_xhr.end_time_ms = _.now();
-
-              var headers = null;
-              xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
-              if (self.autoInstrument.networkResponseHeaders) {
-                var headersConfig = self.autoInstrument.networkResponseHeaders;
-                headers = {};
-                try {
-                  var header, i;
-                  if (headersConfig === true) {
-                    var allHeaders = xhr.getAllResponseHeaders();
-                    if (allHeaders) {
-                      var arr = allHeaders.trim().split(/[\r\n]+/);
-                      var parts, value;
-                      for (i=0; i < arr.length; i++) {
-                        parts = arr[i].split(': ');
-                        header = parts.shift();
-                        value = parts.join(': ');
-                        headers[header] = value;
-                      }
-                    }
-                  } else {
-                    for (i=0; i < headersConfig.length; i++) {
-                      header = headersConfig[i];
-                      headers[header] = xhr.getResponseHeader(header);
-                    }
-                  }
-                } catch (e) {
-                  /* we ignore the errors here that could come from different
-                   * browser issues with the xhr methods */
-                }
-              }
-              var body = null;
-              if (self.autoInstrument.networkResponseBody) {
-                try {
-                  body = xhr.responseText;
-                } catch (e) {
-                  /* ignore errors from reading responseText */
-                }
-              }
-              var response = null;
-              if (body || headers) {
-                response = {};
-                if (body) {
-                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
-                    response.body = self.scrubJson(body);
-                  } else {
-                    response.body = body;
-                  }
-                }
-                if (headers) {
-                  response.headers = headers;
-                }
-              }
-              if (response) {
-                xhr.__rollbar_xhr.response = response;
-              }
-              try {
-                var code = xhr.status;
-                code = code === 1223 ? 204 : code;
-                xhr.__rollbar_xhr.status_code = code;
-                xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
-                self.errorOnHttpStatus(xhr.__rollbar_xhr);
-              } catch (e) {
-                /* ignore possible exception from xhr.status */
-              }
-            }
-          }
-        }
-
-        wrapProp('onload', xhr);
-        wrapProp('onerror', xhr);
-        wrapProp('onprogress', xhr);
-
-        if ('onreadystatechange' in xhr && _.isFunction(xhr.onreadystatechange)) {
-          replace(xhr, 'onreadystatechange', function(orig) {
-            return self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
-          });
-        } else {
-          xhr.onreadystatechange = onreadystatechangeHandler;
-        }
-        if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
-          xhr.__rollbar_xhr.stack = (new Error()).stack;
-        }
-        return orig.apply(this, arguments);
-      }
-    }, this.replacements, 'network');
-  }
-
-  if ('fetch' in this._window) {
-    replace(this._window, 'fetch', function(orig) {
-      /* eslint-disable no-unused-vars */
-      return function(fn, t) {
-      /* eslint-enable no-unused-vars */
-        var args = new Array(arguments.length);
-        for (var i=0, len=args.length; i < len; i++) {
-          args[i] = arguments[i];
-        }
-        var input = args[0];
-        var method = 'GET';
-        var url;
-        if (_.isType(input, 'string')) {
-          url = input;
-        } else if (input) {
-          url = input.url;
-          if (input.method) {
-            method = input.method;
-          }
-        }
-        if (args[1] && args[1].method) {
-          method = args[1].method;
-        }
-        var metadata = {
-          method: method,
-          url: url,
-          status_code: null,
-          start_time_ms: _.now(),
-          end_time_ms: null
-        };
-        if (args[1] && args[1].headers) {
-          // Argument may be a Headers object, or plain object. Ensure here that
-          // we are working with a Headers object with case-insensitive keys.
-          var reqHeaders = new Headers(args[1].headers);
-
-          metadata.request_content_type = reqHeaders.get('Content-Type');
-
-          if (self.autoInstrument.networkRequestHeaders) {
-            metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders)
-          }
-        }
-
-        if (self.autoInstrument.networkRequestBody) {
-          if (args[1] && args[1].body) {
-            metadata.request = args[1].body;
-          } else if (args[0] && !_.isType(args[0], 'string') && args[0].body) {
-            metadata.request = args[0].body;
-          }
-        }
-        self.captureNetwork(metadata, 'fetch', undefined);
-        if (self.trackHttpErrors()) {
-          metadata.stack = (new Error()).stack;
-        }
-        return orig.apply(this, args).then(function (resp) {
-          metadata.end_time_ms = _.now();
-          metadata.status_code = resp.status;
-          metadata.response_content_type = resp.headers.get('Content-Type');
-          var headers = null;
-          if (self.autoInstrument.networkResponseHeaders) {
-            headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
-          }
-          var body = null;
-          if (self.autoInstrument.networkResponseBody) {
-            if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
-              // The response must be cloned to prevent reading (and locking) the original stream.
-              body = resp.clone().text(); //returns a Promise
-            }
-          }
-          if (headers || body) {
-            metadata.response = {};
-            if (body) {
-              // Test to ensure body is a Promise, which it should always be.
-              if (typeof body.then === 'function') {
-                body.then(function (text) {
-                  if (self.isJsonContentType(metadata.response_content_type)) {
-                    metadata.response.body = self.scrubJson(text);
-                  }
-                });
-              } else {
-                metadata.response.body = body;
-              }
-            }
-            if (headers) {
-              metadata.response.headers = headers;
-            }
-          }
-          self.errorOnHttpStatus(metadata);
-          return resp;
-        });
-      };
-    }, this.replacements, 'network');
-  }
-};
-
-Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
-  if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
-    metadata.request = this.scrubJson(metadata.request);
-  }
-  return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
-};
-
-Instrumenter.prototype.isJsonContentType = function(contentType) {
-  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
-}
-
-Instrumenter.prototype.scrubJson = function(json) {
-  return JSON.stringify(_.scrub(JSON.parse(json), this.options.scrubFields));
-}
-
-Instrumenter.prototype.fetchHeaders = function(inHeaders, headersConfig) {
-  var outHeaders = {};
-  try {
-    var i;
-    if (headersConfig === true) {
-      if (typeof inHeaders.entries === 'function') { // Headers.entries() is not implemented in IE
-        var allHeaders = inHeaders.entries();
-        var currentHeader = allHeaders.next();
-        while (!currentHeader.done) {
-          outHeaders[currentHeader.value[0]] = currentHeader.value[1];
-          currentHeader = allHeaders.next();
-        }
-      }
-    } else {
-      for (i=0; i < headersConfig.length; i++) {
-        var header = headersConfig[i];
-        outHeaders[header] = inHeaders.get(header);
-      }
-    }
-  } catch (e) {
-    /* ignore probable IE errors */
-  }
-  return outHeaders;
-}
-
-Instrumenter.prototype.trackHttpErrors = function() {
-  return this.autoInstrument.networkErrorOnHttp5xx ||
-    this.autoInstrument.networkErrorOnHttp4xx ||
-    this.autoInstrument.networkErrorOnHttp0;
-}
-
-Instrumenter.prototype.errorOnHttpStatus = function(metadata) {
-  var status = metadata.status_code;
-
-  if ((status >= 500 && this.autoInstrument.networkErrorOnHttp5xx) ||
-    (status >= 400 && this.autoInstrument.networkErrorOnHttp4xx) ||
-    (status === 0 && this.autoInstrument.networkErrorOnHttp0)) {
-    var error = new Error('HTTP request failed with Status ' + status);
-    error.stack = metadata.stack;
-    this.rollbar.error(error, { skipFrames: 1 });
-  }
-}
-
-Instrumenter.prototype.deinstrumentConsole = function() {
-  if (!('console' in this._window && this._window.console.log)) {
-    return;
-  }
-  var b;
-  while (this.replacements['log'].length) {
-    b = this.replacements['log'].shift();
-    this._window.console[b[0]] = b[1];
-  }
-};
-
-Instrumenter.prototype.instrumentConsole = function() {
-  if (!('console' in this._window && this._window.console.log)) {
-    return;
-  }
-
-  var self = this;
-  var c = this._window.console;
-
-  function wrapConsole(method) {
-    'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
-
-    var orig = c[method];
-    var origConsole = c;
-    var level = method === 'warn' ? 'warning' : method;
-    c[method] = function() {
-      var args = Array.prototype.slice.call(arguments);
-      var message = _.formatArgsAsString(args);
-      self.telemeter.captureLog(message, level);
-      if (orig) {
-        Function.prototype.apply.call(orig, origConsole, args);
-      }
-    };
-    self.replacements['log'].push([method, orig]);
-  }
-  var methods = ['debug','info','warn','error','log'];
-  try {
-    for (var i=0, len=methods.length; i < len; i++) {
-      wrapConsole(methods[i]);
-    }
-  } catch (e) {
-    this.diagnostic.instrumentConsole = { error: e.message };
-  }
-};
-
-Instrumenter.prototype.deinstrumentDom = function() {
-  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
-    return;
-  }
-  this.removeListeners('dom');
-};
-
-Instrumenter.prototype.instrumentDom = function() {
-  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
-    return;
-  }
-  var clickHandler = this.handleClick.bind(this);
-  var blurHandler = this.handleBlur.bind(this);
-  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
-  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
-};
-
-Instrumenter.prototype.handleClick = function(evt) {
-  try {
-    var e = domUtil.getElementFromEvent(evt, this._document);
-    var hasTag = e && e.tagName;
-    var anchorOrButton = domUtil.isDescribedElement(e, 'a') || domUtil.isDescribedElement(e, 'button');
-    if (hasTag && (anchorOrButton || domUtil.isDescribedElement(e, 'input', ['button', 'submit']))) {
-        this.captureDomEvent('click', e);
-    } else if (domUtil.isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
-      this.captureDomEvent('input', e, e.value, e.checked);
-    }
-  } catch (exc) {
-    // TODO: Not sure what to do here
-  }
-};
-
-Instrumenter.prototype.handleBlur = function(evt) {
-  try {
-    var e = domUtil.getElementFromEvent(evt, this._document);
-    if (e && e.tagName) {
-      if (domUtil.isDescribedElement(e, 'textarea')) {
-        this.captureDomEvent('input', e, e.value);
-      } else if (domUtil.isDescribedElement(e, 'select') && e.options && e.options.length) {
-        this.handleSelectInputChanged(e);
-      } else if (domUtil.isDescribedElement(e, 'input') && !domUtil.isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
-        this.captureDomEvent('input', e, e.value);
-      }
-    }
-  } catch (exc) {
-    // TODO: Not sure what to do here
-  }
-};
-
-Instrumenter.prototype.handleSelectInputChanged = function(elem) {
-  if (elem.multiple) {
-    for (var i = 0; i < elem.options.length; i++) {
-      if (elem.options[i].selected) {
-        this.captureDomEvent('input', elem, elem.options[i].value);
-      }
-    }
-  } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
-    this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
-  }
-};
-
-Instrumenter.prototype.captureDomEvent = function(subtype, element, value, isChecked) {
-  if (value !== undefined) {
-    if (this.scrubTelemetryInputs || (domUtil.getElementType(element) === 'password')) {
-      value = '[scrubbed]';
-    } else {
-      var description = domUtil.describeElement(element);
-      if (this.telemetryScrubber) {
-        if (this.telemetryScrubber(description)) {
-          value = '[scrubbed]';
-        }
-      } else if (this.defaultValueScrubber(description)) {
-        value = '[scrubbed]';
-      }
-    }
-  }
-  var elementString = domUtil.elementArrayToString(domUtil.treeToArray(element));
-  this.telemeter.captureDom(subtype, elementString, value, isChecked);
-};
-
-Instrumenter.prototype.deinstrumentNavigation = function() {
-  var chrome = this._window.chrome;
-  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
-  // See https://github.com/angular/angular.js/pull/13945/files
-  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
-  if (!hasPushState) {
-    return;
-  }
-  restore(this.replacements, 'navigation');
-};
-
-Instrumenter.prototype.instrumentNavigation = function() {
-  var chrome = this._window.chrome;
-  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
-  // See https://github.com/angular/angular.js/pull/13945/files
-  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
-  if (!hasPushState) {
-    return;
-  }
-  var self = this;
-  replace(this._window, 'onpopstate', function(orig) {
-    return function() {
-      var current = self._location.href;
-      self.handleUrlChange(self._lastHref, current);
-      if (orig) {
-        orig.apply(this, arguments);
-      }
-    };
-  }, this.replacements, 'navigation');
-
-  replace(this._window.history, 'pushState', function(orig) {
-    return function() {
-      var url = arguments.length > 2 ? arguments[2] : undefined;
-      if (url) {
-        self.handleUrlChange(self._lastHref, url + '');
-      }
-      return orig.apply(this, arguments);
-    };
-  }, this.replacements, 'navigation');
-};
-
-Instrumenter.prototype.handleUrlChange = function(from, to) {
-  var parsedHref = urlparser.parse(this._location.href);
-  var parsedTo = urlparser.parse(to);
-  var parsedFrom = urlparser.parse(from);
-  this._lastHref = to;
-  if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
-    to = parsedTo.path + (parsedTo.hash || '');
-  }
-  if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
-    from = parsedFrom.path + (parsedFrom.hash || '');
-  }
-  this.telemeter.captureNavigation(from, to);
-};
-
-Instrumenter.prototype.deinstrumentConnectivity = function() {
-  if (!('addEventListener' in this._window || 'body' in this._document)) {
-    return;
-  }
-  if (this._window.addEventListener) {
-    this.removeListeners('connectivity');
-  } else {
-    restore(this.replacements, 'connectivity');
-  }
-};
-
-Instrumenter.prototype.instrumentConnectivity = function() {
-  if (!('addEventListener' in this._window || 'body' in this._document)) {
-    return;
-  }
-  if (this._window.addEventListener) {
-    this.addListener('connectivity', this._window, 'online', undefined, function() {
-      this.telemeter.captureConnectivityChange('online');
-    }.bind(this), true);
-    this.addListener('connectivity', this._window, 'offline', undefined, function() {
-      this.telemeter.captureConnectivityChange('offline');
-    }.bind(this), true);
-  } else {
-    var self = this;
-    replace(this._document.body, 'ononline', function(orig) {
-      return function() {
-        self.telemeter.captureConnectivityChange('online');
-        if (orig) {
-          orig.apply(this, arguments);
-        }
-      }
-    }, this.replacements, 'connectivity');
-    replace(this._document.body, 'onoffline', function(orig) {
-      return function() {
-        self.telemeter.captureConnectivityChange('offline');
-        if (orig) {
-          orig.apply(this, arguments);
-        }
-      }
-    }, this.replacements, 'connectivity');
-  }
-};
-
-Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
-  if (obj.addEventListener) {
-    obj.addEventListener(type, handler, capture);
-    this.eventRemovers[section].push(function() {
-      obj.removeEventListener(type, handler, capture);
-    });
-  } else if (altType) {
-    obj.attachEvent(altType, handler);
-    this.eventRemovers[section].push(function() {
-      obj.detachEvent(altType, handler);
-    });
-  }
-};
-
-Instrumenter.prototype.removeListeners = function(section) {
-  var r;
-  while (this.eventRemovers[section].length) {
-    r = this.eventRemovers[section].shift();
-    r();
-  }
-};
-
-module.exports = Instrumenter;
-
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function getElementType(e) {
-  return (e.getAttribute('type') || '').toLowerCase();
-}
-
-function isDescribedElement(element, type, subtypes) {
-  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
-    return false;
-  }
-  if (!subtypes) {
-    return true;
-  }
-  element = getElementType(element);
-  for (var i = 0; i < subtypes.length; i++) {
-    if (subtypes[i] === element) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function getElementFromEvent(evt, doc) {
-  if (evt.target) {
-    return evt.target;
-  }
-  if (doc && doc.elementFromPoint) {
-    return doc.elementFromPoint(evt.clientX, evt.clientY);
-  }
-  return undefined;
-}
-
-function treeToArray(elem) {
-  var MAX_HEIGHT = 5;
-  var out = [];
-  var nextDescription;
-  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
-    nextDescription = describeElement(elem);
-    if (nextDescription.tagName === 'html') {
-      break;
-    }
-    out.unshift(nextDescription);
-    elem = elem.parentNode;
-  }
-  return out;
-}
-
-function elementArrayToString(a) {
-  var MAX_LENGTH = 80;
-  var separator = ' > ', separatorLength = separator.length;
-  var out = [], len = 0, nextStr, totalLength;
-
-  for (var i = a.length - 1; i >= 0; i--) {
-    nextStr = descriptionToString(a[i]);
-    totalLength = len + (out.length * separatorLength) + nextStr.length;
-    if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
-      out.unshift('...');
-      break;
-    }
-    out.unshift(nextStr);
-    len += nextStr.length;
-  }
-  return out.join(separator);
-}
-
-function descriptionToString(desc) {
-  if (!desc || !desc.tagName) {
-    return '';
-  }
-  var out = [desc.tagName];
-  if (desc.id) {
-    out.push('#' + desc.id);
-  }
-  if (desc.classes) {
-    out.push('.' + desc.classes.join('.'));
-  }
-  for (var i = 0; i < desc.attributes.length; i++) {
-    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
-  }
-
-  return out.join('');
-}
-
-/**
- * Input: a dom element
- * Output: null if tagName is falsey or input is falsey, else
- *  {
- *    tagName: String,
- *    id: String | undefined,
- *    classes: [String] | undefined,
- *    attributes: [
- *      {
- *        key: OneOf(type, name, title, alt),
- *        value: String
- *      }
- *    ]
- *  }
- */
-function describeElement(elem) {
-  if (!elem || !elem.tagName) {
-    return null;
-  }
-  var out = {}, className, key, attr, i;
-  out.tagName = elem.tagName.toLowerCase();
-  if (elem.id) {
-    out.id = elem.id;
-  }
-  className = elem.className;
-  if (className && (typeof className === 'string')) {
-    out.classes = className.split(/\s+/);
-  }
-  var attributes = ['type', 'name', 'title', 'alt'];
-  out.attributes = [];
-  for (i = 0; i < attributes.length; i++) {
-    key = attributes[i];
-    attr = elem.getAttribute(key);
-    if (attr) {
-      out.attributes.push({key: key, value: attr});
-    }
-  }
-  return out;
-}
-
-module.exports = {
-  describeElement: describeElement,
-  descriptionToString: descriptionToString,
-  elementArrayToString: elementArrayToString,
-  treeToArray: treeToArray,
-  getElementFromEvent: getElementFromEvent,
-  isDescribedElement: isDescribedElement,
-  getElementType: getElementType
+  truncate: truncate,
+
+  /* for testing */
+  raw: raw,
+  truncateFrames: truncateFrames,
+  truncateStrings: truncateStrings,
+  maybeTruncateValue: maybeTruncateValue
 };
 
 
