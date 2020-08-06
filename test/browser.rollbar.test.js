@@ -68,7 +68,7 @@ function TestClientGen() {
 
 describe('Rollbar()', function() {
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
   it('should have all of the expected methods with a real client', function(done) {
@@ -201,7 +201,7 @@ describe('Rollbar()', function() {
 
 describe('configure', function() {
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
   it('should configure client', function(done) {
@@ -284,7 +284,7 @@ describe('options.captureUncaught', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -601,7 +601,7 @@ describe('options.captureUnhandledRejections', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -719,7 +719,7 @@ describe('log', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -867,7 +867,7 @@ describe('onerror', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -912,7 +912,7 @@ describe('callback options', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -973,6 +973,34 @@ describe('callback options', function() {
 
     done();
   });
+
+  it('should receive uncaught at checkIgnore', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      checkIgnore: function(isUncaught, args, payload) {
+        if (isUncaught === true) {
+          return true;
+        }
+        return false;
+      }
+    };
+    window.rollbar = new Rollbar(options);
+
+    var element = document.getElementById('throw-error');
+    element.click();
+
+    server.respond();
+
+    // Should be ignored if checkIgnore receives isUncaught.
+    expect(server.requests.length).to.eql(0);
+
+    done();
+  })
 
   it('should send when checkIgnore returns false', function(done) {
     var server = window.server;
@@ -1059,7 +1087,7 @@ describe('options.autoInstrument', function() {
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
     window.server.restore();
   });
 
@@ -1369,7 +1397,7 @@ describe('options.autoInstrument', function() {
 
 describe('captureEvent', function() {
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
   it('should handle missing/default type and level', function(done) {
@@ -1421,7 +1449,7 @@ describe('captureEvent', function() {
 
 describe('createItem', function() {
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
   it('should handle multiple strings', function(done) {
