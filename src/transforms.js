@@ -103,7 +103,6 @@ function addDiagnosticKeys(item, options, callback) {
 
   if (item._isUncaught) {
     diagnostic.is_uncaught = item._isUncaught;
-    delete item._isUncaught;
   }
 
   if (item.err) {
