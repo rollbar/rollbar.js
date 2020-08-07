@@ -4192,7 +4192,6 @@ function addDiagnosticKeys(item, options, callback) {
 
   if (item._isUncaught) {
     diagnostic.is_uncaught = item._isUncaught;
-    delete item._isUncaught;
   }
 
   if (item.err) {
@@ -4271,6 +4270,7 @@ function checkLevel(item, settings) {
 function userCheckIgnore(logger) {
   return function(item, settings) {
     var isUncaught = !!item._isUncaught;
+    delete item._isUncaught;
     var args = item._originalArgs;
     delete item._originalArgs;
     try {
@@ -4436,7 +4436,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.19.1',
+  version: '2.19.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4878,15 +4878,20 @@ Instrumenter.prototype.instrumentNetwork = function() {
     replace(xhrp, 'open', function(orig) {
       return function(method, url) {
         if (_.isType(url, 'string')) {
-          this.__rollbar_xhr = {
-            method: method,
-            url: url,
-            status_code: null,
-            start_time_ms: _.now(),
-            end_time_ms: null
-          };
-          if (self.autoInstrument.networkRequestHeaders) {
-            this.__rollbar_xhr.request_headers = {};
+          if (this.__rollbar_xhr) {
+            this.__rollbar_xhr.method = method;
+            this.__rollbar_xhr.url = url;
+            this.__rollbar_xhr.status_code = null;
+            this.__rollbar_xhr.start_time_ms = _.now();
+            this.__rollbar_xhr.end_time_ms = null;
+          } else {
+            this.__rollbar_xhr = {
+              method: method,
+              url: url,
+              status_code: null,
+              start_time_ms: _.now(),
+              end_time_ms: null
+            };
           }
         }
         return orig.apply(this, arguments);
@@ -4895,12 +4900,21 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
     replace(xhrp, 'setRequestHeader', function(orig) {
       return function(header, value) {
-        if (self.autoInstrument.networkRequestHeaders && this.__rollbar_xhr &&
-          _.isType(header, 'string') && _.isType(value, 'string')) {
-          this.__rollbar_xhr.request_headers[header] = value;
+        // If xhr.open is async, __rollbar_xhr may not be initialized yet.
+        if (!this.__rollbar_xhr) {
+          this.__rollbar_xhr = {};
         }
-        if (header.toLowerCase() === 'content-type') {
-          this.__rollbar_xhr.request_content_type = value;
+        if (_.isType(header, 'string') && _.isType(value, 'string')) {
+          if (self.autoInstrument.networkRequestHeaders) {
+            if (!this.__rollbar_xhr.request_headers) {
+              this.__rollbar_xhr.request_headers = {};
+            }
+            this.__rollbar_xhr.request_headers[header] = value;
+          }
+          // We want the content type even if request header telemetry is off.
+          if (header.toLowerCase() === 'content-type') {
+            this.__rollbar_xhr.request_content_type = value;
+          }
         }
         return orig.apply(this, arguments);
       };
