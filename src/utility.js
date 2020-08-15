@@ -17,7 +17,7 @@ function setupJSON(polyfillJSON) {
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    polyfillJSON(RollbarJSON);
+    polyfillJSON && polyfillJSON(RollbarJSON);
   }
 }
 
