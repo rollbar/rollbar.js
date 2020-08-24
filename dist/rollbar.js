@@ -94,23 +94,31 @@
 var merge = __webpack_require__(11);
 
 var RollbarJSON = {};
-var __initRollbarJSON = false;
 function setupJSON(polyfillJSON) {
-  if (__initRollbarJSON) {
+  if (isFunction(RollbarJSON.stringify) && isFunction(RollbarJSON.parse)) {
     return;
   }
-  __initRollbarJSON = true;
 
   if (isDefined(JSON)) {
-    if (isNativeFunction(JSON.stringify)) {
-      RollbarJSON.stringify = JSON.stringify;
-    }
-    if (isNativeFunction(JSON.parse)) {
-      RollbarJSON.parse = JSON.parse;
+    // If polyfill is provided, prefer it over existing non-native shims.
+    if(polyfillJSON) {
+      if (isNativeFunction(JSON.stringify)) {
+        RollbarJSON.stringify = JSON.stringify;
+      }
+      if (isNativeFunction(JSON.parse)) {
+        RollbarJSON.parse = JSON.parse;
+      }
+    } else { // else accept any interface that is present.
+      if (isFunction(JSON.stringify)) {
+        RollbarJSON.stringify = JSON.stringify;
+      }
+      if (isFunction(JSON.parse)) {
+        RollbarJSON.parse = JSON.parse;
+      }
     }
   }
   if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    polyfillJSON(RollbarJSON);
+    polyfillJSON && polyfillJSON(RollbarJSON);
   }
 }
 
@@ -784,6 +792,7 @@ module.exports = {
   merge: merge,
   now: now,
   redact: redact,
+  RollbarJSON: RollbarJSON,
   sanitizeUrl: sanitizeUrl,
   set: set,
   setupJSON: setupJSON,
@@ -4429,7 +4438,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.19.2',
+  version: '2.19.3',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
