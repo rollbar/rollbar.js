@@ -5,7 +5,79 @@
 
 var _ = require('../src/utility');
 var utility = require('../src/utility');
+var polyfillJSON = require('../vendor/JSON-js/json3');
+
 utility.setupJSON();
+
+describe('setupJSON', function() {
+  beforeEach(function(){
+    utility.RollbarJSON.stringify = null;
+    utility.RollbarJSON.parse = null;
+  });
+
+  afterEach(function(){
+    // Resets utility.RollbarJSON
+    utility.RollbarJSON.stringify = null;
+    utility.RollbarJSON.parse = null;
+    utility.setupJSON();
+  });
+
+  it('should use native interface when polyfill is provided', function() {
+    var native = {stringify: JSON.stringify, parse: JSON.parse};
+
+    utility.setupJSON(polyfillJSON);
+
+    expect(utility.RollbarJSON.stringify.toString()).to.equal(native.stringify.toString());
+    expect(utility.RollbarJSON.parse.toString()).to.equal(native.parse.toString());
+  });
+
+  it('should use native interface when polyfill is not provided', function() {
+    var native = {stringify: JSON.stringify, parse: JSON.parse};
+
+    utility.setupJSON();
+
+    expect(utility.RollbarJSON.stringify.toString()).to.equal(native.stringify.toString());
+    expect(utility.RollbarJSON.parse.toString()).to.equal(native.parse.toString());
+  });
+
+  it('should replace custom interface when polyfill is provided', function() {
+    var native = {stringify: JSON.stringify, parse: JSON.parse};
+    var custom = {stringify: function(json){ return json;}, parse: function(json){ return json;}};
+    var polyfill = {};
+    polyfillJSON(polyfill);
+
+    // Set to custom interface
+    JSON.stringify = custom.stringify;
+    JSON.parse = custom.parse;
+
+    utility.setupJSON(polyfillJSON);
+
+    expect(utility.RollbarJSON.stringify.toString()).to.equal(polyfill.stringify.toString());
+    expect(utility.RollbarJSON.parse.toString()).to.equal(polyfill.parse.toString());
+
+    // restore original interface
+    JSON.stringify = native.stringify;
+    JSON.parse = native.parse;
+  });
+
+  it('should keep custom interface when polyfill is not provided', function() {
+    var native = {stringify: JSON.stringify, parse: JSON.parse};
+    var custom = {stringify: function(json){ return json;}, parse: function(json){ return json;}};
+
+    // Set to custom interface
+    JSON.stringify = custom.stringify;
+    JSON.parse = custom.parse;
+
+    utility.setupJSON();
+
+    expect(utility.RollbarJSON.stringify.toString()).to.equal(custom.stringify.toString());
+    expect(utility.RollbarJSON.parse.toString()).to.equal(custom.parse.toString());
+
+    // restore original interface
+    JSON.stringify = native.stringify;
+    JSON.parse = native.parse;
+  });
+});
 
 describe('typeName', function() {
   it('should handle undefined', function(done) {

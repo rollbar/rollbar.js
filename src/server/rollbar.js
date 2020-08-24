@@ -16,6 +16,7 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
 var truncation = require('../truncation');
+var polyfillJSON = require('../../vendor/JSON-js/json3');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -42,7 +43,7 @@ function Rollbar(options, client) {
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
-  _.setupJSON();
+  _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;

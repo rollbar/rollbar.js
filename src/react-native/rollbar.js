@@ -12,6 +12,7 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
 var truncation = require('../truncation');
+var polyfillJSON = require('../../vendor/JSON-js/json3');
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -31,7 +32,7 @@ function Rollbar(options, client) {
   this.client = client || new Client(this.options, api, logger, telemeter, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-  _.setupJSON();
+  _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;
