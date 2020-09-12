@@ -188,6 +188,8 @@ Rollbar.prototype._addTracingInfo = function (item) {
       span.setTag('rollbar.error_uuid', item.uuid);
       span.setTag('rollbar.has_error', true);
       span.setTag('error', true);
+      span.setTag('rollbar.item_url', `https://rollbar.com/item/uuid/?uuid=${item.uuid}`);
+      span.setTag('rollbar.occurrence_url', `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`);
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
