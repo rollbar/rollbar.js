@@ -6,6 +6,7 @@ export = Rollbar;
 declare class Rollbar {
     constructor(options?: Rollbar.Configuration);
     static init(options: Rollbar.Configuration): Rollbar;
+    static setComponents(components: Rollbar.Components): void;
 
     public global(options: Rollbar.Configuration): Rollbar;
     public configure(options: Rollbar.Configuration): Rollbar;
@@ -129,5 +130,24 @@ declare namespace Rollbar {
     export type ExpressErrorHandler = (err: any, request: any, response: any, next: ExpressNextFunction) => any;
     export interface ExpressNextFunction {
       (err?: any): void;
+    }
+
+    class Telemeter {}
+    class Instrumenter {}
+
+    export type TelemeterType = typeof Telemeter;
+    export type InstrumenterType = typeof Instrumenter;
+    export type TruncationType = object;
+    export type ScrubType = (data: object, scrubFields?: string[], scrubPaths?: string[]) => object;
+    export type WrapGlobalsType = (window?: any, handler?: any, shim?: any) => void;
+    export type PolyfillJSONType = (JSON: any) => any;
+
+    export interface Components {
+        telemeter?: TelemeterType,
+        instrumenter?: InstrumenterType,
+        polyfillJSON?: PolyfillJSONType,
+        wrapGlobals?: WrapGlobalsType,
+        scrub?: ScrubType,
+        truncation?: TruncationType
     }
 }
