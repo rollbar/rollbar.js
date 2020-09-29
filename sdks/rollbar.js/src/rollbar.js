@@ -187,6 +187,7 @@ Rollbar.prototype._addTracingInfo = function (item) {
     if (validateSpan(span)) {
       span.setTag('rollbar.error_uuid', item.uuid);
       span.setTag('rollbar.has_error', true);
+      span.setTag('error', true);
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
