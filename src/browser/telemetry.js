@@ -274,7 +274,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (body || headers) {
                 response = {};
                 if (body) {
-                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.response_content_type)) {
                     response.body = self.scrubJson(body);
                   } else {
                     response.body = body;
