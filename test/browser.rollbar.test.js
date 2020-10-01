@@ -1124,19 +1124,7 @@ describe('options.autoInstrument', function() {
     done();
   });
 
-  it('should add telemetry events for xhr calls', function(done) {
-    var server = window.server;
-    stubResponse(server);
-    server.requests.length = 0;
-
-    server.respondWith('POST', 'xhr-test',
-      [
-        200,
-        { 'Content-Type': 'application/json' },
-        JSON.stringify({name: 'foo', password: '123456'})
-      ]
-    );
-
+  function initRollbarForNetworkTelemetry() {
     var options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       autoInstrument: {
@@ -1148,7 +1136,23 @@ describe('options.autoInstrument', function() {
         networkRequestHeaders: true
       }
     };
-    var rollbar = window.rollbar = new Rollbar(options);
+    return new Rollbar(options);
+  }
+
+  it('should add telemetry events for POST xhr calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('POST', 'https://example.com/xhr-test',
+      [
+        200,
+        { 'Content-Type': 'application/json', 'Password': '123456' },
+        JSON.stringify({name: 'foo', password: '123456'})
+      ]
+    );
+
+    var rollbar = window.rollbar = initRollbarForNetworkTelemetry();
 
     // generate a telemetry event
     var xhr = new XMLHttpRequest();
@@ -1163,15 +1167,108 @@ describe('options.autoInstrument', function() {
           expect(server.requests.length).to.eql(2);
           var body = JSON.parse(server.requests[1].requestBody);
 
-          // Sinon fake server doesn't generate response body or headers that are visible
-          // via the XMLHttpRequest properties and methods. So we settle for verifying
-          // the request only.
-
           // Verify request capture and scrubbing
           expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
 
           // Verify request headers capture and case-insensitive scrubbing
           expect(body.data.body.telemetry[0].body.request_headers).to.eql({'Content-type': 'application/json', Secret: '********'});
+
+          // Verify response capture and scrubbing
+          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }
+    };
+    xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
+    server.respond();
+  });
+
+  it('should add telemetry events for GET xhr calls', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('GET', 'https://example.com/xhr-test',
+      [
+        200,
+        { 'Content-Type': 'application/json',
+          'Password': 'abcdef'
+        },
+        JSON.stringify({name: 'foo', password: '123456'})
+      ]
+    );
+
+    var rollbar = window.rollbar = initRollbarForNetworkTelemetry();
+
+    // generate a telemetry event
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://example.com/xhr-test', true);
+    xhr.setRequestHeader('Secret', 'abcdef');
+    xhr.onreadystatechange = function () {
+      if(xhr.readyState === 4) {
+        try {
+          rollbar.log('test'); // generate a payload to inspect
+
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
+
+          // Verify response capture and scrubbing
+          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }
+    };
+    xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
+    server.respond();
+  });
+
+  it('should handle non-string Content-Type', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    server.respondWith('GET', 'https://example.com/xhr-test',
+      [
+        200,
+        { 'Content-Type': {}, // unexpected/invalid (non-string) content type
+          'Password': 'abcdef'
+        },
+        JSON.stringify({name: 'foo', password: '123456'})
+      ]
+    );
+
+    var rollbar = window.rollbar = initRollbarForNetworkTelemetry();
+
+    // generate a telemetry event
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://example.com/xhr-test', true);
+    xhr.setRequestHeader('Secret', 'abcdef');
+    xhr.onreadystatechange = function () {
+      if(xhr.readyState === 4) {
+        try {
+          rollbar.log('test'); // generate a payload to inspect
+
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
+
+          // Not scrubbed for unrecognized content type
+          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"123456"}');
+
+          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
 
           done();
         } catch (e) {
