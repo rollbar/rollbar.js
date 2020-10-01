@@ -421,7 +421,7 @@ Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID)
 };
 
 Instrumenter.prototype.isJsonContentType = function(contentType) {
-  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+  return (contentType && _.isType(contentType, 'string') && contentType.toLowerCase().includes('json')) ? true : false;
 }
 
 Instrumenter.prototype.scrubJson = function(json) {
