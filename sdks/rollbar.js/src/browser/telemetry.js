@@ -274,7 +274,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (body || headers) {
                 response = {};
                 if (body) {
-                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.response_content_type)) {
                     response.body = self.scrubJson(body);
                   } else {
                     response.body = body;
@@ -421,7 +421,7 @@ Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID)
 };
 
 Instrumenter.prototype.isJsonContentType = function(contentType) {
-  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+  return (contentType && _.isType(contentType, 'string') && contentType.toLowerCase().includes('json')) ? true : false;
 }
 
 Instrumenter.prototype.scrubJson = function(json) {
