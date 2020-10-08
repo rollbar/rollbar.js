@@ -206,8 +206,9 @@ Rollbar.error = function () {
 Rollbar.prototype._uncaughtError = function () {
   var item = this._createItem(arguments);
   item._isUncaught = true;
+  item.level = this.options.uncaughtErrorLevel;
   var uuid = item.uuid;
-  this.client.error(item);
+  this.client.log(item);
   return { uuid: uuid };
 };
 
