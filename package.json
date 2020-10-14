@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "2.19.3",
+  "version": "2.19.4",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
