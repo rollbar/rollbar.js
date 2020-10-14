@@ -1273,9 +1273,9 @@ var Rollbar = __webpack_require__(9);
 var telemeter = __webpack_require__(29);
 var instrumenter = __webpack_require__(30);
 var polyfillJSON = __webpack_require__(32);
-var wrapGlobals = __webpack_require__(33);
+var wrapGlobals = __webpack_require__(34);
 var scrub = __webpack_require__(4);
-var truncation = __webpack_require__(34);
+var truncation = __webpack_require__(35);
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -2055,6 +2055,7 @@ Rollbar.prototype._addTracingInfo = function (item) {
     if (validateSpan(span)) {
       span.setTag('rollbar.error_uuid', item.uuid);
       span.setTag('rollbar.has_error', true);
+      span.setTag('error', true);
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
@@ -4445,7 +4446,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.19.3',
+  version: '2.19.4',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4992,7 +4993,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
               if (body || headers) {
                 response = {};
                 if (body) {
-                  if (self.isJsonContentType(xhr.__rollbar_xhr.request_content_type)) {
+                  if (self.isJsonContentType(xhr.__rollbar_xhr.response_content_type)) {
                     response.body = self.scrubJson(body);
                   } else {
                     response.body = body;
@@ -5139,7 +5140,7 @@ Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID)
 };
 
 Instrumenter.prototype.isJsonContentType = function(contentType) {
-  return (contentType && contentType.toLowerCase().includes('json')) ? true : false;
+  return (contentType && _.isType(contentType, 'string') && contentType.toLowerCase().includes('json')) ? true : false;
 }
 
 Instrumenter.prototype.scrubJson = function(json) {
@@ -5578,6 +5579,18 @@ module.exports = {
 
 /***/ }),
 /* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var polyfillJSON = __webpack_require__(33);
+
+module.exports = polyfillJSON;
+
+
+/***/ }),
+/* 33 */
 /***/ (function(module, exports) {
 
 //  json3.js
@@ -6346,7 +6359,7 @@ module.exports = setupCustomJSON;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6396,7 +6409,7 @@ module.exports = wrapGlobals;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
