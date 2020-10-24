@@ -78,6 +78,7 @@ declare namespace Rollbar {
         rewriteFilenamePatterns?: string[];
         scrubFields?: string[];
         scrubHeaders?: string[];
+        scrubPaths?: string[];
         scrubRequestBody?: boolean;
         scrubTelemetryInputs?: boolean;
         sendConfig?: boolean;
