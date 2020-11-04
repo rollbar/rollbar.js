@@ -857,6 +857,42 @@ describe('log', function() {
 
     done();
   })
+
+  it('should call the item callback on error', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // Create an invalid tracer, in order to force an error in notifier._log()
+    var tracer = {
+      scope: function() {
+        return {
+          active: function() {
+            throw new Error('Test error');
+          }
+        }
+      }
+    };
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      tracer: tracer
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var callbackCalled;
+    var callback = function(err) {
+      callbackCalled = err;
+    };
+
+    rollbar.log('test', callback);
+
+    server.respond();
+
+    expect(callbackCalled.message).to.eql('Test error');
+
+    done();
+  })
 });
 
 // Test direct call to onerror, as used in verification of browser js install.

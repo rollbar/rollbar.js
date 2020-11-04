@@ -383,6 +383,28 @@ vows.describe('transforms')
                 assert.equal(trace_chain[1].exception.class, 'ReferenceError');
               }
             },
+            'with a null nested error': {
+              topic: function (options) {
+                var err = new CustomError('With null nested error');
+
+                // Set nested to null for the test
+                err.nested = null;
+
+                var item = {
+                  data: {body: {}},
+                  err: err
+                };
+                t.handleItemWithError(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should have the right data in the trace_chain': function(err, item) {
+                var trace_chain = item.stackInfo;
+                assert.lengthOf(trace_chain, 1);
+                assert.equal(trace_chain[0].exception.class, 'CustomError');
+              }
+            },
             'with error context': {
               topic: function (options) {
                 var test = function() {
