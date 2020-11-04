@@ -86,7 +86,7 @@ function handleItemWithError(item, options, callback) {
   do {
     errors.push(err);
     err = err.nested;
-  } while (err !== undefined);
+  } while (err);
   item.stackInfo = chain;
 
   if (options.addErrorContext) {
