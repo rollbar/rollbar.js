@@ -459,6 +459,9 @@ vows.describe('rollbar')
 
           nodeThrow(rollbar, this.callback);
         },
+        'should have locals disabled': function(r) {
+          assert.equal(r.client.notifier.locals, undefined);
+        },
         'should log': function(r) {
           var logStub = r.logStub;
 

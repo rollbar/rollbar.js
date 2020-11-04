@@ -16,6 +16,7 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
 var truncation = require('../truncation');
+var Locals = require('./locals');
 var polyfillJSON = require('../../vendor/JSON-js/json3');
 
 function Rollbar(options, client) {
@@ -40,6 +41,13 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options)
   this.client = client || new Client(this.options, api, logger, telemeter, 'server');
+  if (options.locals) {
+    // Capturing stack local variables is only supported in Node 10 and higher.
+    var nodeMajorVersion = process.versions.node.split('.')[0];
+    if (nodeMajorVersion >= 10) {
+      this.locals = new Locals(this.options)
+    }
+  }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
@@ -519,7 +527,13 @@ function addPredicatesToQueue(queue) {
 
 Rollbar.prototype._createItem = function (args) {
   var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
-  return _.createItem(args, logger, this, requestKeys, this.lambdaContext);
+  var item = _.createItem(args, logger, this, requestKeys, this.lambdaContext);
+
+  if (item.err && item.notifier.locals) {
+    item.localsMap = item.notifier.locals.currentLocalsMap();
+  }
+
+  return item;
 };
 
 function _getFirstFunction(args) {
