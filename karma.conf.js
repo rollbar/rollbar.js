@@ -59,6 +59,16 @@ module.exports = function (config) {
       '/examples/': '/base/examples/'
     },
 
+    customHeaders: [
+      // Allow CSP error testing, but leave enough enabled so that karma
+      // can still run correctly.
+      {
+        match: '\\.html',
+        name: 'Content-Security-Policy',
+        value: "default-src 'self' 'unsafe-inline' 'unsafe-eval';"
+      }
+    ],
+
     reporters: ['progress'],
 
     singleRun: true,

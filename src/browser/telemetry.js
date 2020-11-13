@@ -15,7 +15,9 @@ var defaults = {
   log: true,
   dom: true,
   navigation: true,
-  connectivity: true
+  connectivity: true,
+  contentSecurityPolicy: true,
+  errorOnContentSecurityPolicy: false
 };
 
 function replace(obj, name, replacement, replacements, type) {
@@ -89,7 +91,8 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   };
   this.eventRemovers = {
     dom: [],
-    connectivity: []
+    connectivity: [],
+    contentsecuritypolicy: []
   };
 
   this._location = this._window.location;
@@ -117,6 +120,7 @@ Instrumenter.prototype.configure = function(options) {
   }
 };
 
+// eslint-disable-next-line complexity
 Instrumenter.prototype.instrument = function(oldSettings) {
   if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
     this.instrumentNetwork();
@@ -146,6 +150,12 @@ Instrumenter.prototype.instrument = function(oldSettings) {
     this.instrumentConnectivity();
   } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
     this.deinstrumentConnectivity();
+  }
+
+  if (this.autoInstrument.contentSecurityPolicy && !(oldSettings && oldSettings.contentSecurityPolicy)) {
+    this.instrumentContentSecurityPolicy();
+  } else if (!this.autoInstrument.contentSecurityPolicy && oldSettings && oldSettings.contentSecurityPolicy) {
+    this.deinstrumentContentSecurityPolicy();
   }
 };
 
@@ -692,6 +702,43 @@ Instrumenter.prototype.instrumentConnectivity = function() {
       }
     }, this.replacements, 'connectivity');
   }
+};
+
+Instrumenter.prototype.handleCspEvent = function(cspEvent) {
+  var message = 'Security Policy Violation: ' +
+    'blockedURI: ' + cspEvent.blockedURI + ', ' +
+    'violatedDirective: ' + cspEvent.violatedDirective + ', ' +
+    'effectiveDirective: ' + cspEvent.effectiveDirective + ', ';
+
+  if (cspEvent.sourceFile) {
+    message += 'location: ' + cspEvent.sourceFile + ', ' +
+      'line: ' + cspEvent.lineNumber + ', ' +
+      'col: ' + cspEvent.columnNumber + ', ';
+  }
+
+  message += 'originalPolicy: ' + cspEvent.originalPolicy;
+
+  this.telemeter.captureLog(message, 'error');
+  this.handleCspError(message);
+}
+
+Instrumenter.prototype.handleCspError = function(message) {
+  if (this.autoInstrument.errorOnContentSecurityPolicy) {
+    this.rollbar.error(message);
+  }
+}
+
+Instrumenter.prototype.deinstrumentContentSecurityPolicy = function() {
+  if (!('addEventListener' in this._window)) { return; }
+
+  this.removeListeners('contentsecuritypolicy');
+};
+
+Instrumenter.prototype.instrumentContentSecurityPolicy = function() {
+  if (!('addEventListener' in this._window)) { return; }
+
+  var cspHandler = this.handleCspEvent.bind(this);
+  this.addListener('contentsecuritypolicy', this._window, 'securitypolicyviolation', null, cspHandler, false);
 };
 
 Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
