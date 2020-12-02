@@ -3,6 +3,10 @@ var inspector = require('inspector');
 var async = require('async');
 
 function Locals(config) {
+  if (!(this instanceof Locals)) {
+    return new Locals(config);
+  }
+
   this.config = config;
 
   this.initSession();
