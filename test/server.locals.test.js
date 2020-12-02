@@ -7,6 +7,7 @@ var sinon = require('sinon');
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
 var Locals = require('../src/server/locals');
+var localsFixtures = require('./fixtures/locals.fixtures');
 
 var nodeMajorVersion = process.versions.node.split('.')[0];
 
@@ -55,6 +56,29 @@ async function nodeThrowNested(rollbar, callback) {
   }, 1);
   await wait(500);
   callback(rollbar);
+}
+
+function fakeSessionPostHandler(responses) {
+  return function fakeSessionPost(command, options, callback) {
+    var error;
+    var response;
+
+    if (command === 'Runtime.getProperties') {
+      response = { result: responses[options.objectId] };
+    } else {
+      error = new Error('Unexpected session.post command');
+    }
+
+    setTimeout(function () {
+      callback(error, response);
+    }, 1);
+  }
+}
+
+function cloneStack(stack) {
+  // Deep clone, because stack gets modified by mergeLocals
+  // and we don't want to modify the test fixtures.
+  return JSON.parse(JSON.stringify(stack));
 }
 
 vows.describe('locals')
@@ -168,4 +192,176 @@ vows.describe('locals')
         }
       },
     }
-  }).export(module, {error: false});
+  })
+
+  // The following tests stub a singleton (Locals.session.post()), and need to run sequentially.
+  // One way to do this in vows is to put each in a separate batch.
+  .addBatch({
+    'mergeLocals returns error from session.post()': {
+      topic: function() {
+        var locals = new Locals();
+        var err = new Error('post error');
+        sinon.stub(Locals.session, 'post').yields(err);
+
+        var key = 'key';
+        var localsMap = new Map();
+        localsMap.set('key', localsFixtures.maps.simple);
+
+        var stack = localsFixtures.stacks.simple;
+
+        locals.mergeLocals(localsMap, stack, key, this.callback);
+      },
+      'should callback with error': function(err) {
+        assert.instanceOf(err, Error);
+        assert.isTrue(err.stack.startsWith('Error: post error'));
+        assert.equal(err.message, 'post error');
+        sinon.restore();
+      }
+    }
+  })
+  .addBatch({
+    'mergeLocals called with multiple/complex locals maps present': {
+      // Sets up several conditions for test:
+      // * URLs with and without 'file://' prefix.
+      // * Intended locals map key isn't the first or only entry.
+      // * Other scopes besides type: 'local' are present.
+      // * Transpiled code (Typescript) present in stack
+      topic: function() {
+        var getPropertiesResponses = {
+          objectId1: [
+            localsFixtures.locals.object1,
+            localsFixtures.locals.object2,
+          ],
+          objectId2: [
+            localsFixtures.locals.boolean1,
+            localsFixtures.locals.boolean2,
+          ],
+          objectId3: [
+            localsFixtures.locals.string1,
+            localsFixtures.locals.array1,
+          ],
+        }
+
+        var locals = new Locals();
+        sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
+
+        var key1 = 'key1';
+        var key2 = 'key2';
+        var localsMap = new Map();
+
+        // Test with multiple maps present.
+        localsMap.set(key1, localsFixtures.maps.simple);
+        localsMap.set(key2, localsFixtures.maps.complex); // Stack will match the 2nd locals map added.
+
+        var stack = cloneStack(localsFixtures.stacks.complex);
+
+        var self = this;
+        locals.mergeLocals(localsMap, stack, key2, function(err) {
+          self.callback(err, stack);
+        });
+      },
+      'should callback with merged locals': function(err, stack) {
+        if (err) {
+          // Ensure unexpected error can be seen.
+          console.log(err);
+        }
+        assert.isNull(err);
+
+        assert.equal(stack[0].locals.response, 'success');
+        assert.equal(stack[0].locals.args, '<Array object>');
+        assert.equal(stack[1].locals.old, false);
+        assert.equal(stack[1].locals.new, true);
+        assert.equal(stack[2].locals.foo, '<FooClass object>');
+        assert.equal(stack[2].locals.bar, '<BarClass object>');
+
+        sinon.restore();
+      }
+    }
+  })
+  .addBatch({
+    'mergeLocals called with simple locals maps present': {
+      topic: function() {
+        var getPropertiesResponses = {
+          objectId1: [
+            localsFixtures.locals.object1,
+            localsFixtures.locals.object2,
+          ]
+        }
+
+        var locals = new Locals();
+        sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
+
+        var key = 'key';
+        var localsMap = new Map();
+
+        localsMap.set(key, localsFixtures.maps.simple);
+
+        var stack = cloneStack(localsFixtures.stacks.simple);
+
+        var self = this;
+        locals.mergeLocals(localsMap, stack, key, function(err) {
+          self.callback(err, stack);
+        });
+      },
+      'should callback with merged locals': function(err, stack) {
+        if (err) {
+          // Ensure unexpected error can be seen.
+          console.log(err);
+        }
+        assert.isNull(err);
+
+        assert.equal(stack[0].locals.foo, '<FooClass object>');
+        assert.equal(stack[0].locals.bar, '<BarClass object>');
+
+        sinon.restore();
+      }
+    }
+  })
+  .addBatch({
+    'mergeLocals called with no locals maps present': {
+      topic: function() {
+        var getPropertiesResponses = {
+          objectId1: [
+            localsFixtures.locals.object1,
+            localsFixtures.locals.object2,
+          ],
+          objectId2: [
+            localsFixtures.locals.boolean1,
+            localsFixtures.locals.boolean2,
+          ],
+          objectId3: [
+            localsFixtures.locals.string1,
+            localsFixtures.locals.array1,
+          ],
+        }
+
+        var locals = new Locals();
+        sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
+
+        // Test with no maps present. 'key' won't match anything.
+        var key = 'key';
+        var localsMap = new Map();
+
+        var stack = cloneStack(localsFixtures.stacks.complex);
+
+        var self = this;
+        locals.mergeLocals(localsMap, stack, key, function(err) {
+          self.callback(err, stack);
+        });
+      },
+      'should succeed without merged locals': function(err, stack) {
+        if (err) {
+          // Ensure unexpected error can be seen.
+          console.log(err);
+        }
+        assert.isNull(err);
+
+        assert.equal(stack[0].locals, undefined);
+        assert.equal(stack[1].locals, undefined);
+        assert.equal(stack[2].locals, undefined);
+
+        sinon.restore();
+      }
+    }
+  })
+  .export(module, {error: false});
