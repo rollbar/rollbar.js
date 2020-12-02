@@ -190,7 +190,7 @@ module.exports = function(grunt) {
           },
           // README travis link
           {
-            from: new RegExp('(https://travis-ci\.org/rollbar/rollbar\.js\.svg\\?branch=v)([0-9a-zA-Z.-]+)'),
+            from: new RegExp('(https://github\\.com/rollbar/rollbar\\.js/workflows/Rollbar\\.js%20CI/badge\\.svg\\?branch=v)([0-9a-zA-Z.-]+)'),
             to: function(match, index, fullText, captures) {
               captures[1] = pkg.version;
               return captures.join('');
