@@ -162,6 +162,99 @@ var localsFixtures = {
         uncaught: true
       },
       hitBreakpoints: []
+    },
+    noLocalScope: {
+      callFrames: [
+        { callFrameId: '{"ordinal":0,"injectedScriptId":1}',
+          functionName: '',
+          functionLocation: { scriptId: '121', lineNumber: 24, columnNumber: 12 },
+          location: { scriptId: '121', lineNumber: 28, columnNumber: 16 },
+          url: '/example/test/locals2.js',
+          scopeChain: [
+            { type: 'global',
+              object: {
+                type: 'object',
+                className: 'global',
+                description: 'global',
+                objectId: '{"injectedScriptId":1,"id":41}'
+              }
+            },
+            { type: 'closure',
+              object: {
+                type: 'object',
+                className: 'Object',
+                description: 'Object',
+                objectId: '{"injectedScriptId":1,"id":44}'
+              },
+              startLocation: { scriptId: '121', lineNumber: 0, columnNumber: 0 },
+              endLocation: { scriptId: '121', lineNumber: 219, columnNumber: 34 }
+            },
+          ]
+        },
+        { callFrameId: '{"ordinal":0,"injectedScriptId":1}',
+          functionName: '',
+          // functionLocation should not be used for matching. Set to a non-matching value.
+          functionLocation: { scriptId: '121', lineNumber: 136, columnNumber: 1 },
+          location: { scriptId: '121', lineNumber: 139, columnNumber: 14 },
+          url: 'file:///example/test/locals3.js', // The `file://` prefix may be present.
+          scopeChain: [
+            { type: 'global',
+              object: {
+                type: 'object',
+                className: 'global',
+                description: 'global',
+                objectId: '{"injectedScriptId":1,"id":41}'
+              }
+            },
+            { type: 'closure',
+              object: {
+                type: 'object',
+                className: 'Object',
+                description: 'Object',
+                objectId: '{"injectedScriptId":1,"id":44}'
+              },
+              startLocation: { scriptId: '121', lineNumber: 0, columnNumber: 0 },
+              endLocation: { scriptId: '121', lineNumber: 219, columnNumber: 34 }
+            },
+          ]
+        },
+        { callFrameId: '{"ordinal":0,"injectedScriptId":1}',
+          functionName: '',
+          functionLocation: { scriptId: '121', lineNumber: 128, columnNumber: 1 },
+          location: { scriptId: '121', lineNumber: 132, columnNumber: 34 },
+          url: 'file:///example/test/locals4.js',
+          scopeChain: [
+            { type: 'global',
+              object: {
+                type: 'object',
+                className: 'global',
+                description: 'global',
+                objectId: '{"injectedScriptId":1,"id":41}'
+              }
+            },
+            { type: 'closure',
+              object: {
+                type: 'object',
+                className: 'Object',
+                description: 'Object',
+                objectId: '{"injectedScriptId":1,"id":44}'
+              },
+              startLocation: { scriptId: '121', lineNumber: 0, columnNumber: 0 },
+              endLocation: { scriptId: '121', lineNumber: 219, columnNumber: 34 }
+            },
+          ]
+        }
+      ],
+      reason: 'exception',
+      data: {
+        type: 'object',
+        subtype: 'error',
+        className: 'Error',
+        description: 'Error: node error',
+        objectId: '{"injectedScriptId":1,"id":1}',
+        uncaught: true
+      },
+      hitBreakpoints: []
     }
   },
 

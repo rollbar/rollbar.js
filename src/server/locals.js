@@ -124,24 +124,25 @@ function getLocalScopesForFrames(matchedFrames, callback) {
 function getLocalScopeForFrame(matchedFrame, callback) {
   var scopes = matchedFrame.callFrame.scopeChain;
 
-  for (var i = 0; i < scopes.length; i++) {
-    var scope = scopes[i]
-    if (scope.type === 'local') {
-      getProperties(scope.object.objectId, function(err, response){
-        if (err) {
-          return callback(err);
-        }
+  var scope = scopes.find(scope => scope.type === 'local');
 
-        var locals = response.result;
-        matchedFrame.stackLocation.locals = {};
-        for (var local of locals) {
-          matchedFrame.stackLocation.locals[local.name] = getLocalValue(local);
-        }
-
-        callback(null);
-      });
-    }
+  if (!scope) {
+    return callback(null); // Do nothing return success.
   }
+
+  getProperties(scope.object.objectId, function(err, response){
+    if (err) {
+      return callback(err);
+    }
+
+    var locals = response.result;
+    matchedFrame.stackLocation.locals = {};
+    for (var local of locals) {
+      matchedFrame.stackLocation.locals[local.name] = getLocalValue(local);
+    }
+
+    callback(null);
+  });
 }
 
 function getLocalValue(local) {

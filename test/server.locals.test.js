@@ -364,4 +364,52 @@ vows.describe('locals')
       }
     }
   })
+  .addBatch({
+    'mergeLocals called with no local scopes in map': {
+      topic: function() {
+        var getPropertiesResponses = {
+          objectId1: [
+            localsFixtures.locals.object1,
+            localsFixtures.locals.object2,
+          ],
+          objectId2: [
+            localsFixtures.locals.boolean1,
+            localsFixtures.locals.boolean2,
+          ],
+          objectId3: [
+            localsFixtures.locals.string1,
+            localsFixtures.locals.array1,
+          ],
+        }
+
+        var locals = new Locals();
+        sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
+
+        var key = 'key';
+        var localsMap = new Map();
+
+        localsMap.set(key, localsFixtures.maps.noLocalScope);
+
+        var stack = cloneStack(localsFixtures.stacks.complex);
+
+        var self = this;
+        locals.mergeLocals(localsMap, stack, key, function(err) {
+          self.callback(err, stack);
+        });
+      },
+      'should succeed without merged locals': function(err, stack) {
+        if (err) {
+          // Ensure unexpected error can be seen.
+          console.log(err);
+        }
+        assert.isNull(err);
+
+        assert.equal(stack[0].locals, undefined);
+        assert.equal(stack[1].locals, undefined);
+        assert.equal(stack[2].locals, undefined);
+
+        sinon.restore();
+      }
+    }
+  })
   .export(module, {error: false});
