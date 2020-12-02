@@ -4,37 +4,43 @@ var async = require('async');
 
 function Locals(config) {
   this.config = config;
-  this.errorCounter = 0;
-  this.currentErrors = new Map();
 
   this.initSession();
 }
 
 Locals.prototype.initSession = function() {
-  this.session = new inspector.Session();
-  this.session.connect();
+  if (Locals.session) { return; }
 
-  this.session.on('Debugger.paused', ({ params }) => {
+  Locals.session = new inspector.Session();
+  Locals.session.connect();
+  Locals.currentErrors = new Map();
+
+  Locals.session.on('Debugger.paused', ({ params }) => {
     if (params.reason == 'promiseRejection' || params.reason == 'exception') {
       var key = params.data.description;
-      this.currentErrors.set(key, params);
+      Locals.currentErrors.set(key, params);
 
-      if (this.currentErrors.size > 4) {
-        var firstKey = this.currentErrors.keys()[0];
-        this.currentErrors.delete(firstKey);
+      // Set the max size of the current errors array.
+      // The value should be large enough to preserve each of the errors in
+      // the current cause chain.
+      var CURRENT_ERRORS_MAX_SIZE = 4;
+
+      if (Locals.currentErrors.size > CURRENT_ERRORS_MAX_SIZE) {
+        var firstKey = Locals.currentErrors.keys()[0];
+        Locals.currentErrors.delete(firstKey);
       }
     }
   });
 
-  this.session.post('Debugger.enable', (_err, _result) => {
-    this.session.post('Debugger.setPauseOnExceptions', { state: 'all'}, (_err, _result) => {
+  Locals.session.post('Debugger.enable', (_err, _result) => {
+    Locals.session.post('Debugger.setPauseOnExceptions', { state: 'all'}, (_err, _result) => {
     });
   });
 }
 
 Locals.prototype.currentLocalsMap = function() {
-  if (this.currentErrors.size) {
-    return new Map(this.currentErrors);
+  if (Locals.currentErrors.size) {
+    return new Map(Locals.currentErrors);
   }
 }
 
@@ -43,18 +49,22 @@ Locals.prototype.mergeLocals = function(localsMap, stack, key, callback) {
 
   try {
     var localParams = localsMap.get(key);
-    matchedFrames = this.matchFrames(localParams, stack.slice().reverse());
+
+    // If a mapping isn't found return success without mapped locals.
+    if (!localParams) {
+      return callback(null);
+    }
+
+    matchedFrames = matchFrames(localParams, stack.slice().reverse());
   } catch (e) {
     return callback(e);
   }
 
-  this.getLocalScopesForFrames(matchedFrames, function(err) {
-    callback(err);
-  });
+  getLocalScopesForFrames(matchedFrames, callback);
 }
 
 // Finds frames in localParams that match file and line locations in stack.
-Locals.prototype.matchFrames = function(localParams, stack) {
+function matchFrames(localParams, stack) {
   var matchedFrames = [];
   var localIndex = 0, stackIndex = 0;
   var stackLength = stack.length;
@@ -63,7 +73,7 @@ Locals.prototype.matchFrames = function(localParams, stack) {
 
   for (; stackIndex < stackLength; stackIndex++) {
     while (localIndex < callFramesLength) {
-      if (this.firstFrame(localIndex, stackIndex) || this.matchedFrame(callFrames[localIndex], stack[stackIndex])) {
+      if (firstFrame(localIndex, stackIndex) || matchedFrame(callFrames[localIndex], stack[stackIndex])) {
         matchedFrames.push({
           stackLocation: stack[stackIndex],
           callFrame: callFrames[localIndex]
@@ -79,11 +89,11 @@ Locals.prototype.matchFrames = function(localParams, stack) {
   return matchedFrames;
 }
 
-Locals.prototype.firstFrame = function(localIndex, stackIndex) {
+function firstFrame(localIndex, stackIndex) {
   return !localIndex && !stackIndex;
 }
 
-Locals.prototype.matchedFrame = function(callFrame, stackLocation) {
+function matchedFrame(callFrame, stackLocation) {
   if (!callFrame || !stackLocation) {
     return false;
   }
@@ -103,20 +113,17 @@ Locals.prototype.matchedFrame = function(callFrame, stackLocation) {
     callFrameColumn === position.column;
 }
 
-Locals.prototype.getLocalScopesForFrames = function(matchedFrames, callback) {
-  async.each(matchedFrames, this.getLocalScopeForFrame.bind(this), function (err) {
-    callback(err);
-  });
+function getLocalScopesForFrames(matchedFrames, callback) {
+  async.each(matchedFrames, getLocalScopeForFrame, callback);
 }
 
-Locals.prototype.getLocalScopeForFrame = function(matchedFrame, callback) {
+function getLocalScopeForFrame(matchedFrame, callback) {
   var scopes = matchedFrame.callFrame.scopeChain;
 
-  var _this = this;
   for (var i = 0; i < scopes.length; i++) {
     var scope = scopes[i]
     if (scope.type === 'local') {
-      this.getProperties(scope.object.objectId, function(err, response){
+      getProperties(scope.object.objectId, function(err, response){
         if (err) {
           return callback(err);
         }
@@ -124,7 +131,7 @@ Locals.prototype.getLocalScopeForFrame = function(matchedFrame, callback) {
         var locals = response.result;
         matchedFrame.stackLocation.locals = {};
         for (var local of locals) {
-          matchedFrame.stackLocation.locals[local.name] = _this.getLocalValue(local);
+          matchedFrame.stackLocation.locals[local.name] = getLocalValue(local);
         }
 
         callback(null);
@@ -133,19 +140,20 @@ Locals.prototype.getLocalScopeForFrame = function(matchedFrame, callback) {
   }
 }
 
-Locals.prototype.getLocalValue = function(local) {
+function getLocalValue(local) {
   var value;
 
   switch (local.value.type) {
     case 'undefined': value = 'undefined'; break;
-    case 'object': value = this.getObjectValue(local); break;
+    case 'object': value = getObjectValue(local); break;
+    case 'array': value = getObjectValue(local); break;
     default: value = local.value.value; break;
   }
 
   return value;
 }
 
-Locals.prototype.getObjectValue = function(local) {
+function getObjectValue(local) {
   if (local.value.className) {
     return '<' + local.value.className + ' object>'
   } else {
@@ -153,8 +161,8 @@ Locals.prototype.getObjectValue = function(local) {
   }
 }
 
-Locals.prototype.getProperties = function(objectId, callback) {
-  this.session.post('Runtime.getProperties', { objectId : objectId, ownProperties: true }, callback);
+function getProperties(objectId, callback) {
+  Locals.session.post('Runtime.getProperties', { objectId : objectId, ownProperties: true }, callback);
 }
 
 module.exports = Locals;
