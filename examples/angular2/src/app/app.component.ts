@@ -23,6 +23,10 @@ export class AppComponent {
     throw new Error('angular test error');
   }
 
+  // Example log event with undefined arg.
+  rollbarInfoWithUndefined() {
+    this.rollbar.info('angular test log with undefined', undefined);
+  }
   // Methods used by rollbar.js tests
 
   publicRollbarInfo() {
@@ -31,6 +35,10 @@ export class AppComponent {
 
   publicThrowError() {
     this.ngZone.run(() => this.throwError());
+  }
+
+  publicRollbarInfoWithUndefined() {
+    this.ngZone.run(() => this.rollbarInfoWithUndefined());
   }
 
   doCheckCount: number = 0;

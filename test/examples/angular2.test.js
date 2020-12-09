@@ -93,4 +93,22 @@ describe('Angular2 app', function() {
 
     done();
   });
+
+  it('should allow undefined arguments to rollbar.log', function(done) {
+    var server = window.server;
+    var angularComponent = window.angularAppComponent;
+
+    stubResponse(server);
+    server.requests.length = 0;
+
+    angularComponent.publicRollbarInfoWithUndefined();
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(body.data.body.message.body).to.eql('angular test log with undefined');
+
+    done();
+  });
 });
