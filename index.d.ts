@@ -92,7 +92,7 @@ declare namespace Rollbar {
         wrapGlobalEventHandlers?: boolean;
     }
     export type Callback<TResponse = any> = (err: MaybeError, response: TResponse) => void;
-    export type LogArgument = string | Error | object | Callback | Date | any[];
+    export type LogArgument = string | Error | object | Callback | Date | any[] | undefined;
     export interface LogResult {
         uuid: string;
     }
