@@ -1,7 +1,7 @@
 # Rollbar.js
 
 
-[![Build Status](https://travis-ci.org/rollbar/rollbar.js.svg?branch=v2.19.4)](https://travis-ci.org/rollbar/rollbar.js)
+![Build Status](https://github.com/rollbar/rollbar.js/workflows/Rollbar.js%20CI/badge.svg?branch=v2.19.4)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/context:javascript)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/alerts)
 
@@ -15,7 +15,7 @@ Rollbar.js is the Javascript SDK for [Rollbar](https://rollbar.com).  It support
 ## Usage and Reference
 
 For complete usage instructions and configuration reference, see our [Javascript SDK docs](https://docs.rollbar.com/docs/javascript).
-  
+
 ## Release History & Changelog
 
 See our [Releases](https://github.com/rollbar/rollbar.js/releases) page for a list of all releases, including changes.
