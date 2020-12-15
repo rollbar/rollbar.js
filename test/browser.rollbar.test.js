@@ -1137,6 +1137,57 @@ describe('options.autoInstrument', function() {
     );
   }
 
+  describe('options.autoInstrument.contentSecurityPolicy', function() {
+    beforeEach(function (done) {
+      var options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        autoInstrument: {
+          log: false,
+          contentSecurityPolicy: true,
+          errorOnContentSecurityPolicy: true
+        }
+      };
+      window.rollbar = new Rollbar(options);
+      done();
+    });
+
+    afterEach(function () {
+      window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    });
+
+    it('should report content security policy errors', function(done) {
+      var queue = rollbar.client.notifier.queue;
+      var queueStub = sinon.stub(queue, '_makeApiRequest');
+
+      // Load the HTML page, so errors can be generated.
+      document.write(window.__html__['examples/csp-errors.html']);
+
+      setTimeout(function() {
+        try {
+          var item = queueStub.getCall(0).args[0];
+          var message = item.body.message.body;
+          var telemetry = item.body.telemetry[0]
+
+          expect(message).to.match(/Security Policy Violation/);
+          expect(message).to.match(/blockedURI: https:\/\/example.com\/v3\//);
+          expect(message).to.match(/violatedDirective: script-src/);
+          expect(message).to.match(/originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/);
+
+          expect(telemetry.level).to.eql('error');
+          expect(telemetry.type).to.eql('log');
+          expect(telemetry.body.message).to.match(/Security Policy Violation/);
+          expect(telemetry.body.message).to.match(/blockedURI: https:\/\/example.com\/v3\//);
+          expect(telemetry.body.message).to.match(/violatedDirective: script-src/);
+          expect(telemetry.body.message).to.match(/originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/);
+
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }, 100);
+    });
+  });
+
   it('should add telemetry events when console.log is called', function(done) {
     var server = window.server;
     stubResponse(server);
