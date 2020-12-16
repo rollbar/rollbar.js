@@ -304,7 +304,7 @@ Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
     self.error(message, custom);
   };
   var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function (event, context) {
+  return function rollbarAsyncLambdaHandler(event, context) {
     return new Promise(function (resolve, reject) {
       self.lambdaContext = context;
       if (shouldReportTimeouts) {
@@ -313,8 +313,10 @@ Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
       }
       handler(event, context)
         .then(function (resp) {
-          clearTimeout(self.lambdaTimeoutHandle);
-          resolve(resp);
+          self.wait(function () {
+            clearTimeout(self.lambdaTimeoutHandle);
+            resolve(resp);
+          });
         })
         .catch(function (err) {
           self.error(err);
