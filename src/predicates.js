@@ -38,24 +38,24 @@ function userCheckIgnore(logger) {
   }
 }
 
-function urlIsNotBlacklisted(logger) {
+function urlIsNotBlockListed(logger) {
   return function(item, settings) {
-    return !urlIsOnAList(item, settings, 'blacklist', logger);
+    return !urlIsOnAList(item, settings, 'blocklist', logger);
   }
 }
 
-function urlIsWhitelisted(logger) {
+function urlIsSafeListed(logger) {
   return function(item, settings) {
-    return urlIsOnAList(item, settings, 'whitelist', logger);
+    return urlIsOnAList(item, settings, 'safelist', logger);
   }
 }
 
-function matchFrames(trace, list, black) {
-  if (!trace) { return !black }
+function matchFrames(trace, list, block) {
+  if (!trace) { return !block }
 
   var frames = trace.frames;
 
-  if (!frames || frames.length === 0) { return !black; }
+  if (!frames || frames.length === 0) { return !block; }
 
   var frame, filename, url, urlRegex;
   var listLength = list.length;
@@ -64,7 +64,7 @@ function matchFrames(trace, list, black) {
     frame = frames[i];
     filename = frame.filename;
 
-    if (!_.isType(filename, 'string')) { return !black; }
+    if (!_.isType(filename, 'string')) { return !block; }
 
     for (var j = 0; j < listLength; j++) {
       url = list[j];
@@ -78,44 +78,44 @@ function matchFrames(trace, list, black) {
   return false;
 }
 
-function urlIsOnAList(item, settings, whiteOrBlack, logger) {
-  // whitelist is the default
-  var black = false;
-  if (whiteOrBlack === 'blacklist') {
-    black = true;
+function urlIsOnAList(item, settings, safeOrBlock, logger) {
+  // safelist is the default
+  var block = false;
+  if (safeOrBlock === 'blocklist') {
+    block = true;
   }
 
   var list, traces;
   try {
-    list = black ? settings.hostBlackList : settings.hostWhiteList;
+    list = block ? settings.hostBlockList : settings.hostSafeList;
     traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
 
     // These two checks are important to come first as they are defaults
     // in case the list is missing or the trace is missing or not well-formed
     if (!list || list.length === 0) {
-      return !black;
+      return !block;
     }
     if (traces.length === 0 || !traces[0]) {
-      return !black;
+      return !block;
     }
 
     var tracesLength = traces.length;
     for (var i = 0; i < tracesLength; i++) {
-      if(matchFrames(traces[i], list, black)) {
+      if(matchFrames(traces[i], list, block)) {
         return true;
       }
     }
   } catch (e)
   /* istanbul ignore next */
   {
-    if (black) {
-      settings.hostBlackList = null;
+    if (block) {
+      settings.hostBlockList = null;
     } else {
-      settings.hostWhiteList = null;
+      settings.hostSafeList = null;
     }
-    var listName = black ? 'hostBlackList' : 'hostWhiteList';
+    var listName = block ? 'hostBlockList' : 'hostSafeList';
     logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
-    return !black;
+    return !block;
   }
   return false;
 }
@@ -167,7 +167,7 @@ function messageIsIgnored(logger) {
 module.exports = {
   checkLevel: checkLevel,
   userCheckIgnore: userCheckIgnore,
-  urlIsNotBlacklisted: urlIsNotBlacklisted,
-  urlIsWhitelisted: urlIsWhitelisted,
+  urlIsNotBlockListed: urlIsNotBlockListed,
+  urlIsSafeListed: urlIsSafeListed,
   messageIsIgnored: messageIsIgnored
 };

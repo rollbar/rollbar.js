@@ -175,6 +175,21 @@ describe('Rollbar()', function() {
     done();
   });
 
+  it ('should replace deprecated options', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      hostWhiteList: ['foo'],
+      hostBlackList: ['bar']
+    };
+    var rollbar = new Rollbar(options, client);
+
+    expect(rollbar.options.hostWhiteList).to.eql(undefined);
+    expect(rollbar.options.hostBlackList).to.eql(undefined);
+    expect(rollbar.options.hostSafeList).to.contain('foo');
+    expect(rollbar.options.hostBlockList).to.contain('bar');
+    done();
+  });
+
   it('should return a uuid when logging', function(done) {
     var client = new (TestClientGen())();
     var options = {};
@@ -283,6 +298,21 @@ describe('configure', function() {
     expect(rollbar.options.somekey).to.eql('borkbork');
     expect(rollbar.options.payload.b).to.eql(97);
     expect(client.payloadData.b).to.eql(97);
+    done();
+  });
+  it ('should replace deprecated options', function(done) {
+    var client = new (TestClientGen())();
+    var options = {
+      hostWhiteList: ['foo'],
+      hostBlackList: ['bar']
+    };
+    var rollbar = window.rollbar = new Rollbar({ autoInstrument: false }, client);
+    rollbar.configure(options);
+
+    expect(rollbar.options.hostWhiteList).to.eql(undefined);
+    expect(rollbar.options.hostBlackList).to.eql(undefined);
+    expect(rollbar.options.hostSafeList).to.contain('foo');
+    expect(rollbar.options.hostBlockList).to.contain('bar');
     done();
   });
   it('should store configured options', function(done) {

@@ -28,7 +28,7 @@ function Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
-  this.options = _.handleOptions(Rollbar.defaultOptions, options);
+  this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
@@ -84,7 +84,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
   if (payloadData) {
     payload = { payload: payloadData };
   }
-  this.options = _.handleOptions(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload, logger);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
@@ -512,8 +512,8 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(sharedPredicates.userCheckIgnore(logger))
-    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
-    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+    .addPredicate(sharedPredicates.urlIsNotBlockListed(logger))
+    .addPredicate(sharedPredicates.urlIsSafeListed(logger))
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
