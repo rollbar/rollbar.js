@@ -412,4 +412,22 @@ vows.describe('locals')
       }
     }
   })
+  .addBatch({
+    'currentLocalsMap called with no local scopes in map': {
+      topic: function() {
+        var locals = new Locals();
+
+        // Ensure empty map, as vows uses the same class object between tests.
+        Locals.currentErrors = new Map();
+
+        return locals;
+      },
+      'should return empty map': function(locals) {
+        var localsMap = locals.currentLocalsMap();
+
+        assert.instanceOf(localsMap, Map);
+        assert.equal(localsMap.size, 0);
+      }
+    }
+  })
   .export(module, {error: false});

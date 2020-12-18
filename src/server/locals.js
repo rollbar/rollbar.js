@@ -43,9 +43,7 @@ Locals.prototype.initSession = function() {
 }
 
 Locals.prototype.currentLocalsMap = function() {
-  if (Locals.currentErrors.size) {
-    return new Map(Locals.currentErrors);
-  }
+  return new Map(Locals.currentErrors);
 }
 
 Locals.prototype.mergeLocals = function(localsMap, stack, key, callback) {
