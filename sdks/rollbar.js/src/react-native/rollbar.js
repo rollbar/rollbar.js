@@ -20,7 +20,7 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
-  this.options = _.handleOptions(Rollbar.defaultOptions, options);
+  this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // This makes no sense in a long running app
   delete this.options.maxItems;
@@ -70,7 +70,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.handleOptions(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload, logger);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(options, payloadData);
   return this;

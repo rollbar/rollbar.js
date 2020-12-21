@@ -143,6 +143,20 @@ vows.describe('rollbar')
           assert.equal('fake-env', r.options._configuredOptions.environment);
         }
       },
+      'with deprecated options': {
+        topic: function() {
+          return new Rollbar({
+            hostWhiteList: ['foo'],
+            hostBlackList: ['bar']
+          });
+        },
+        'should replace options': function(r) {
+          assert.equal(r.options.hostWhiteList, undefined);
+          assert.equal(r.options.hostBlackList, undefined);
+          assert.equal(r.options.hostSafeList, 'foo');
+          assert.equal(r.options.hostBlockList, 'bar');
+        }
+      },
       'with valid tracer': {
         topic: function () {
           var rollbar = new Rollbar({ captureUncaught: true, environment: 'fake-env', tracer: ValidOpenTracingTracerStub });
@@ -172,6 +186,22 @@ vows.describe('rollbar')
         'should set configured options': function(r) {
           assert.equal('new-env', r.options._configuredOptions.environment);
           assert.equal(false, r.options._configuredOptions.captureUncaught);
+        }
+      },
+      'with deprecated options': {
+        topic: function() {
+          var rollbar = new Rollbar({ captureUncaught: true });
+          rollbar.configure({
+            hostWhiteList: ['foo'],
+            hostBlackList: ['bar']
+          });
+          return rollbar;
+        },
+        'should replace options': function(r) {
+          assert.equal(r.options.hostWhiteList, undefined);
+          assert.equal(r.options.hostBlackList, undefined);
+          assert.equal(r.options.hostSafeList, 'foo');
+          assert.equal(r.options.hostBlockList, 'bar');
         }
       },
       'with valid tracer': {
