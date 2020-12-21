@@ -14,7 +14,7 @@ var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
 
 function Rollbar(options, client) {
-  this.options = _.handleOptions(defaultOptions, options);
+  this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   var Telemeter = this.components.telemeter;
   var Instrumenter = this.components.instrumenter;
@@ -84,7 +84,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.handleOptions(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload, logger);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter && this.instrumenter.configure(this.options);
@@ -511,8 +511,8 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(predicates.checkIgnore)
     .addPredicate(sharedPredicates.userCheckIgnore(logger))
-    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
-    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+    .addPredicate(sharedPredicates.urlIsNotBlockListed(logger))
+    .addPredicate(sharedPredicates.urlIsSafeListed(logger))
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 

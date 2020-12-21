@@ -665,8 +665,9 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
-function handleOptions(current, input, payload) {
+function handleOptions(current, input, payload, logger) {
   var result = merge(current, input, payload);
+  result = updateDeprecatedOptions(result, logger);
   if (!input || input.overwriteScrubFields) {
     return result;
   }
@@ -674,6 +675,20 @@ function handleOptions(current, input, payload) {
     result.scrubFields = (current.scrubFields || []).concat(input.scrubFields);
   }
   return result;
+}
+
+function updateDeprecatedOptions(options, logger) {
+  if(options.hostWhiteList && !options.hostSafeList) {
+    options.hostSafeList = options.hostWhiteList;
+    options.hostWhiteList = undefined;
+    logger && logger.log('hostWhiteList is deprecated. Use hostSafeList.');
+  }
+  if(options.hostBlackList && !options.hostBlockList) {
+    options.hostBlockList = options.hostBlackList;
+    options.hostBlackList = undefined;
+    logger && logger.log('hostBlackList is deprecated. Use hostBlockList.');
+  }
+  return options;
 }
 
 module.exports = {
