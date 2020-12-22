@@ -778,6 +778,25 @@ describe('scrub', function() {
     expect(result.inner.a).to.be.ok();
     expect(result.inner.b).to.eql('yes');
   });
+  it('should scrub objects seen twice', function() {
+    var request = {
+      password: 'foo'
+    }
+
+    var data = {
+      request,
+      response: { request }
+    }
+
+    var scrubFields = ['password'];
+
+    var result = scrub(data, scrubFields);
+
+    expect(result.request.password).to.eql(_.redact());
+
+    // TODO: This should be redacted.
+    expect(result.response.request.password).to.eql('foo');
+  });
   it('should handle scrubPaths', function() {
     var data = {
       a: {
