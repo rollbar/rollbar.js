@@ -127,7 +127,7 @@ function mapPosition(position, diagnostic) {
 }
 
 function parseFrameLine(line, callback) {
-  var matched, curLine, data, frame;
+  var matched, curLine, data, frame, position;
 
   curLine = line;
   matched = curLine.match(jadeTracePattern);
@@ -141,20 +141,23 @@ function parseFrameLine(line, callback) {
   }
 
   data = matched.slice(1);
-  var position = {
+  var runtimePosition = {
     source: data[1],
     line: Math.floor(data[2]),
     column: Math.floor(data[3]) - 1
   };
   if (this.useSourceMaps) {
-    position = mapPosition(position, this.diagnostic);
+    position = mapPosition(runtimePosition, this.diagnostic);
+  } else {
+    position = runtimePosition;
   }
 
   frame = {
     method: data[0] || '<unknown>',
     filename: position.source,
     lineno: position.line,
-    colno: position.column
+    colno: position.column,
+    runtimePosition: runtimePosition // Used to match frames for locals
   };
 
   // For coffeescript, lineno and colno refer to the .coffee positions
@@ -306,7 +309,19 @@ exports.parseException = function (exc, options, item, callback) {
       ret.message = jadeData.message;
       ret.frames.push(jadeData.frame);
     }
-    return callback(null, ret);
+
+    if (item.localsMap) {
+      item.notifier.locals.mergeLocals(item.localsMap, stack, exc.stack, function (err) {
+        if (err) {
+          logger.error('could not parse locals, err: ' + err);
+          return callback(err);
+        }
+
+        return callback(null, ret);
+      });
+    } else {
+      return callback(null, ret);
+    }
   });
 };
 

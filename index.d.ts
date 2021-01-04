@@ -67,6 +67,7 @@ declare namespace Rollbar {
         includeItemsInTelemetry?: boolean;
         inspectAnonymousErrors?: boolean;
         itemsPerMinute?: number;
+        locals?: boolean;
         logLevel?: Level;
         maxItems?: number;
         maxTelemetryEvents?: number;
