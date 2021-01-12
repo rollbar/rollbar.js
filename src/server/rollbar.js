@@ -41,11 +41,11 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options)
   this.client = client || new Client(this.options, api, logger, telemeter, 'server');
-  if (options.locals) {
+  if (this.options.locals) {
     // Capturing stack local variables is only supported in Node 10 and higher.
     var nodeMajorVersion = process.versions.node.split('.')[0];
     if (nodeMajorVersion >= 10) {
-      this.locals = new Locals(this.options)
+      this.locals = new Locals(this.options.locals);
     }
   }
   addTransformsToNotifier(this.client.notifier);

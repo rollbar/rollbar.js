@@ -314,7 +314,9 @@ exports.parseException = function (exc, options, item, callback) {
       item.notifier.locals.mergeLocals(item.localsMap, stack, exc.stack, function (err) {
         if (err) {
           logger.error('could not parse locals, err: ' + err);
-          return callback(err);
+
+          // Don't reject the occurrence, record the error instead.
+          item.diagnostic['error parsing locals'] = err;
         }
 
         return callback(null, ret);
