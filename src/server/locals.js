@@ -183,7 +183,7 @@ function getLocalValue(local, callback) {
     callback(null);
   }
 
-  if(!local.value) {
+  if (!local.value) {
     return cb(null, '[unavailable]');
   }
 
@@ -209,14 +209,14 @@ function getSymbolValue(local) {
 }
 
 function getObjectValue(local, options, depth, callback) {
-  if(!local.value.objectId) {
+  if (!local.value.objectId) {
     if ('value' in local.value) {
       // Treat as immediate value. (Known example is `null`.)
       return callback(null, local.value.value);
     }
   }
 
-  if (!depth) {
+  if (depth === 0) {
     return callback(null, getObjectType(local));
   }
 
