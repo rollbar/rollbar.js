@@ -314,7 +314,7 @@ var localsFixtures = {
         type: 'object',
         className: 'FooClass',
         description: 'FooClass',
-        objectId: '{"injectedScriptId":1,"id":48}'
+        objectId: 'nestedProps1'
       },
       writable: true,
       configurable: true,
@@ -327,7 +327,7 @@ var localsFixtures = {
         type: 'object',
         className: 'BarClass',
         description: 'BarClass',
-        objectId: '{"injectedScriptId":1,"id":48}'
+        objectId: 'nestedProps2'
       },
       writable: true,
       configurable: true,
@@ -370,7 +370,7 @@ var localsFixtures = {
     array1: {
       name: 'args',
       value: {
-        type: 'array',
+        type: 'object',
         subtype: 'array',
         className: 'Array',
         description: 'Array(1)',
@@ -378,6 +378,43 @@ var localsFixtures = {
       },
       writable: true,
       configurable: true,
+      enumerable: true,
+      isOwn: true
+    },
+    function1: {
+      name: 'func',
+      value: {
+        type: 'function',
+        className: 'Function',
+        description: 'Array(1)',
+        objectId: '{"injectedScriptId":1,"id":64}'
+      },
+      writable: true,
+      configurable: true,
+      enumerable: true,
+      isOwn: true
+    },
+    function2: {
+      name: 'asyncFunc',
+      value: {
+        type: 'function',
+        className: 'AsyncFunction',
+        objectId: '{"injectedScriptId":1,"id":32}'
+      },
+      writable: true,
+      configurable: true,
+      enumerable: true,
+      isOwn: true
+    },
+    null1: {
+      name: 'parent',
+      value: {
+        subtype: 'null',
+        type: 'object',
+        value: null
+      },
+      configurable: true,
+      writable: true,
       enumerable: true,
       isOwn: true
     }

@@ -75,6 +75,36 @@ function fakeSessionPostHandler(responses) {
   }
 }
 
+
+async function nodeThrowWithNestedLocals(rollbar, callback) {
+  setTimeout(function () {
+    var arr = [{ zero: [0, 0]}, { one: 1}, { two: 2}, { three: 3}];
+    var obj = { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e', f: 'f' };
+    var password = 'password';
+    var sym = Symbol('foo');
+    var error = new Error('node error');
+    throw error;
+  }, 1);
+  await wait(500);
+  callback(rollbar);
+}
+
+function recurse(curr, limit) {
+  if (curr < limit) {
+    recurse(curr + 1, limit);
+  } else {
+    throw new Error('deep stack error, limit='+limit);
+  }
+}
+
+async function nodeThrowRecursionError(rollbar, callback) {
+  setTimeout(function () {
+    recurse(0, 3);
+  }, 1);
+  await wait(500);
+  callback(rollbar);
+}
+
 function cloneStack(stack) {
   // Deep clone, because stack gets modified by mergeLocals
   // and we don't want to modify the test fixtures.
@@ -89,7 +119,7 @@ vows.describe('locals')
           var rollbar = new Rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            locals: true
+            locals: { depth: 0 }
           });
           var notifier = rollbar.client.notifier;
           rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
@@ -120,7 +150,7 @@ vows.describe('locals')
             var rollbar = new Rollbar({
               accessToken: 'abc123',
               captureUncaught: true,
-              locals: true
+              locals: { depth: 0 }
             });
             var notifier = rollbar.client.notifier;
             rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
@@ -160,7 +190,7 @@ vows.describe('locals')
               var rollbar = new Rollbar({
                 accessToken: 'abc123',
                 captureUnhandledRejections: true,
-                locals: true
+                locals: { depth: 0 }
               });
               var notifier = rollbar.client.notifier;
               rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
@@ -191,6 +221,161 @@ vows.describe('locals')
           }
         }
       },
+    }
+  })
+
+  .addBatch({
+    'on exception': {
+      'with custom options': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            locals: { depth: 2, maxProperties: 5, maxArray: 2 }
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          nodeThrowWithNestedLocals(rollbar, this.callback);
+        },
+        'should include locals': function(r) {
+          var addItemStub = r.addItemStub;
+
+          assert.isTrue(addItemStub.called);
+          var data = addItemStub.getCall(0).args[3].data;
+          assert.equal(data.body.trace_chain[0].exception.message, 'node error');
+          if (nodeMajorVersion < 10) {
+            // Node 8; locals disabled
+            var length = data.body.trace_chain[0].frames.length;
+            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+          } else {
+            var length = data.body.trace_chain[0].frames.length;
+            assert.equal(Object.keys(data.body.trace_chain[0].frames[length-1].locals.obj).length, 5);
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals.obj, { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e' });
+            assert.equal(data.body.trace_chain[0].frames[length-1].locals.arr.length, 2);
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals.arr[0], { zero: '<Array object>' });
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals.arr[1], { one: 1 });
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals.password, '********');
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals.sym, 'Symbol(foo)');
+          }
+          addItemStub.reset();
+          Locals.session = undefined;
+        }
+      }
+    }
+  })
+
+  .addBatch({
+    'on exception': {
+      'with recursive stack': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            locals: true
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          nodeThrowRecursionError(rollbar, this.callback);
+        },
+        'should include locals': function(r) {
+          var addItemStub = r.addItemStub;
+
+          assert.isTrue(addItemStub.called);
+          var data = addItemStub.getCall(0).args[3].data;
+          assert.equal(data.body.trace_chain[0].exception.message, 'deep stack error, limit=3');
+          if (nodeMajorVersion < 10) {
+            // Node 8; locals disabled
+            var length = data.body.trace_chain[0].frames.length;
+            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+          } else {
+            var length = data.body.trace_chain[0].frames.length;
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals, { curr: 3, limit: 3 });
+            assert.deepEqual(data.body.trace_chain[0].frames[length-2].locals, { curr: 2, limit: 3 });
+            assert.deepEqual(data.body.trace_chain[0].frames[length-3].locals, { curr: 1, limit: 3 });
+          }
+          addItemStub.reset();
+          Locals.session = undefined;
+        }
+      }
+    }
+  })
+
+  .addBatch({
+    'constructor': {
+      'passing no arguments': {
+        topic: function() {
+          return new Locals();
+        },
+        'should use defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 1);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing true boolean': {
+        topic: function() {
+          return new Locals(true);
+        },
+        'should use defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 1);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing false boolean': {
+        topic: function() {
+          return new Locals(false);
+        },
+        'should use defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 1);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing empty object': {
+        topic: function() {
+          return new Locals({});
+        },
+        'should use defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 1);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing depth option': {
+        topic: function() {
+          return new Locals({ depth: 0 });
+        },
+        'should use updated depth with remaining defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 0);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing all options': {
+        topic: function() {
+          return new Locals({ depth: 2, maxProperties: 15, maxArray: 10 });
+        },
+        'should use updated options': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.depth, 2);
+          assert.equal(options.maxProperties, 15);
+          assert.equal(options.maxArray, 10);
+        }
+      }
     }
   })
 
@@ -242,7 +427,7 @@ vows.describe('locals')
           ],
         }
 
-        var locals = new Locals();
+        var locals = new Locals({ depth: 0 });
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key1 = 'key1';
@@ -288,7 +473,7 @@ vows.describe('locals')
           ]
         }
 
-        var locals = new Locals();
+        var locals = new Locals({ depth: 0 });
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key = 'key';
@@ -312,6 +497,55 @@ vows.describe('locals')
 
         assert.equal(stack[0].locals.foo, '<FooClass object>');
         assert.equal(stack[0].locals.bar, '<BarClass object>');
+
+        sinon.restore();
+      }
+    }
+  })
+  .addBatch({
+    'mergeLocals called with depth = 1': {
+      topic: function() {
+        var getPropertiesResponses = {
+          objectId1: [
+            localsFixtures.locals.object1,
+            localsFixtures.locals.object2,
+          ],
+          nestedProps1: [
+            localsFixtures.locals.string1,
+            localsFixtures.locals.boolean1,
+            localsFixtures.locals.function1,
+          ],
+          nestedProps2: [
+            localsFixtures.locals.array1,
+            localsFixtures.locals.null1,
+            localsFixtures.locals.function2,
+          ]
+        }
+
+        var locals = new Locals({ depth: 1 });
+        sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
+
+        var key = 'key';
+        var localsMap = new Map();
+
+        localsMap.set(key, localsFixtures.maps.simple);
+
+        var stack = cloneStack(localsFixtures.stacks.simple);
+
+        var self = this;
+        locals.mergeLocals(localsMap, stack, key, function(err) {
+          self.callback(err, stack);
+        });
+      },
+      'should callback with merged locals': function(err, stack) {
+        if (err) {
+          // Ensure unexpected error can be seen.
+          console.log(err);
+        }
+        assert.isNull(err);
+
+        assert.deepEqual(stack[0].locals.foo, { response: 'success', old: false, func: '<Function object>' });
+        assert.deepEqual(stack[0].locals.bar, { args: '<Array object>', parent: null, asyncFunc: '<AsyncFunction object>' });
 
         sinon.restore();
       }

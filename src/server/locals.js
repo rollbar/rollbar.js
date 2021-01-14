@@ -1,13 +1,28 @@
 /* globals Map */
 var inspector = require('inspector');
 var async = require('async');
+var _ = require('../utility');
 
-function Locals(config) {
+// It's helpful to have default limits, as the data expands quickly in real environments.
+// depth = 1 is  enough to capture the members of top level objects and arrays.
+// maxProperties limits the number of properties captured from non-array objects.
+// When this value is too small, relevant values for debugging are easily omitted.
+// maxArray applies to array objects, which in practice may be arbitrarily large,
+// yet for debugging we usually only care about the pattern of data that is established,
+// so a smaller limit is usually sufficient.
+var DEFAULT_OPTIONS = {
+  depth: 1,
+  maxProperties: 30,
+  maxArray: 5
+}
+
+function Locals(options) {
   if (!(this instanceof Locals)) {
-    return new Locals(config);
+    return new Locals(options);
   }
 
-  this.config = config;
+  options = _.isType(options, 'object') ? options : {};
+  this.options = _.merge(DEFAULT_OPTIONS, options);
 
   this.initSession();
 }
@@ -62,7 +77,7 @@ Locals.prototype.mergeLocals = function(localsMap, stack, key, callback) {
     return callback(e);
   }
 
-  getLocalScopesForFrames(matchedFrames, callback);
+  getLocalScopesForFrames(matchedFrames, this.options, callback);
 }
 
 // Finds frames in localParams that match file and line locations in stack.
@@ -115,11 +130,12 @@ function matchedFrame(callFrame, stackLocation) {
     callFrameColumn === position.column;
 }
 
-function getLocalScopesForFrames(matchedFrames, callback) {
-  async.each(matchedFrames, getLocalScopeForFrame, callback);
+function getLocalScopesForFrames(matchedFrames, options, callback) {
+  async.each(matchedFrames, getLocalScopeForFrame.bind({ options: options }), callback);
 }
 
 function getLocalScopeForFrame(matchedFrame, callback) {
+  var options = this.options;
   var scopes = matchedFrame.callFrame.scopeChain;
 
   var scope = scopes.find(scope => scope.type === 'local');
@@ -135,33 +151,100 @@ function getLocalScopeForFrame(matchedFrame, callback) {
 
     var locals = response.result;
     matchedFrame.stackLocation.locals = {};
-    for (var local of locals) {
-      matchedFrame.stackLocation.locals[local.name] = getLocalValue(local);
+    var localsContext = {
+      localsObject: matchedFrame.stackLocation.locals,
+      options: options,
+      depth: options.depth
     }
-
-    callback(null);
+    async.each(locals, getLocalValue.bind(localsContext), callback);
   });
 }
 
-function getLocalValue(local) {
-  var value;
+function getLocalValue(local, callback) {
+  var localsObject = this.localsObject;
+  var options = this.options;
+  var depth = this.depth;
+
+  function cb(error, value) {
+    if (error) {
+      // Add the relevant data to the error object,
+      // taking care to preserve the innermost data context.
+      if (!error.rollbarContext) {
+        error.rollbarContext = local;
+      }
+      return callback(error);
+    }
+
+    if (_.typeName(localsObject) === 'array') {
+      localsObject.push(value);
+    } else {
+      localsObject[local.name] = value;
+    }
+    callback(null);
+  }
+
+  if (!local.value) {
+    return cb(null, '[unavailable]');
+  }
 
   switch (local.value.type) {
-    case 'undefined': value = 'undefined'; break;
-    case 'object': value = getObjectValue(local); break;
-    case 'array': value = getObjectValue(local); break;
-    default: value = local.value.value; break;
+    case 'undefined': cb(null, 'undefined'); break;
+    case 'object': getObjectValue(local, options, depth, cb); break;
+    case 'function': cb(null, getObjectType(local)); break;
+    case 'symbol': cb(null, getSymbolValue(local)); break;
+    default: cb(null, local.value.value); break;
   }
-
-  return value;
 }
 
-function getObjectValue(local) {
+function getObjectType(local) {
   if (local.value.className) {
-    return '<' + local.value.className + ' object>'
+    return '<' + local.value.className + ' object>';
   } else {
-    return '<object>'
+    return '<object>';
   }
+}
+
+function getSymbolValue(local) {
+  return local.value.description;
+}
+
+function getObjectValue(local, options, depth, callback) {
+  if (!local.value.objectId) {
+    if ('value' in local.value) {
+      // Treat as immediate value. (Known example is `null`.)
+      return callback(null, local.value.value);
+    }
+  }
+
+  if (depth === 0) {
+    return callback(null, getObjectType(local));
+  }
+
+  getProperties(local.value.objectId, function(err, response){
+    if (err) {
+      return callback(err);
+    }
+
+    var isArray = local.value.className === 'Array';
+    var length = isArray ? options.maxArray : options.maxProperties;
+    var properties = response.result.slice(0, length);
+    var localsContext = {
+      localsObject: isArray ? [] : {},
+      options: options,
+      depth: depth - 1
+    }
+
+    // For arrays, use eachSeries to ensure order is preserved.
+    // Otherwise, use each for faster completion.
+    var iterator = isArray ? async.eachSeries : async.each;
+    iterator(properties, getLocalValue.bind(localsContext), function(error){
+      if (error) {
+        return callback(error);
+      }
+
+      callback(null, localsContext.localsObject);
+    });
+  });
 }
 
 function getProperties(objectId, callback) {
