@@ -139,8 +139,10 @@ function isIterable(i) {
  * @returns true if e is an error
  */
 function isError(e) {
-  // Detect both Error and Firefox Exception type
-  return isType(e, 'error') || isType(e, 'exception');
+  // Detect Error, Firefox Exception type and error like object
+  return (isType(e, 'error')
+    || isType(e, 'exception')
+    || (typeof e === 'object' && e && e.name && e.message));
 }
 
 function redact() {
@@ -410,7 +412,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
         break;
       case 'object':
       case 'array':
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+        if (isError(arg)) {
           err ? extraArgs.push(arg) : err = arg;
           break;
         }
@@ -428,7 +430,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
         custom ? extraArgs.push(arg) : custom = arg;
         break;
       default:
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
+        if (isError(arg)) {
           err ? extraArgs.push(arg) : err = arg;
           break;
         }
