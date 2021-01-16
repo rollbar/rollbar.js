@@ -22,7 +22,7 @@
     "no-underscore-dangle": "off",
     "no-useless-escape": "off",
     "complexity": ["error", {"max": 32}],
-    "no-use-before-define": ["off", { "functions": false }],
+    "no-use-before-define": ["error", { "functions": false }],
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "no-prototype-builtins": "off"
   }

@@ -13,6 +13,27 @@ var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
 
+var defaults = require('../defaults');
+var scrubFields = require('./defaults/scrubFields');
+
+var defaultOptions = {
+  version: defaults.version,
+  scrubFields: scrubFields.scrubFields,
+  logLevel: defaults.logLevel,
+  reportLevel: defaults.reportLevel,
+  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
+  endpoint: defaults.endpoint,
+  verbose: false,
+  enabled: true,
+  transmit: true,
+  sendConfig: false,
+  includeItemsInTelemetry: true,
+  captureIp: true,
+  inspectAnonymousErrors: true,
+  ignoreDuplicateErrors: true,
+  wrapGlobalEventHandlers: false
+};
+
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
@@ -536,26 +557,5 @@ function _getFirstFunction(args) {
 function _gWindow() {
   return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 }
-
-var defaults = require('../defaults');
-var scrubFields = require('./defaults/scrubFields');
-
-var defaultOptions = {
-  version: defaults.version,
-  scrubFields: scrubFields.scrubFields,
-  logLevel: defaults.logLevel,
-  reportLevel: defaults.reportLevel,
-  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
-  endpoint: defaults.endpoint,
-  verbose: false,
-  enabled: true,
-  transmit: true,
-  sendConfig: false,
-  includeItemsInTelemetry: true,
-  captureIp: true,
-  inspectAnonymousErrors: true,
-  ignoreDuplicateErrors: true,
-  wrapGlobalEventHandlers: false
-};
 
 module.exports = Rollbar;
