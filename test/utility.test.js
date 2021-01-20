@@ -411,7 +411,7 @@ describe('traverse', function() {
       var result = traverse(obj, function(k, v) {
         callCount++;
         return v + 1;
-      }, []);
+      });
       expect(result).to.eql(expectedOutput);
       expect(callCount).to.eql(2);
 
@@ -427,7 +427,7 @@ describe('traverse', function() {
           return {ca: v.ca+1};
        }
         return v + 1;
-      }, []);
+      });
       expect(result).to.eql(expectedOutput);
       expect(callCount).to.eql(3);
 
@@ -793,9 +793,7 @@ describe('scrub', function() {
     var result = scrub(data, scrubFields);
 
     expect(result.request.password).to.eql(_.redact());
-
-    // TODO: This should be redacted.
-    expect(result.response.request.password).to.eql('foo');
+    expect(result.response.request.password).to.eql(_.redact());
   });
   it('should handle scrubPaths', function() {
     var data = {
