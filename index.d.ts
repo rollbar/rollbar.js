@@ -60,8 +60,10 @@ declare namespace Rollbar {
         environment?: string;
         filterTelemetry?: (e: TelemetryEvent) => boolean;
         host?: string; // used in node only
-        hostBlackList?: string[];
-        hostWhiteList?: string[];
+        hostBlackList?: string[]; // deprecated
+        hostBlockList?: string[];
+        hostWhiteList?: string[]; // deprecated
+        hostSafeList?: string[];
         ignoredMessages?: string[];
         ignoreDuplicateErrors?: boolean;
         includeItemsInTelemetry?: boolean;
