@@ -50,7 +50,7 @@ function scrub(data, scrubFields, scrubPaths) {
     }
   }
 
-  return traverse(data, scrubber, []);
+  return traverse(data, scrubber);
 }
 
 function scrubPath(obj, path) {
