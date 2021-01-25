@@ -5,11 +5,22 @@ function traverse(obj, func, seen) {
   var isObj = _.isType(obj, 'object');
   var isArray = _.isType(obj, 'array');
   var keys = [];
+  var seenIndex;
 
-  if (isObj && seen.indexOf(obj) !== -1) {
-    return obj;
+  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
+  seen = seen || { obj: [], mapped: []};
+
+  if (isObj) {
+    seenIndex = seen.obj.indexOf(obj);
+
+    if (isObj && seenIndex !== -1) {
+      // Prefer the mapped object if there is one.
+      return seen.mapped[seenIndex] || seen.obj[seenIndex];
+    }
+
+    seen.obj.push(obj);
+    seenIndex = seen.obj.length - 1;
   }
-  seen.push(obj);
 
   if (isObj) {
     for (k in obj) {
@@ -32,7 +43,11 @@ function traverse(obj, func, seen) {
     same = same && result[k] === obj[k];
   }
 
-  return (keys.length != 0 && !same) ? result : obj;
+  if (isObj && !same) {
+    seen.mapped[seenIndex] = result;
+  }
+
+  return !same ? result : obj;
 }
 
 module.exports = traverse;

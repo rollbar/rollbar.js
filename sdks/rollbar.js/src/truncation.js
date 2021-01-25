@@ -54,7 +54,7 @@ function truncateStrings(len, payload, jsonBackup) {
         return v;
     }
   }
-  payload = traverse(payload, truncator, []);
+  payload = traverse(payload, truncator);
   return [payload, _.stringify(payload, jsonBackup)];
 }
 
