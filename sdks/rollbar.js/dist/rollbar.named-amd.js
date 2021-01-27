@@ -758,8 +758,9 @@ function filterIp(requestData, captureIp) {
   requestData['user_ip'] = newIp;
 }
 
-function handleOptions(current, input, payload) {
+function handleOptions(current, input, payload, logger) {
   var result = merge(current, input, payload);
+  result = updateDeprecatedOptions(result, logger);
   if (!input || input.overwriteScrubFields) {
     return result;
   }
@@ -767,6 +768,20 @@ function handleOptions(current, input, payload) {
     result.scrubFields = (current.scrubFields || []).concat(input.scrubFields);
   }
   return result;
+}
+
+function updateDeprecatedOptions(options, logger) {
+  if(options.hostWhiteList && !options.hostSafeList) {
+    options.hostSafeList = options.hostWhiteList;
+    options.hostWhiteList = undefined;
+    logger && logger.log('hostWhiteList is deprecated. Use hostSafeList.');
+  }
+  if(options.hostBlackList && !options.hostBlockList) {
+    options.hostBlockList = options.hostBlackList;
+    options.hostBlackList = undefined;
+    logger && logger.log('hostBlackList is deprecated. Use hostBlockList.');
+  }
+  return options;
 }
 
 module.exports = {
@@ -1134,7 +1149,7 @@ function scrub(data, scrubFields, scrubPaths) {
     }
   }
 
-  return traverse(data, scrubber, []);
+  return traverse(data, scrubber);
 }
 
 function scrubPath(obj, path) {
@@ -1191,11 +1206,22 @@ function traverse(obj, func, seen) {
   var isObj = _.isType(obj, 'object');
   var isArray = _.isType(obj, 'array');
   var keys = [];
+  var seenIndex;
 
-  if (isObj && seen.indexOf(obj) !== -1) {
-    return obj;
+  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
+  seen = seen || { obj: [], mapped: []};
+
+  if (isObj) {
+    seenIndex = seen.obj.indexOf(obj);
+
+    if (isObj && seenIndex !== -1) {
+      // Prefer the mapped object if there is one.
+      return seen.mapped[seenIndex] || seen.obj[seenIndex];
+    }
+
+    seen.obj.push(obj);
+    seenIndex = seen.obj.length - 1;
   }
-  seen.push(obj);
 
   if (isObj) {
     for (k in obj) {
@@ -1218,7 +1244,11 @@ function traverse(obj, func, seen) {
     same = same && result[k] === obj[k];
   }
 
-  return (keys.length != 0 && !same) ? result : obj;
+  if (isObj && !same) {
+    seen.mapped[seenIndex] = result;
+  }
+
+  return !same ? result : obj;
 }
 
 module.exports = traverse;
@@ -1312,7 +1342,7 @@ var sharedPredicates = __webpack_require__(26);
 var errorParser = __webpack_require__(3);
 
 function Rollbar(options, client) {
-  this.options = _.handleOptions(defaultOptions, options);
+  this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   var Telemeter = this.components.telemeter;
   var Instrumenter = this.components.instrumenter;
@@ -1382,7 +1412,7 @@ Rollbar.prototype.configure = function(options, payloadData) {
   if (payloadData) {
     payload = {payload: payloadData};
   }
-  this.options = _.handleOptions(oldOptions, options, payload);
+  this.options = _.handleOptions(oldOptions, options, payload, logger);
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
   this.instrumenter && this.instrumenter.configure(this.options);
@@ -1809,8 +1839,8 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(predicates.checkIgnore)
     .addPredicate(sharedPredicates.userCheckIgnore(logger))
-    .addPredicate(sharedPredicates.urlIsNotBlacklisted(logger))
-    .addPredicate(sharedPredicates.urlIsWhitelisted(logger))
+    .addPredicate(sharedPredicates.urlIsNotBlockListed(logger))
+    .addPredicate(sharedPredicates.urlIsSafeListed(logger))
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
@@ -2024,6 +2054,9 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     item.telemetryEvents = (this.telemeter && this.telemeter.copyEvents()) || [];
     this.notifier.log(item, callback);
   } catch (e) {
+    if (callback) {
+      callback(e);
+    }
     this.logger.error(e);
   }
 };
@@ -2056,6 +2089,8 @@ Rollbar.prototype._addTracingInfo = function (item) {
       span.setTag('rollbar.error_uuid', item.uuid);
       span.setTag('rollbar.has_error', true);
       span.setTag('error', true);
+      span.setTag('rollbar.item_url', `https://rollbar.com/item/uuid/?uuid=${item.uuid}`);
+      span.setTag('rollbar.occurrence_url', `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`);
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
@@ -4303,24 +4338,24 @@ function userCheckIgnore(logger) {
   }
 }
 
-function urlIsNotBlacklisted(logger) {
+function urlIsNotBlockListed(logger) {
   return function(item, settings) {
-    return !urlIsOnAList(item, settings, 'blacklist', logger);
+    return !urlIsOnAList(item, settings, 'blocklist', logger);
   }
 }
 
-function urlIsWhitelisted(logger) {
+function urlIsSafeListed(logger) {
   return function(item, settings) {
-    return urlIsOnAList(item, settings, 'whitelist', logger);
+    return urlIsOnAList(item, settings, 'safelist', logger);
   }
 }
 
-function matchFrames(trace, list, black) {
-  if (!trace) { return !black }
+function matchFrames(trace, list, block) {
+  if (!trace) { return !block }
 
   var frames = trace.frames;
 
-  if (!frames || frames.length === 0) { return !black; }
+  if (!frames || frames.length === 0) { return !block; }
 
   var frame, filename, url, urlRegex;
   var listLength = list.length;
@@ -4329,7 +4364,7 @@ function matchFrames(trace, list, black) {
     frame = frames[i];
     filename = frame.filename;
 
-    if (!_.isType(filename, 'string')) { return !black; }
+    if (!_.isType(filename, 'string')) { return !block; }
 
     for (var j = 0; j < listLength; j++) {
       url = list[j];
@@ -4343,44 +4378,44 @@ function matchFrames(trace, list, black) {
   return false;
 }
 
-function urlIsOnAList(item, settings, whiteOrBlack, logger) {
-  // whitelist is the default
-  var black = false;
-  if (whiteOrBlack === 'blacklist') {
-    black = true;
+function urlIsOnAList(item, settings, safeOrBlock, logger) {
+  // safelist is the default
+  var block = false;
+  if (safeOrBlock === 'blocklist') {
+    block = true;
   }
 
   var list, traces;
   try {
-    list = black ? settings.hostBlackList : settings.hostWhiteList;
+    list = block ? settings.hostBlockList : settings.hostSafeList;
     traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
 
     // These two checks are important to come first as they are defaults
     // in case the list is missing or the trace is missing or not well-formed
     if (!list || list.length === 0) {
-      return !black;
+      return !block;
     }
     if (traces.length === 0 || !traces[0]) {
-      return !black;
+      return !block;
     }
 
     var tracesLength = traces.length;
     for (var i = 0; i < tracesLength; i++) {
-      if(matchFrames(traces[i], list, black)) {
+      if(matchFrames(traces[i], list, block)) {
         return true;
       }
     }
   } catch (e)
   /* istanbul ignore next */
   {
-    if (black) {
-      settings.hostBlackList = null;
+    if (block) {
+      settings.hostBlockList = null;
     } else {
-      settings.hostWhiteList = null;
+      settings.hostSafeList = null;
     }
-    var listName = black ? 'hostBlackList' : 'hostWhiteList';
+    var listName = block ? 'hostBlockList' : 'hostSafeList';
     logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
-    return !black;
+    return !block;
   }
   return false;
 }
@@ -4432,8 +4467,8 @@ function messageIsIgnored(logger) {
 module.exports = {
   checkLevel: checkLevel,
   userCheckIgnore: userCheckIgnore,
-  urlIsNotBlacklisted: urlIsNotBlacklisted,
-  urlIsWhitelisted: urlIsWhitelisted,
+  urlIsNotBlockListed: urlIsNotBlockListed,
+  urlIsSafeListed: urlIsSafeListed,
   messageIsIgnored: messageIsIgnored
 };
 
@@ -4446,7 +4481,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.19.4',
+  version: '2.20.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4734,7 +4769,9 @@ var defaults = {
   log: true,
   dom: true,
   navigation: true,
-  connectivity: true
+  connectivity: true,
+  contentSecurityPolicy: true,
+  errorOnContentSecurityPolicy: false
 };
 
 function replace(obj, name, replacement, replacements, type) {
@@ -4808,7 +4845,8 @@ function Instrumenter(options, telemeter, rollbar, _window, _document) {
   };
   this.eventRemovers = {
     dom: [],
-    connectivity: []
+    connectivity: [],
+    contentsecuritypolicy: []
   };
 
   this._location = this._window.location;
@@ -4836,6 +4874,7 @@ Instrumenter.prototype.configure = function(options) {
   }
 };
 
+// eslint-disable-next-line complexity
 Instrumenter.prototype.instrument = function(oldSettings) {
   if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
     this.instrumentNetwork();
@@ -4865,6 +4904,12 @@ Instrumenter.prototype.instrument = function(oldSettings) {
     this.instrumentConnectivity();
   } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
     this.deinstrumentConnectivity();
+  }
+
+  if (this.autoInstrument.contentSecurityPolicy && !(oldSettings && oldSettings.contentSecurityPolicy)) {
+    this.instrumentContentSecurityPolicy();
+  } else if (!this.autoInstrument.contentSecurityPolicy && oldSettings && oldSettings.contentSecurityPolicy) {
+    this.deinstrumentContentSecurityPolicy();
   }
 };
 
@@ -5411,6 +5456,43 @@ Instrumenter.prototype.instrumentConnectivity = function() {
       }
     }, this.replacements, 'connectivity');
   }
+};
+
+Instrumenter.prototype.handleCspEvent = function(cspEvent) {
+  var message = 'Security Policy Violation: ' +
+    'blockedURI: ' + cspEvent.blockedURI + ', ' +
+    'violatedDirective: ' + cspEvent.violatedDirective + ', ' +
+    'effectiveDirective: ' + cspEvent.effectiveDirective + ', ';
+
+  if (cspEvent.sourceFile) {
+    message += 'location: ' + cspEvent.sourceFile + ', ' +
+      'line: ' + cspEvent.lineNumber + ', ' +
+      'col: ' + cspEvent.columnNumber + ', ';
+  }
+
+  message += 'originalPolicy: ' + cspEvent.originalPolicy;
+
+  this.telemeter.captureLog(message, 'error');
+  this.handleCspError(message);
+}
+
+Instrumenter.prototype.handleCspError = function(message) {
+  if (this.autoInstrument.errorOnContentSecurityPolicy) {
+    this.rollbar.error(message);
+  }
+}
+
+Instrumenter.prototype.deinstrumentContentSecurityPolicy = function() {
+  if (!('addEventListener' in this._window)) { return; }
+
+  this.removeListeners('contentsecuritypolicy');
+};
+
+Instrumenter.prototype.instrumentContentSecurityPolicy = function() {
+  if (!('addEventListener' in this._window)) { return; }
+
+  var cspHandler = this.handleCspEvent.bind(this);
+  this.addListener('contentsecuritypolicy', this._window, 'securitypolicyviolation', null, cspHandler, false);
 };
 
 Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
@@ -6471,7 +6553,7 @@ function truncateStrings(len, payload, jsonBackup) {
         return v;
     }
   }
-  payload = traverse(payload, truncator, []);
+  payload = traverse(payload, truncator);
   return [payload, _.stringify(payload, jsonBackup)];
 }
 
