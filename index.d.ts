@@ -69,7 +69,7 @@ declare namespace Rollbar {
         includeItemsInTelemetry?: boolean;
         inspectAnonymousErrors?: boolean;
         itemsPerMinute?: number;
-        locals?: boolean;
+        locals?: LocalsOptions;
         logLevel?: Level;
         maxItems?: number;
         maxTelemetryEvents?: number;
@@ -134,6 +134,12 @@ declare namespace Rollbar {
     export type ExpressErrorHandler = (err: any, request: any, response: any, next: ExpressNextFunction) => any;
     export interface ExpressNextFunction {
       (err?: any): void;
+    }
+    export type LocalsOptions = boolean | LocalsSettings;
+    export interface LocalsSettings {
+        depth?: number;
+        maxProperties?: number;
+        maxArray?: number;
     }
 
     class Telemeter {}
