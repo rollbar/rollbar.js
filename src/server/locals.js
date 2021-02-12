@@ -11,24 +11,30 @@ var _ = require('../utility');
 // yet for debugging we usually only care about the pattern of data that is established,
 // so a smaller limit is usually sufficient.
 var DEFAULT_OPTIONS = {
+  enabled: true,
+  uncaughtOnly: true,
   depth: 1,
   maxProperties: 30,
   maxArray: 5
 }
 
-function Locals(options) {
+function Locals(options, logger) {
   if (!(this instanceof Locals)) {
     return new Locals(options);
   }
 
   options = _.isType(options, 'object') ? options : {};
   this.options = _.merge(DEFAULT_OPTIONS, options);
+  this.initialized = false;
+  this.logger = logger;
 
   this.initSession();
 }
 
 Locals.prototype.initSession = function() {
-  if (Locals.session) { return; }
+  if (Locals.session) {
+    this.disconnectSession();
+  }
 
   Locals.session = new inspector.Session();
   Locals.session.connect();
@@ -51,10 +57,49 @@ Locals.prototype.initSession = function() {
     }
   });
 
+  var self = this;
   Locals.session.post('Debugger.enable', (_err, _result) => {
-    Locals.session.post('Debugger.setPauseOnExceptions', { state: 'all'}, (_err, _result) => {
-    });
+    self.initialized = true;
+    updatePauseState(self.options, self.logger);
   });
+}
+
+Locals.prototype.disconnectSession = function() {
+  if (Locals.session) {
+    updatePauseState({ enabled: false }, this.logger);
+    Locals.session.disconnect();
+    Locals.session = null;
+  }
+}
+
+Locals.prototype.updateOptions = function(options) {
+  var setPauseChanged = this.options.enabled != options.enabled || this.options.uncaughtOnly != options.uncaughtOnly;
+
+  this.options = _.merge(this.options, options);
+
+  if (this.initialized && setPauseChanged) {
+    updatePauseState(this.options, this.logger);
+  }
+}
+
+function updatePauseState(options, logger) {
+  var state = pauseStateFromOptions(options);
+  console.log('setPauseOnExceptions', state);
+  Locals.session.post('Debugger.setPauseOnExceptions', { state: state}, (err, _result) => {
+    logger.error('error in setPauseOnExceptions', err);
+  });
+}
+
+function pauseStateFromOptions(options) {
+  if (options.enabled) {
+    if (options.uncaughtOnly) {
+      return 'uncaught';
+    } else {
+      return 'all';
+    }
+  } else {
+    return 'none';
+  }
 }
 
 Locals.prototype.currentLocalsMap = function() {

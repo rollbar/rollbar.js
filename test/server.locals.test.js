@@ -6,6 +6,7 @@ var sinon = require('sinon');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
+var logger = require('../src/server/logger');
 var Locals = require('../src/server/locals');
 var localsFixtures = require('./fixtures/locals.fixtures');
 
@@ -22,7 +23,7 @@ async function promiseReject(rollbar, callback) {
 
   Promise.reject(error);
   await wait(500);
-  callback(rollbar);
+  callback(null, rollbar);
 }
 
 async function nodeThrow(rollbar, callback) {
@@ -31,7 +32,20 @@ async function nodeThrow(rollbar, callback) {
     throw error;
   }, 1);
   await wait(500);
-  callback(rollbar);
+  callback(null, rollbar);
+}
+
+async function nodeThrowAndCatch(rollbar, callback) {
+  setTimeout(function () {
+    var error = new Error('caught error');
+    try {
+      throw error;
+    } catch (e) {
+      rollbar.error(e);
+    }
+  }, 1);
+  await wait(500);
+  callback(null, rollbar);
 }
 
 function nestedError(nestedMessage, _password) {
@@ -55,7 +69,7 @@ async function nodeThrowNested(rollbar, callback) {
     throw err;
   }, 1);
   await wait(500);
-  callback(rollbar);
+  callback(null, rollbar);
 }
 
 function fakeSessionPostHandler(responses) {
@@ -86,7 +100,7 @@ async function nodeThrowWithNestedLocals(rollbar, callback) {
     throw error;
   }, 1);
   await wait(500);
-  callback(rollbar);
+  callback(null, rollbar);
 }
 
 function recurse(curr, limit) {
@@ -102,7 +116,7 @@ async function nodeThrowRecursionError(rollbar, callback) {
     recurse(0, 3);
   }, 1);
   await wait(500);
-  callback(rollbar);
+  callback(null, rollbar);
 }
 
 function cloneStack(stack) {
@@ -111,7 +125,198 @@ function cloneStack(stack) {
   return JSON.parse(JSON.stringify(stack));
 }
 
+function verifyThrownError(r) {
+  var addItemStub = r.addItemStub;
+
+  assert.isTrue(addItemStub.called);
+  var data = addItemStub.getCall(0).args[3].data;
+  assert.equal(data.body.trace_chain[0].exception.message, 'node error');
+  if (nodeMajorVersion < 10) {
+    // Node 8; locals disabled
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else {
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+  }
+  addItemStub.restore();
+}
+
+function verifyCaughtError(r) {
+  var addItemStub = r.addItemStub;
+
+  assert.isTrue(addItemStub.called);
+  var data = addItemStub.getCall(0).args[3].data;
+  assert.equal(data.body.trace_chain[0].exception.message, 'caught error');
+  if (nodeMajorVersion < 10) {
+    // Node 8; locals disabled
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else {
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+  }
+  addItemStub.restore();
+}
+
+function verifyNestedError(r) {
+  var addItemStub = r.addItemStub;
+
+  assert.isTrue(addItemStub.called);
+  var data = addItemStub.getCall(0).args[3].data;
+  assert.equal(data.body.trace_chain[0].exception.message, 'test error');
+  assert.equal(data.body.trace_chain[1].exception.message, 'nested test error');
+  if (nodeMajorVersion < 10) {
+    // Node 8; locals disabled
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else {
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+
+    length = data.body.trace_chain[1].frames.length;
+    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
+    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
+    assert.equal(data.body.trace_chain[1].frames[length-2].locals.message, 'test error');
+    assert.equal(data.body.trace_chain[1].frames[length-2].locals.password, '********');
+    assert.equal(data.body.trace_chain[1].frames[length-2].locals.err, '<Error object>');
+    assert.equal(data.body.trace_chain[1].frames[length-2].locals.newMessage, 'nested test error');
+  }
+  addItemStub.restore();
+}
+
+function verifyRejectedPromise(r) {
+  var addItemStub = r.addItemStub;
+
+  assert.isTrue(addItemStub.called);
+  var data = addItemStub.getCall(0).args[3].data;
+  assert.equal(data.body.trace_chain[0].exception.message, 'promise reject');
+  if (nodeMajorVersion < 10) {
+    // Node 8; locals disabled
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else {
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals.notifier, '<Notifier object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals.r, '<Rollbar object>');
+  }
+  addItemStub.restore();
+}
+
+function verifyDefaultOptions(options) {
+  assert.equal(options.enabled, true);
+  assert.equal(options.uncaughtOnly, true);
+  assert.equal(options.depth, 1);
+  assert.equal(options.maxProperties, 30);
+  assert.equal(options.maxArray, 5);
+}
+
 vows.describe('locals')
+  .addBatch({
+    'enabled': {
+      topic: function() {
+        var rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+          captureUnhandledRejections: true,
+          locals: { module: Locals, uncaughtOnly: true, depth: 0 }
+        });
+        var notifier = rollbar.client.notifier;
+        rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+        nodeThrow(rollbar, this.callback);
+      },
+      'should include locals': function(_err, r) {
+        verifyThrownError(r);
+      },
+      'then disabled': {
+        topic: function(_err, r) {
+          r.configure({ locals: { enabled: false }});
+          var notifier = r.client.notifier;
+          r.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          nodeThrowNested(r, this.callback);
+        },
+        'should not include locals': function(_err, r) {
+          var addItemStub = r.addItemStub;
+
+          assert.isTrue(addItemStub.called);
+          var data = addItemStub.getCall(0).args[3].data;
+          assert.equal(data.body.trace_chain[0].exception.message, 'test error');
+          assert.equal(data.body.trace_chain[1].exception.message, 'nested test error');
+          var length = data.body.trace_chain[0].frames.length;
+          assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+          assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+          addItemStub.restore();
+        },
+        'then enabled': {
+          topic: function(_err, r) {
+            r.configure({ locals: { enabled: true, uncaughtOnly: false }});
+            var notifier = r.client.notifier;
+            r.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+            promiseReject(r, this.callback);
+          },
+          'should include locals': function(_err, r) {
+            verifyRejectedPromise(r);
+          },
+        }
+      }
+    }
+  })
+
+  .addBatch({
+    'on caught error': {
+      'uncaughtOnly: true': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            captureUnhandledRejections: true,
+            locals: { module: Locals, uncaughtOnly:true, depth: 0 }
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          nodeThrowAndCatch(rollbar, this.callback);
+        },
+        'should not include locals': function(_err, r) {
+          var addItemStub = r.addItemStub;
+
+          assert.isTrue(addItemStub.called);
+          var data = addItemStub.getCall(0).args[3].data;
+          assert.equal(data.body.trace_chain[0].exception.message, 'caught error');
+          var length = data.body.trace_chain[0].frames.length;
+          assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+          assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+
+          addItemStub.restore();
+        },
+        'then uncaughtOnly: false': {
+          topic: function(_err, r) {
+            r.configure({ locals: { uncaughtOnly: false }});
+            var notifier = r.client.notifier;
+            r.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+            nodeThrowAndCatch(r, this.callback);
+          },
+          'should include locals': function(_err, r) {
+            verifyCaughtError(r);
+          }
+        }
+      }
+    }
+  })
+
   .addBatch({
     'on exception': {
       'uncaught': {
@@ -119,108 +324,60 @@ vows.describe('locals')
           var rollbar = new Rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            locals: { depth: 0 }
+            captureUnhandledRejections: true,
+            locals: { module: Locals, uncaughtOnly: true, depth: 0 }
           });
           var notifier = rollbar.client.notifier;
           rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
 
           nodeThrow(rollbar, this.callback);
         },
-        'should include locals': function(r) {
-          var addItemStub = r.addItemStub;
-
-          assert.isTrue(addItemStub.called);
-          var data = addItemStub.getCall(0).args[3].data;
-          assert.equal(data.body.trace_chain[0].exception.message, 'node error');
-          if (nodeMajorVersion < 10) {
-            // Node 8; locals disabled
-            var length = data.body.trace_chain[0].frames.length;
-            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-            assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-          } else {
-            var length = data.body.trace_chain[0].frames.length;
-            assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-            assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
-          }
-          addItemStub.reset();
-          Locals.session = undefined;
-        },
-        'nested': {
-          topic: function() {
-            var rollbar = new Rollbar({
-              accessToken: 'abc123',
-              captureUncaught: true,
-              locals: { depth: 0 }
-            });
-            var notifier = rollbar.client.notifier;
-            rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
-
-            nodeThrowNested(rollbar, this.callback);
-          },
-          'should include locals': function(r) {
-            var addItemStub = r.addItemStub;
-
-            assert.isTrue(addItemStub.called);
-            var data = addItemStub.getCall(0).args[3].data;
-            assert.equal(data.body.trace_chain[0].exception.message, 'test error');
-            assert.equal(data.body.trace_chain[1].exception.message, 'nested test error');
-            if (nodeMajorVersion < 10) {
-              // Node 8; locals disabled
-              var length = data.body.trace_chain[0].frames.length;
-              assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-              assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-            } else {
-              var length = data.body.trace_chain[0].frames.length;
-              assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
-              assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
-
-              length = data.body.trace_chain[1].frames.length;
-              assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
-              assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
-              assert.equal(data.body.trace_chain[1].frames[length-2].locals.message, 'test error');
-              assert.equal(data.body.trace_chain[1].frames[length-2].locals.password, '********');
-              assert.equal(data.body.trace_chain[1].frames[length-2].locals.err, '<Error object>');
-              assert.equal(data.body.trace_chain[1].frames[length-2].locals.newMessage, 'nested test error');
-            }
-            addItemStub.reset();
-            Locals.session = undefined;
-          },
-          'promise rejection': {
-            topic: function() {
-              var rollbar = new Rollbar({
-                accessToken: 'abc123',
-                captureUnhandledRejections: true,
-                locals: { depth: 0 }
-              });
-              var notifier = rollbar.client.notifier;
-              rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
-
-              promiseReject(rollbar, this.callback);
-            },
-            'should include locals': function(r) {
-              var addItemStub = r.addItemStub;
-
-              assert.isTrue(addItemStub.called);
-              var data = addItemStub.getCall(0).args[3].data;
-              assert.equal(data.body.trace_chain[0].exception.message, 'promise reject');
-              if (nodeMajorVersion < 10) {
-                // Node 8; locals disabled
-                var length = data.body.trace_chain[0].frames.length;
-                assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-                assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-              } else {
-                var length = data.body.trace_chain[0].frames.length;
-                assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-                assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
-                assert.equal(data.body.trace_chain[0].frames[length-2].locals.notifier, '<Notifier object>');
-                assert.equal(data.body.trace_chain[0].frames[length-2].locals.rollbar, '<Rollbar object>');
-              }
-              addItemStub.reset();
-              Locals.session = undefined;
-            },
-          }
+        'should include locals': function(_err, r) {
+          verifyThrownError(r);
         }
-      },
+      }
+    }
+  })
+
+  .addBatch({
+    'on exception': {
+      'nested': {
+        topic: function() {
+          var rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            locals: { module: Locals, uncaughtOnly: false, depth: 0 }
+          });
+          var notifier = rollbar.client.notifier;
+          rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          nodeThrowNested(rollbar, this.callback);
+        },
+        'should include locals': function(_err, r) {
+          verifyNestedError(r);
+        },
+      }
+    }
+  })
+
+  .addBatch({
+    'on exception': {
+      'promise rejection': {
+        topic: function() {
+          var r = new Rollbar({
+            accessToken: 'abc123',
+            captureUnhandledRejections: true,
+            locals: { module: Locals, uncaughtOnly: false, depth: 0 }
+          });
+          var notifier = r.client.notifier;
+          r.addItemStub = sinon.stub(notifier.queue, 'addItem');
+
+          promiseReject(r, this.callback);
+        },
+        'should include locals': function(_err, r) {
+          verifyRejectedPromise(r);
+        },
+      }
     }
   })
 
@@ -231,14 +388,14 @@ vows.describe('locals')
           var rollbar = new Rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            locals: { depth: 2, maxProperties: 5, maxArray: 2 }
+            locals: { module: Locals, depth: 2, maxProperties: 5, maxArray: 2 }
           });
           var notifier = rollbar.client.notifier;
           rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
 
           nodeThrowWithNestedLocals(rollbar, this.callback);
         },
-        'should include locals': function(r) {
+        'should include locals': function(_err, r) {
           var addItemStub = r.addItemStub;
 
           assert.isTrue(addItemStub.called);
@@ -272,14 +429,14 @@ vows.describe('locals')
           var rollbar = new Rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            locals: true
+            locals: Locals
           });
           var notifier = rollbar.client.notifier;
           rollbar.addItemStub = sinon.stub(notifier.queue, 'addItem');
 
           nodeThrowRecursionError(rollbar, this.callback);
         },
-        'should include locals': function(r) {
+        'should include locals': function(_err, r) {
           var addItemStub = r.addItemStub;
 
           assert.isTrue(addItemStub.called);
@@ -304,73 +461,87 @@ vows.describe('locals')
 
   .addBatch({
     'constructor': {
-      'passing no arguments': {
-        topic: function() {
-          return new Locals();
-        },
-        'should use defaults': function(locals) {
-          var options = locals.options;
-
-          assert.equal(options.depth, 1);
-          assert.equal(options.maxProperties, 30);
-          assert.equal(options.maxArray, 5);
-        }
-      },
       'passing true boolean': {
         topic: function() {
-          return new Locals(true);
+          return new Locals(true, logger);
         },
         'should use defaults': function(locals) {
-          var options = locals.options;
-
-          assert.equal(options.depth, 1);
-          assert.equal(options.maxProperties, 30);
-          assert.equal(options.maxArray, 5);
+          verifyDefaultOptions(locals.options);
         }
       },
       'passing false boolean': {
         topic: function() {
-          return new Locals(false);
+          return new Locals(false, logger);
         },
         'should use defaults': function(locals) {
-          var options = locals.options;
-
-          assert.equal(options.depth, 1);
-          assert.equal(options.maxProperties, 30);
-          assert.equal(options.maxArray, 5);
+          verifyDefaultOptions(locals.options);
         }
       },
       'passing empty object': {
         topic: function() {
-          return new Locals({});
+          return new Locals({}, logger);
         },
         'should use defaults': function(locals) {
+          verifyDefaultOptions(locals.options);
+        }
+      },
+      'passing depth option': {
+        topic: function() {
+          return new Locals({ depth: 0 }, logger);
+        },
+        'should use updated depth with remaining defaults': function(locals) {
           var options = locals.options;
 
+          assert.equal(options.enabled, true);
+          assert.equal(options.uncaughtOnly, true);
+          assert.equal(options.depth, 0);
+          assert.equal(options.maxProperties, 30);
+          assert.equal(options.maxArray, 5);
+        }
+      },
+      'passing enabled option': {
+        topic: function() {
+          return new Locals({ enabled: false }, logger);
+        },
+        'should use updated enabled with remaining defaults': function(locals) {
+          var options = locals.options;
+
+          assert.equal(options.enabled, false);
+          assert.equal(options.uncaughtOnly, true);
           assert.equal(options.depth, 1);
           assert.equal(options.maxProperties, 30);
           assert.equal(options.maxArray, 5);
         }
       },
-      'passing depth option': {
+      'passing uncaughtOnly option': {
         topic: function() {
-          return new Locals({ depth: 0 });
+          return new Locals({ uncaughtOnly: false }, logger);
         },
-        'should use updated depth with remaining defaults': function(locals) {
+        'should use updated uncaughtOnly with remaining defaults': function(locals) {
           var options = locals.options;
 
-          assert.equal(options.depth, 0);
+          assert.equal(options.enabled, true);
+          assert.equal(options.uncaughtOnly, false);
+          assert.equal(options.depth, 1);
           assert.equal(options.maxProperties, 30);
           assert.equal(options.maxArray, 5);
         }
       },
       'passing all options': {
         topic: function() {
-          return new Locals({ depth: 2, maxProperties: 15, maxArray: 10 });
+          return new Locals({
+            enabled: false,
+            uncaughtOnly: false,
+            depth: 2,
+            maxProperties: 15,
+            maxArray: 10
+          }, logger);
         },
         'should use updated options': function(locals) {
           var options = locals.options;
 
+          assert.equal(options.enabled, false);
+          assert.equal(options.uncaughtOnly, false);
           assert.equal(options.depth, 2);
           assert.equal(options.maxProperties, 15);
           assert.equal(options.maxArray, 10);
@@ -384,7 +555,7 @@ vows.describe('locals')
   .addBatch({
     'mergeLocals returns error from session.post()': {
       topic: function() {
-        var locals = new Locals();
+        var locals = new Locals({}, logger);
         var err = new Error('post error');
         sinon.stub(Locals.session, 'post').yields(err);
 
@@ -427,7 +598,7 @@ vows.describe('locals')
           ],
         }
 
-        var locals = new Locals({ depth: 0 });
+        var locals = new Locals({ depth: 0 }, logger);
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key1 = 'key1';
@@ -473,7 +644,7 @@ vows.describe('locals')
           ]
         }
 
-        var locals = new Locals({ depth: 0 });
+        var locals = new Locals({ depth: 0 }, logger);
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key = 'key';
@@ -522,7 +693,7 @@ vows.describe('locals')
           ]
         }
 
-        var locals = new Locals({ depth: 1 });
+        var locals = new Locals({ depth: 1 }, logger);
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key = 'key';
@@ -569,7 +740,7 @@ vows.describe('locals')
           ],
         }
 
-        var locals = new Locals();
+        var locals = new Locals({}, logger);
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         // Test with no maps present. 'key' won't match anything.
@@ -616,7 +787,7 @@ vows.describe('locals')
           ],
         }
 
-        var locals = new Locals();
+        var locals = new Locals({}, logger);
         sinon.stub(Locals.session, 'post').callsFake(fakeSessionPostHandler(getPropertiesResponses));
 
         var key = 'key';
@@ -649,7 +820,7 @@ vows.describe('locals')
   .addBatch({
     'currentLocalsMap called with no local scopes in map': {
       topic: function() {
-        var locals = new Locals();
+        var locals = new Locals({}, logger);
 
         // Ensure empty map, as vows uses the same class object between tests.
         Locals.currentErrors = new Map();
