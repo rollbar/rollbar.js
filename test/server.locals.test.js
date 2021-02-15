@@ -199,18 +199,19 @@ function verifyRejectedPromise(r) {
   assert.isTrue(addItemStub.called);
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'promise reject');
-  if (nodeMajorVersion < 10) {
-    // Node 8; locals disabled
-    var length = data.body.trace_chain[0].frames.length;
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-  } else {
+  if (nodeMajorVersion >= 10) {
+    // Node 10+; locals enabled
     var length = data.body.trace_chain[0].frames.length;
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.notifier, '<Notifier object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.r, '<Rollbar object>');
-  }
+  } else {
+    // Node 8; locals disabled
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+}
   addItemStub.restore();
 }
 
