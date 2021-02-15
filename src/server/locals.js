@@ -73,11 +73,11 @@ Locals.prototype.disconnectSession = function() {
 }
 
 Locals.prototype.updateOptions = function(options) {
-  var setPauseChanged = this.options.enabled != options.enabled || this.options.uncaughtOnly != options.uncaughtOnly;
+  var pauseStateChanged = this.options.enabled != options.enabled || this.options.uncaughtOnly != options.uncaughtOnly;
 
   this.options = _.merge(this.options, options);
 
-  if (this.initialized && setPauseChanged) {
+  if (this.initialized && pauseStateChanged) {
     updatePauseState(this.options, this.logger);
   }
 }
@@ -86,7 +86,9 @@ function updatePauseState(options, logger) {
   var state = pauseStateFromOptions(options);
   console.log('setPauseOnExceptions', state);
   Locals.session.post('Debugger.setPauseOnExceptions', { state: state}, (err, _result) => {
-    logger.error('error in setPauseOnExceptions', err);
+    if (err) {
+      logger.error('error in setPauseOnExceptions', err);
+    }
   });
 }
 
