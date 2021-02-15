@@ -151,15 +151,15 @@ function verifyCaughtError(r) {
   assert.isTrue(addItemStub.called);
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'caught error');
-  if (nodeMajorVersion < 10) {
-    // Node 8; locals disabled
-    var length = data.body.trace_chain[0].frames.length;
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-  } else {
+  if (nodeMajorVersion >= 10) {
+    // Node 10+; locals enabled
     var length = data.body.trace_chain[0].frames.length;
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+  } else {
+    var length = data.body.trace_chain[0].frames.length;
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
   }
   addItemStub.restore();
 }
