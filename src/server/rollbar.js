@@ -16,7 +16,6 @@ var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
 var truncation = require('../truncation');
-var Locals = require('./locals');
 var polyfillJSON = require('../../vendor/JSON-js/json3');
 
 function Rollbar(options, client) {
@@ -42,16 +41,31 @@ function Rollbar(options, client) {
   var telemeter = new Telemeter(this.options)
   this.client = client || new Client(this.options, api, logger, telemeter, 'server');
   if (this.options.locals) {
-    // Capturing stack local variables is only supported in Node 10 and higher.
-    var nodeMajorVersion = process.versions.node.split('.')[0];
-    if (nodeMajorVersion >= 10) {
-      this.locals = new Locals(this.options.locals);
-    }
+    this.locals = initLocals(this.options.locals, logger);
   }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
   _.setupJSON(polyfillJSON);
+}
+
+function initLocals(localsOptions, logger) {
+  // Capturing stack local variables is only supported in Node 10 and higher.
+  var nodeMajorVersion = process.versions.node.split('.')[0];
+  if (nodeMajorVersion < 10) { return null; }
+
+  var Locals;
+  if (typeof localsOptions === 'function') {
+    Locals = localsOptions;
+    localsOptions = null; // use defaults
+  } else if (_.isType(localsOptions, 'object')) {
+    Locals = localsOptions.module;
+    delete localsOptions.module;
+  } else {
+    logger.error('options.locals or options.locals.module must be a Locals module');
+    return null;
+  }
+  return new Locals(localsOptions, logger);
 }
 
 var _instance = null;
@@ -99,6 +113,14 @@ Rollbar.prototype.configure = function (options, payloadData) {
   logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
   this.setupUnhandledCapture();
+
+  if (this.options.locals) {
+    if (this.locals) {
+      this.locals.updateOptions(this.options.locals);
+    } else {
+      this.locals = initLocals(this.options.locals, logger)
+    }
+  }
   return this;
 };
 Rollbar.configure = function (options, payloadData) {
