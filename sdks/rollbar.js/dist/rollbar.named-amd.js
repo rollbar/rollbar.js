@@ -4012,9 +4012,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     var numericProps = ['columnNumber', 'lineNumber'];
     var stringProps = ['fileName', 'functionName', 'source'];
     var arrayProps = ['args'];
-    var objectProps = ['evalOrigin'];
 
-    var props = booleanProps.concat(numericProps, stringProps, arrayProps, objectProps);
+    var props = booleanProps.concat(numericProps, stringProps, arrayProps);
 
     function StackFrame(obj) {
         if (!obj) return;
@@ -4481,7 +4480,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.20.0',
+  version: '2.21.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
