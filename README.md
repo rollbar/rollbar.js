@@ -1,7 +1,7 @@
 # Rollbar.js
 
 
-![Build Status](https://github.com/rollbar/rollbar.js/workflows/Rollbar.js%20CI/badge.svg?branch=v2.21.0)
+![Build Status](https://github.com/rollbar/rollbar.js/workflows/Rollbar.js%20CI/badge.svg?tag=latest)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/context:javascript)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/alerts)
 
