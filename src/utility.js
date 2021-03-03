@@ -358,8 +358,8 @@ function makeUnhandledStackInfo(
   };
   location.func = errorParser.guessFunctionName(location.url, location.line);
   location.context = errorParser.gatherContext(location.url, location.line);
-  var href = document && document.location && document.location.href;
-  var useragent = window && window.navigator && window.navigator.userAgent;
+  var href = typeof document !== 'undefined' && document && document.location && document.location.href;
+  var useragent = typeof window !== 'undefined' && window && window.navigator && window.navigator.userAgent;
   return {
     'mode': mode,
     'message': error ? String(error) : (message || backupMessage),

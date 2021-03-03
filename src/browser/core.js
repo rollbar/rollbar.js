@@ -264,7 +264,9 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
 
   // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
   // If error is undefined, we have a different caller.
-  if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
+  // Chrome also sends errors from web workers with null error, but does not invoke
+  // prepareStackTrace() for these. Test for empty url to skip them.
+  if (this.options.inspectAnonymousErrors && this.isChrome && error === null && url === '') {
     return 'anonymous';
   }
 
