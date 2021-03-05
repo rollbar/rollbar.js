@@ -385,7 +385,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
-          metadata.response_content_type = resp.headers.get('Content-Type');
+          if (resp.headers && typeof resp.headers.get === 'function') {
+            metadata.response_content_type = resp.headers.get('Content-Type');
+          }
           var headers = null;
           if (self.autoInstrument.networkResponseHeaders) {
             headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
