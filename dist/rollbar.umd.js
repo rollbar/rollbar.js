@@ -461,8 +461,8 @@ function makeUnhandledStackInfo(
   };
   location.func = errorParser.guessFunctionName(location.url, location.line);
   location.context = errorParser.gatherContext(location.url, location.line);
-  var href = document && document.location && document.location.href;
-  var useragent = window && window.navigator && window.navigator.userAgent;
+  var href = typeof document !== 'undefined' && document && document.location && document.location.href;
+  var useragent = typeof window !== 'undefined' && window && window.navigator && window.navigator.userAgent;
   return {
     'mode': mode,
     'message': error ? String(error) : (message || backupMessage),
@@ -1602,7 +1602,9 @@ Rollbar.prototype.handleUncaughtException = function(message, url, lineno, colno
 
   // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
   // If error is undefined, we have a different caller.
-  if (this.options.inspectAnonymousErrors && this.isChrome && (error === null)) {
+  // Chrome also sends errors from web workers with null error, but does not invoke
+  // prepareStackTrace() for these. Test for empty url to skip them.
+  if (this.options.inspectAnonymousErrors && this.isChrome && error === null && url === '') {
     return 'anonymous';
   }
 
@@ -4490,7 +4492,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.21.0',
+  version: '2.21.1',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
