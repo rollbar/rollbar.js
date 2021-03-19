@@ -1,7 +1,8 @@
 var util = require('util');
 var os = require('os');
+var path = require('path');
 
-var packageJson = require('../../package.json');
+var packageJson = require(path.join(__dirname, '../../package.json'));
 var Client = require('../rollbar');
 var _ = require('../utility');
 var API = require('../api');
