@@ -45,6 +45,7 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
  * @param callback
  */
 Api.prototype.postItem = function(data, callback) {
+  console.log('postItem')
   var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
   this.transport.post(this.accessToken, transportOptions, payload, callback);
