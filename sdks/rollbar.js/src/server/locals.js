@@ -84,7 +84,6 @@ Locals.prototype.updateOptions = function(options) {
 
 function updatePauseState(options, logger) {
   var state = pauseStateFromOptions(options);
-  console.log('setPauseOnExceptions', state);
   Locals.session.post('Debugger.setPauseOnExceptions', { state: state}, (err, _result) => {
     if (err) {
       logger.error('error in setPauseOnExceptions', err);
