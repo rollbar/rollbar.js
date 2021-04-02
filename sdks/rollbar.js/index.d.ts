@@ -117,6 +117,8 @@ declare namespace Rollbar {
         dom?: boolean;
         navigation?: boolean;
         connectivity?: boolean;
+        contentSecurityPolicy?: boolean;
+        errorOnContentSecurityPolicy?: boolean;
     }
     export type TelemetryScrubber = (description: TelemetryScrubberInput) => boolean;
     export type TelemetryScrubberInput = DomDescription | null;
