@@ -12,6 +12,7 @@ var urllib = require('url');
 var jsonBackup = require('json-stringify-safe');
 
 var Telemeter = require('../telemetry');
+var Instrumenter = require('./telemetry');
 var transforms = require('./transforms');
 var sharedTransforms = require('../transforms');
 var sharedPredicates = require('../predicates');
@@ -40,6 +41,8 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options)
   this.client = client || new Client(this.options, api, logger, telemeter, 'server');
+  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this);
+  this.instrumenter.instrument();
   if (this.options.locals) {
     this.locals = initLocals(this.options.locals, logger);
   }
@@ -670,7 +673,8 @@ Rollbar.defaultOptions = {
   captureIp: true,
   captureLambdaTimeouts: true,
   ignoreDuplicateErrors: true,
-  scrubRequestBody: true
+  scrubRequestBody: true,
+  autoInstrument: false
 };
 
 module.exports = Rollbar;
