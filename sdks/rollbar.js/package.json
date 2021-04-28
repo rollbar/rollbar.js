@@ -68,6 +68,7 @@
     "mocha": "^7.1.2",
     "mootools": "^1.5.1",
     "natives": "^1.1.6",
+    "nock": "^11.9.1",
     "node-libs-browser": "^0.5.2",
     "request": "^2.88.0",
     "requirejs": "^2.1.20",
