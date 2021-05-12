@@ -174,7 +174,7 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory, 
       }
 
       if(transportOptions.timeout) {
-        request.timeout = transportOptions;
+        request.timeout = transportOptions.timeout;
       }
 
       request.onreadystatechange = onreadystatechange;
