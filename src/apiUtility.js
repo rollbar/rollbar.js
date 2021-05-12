@@ -24,6 +24,7 @@ function getTransportFromOptions(options, defaults, url) {
   var port = defaults.port;
   var path = defaults.path;
   var search = defaults.search;
+  var timeout = options.timeout;
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -35,6 +36,7 @@ function getTransportFromOptions(options, defaults, url) {
     search = opts.search;
   }
   return {
+    timeout: timeout,
     hostname: hostname,
     protocol: protocol,
     port: port,
@@ -49,6 +51,7 @@ function transportOptions(transport, method) {
   var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
   var path = transport.path;
+  var timeout = transport.timeout;
   if (transport.search) {
     path = path + transport.search;
   }
@@ -59,6 +62,7 @@ function transportOptions(transport, method) {
     protocol = transport.proxy.protocol || protocol;
   }
   return {
+    timeout: timeout,
     protocol: protocol,
     hostname: hostname,
     path: path,
