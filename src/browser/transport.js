@@ -111,6 +111,10 @@ function _proxyRequest(json, callback) {
   );
 }
 
+function _isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 function _makeRequest(accessToken, url, method, data, callback, requestFactory, transportOptions) {
   if (typeof RollbarProxy !== 'undefined') {
     return _proxyRequest(data, callback);
@@ -173,7 +177,7 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory, 
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
       }
 
-      if(transportOptions.timeout) {
+      if(_isNumber(transportOptions.timeout)) {
         request.timeout = transportOptions.timeout;
       }
 
