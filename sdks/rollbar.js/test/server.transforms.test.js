@@ -286,7 +286,12 @@ vows.describe('transforms')
             assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
             assert.ok(urls[1].includes('server.transforms.test.js'));
             assert.ok(sourceMappingURLs[urls[1]].includes('not found'));
-            assert.ok(urls[2].includes('timers.js'));
+
+            // Node until v12 will have 'timers.js' here.
+            // Node 12 - 14 will have 'internal/timers.js' here.
+            // Starting in v16, this is 'node:internal/timers'.
+            // This assert works for all and is specific enough for this test case.
+            assert.ok(urls[2].includes('timers'));
             assert.ok(sourceMappingURLs[urls[2]].includes('not found'));
           }
           addItem.reset();
