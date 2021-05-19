@@ -142,8 +142,7 @@ function messageIsIgnored(logger) {
       for (i = 0; i < len; i++) {
         rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
 
-        var messagesLength = messages.length;
-        for (j = 0; j < messagesLength; j++) {
+        for (j = 0; j < messages.length; j++) {
           messageIsIgnored = rIgnoredMessage.test(messages[j]);
 
           if (messageIsIgnored) {
