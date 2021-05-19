@@ -122,9 +122,7 @@ function urlIsOnAList(item, settings, safeOrBlock, logger) {
 
 function messageIsIgnored(logger) {
   return function(item, settings) {
-    var exceptionMessage, i, ignoredMessages,
-        len, messageIsIgnored, rIgnoredMessage,
-        body, traceMessage, bodyMessage;
+    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
 
     try {
       messageIsIgnored = false;
@@ -134,23 +132,22 @@ function messageIsIgnored(logger) {
         return true;
       }
 
-      body = item.body;
-      traceMessage = _.get(body, 'trace.exception.message');
-      bodyMessage = _.get(body, 'message.body');
+      messages = messagesFromItem(item);
 
-      exceptionMessage = traceMessage || bodyMessage;
-
-      if (!exceptionMessage){
+      if (messages.length === 0){
         return true;
       }
 
       len = ignoredMessages.length;
       for (i = 0; i < len; i++) {
         rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-        messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
 
-        if (messageIsIgnored) {
-          break;
+        for (j = 0; j < messages.length; j++) {
+          messageIsIgnored = rIgnoredMessage.test(messages[j]);
+
+          if (messageIsIgnored) {
+            return false;
+          }
         }
       }
     } catch(e)
@@ -160,8 +157,31 @@ function messageIsIgnored(logger) {
       logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
     }
 
-    return !messageIsIgnored;
+    return true;
   }
+}
+
+function messagesFromItem(item) {
+  var body = item.body;
+  var messages = [];
+
+  // The payload schema only allows one of trace_chain, message, or trace.
+  // However, existing test cases are based on having both trace and message present.
+  // So here we preserve the ability to collect strings from any combination of these keys.
+  if (body.trace_chain) {
+    var traceChain = body.trace_chain;
+    for (var i = 0; i < traceChain.length; i++) {
+      var trace = traceChain[i];
+      messages.push(_.get(trace, 'exception.message'));
+    }
+  }
+  if (body.trace) {
+    messages.push(_.get(body, 'trace.exception.message'));
+  }
+  if (body.message) {
+    messages.push(_.get(body, 'message.body'));
+  }
+  return messages;
 }
 
 module.exports = {

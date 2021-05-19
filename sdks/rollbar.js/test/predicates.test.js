@@ -416,7 +416,7 @@ describe('messageIsIgnored', function() {
     };
     expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
   });
-  it('true if both trace and body message but ignoredMessages only match body', function() {
+  it('false if both trace and body message but ignoredMessages only match body', function() {
     var item = {
       level: 'critical',
       body: {
@@ -428,7 +428,7 @@ describe('messageIsIgnored', function() {
       reportLevel: 'debug',
       ignoredMessages: ['fuzz', 'stuff']
     };
-    expect(p.messageIsIgnored(logger)(item, settings)).to.be.ok();
+    expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
   });
   it('false if ignoredMessages match something in body exception message', function() {
     var item = {
@@ -436,6 +436,54 @@ describe('messageIsIgnored', function() {
       body: {
         trace: {frames: []},
         message: {body: 'fuzz'}
+      }
+    };
+    var settings = {
+      reportLevel: 'debug',
+      ignoredMessages: ['stuff', 'fuzz']
+    };
+    expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
+  });
+  it("true if trace_chain doesn't match", function() {
+    var item = {
+      level: 'critical',
+      body: {
+        trace_chain: [
+          {exception: {message: 'inner bork'}},
+          {exception: {message: 'outer bork'}}
+        ]
+      }
+    };
+    var settings = {
+      reportLevel: 'debug',
+      ignoredMessages: ['stuff', 'fuzz']
+    };
+    expect(p.messageIsIgnored(logger)(item, settings)).to.be.ok();
+  });
+  it("false if first trace_chain trace matches", function() {
+    var item = {
+      level: 'critical',
+      body: {
+        trace_chain: [
+          {exception: {message: 'inner stuff'}},
+          {exception: {message: 'outer bork'}}
+        ]
+      }
+    };
+    var settings = {
+      reportLevel: 'debug',
+      ignoredMessages: ['stuff', 'fuzz']
+    };
+    expect(p.messageIsIgnored(logger)(item, settings)).to.not.be.ok();
+  });
+  it("false if last trace_chain trace matches", function() {
+    var item = {
+      level: 'critical',
+      body: {
+        trace_chain: [
+          {exception: {message: 'inner bork'}},
+          {exception: {message: 'outer fuzz'}}
+        ]
       }
     };
     var settings = {
