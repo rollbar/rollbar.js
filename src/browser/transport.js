@@ -75,17 +75,18 @@ Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayloa
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
 //
-function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
+function _makeZoneRequest() {
   var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
   var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+  var args = Array.prototype.slice.call(arguments);
 
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
     rootZone.run(function () {
-      _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout);
+      _makeRequest.apply(undefined, args);
     });
   } else {
-    _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout);
+    _makeRequest.apply(undefined, args);
   }
 }
 
