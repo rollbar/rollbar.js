@@ -14,7 +14,8 @@ describe('post', function() {
   var options = {
     hostname: 'api.rollbar.com',
     protocol: 'https',
-    path: '/api/1/item/'
+    path: '/api/1/item/',
+    timeout: 2000
   };
   var payload = {
     access_token: accessToken,
@@ -31,54 +32,59 @@ describe('post', function() {
     t.post(accessToken, options, payload, callback, requestFactory);
   });
   it('should callback with the right value on success', function(done) {
-    var requestFactory = requestGenerator('{"err": null, "result": true}', 200);
+    var requestFactory = new requestGenerator('{"err": null, "result": true}', 200);
     var callback = function(err, resp) {
       expect(resp).to.be.ok();
       expect(resp.result).to.be.ok();
+      expect(requestFactory.request.timeout).to.equal(options.timeout);
       done(err);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.get.bind(requestFactory));
   });
   it('should callback with the server error if 403', function(done) {
     var response = '{"err": "bad request", "result": null, "message": "fail whale"}'
-    var requestFactory = requestGenerator(response, 403);
+    var requestFactory = new requestGenerator(response, 403);
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.eql('403');
+      expect(requestFactory.request.timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.get.bind(requestFactory));
   });
   it('should callback with the server error if 500', function(done) {
     var response = '{"err": "bad request", "result": null, "message": "500!!!"}'
-    var requestFactory = requestGenerator(response, 500);
+    var requestFactory = new requestGenerator(response, 500);
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.eql('500');
+      expect(requestFactory.request.timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.get.bind(requestFactory));
   });
   it('should callback with a retriable error with a weird status', function(done) {
     var response = '{"err": "bad request"}'
-    var requestFactory = requestGenerator(response, 12005);
+    var requestFactory = new requestGenerator(response, 12005);
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.match(/connection failure/);
       expect(err.code).to.eql('ENOTFOUND');
+      expect(requestFactory.request.timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.get.bind(requestFactory));
   });
   it('should callback with some error if normal sending throws', function(done) {
     var response = '{"err": "bad request"}'
-    var requestFactory = requestGenerator(response, 500, true);
+    var requestFactory = new requestGenerator(response, 500, true);
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.match(/Cannot find a method to transport/);
+      expect(requestFactory.request.timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.get.bind(requestFactory));
   });
 });
 
@@ -112,8 +118,13 @@ TestRequest.prototype.send = function(data) {
     this.onreadystatechange();
   }
 };
+
 var requestGenerator = function(response, status, shouldThrow) {
-  return function() {
-    return new TestRequest(response, status, shouldThrow);
-  };
+  this.response = response;
+  this.status = status;
+  this.shouldThrow = shouldThrow;
+};
+requestGenerator.prototype.get = function() {
+  this.request = new TestRequest(this.response, this.status, this.shouldThrow);
+  return this.request;
 };
