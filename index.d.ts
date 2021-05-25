@@ -137,8 +137,13 @@ declare namespace Rollbar {
     export interface ExpressNextFunction {
       (err?: any): void;
     }
-    export type LocalsOptions = boolean | LocalsSettings;
+    class Locals {}
+    export type LocalsType = typeof Locals;
+    export type LocalsOptions = LocalsType | LocalsSettings;
     export interface LocalsSettings {
+        locals: LocalsType,
+        enabled?: boolean;
+        uncaughtOnly?: boolean;
         depth?: number;
         maxProperties?: number;
         maxArray?: number;
