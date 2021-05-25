@@ -32,8 +32,7 @@ Transport.prototype.get = function(accessToken, options, params, callback, reque
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  var transportOptions = _getMakeZoneRequestOptions(options);
-  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory, transportOptions);
+  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory, options.timeout);
 }
 
 Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
@@ -58,8 +57,7 @@ Transport.prototype.post = function(accessToken, options, payload, callback, req
   var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  var transportOptions = _getMakeZoneRequestOptions(options);
-  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory, transportOptions);
+  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory, options.timeout);
 }
 
 Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
@@ -69,33 +67,25 @@ Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayloa
 
   var method = 'POST';
   var url = _.formatUrl(options);
-  var transportOptions = _getMakeZoneRequestOptions(options);
-  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory, transportOptions);
+  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout);
 }
 
-// Returns the options to be sent to the _makeZoneRequest calls
-function _getMakeZoneRequestOptions(options) {
-  var timeout = options.timeout;
-  return {
-    timeout: timeout
-  }
-}
 
 // Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
 //
-function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory, transportOptions) {
+function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
   var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
   var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
 
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
     rootZone.run(function () {
-      _makeRequest(accessToken, url, method, data, callback, requestFactory, transportOptions);
+      _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout);
     });
   } else {
-    _makeRequest(accessToken, url, method, data, callback, requestFactory, transportOptions);
+    _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout);
   }
 }
 
@@ -111,11 +101,7 @@ function _proxyRequest(json, callback) {
   );
 }
 
-function _isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-function _makeRequest(accessToken, url, method, data, callback, requestFactory, transportOptions) {
+function _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
   if (typeof RollbarProxy !== 'undefined') {
     return _proxyRequest(data, callback);
   }
@@ -177,8 +163,8 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory, 
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
       }
 
-      if(_isNumber(transportOptions.timeout)) {
-        request.timeout = transportOptions.timeout;
+      if(_.isFiniteNumber(timeout)) {
+        request.timeout = timeout;
       }
 
       request.onreadystatechange = onreadystatechange;
