@@ -119,6 +119,7 @@ function isString(value) {
  function isFiniteNumber(n) {
   return Number.isFinite(n);
 }
+
 /*
  * isDefined - a convenience function for checking if a value is not equal to undefined
  *
