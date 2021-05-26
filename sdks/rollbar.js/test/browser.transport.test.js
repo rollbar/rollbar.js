@@ -14,7 +14,8 @@ describe('post', function() {
   var options = {
     hostname: 'api.rollbar.com',
     protocol: 'https',
-    path: '/api/1/item/'
+    path: '/api/1/item/',
+    timeout: 2000
   };
   var payload = {
     access_token: accessToken,
@@ -35,9 +36,10 @@ describe('post', function() {
     var callback = function(err, resp) {
       expect(resp).to.be.ok();
       expect(resp.result).to.be.ok();
+      expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(err);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
   it('should callback with the server error if 403', function(done) {
     var response = '{"err": "bad request", "result": null, "message": "fail whale"}'
@@ -45,9 +47,10 @@ describe('post', function() {
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.eql('403');
+      expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
   it('should callback with the server error if 500', function(done) {
     var response = '{"err": "bad request", "result": null, "message": "500!!!"}'
@@ -55,9 +58,10 @@ describe('post', function() {
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.eql('500');
+      expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
   it('should callback with a retriable error with a weird status', function(done) {
     var response = '{"err": "bad request"}'
@@ -66,9 +70,10 @@ describe('post', function() {
       expect(resp).to.not.be.ok();
       expect(err.message).to.match(/connection failure/);
       expect(err.code).to.eql('ENOTFOUND');
+      expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
   it('should callback with some error if normal sending throws', function(done) {
     var response = '{"err": "bad request"}'
@@ -76,9 +81,10 @@ describe('post', function() {
     var callback = function(err, resp) {
       expect(resp).to.not.be.ok();
       expect(err.message).to.match(/Cannot find a method to transport/);
+      expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
 });
 
@@ -112,8 +118,15 @@ TestRequest.prototype.send = function(data) {
     this.onreadystatechange();
   }
 };
+
 var requestGenerator = function(response, status, shouldThrow) {
-  return function() {
-    return new TestRequest(response, status, shouldThrow);
-  };
+  var request;
+  return {
+    getInstance: function() {
+      if(!request) {
+        request = new TestRequest(response, status, shouldThrow);
+      }
+      return request;
+    }
+  }
 };
