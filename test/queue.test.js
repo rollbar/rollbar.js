@@ -474,34 +474,63 @@ describe('addItem', function() {
           done();
         });
       });
-      it('should retry if we get a retriable error', function(done) {
-        var rateLimiter = new (TestRateLimiterGenerator())();
-        var api = new (TestApiGenerator())();
-        var logger = new (TestLoggerGenerator())();
-        var options = {retryInterval: 1, transmit: true};
-        var queue = new Queue(rateLimiter, api, logger, options);
+      describe('if we get a retriable error', function() {
+        it('should retry', function(done) {
+          var rateLimiter = new (TestRateLimiterGenerator())();
+          var api = new (TestApiGenerator())();
+          var logger = new (TestLoggerGenerator())();
+          var options = {retryInterval: 1, transmit: true};
+          var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = {mykey: 'myvalue'};
-        var serverResponse = {success: true};
-        var apiError = {code: 'ENOTFOUND', message: 'No internet connection'};
+          var item = {mykey: 'myvalue'};
+          var serverResponse = {success: true};
+          var apiError = {code: 'ENOTFOUND', message: 'No internet connection'};
 
-        var apiRequestCount = 0;
-        rateLimiter.handler = function(i) {
-          return {error: null, shouldSend: true, payload: null};
-        };
-        api.handler = function(i, cb) {
-          apiRequestCount++;
-          if (apiRequestCount === 1) {
-            cb(apiError);
-          } else {
-            cb(null, serverResponse);
-          }
-        };
-        queue.addItem({mykey: 'myvalue'}, function(err, resp) {
-          expect(err).to.not.be.ok();
-          expect(resp).to.eql(serverResponse);
-          expect(apiRequestCount).to.eql(2);
-          done();
+          var apiRequestCount = 0;
+          rateLimiter.handler = function(i) {
+            return {error: null, shouldSend: true, payload: null};
+          };
+          api.handler = function(i, cb) {
+            apiRequestCount++;
+            if (apiRequestCount === 1) {
+              cb(apiError);
+            } else {
+              cb(null, serverResponse);
+            }
+          };
+          queue.addItem({mykey: 'myvalue'}, function(err, resp) {
+            expect(err).to.not.be.ok();
+            expect(resp).to.eql(serverResponse);
+            expect(apiRequestCount).to.eql(2);
+            done();
+          });
+        });
+        it('should retry until maxRetries limit is reached', function(done) {
+          var rateLimiter = new (TestRateLimiterGenerator())();
+          var api = new (TestApiGenerator())();
+          var logger = new (TestLoggerGenerator())();
+          var options = {retryInterval: 1, maxRetries: 2, transmit: true};
+          var queue = new Queue(rateLimiter, api, logger, options);
+
+          var item = {mykey: 'myvalue'};
+          var serverResponse = {success: true};
+          var apiError = {code: 'ENOTFOUND', message: 'No internet connection'};
+
+          var apiRequestCount = 0;
+          rateLimiter.handler = function(i) {
+            return {error: null, shouldSend: true, payload: null};
+          };
+          api.handler = function(i, cb) {
+            apiRequestCount++;
+            cb({...apiError, retry: apiRequestCount});
+          };
+          queue.addItem({mykey: 'myvalue'}, function(err, resp) {
+            var numRequests = options.maxRetries + 1;
+            expect(apiRequestCount).to.eql(numRequests);
+            expect(err).to.eql({...apiError, retry: numRequests});
+            expect(resp).to.not.be.ok();
+            done();
+          });
         });
       });
     });
