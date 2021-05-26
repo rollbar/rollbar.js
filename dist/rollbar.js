@@ -203,6 +203,16 @@ function isString(value) {
   return typeof value === 'string' || value instanceof String
 }
 
+/**
+ * isFiniteNumber - determines whether the passed value is a finite number
+ *
+ * @param {*} n - any value
+ * @returns true if value is a finite number
+ */
+ function isFiniteNumber(n) {
+  return Number.isFinite(n);
+}
+
 /*
  * isDefined - a convenience function for checking if a value is not equal to undefined
  *
@@ -795,12 +805,13 @@ module.exports = {
   get: get,
   handleOptions: handleOptions,
   isError: isError,
+  isFiniteNumber: isFiniteNumber,
   isFunction: isFunction,
   isIterable: isIterable,
   isNativeFunction: isNativeFunction,
-  isType: isType,
   isObject: isObject,
   isString: isString,
+  isType: isType,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
@@ -2579,6 +2590,12 @@ Queue.prototype._maybeRetry = function(err, item, callback) {
         break;
       }
     }
+    if (shouldRetry && _.isFiniteNumber(this.options.maxRetries)) {
+      item.retries = item.retries ? item.retries + 1 : 1;
+      if (item.retries > this.options.maxRetries) {
+        shouldRetry = false;
+      }
+    }
   }
   if (shouldRetry) {
     this._retryApiRequest(item, callback);
@@ -2925,6 +2942,7 @@ function getTransportFromOptions(options, defaults, url) {
   var port = defaults.port;
   var path = defaults.path;
   var search = defaults.search;
+  var timeout = options.timeout;
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -2936,6 +2954,7 @@ function getTransportFromOptions(options, defaults, url) {
     search = opts.search;
   }
   return {
+    timeout: timeout,
     hostname: hostname,
     protocol: protocol,
     port: port,
@@ -2950,6 +2969,7 @@ function transportOptions(transport, method) {
   var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
   var path = transport.path;
+  var timeout = transport.timeout;
   if (transport.search) {
     path = path + transport.search;
   }
@@ -2960,6 +2980,7 @@ function transportOptions(transport, method) {
     protocol = transport.proxy.protocol || protocol;
   }
   return {
+    timeout: timeout,
     protocol: protocol,
     hostname: hostname,
     path: path,
@@ -3200,7 +3221,7 @@ Transport.prototype.get = function(accessToken, options, params, callback, reque
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory);
+  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory, options.timeout);
 }
 
 Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
@@ -3225,7 +3246,7 @@ Transport.prototype.post = function(accessToken, options, payload, callback, req
   var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory);
+  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory, options.timeout);
 }
 
 Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
@@ -3235,24 +3256,26 @@ Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayloa
 
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory);
+  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout);
 }
+
 
 // Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
 //
-function _makeZoneRequest(accessToken, url, method, data, callback, requestFactory) {
+function _makeZoneRequest() {
   var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
   var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+  var args = Array.prototype.slice.call(arguments);
 
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
     rootZone.run(function () {
-      _makeRequest(accessToken, url, method, data, callback, requestFactory);
+      _makeRequest.apply(undefined, args);
     });
   } else {
-    _makeRequest(accessToken, url, method, data, callback, requestFactory);
+    _makeRequest.apply(undefined, args);
   }
 }
 
@@ -3268,7 +3291,7 @@ function _proxyRequest(json, callback) {
   );
 }
 
-function _makeRequest(accessToken, url, method, data, callback, requestFactory) {
+function _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
   if (typeof RollbarProxy !== 'undefined') {
     return _proxyRequest(data, callback);
   }
@@ -3329,6 +3352,11 @@ function _makeRequest(accessToken, url, method, data, callback, requestFactory) 
         request.setRequestHeader('Content-Type', 'application/json');
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
       }
+
+      if(_.isFiniteNumber(timeout)) {
+        request.timeout = timeout;
+      }
+
       request.onreadystatechange = onreadystatechange;
       request.send(data);
     } catch (e1) {
@@ -4416,9 +4444,7 @@ function urlIsOnAList(item, settings, safeOrBlock, logger) {
 
 function messageIsIgnored(logger) {
   return function(item, settings) {
-    var exceptionMessage, i, ignoredMessages,
-        len, messageIsIgnored, rIgnoredMessage,
-        body, traceMessage, bodyMessage;
+    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
 
     try {
       messageIsIgnored = false;
@@ -4428,23 +4454,22 @@ function messageIsIgnored(logger) {
         return true;
       }
 
-      body = item.body;
-      traceMessage = _.get(body, 'trace.exception.message');
-      bodyMessage = _.get(body, 'message.body');
+      messages = messagesFromItem(item);
 
-      exceptionMessage = traceMessage || bodyMessage;
-
-      if (!exceptionMessage){
+      if (messages.length === 0){
         return true;
       }
 
       len = ignoredMessages.length;
       for (i = 0; i < len; i++) {
         rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-        messageIsIgnored = rIgnoredMessage.test(exceptionMessage);
 
-        if (messageIsIgnored) {
-          break;
+        for (j = 0; j < messages.length; j++) {
+          messageIsIgnored = rIgnoredMessage.test(messages[j]);
+
+          if (messageIsIgnored) {
+            return false;
+          }
         }
       }
     } catch(e)
@@ -4454,8 +4479,31 @@ function messageIsIgnored(logger) {
       logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
     }
 
-    return !messageIsIgnored;
+    return true;
   }
+}
+
+function messagesFromItem(item) {
+  var body = item.body;
+  var messages = [];
+
+  // The payload schema only allows one of trace_chain, message, or trace.
+  // However, existing test cases are based on having both trace and message present.
+  // So here we preserve the ability to collect strings from any combination of these keys.
+  if (body.trace_chain) {
+    var traceChain = body.trace_chain;
+    for (var i = 0; i < traceChain.length; i++) {
+      var trace = traceChain[i];
+      messages.push(_.get(trace, 'exception.message'));
+    }
+  }
+  if (body.trace) {
+    messages.push(_.get(body, 'trace.exception.message'));
+  }
+  if (body.message) {
+    messages.push(_.get(body, 'message.body'));
+  }
+  return messages;
 }
 
 module.exports = {
@@ -4475,7 +4523,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.21.1',
+  version: '2.22.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
