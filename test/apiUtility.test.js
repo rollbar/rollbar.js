@@ -52,7 +52,8 @@ describe('getTransportFromOptions', function() {
       proxy: {
         host: 'whatver.com',
         port: 9090
-      }
+      },
+      timeout: 3000
     };
     var defaults = {
       hostname: 'api.com',
@@ -70,6 +71,7 @@ describe('getTransportFromOptions', function() {
     expect(t.protocol).to.eql(defaults.protocol);
     expect(t.port).to.eql(defaults.port);
     expect(t.proxy).to.eql(options.proxy);
+    expect(t.timeout).to.eql(options.timeout);
   });
   it('should parse the endpoint if given', function() {
     var options = {
@@ -101,6 +103,7 @@ describe('getTransportFromOptions', function() {
     expect(t.protocol).to.eql('http:');
     expect(t.search).to.not.be.ok();
     expect(t.proxy).to.eql(options.proxy);
+    expect(t.timeout).to.eql(undefined);
   });
 });
 
@@ -119,6 +122,7 @@ describe('transportOptions', function() {
     expect(o.path).to.eql('/api/v1/item/');
     expect(o.port).to.eql(5000);
     expect(o.method).to.eql(method);
+    expect(o.timeout).to.eql(undefined);
   });
   it('should use the proxy if given', function() {
     var transport = {
@@ -128,7 +132,8 @@ describe('transportOptions', function() {
       proxy: {
         host: 'b.com',
         port: 8080
-      }
+      },
+      timeout: 3000
     };
     var method = 'GET';
 
@@ -138,6 +143,7 @@ describe('transportOptions', function() {
     expect(o.port).to.eql(8080);
     expect(o.path).to.eql('https://a.com/api/v1/item/');
     expect(o.method).to.eql(method);
+    expect(o.timeout).to.eql(transport.timeout);
   });
 });
 

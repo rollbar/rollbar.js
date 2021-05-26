@@ -188,6 +188,12 @@ Queue.prototype._maybeRetry = function(err, item, callback) {
         break;
       }
     }
+    if (shouldRetry && _.isFiniteNumber(this.options.maxRetries)) {
+      item.retries = item.retries ? item.retries + 1 : 1;
+      if (item.retries > this.options.maxRetries) {
+        shouldRetry = false;
+      }
+    }
   }
   if (shouldRetry) {
     this._retryApiRequest(item, callback);

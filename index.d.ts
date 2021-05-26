@@ -72,6 +72,7 @@ declare namespace Rollbar {
         locals?: LocalsOptions;
         logLevel?: Level;
         maxItems?: number;
+        maxRetries?: number;
         maxTelemetryEvents?: number;
         nodeSourceMaps?: boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
@@ -87,6 +88,7 @@ declare namespace Rollbar {
         sendConfig?: boolean;
         stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
+        timeout?: number;
         transform?: (data: object) => void;
         transmit?: boolean;
         uncaughtErrorLevel?: Level;

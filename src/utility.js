@@ -110,6 +110,16 @@ function isString(value) {
   return typeof value === 'string' || value instanceof String
 }
 
+/**
+ * isFiniteNumber - determines whether the passed value is a finite number
+ *
+ * @param {*} n - any value
+ * @returns true if value is a finite number
+ */
+ function isFiniteNumber(n) {
+  return Number.isFinite(n);
+}
+
 /*
  * isDefined - a convenience function for checking if a value is not equal to undefined
  *
@@ -702,12 +712,13 @@ module.exports = {
   get: get,
   handleOptions: handleOptions,
   isError: isError,
+  isFiniteNumber: isFiniteNumber,
   isFunction: isFunction,
   isIterable: isIterable,
   isNativeFunction: isNativeFunction,
-  isType: isType,
   isObject: isObject,
   isString: isString,
+  isType: isType,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
