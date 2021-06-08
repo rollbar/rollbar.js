@@ -153,6 +153,15 @@ function isError(e) {
   return isType(e, 'error') || isType(e, 'exception');
 }
 
+/* isPromise - a convenience function for checking if a value is a promise
+ *
+ * @param p - any value
+ * @returns true if f is a function, otherwise false
+ */
+function isPromise(p) {
+  return isObject(p) && isType(p.then, 'function');
+}
+
 function redact() {
   return '********';
 }
@@ -719,6 +728,7 @@ module.exports = {
   isObject: isObject,
   isString: isString,
   isType: isType,
+  isPromise: isPromise,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,

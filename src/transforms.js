@@ -50,9 +50,10 @@ function addMessageWithError(item, options, callback) {
 function userTransform(logger) {
   return function(item, options, callback) {
     var newItem = _.merge(item);
+    var response = null;
     try {
       if (_.isFunction(options.transform)) {
-        options.transform(newItem.data, item);
+        response = options.transform(newItem.data, item);
       }
     } catch (e) {
       options.transform = null;
@@ -60,7 +61,15 @@ function userTransform(logger) {
       callback(null, item);
       return;
     }
-    callback(null, newItem);
+    if(_.isPromise(response)) {
+      response.then(function (promisedItem) {
+        callback(null, promisedItem || newItem);
+      }, function (error) {
+        callback(error, item);
+      });
+    } else {
+      callback(null, newItem);
+    }
   }
 }
 
