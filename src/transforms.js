@@ -63,7 +63,10 @@ function userTransform(logger) {
     }
     if(_.isPromise(response)) {
       response.then(function (promisedItem) {
-        callback(null, promisedItem || newItem);
+        if(promisedItem) {
+          newItem.data = promisedItem;
+        }
+        callback(null, newItem);
       }, function (error) {
         callback(error, item);
       });
