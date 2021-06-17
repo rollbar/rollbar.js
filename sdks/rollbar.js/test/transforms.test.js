@@ -171,4 +171,69 @@ describe('userTransform', function() {
       done(e);
     });
   });
+
+  it('waits for promise resolution if transform returns a promise', function (done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: function(newItem) {
+        newItem.message = 'HELLO';
+        return Promise.resolve()
+      }
+    };
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.eql('HELLO');
+      done(e);
+    });
+    expect(payload.data.message).to.not.eql('HELLO');
+  });
+
+  it('uses resolved value if transform returns a promise with a value', function (done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: function(newItem) {
+        return Promise.resolve({ message: 'HELLO' });
+      }
+    };
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.eql('HELLO');
+      expect(i.data).to.not.eql(item);
+      done(e);
+    });
+    expect(payload.data.message).to.not.eql('HELLO');
+  });
+
+  it('uses untransformed value if transform returns a promise that rejects', function (done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    var err = { message: "HELLO" };
+    var payload = {
+      access_token: '123',
+      data: item
+    };
+    var options = {
+      endpoint: 'api.rollbar.com',
+      transform: function(newItem) {
+        return Promise.reject(err);
+      }
+    };
+    (t.userTransform(fakeLogger))(payload, options, function(e, i) {
+      expect(i.data.message).to.not.eql('HELLO');
+      expect(i.data).to.eql(item);
+      expect(e).to.eql(err);
+      done();
+    });
+    expect(payload.data.message).to.not.eql('HELLO');
+  });
 });
