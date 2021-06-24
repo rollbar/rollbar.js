@@ -204,6 +204,9 @@ function readFileLines(filename, callback) {
 
 /* Older versions of node do not have fs.exists so we implement our own */
 function checkFileExists(filename, callback) {
+  if (stackTrace.sourceContent(filename)) {
+    return callback(true);
+  }
   if (fs.exists !== undefined) {
     fs.exists(filename, callback);
   } else {
@@ -228,17 +231,31 @@ function gatherContexts(frames, callback) {
 
     tempFileCache = {};
 
+    function cacheLines(filename, lines) {
+      // Cache this in a temp cache as well as the LRU cache so that
+      // we know we will have all of the necessary file contents for
+      // each filename in tempFileCache.
+      tempFileCache[filename] = lines;
+      cache.set(filename, lines);
+    }
+
     function gatherFileData(filename, callback) {
+      var sourceContent = stackTrace.sourceContent(filename);
+      if (sourceContent) {
+        try {
+          var lines = sourceContent.split('\n');
+          cacheLines(filename, lines);
+          return callback(null);
+        } catch (err) {
+          return callback(err);
+        }
+      }
       readFileLines(filename, function (err, lines) {
         if (err) {
           return callback(err);
         }
 
-        // Cache this in a temp cache as well as the LRU cache so that
-        // we know we will have all of the necessary file contents for
-        // each filename in tempFileCache.
-        tempFileCache[filename] = lines;
-        cache.set(filename, lines);
+        cacheLines(filename, lines);
 
         return callback(null);
       });
