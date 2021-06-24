@@ -256,6 +256,15 @@ function isError(e) {
   return isType(e, 'error') || isType(e, 'exception');
 }
 
+/* isPromise - a convenience function for checking if a value is a promise
+ *
+ * @param p - any value
+ * @returns true if f is a function, otherwise false
+ */
+function isPromise(p) {
+  return isObject(p) && isType(p.then, 'function');
+}
+
 function redact() {
   return '********';
 }
@@ -822,6 +831,7 @@ module.exports = {
   isObject: isObject,
   isString: isString,
   isType: isType,
+  isPromise: isPromise,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
@@ -4052,8 +4062,9 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
     var numericProps = ['columnNumber', 'lineNumber'];
     var stringProps = ['fileName', 'functionName', 'source'];
     var arrayProps = ['args'];
+    var objectProps = ['evalOrigin'];
 
-    var props = booleanProps.concat(numericProps, stringProps, arrayProps);
+    var props = booleanProps.concat(numericProps, stringProps, arrayProps, objectProps);
 
     function StackFrame(obj) {
         if (!obj) return;
@@ -4223,9 +4234,10 @@ function addMessageWithError(item, options, callback) {
 function userTransform(logger) {
   return function(item, options, callback) {
     var newItem = _.merge(item);
+    var response = null;
     try {
       if (_.isFunction(options.transform)) {
-        options.transform(newItem.data, item);
+        response = options.transform(newItem.data, item);
       }
     } catch (e) {
       options.transform = null;
@@ -4233,7 +4245,18 @@ function userTransform(logger) {
       callback(null, item);
       return;
     }
-    callback(null, newItem);
+    if(_.isPromise(response)) {
+      response.then(function (promisedItem) {
+        if(promisedItem) {
+          newItem.data = promisedItem;
+        }
+        callback(null, newItem);
+      }, function (error) {
+        callback(error, item);
+      });
+    } else {
+      callback(null, newItem);
+    }
   }
 }
 
@@ -4540,7 +4563,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.22.0',
+  version: '2.23.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
