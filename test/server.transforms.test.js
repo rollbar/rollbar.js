@@ -21,9 +21,9 @@ async function wait(ms) {
   });
 }
 
-async function throwInTypescriptFile(rollbar, callback) {
+async function throwInScriptFile(rollbar, filepath, callback) {
   setTimeout(function () {
-    var error = require('../examples/node-typescript/dist/index');
+    var error = require(filepath);
     error();
   }, 10);
   await wait(500);
@@ -256,8 +256,8 @@ vows.describe('transforms')
     }
   })
   .addBatch({
-    'handleItemWithError': {
-      'nodeSourceMaps': {
+    'nodeSourceMaps': {
+      'with original source present': {
         topic: function() {
           var Rollbar = new rollbar({
             accessToken: 'abc123',
@@ -267,9 +267,10 @@ vows.describe('transforms')
           var queue = Rollbar.client.notifier.queue;
           Rollbar.addItemStub = sinon.stub(queue, 'addItem');
 
-          throwInTypescriptFile(Rollbar, this.callback);
+          throwInScriptFile(Rollbar, '../examples/node-typescript/dist/index',
+            this.callback);
         },
-        'should map the stack': function(r) {
+        'should map the stack with context': function(r) {
           var addItem = r.addItemStub;
 
           assert.isTrue(addItem.called);
@@ -279,8 +280,15 @@ vows.describe('transforms')
             assert.equal(frame.lineno, 10);
             assert.equal(frame.colno, 22);
             assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+            assert.equal(frame.context.pre[0], '    }');
+            assert.equal(frame.context.pre[1], '  }');
+            assert.equal(frame.context.pre[2],
+              '  // TypeScript code snippet will include `<Error>`');
+            assert.equal(frame.context.post[0], '  throw error;');
+            assert.equal(frame.context.post[1], '}');
 
-            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic.node_source_maps.source_mapping_urls;
+            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic
+              .node_source_maps.source_mapping_urls;
             var urls = Object.keys(sourceMappingURLs);
             assert.ok(urls[0].includes('index.js'));
             assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
@@ -295,8 +303,55 @@ vows.describe('transforms')
             assert.ok(sourceMappingURLs[urls[2]].includes('not found'));
           }
           addItem.reset();
+        }
+      }
+    }
+  })
+  .addBatch({
+    'nodeSourceMaps': {
+      'using sourcesContent': {
+        topic: function() {
+          var Rollbar = new rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            nodeSourceMaps: true
+          });
+          var queue = Rollbar.client.notifier.queue;
+          Rollbar.addItemStub = sinon.stub(queue, 'addItem');
+
+          throwInScriptFile(Rollbar, '../examples/node-dist/index', this.callback);
         },
-      },
+        'should map the stack with context': function(r) {
+          var addItem = r.addItemStub;
+
+          assert.isTrue(addItem.called);
+          if (addItem.called) {
+            var frame = addItem.getCall(0).args[0].body.trace_chain[0].frames.pop();
+            assert.ok(frame.filename.includes('src/index.ts'));
+            assert.equal(frame.lineno, 10);
+            assert.equal(frame.colno, 22);
+            assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+            assert.equal(frame.context.pre[0], '    }');
+            assert.equal(frame.context.pre[1], '  }');
+            assert.equal(frame.context.pre[2],
+              '  // TypeScript code snippet will include `<Error>`');
+            assert.equal(frame.context.post[0], '  throw error;');
+            assert.equal(frame.context.post[1], '}');
+
+            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic
+              .node_source_maps.source_mapping_urls;
+            var urls = Object.keys(sourceMappingURLs);
+            assert.ok(urls.length === 1);
+            assert.ok(urls[0].includes('index.js'));
+            assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
+          }
+          addItem.reset();
+        }
+      }
+    }
+  })
+  .addBatch({
+    'handleItemWithError': {
       'options': {
         'anything': {
           topic: function() {
