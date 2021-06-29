@@ -20,6 +20,9 @@ var fileContentsCache = {};
 // Maps a file path to a source map for that file
 var sourceMapCache = {};
 
+// Maps a file path to sourcesContent string
+var sourcesContentCache = {};
+
 // Regex for detecting source maps
 var reSourceMap = /^data:application\/json[^,]+base64,/;
 
@@ -111,6 +114,17 @@ function retrieveSourceMap(source) {
   };
 }
 
+function cacheSourceContent(sourceMap, originalSource, newSource) {
+  if (sourcesContentCache[newSource]) {
+    return;
+  }
+
+  // The sourceContentFor lookup needs the original source url as found in the
+  // map file. However the client lookup in sourcesContentCache will use
+  // a rewritten form of the url, hence originalSource and newSource.
+  sourcesContentCache[newSource] = sourceMap.map.sourceContentFor(originalSource, true);
+}
+
 exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
   var sourceMap = sourceMapCache[position.source];
   if (!sourceMap) {
@@ -153,11 +167,17 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
     // better to give a precise location in the compiled file than a vague
     // location in the original file.
     if (originalPosition.source !== null) {
+      var originalSource = originalPosition.source;
       originalPosition.source = supportRelativeURL(
         sourceMap.url, originalPosition.source);
+      cacheSourceContent(sourceMap, originalSource, originalPosition.source);
       return originalPosition;
     }
   }
 
   return position;
+}
+
+exports.sourceContent = function sourceContent(source) {
+  return sourcesContentCache[source];
 }
