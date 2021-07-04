@@ -7,9 +7,8 @@ function _wrapInternalErr(f) {
       return f.apply(this, arguments);
     } catch (e) {
       try {
-        /* eslint-disable no-console */
+        /* eslint-disable-next-line no-console */
         console.error('[Rollbar]: Internal error', e);
-        /* eslint-enable no-console */
       } catch (e2) {
         // Ignore
       }
