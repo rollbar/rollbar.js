@@ -1,6 +1,6 @@
 var async = require('async');
+var RequestIp = require('@supercharge/request-ip')
 var parser = require('./parser');
-var requestIp = require('request-ip');
 var url = require('url');
 var _ = require('../utility');
 var scrub = require('../scrub');
@@ -258,10 +258,7 @@ function _buildTraceData(chain, options, item) {
 }
 
 function _extractIp(req) {
-  var ip = req.ip;
-  if (!ip) {
-    ip = requestIp.getClientIp(req);
-  }
+  const ip = req.ip || RequestIp.getClientIp(req);
   return ip;
 }
 

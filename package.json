@@ -11,14 +11,13 @@
   "browser": "dist/rollbar.umd.min.js",
   "types": "./index.d.ts",
   "dependencies": {
+    "@supercharge/request-ip": "^1.1.2",
     "async": "~1.2.1",
     "console-polyfill": "0.3.0",
     "error-stack-parser": "^2.0.4",
     "json-stringify-safe": "~5.0.0",
     "lru-cache": "~2.2.1",
-    "request-ip": "~2.0.1",
-    "source-map": "^0.5.7",
-    "uuid": "3.0.x"
+    "source-map": "^0.5.7"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
