@@ -89,7 +89,7 @@ declare namespace Rollbar {
         stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
         timeout?: number;
-        transform?: (data: object) => void;
+        transform?: (data: object, item: object) => void;
         transmit?: boolean;
         uncaughtErrorLevel?: Level;
         verbose?: boolean;
