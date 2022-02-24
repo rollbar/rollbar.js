@@ -278,7 +278,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item;
             assert.equal(item.message, message);
             assert.equal(item.request, request);
-            assert.equal(item.custom, custom);
+            assert.deepStrictEqual(item.custom, custom);
             item.callback();
             assert.isTrue(callbackCalled);
           }
@@ -332,7 +332,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.message, message)
             assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
+            assert.deepStrictEqual(item.custom, custom)
           },
           'should work with request and custom and callback': function(r) {
             var message = 'hello'
@@ -346,7 +346,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.message, message)
             assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
+            assert.deepStrictEqual(item.custom, custom)
             item.callback();
             assert.isTrue(callbackCalled);
           }
@@ -399,7 +399,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
             assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
+            assert.deepStrictEqual(item.custom, custom)
             item.callback();
             assert.isTrue(callbackCalled);
           }
@@ -453,7 +453,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
             assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
+            assert.deepStrictEqual(item.custom, custom)
           },
           'should work with request and custom and callback': function(r) {
             var err = new Error('hello!')
@@ -467,7 +467,7 @@ vows.describe('rollbar')
             var item = r.client.logCalls[r.client.logCalls.length - 1].item
             assert.equal(item.err, err)
             assert.equal(item.request, request)
-            assert.equal(item.custom, custom)
+            assert.deepStrictEqual(item.custom, custom)
             item.callback();
             assert.isTrue(callbackCalled);
           }
