@@ -17,8 +17,7 @@
     "json-stringify-safe": "~5.0.0",
     "lru-cache": "~2.2.1",
     "request-ip": "~2.0.1",
-    "source-map": "^0.5.7",
-    "uuid": "3.0.x"
+    "source-map": "^0.5.7"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
