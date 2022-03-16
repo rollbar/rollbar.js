@@ -398,6 +398,37 @@ function wrapCallback(logger, f) {
   };
 }
 
+function nonCircularClone(obj) {
+  var seen = [obj];
+
+  function clone(obj, seen) {
+    var value, name, newSeen, result = {};
+
+    try {
+      for (name in obj) {
+        value = obj[name];
+
+        if (value && (isType(value, 'object') || isType(value, 'array'))) {
+          if (seen.includes(value)) {
+            result[name] = 'Removed circular reference: ' + typeName(value);
+          } else {
+            newSeen = seen.slice();
+            newSeen.push(value);
+            result[name] = clone(value, newSeen);
+          }
+          continue;
+        }
+
+        result[name] = value;
+      }
+    } catch (e) {
+      result = 'Failed cloning custom data: ' + e.message;
+    }
+    return result;
+  }
+  return clone(obj, seen);
+}
+
 function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   var message, err, custom, callback, request;
   var arg;
@@ -455,10 +486,12 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     }
   }
 
+  // if custom is an array this turns it into an object with integer keys
+  if (custom) custom = nonCircularClone(custom);
+
   if (extraArgs.length > 0) {
-    // if custom is an array this turns it into an object with integer keys
-    custom = merge(custom);
-    custom.extraArgs = extraArgs;
+    if (!custom) custom = nonCircularClone({});
+    custom.extraArgs = nonCircularClone(extraArgs);
   }
 
   var item = {
@@ -503,7 +536,7 @@ function addErrorContext(item, errors) {
   try {
     for (var i = 0; i < errors.length; ++i) {
       if (errors[i].hasOwnProperty('rollbarContext')) {
-        custom = merge(custom, errors[i].rollbarContext);
+        custom = merge(custom, nonCircularClone(errors[i].rollbarContext));
         contextAdded = true;
       }
     }
