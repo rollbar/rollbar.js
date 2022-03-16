@@ -40,6 +40,9 @@ declare namespace Rollbar {
     ) => void | Promise<TResult>;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
+    /**
+     * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
+     */
     export interface Configuration {
         accessToken?: string;
         addErrorContext?: boolean;
@@ -52,7 +55,15 @@ declare namespace Rollbar {
         captureUnhandledRejections?: boolean;
         captureUsername?: boolean;
         checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
+        /**
+         * `codeVersion` takes precedence over `code_version`, if provided.
+         * `client.javascript.code_version` takes precedence over both top level properties.
+         */
         codeVersion?: string;
+        /**
+         * `codeVersion` takes precedence over `code_version`, if provided.
+         * `client.javascript.code_version` takes precedence over both top level properties.
+         */
         code_version?: string;
         enabled?: boolean;
         endpoint?: string;
@@ -77,7 +88,7 @@ declare namespace Rollbar {
         nodeSourceMaps?: boolean;
         onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
         overwriteScrubFields?: boolean;
-        payload?: object;
+        payload?: Payload;
         reportLevel?: Level;
         rewriteFilenamePatterns?: string[];
         scrubFields?: string[];
@@ -89,7 +100,7 @@ declare namespace Rollbar {
         stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
         timeout?: number;
-        transform?: (data: object, item: object) => void;
+        transform?: (data: object, item: object) => void | Promise<void>;
         transmit?: boolean;
         uncaughtErrorLevel?: Level;
         verbose?: boolean;
@@ -168,5 +179,74 @@ declare namespace Rollbar {
         wrapGlobals?: WrapGlobalsType,
         scrub?: ScrubType,
         truncation?: TruncationType
+    }
+
+    /**
+      * @deprecated number is deprecated for this field
+      */
+     export type DeprecatedNumber = number;
+
+    /**
+     * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#payload-1}
+     */
+    export interface Payload {
+        person?: {
+            id: string | DeprecatedNumber;
+            username?: string;
+            email?: string;
+            [property: string]: any;
+        },
+        context?: any;
+        client?: {
+            javascript?: {
+                /**
+                 * Version control number (i.e. git SHA) of the current revision. Used for linking filenames in stacktraces to GitHub.
+                 * Note: for the purposes of nesting under the payload key, only code_version will correctly set the value in the final item.
+                 * However, if you wish to set this code version at the top level of the configuration object rather than nested under
+                 * the payload key, we will accept both codeVersion and code_version with codeVersion given preference if both happened
+                 * to be defined. Furthermore, if code_version is nested under the payload key this will have the final preference over
+                 * any value set at the top level.
+                 */
+                code_version?: string | DeprecatedNumber;
+                /**
+                 * When true, the Rollbar service will attempt to find and apply source maps to all frames in the stack trace.
+                 * @default false
+                 */
+                source_map_enabled?: boolean;
+                /**
+                 * When true, the Rollbar service will attempt to apply source maps to frames even if they are missing column numbers.
+                 * Works best when the minified javascript file is generated using newlines instead of semicolons.
+                 * @default false
+                 */
+                guess_uncaught_frames?: boolean;
+                [property: string]: any;
+            }
+            [property: string]: any;
+        },
+        /**
+         * The environment that your code is running in.
+         * @default undefined
+         */
+        environment?: string;
+        server?: {
+            /**
+             * @default master
+             */
+            branch?: string;
+            /**
+             * The hostname of the machine that rendered the page.
+             */
+            host?: string;
+            /**
+             * It is used in two different ways: `source maps`, and `source control`.
+             * 
+             * If you are looking for more information on it please go to:
+             * {@link https://docs.rollbar.com/docs/source-maps}
+             * {@link https://docs.rollbar.com/docs/source-control}
+             */
+            root?: string;
+            [property: string]: any;
+        },
+        [property: string]: any;
     }
 }
