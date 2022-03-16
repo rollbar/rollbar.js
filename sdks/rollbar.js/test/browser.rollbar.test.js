@@ -1575,6 +1575,68 @@ describe('options.autoInstrument', function() {
     })
   });
 
+  it('should not fail if a fetch call responds with an empty body', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    window.fetchStub = sinon.stub(window, 'fetch');
+
+    var readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue("");
+        controller.close();
+      }
+    });
+
+    window.fetch.returns(Promise.resolve(new Response(
+      readableStream,
+      { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' }}
+    )));
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkResponseHeaders: true,
+        networkResponseBody: true,
+        networkRequestBody: true,
+        networkRequestHeaders: true
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var fetchHeaders = new Headers();
+    fetchHeaders.append('Content-Type', 'application/json');
+
+    const fetchInit = {
+      method: 'POST',
+      headers: fetchHeaders,
+      body: "{}"
+    };
+    var fetchRequest = new Request('https://example.com/xhr-test');
+    window.fetch(fetchRequest, fetchInit)
+    .then(function(response) {
+      try {
+        rollbar.log('test'); // generate a payload to inspect
+        server.respond();
+
+        expect(server.requests.length).to.eql(1);
+
+        var body = JSON.parse(server.requests[0].requestBody);
+        // Verify response headers capture
+        expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json'});
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        done();
+      } catch (e) {
+        done(e);
+      }
+    })
+  });
+
   it('should add a diagnostic message when wrapConsole fails', function(done) {
     var server = window.server;
     stubResponse(server);
