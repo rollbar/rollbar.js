@@ -403,8 +403,10 @@ Instrumenter.prototype.instrumentNetwork = function() {
               // Test to ensure body is a Promise, which it should always be.
               if (typeof body.then === 'function') {
                 body.then(function (text) {
-                  if (self.isJsonContentType(metadata.response_content_type)) {
+                  if (text && self.isJsonContentType(metadata.response_content_type)) {
                     metadata.response.body = self.scrubJson(text);
+                  } else {
+                    metadata.response.body = text
                   }
                 });
               } else {
