@@ -503,6 +503,58 @@ describe('log', function() {
     done();
   })
 
+  it('should remove circular references in custom data', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      addErrorContext: true
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    var err = new Error('test error');
+    var contextData = { extra: 'baz' }
+    contextData.data = contextData;
+    var context = { err: 'test', contextData: contextData };
+    err.rollbarContext = context;
+
+    var array = ['one', 'two'];
+    array.push(array);
+    var custom = { foo: 'bar', array: array };
+    var notCircular = { key: 'value' };
+    custom.notCircular1 = notCircular;
+    custom.notCircular2 = notCircular;
+    custom.self = custom;
+    rollbar.error(err, custom);
+
+    server.respond();
+
+    var body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.custom.foo).to.eql('bar');
+    expect(body.data.custom.err).to.eql('test');
+
+    // Duplicate objects are allowed when there is no circular reference.
+    expect(body.data.custom.notCircular1).to.eql(notCircular);
+    expect(body.data.custom.notCircular2).to.eql(notCircular);
+
+    expect(body.data.custom.self).to.eql(
+      'Removed circular reference: object'
+    );
+    expect(body.data.custom.array).to.eql([
+      'one', 'two', 'Removed circular reference: array'
+    ]);
+    expect(body.data.custom.contextData).to.eql({
+      extra: 'baz',
+      data: 'Removed circular reference: object'
+    });
+
+    done();
+  })
+
   it('should send message when called with only null arguments', function(done) {
     var server = window.server;
     stubResponse(server);
