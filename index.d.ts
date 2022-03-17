@@ -154,7 +154,7 @@ declare namespace Rollbar {
     export type LocalsType = typeof Locals;
     export type LocalsOptions = LocalsType | LocalsSettings;
     export interface LocalsSettings {
-        locals: LocalsType,
+        module: LocalsType,
         enabled?: boolean;
         uncaughtOnly?: boolean;
         depth?: number;
@@ -239,7 +239,7 @@ declare namespace Rollbar {
             host?: string;
             /**
              * It is used in two different ways: `source maps`, and `source control`.
-             * 
+             *
              * If you are looking for more information on it please go to:
              * {@link https://docs.rollbar.com/docs/source-maps}
              * {@link https://docs.rollbar.com/docs/source-control}
