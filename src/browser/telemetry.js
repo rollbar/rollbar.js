@@ -729,16 +729,16 @@ Instrumenter.prototype.handleCspError = function(message) {
 }
 
 Instrumenter.prototype.deinstrumentContentSecurityPolicy = function() {
-  if (!('addEventListener' in this._window)) { return; }
+  if (!('addEventListener' in this._document)) { return; }
 
   this.removeListeners('contentsecuritypolicy');
 };
 
 Instrumenter.prototype.instrumentContentSecurityPolicy = function() {
-  if (!('addEventListener' in this._window)) { return; }
+  if (!('addEventListener' in this._document)) { return; }
 
   var cspHandler = this.handleCspEvent.bind(this);
-  this.addListener('contentsecuritypolicy', this._window, 'securitypolicyviolation', null, cspHandler, false);
+  this.addListener('contentsecuritypolicy', this._document, 'securitypolicyviolation', null, cspHandler, false);
 };
 
 Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
