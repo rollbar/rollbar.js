@@ -30,6 +30,10 @@ function itemFromArgs(args) {
   return item;
 }
 
+function chromeMajorVersion() {
+  return parseInt(navigator.userAgent.match(/Chrome\/([0-9]+)\./)[1]);
+}
+
 describe('handleDomException', function() {
   it('should do nothing if not a DOMException', function(done) {
     var err = new Error('test');
@@ -447,6 +451,45 @@ describe('addBody', function() {
       t.addBody(item, options, function(e, i) {
         expect(i.data.body.trace_chain.length).to.eql(2);
         expect(i.data.custom.err1).to.eql('nested context');
+        expect(i.data.custom.err2).to.eql('error context');
+        done(e);
+      });
+    });
+  });
+  describe('with error cause', function() {
+    // Error cause was introduced in Chrome 93.
+    if (chromeMajorVersion() < 93) return;
+
+    it('should create trace_chain', function(done) {
+      var causeErr = new Error('cause error');
+      var err = new Error('test error', { cause: causeErr});
+      var args = ['a message', err];
+      var item = itemFromArgs(args);
+      var options = {};
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo).to.be.ok();
+      });
+      t.addBody(item, options, function(e, i) {
+        expect(i.data.body.trace_chain.length).to.eql(2);
+        expect(i.data.body.trace_chain[0].exception.message).to.eql('test error');
+        expect(i.data.body.trace_chain[1].exception.message).to.eql('cause error');
+        done(e);
+      });
+    });
+    it('should create add error context as custom data', function(done) {
+      var causeErr = new Error('cause error');
+      causeErr.rollbarContext = { err1: 'cause context' };
+      var err = new Error('test error', { cause: causeErr});
+      err.rollbarContext = { err2: 'error context' };
+      var args = ['a message', err];
+      var item = itemFromArgs(args);
+      var options = { addErrorContext: true };
+      t.handleItemWithError(item, options, function(e, i) {
+        expect(i.stackInfo).to.be.ok();
+      });
+      t.addBody(item, options, function(e, i) {
+        expect(i.data.body.trace_chain.length).to.eql(2);
+        expect(i.data.custom.err1).to.eql('cause context');
         expect(i.data.custom.err2).to.eql('error context');
         done(e);
       });
