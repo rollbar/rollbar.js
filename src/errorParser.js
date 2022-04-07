@@ -64,11 +64,11 @@ function Stack(exception, skip) {
 function parse(e, skip) {
   var err = e;
 
-  if (err.nested) {
+  if (err.nested || err.cause) {
     var traceChain = [];
     while (err) {
       traceChain.push(new Stack(err, skip));
-      err = err.nested;
+      err = err.nested || err.cause;
 
       skip = 0; // Only apply skip value to primary error
     }

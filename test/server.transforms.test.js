@@ -30,6 +30,22 @@ async function throwInScriptFile(rollbar, filepath, callback) {
   callback(rollbar);
 }
 
+var nodeVersion = function () {
+  var version = process.versions.node.split('.');
+
+  return [
+    parseInt(version[0]),
+    parseInt(version[1]),
+    parseInt(version[2]),
+  ];
+}();
+
+var isMinNodeVersion = function(major, minor) {
+  return (
+    nodeVersion[0] > major || (nodeVersion[0] === major && nodeVersion[1] >= minor)
+  );
+}
+
 vows.describe('transforms')
   .addBatch({
     'baseData': {
@@ -494,7 +510,42 @@ vows.describe('transforms')
                 assert.equal(item.data.custom.err1, 'nested context');
                 assert.equal(item.data.custom.err2, 'error context');
               }
-            }
+            },
+            'with an error cause': {
+              topic: function (options) {
+                var test = function() {
+                  var x = thisVariableIsNotDefined;
+                };
+                var err;
+                try {
+                  test();
+                } catch (e) {
+                  err = new Error('cause message', { cause: e });
+                  e.rollbarContext = { err1: 'cause context' };
+                  err.rollbarContext = { err2: 'error context' };
+                }
+                var item = {
+                  data: {body: {}},
+                  err: err
+                };
+                t.handleItemWithError(item, options, this.callback);
+              },
+              'should not error': function(err, item) {
+                assert.ifError(err);
+              },
+              'should have the right data in the trace_chain': function(err, item) {
+                // Error cause was introduced in Node 16.9.
+                if (!isMinNodeVersion(16, 9)) return;
+
+                var trace_chain = item.stackInfo;
+                assert.lengthOf(trace_chain, 2);
+                assert.equal(trace_chain[0].exception.class, 'Error');
+                assert.equal(trace_chain[0].exception.message, 'cause message');
+                assert.equal(trace_chain[1].exception.class, 'ReferenceError');
+                assert.equal(item.data.custom.err1, 'cause context');
+                assert.equal(item.data.custom.err2, 'error context');
+              }
+            },
           }
         }
       }
