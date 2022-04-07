@@ -1524,7 +1524,7 @@ describe('options.autoInstrument', function() {
     })
   });
 
-  it('should add telemetry events for fetch calls', function(done) {
+  it('should report error for http 4xx fetch calls, when enabled', function(done) {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
