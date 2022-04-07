@@ -42,8 +42,8 @@ function addErrorContext(item) {
 
   chain.push(err);
 
-  while (err.nested) {
-    err = err.nested;
+  while (err.nested || err.cause) {
+    err = err.nested || err.cause;
     chain.push(err);
   }
 
