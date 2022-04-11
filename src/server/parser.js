@@ -181,7 +181,7 @@ function shouldReadFrameFile(frameFilename, callback) {
   isCached = !!cache.get(frameFilename);
   isPending = !!pendingReads[frameFilename];
 
-  callback(isValidFilename && !isCached && !isPending);
+  callback(null, isValidFilename && !isCached && !isPending);
 }
 
 
@@ -201,19 +201,13 @@ function readFileLines(filename, callback) {
   }
 }
 
-
-/* Older versions of node do not have fs.exists so we implement our own */
 function checkFileExists(filename, callback) {
   if (stackTrace.sourceContent(filename)) {
-    return callback(true);
+    return callback(null, true);
   }
-  if (fs.exists !== undefined) {
-    fs.exists(filename, callback);
-  } else {
-    fs.stat(filename, function (err) {
-      callback(!err);
-    });
-  }
+  fs.stat(filename, function (err) {
+    callback(null, !err);
+  });
 }
 
 
@@ -226,7 +220,9 @@ function gatherContexts(frames, callback) {
     }
   });
 
-  async.filter(frameFilenames, shouldReadFrameFile, function (results) {
+  async.filter(frameFilenames, shouldReadFrameFile, function (err, results) {
+    if (err) return callback(err);
+
     var tempFileCache;
 
     tempFileCache = {};
@@ -270,7 +266,8 @@ function gatherContexts(frames, callback) {
       callback(null);
     }
 
-    async.filter(results, checkFileExists, function (filenames) {
+    async.filter(results, checkFileExists, function (err, filenames) {
+      if (err) return callback(err);
       async.each(filenames, gatherFileData, function (err) {
         if (err) {
           return callback(err);
@@ -367,7 +364,8 @@ exports.parseStack = function (stack, options, item, callback) {
       return callback(err);
     }
     frames.reverse();
-    async.filter(frames, function (frame, callback) { callback(!!frame); }, function (results) {
+    async.filter(frames, function (frame, callback) { callback(null, !!frame); }, function (err, results) {
+      if (err) return callback(err);
       gatherContexts(results, callback);
     });
   });
