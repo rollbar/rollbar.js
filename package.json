@@ -11,7 +11,7 @@
   "browser": "dist/rollbar.umd.min.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "async": "~1.2.1",
+    "async": "~3.2.3",
     "console-polyfill": "0.3.0",
     "error-stack-parser": "^2.0.4",
     "json-stringify-safe": "~5.0.0",
