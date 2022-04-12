@@ -2,6 +2,10 @@
 
 The change log has moved to this repo's [GitHub Releases Page](https://github.com/rollbar/rollbar.js/releases).
 
+## not a real change
+
+- Will the CircleCI check show up with a new PR to this repo?
+
 ## v2.4.0
 
 - Introduce the `captureIp` configuration settting.
@@ -46,25 +50,25 @@ The change log has moved to this repo's [GitHub Releases Page](https://github.co
 
 ## v2.3.2
 
-- Be defensive about navigator not existing on window 
+- Be defensive about navigator not existing on window
 [#514](https://github.com/rollbar/rollbar.js/pull/514)
 
-- Proper scrubbing 
+- Proper scrubbing
 [#510](https://github.com/rollbar/rollbar.js/pull/510)
 
-- Be defensive when accessing event properties 
+- Be defensive when accessing event properties
 [#503](https://github.com/rollbar/rollbar.js/pull/503)
 
 - Add environment to options type enhancement
 [#499](https://github.com/rollbar/rollbar.js/pull/499)
 
-- call the transform in the options on the server side too 
+- call the transform in the options on the server side too
 [#498](https://github.com/rollbar/rollbar.js/pull/498)
 
-- fixes errMsg.match is not a function error 
+- fixes errMsg.match is not a function error
 [#492](https://github.com/rollbar/rollbar.js/pull/492)
 
-- Call callback even if logging same as last error 
+- Call callback even if logging same as last error
 [#490](https://github.com/rollbar/rollbar.js/pull/490)
 
 ## v2.3.1
@@ -154,23 +158,23 @@ The change log has moved to this repo's [GitHub Releases Page](https://github.co
 
 ## v2.1.1
 
-- Allow more flexibility of request objects 
+- Allow more flexibility of request objects
 [#346](https://github.com/rollbar/rollbar.js/pull/346)
-- Address issue with handleItemWithError possible not calling the callback 
+- Address issue with handleItemWithError possible not calling the callback
 [#345](https://github.com/rollbar/rollbar.js/pull/345)
-- Fixed a typo in README.md 
+- Fixed a typo in README.md
 [#343](https://github.com/rollbar/rollbar.js/pull/343)
-- unify configuration options 
+- unify configuration options
 [#341](https://github.com/rollbar/rollbar.js/pull/341)
-- add some intervals to keep the event loop running when wait is called 
+- add some intervals to keep the event loop running when wait is called
 [#338](https://github.com/rollbar/rollbar.js/pull/338)
-- [Fixes #336] Propagate message 
+- [Fixes #336] Propagate message
 [#337](https://github.com/rollbar/rollbar.js/pull/337)
-- [Fixes #269] get rid of rollbar wrapper stack frames 
+- [Fixes #269] get rid of rollbar wrapper stack frames
 [#335](https://github.com/rollbar/rollbar.js/pull/335)
-- first pass at a typescript declaration file 
+- first pass at a typescript declaration file
 [#334](https://github.com/rollbar/rollbar.js/pull/334)
-- Fix #331 Verbose logging was using the wrong key structure 
+- Fix #331 Verbose logging was using the wrong key structure
 [#332](https://github.com/rollbar/rollbar.js/pull/332)
 
 ## v2.1.0
@@ -198,7 +202,7 @@ The change log has moved to this repo's [GitHub Releases Page](https://github.co
 
 ## v2.0.4
 - Fixes a small typo in the unhandled rejection handler. (pr#303)
-- Updated the no-conflict example to use the new noconflict bundle and updated docs. 
+- Updated the no-conflict example to use the new noconflict bundle and updated docs.
 
 ## v2.0.3
 - Decreased NPM package size by removing examples and coverage directories. (pr#276)
