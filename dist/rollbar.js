@@ -1084,11 +1084,11 @@ function Stack(exception, skip) {
 function parse(e, skip) {
   var err = e;
 
-  if (err.nested) {
+  if (err.nested || err.cause) {
     var traceChain = [];
     while (err) {
       traceChain.push(new Stack(err, skip));
-      err = err.nested;
+      err = err.nested || err.cause;
 
       skip = 0; // Only apply skip value to primary error
     }
@@ -3545,8 +3545,8 @@ function addErrorContext(item) {
 
   chain.push(err);
 
-  while (err.nested) {
-    err = err.nested;
+  while (err.nested || err.cause) {
+    err = err.nested || err.cause;
     chain.push(err);
   }
 
@@ -4579,7 +4579,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.24.1',
+  version: '2.25.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -5255,8 +5255,10 @@ Instrumenter.prototype.instrumentNetwork = function() {
               // Test to ensure body is a Promise, which it should always be.
               if (typeof body.then === 'function') {
                 body.then(function (text) {
-                  if (self.isJsonContentType(metadata.response_content_type)) {
+                  if (text && self.isJsonContentType(metadata.response_content_type)) {
                     metadata.response.body = self.scrubJson(text);
+                  } else {
+                    metadata.response.body = text;
                   }
                 });
               } else {
@@ -5581,16 +5583,16 @@ Instrumenter.prototype.handleCspError = function(message) {
 }
 
 Instrumenter.prototype.deinstrumentContentSecurityPolicy = function() {
-  if (!('addEventListener' in this._window)) { return; }
+  if (!('addEventListener' in this._document)) { return; }
 
   this.removeListeners('contentsecuritypolicy');
 };
 
 Instrumenter.prototype.instrumentContentSecurityPolicy = function() {
-  if (!('addEventListener' in this._window)) { return; }
+  if (!('addEventListener' in this._document)) { return; }
 
   var cspHandler = this.handleCspEvent.bind(this);
-  this.addListener('contentsecuritypolicy', this._window, 'securitypolicyviolation', null, cspHandler, false);
+  this.addListener('contentsecuritypolicy', this._document, 'securitypolicyviolation', null, cspHandler, false);
 };
 
 Instrumenter.prototype.addListener = function(section, obj, type, altType, handler, capture) {
