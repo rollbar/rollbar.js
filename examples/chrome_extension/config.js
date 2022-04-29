@@ -1,6 +1,11 @@
 
 window._rollbarConfig = {
   accessToken: 'ROLLBAR_CLIENT_TOKEN',
-  captureUncaught: true,
-  captureUnhandledRejections: true
+  captureUncaught: false, // Only required for Firefox, other browser targets
+                          // may set true. See README.
+  captureUnhandledRejections: true,
+  autoInstrument: {
+    network: false // Only required for Firefox, other browser targets
+                   // may set true. See README.
+  }
 };
