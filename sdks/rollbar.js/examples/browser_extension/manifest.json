@@ -3,10 +3,10 @@
   "name": "Test Extension",
   "version": "1.0.0",
   "permissions": ["storage", "activeTab", "https://api.rollbar.com/"],
-  "content_security_policy": "default-src 'self' https://cdnjs.cloudflare.com https://api.rollbar.com;",
+  "content_security_policy": "script-src 'self' https://cdn.rollbar.com; object-src 'self' https://cdn.rollbar.com;",
   "background": {
       "scripts": ["background.js"],
-      "persistent": false
+      "persistent": true
   },
  "content_scripts": [
    {
