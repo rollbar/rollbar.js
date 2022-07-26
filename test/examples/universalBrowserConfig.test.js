@@ -1,15 +1,14 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+// The most maintainable way to reset the browser state in karma is to put
+// tests in separate files. This file is for testing non-default config
+// options during snippet execution. (Before full rollbar.js loads.)
 
-describe('Rollbar loaded by snippet', function() {
+describe('Rollbar loaded by snippet with non-default options', function() {
   before(function (done) {
     // Stub the xhr interface.
     window.server = sinon.createFakeServer();
 
     // Load the HTML page.
-    document.write(window.__html__['examples/universal-browser/test.html']);
+    document.write(window.__html__['examples/universal-browser/test-with-non-default-options.html']);
 
     // Karma headless chrome won't dispatch DOMContentLoaded,
     // so we need to do it manually.
@@ -48,9 +47,9 @@ describe('Rollbar loaded by snippet', function() {
     expect(body.data.uuid).to.eql(ret.uuid);
     expect(body.data.body.message.body).to.eql('test');
 
-    // Assert load telemetry was added.
-    expect(body.data.body.telemetry[0].type).to.eql('navigation');
-    expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
+    // Assert that load telemetry was not added. (First event is the log event.)
+    expect(body.data.body.telemetry[0].type).to.eql('log');
+    expect(body.data.body.telemetry[0].body.message).to.eql('test');
 
     done();
   });
