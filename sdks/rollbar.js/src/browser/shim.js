@@ -62,9 +62,16 @@ function setupShim(window, options) {
       globals.captureUnhandledRejections(window, handler, true);
     }
 
+    function pageTelemetryEnabled(ai) {
+      if (typeof ai === 'object' && (ai.page === undefined || ai.page)) {
+        return true;
+      }
+      return false;
+    }
+
     var ai = options.autoInstrument;
     if (options.enabled !== false) {
-      if (ai === undefined || ai === true || (typeof ai === 'object' && ai.network)) {
+      if (ai === undefined || ai === true || pageTelemetryEnabled(ai)) {
         if (window.addEventListener) {
           window.addEventListener('load', handler.captureLoad.bind(handler));
           window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
