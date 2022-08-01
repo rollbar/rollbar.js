@@ -39,18 +39,21 @@ describe('Rollbar loaded by snippet with non-default options', function() {
     );
 
     var ret = rollbar.info('test');
-    server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    setTimeout(function() {
+      server.respond();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.uuid).to.eql(ret.uuid);
-    expect(body.data.body.message.body).to.eql('test');
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // Assert that load telemetry was not added. (First event is the log event.)
-    expect(body.data.body.telemetry[0].type).to.eql('log');
-    expect(body.data.body.telemetry[0].body.message).to.eql('test');
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.uuid).to.eql(ret.uuid);
+      expect(body.data.body.message.body).to.eql('test');
 
-    done();
+      // Assert that load telemetry was not added. (First event is the log event.)
+      expect(body.data.body.telemetry[0].type).to.eql('log');
+      expect(body.data.body.telemetry[0].body.message).to.eql('test');
+
+      done();
+    }, 1);
   });
 });
