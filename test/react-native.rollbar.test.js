@@ -422,11 +422,13 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    expect(window.fetchStub.called).to.be.ok();
-    var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
-    expect(body.data.foo).to.eql('bar');
+    setTimeout(function() {
+      expect(window.fetchStub.called).to.be.ok();
+      var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
+      expect(body.data.foo).to.eql('bar');
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should use transform when set', function(done) {
@@ -442,11 +444,13 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    expect(window.fetchStub.called).to.be.ok();
-    var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
-    expect(body.data.foo).to.eql('baz');
+    setTimeout(function() {
+      expect(window.fetchStub.called).to.be.ok();
+      var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
+      expect(body.data.foo).to.eql('baz');
 
-    done();
+      done();
+    }, 1);
   });
 });
 

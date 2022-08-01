@@ -341,23 +341,26 @@ describe('options.captureUncaught', function() {
 
     var element = document.getElementById('throw-error');
     element.click();
-    server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    setTimeout(function() {
+      server.respond();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('test error');
-    expect(body.data.notifier.diagnostic.raw_error.message).to.eql('test error');
-    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false
-    });
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('test error');
+      expect(body.data.notifier.diagnostic.raw_error.message).to.eql('test error');
+      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
-    done();
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false
+      });
+
+      done();
+    }, 1);
   });
 
   it('should respond to enable/disable in configure', function(done) {
@@ -373,34 +376,44 @@ describe('options.captureUncaught', function() {
     var rollbar = window.rollbar = new Rollbar(options);
 
     element.click();
-    server.respond();
-    expect(server.requests.length).to.eql(0); // Disabled, no event
-    server.requests.length = 0;
 
-    rollbar.configure({
-      captureUncaught: true
-    });
+    setTimeout(function() {
+      server.respond();
+      expect(server.requests.length).to.eql(0); // Disabled, no event
+      server.requests.length = 0;
 
-    element.click();
-    server.respond();
+      rollbar.configure({
+        captureUncaught: true
+      });
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      element.click();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('test error');
-    expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
+      setTimeout(function() {
+        server.respond();
 
-    server.requests.length = 0;
+        var body = JSON.parse(server.requests[0].requestBody);
 
-    rollbar.configure({
-      captureUncaught: false
-    });
+        expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+        expect(body.data.body.trace.exception.message).to.eql('test error');
+        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
 
-    element.click();
-    server.respond();
-    expect(server.requests.length).to.eql(0); // Disabled, no event
+        server.requests.length = 0;
 
-    done();
+        rollbar.configure({
+          captureUncaught: false
+        });
+
+        element.click();
+
+        setTimeout(function() {
+          server.respond();
+          expect(server.requests.length).to.eql(0); // Disabled, no event
+
+          done();
+        }, 1);
+      }, 1);
+    }, 1);
+
   });
 
   // Test case expects Chrome, which is the currently configured karma js/browser
@@ -430,22 +443,24 @@ describe('options.captureUncaught', function() {
       Error.prepareStackTrace(e);
     }
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('anon error');
-    expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('anon error');
+      expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false
-    });
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false
+      });
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should ignore duplicate errors by default', function(done) {
@@ -465,24 +480,27 @@ describe('options.captureUncaught', function() {
     for(var i = 0; i < 2; i++) {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
-    server.respond();
 
-    // transmit only once
-    expect(server.requests.length).to.eql(1);
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      // transmit only once
+      expect(server.requests.length).to.eql(1);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('test error');
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false
-    });
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('test error');
 
-    done();
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false
+      });
+
+      done();
+    }, 1);
   });
 
   it('should transmit duplicate errors when set in config', function(done) {
@@ -503,24 +521,27 @@ describe('options.captureUncaught', function() {
     for(var i = 0; i < 2; i++) {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
-    server.respond();
 
-    // transmit both errors
-    expect(server.requests.length).to.eql(2);
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      // transmit both errors
+      expect(server.requests.length).to.eql(2);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('test error');
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false
-    });
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('test error');
 
-    done();
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false
+      });
+
+      done();
+    }, 1);
   });
   it('should send DOMException as trace_chain', function(done) {
     var server = window.server;
@@ -535,21 +556,24 @@ describe('options.captureUncaught', function() {
 
     var element = document.getElementById('throw-dom-exception');
     element.click();
-    server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    setTimeout(function() {
+      server.respond();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace_chain[0].exception.message).to.eql('test DOMException');
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false
-    });
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace_chain[0].exception.message).to.eql('test DOMException');
 
-    done();
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false
+      });
+
+      done();
+    }, 1);
   });
 
   it('should capture exta frames when stackTraceLimit is set', function(done) {
@@ -567,23 +591,26 @@ describe('options.captureUncaught', function() {
 
     var element = document.getElementById('throw-depp-stack-error');
     element.click();
-    server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    setTimeout(function() {
+      server.respond();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('deep stack error');
-    expect(body.data.body.trace.frames.length).to.be.above(20);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // karma doesn't unload the browser between tests, so the onerror handler
-    // will remain installed. Unset captureUncaught so the onerror handler
-    // won't affect other tests.
-    rollbar.configure({
-      captureUncaught: false,
-      stackTraceLimit: oldLimit // reset to default
-    });
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('deep stack error');
+      expect(body.data.body.trace.frames.length).to.be.above(20);
 
-    done();
+      // karma doesn't unload the browser between tests, so the onerror handler
+      // will remain installed. Unset captureUncaught so the onerror handler
+      // won't affect other tests.
+      rollbar.configure({
+        captureUncaught: false,
+        stackTraceLimit: oldLimit // reset to default
+      });
+
+      done();
+    }, 1);
   });
 
   it('should add _wrappedSource when wrapGlobalEventHandlers is set', function(done) {
@@ -775,16 +802,18 @@ describe('log', function() {
 
     rollbar.log('test message', { 'foo': 'bar' });
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.message.body).to.eql('test message');
-    expect(body.data.body.message.extra).to.eql({ 'foo': 'bar' });
-    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
-    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['string', 'object']);
+      expect(body.data.body.message.body).to.eql('test message');
+      expect(body.data.body.message.extra).to.eql({ 'foo': 'bar' });
+      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+      expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['string', 'object']);
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should send exception when called with error and extra args', function(done) {
@@ -799,16 +828,18 @@ describe('log', function() {
 
     rollbar.log(new Error('test error'), { 'foo': 'bar' });
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.trace.exception.message).to.eql('test error');
-    expect(body.data.body.trace.extra).to.eql({ 'foo': 'bar' });
-    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
-    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['error', 'object']);
+      expect(body.data.body.trace.exception.message).to.eql('test error');
+      expect(body.data.body.trace.extra).to.eql({ 'foo': 'bar' });
+      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+      expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['error', 'object']);
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should add custom data when called with error context', function(done) {
@@ -827,15 +858,17 @@ describe('log', function() {
 
     rollbar.error(err, { 'foo': 'bar' });
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.trace.exception.message).to.eql('test error');
-    expect(body.data.custom.foo).to.eql('bar');
-    expect(body.data.custom.err).to.eql('test');
+      expect(body.data.body.trace.exception.message).to.eql('test error');
+      expect(body.data.custom.foo).to.eql('bar');
+      expect(body.data.custom.err).to.eql('test');
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should send message when called with only null arguments', function(done) {
@@ -851,14 +884,16 @@ describe('log', function() {
 
     rollbar.log(null);
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.message.body).to.eql('Item sent with null or missing arguments.');
-    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
+      expect(body.data.body.message.body).to.eql('Item sent with null or missing arguments.');
+      expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should skipFrames when set', function(done) {
@@ -877,15 +912,17 @@ describe('log', function() {
     rollbar.log(error);
     rollbar.log(error, { skipFrames: 1 });
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace.frames;
-    var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace.frames;
+      var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace.frames;
+      var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace.frames;
 
-    expect(frames1.length).to.eql(frames2.length + 1);
-    expect(frames1.slice(0,-1)).to.eql(frames2);
+      expect(frames1.length).to.eql(frames2.length + 1);
+      expect(frames1.slice(0,-1)).to.eql(frames2);
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should call the item callback on error', function(done) {
@@ -917,11 +954,13 @@ describe('log', function() {
 
     rollbar.log('test', callback);
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    expect(callbackCalled.message).to.eql('Test error');
+      expect(callbackCalled.message).to.eql('Test error');
 
-    done();
+      done();
+    }, 1);
   })
 });
 
@@ -960,14 +999,16 @@ describe('onerror', function() {
 
     window.onerror("TestRollbarError: testing window.onerror", window.location.href);
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.trace.exception.message).to.eql('testing window.onerror');
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.body.trace.exception.message).to.eql('testing window.onerror');
 
-    done();
+      done();
+    }, 1);
   })
 });
 
@@ -1007,11 +1048,13 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to ignore
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    expect(server.requests.length).to.eql(0);
+      expect(server.requests.length).to.eql(0);
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should receive valid arguments at checkIgnore', function(done) {
@@ -1032,12 +1075,14 @@ describe('callback options', function() {
 
     rollbar.log(new Error('test'));
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    // Should be ignored if all checks pass.
-    expect(server.requests.length).to.eql(0);
+      // Should be ignored if all checks pass.
+      expect(server.requests.length).to.eql(0);
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should receive uncaught at checkIgnore', function(done) {
@@ -1060,12 +1105,14 @@ describe('callback options', function() {
     var element = document.getElementById('throw-error');
     element.click();
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    // Should be ignored if checkIgnore receives isUncaught.
-    expect(server.requests.length).to.eql(0);
+      // Should be ignored if checkIgnore receives isUncaught.
+      expect(server.requests.length).to.eql(0);
 
-    done();
+      done();
+    }, 1);
   })
 
   it('should send when checkIgnore returns false', function(done) {
@@ -1083,14 +1130,16 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
-    expect(body.data.notifier.configured_options.checkIgnore.substr(0,8))
-      .to.eql('function');
+      expect(server.requests.length).to.eql(1);
+      var body = JSON.parse(server.requests[0].requestBody);
+      expect(body.data.notifier.configured_options.checkIgnore.substr(0,8))
+        .to.eql('function');
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should use onSendCallback when set', function(done) {
@@ -1108,15 +1157,17 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
-    expect(body.data.foo).to.eql('bar');
-    expect(body.data.notifier.configured_options.onSendCallback.substr(0,8))
-      .to.eql('function');
+      expect(server.requests.length).to.eql(1);
+      var body = JSON.parse(server.requests[0].requestBody);
+      expect(body.data.foo).to.eql('bar');
+      expect(body.data.notifier.configured_options.onSendCallback.substr(0,8))
+        .to.eql('function');
 
-    done();
+      done();
+    }, 1);
   });
 
   it('should use transform when set', function(done) {
@@ -1134,15 +1185,17 @@ describe('callback options', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
-    expect(body.data.foo).to.eql('baz');
-    expect(body.data.notifier.configured_options.transform.substr(0,8))
-      .to.eql('function');
+      expect(server.requests.length).to.eql(1);
+      var body = JSON.parse(server.requests[0].requestBody);
+      expect(body.data.foo).to.eql('baz');
+      expect(body.data.notifier.configured_options.transform.substr(0,8))
+        .to.eql('function');
 
-    done();
+      done();
+    }, 1);
   });
 });
 
@@ -1232,13 +1285,15 @@ describe('options.autoInstrument', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.telemetry[0].body.message).to.eql('console test');
+      expect(body.data.body.telemetry[0].body.message).to.eql('console test');
 
-    done();
+      done();
+    }, 1);
   });
 
   function initRollbarForNetworkTelemetry() {
@@ -1281,20 +1336,24 @@ describe('options.autoInstrument', function() {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          expect(server.requests.length).to.eql(2);
-          var body = JSON.parse(server.requests[1].requestBody);
+          setTimeout(function() {
+            server.respond();
 
-          // Verify request capture and scrubbing
-          expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
+            expect(server.requests.length).to.eql(2);
+            var body = JSON.parse(server.requests[1].requestBody);
 
-          // Verify request headers capture and case-insensitive scrubbing
-          expect(body.data.body.telemetry[0].body.request_headers).to.eql({'Content-type': 'application/json', Secret: '********'});
+            // Verify request capture and scrubbing
+            expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
 
-          // Verify response capture and scrubbing
-          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
-          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+            // Verify request headers capture and case-insensitive scrubbing
+            expect(body.data.body.telemetry[0].body.request_headers).to.eql({'Content-type': 'application/json', Secret: '********'});
 
-          done();
+            // Verify response capture and scrubbing
+            expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+            expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+
+            done();
+          }, 1);
         } catch (e) {
           done(e);
         }
@@ -1330,17 +1389,21 @@ describe('options.autoInstrument', function() {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          expect(server.requests.length).to.eql(2);
-          var body = JSON.parse(server.requests[1].requestBody);
+          setTimeout(function() {
+            server.respond();
 
-          // Verify request headers capture and case-insensitive scrubbing
-          expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
+            expect(server.requests.length).to.eql(2);
+            var body = JSON.parse(server.requests[1].requestBody);
 
-          // Verify response capture and scrubbing
-          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
-          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+            // Verify request headers capture and case-insensitive scrubbing
+            expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
 
-          done();
+            // Verify response capture and scrubbing
+            expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+            expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+
+            done();
+          }, 1);
         } catch (e) {
           done(e);
         }
@@ -1376,18 +1439,22 @@ describe('options.autoInstrument', function() {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          expect(server.requests.length).to.eql(2);
-          var body = JSON.parse(server.requests[1].requestBody);
+          setTimeout(function() {
+            server.respond();
 
-          // Verify request headers capture and case-insensitive scrubbing
-          expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
+            expect(server.requests.length).to.eql(2);
+            var body = JSON.parse(server.requests[1].requestBody);
 
-          // Not scrubbed for unrecognized content type
-          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"123456"}');
+            // Verify request headers capture and case-insensitive scrubbing
+            expect(body.data.body.telemetry[0].body.request_headers).to.eql({Secret: '********'});
 
-          expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+            // Not scrubbed for unrecognized content type
+            expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"123456"}');
 
-          done();
+            expect(body.data.body.telemetry[0].body.response.headers['Password']).to.eql('********');
+
+            done();
+          }, 1);
         } catch (e) {
           done(e);
         }
@@ -1427,22 +1494,28 @@ describe('options.autoInstrument', function() {
     xhr.onreadystatechange = function () {
       if(xhr.readyState === 4) {
         try {
-          expect(server.requests.length).to.eql(2);
-          var body = JSON.parse(server.requests[1].requestBody);
+          setTimeout(function() {
+            server.respond();
 
-          expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+            expect(server.requests.length).to.eql(2);
+            var body = JSON.parse(server.requests[1].requestBody);
 
-          // Just knowing a stack is present is enough for this test.
-          expect(body.data.body.trace.frames.length).to.be.above(1);
+            expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
 
-          done();
+            // Just knowing a stack is present is enough for this test.
+            expect(body.data.body.trace.frames.length).to.be.above(1);
+
+            done();
+          }, 1);
         } catch (e) {
           done(e);
         }
       }
     };
     xhr.send(JSON.stringify({name: 'bar', secret: 'xhr post' }));
-    server.respond();
+    setTimeout(function() {
+      server.respond();
+    }, 1);
   });
 
   it('should add telemetry events for fetch calls', function(done) {
@@ -1491,36 +1564,45 @@ describe('options.autoInstrument', function() {
     .then(function(response) {
       try {
         rollbar.log('test'); // generate a payload to inspect
-        server.respond();
-
-        expect(server.requests.length).to.eql(1);
-        var body = JSON.parse(server.requests[0].requestBody);
-
-        // Verify request capture and scrubbing
-        expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
-
-        // Verify request headers capture and case-insensitive scrubbing
-        expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
-
-        // When using the Sinon test stub, the response body is populated in Headless Chrome 73,
-        // but not in 77. When using the Fetch API normally, it is populated in all tested Chrome versions.
-        // Disable here due to the Sinon limitation.
-        //
-        // Verify response capture and scrubbing
-        // expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
-
-        // Verify response headers capture and case-insensitive scrubbing
-        expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
-
-        // Assert that the original stream reader hasn't been read.
-        expect(response.bodyUsed).to.eql(false);
-
-        rollbar.configure({ autoInstrument: false });
-        window.fetch.restore();
-        done();
       } catch (e) {
         done(e);
+        return;
       }
+
+      setTimeout(function() {
+        try {
+          server.respond();
+
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
+
+          // Verify request capture and scrubbing
+          expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
+
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
+
+          // When using the Sinon test stub, the response body is populated in Headless Chrome 73,
+          // but not in 77. When using the Fetch API normally, it is populated in all tested Chrome versions.
+          // Disable here due to the Sinon limitation.
+          //
+          // Verify response capture and scrubbing
+          // expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+
+          // Verify response headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+          // Assert that the original stream reader hasn't been read.
+          expect(response.bodyUsed).to.eql(false);
+
+          rollbar.configure({ autoInstrument: false });
+          window.fetch.restore();
+          done();
+        } catch (e) {
+          done(e);
+          return;
+        }
+      }, 1);
     })
   });
 
@@ -1555,23 +1637,25 @@ describe('options.autoInstrument', function() {
     };
     var fetchRequest = new Request('https://example.com/xhr-test');
     window.fetch(fetchRequest, fetchInit).then(function(_response) {
-      try {
-        server.respond();
+      setTimeout(function() {
+        try {
+          server.respond();
 
-        expect(server.requests.length).to.eql(2);
-        var body = JSON.parse(server.requests[1].requestBody);
+          expect(server.requests.length).to.eql(1);
+          var body = JSON.parse(server.requests[0].requestBody);
 
-        expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+          expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
 
-        // Just knowing a stack is present is enough for this test.
-        expect(body.data.body.trace.frames.length).to.be.above(1);
+          // Just knowing a stack is present is enough for this test.
+          expect(body.data.body.trace.frames.length).to.be.above(1);
 
-        rollbar.configure({ autoInstrument: false });
-        window.fetch.restore();
-        done();
-      } catch (e) {
-        done(e);
-      }
+          rollbar.configure({ autoInstrument: false });
+          window.fetch.restore();
+          done();
+        } catch (e) {
+          done(e);
+        }
+      }, 1);
     })
   });
 
@@ -1596,16 +1680,18 @@ describe('options.autoInstrument', function() {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    server.respond();
+    setTimeout(function() {
+      server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    window.console = oldConsole;
+      window.console = oldConsole;
 
-    expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.have.property('error');
-    expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property('error');
+      expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.have.property('error');
+      expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property('error');
 
-    done();
+      done();
+    }, 1);
   });
 });
 
