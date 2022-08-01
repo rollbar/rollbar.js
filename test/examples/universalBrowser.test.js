@@ -40,18 +40,21 @@ describe('Rollbar loaded by snippet', function() {
     );
 
     var ret = rollbar.info('test');
-    server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    setTimeout(function() {
+      server.respond();
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.uuid).to.eql(ret.uuid);
-    expect(body.data.body.message.body).to.eql('test');
+      var body = JSON.parse(server.requests[0].requestBody);
 
-    // Assert load telemetry was added.
-    expect(body.data.body.telemetry[0].type).to.eql('navigation');
-    expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
+      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.data.uuid).to.eql(ret.uuid);
+      expect(body.data.body.message.body).to.eql('test');
 
-    done();
+      // Assert load telemetry was added.
+      expect(body.data.body.telemetry[0].type).to.eql('navigation');
+      expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
+
+      done();
+    }, 1);
   });
 });
