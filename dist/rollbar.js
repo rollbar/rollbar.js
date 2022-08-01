@@ -2897,7 +2897,12 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
 Api.prototype.postItem = function(data, callback) {
   var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
-  this.transport.post(this.accessToken, transportOptions, payload, callback);
+  var self = this;
+
+  // ensure the network request is scheduled after the current tick.
+  setTimeout(function() {
+    self.transport.post(self.accessToken, transportOptions, payload, callback);
+  }, 0);
 };
 
 /**
@@ -4579,7 +4584,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.25.0',
+  version: '2.25.1',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
