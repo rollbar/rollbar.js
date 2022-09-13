@@ -226,9 +226,10 @@ describe('addRequestInfo', function() {
   it('should use window info to set request properties', function(done) {
     var args = ['a message'];
     var item = itemFromArgs(args);
-    var options = {};
+    var options = { captureIp: 'anonymize' };
     t.addRequestInfo(window)(item, options, function(e, i) {
       expect(i.data.request).to.be.ok();
+      expect(i.data.request.user_ip).to.eql('$remote_ip_anonymize');
       done(e);
     });
   });
@@ -240,6 +241,19 @@ describe('addRequestInfo', function() {
     var w = null;
     t.addRequestInfo(w)(item, options, function(e, i) {
       expect(i.data.request).to.not.be.ok();
+      done(e);
+    });
+  });
+  it('should honor captureIp without window', function(done) {
+    var args = ['a message'];
+    var item = itemFromArgs(args);
+    item.data = {};
+    var options = { captureIp: true };
+    var w = null;
+    t.addRequestInfo(w)(item, options, function(e, i) {
+      expect(i.data.request.url).to.not.be.ok();
+      expect(i.data.request.query_string).to.not.be.ok();
+      expect(i.data.request.user_ip).to.eql('$remote_ip');
       done(e);
     });
   });

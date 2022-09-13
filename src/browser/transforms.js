@@ -79,20 +79,25 @@ function addBaseInfo(item, options, callback) {
 
 function addRequestInfo(window) {
   return function(item, options, callback) {
-    if (!window || !window.location) {
-      return callback(null, item);
+    var requestInfo = {};
+
+    if (window && window.location) {
+      requestInfo.url = window.location.href;
+      requestInfo.query_string = window.location.search;
     }
+
     var remoteString = '$remote_ip';
     if (!options.captureIp) {
       remoteString = null;
     } else if (options.captureIp !== true) {
       remoteString += '_anonymize';
     }
-    _.set(item, 'data.request', {
-      url: window.location.href,
-      query_string: window.location.search,
-      user_ip: remoteString
-    });
+    if (remoteString) requestInfo.user_ip = remoteString;
+
+    if (Object.keys(requestInfo).length > 0) {
+      _.set(item, 'data.request', requestInfo);
+    }
+
     callback(null, item);
   };
 }
