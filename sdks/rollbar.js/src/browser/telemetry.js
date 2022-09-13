@@ -1,4 +1,5 @@
 var _ = require('../utility');
+var headers = require('../utility/headers');
 var scrub = require('../scrub');
 var urlparser = require('./url');
 var domUtil = require('./domUtility');
@@ -362,7 +363,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         if (args[1] && args[1].headers) {
           // Argument may be a Headers object, or plain object. Ensure here that
           // we are working with a Headers object with case-insensitive keys.
-          var reqHeaders = new Headers(args[1].headers);
+          var reqHeaders = headers(args[1].headers);
 
           metadata.request_content_type = reqHeaders.get('Content-Type');
 
