@@ -1606,7 +1606,7 @@ describe('options.autoInstrument', function() {
     })
   });
 
-  it('should add telemetry events for fetch calls', function(done) {
+  it('should report error for http 4xx fetch calls, when enabled', function(done) {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1656,6 +1656,74 @@ describe('options.autoInstrument', function() {
           done(e);
         }
       }, 1);
+    })
+  });
+
+  it('should add telemetry headers when fetch Headers object is undefined', function(done) {
+    var server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    window.fetchStub = sinon.stub(window, 'fetch');
+
+    var readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(JSON.stringify({name: 'foo', password: '123456'}));
+        controller.close();
+      }
+    });
+
+    window.fetch.returns(Promise.resolve(new Response(
+      readableStream,
+      { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json', 'password': '123456' }}
+    )));
+
+    var options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      autoInstrument: {
+        log: false,
+        network: true,
+        networkResponseHeaders: true,
+        networkRequestHeaders: true
+      }
+    };
+    var rollbar = window.rollbar = new Rollbar(options);
+
+    // Remove Headers from window object
+    var originalHeaders = window.Headers;
+    delete window.Headers;
+
+    const fetchInit = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Secret: '123456'},
+      body: JSON.stringify({name: 'bar', secret: 'xhr post'})
+    };
+    var fetchRequest = new Request('https://example.com/xhr-test');
+    window.fetch(fetchRequest, fetchInit)
+    .then(function(response) {
+      try {
+        rollbar.log('test'); // generate a payload to inspect
+        server.respond();
+
+        expect(server.requests.length).to.eql(1);
+        var body = JSON.parse(server.requests[0].requestBody);
+
+        // Verify request headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
+
+        // Verify response headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+
+        // Assert that the original stream reader hasn't been read.
+        expect(response.bodyUsed).to.eql(false);
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        window.Headers = originalHeaders;
+        done();
+      } catch (e) {
+        done(e);
+      }
     })
   });
 
