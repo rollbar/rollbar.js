@@ -1366,10 +1366,10 @@ module.exports = rollbar;
 var Rollbar = __webpack_require__(9);
 var telemeter = __webpack_require__(29);
 var instrumenter = __webpack_require__(30);
-var polyfillJSON = __webpack_require__(32);
-var wrapGlobals = __webpack_require__(34);
+var polyfillJSON = __webpack_require__(33);
+var wrapGlobals = __webpack_require__(35);
 var scrub = __webpack_require__(4);
-var truncation = __webpack_require__(35);
+var truncation = __webpack_require__(36);
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -3604,20 +3604,25 @@ function addBaseInfo(item, options, callback) {
 
 function addRequestInfo(window) {
   return function(item, options, callback) {
-    if (!window || !window.location) {
-      return callback(null, item);
+    var requestInfo = {};
+
+    if (window && window.location) {
+      requestInfo.url = window.location.href;
+      requestInfo.query_string = window.location.search;
     }
+
     var remoteString = '$remote_ip';
     if (!options.captureIp) {
       remoteString = null;
     } else if (options.captureIp !== true) {
       remoteString += '_anonymize';
     }
-    _.set(item, 'data.request', {
-      url: window.location.href,
-      query_string: window.location.search,
-      user_ip: remoteString
-    });
+    if (remoteString) requestInfo.user_ip = remoteString;
+
+    if (Object.keys(requestInfo).length > 0) {
+      _.set(item, 'data.request', requestInfo);
+    }
+
     callback(null, item);
   };
 }
@@ -4601,7 +4606,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.25.1',
+  version: '2.25.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4873,9 +4878,10 @@ module.exports = Telemeter;
 
 
 var _ = __webpack_require__(0);
+var headers = __webpack_require__(31);
 var scrub = __webpack_require__(4);
 var urlparser = __webpack_require__(2);
-var domUtil = __webpack_require__(31);
+var domUtil = __webpack_require__(32);
 
 var defaults = {
   network: true,
@@ -5236,7 +5242,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
         if (args[1] && args[1].headers) {
           // Argument may be a Headers object, or plain object. Ensure here that
           // we are working with a Headers object with case-insensitive keys.
-          var reqHeaders = new Headers(args[1].headers);
+          var reqHeaders = headers(args[1].headers);
 
           metadata.request_content_type = reqHeaders.get('Content-Type');
 
@@ -5649,6 +5655,109 @@ module.exports = Instrumenter;
 "use strict";
 
 
+/*
+ * headers - Detect when fetch Headers are undefined and use a partial polyfill.
+ *
+ * A full polyfill is not used in order to keep package size as small as possible.
+ * Since this is only used internally and is not added to the window object,
+ * the full interface doesn't need to be supported.
+ *
+ * This implementation is modified from whatwg-fetch:
+ * https://github.com/github/fetch
+ */
+function headers(headers) {
+  if (typeof Headers === 'undefined') {
+    return new FetchHeaders(headers);
+  }
+
+  return new Headers(headers);
+}
+
+function normalizeName(name) {
+  if (typeof name !== 'string') {
+    name = String(name)
+  }
+  return name.toLowerCase()
+}
+
+function normalizeValue(value) {
+  if (typeof value !== 'string') {
+    value = String(value)
+  }
+  return value
+}
+
+function iteratorFor(items) {
+  var iterator = {
+    next: function() {
+      var value = items.shift()
+      return {done: value === undefined, value: value}
+    }
+  }
+
+  return iterator
+}
+
+function FetchHeaders(headers) {
+  this.map = {}
+
+  if (headers instanceof FetchHeaders) {
+    headers.forEach(function(value, name) {
+      this.append(name, value)
+    }, this)
+  } else if (Array.isArray(headers)) {
+    headers.forEach(function(header) {
+      this.append(header[0], header[1])
+    }, this)
+  } else if (headers) {
+    Object.getOwnPropertyNames(headers).forEach(function(name) {
+      this.append(name, headers[name])
+    }, this)
+  }
+}
+
+FetchHeaders.prototype.append = function(name, value) {
+  name = normalizeName(name)
+  value = normalizeValue(value)
+  var oldValue = this.map[name]
+  this.map[name] = oldValue ? oldValue + ', ' + value : value
+}
+
+FetchHeaders.prototype.get = function(name) {
+  name = normalizeName(name)
+  return this.has(name) ? this.map[name] : null
+}
+
+FetchHeaders.prototype.has = function(name) {
+  return this.map.hasOwnProperty(normalizeName(name))
+}
+
+FetchHeaders.prototype.forEach = function(callback, thisArg) {
+  for (var name in this.map) {
+    if (this.map.hasOwnProperty(name)) {
+      callback.call(thisArg, this.map[name], name, this)
+    }
+  }
+}
+
+FetchHeaders.prototype.entries = function() {
+  var items = []
+  this.forEach(function(value, name) {
+    items.push([name, value])
+  })
+  return iteratorFor(items)
+}
+
+module.exports = headers;
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 function getElementType(e) {
   return (e.getAttribute('type') || '').toLowerCase();
 }
@@ -5782,19 +5891,19 @@ module.exports = {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var polyfillJSON = __webpack_require__(33);
+var polyfillJSON = __webpack_require__(34);
 
 module.exports = polyfillJSON;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 //  json3.js
@@ -6563,7 +6672,7 @@ module.exports = setupCustomJSON;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6613,7 +6722,7 @@ module.exports = wrapGlobals;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
