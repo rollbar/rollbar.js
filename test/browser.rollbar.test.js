@@ -1495,17 +1495,21 @@ describe('options.autoInstrument', function() {
       if(xhr.readyState === 4) {
         try {
           setTimeout(function() {
-            server.respond();
+            try {
+              server.respond();
 
-            expect(server.requests.length).to.eql(2);
-            var body = JSON.parse(server.requests[1].requestBody);
+              expect(server.requests.length).to.eql(2);
+              var body = JSON.parse(server.requests[1].requestBody);
 
-            expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
+              expect(body.data.body.trace.exception.message).to.eql('HTTP request failed with Status 404');
 
-            // Just knowing a stack is present is enough for this test.
-            expect(body.data.body.trace.frames.length).to.be.above(1);
+              // Just knowing a stack is present is enough for this test.
+              expect(body.data.body.trace.frames.length).to.be.above(1);
 
-            done();
+              done();
+            } catch (e) {
+              done(e);
+            }
           }, 1);
         } catch (e) {
           done(e);
@@ -1703,24 +1707,30 @@ describe('options.autoInstrument', function() {
     .then(function(response) {
       try {
         rollbar.log('test'); // generate a payload to inspect
-        server.respond();
+        setTimeout(function() {
+          try {
+            server.respond();
 
-        expect(server.requests.length).to.eql(1);
-        var body = JSON.parse(server.requests[0].requestBody);
+            expect(server.requests.length).to.eql(1);
+            var body = JSON.parse(server.requests[0].requestBody);
 
-        // Verify request headers capture and case-insensitive scrubbing
-        expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
+            // Verify request headers capture and case-insensitive scrubbing
+            expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
 
-        // Verify response headers capture and case-insensitive scrubbing
-        expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
+            // Verify response headers capture and case-insensitive scrubbing
+            expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
 
-        // Assert that the original stream reader hasn't been read.
-        expect(response.bodyUsed).to.eql(false);
+            // Assert that the original stream reader hasn't been read.
+            expect(response.bodyUsed).to.eql(false);
 
-        rollbar.configure({ autoInstrument: false });
-        window.fetch.restore();
-        window.Headers = originalHeaders;
-        done();
+            rollbar.configure({ autoInstrument: false });
+            window.fetch.restore();
+            window.Headers = originalHeaders;
+            done();
+          } catch (e) {
+            done(e);
+          }
+        });
       } catch (e) {
         done(e);
       }
