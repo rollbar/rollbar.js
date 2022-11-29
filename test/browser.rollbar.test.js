@@ -1529,15 +1529,9 @@ describe('options.autoInstrument', function() {
 
     window.fetchStub = sinon.stub(window, 'fetch');
 
-    var readableStream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(JSON.stringify({name: 'foo', password: '123456'}));
-        controller.close();
-      }
-    });
-
+    var responseBody = JSON.stringify({name: 'foo', password: '123456'});
     window.fetch.returns(Promise.resolve(new Response(
-      readableStream,
+      responseBody,
       { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json', 'password': '123456' }}
     )));
 
@@ -1561,11 +1555,18 @@ describe('options.autoInstrument', function() {
     const fetchInit = {
       method: 'POST',
       headers: fetchHeaders,
-      body: JSON.stringify({name: 'bar', secret: 'xhr post'})
+      body: JSON.stringify({name: 'bar', secret: 'fetch post'})
     };
-    var fetchRequest = new Request('https://example.com/xhr-test');
+    var fetchRequest = new Request('https://example.com/fetch-test');
     window.fetch(fetchRequest, fetchInit)
     .then(function(response) {
+      // Assert that the original stream reader hasn't been read.
+      expect(response.bodyUsed).to.eql(false);
+      return response.text()
+    })
+    .then(function(text) {
+      expect(text).to.eql(responseBody);
+
       try {
         rollbar.log('test'); // generate a payload to inspect
       } catch (e) {
@@ -1577,8 +1578,9 @@ describe('options.autoInstrument', function() {
         try {
           server.respond();
 
-          expect(server.requests.length).to.eql(2);
-          var body = JSON.parse(server.requests[1].requestBody);
+          expect(window.fetchStub.called).to.be.ok();
+          expect(server.requests.length).to.eql(1);
+          var body = JSON.parse(server.requests[0].requestBody);
 
           // Verify request capture and scrubbing
           expect(body.data.body.telemetry[0].body.request).to.eql('{"name":"bar","secret":"********"}');
@@ -1586,18 +1588,11 @@ describe('options.autoInstrument', function() {
           // Verify request headers capture and case-insensitive scrubbing
           expect(body.data.body.telemetry[0].body.request_headers).to.eql({'content-type': 'application/json', secret: '********'});
 
-          // When using the Sinon test stub, the response body is populated in Headless Chrome 73,
-          // but not in 77. When using the Fetch API normally, it is populated in all tested Chrome versions.
-          // Disable here due to the Sinon limitation.
-          //
           // Verify response capture and scrubbing
-          // expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
+          expect(body.data.body.telemetry[0].body.response.body).to.eql('{"name":"foo","password":"********"}');
 
           // Verify response headers capture and case-insensitive scrubbing
           expect(body.data.body.telemetry[0].body.response.headers).to.eql({'content-type': 'application/json', password: '********'});
-
-          // Assert that the original stream reader hasn't been read.
-          expect(response.bodyUsed).to.eql(false);
 
           rollbar.configure({ autoInstrument: false });
           window.fetch.restore();

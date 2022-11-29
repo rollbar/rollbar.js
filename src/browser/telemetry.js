@@ -383,6 +383,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
         if (self.trackHttpErrors()) {
           metadata.stack = (new Error()).stack;
         }
+
+        // Start our handler before returning the promise. This allows resp.clone()
+        // to execute before other handlers touch the response.
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -395,6 +398,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (self.autoInstrument.networkResponseBody) {
             if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
               // The response must be cloned to prevent reading (and locking) the original stream.
+              // This must be done before other handlers touch the response.
               body = resp.clone().text(); //returns a Promise
             }
           }
