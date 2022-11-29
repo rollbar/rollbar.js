@@ -384,11 +384,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
           metadata.stack = (new Error()).stack;
         }
 
-        var promise = orig.apply(this, args);
-
         // Start our handler before returning the promise. This allows resp.clone()
         // to execute before other handlers touch the response.
-        promise.then(function (resp) {
+        return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
           metadata.response_content_type = resp.headers.get('Content-Type');
@@ -427,7 +425,6 @@ Instrumenter.prototype.instrumentNetwork = function() {
           self.errorOnHttpStatus(metadata);
           return resp;
         });
-        return promise;
       };
     }, this.replacements, 'network');
   }
