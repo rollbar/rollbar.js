@@ -105,6 +105,60 @@ describe('getTransportFromOptions', function() {
     expect(t.proxy).to.eql(options.proxy);
     expect(t.timeout).to.eql(undefined);
   });
+  describe('getTransportFromOptions', function() {
+    var defaults = {
+      hostname: 'api.com',
+      protocol: 'https:',
+      path: '/api/1',
+      search: '?abc=456',
+    };
+    var url = {
+      parse: function(_) {
+        return {
+          hostname: 'whatever.com',
+          protocol: 'http:',
+          pathname: '/api/42'
+        };
+      }
+    };
+    it('should use xhr by default', function(done) {
+      var options = {};
+      var t = u.getTransportFromOptions(options, defaults, url);
+      expect(t.transport).to.eql('xhr');
+      done();
+    });
+    it('should use fetch when requested', function(done) {
+      var options = {defaultTransport: 'fetch'};
+      var t = u.getTransportFromOptions(options, defaults, url);
+      expect(t.transport).to.eql('fetch');
+      done();
+    });
+    it('should use xhr when requested', function(done) {
+      var options = {defaultTransport: 'xhr'};
+      var t = u.getTransportFromOptions(options, defaults, url);
+      expect(t.transport).to.eql('xhr');
+      done();
+    });
+    it('should use xhr when fetch is unavailable', function(done) {
+      var options = {defaultTransport: 'fetch'};
+      var oldFetch = window.fetch;
+      self.fetch = undefined;
+      var t = u.getTransportFromOptions(options, defaults, url);
+      expect(t.transport).to.eql('xhr');
+      self.fetch = oldFetch;
+      done();
+    });
+    it('should use fetch when xhr is unavailable', function(done) {
+      var options = {defaultTransport: 'xhr'};
+      var oldXhr = window.XMLHttpRequest;
+      self.XMLHttpRequest = undefined;
+      var t = u.getTransportFromOptions(options, defaults, url);
+      expect(t.transport).to.eql('fetch');
+      self.XMLHttpRequest = oldXhr;
+      done();
+    });
+  });
+
 });
 
 describe('transportOptions', function() {

@@ -86,6 +86,65 @@ describe('post', function() {
     };
     t.post(accessToken, options, payload, callback, requestFactory.getInstance);
   });
+  describe('post', function() {
+    beforeEach(function (done) {
+      window.fetchStub = sinon.stub(window, 'fetch');
+      window.server = sinon.createFakeServer();
+      done();
+    });
+
+    afterEach(function () {
+      window.fetch.restore();
+      window.server.restore();
+    });
+
+    function stubFetchResponse() {
+      window.fetch.returns(Promise.resolve(new Response(
+        JSON.stringify({ err: 0, message: 'OK', result: { uuid: uuid }}),
+        { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/json' }}
+      )));
+    }
+
+    function stubXhrResponse() {
+      window.server.respondWith(
+        [
+          200,
+          { 'Content-Type': 'application/json' },
+          '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
+        ]
+      );
+    }
+
+    var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
+
+    it('should use fetch when requested', function(done) {
+      var callback = function(err, resp) {
+        expect(window.fetchStub.called).to.be.ok();
+        expect(server.requests.length).to.eql(0);
+        done(err);
+      };
+      stubFetchResponse();
+      stubXhrResponse();
+      server.requests.length = 0;
+      options.transport = 'fetch';
+      t.post(accessToken, options, payload, callback);
+    });
+    it('should use xhr when requested', function(done) {
+      var callback = function(err, resp) {
+        expect(window.fetchStub.called).to.not.be.ok();
+        expect(server.requests.length).to.eql(1);
+        done(err);
+      };
+      stubFetchResponse();
+      stubXhrResponse();
+      server.requests.length = 0;
+      options.transport = 'xhr';
+      t.post(accessToken, options, payload, callback);
+      setTimeout(function() {
+        server.respond();
+      }, 1);
+    });
+  });
 });
 
 var TestRequest = function(response, status, shouldThrowOnSend) {
