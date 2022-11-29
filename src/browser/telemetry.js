@@ -383,7 +383,12 @@ Instrumenter.prototype.instrumentNetwork = function() {
         if (self.trackHttpErrors()) {
           metadata.stack = (new Error()).stack;
         }
-        return orig.apply(this, args).then(function (resp) {
+
+        var promise = orig.apply(this, args);
+
+        // Start our handler before returning the promise. This allows resp.clone()
+        // to execute before other handlers touch the response.
+        promise.then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
           metadata.response_content_type = resp.headers.get('Content-Type');
@@ -395,6 +400,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (self.autoInstrument.networkResponseBody) {
             if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
               // The response must be cloned to prevent reading (and locking) the original stream.
+              // This must be done before other handlers touch the response.
               body = resp.clone().text(); //returns a Promise
             }
           }
@@ -421,6 +427,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           self.errorOnHttpStatus(metadata);
           return resp;
         });
+        return promise;
       };
     }, this.replacements, 'network');
   }
