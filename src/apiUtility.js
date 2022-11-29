@@ -25,6 +25,7 @@ function getTransportFromOptions(options, defaults, url) {
   var path = defaults.path;
   var search = defaults.search;
   var timeout = options.timeout;
+  var transport = detectTransport(options)
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -42,8 +43,17 @@ function getTransportFromOptions(options, defaults, url) {
     port: port,
     path: path,
     search: search,
-    proxy: proxy
+    proxy: proxy,
+    transport: transport
   };
+}
+
+function detectTransport(options) {
+  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var transport = options.defaultTransport || 'xhr';
+  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
+  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
+  return transport;
 }
 
 function transportOptions(transport, method) {
@@ -52,6 +62,7 @@ function transportOptions(transport, method) {
   var hostname = transport.hostname;
   var path = transport.path;
   var timeout = transport.timeout;
+  var transportAPI = transport.transport;
   if (transport.search) {
     path = path + transport.search;
   }
@@ -67,7 +78,8 @@ function transportOptions(transport, method) {
     hostname: hostname,
     path: path,
     port: port,
-    method: method
+    method: method,
+    transport: transportAPI
   };
 }
 
