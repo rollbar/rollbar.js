@@ -1018,7 +1018,7 @@ module.exports = {
 "use strict";
 
 
-var ErrorStackParser = __webpack_require__(21);
+var ErrorStackParser = __webpack_require__(23);
 
 var UNKNOWN_FUNCTION = '?';
 var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
@@ -1347,12 +1347,12 @@ module.exports = rollbar;
 
 
 var Rollbar = __webpack_require__(8);
-var telemeter = __webpack_require__(28);
-var instrumenter = __webpack_require__(29);
-var polyfillJSON = __webpack_require__(32);
-var wrapGlobals = __webpack_require__(34);
+var telemeter = __webpack_require__(30);
+var instrumenter = __webpack_require__(31);
+var polyfillJSON = __webpack_require__(34);
+var wrapGlobals = __webpack_require__(36);
 var scrub = __webpack_require__(4);
-var truncation = __webpack_require__(35);
+var truncation = __webpack_require__(37);
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -1382,10 +1382,10 @@ var globals = __webpack_require__(18);
 var Transport = __webpack_require__(19);
 var urllib = __webpack_require__(2);
 
-var transforms = __webpack_require__(20);
-var sharedTransforms = __webpack_require__(23);
-var predicates = __webpack_require__(24);
-var sharedPredicates = __webpack_require__(25);
+var transforms = __webpack_require__(22);
+var sharedTransforms = __webpack_require__(25);
+var predicates = __webpack_require__(26);
+var sharedPredicates = __webpack_require__(27);
 var errorParser = __webpack_require__(3);
 
 function Rollbar(options, client) {
@@ -1914,8 +1914,8 @@ function _gWindow() {
   return ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
 }
 
-var defaults = __webpack_require__(26);
-var scrubFields = __webpack_require__(27);
+var defaults = __webpack_require__(28);
+var scrubFields = __webpack_require__(29);
 
 var defaultOptions = {
   version: defaults.version,
@@ -2991,6 +2991,7 @@ function getTransportFromOptions(options, defaults, url) {
   var path = defaults.path;
   var search = defaults.search;
   var timeout = options.timeout;
+  var transport = detectTransport(options)
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -3008,8 +3009,17 @@ function getTransportFromOptions(options, defaults, url) {
     port: port,
     path: path,
     search: search,
-    proxy: proxy
+    proxy: proxy,
+    transport: transport
   };
+}
+
+function detectTransport(options) {
+  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var transport = options.defaultTransport || 'xhr';
+  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
+  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
+  return transport;
 }
 
 function transportOptions(transport, method) {
@@ -3018,6 +3028,7 @@ function transportOptions(transport, method) {
   var hostname = transport.hostname;
   var path = transport.path;
   var timeout = transport.timeout;
+  var transportAPI = transport.transport;
   if (transport.search) {
     path = path + transport.search;
   }
@@ -3033,7 +3044,8 @@ function transportOptions(transport, method) {
     hostname: hostname,
     path: path,
     port: port,
-    method: method
+    method: method,
+    transport: transportAPI
   };
 }
 
@@ -3235,10 +3247,9 @@ module.exports = {
 "use strict";
 
 
-/*global XDomainRequest*/
-
 var _ = __webpack_require__(0);
-var logger = __webpack_require__(1);
+var makeFetchRequest = __webpack_require__(20);
+var makeXhrRequest = __webpack_require__(21);
 
 /*
  * accessToken may be embedded in payload but that should not
@@ -3250,6 +3261,7 @@ var logger = __webpack_require__(1);
  *   path
  *   port
  *   method
+ *   transport ('xhr' | 'fetch')
  * }
  *
  *  params is an object containing key/value pairs. These
@@ -3269,7 +3281,9 @@ Transport.prototype.get = function(accessToken, options, params, callback, reque
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, null, callback, requestFactory, options.timeout);
+  this._makeZoneRequest(
+    accessToken, url, method, null, callback, requestFactory, options.timeout, options.transport
+  );
 }
 
 Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
@@ -3294,7 +3308,9 @@ Transport.prototype.post = function(accessToken, options, payload, callback, req
   var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory, options.timeout);
+  this._makeZoneRequest(
+    accessToken, url, method, writeData, callback, requestFactory, options.timeout, options.transport
+  );
 }
 
 Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
@@ -3304,7 +3320,9 @@ Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayloa
 
   var method = 'POST';
   var url = _.formatUrl(options);
-  _makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout);
+  this._makeZoneRequest(
+    accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout, options.transport
+  );
 }
 
 
@@ -3312,7 +3330,7 @@ Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayloa
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
 //
-function _makeZoneRequest() {
+Transport.prototype._makeZoneRequest = function () {
   var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
   var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
   var args = Array.prototype.slice.call(arguments);
@@ -3320,10 +3338,24 @@ function _makeZoneRequest() {
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
     rootZone.run(function () {
-      _makeRequest.apply(undefined, args);
+      this._makeRequest.apply(undefined, args);
     });
   } else {
-    _makeRequest.apply(undefined, args);
+    this._makeRequest.apply(undefined, args);
+  }
+}
+
+Transport.prototype._makeRequest = function (
+  accessToken, url, method, data, callback, requestFactory, timeout, transport
+) {
+  if (typeof RollbarProxy !== 'undefined') {
+    return _proxyRequest(data, callback);
+  }
+
+  if (transport === 'fetch') {
+    makeFetchRequest(accessToken, url, method, data, callback, timeout)
+  } else {
+    makeXhrRequest(accessToken, url, method, data, callback, requestFactory, timeout)
   }
 }
 
@@ -3339,11 +3371,66 @@ function _proxyRequest(json, callback) {
   );
 }
 
-function _makeRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
-  if (typeof RollbarProxy !== 'undefined') {
-    return _proxyRequest(data, callback);
+module.exports = Transport;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var logger = __webpack_require__(1);
+var _ = __webpack_require__(0);
+
+function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
+  var controller;
+  var timeoutId;
+
+  if(_.isFiniteNumber(timeout)) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), timeout);
   }
 
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Rollbar-Access-Token': accessToken,
+      signal: controller && controller.signal
+    },
+    body: data,
+  })
+  .then((response) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    return response.json();
+  })
+  .then((data) => {
+    callback(null, data);
+  })
+  .catch((error) => {
+    logger.error(error.message);
+    callback(error);
+  });
+}
+
+module.exports = makeFetchRequest;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/*global XDomainRequest*/
+
+var _ = __webpack_require__(0);
+var logger = __webpack_require__(1);
+
+function makeXhrRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
   var request;
   if (requestFactory) {
     request = requestFactory();
@@ -3496,11 +3583,11 @@ function _newRetriableError(message, code) {
   return err;
 }
 
-module.exports = Transport;
+module.exports = makeXhrRequest;
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3847,7 +3934,7 @@ module.exports = {
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
@@ -3856,7 +3943,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
     /* istanbul ignore next */
     if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(22)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(24)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -3907,21 +3994,21 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
             return filtered.map(function(line) {
                 if (line.indexOf('(eval ') > -1) {
                     // Throw away eval information until we implement stacktrace.js/stackframe#8
-                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
+                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(,.*$)/g, '');
                 }
-                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
+                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(').replace(/^.*?\s+/, '');
 
                 // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
                 // case it has spaces in it, as the string is split on \s+ later on
-                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
+                var location = sanitizedLine.match(/ (\(.+\)$)/);
 
                 // remove the parenthesized location from the line, if it was matched
                 sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
 
-                var tokens = sanitizedLine.split(/\s+/).slice(1);
-                // if a location was matched, pass it to extractLocation() otherwise pop the last token
-                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
-                var functionName = tokens.join(' ') || undefined;
+                // if a location was matched, pass it to extractLocation() otherwise pass all sanitizedLine
+                // because this line doesn't have function name
+                var locationParts = this.extractLocation(location ? location[1] : sanitizedLine);
+                var functionName = location && sanitizedLine || undefined;
                 var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
 
                 return new StackFrame({
@@ -4054,7 +4141,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
@@ -4202,7 +4289,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4359,7 +4446,7 @@ module.exports = {
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4380,7 +4467,7 @@ module.exports = {
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4582,14 +4669,14 @@ module.exports = {
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  version: '2.25.2',
+  version: '2.26.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4600,7 +4687,7 @@ module.exports = {
 
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4668,7 +4755,7 @@ module.exports = {
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4854,17 +4941,17 @@ module.exports = Telemeter;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var _ = __webpack_require__(0);
-var headers = __webpack_require__(30);
+var headers = __webpack_require__(32);
 var scrub = __webpack_require__(4);
 var urlparser = __webpack_require__(2);
-var domUtil = __webpack_require__(31);
+var domUtil = __webpack_require__(33);
 
 var defaults = {
   network: true,
@@ -5245,6 +5332,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
         if (self.trackHttpErrors()) {
           metadata.stack = (new Error()).stack;
         }
+
+        // Start our handler before returning the promise. This allows resp.clone()
+        // to execute before other handlers touch the response.
         return orig.apply(this, args).then(function (resp) {
           metadata.end_time_ms = _.now();
           metadata.status_code = resp.status;
@@ -5257,6 +5347,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
           if (self.autoInstrument.networkResponseBody) {
             if (typeof resp.text === 'function') { // Response.text() is not implemented on some platforms
               // The response must be cloned to prevent reading (and locking) the original stream.
+              // This must be done before other handlers touch the response.
               body = resp.clone().text(); //returns a Promise
             }
           }
@@ -5632,7 +5723,7 @@ module.exports = Instrumenter;
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5735,7 +5826,7 @@ module.exports = headers;
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5874,19 +5965,19 @@ module.exports = {
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var polyfillJSON = __webpack_require__(33);
+var polyfillJSON = __webpack_require__(35);
 
 module.exports = polyfillJSON;
 
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports) {
 
 //  json3.js
@@ -6655,7 +6746,7 @@ module.exports = setupCustomJSON;
 
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6705,7 +6796,7 @@ module.exports = wrapGlobals;
 
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
