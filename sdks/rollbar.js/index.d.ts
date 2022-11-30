@@ -75,7 +75,7 @@ declare namespace Rollbar {
         hostBlockList?: string[];
         hostWhiteList?: string[]; // deprecated
         hostSafeList?: string[];
-        ignoredMessages?: string[];
+        ignoredMessages?: (string | RegExp)[];
         ignoreDuplicateErrors?: boolean;
         includeItemsInTelemetry?: boolean;
         inspectAnonymousErrors?: boolean;
