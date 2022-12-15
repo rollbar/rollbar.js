@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Test Extension",
+  "version": "1.0.0",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://api.rollbar.com/"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["config.js", "rollbar.min.js", "content_script.js"]
+    }
+  ]
+}

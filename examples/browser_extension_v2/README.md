@@ -1,7 +1,7 @@
 # Chrome/Firefox/Edge Chromium Extension Example
 
 This example demonstrates initializing Rollbar both in the background extension
-and in the content script of a Chrome/Chromium or Firefox extension.
+and in the content script of a Chrome/Chromium or Firefox manifest v2 extension.
 
 To load and run this demo:
 
