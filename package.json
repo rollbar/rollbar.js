@@ -5,7 +5,8 @@
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
   },
-  "description": "Error tracking and logging from JS to Rollbar",
+  "description": "Effortlessly track and debug errors in your JavaScript applications with Rollbar. This package includes advanced error tracking features and an intuitive interface to help you identify and fix issues more quickly.",
+  "keywords": ["error", "tracking", "logging", "debugging", "javascript"],
   "license": "MIT",
   "main": "src/server/rollbar.js",
   "browser": "dist/rollbar.umd.min.js",
