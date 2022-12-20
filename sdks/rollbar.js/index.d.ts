@@ -191,7 +191,7 @@ declare namespace Rollbar {
      */
     export interface Payload {
         person?: {
-            id: string | DeprecatedNumber;
+            id: string | DeprecatedNumber | null;
             username?: string;
             email?: string;
             [property: string]: any;
