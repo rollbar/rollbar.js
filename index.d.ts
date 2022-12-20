@@ -90,6 +90,7 @@ declare namespace Rollbar {
         overwriteScrubFields?: boolean;
         payload?: Payload;
         reportLevel?: Level;
+        retryInterval?: number | null;
         rewriteFilenamePatterns?: string[];
         scrubFields?: string[];
         scrubHeaders?: string[];
