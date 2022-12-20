@@ -7,7 +7,7 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
 
   if(_.isFiniteNumber(timeout)) {
     controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(function () {controller.abort()}, timeout);
   }
 
   fetch(url, {
@@ -19,14 +19,14 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     },
     body: data,
   })
-  .then((response) => {
+  .then(function (response) {
     if (timeoutId) clearTimeout(timeoutId);
     return response.json();
   })
-  .then((data) => {
+  .then(function (data) {
     callback(null, data);
   })
-  .catch((error) => {
+  .catch(function (error) {
     logger.error(error.message);
     callback(error);
   });
