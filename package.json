@@ -64,7 +64,7 @@
     "karma-sinon": "^1.0.4",
     "karma-sourcemap-loader": "^0.3.5",
     "karma-webpack": "^4.0.2",
-    "mocha": "^7.1.2",
+    "mocha": "^10.2.0",
     "natives": "^1.1.6",
     "nock": "^11.9.1",
     "node-libs-browser": "^0.5.2",
