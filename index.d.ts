@@ -40,7 +40,7 @@ declare namespace Rollbar {
     ) => void | Promise<TResult>;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
-    export type Dictionary = { [key: string]: any};
+    export type Dictionary = { [key: string]: unknown};
     /**
      * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
      */
