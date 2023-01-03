@@ -21,13 +21,20 @@ describe('itemToPayload', function() {
     var args = ['a message', {custom: 'stuff'}];
     var item = itemFromArgs(args);
     item.accessToken = 'abc123';
+    item._isUncaught = true;
+    item._originalArgs = ['c', 3];
+    item.data = {};
     var options = {
       endpoint: 'api.rollbar.com',
       payload: {body: 'hey', x: 42}
     };
     t.itemToPayload(item, options, function(e, i) {
+      expect(i._isUncaught).to.eql(item._isUncaught);
+      expect(i._originalArgs).to.eql(item._originalArgs);
+
+      // This transform shouldn't apply any payload keys.
       expect(i.body).to.not.eql('hey');
-      expect(i.x).to.eql(42);
+      expect(i.x).to.not.eql(42);
       done(e);
     });
   });
@@ -41,6 +48,23 @@ describe('itemToPayload', function() {
     };
     t.itemToPayload(item, options, function(e, i) {
       expect(i.message).to.eql('a message');
+      done(e);
+    });
+  });
+});
+
+describe('addPayloadOptions', function() {
+  it('ignores options.payload.body but merges in other payload options', function(done) {
+    var args = ['a message', {custom: 'stuff'}];
+    var item = itemFromArgs(args);
+    item.accessToken = 'abc123';
+    var options = {
+      endpoint: 'api.rollbar.com',
+      payload: {body: 'hey', x: 42}
+    };
+    t.addPayloadOptions(item, options, function(e, i) {
+      expect(i.data.body).to.not.eql('hey');
+      expect(i.data.x).to.eql(42);
       done(e);
     });
   });

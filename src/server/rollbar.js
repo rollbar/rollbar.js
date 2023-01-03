@@ -537,6 +537,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addLambdaData)
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
+    .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)

@@ -1,12 +1,8 @@
 var _ = require('./utility');
 
 function itemToPayload(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
-  }
+  var data = item.data;
 
-  var data = _.merge(item.data, payloadOptions);
   if (item._isUncaught) {
     data._isUncaught = true;
   }
@@ -14,6 +10,16 @@ function itemToPayload(item, options, callback) {
     data._originalArgs = item._originalArgs;
   }
   callback(null, data);
+}
+
+function addPayloadOptions(item, options, callback) {
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+
+  item.data = _.merge(item.data, payloadOptions);
+  callback(null, item);
 }
 
 function addTelemetryData(item, options, callback) {
@@ -139,6 +145,7 @@ function addDiagnosticKeys(item, options, callback) {
 
 module.exports = {
   itemToPayload: itemToPayload,
+  addPayloadOptions: addPayloadOptions,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
   userTransform: userTransform,
