@@ -40,13 +40,14 @@ declare namespace Rollbar {
     ) => void | Promise<TResult>;
     export type MaybeError = Error | undefined | null;
     export type Level = "debug" | "info" | "warning" | "error" | "critical";
+    export type Dictionary = { [key: string]: unknown};
     /**
      * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
      */
     export interface Configuration {
         accessToken?: string;
         addErrorContext?: boolean;
-        addRequestData?: (data: object, req: object) => void;
+        addRequestData?: (data: Dictionary, req: Dictionary) => void;
         autoInstrument?: AutoInstrumentOptions;
         captureEmail?: boolean;
         captureIp?: boolean | "anonymize";
@@ -54,7 +55,7 @@ declare namespace Rollbar {
         captureUncaught?: boolean;
         captureUnhandledRejections?: boolean;
         captureUsername?: boolean;
-        checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: object) => boolean;
+        checkIgnore?: (isUncaught: boolean, args: LogArgument[], item: Dictionary) => boolean;
         /**
          * `codeVersion` takes precedence over `code_version`, if provided.
          * `client.javascript.code_version` takes precedence over both top level properties.
@@ -86,7 +87,7 @@ declare namespace Rollbar {
         maxRetries?: number;
         maxTelemetryEvents?: number;
         nodeSourceMaps?: boolean;
-        onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: object) => void;
+        onSendCallback?: (isUncaught: boolean, args: LogArgument[], item: Dictionary) => void;
         overwriteScrubFields?: boolean;
         payload?: Payload;
         reportLevel?: Level;
@@ -101,7 +102,7 @@ declare namespace Rollbar {
         stackTraceLimit?: number;
         telemetryScrubber?: TelemetryScrubber;
         timeout?: number;
-        transform?: (data: object, item: object) => void | Promise<void>;
+        transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
         transmit?: boolean;
         uncaughtErrorLevel?: Level;
         verbose?: boolean;
@@ -109,7 +110,7 @@ declare namespace Rollbar {
         wrapGlobalEventHandlers?: boolean;
     }
     export type Callback<TResponse = any> = (err: MaybeError, response: TResponse) => void;
-    export type LogArgument = string | Error | object | Callback | Date | any[] | undefined;
+    export type LogArgument = string | Error | object | Dictionary | Callback | Date | any[] | undefined;
     export interface LogResult {
         uuid: string;
     }
@@ -117,7 +118,7 @@ declare namespace Rollbar {
         level: Level;
         type: string;
         timestamp_ms: number;
-        body: object;
+        body: Dictionary;
         source: string;
         uuid?: string;
     }
