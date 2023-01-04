@@ -1877,6 +1877,7 @@ function addTransformsToNotifier(notifier, rollbar, gWindow) {
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.addScrubber(rollbar.scrub))
+    .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
@@ -3337,8 +3338,9 @@ Transport.prototype._makeZoneRequest = function () {
 
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
+    var self = this;
     rootZone.run(function () {
-      this._makeRequest.apply(undefined, args);
+      self._makeRequest.apply(undefined, args);
     });
   } else {
     this._makeRequest.apply(undefined, args);
@@ -3390,7 +3392,7 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
 
   if(_.isFiniteNumber(timeout)) {
     controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), timeout);
+    timeoutId = setTimeout(function () {controller.abort()}, timeout);
   }
 
   fetch(url, {
@@ -3402,14 +3404,14 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     },
     body: data,
   })
-  .then((response) => {
+  .then(function (response) {
     if (timeoutId) clearTimeout(timeoutId);
     return response.json();
   })
-  .then((data) => {
+  .then(function (data) {
     callback(null, data);
   })
-  .catch((error) => {
+  .catch(function (error) {
     logger.error(error.message);
     callback(error);
   });
@@ -4298,12 +4300,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 var _ = __webpack_require__(0);
 
 function itemToPayload(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
-  }
+  var data = item.data;
 
-  var data = _.merge(item.data, payloadOptions);
   if (item._isUncaught) {
     data._isUncaught = true;
   }
@@ -4311,6 +4309,16 @@ function itemToPayload(item, options, callback) {
     data._originalArgs = item._originalArgs;
   }
   callback(null, data);
+}
+
+function addPayloadOptions(item, options, callback) {
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+
+  item.data = _.merge(item.data, payloadOptions);
+  callback(null, item);
 }
 
 function addTelemetryData(item, options, callback) {
@@ -4436,6 +4444,7 @@ function addDiagnosticKeys(item, options, callback) {
 
 module.exports = {
   itemToPayload: itemToPayload,
+  addPayloadOptions: addPayloadOptions,
   addTelemetryData: addTelemetryData,
   addMessageWithError: addMessageWithError,
   userTransform: userTransform,
@@ -4676,7 +4685,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.26.0',
+  version: '2.26.1',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
