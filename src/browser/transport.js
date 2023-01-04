@@ -88,8 +88,9 @@ Transport.prototype._makeZoneRequest = function () {
 
   if (currentZone && currentZone._name === 'angular') {
     var rootZone = currentZone._parent;
+    var self = this;
     rootZone.run(function () {
-      this._makeRequest.apply(undefined, args);
+      self._makeRequest.apply(undefined, args);
     });
   } else {
     this._makeRequest.apply(undefined, args);
