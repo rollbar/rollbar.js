@@ -15,8 +15,8 @@ Telemeter.prototype.configure = function(options) {
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
   var deleteCount = 0;
-  if (this.maxQueueSize > newMaxEvents) {
-    deleteCount = this.maxQueueSize - newMaxEvents;
+  if (this.queue.length > newMaxEvents) {
+    deleteCount = this.queue.length - newMaxEvents;
   }
   this.maxQueueSize = newMaxEvents;
   this.queue.splice(0, deleteCount);
