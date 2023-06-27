@@ -41,6 +41,9 @@ function Rollbar(options, client) {
     this.instrumenter.instrument();
   }
   _.setupJSON(polyfillJSON);
+
+  // Used with rollbar-react for rollbar-react-native compatibility.
+  this.rollbar = this;
 }
 
 var _instance = null;
