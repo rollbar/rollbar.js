@@ -27,6 +27,9 @@ declare class Rollbar {
 
     public errorHandler(): Rollbar.ExpressErrorHandler;
 
+    // Used with rollbar-react for rollbar-react-native compatibility.
+    public rollbar: Rollbar;
+
     // Exposed only for testing, should be changed via the configure method
     // DO NOT MODIFY DIRECTLY
     public options: Rollbar.Configuration;
@@ -49,6 +52,7 @@ declare namespace Rollbar {
         addErrorContext?: boolean;
         addRequestData?: (data: Dictionary, req: Dictionary) => void;
         autoInstrument?: AutoInstrumentOptions;
+        captureDeviceInfo?: boolean;
         captureEmail?: boolean;
         captureIp?: boolean | "anonymize";
         captureLambdaTimeouts?: boolean;
