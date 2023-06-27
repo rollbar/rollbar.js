@@ -52,6 +52,7 @@ declare namespace Rollbar {
         addErrorContext?: boolean;
         addRequestData?: (data: Dictionary, req: Dictionary) => void;
         autoInstrument?: AutoInstrumentOptions;
+        captureDeviceInfo?: boolean;
         captureEmail?: boolean;
         captureIp?: boolean | "anonymize";
         captureLambdaTimeouts?: boolean;
