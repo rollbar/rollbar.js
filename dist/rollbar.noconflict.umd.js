@@ -1418,6 +1418,9 @@ function Rollbar(options, client) {
     this.instrumenter.instrument();
   }
   _.setupJSON(polyfillJSON);
+
+  // Used with rollbar-react for rollbar-react-native compatibility.
+  this.rollbar = this;
 }
 
 var _instance = null;
@@ -4687,7 +4690,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.26.1',
+  version: '2.26.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -4789,8 +4792,8 @@ Telemeter.prototype.configure = function(options) {
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
   var deleteCount = 0;
-  if (this.maxQueueSize > newMaxEvents) {
-    deleteCount = this.maxQueueSize - newMaxEvents;
+  if (this.queue.length > newMaxEvents) {
+    deleteCount = this.queue.length - newMaxEvents;
   }
   this.maxQueueSize = newMaxEvents;
   this.queue.splice(0, deleteCount);
