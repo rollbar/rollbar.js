@@ -179,7 +179,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
     var xhrp = this._window.XMLHttpRequest.prototype;
     replace(xhrp, 'open', function(orig) {
       return function(method, url) {
-        if (_.isType(url, 'string')) {
+        var isUrlObject = typeof URL !== 'undefined' && url instanceof URL
+        if (_.isType(url, 'string') || isUrlObject) {
+          url = isUrlObject ? url.toString() : url;
           if (this.__rollbar_xhr) {
             this.__rollbar_xhr.method = method;
             this.__rollbar_xhr.url = url;
