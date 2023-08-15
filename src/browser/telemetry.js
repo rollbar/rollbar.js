@@ -179,7 +179,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     var xhrp = this._window.XMLHttpRequest.prototype;
     replace(xhrp, 'open', function(orig) {
       return function(method, url) {
-        var isUrlObject = typeof URL !== 'undefined' && url instanceof URL
+        var isUrlObject = _isUrlObject(url)
         if (_.isType(url, 'string') || isUrlObject) {
           url = isUrlObject ? url.toString() : url;
           if (this.__rollbar_xhr) {
@@ -344,8 +344,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var input = args[0];
         var method = 'GET';
         var url;
-        if (_.isType(input, 'string')) {
-          url = input;
+        var isUrlObject = _isUrlObject(input)
+        if (_.isType(input, 'string') || isUrlObject) {
+          url = isUrlObject ? input.toString() : input;
         } else if (input) {
           url = input.url;
           if (input.method) {
@@ -771,5 +772,9 @@ Instrumenter.prototype.removeListeners = function(section) {
     r();
   }
 };
+
+function _isUrlObject(input) {
+  return typeof URL !== 'undefined' && input instanceof URL
+}
 
 module.exports = Instrumenter;
