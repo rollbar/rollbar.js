@@ -6,7 +6,13 @@
     "url": "http://github.com/rollbar/rollbar.js"
   },
   "description": "Effortlessly track and debug errors in your JavaScript applications with Rollbar. This package includes advanced error tracking features and an intuitive interface to help you identify and fix issues more quickly.",
-  "keywords": ["error", "tracking", "logging", "debugging", "javascript"],
+  "keywords": [
+    "error",
+    "tracking",
+    "logging",
+    "debugging",
+    "javascript"
+  ],
   "license": "MIT",
   "main": "src/server/rollbar.js",
   "browser": "dist/rollbar.umd.min.js",
@@ -30,7 +36,7 @@
     "chalk": "^1.1.1",
     "eslint": "^6.8.0",
     "eslint-loader": "^3.0.3",
-    "express": "^4.16.4",
+    "express": "^4.18.2",
     "glob": "^5.0.14",
     "grunt": "^1.1.0",
     "grunt-bumpup": "^0.6.3",
