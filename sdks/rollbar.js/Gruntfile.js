@@ -1,9 +1,5 @@
 /**
  * Build and test rollbar.js
- *
- * Test with browserstack:
- *   $> BROWSER_STACK_USERNAME=username BROWSER_STACK_ACCESS_KEY=12345asdf grunt test --browsers=bs_ie_latest
- *
  */
 
 
@@ -15,7 +11,6 @@ var pkg = require('./package.json');
 var fs = require('fs');
 
 var webpackConfig = require('./webpack.config.js');
-var browserStackBrowsers = require('./browserstack.browsers');
 
 
 function findTests(context) {
@@ -33,7 +28,7 @@ function findTests(context) {
   return mapping;
 }
 
-function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
+function buildGruntKarmaConfig(singleRun, tests, reporters) {
   var config = {
     options: {
       configFile: './karma.conf.js',
@@ -70,10 +65,6 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
       ]
     },
   };
-
-  if (browsers && browsers.length) {
-    config.options.browsers = browsers;
-  }
 
   if (reporters && reporters.length) {
     config.options.reporters = reporters;
@@ -112,27 +103,6 @@ module.exports = function(grunt) {
   require('time-grunt')(grunt);
 
   var browserTests = findTests('browser');
-  var browsers = grunt.option('browsers');
-  if (browsers) {
-    browsers = browsers.split(',');
-
-    var browserStackAliases = [];
-    var nonBrowserStackAliases = [];
-    browsers.forEach(function(browserName) {
-      if (browserName.slice(0, 3) === 'bs_') {
-        browserStackAliases.push(browserName);
-      } else {
-        nonBrowserStackAliases.push(browserName);
-      }
-    });
-
-    var expandedBrowsers = browserStackBrowsers.filter.apply(null, browserStackAliases);
-    var expandedBrowserNames = [];
-    expandedBrowsers.forEach(function(browser) {
-      expandedBrowserNames.push(browser._alias);
-    });
-    browsers = nonBrowserStackAliases.concat(expandedBrowserNames);
-  }
 
   var singleRun = grunt.option('singleRun');
   if (singleRun === undefined) {
@@ -165,7 +135,7 @@ module.exports = function(grunt) {
       }
     },
 
-    karma: buildGruntKarmaConfig(singleRun, browsers, browserTests, reporters),
+    karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
 
     replace: {
       snippets: {
@@ -188,7 +158,7 @@ module.exports = function(grunt) {
               return captures.join('\n');
             }
           },
-          // README travis link
+          // README CI link
           {
             from: new RegExp('(https://github\\.com/rollbar/rollbar\\.js/workflows/Rollbar\\.js%20CI/badge\\.svg\\?branch=v)([0-9a-zA-Z.-]+)'),
             to: function(match, index, fullText, captures) {
