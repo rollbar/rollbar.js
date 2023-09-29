@@ -8,7 +8,6 @@ var outputPath = path.resolve(__dirname, 'dist');
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new TerserPlugin({
-  sourceMap: true,
   parallel: true
 });
 

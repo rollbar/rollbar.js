@@ -1,27 +1,12 @@
 var path = require('path');
 var webpack = require('webpack');
 var defaults = require('./defaults');
-var browserStackBrowsers = require('./browserstack.browsers');
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 
-var allBrowsers = browserStackBrowsers.filter('bs_all');
-var allBrowsersByBrowser = {
-  // Travis needs the --no-sandbox option,
-  // so add as a custom launcher to be used as the default browser.
-  ChromeNoSandbox: {
-    base: 'ChromeHeadless',
-    flags: ['--no-sandbox']
-  }
-};
-allBrowsers.forEach(function(browser) {
-  allBrowsersByBrowser[browser._alias] = browser;
-});
-
-
 module.exports = function (config) {
   config.set({
-    browsers: ['ChromeNoSandbox'],
+    browsers: ['ChromeHeadless'],
 
     // The Travis environment has these specified.
     // To run BrowserStack tests locally, specify the environment variables:
@@ -34,9 +19,6 @@ module.exports = function (config) {
     client: {
       captureConsole: true
     },
-
-    // Used for testing on BrowserStack
-    customLaunchers: allBrowsersByBrowser,
 
     // Files are specified in the grunt-karma configuration in Gruntfile.js
     //files: []
