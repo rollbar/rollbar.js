@@ -1,5 +1,6 @@
 var _ = require('../utility');
 var headers = require('../utility/headers');
+var replace = require('../utility/replace');
 var scrub = require('../scrub');
 var urlparser = require('./url');
 var domUtil = require('./domUtility');
@@ -20,14 +21,6 @@ var defaults = {
   contentSecurityPolicy: true,
   errorOnContentSecurityPolicy: false
 };
-
-function replace(obj, name, replacement, replacements, type) {
-  var orig = obj[name];
-  obj[name] = replacement(orig);
-  if (replacements) {
-    replacements[type].push([obj, name, orig]);
-  }
-}
 
 function restore(replacements, type) {
   var b;
