@@ -583,9 +583,6 @@ Rollbar.prototype.setupUnhandledCapture = function () {
 };
 
 Rollbar.prototype.handleUncaughtExceptions = function () {
-  var exitOnUncaught = !!this.options.exitOnUncaughtException;
-  delete this.options.exitOnUncaughtException;
-
   addOrReplaceRollbarHandler('uncaughtException', function (err) {
     if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
       return;
@@ -597,7 +594,7 @@ Rollbar.prototype.handleUncaughtExceptions = function () {
         logger.error(err);
       }
     });
-    if (exitOnUncaught) {
+    if (this.options.exitOnUncaughtException) {
       setImmediate(function () {
         this.wait(function () {
           process.exit(1);

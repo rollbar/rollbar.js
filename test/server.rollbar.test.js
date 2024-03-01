@@ -550,6 +550,38 @@ vows.describe('rollbar')
                   assert.equal(logStub.getCall(0).args[0].err.message, 'node error');
                 }
                 notifier.log.restore();
+              },
+              'exitOnUncaughtException': {
+                topic: function () {
+                  var rollbar = new Rollbar({
+                    accessToken: 'abc123',
+                    captureUncaught: true,
+                    exitOnUncaughtException: true
+                  });
+                  rollbar.exitStub = sinon.stub(process, 'exit');
+
+                  nodeThrow(rollbar, this.callback);
+                },
+                'should exit': function (r) {
+                  var calls = r.exitStub.getCalls();
+                  r.exitStub.restore();
+                  assert.equal(calls.length, 1);
+                },
+                'unrelated option reconfigured': {
+                  topic: function(r) {
+                    r.configure({
+                      environment: 'new-env'
+                    });
+                    r.exitStub = sinon.stub(process, 'exit');
+
+                    nodeThrow(r, this.callback);
+                  },
+                  'should exit': function(r) {
+                    var calls = r.exitStub.getCalls();
+                    r.exitStub.restore();
+                    assert.equal(calls.length, 1);
+                  }
+                }
               }
             }
           }
