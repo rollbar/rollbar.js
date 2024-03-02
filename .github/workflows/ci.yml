@@ -14,6 +14,7 @@ jobs:
       matrix:
         node-version: [10, 12, 14, 16]
 
+    name: Test / Node ${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -26,6 +27,9 @@ jobs:
 
       - name: npm install
         run: npm install
+
+      - name: Lint
+        run: npm run lint
 
       - name: Run tests
         run: npm run test_ci

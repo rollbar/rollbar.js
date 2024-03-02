@@ -121,41 +121,46 @@ Instrumenter.prototype.configure = function(options) {
   }
 };
 
-// eslint-disable-next-line complexity
 Instrumenter.prototype.instrument = function(oldSettings) {
-  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
+  var network = oldSettings && oldSettings.network;
+  if (this.autoInstrument.network && !network) {
     this.instrumentNetwork();
-  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+  } else if (!this.autoInstrument.network && network) {
     this.deinstrumentNetwork();
   }
 
-  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
+  var log = oldSettings && oldSettings.log;
+  if (this.autoInstrument.log && !log) {
     this.instrumentConsole();
-  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
+  } else if (!this.autoInstrument.log && log) {
     this.deinstrumentConsole();
   }
 
-  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
+  var dom = oldSettings && oldSettings.dom;
+  if (this.autoInstrument.dom && !dom) {
     this.instrumentDom();
-  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
+  } else if (!this.autoInstrument.dom && dom) {
     this.deinstrumentDom();
   }
 
-  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
+  var navigation = oldSettings && oldSettings.navigation;
+  if (this.autoInstrument.navigation && !navigation) {
     this.instrumentNavigation();
-  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
+  } else if (!this.autoInstrument.navigation && navigation) {
     this.deinstrumentNavigation();
   }
 
-  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
+  var connectivity = oldSettings && oldSettings.connectivity;
+  if (this.autoInstrument.connectivity && !connectivity) {
     this.instrumentConnectivity();
-  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
+  } else if (!this.autoInstrument.connectivity && connectivity) {
     this.deinstrumentConnectivity();
   }
 
-  if (this.autoInstrument.contentSecurityPolicy && !(oldSettings && oldSettings.contentSecurityPolicy)) {
+  var contentSecurityPolicy = oldSettings && oldSettings.contentSecurityPolicy;
+  if (this.autoInstrument.contentSecurityPolicy && !contentSecurityPolicy) {
     this.instrumentContentSecurityPolicy();
-  } else if (!this.autoInstrument.contentSecurityPolicy && oldSettings && oldSettings.contentSecurityPolicy) {
+  } else if (!this.autoInstrument.contentSecurityPolicy && contentSecurityPolicy) {
     this.deinstrumentContentSecurityPolicy();
   }
 };
@@ -225,9 +230,7 @@ Instrumenter.prototype.instrumentNetwork = function() {
     }, this.replacements, 'network');
 
     replace(xhrp, 'send', function(orig) {
-      /* eslint-disable no-unused-vars */
       return function(data) {
-      /* eslint-enable no-unused-vars */
         var xhr = this;
 
         function onreadystatechangeHandler() {
@@ -334,9 +337,8 @@ Instrumenter.prototype.instrumentNetwork = function() {
 
   if ('fetch' in this._window) {
     replace(this._window, 'fetch', function(orig) {
-      /* eslint-disable no-unused-vars */
+      /* eslint-disable-next-line no-unused-vars */
       return function(fn, t) {
-      /* eslint-enable no-unused-vars */
         var args = new Array(arguments.length);
         for (var i=0, len=args.length; i < len; i++) {
           args[i] = arguments[i];
