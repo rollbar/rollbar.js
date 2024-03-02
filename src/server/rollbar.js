@@ -305,7 +305,7 @@ Rollbar.prototype.errorHandler = function () {
       return next(err, request, response);
     }
 
-    if (err instanceof Error) {
+    if (_.isError(err)) {
       return this.error(err, request, cb);
     }
     return this.error('Error: ' + err, request, cb);
