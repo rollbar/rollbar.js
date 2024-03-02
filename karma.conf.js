@@ -87,7 +87,7 @@ module.exports = function (config) {
             enforce: 'post',
             test: /\.js$/,
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
-            loader: 'istanbul-instrumenter-loader'
+            loader: 'coverage-istanbul-loader'
           }
         ],
       }
