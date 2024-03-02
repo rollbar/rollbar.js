@@ -1,0 +1,13 @@
+.github
+.next
+.yalc
+build
+bundles
+coverage
+dist
+lib
+node_modules
+out
+public
+release
+vendor
