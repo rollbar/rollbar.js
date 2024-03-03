@@ -22,7 +22,7 @@ function Notifier(queue, options) {
  * @param options - an object which gets merged with the current options set on this notifier
  * @returns this
  */
-Notifier.prototype.configure = function(options) {
+Notifier.prototype.configure = function (options) {
   this.queue && this.queue.configure(options);
   var oldOptions = this.options;
   this.options = _.merge(oldOptions, options);
@@ -40,7 +40,7 @@ Notifier.prototype.configure = function(options) {
  *    with an error to terminate the processing. The item should be the updated item after this
  *    transform is finished modifying it.
  */
-Notifier.prototype.addTransform = function(transform) {
+Notifier.prototype.addTransform = function (transform) {
   if (_.isFunction(transform)) {
     this.transforms.push(transform);
   }
@@ -60,9 +60,9 @@ Notifier.prototype.addTransform = function(transform) {
  * transform stage if an error occurs inside a transform, or in response to the communication with
  * the backend. The second argument will be the response from the backend in case of success.
  */
-Notifier.prototype.log = function(item, callback) {
+Notifier.prototype.log = function (item, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
 
   if (!this.options.enabled) {
@@ -71,13 +71,16 @@ Notifier.prototype.log = function(item, callback) {
 
   this.queue.addPendingItem(item);
   var originalError = item.err;
-  this._applyTransforms(item, function(err, i) {
-    if (err) {
-      this.queue.removePendingItem(item);
-      return callback(err, null);
-    }
-    this.queue.addItem(i, callback, originalError, item);
-  }.bind(this));
+  this._applyTransforms(
+    item,
+    function (err, i) {
+      if (err) {
+        this.queue.removePendingItem(item);
+        return callback(err, null);
+      }
+      this.queue.addItem(i, callback, originalError, item);
+    }.bind(this),
+  );
 };
 
 /* Internal */
@@ -91,13 +94,13 @@ Notifier.prototype.log = function(item, callback) {
  * error and a null item in the case of a transform failure, or a null error and non-null item after
  * all transforms have been applied.
  */
-Notifier.prototype._applyTransforms = function(item, callback) {
+Notifier.prototype._applyTransforms = function (item, callback) {
   var transformIndex = -1;
   var transformsLength = this.transforms.length;
   var transforms = this.transforms;
   var options = this.options;
 
-  var cb = function(err, i) {
+  var cb = function (err, i) {
     if (err) {
       callback(err, null);
       return;

@@ -5,7 +5,7 @@
 
 // To make changes to the example app, see /examples/angular2/README.md.
 
-describe('Angular2 app', function() {
+describe('Angular2 app', function () {
   this.timeout(4000);
 
   before(function (done) {
@@ -14,7 +14,7 @@ describe('Angular2 app', function() {
 
     // Set a timer before stubbing the XHR server, else it will interfere with
     // scripts loaded from the HTML page.
-    setTimeout(function() {
+    setTimeout(function () {
       // Stub the xhr interface.
       window.server = sinon.createFakeServer();
 
@@ -27,16 +27,14 @@ describe('Angular2 app', function() {
   });
 
   function stubResponse(server) {
-    server.respondWith('POST', 'api/1/item',
-      [
-        200,
-        { 'Content-Type': 'application/json' },
-        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
-      ]
-    );
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
   }
 
-  it('should send a valid log event', function(done) {
+  it('should send a valid log event', function (done) {
     var server = window.server;
     var angularComponent = window.angularAppComponent;
 
@@ -54,7 +52,7 @@ describe('Angular2 app', function() {
     done();
   });
 
-  it('should minimize Angular change detection events', function(done) {
+  it('should minimize Angular change detection events', function (done) {
     var server = window.server;
     var angularComponent = window.angularAppComponent;
     var doCheckCount = angularComponent.doCheckCount;
@@ -76,10 +74,10 @@ describe('Angular2 app', function() {
     done();
   });
 
-  it('should report uncaught error', function(done) {
+  it('should report uncaught error', function (done) {
     var server = window.server;
 
-    stubResponse(server)
+    stubResponse(server);
     server.requests.length = 0;
 
     var element = document.getElementById('throw-error');
@@ -94,7 +92,7 @@ describe('Angular2 app', function() {
     done();
   });
 
-  it('should allow undefined arguments to rollbar.log', function(done) {
+  it('should allow undefined arguments to rollbar.log', function (done) {
     var server = window.server;
     var angularComponent = window.angularAppComponent;
 
@@ -107,7 +105,9 @@ describe('Angular2 app', function() {
     var body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.message.body).to.eql('angular test log with undefined');
+    expect(body.data.body.message.body).to.eql(
+      'angular test log with undefined',
+    );
 
     done();
   });

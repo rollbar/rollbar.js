@@ -1,22 +1,28 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Webpack Example</title>
+  <head>
+    <meta charset="utf-8" />
+    <title>Webpack Example</title>
 
-  <script src="../dist/bundle.js"></script>
+    <script src="../dist/bundle.js"></script>
 
-  <!-- Used for rollbar.js tests, which need a different path for bundle.js -->
-  <script>window.Rollbar || document.write('<script src="/examples/webpack/dist/bundle.js"><\/script>')</script>
-</head>
-<body>
-  <div style="text-align:center">
-    <h1>
-      Rollbar example for Webpack
-    </h1>
-  </div>
-  <button id="rollbar-info" onclick="rollbarInfo()">Log info</button>
-  <button id="throw-error" onclick="throwError()">Throw Error</button>
-  <button id="rollbar-info-with-extra" onclick="rollbarInfoWithExtra()">Log info and store JSON payload</button>
-  <button id="send-json" onclick="sendJson()">Send stored JSON</button>
+    <!-- Used for rollbar.js tests, which need a different path for bundle.js -->
+    <script>
+      window.Rollbar ||
+        document.write(
+          '<script src="/examples/webpack/dist/bundle.js"><\/script>',
+        );
+    </script>
+  </head>
+  <body>
+    <div style="text-align: center">
+      <h1>Rollbar example for Webpack</h1>
+    </div>
+    <button id="rollbar-info" onclick="rollbarInfo()">Log info</button>
+    <button id="throw-error" onclick="throwError()">Throw Error</button>
+    <button id="rollbar-info-with-extra" onclick="rollbarInfoWithExtra()">
+      Log info and store JSON payload
+    </button>
+    <button id="send-json" onclick="sendJson()">Send stored JSON</button>
+  </body>
 </html>

@@ -5,9 +5,11 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
   var controller;
   var timeoutId;
 
-  if(_.isFiniteNumber(timeout)) {
+  if (_.isFiniteNumber(timeout)) {
     controller = new AbortController();
-    timeoutId = setTimeout(function () {controller.abort()}, timeout);
+    timeoutId = setTimeout(function () {
+      controller.abort();
+    }, timeout);
   }
 
   fetch(url, {
@@ -15,21 +17,21 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     headers: {
       'Content-Type': 'application/json',
       'X-Rollbar-Access-Token': accessToken,
-      signal: controller && controller.signal
+      signal: controller && controller.signal,
     },
     body: data,
   })
-  .then(function (response) {
-    if (timeoutId) clearTimeout(timeoutId);
-    return response.json();
-  })
-  .then(function (data) {
-    callback(null, data);
-  })
-  .catch(function (error) {
-    logger.error(error.message);
-    callback(error);
-  });
+    .then(function (response) {
+      if (timeoutId) clearTimeout(timeoutId);
+      return response.json();
+    })
+    .then(function (data) {
+      callback(null, data);
+    })
+    .catch(function (error) {
+      logger.error(error.message);
+      callback(error);
+    });
 }
 
 module.exports = makeFetchRequest;

@@ -8,28 +8,28 @@ function Transport(truncation) {
   this.truncation = truncation;
 }
 
-Transport.prototype.get = function(accessToken, options, params, callback) {
+Transport.prototype.get = function (accessToken, options, params, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
   var headers = _headers(accessToken, options);
   fetch(_.formatUrl(options), {
     method: 'GET',
-    headers: headers
+    headers: headers,
   })
-  .then(function(resp) {
-    _handleResponse(resp, callback);
-  })
-  .catch(function(err) {
-    callback(err);
-  });
-}
+    .then(function (resp) {
+      _handleResponse(resp, callback);
+    })
+    .catch(function (err) {
+      callback(err);
+    });
+};
 
-Transport.prototype.post = function(accessToken, options, payload, callback) {
+Transport.prototype.post = function (accessToken, options, payload, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   options = options || {};
   if (!payload) {
@@ -40,7 +40,7 @@ Transport.prototype.post = function(accessToken, options, payload, callback) {
   if (this.truncation) {
     stringifyResult = this.truncation.truncate(payload);
   } else {
-    stringifyResult = _.stringify(payload)
+    stringifyResult = _.stringify(payload);
   }
   if (stringifyResult.error) {
     logger.error('Problem stringifying payload. Giving up');
@@ -50,11 +50,16 @@ Transport.prototype.post = function(accessToken, options, payload, callback) {
   var headers = _headers(accessToken, options, writeData);
 
   _makeRequest(headers, options, writeData, callback);
-}
+};
 
-Transport.prototype.postJsonPayload = function(accessToken, options, jsonPayload, callback) {
+Transport.prototype.postJsonPayload = function (
+  accessToken,
+  options,
+  jsonPayload,
+  callback,
+) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   options = options || {};
   if (!jsonPayload) {
@@ -62,8 +67,8 @@ Transport.prototype.postJsonPayload = function(accessToken, options, jsonPayload
   }
   var headers = _headers(accessToken, options, jsonPayload);
 
-  _makeRequest(headers, options, jsonPayload, callback)
-}
+  _makeRequest(headers, options, jsonPayload, callback);
+};
 
 /** Helpers **/
 function _makeRequest(headers, options, data, callback) {
@@ -71,17 +76,17 @@ function _makeRequest(headers, options, data, callback) {
   fetch(url, {
     method: 'POST',
     headers: headers,
-    body: data
+    body: data,
   })
-  .then(function (resp) {
-    return resp.json();
-  })
-  .then(function (data) {
-    _handleResponse(data, _wrapPostCallback(callback));
-  })
-  .catch(function(err) {
-    callback(err);
-  });
+    .then(function (resp) {
+      return resp.json();
+    })
+    .then(function (data) {
+      _handleResponse(data, _wrapPostCallback(callback));
+    })
+    .catch(function (err) {
+      callback(err);
+    });
 }
 
 function _headers(accessToken, options, data) {
@@ -101,27 +106,32 @@ function _headers(accessToken, options, data) {
 function _handleResponse(data, callback) {
   if (data.err) {
     logger.error('Received error: ' + data.message);
-    return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
+    return callback(
+      new Error('Api error: ' + (data.message || 'Unknown error')),
+    );
   }
 
   callback(null, data);
 }
 
 function _wrapPostCallback(callback) {
-  return function(err, data) {
+  return function (err, data) {
     if (err) {
       return callback(err);
     }
     if (data.result && data.result.uuid) {
-      logger.log([
+      logger.log(
+        [
           'Successful api response.',
-          ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid
-      ].join(''));
+          ' Link: https://rollbar.com/occurrence/uuid/?uuid=' +
+            data.result.uuid,
+        ].join(''),
+      );
     } else {
       logger.log('Successful api response');
     }
     callback(null, data.result);
-  }
+  };
 }
 
 module.exports = Transport;

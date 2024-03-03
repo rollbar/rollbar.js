@@ -3,7 +3,15 @@
 var _ = require('../../utility');
 var logger = require('../logger');
 
-function makeXhrRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
+function makeXhrRequest(
+  accessToken,
+  url,
+  method,
+  data,
+  callback,
+  requestFactory,
+  timeout,
+) {
   var request;
   if (requestFactory) {
     request = requestFactory();
@@ -16,7 +24,7 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
   }
   try {
     try {
-      var onreadystatechange = function() {
+      var onreadystatechange = function () {
         try {
           if (onreadystatechange && request.readyState === 4) {
             onreadystatechange = undefined;
@@ -28,7 +36,8 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
             } else if (_isNormalFailure(request)) {
               if (request.status === 403) {
                 // likely caused by using a server access token
-                var message = parseResponse.value && parseResponse.value.message;
+                var message =
+                  parseResponse.value && parseResponse.value.message;
                 logger.error(message);
               }
               // return valid http status codes
@@ -37,7 +46,8 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
               // IE will return a status 12000+ on some sort of connection failure,
               // so we return a blank error
               // http://msdn.microsoft.com/en-us/library/aa383770%28VS.85%29.aspx
-              var msg = 'XHR response had no status code (likely connection failure)';
+              var msg =
+                'XHR response had no status code (likely connection failure)';
               callback(_newRetriableError(msg));
             }
           }
@@ -61,7 +71,7 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
       }
 
-      if(_.isFiniteNumber(timeout)) {
+      if (_.isFiniteNumber(timeout)) {
         request.timeout = timeout;
       }
 
@@ -70,31 +80,37 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
     } catch (e1) {
       // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
       if (typeof XDomainRequest !== 'undefined') {
-
         // Assume we are in a really old browser which has a bunch of limitations:
         // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
 
         // Extreme paranoia: if we have XDomainRequest then we have a window, but just in case
         if (!window || !window.location) {
-          return callback(new Error('No window available during request, unknown environment'));
+          return callback(
+            new Error(
+              'No window available during request, unknown environment',
+            ),
+          );
         }
 
         // If the current page is http, try and send over http
-        if (window.location.href.substring(0, 5) === 'http:' && url.substring(0, 5) === 'https') {
+        if (
+          window.location.href.substring(0, 5) === 'http:' &&
+          url.substring(0, 5) === 'https'
+        ) {
           url = 'http' + url.substring(5);
         }
 
         var xdomainrequest = new XDomainRequest();
-        xdomainrequest.onprogress = function() {};
-        xdomainrequest.ontimeout = function() {
+        xdomainrequest.onprogress = function () {};
+        xdomainrequest.ontimeout = function () {
           var msg = 'Request timed out';
           var code = 'ETIMEDOUT';
           callback(_newRetriableError(msg, code));
         };
-        xdomainrequest.onerror = function() {
+        xdomainrequest.onerror = function () {
           callback(new Error('Error during request'));
         };
-        xdomainrequest.onload = function() {
+        xdomainrequest.onload = function () {
           var parseResponse = _.jsonParse(xdomainrequest.responseText);
           callback(parseResponse.error, parseResponse.value);
         };
@@ -124,7 +140,7 @@ function _createXMLHTTPObject() {
     },
     function () {
       return new ActiveXObject('Microsoft.XMLHTTP');
-    }
+    },
   ];
   var xmlhttp;
   var i;

@@ -7,19 +7,20 @@
 ### Change the config object:
 
 ```js
-var _rollbarParams = {"server.environment": "production"};
-_rollbarParams["notifier.snippet_version"] = "2"; var _rollbar=["POST_CLIENT_ITEM_ACCESS_TOKEN", _rollbarParams];
+var _rollbarParams = { 'server.environment': 'production' };
+_rollbarParams['notifier.snippet_version'] = '2';
+var _rollbar = ['POST_CLIENT_ITEM_ACCESS_TOKEN', _rollbarParams];
 ```
 
-to 
+to
 
 ```js
 var _rollbarConfig = {
-  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   captureUncaught: true,
   payload: {
-    environment: "production"
-  }
+    environment: 'production',
+  },
 };
 ```
 
@@ -29,21 +30,21 @@ e.g.
 
 ```js
 var _rollbarParams = {
-  checkIgnore: function(msg, url, lineNo, colNo, error) {
+  checkIgnore: function (msg, url, lineNo, colNo, error) {
     // don't ignore anything (default)
     return false;
   },
-  context: "home#index",
+  context: 'home#index',
   itemsPerMinute: 60,
-  level: "error",
+  level: 'error',
   person: {
     id: 12345,
-    username: "johndoe",
-    email: "johndoe@example.com"
+    username: 'johndoe',
+    email: 'johndoe@example.com',
   },
-  "server.branch": "develop",
-  "server.environment": "staging",
-  "server.host": "web1"
+  'server.branch': 'develop',
+  'server.environment': 'staging',
+  'server.host': 'web1',
 };
 ```
 
@@ -51,35 +52,34 @@ should be changed to
 
 ```js
 var _rollbarConfig = {
-  accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   captureUncaught: true,
-  checkIgnore: function(msg, url, lineNo, colNo, error) {
+  checkIgnore: function (msg, url, lineNo, colNo, error) {
     // don't ignore anything (default)
     return false;
   },
   itemsPerMinute: 60,
-  logLevel: "error",
+  logLevel: 'error',
   payload: {
-    environment: "production",
-    context: "home#index",
+    environment: 'production',
+    context: 'home#index',
     person: {
       id: 12345,
-      username: "johndoe",
-      email: "johndoe@example.com"
+      username: 'johndoe',
+      email: 'johndoe@example.com',
     },
     server: {
-      branch: "develop",
-      environment: "staging",
-      host: "web1"
-    }
-  }
+      branch: 'develop',
+      environment: 'staging',
+      host: 'web1',
+    },
+  },
 };
 ```
 
 ### Change the snippet
 
 For the latest snippet, see the instructions here: [https://rollbar.com/docs/notifier/rollbar.js/](https://rollbar.com/docs/notifier/rollbar.js/).
-
 
 ## Update references to `_rollbar.push()`
 
@@ -118,19 +118,18 @@ try {
 }
 ```
 
-
 ### Recording a log message
 
 From
 
 ```js
-_rollbar.push("Some log message");
+_rollbar.push('Some log message');
 ```
 
 to
 
 ```js
-Rollbar.info("Some log message");
+Rollbar.info('Some log message');
 ```
 
 #### Including custom data
@@ -138,13 +137,17 @@ Rollbar.info("Some log message");
 From
 
 ```js
-_rollbar.push({level: "warning", msg: "Some warning message", point: {x: 5, y: 10}});
+_rollbar.push({
+  level: 'warning',
+  msg: 'Some warning message',
+  point: { x: 5, y: 10 },
+});
 ```
 
 to
 
 ```js
-Rollbar.warning("Some warning message", {point: {x: 5, y: 10}});
+Rollbar.warning('Some warning message', { point: { x: 5, y: 10 } });
 ```
 
 #### Using callbacks
@@ -155,11 +158,11 @@ From
 try {
   doSomething();
 } catch (e) {
-  _rollbar.push(e, function(err, uuid) {
+  _rollbar.push(e, function (err, uuid) {
     if (err !== null) {
-      console.error("Could not report an exception to Rollbar, error: " + err);
+      console.error('Could not report an exception to Rollbar, error: ' + err);
     } else {
-      console.log("Reported exception to Rollbar, uuid: " + uuid);
+      console.log('Reported exception to Rollbar, uuid: ' + uuid);
     }
   });
 }
@@ -171,11 +174,11 @@ to
 try {
   doSomething();
 } catch (e) {
-  Rollbar.log(e, function(err, uuid) {
+  Rollbar.log(e, function (err, uuid) {
     if (err !== null) {
-      console.error("Could not report an exception to Rollbar, error: " + err);
+      console.error('Could not report an exception to Rollbar, error: ' + err);
     } else {
-      console.log("Reported exception to Rollbar, uuid: " + uuid);
+      console.log('Reported exception to Rollbar, uuid: ' + uuid);
     }
   });
 }

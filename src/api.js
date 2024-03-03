@@ -7,7 +7,7 @@ var defaultOptions = {
   search: null,
   version: '1',
   protocol: 'https:',
-  port: 443
+  port: 443,
 };
 
 /**
@@ -44,13 +44,16 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
  * @param data
  * @param callback
  */
-Api.prototype.postItem = function(data, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+Api.prototype.postItem = function (data, callback) {
+  var transportOptions = helpers.transportOptions(
+    this.transportOptions,
+    'POST',
+  );
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
   var self = this;
 
   // ensure the network request is scheduled after the current tick.
-  setTimeout(function() {
+  setTimeout(function () {
     self.transport.post(self.accessToken, transportOptions, payload, callback);
   }, 0);
 };
@@ -60,14 +63,14 @@ Api.prototype.postItem = function(data, callback) {
  * @param data
  * @param callback
  */
-Api.prototype.buildJsonPayload = function(data, callback) {
+Api.prototype.buildJsonPayload = function (data, callback) {
   var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
 
   var stringifyResult;
   if (this.truncation) {
     stringifyResult = this.truncation.truncate(payload);
   } else {
-    stringifyResult = _.stringify(payload)
+    stringifyResult = _.stringify(payload);
   }
 
   if (stringifyResult.error) {
@@ -85,12 +88,20 @@ Api.prototype.buildJsonPayload = function(data, callback) {
  * @param jsonPayload
  * @param callback
  */
-Api.prototype.postJsonPayload = function(jsonPayload, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
-  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
+Api.prototype.postJsonPayload = function (jsonPayload, callback) {
+  var transportOptions = helpers.transportOptions(
+    this.transportOptions,
+    'POST',
+  );
+  this.transport.postJsonPayload(
+    this.accessToken,
+    transportOptions,
+    jsonPayload,
+    callback,
+  );
 };
 
-Api.prototype.configure = function(options) {
+Api.prototype.configure = function (options) {
   var oldOptions = this.oldOptions;
   this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);

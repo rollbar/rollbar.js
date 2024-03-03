@@ -45,12 +45,16 @@ function treeToArray(elem) {
 
 function elementArrayToString(a) {
   var MAX_LENGTH = 80;
-  var separator = ' > ', separatorLength = separator.length;
-  var out = [], len = 0, nextStr, totalLength;
+  var separator = ' > ',
+    separatorLength = separator.length;
+  var out = [],
+    len = 0,
+    nextStr,
+    totalLength;
 
   for (var i = a.length - 1; i >= 0; i--) {
     nextStr = descriptionToString(a[i]);
-    totalLength = len + (out.length * separatorLength) + nextStr.length;
+    totalLength = len + out.length * separatorLength + nextStr.length;
     if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
       out.unshift('...');
       break;
@@ -73,7 +77,9 @@ function descriptionToString(desc) {
     out.push('.' + desc.classes.join('.'));
   }
   for (var i = 0; i < desc.attributes.length; i++) {
-    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+    out.push(
+      '[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]',
+    );
   }
 
   return out.join('');
@@ -98,13 +104,17 @@ function describeElement(elem) {
   if (!elem || !elem.tagName) {
     return null;
   }
-  var out = {}, className, key, attr, i;
+  var out = {},
+    className,
+    key,
+    attr,
+    i;
   out.tagName = elem.tagName.toLowerCase();
   if (elem.id) {
     out.id = elem.id;
   }
   className = elem.className;
-  if (className && (typeof className === 'string')) {
+  if (className && typeof className === 'string') {
     out.classes = className.split(/\s+/);
   }
   var attributes = ['type', 'name', 'title', 'alt'];
@@ -113,7 +123,7 @@ function describeElement(elem) {
     key = attributes[i];
     attr = elem.getAttribute(key);
     if (attr) {
-      out.attributes.push({key: key, value: attr});
+      out.attributes.push({ key: key, value: attr });
     }
   }
   return out;
@@ -126,5 +136,5 @@ module.exports = {
   treeToArray: treeToArray,
   getElementFromEvent: getElementFromEvent,
   isDescribedElement: isDescribedElement,
-  getElementType: getElementType
+  getElementType: getElementType,
 };

@@ -28,10 +28,16 @@ function Transport() {
   this.rateLimitExpires = 0;
 }
 
-Transport.prototype.get = function(accessToken, options, params, callback, transportFactory) {
+Transport.prototype.get = function (
+  accessToken,
+  options,
+  params,
+  callback,
+  transportFactory,
+) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
@@ -42,22 +48,33 @@ Transport.prototype.get = function(accessToken, options, params, callback, trans
     t = _transport(options);
   }
   if (!t) {
-    logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    logger.error(
+      'Unknown transport based on given protocol: ' + options.protocol,
+    );
     return callback(new Error('Unknown transport'));
   }
-  var req = t.request(options, function(resp) {
-    this.handleResponse(resp, callback);
-  }.bind(this));
-  req.on('error', function(err) {
+  var req = t.request(
+    options,
+    function (resp) {
+      this.handleResponse(resp, callback);
+    }.bind(this),
+  );
+  req.on('error', function (err) {
     callback(err);
   });
   req.end();
-}
+};
 
-Transport.prototype.post = function(accessToken, options, payload, callback, transportFactory) {
+Transport.prototype.post = function (
+  accessToken,
+  options,
+  payload,
+  callback,
+  transportFactory,
+) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   if (_currentTime() < this.rateLimitExpires) {
     return callback(new Error('Exceeded rate limit'));
@@ -79,47 +96,55 @@ Transport.prototype.post = function(accessToken, options, payload, callback, tra
     t = _transport(options);
   }
   if (!t) {
-    logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    logger.error(
+      'Unknown transport based on given protocol: ' + options.protocol,
+    );
     return callback(new Error('Unknown transport'));
   }
-  var req = t.request(options, function(resp) {
-    this.handleResponse(resp, _wrapPostCallback(callback));
-  }.bind(this));
-  req.on('error', function(err) {
+  var req = t.request(
+    options,
+    function (resp) {
+      this.handleResponse(resp, _wrapPostCallback(callback));
+    }.bind(this),
+  );
+  req.on('error', function (err) {
     callback(err);
   });
   if (writeData) {
     req.write(writeData);
   }
   req.end();
-}
+};
 
-Transport.prototype.updateRateLimit = function(resp) {
+Transport.prototype.updateRateLimit = function (resp) {
   var remaining = parseInt(resp.headers['x-rate-limit-remaining'] || 0);
-  var remainingSeconds = Math.min(MAX_RATE_LIMIT_INTERVAL, resp.headers['x-rate-limit-remaining-seconds'] || 0);
+  var remainingSeconds = Math.min(
+    MAX_RATE_LIMIT_INTERVAL,
+    resp.headers['x-rate-limit-remaining-seconds'] || 0,
+  );
   var currentTime = _currentTime();
 
-  if ((resp.statusCode === 429) && (remaining === 0)) {
+  if (resp.statusCode === 429 && remaining === 0) {
     this.rateLimitExpires = currentTime + remainingSeconds;
   } else {
     this.rateLimitExpires = currentTime;
   }
-}
+};
 
-Transport.prototype.handleResponse = function(resp, callback) {
+Transport.prototype.handleResponse = function (resp, callback) {
   this.updateRateLimit(resp);
 
   var respData = [];
   resp.setEncoding('utf8');
-  resp.on('data', function(chunk) {
+  resp.on('data', function (chunk) {
     respData.push(chunk);
   });
 
-  resp.on('end', function() {
+  resp.on('end', function () {
     respData = respData.join('');
     _parseApiResponse(respData, callback);
   });
-}
+};
 
 /** Helpers **/
 
@@ -138,7 +163,7 @@ function _headers(accessToken, options, data) {
 }
 
 function _transport(options) {
-  return {'http:': http, 'https:': https}[options.protocol];
+  return { 'http:': http, 'https:': https }[options.protocol];
 }
 
 function _parseApiResponse(data, callback) {
@@ -151,27 +176,32 @@ function _parseApiResponse(data, callback) {
 
   if (data.err) {
     logger.error('Received error: ' + data.message);
-    return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
+    return callback(
+      new Error('Api error: ' + (data.message || 'Unknown error')),
+    );
   }
 
   callback(null, data);
 }
 
 function _wrapPostCallback(callback) {
-  return function(err, data) {
+  return function (err, data) {
     if (err) {
       return callback(err);
     }
     if (data.result && data.result.uuid) {
-      logger.log([
+      logger.log(
+        [
           'Successful api response.',
-          ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid
-      ].join(''));
+          ' Link: https://rollbar.com/occurrence/uuid/?uuid=' +
+            data.result.uuid,
+        ].join(''),
+      );
     } else {
       logger.log('Successful api response');
     }
     callback(null, data.result);
-  }
+  };
 }
 
 function _currentTime() {

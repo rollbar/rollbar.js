@@ -2,24 +2,24 @@
   <head>
     <script>
       _rollbarConfig = {
-        accessToken: "ACCESS_TOKEN",
+        accessToken: 'ACCESS_TOKEN',
         captureUncaught: true,
         payload: {
-          environment: "test",
+          environment: 'test',
           person: {
             id: 456,
-            username: "foo",
-            email: "foo@example.com"
-          }
-        }
+            username: 'foo',
+            email: 'foo@example.com',
+          },
+        },
       };
-      
+
       function breakme() {
         try {
           var foo = null;
           foo();
         } catch (e) {
-            Rollbar.error(e);
+          Rollbar.error(e);
         }
       }
     </script>

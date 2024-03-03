@@ -42,19 +42,19 @@ function addMessageWithError(item, options, callback) {
   }
   if (trace) {
     if (!(trace.exception && trace.exception.description)) {
-      _.set(item, tracePath+'.exception.description', item.message);
+      _.set(item, tracePath + '.exception.description', item.message);
       callback(null, item);
       return;
     }
-    var extra = _.get(item, tracePath+'.extra') || {};
-    var newExtra =  _.merge(extra, {message: item.message});
-    _.set(item, tracePath+'.extra', newExtra);
+    var extra = _.get(item, tracePath + '.extra') || {};
+    var newExtra = _.merge(extra, { message: item.message });
+    _.set(item, tracePath + '.extra', newExtra);
   }
   callback(null, item);
 }
 
 function userTransform(logger) {
-  return function(item, options, callback) {
+  return function (item, options, callback) {
     var newItem = _.merge(item);
     var response = null;
     try {
@@ -63,23 +63,29 @@ function userTransform(logger) {
       }
     } catch (e) {
       options.transform = null;
-      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
+      logger.error(
+        'Error while calling custom transform() function. Removing custom transform().',
+        e,
+      );
       callback(null, item);
       return;
     }
-    if(_.isPromise(response)) {
-      response.then(function (promisedItem) {
-        if(promisedItem) {
-          newItem.data = promisedItem;
-        }
-        callback(null, newItem);
-      }, function (error) {
-        callback(error, item);
-      });
+    if (_.isPromise(response)) {
+      response.then(
+        function (promisedItem) {
+          if (promisedItem) {
+            newItem.data = promisedItem;
+          }
+          callback(null, newItem);
+        },
+        function (error) {
+          callback(error, item);
+        },
+      );
     } else {
       callback(null, newItem);
     }
-  }
+  };
 }
 
 function addConfigToPayload(item, options, callback) {
@@ -94,7 +100,7 @@ function addConfigToPayload(item, options, callback) {
 }
 
 function addFunctionOption(options, name) {
-  if(_.isFunction(options[name])) {
+  if (_.isFunction(options[name])) {
     options[name] = options[name].toString();
   }
 }
@@ -113,7 +119,10 @@ function addConfiguredOptions(item, options, callback) {
 }
 
 function addDiagnosticKeys(item, options, callback) {
-  var diagnostic = _.merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
+  var diagnostic = _.merge(
+    item.notifier.client.notifier.diagnostic,
+    item.diagnostic,
+  );
 
   if (_.get(item, 'err._isAnonymous')) {
     diagnostic.is_anonymous = true;
@@ -132,14 +141,17 @@ function addDiagnosticKeys(item, options, callback) {
         filename: item.err.fileName,
         line: item.err.lineNumber,
         column: item.err.columnNumber,
-        stack: item.err.stack
+        stack: item.err.stack,
       };
     } catch (e) {
       diagnostic.raw_error = { failed: String(e) };
     }
   }
 
-  item.data.notifier.diagnostic = _.merge(item.data.notifier.diagnostic, diagnostic);
+  item.data.notifier.diagnostic = _.merge(
+    item.data.notifier.diagnostic,
+    diagnostic,
+  );
   callback(null, item);
 }
 
@@ -151,5 +163,5 @@ module.exports = {
   userTransform: userTransform,
   addConfigToPayload: addConfigToPayload,
   addConfiguredOptions: addConfiguredOptions,
-  addDiagnosticKeys: addDiagnosticKeys
+  addDiagnosticKeys: addDiagnosticKeys,
 };

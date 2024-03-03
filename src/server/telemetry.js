@@ -7,7 +7,7 @@ var defaults = {
   network: true,
   networkResponseHeaders: false,
   networkRequestHeaders: false,
-  log: true
+  log: true,
 };
 
 function Instrumenter(options, telemeter, rollbar) {
@@ -26,11 +26,11 @@ function Instrumenter(options, telemeter, rollbar) {
   this.diagnostic = rollbar.client.notifier.diagnostic;
   this.replacements = {
     network: [],
-    log: []
+    log: [],
   };
 }
 
-Instrumenter.prototype.configure = function(options) {
+Instrumenter.prototype.configure = function (options) {
   this.options = _.merge(this.options, options);
   var autoInstrument = options.autoInstrument;
   var oldSettings = _.merge(this.autoInstrument);
@@ -45,10 +45,14 @@ Instrumenter.prototype.configure = function(options) {
   this.instrument(oldSettings);
 };
 
-Instrumenter.prototype.instrument = function(oldSettings) {
+Instrumenter.prototype.instrument = function (oldSettings) {
   if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
     this.instrumentNetwork();
-  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+  } else if (
+    !this.autoInstrument.network &&
+    oldSettings &&
+    oldSettings.network
+  ) {
     this.deinstrumentNetwork();
   }
 
@@ -59,20 +63,32 @@ Instrumenter.prototype.instrument = function(oldSettings) {
   }
 };
 
-Instrumenter.prototype.deinstrumentNetwork = function() {
+Instrumenter.prototype.deinstrumentNetwork = function () {
   restore(this.replacements, 'network');
 };
 
-Instrumenter.prototype.instrumentNetwork = function() {
-  replace(http, 'request', networkRequestWrapper.bind(this), this.replacements, 'network');
-  replace(https, 'request', networkRequestWrapper.bind(this), this.replacements, 'network');
+Instrumenter.prototype.instrumentNetwork = function () {
+  replace(
+    http,
+    'request',
+    networkRequestWrapper.bind(this),
+    this.replacements,
+    'network',
+  );
+  replace(
+    https,
+    'request',
+    networkRequestWrapper.bind(this),
+    this.replacements,
+    'network',
+  );
 };
 
 function networkRequestWrapper(orig) {
   var telemeter = this.telemeter;
   var self = this;
 
-  return function(url, options, cb) {
+  return function (url, options, cb) {
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
 
     var metadata = {
@@ -80,7 +96,7 @@ function networkRequestWrapper(orig) {
       url: urlHelpers.constructUrl(mergedOptions.options),
       status_code: null,
       start_time_ms: _.now(),
-      end_time_ms: null
+      end_time_ms: null,
     };
 
     if (self.autoInstrument.networkRequestHeaders) {
@@ -90,20 +106,24 @@ function networkRequestWrapper(orig) {
 
     // Call the original method with the original arguments and wrapped callback.
     var wrappedArgs = Array.from(arguments);
-    var wrappedCallback = responseCallbackWrapper(self.autoInstrument, metadata, mergedOptions.cb);
+    var wrappedCallback = responseCallbackWrapper(
+      self.autoInstrument,
+      metadata,
+      mergedOptions.cb,
+    );
     if (mergedOptions.cb) {
       wrappedArgs.pop();
     }
     wrappedArgs.push(wrappedCallback);
     var req = orig.apply(https, wrappedArgs);
 
-    req.on('error', err => {
+    req.on('error', (err) => {
       metadata.status_code = 0;
-      metadata.error = [err.name, err.message].join(': ') ;
+      metadata.error = [err.name, err.message].join(': ');
     });
 
     return req;
-  }
+  };
 }
 
 function responseCallbackWrapper(options, metadata, callback) {
@@ -118,35 +138,51 @@ function responseCallbackWrapper(options, metadata, callback) {
     if (callback) {
       return callback.apply(undefined, arguments);
     }
-  }
+  };
 }
 
-Instrumenter.prototype.captureNetwork = function(metadata, subtype, rollbarUUID) {
+Instrumenter.prototype.captureNetwork = function (
+  metadata,
+  subtype,
+  rollbarUUID,
+) {
   return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
 };
 
-Instrumenter.prototype.deinstrumentConsole = function() {
+Instrumenter.prototype.deinstrumentConsole = function () {
   restore(this.replacements, 'log');
 };
 
-Instrumenter.prototype.instrumentConsole = function() {
+Instrumenter.prototype.instrumentConsole = function () {
   var telemeter = this.telemeter;
 
   var stdout = process.stdout;
-  replace(stdout, 'write', function(orig) {
-    return function(string) {
-      telemeter.captureLog(string, 'info');
-      return orig.apply(stdout, arguments);
-    }
-  }, this.replacements, 'log');
+  replace(
+    stdout,
+    'write',
+    function (orig) {
+      return function (string) {
+        telemeter.captureLog(string, 'info');
+        return orig.apply(stdout, arguments);
+      };
+    },
+    this.replacements,
+    'log',
+  );
 
   var stderr = process.stderr;
-  replace(stderr, 'write', function(orig) {
-    return function(string) {
-      telemeter.captureLog(string, 'error');
-      return orig.apply(stderr, arguments);
-    }
-  }, this.replacements, 'log');
+  replace(
+    stderr,
+    'write',
+    function (orig) {
+      return function (string) {
+        telemeter.captureLog(string, 'error');
+        return orig.apply(stderr, arguments);
+      };
+    },
+    this.replacements,
+    'log',
+  );
 };
 
 // TODO: These helpers are duplicated in src/browser/telemetry.js,
