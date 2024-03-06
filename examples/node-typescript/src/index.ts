@@ -7,6 +7,6 @@ export = function error() {
     }
   }
   // TypeScript code snippet will include `<Error>`
-  var error = <Error>new CustomError('foo');
+  var error = <Error> new CustomError('foo');
   throw error;
-};
+}
