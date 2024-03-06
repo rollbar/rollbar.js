@@ -11,3 +11,7 @@ out
 public
 release
 vendor
+
+# ignore prettifying examples for now due to
+# there being minified snippets all over the place
+examples
