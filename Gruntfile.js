@@ -145,9 +145,10 @@ module.exports = function (grunt) {
           // Main rollbar snippet
           {
             from: new RegExp(
+              /* eslint-disable-next-line no-control-regex */
               '^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)',
               'm',
-            ), // eslint-disable-line no-control-regex
+            ),
             to: function (match, index, fullText, captures) {
               captures[1] = rollbarJsSnippet;
               return captures.join('\n');
@@ -156,9 +157,10 @@ module.exports = function (grunt) {
           // jQuery rollbar plugin snippet
           {
             from: new RegExp(
+              /* eslint-disable-next-line no-control-regex */
               '^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)',
               'm',
-            ), // eslint-disable-line no-control-regex
+            ),
             to: function (match, index, fullText, captures) {
               captures[1] = rollbarjQuerySnippet;
               return captures.join('\n');
