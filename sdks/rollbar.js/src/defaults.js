@@ -5,5 +5,5 @@ module.exports = {
   reportLevel: 'debug',
   uncaughtErrorLevel: 'error',
   maxItems: 0,
-  itemsPerMin: 60
-}
+  itemsPerMin: 60,
+};

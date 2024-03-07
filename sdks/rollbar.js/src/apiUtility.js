@@ -4,7 +4,7 @@ function buildPayload(accessToken, data, jsonBackup) {
   if (!_.isType(data.context, 'string')) {
     var contextResult = _.stringify(data.context, jsonBackup);
     if (contextResult.error) {
-      data.context = 'Error: could not serialize \'context\'';
+      data.context = "Error: could not serialize 'context'";
     } else {
       data.context = contextResult.value || '';
     }
@@ -14,7 +14,7 @@ function buildPayload(accessToken, data, jsonBackup) {
   }
   return {
     access_token: accessToken,
-    data: data
+    data: data,
   };
 }
 
@@ -25,7 +25,7 @@ function getTransportFromOptions(options, defaults, url) {
   var path = defaults.path;
   var search = defaults.search;
   var timeout = options.timeout;
-  var transport = detectTransport(options)
+  var transport = detectTransport(options);
 
   var proxy = options.proxy;
   if (options.endpoint) {
@@ -44,12 +44,14 @@ function getTransportFromOptions(options, defaults, url) {
     path: path,
     search: search,
     proxy: proxy,
-    transport: transport
+    transport: transport,
   };
 }
 
 function detectTransport(options) {
-  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var gWindow =
+    (typeof window != 'undefined' && window) ||
+    (typeof self != 'undefined' && self);
   var transport = options.defaultTransport || 'xhr';
   if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
   if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
@@ -58,7 +60,9 @@ function detectTransport(options) {
 
 function transportOptions(transport, method) {
   var protocol = transport.protocol || 'https:';
-  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
+  var port =
+    transport.port ||
+    (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
   var hostname = transport.hostname;
   var path = transport.path;
   var timeout = transport.timeout;
@@ -79,7 +83,7 @@ function transportOptions(transport, method) {
     path: path,
     port: port,
     method: method,
-    transport: transportAPI
+    transport: transportAPI,
   };
 }
 
@@ -100,5 +104,5 @@ module.exports = {
   buildPayload: buildPayload,
   getTransportFromOptions: getTransportFromOptions,
   transportOptions: transportOptions,
-  appendPathToPath: appendPathToPath
+  appendPathToPath: appendPathToPath,
 };

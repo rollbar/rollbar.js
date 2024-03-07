@@ -1,5 +1,5 @@
-module.exports = function(options) {
-  return function(err) {
+module.exports = function (options) {
+  return function (err) {
     if (err) {
       return;
     }
@@ -9,10 +9,12 @@ module.exports = function(options) {
       var alias = options.globalAlias || 'Rollbar';
 
       var rollbar = window.rollbar;
-      var realImpl = function(o) {
+      var realImpl = function (o) {
         return new rollbar(o);
       };
-      var i = 0, obj, mainHandler;
+      var i = 0,
+        obj,
+        mainHandler;
       while ((obj = window._rollbarShims[i++])) {
         if (!mainHandler) {
           mainHandler = obj.handler;

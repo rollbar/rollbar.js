@@ -23,7 +23,9 @@ class TestError extends React.Component {
     return (
       <React.Fragment>
         <h1>Rollbar Example for React Child Component</h1>
-        <button id='child-error' onClick={ this.setErrorState }>Throw Child Error</button>
+        <button id="child-error" onClick={this.setErrorState}>
+          Throw Child Error
+        </button>
       </React.Fragment>
     );
   }

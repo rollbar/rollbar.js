@@ -1,6 +1,6 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import Rollbar from "rollbar";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Rollbar from 'rollbar';
 
 import ErrorBoundary from './ErrorBoundary';
 import TestError from './TestError';
@@ -14,7 +14,7 @@ class App extends React.Component {
         accessToken: 'POST_CLIENT_ITEM_TOKEN',
         captureUncaught: true,
         captureUnhandledRejections: true,
-      })
+      }),
     };
 
     this.logInfo = this.logInfo.bind(this);
@@ -34,15 +34,19 @@ class App extends React.Component {
   render() {
     return (
       <React.Fragment>
-          <h1>Rollbar Example for React</h1>
-          <button id='rollbar-info' onClick={ this.logInfo }>Log Info</button>
-          <button id='throw-error' onClick={ this.throwError }>ThrowError</button>
-        <ErrorBoundary rollbar={ this.state.rollbar }>
-          <TestError/>
+        <h1>Rollbar Example for React</h1>
+        <button id="rollbar-info" onClick={this.logInfo}>
+          Log Info
+        </button>
+        <button id="throw-error" onClick={this.throwError}>
+          ThrowError
+        </button>
+        <ErrorBoundary rollbar={this.state.rollbar}>
+          <TestError />
         </ErrorBoundary>
       </React.Fragment>
     );
   }
 }
 
-ReactDOM.render(<App />, document.getElementById("index"));
+ReactDOM.render(<App />, document.getElementById('index'));

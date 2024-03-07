@@ -1,15 +1,13 @@
 <html>
   <head>
     <script>
-      var domainsBlocked = [
-        "localhost"
-      ];
+      var domainsBlocked = ['localhost'];
 
       function ignoreFilesUncaught(isUncaught, args, payload) {
         try {
           var filename = payload.data.body.trace.frames[0].filename;
 
-          var isBlocked = domainsBlocked.some(function(domain){
+          var isBlocked = domainsBlocked.some(function (domain) {
             return filename.indexOf(domain) !== -1;
           });
 
@@ -24,12 +22,12 @@
       }
 
       var _rollbarConfig = {
-        accessToken: "POST_CLIENT_ITEM_TOKEN",
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
         rollbarJsUrl: '/dist/rollbar.js',
         captureUncaught: true,
         //checkIgnore: ignoreFilesUncaught,
         payload: {
-          environment: "test"
+          environment: 'test',
         },
       };
     </script>
@@ -42,10 +40,10 @@
       function callServer() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/sample', true);
-        xhr.onload = function() {
+        xhr.onload = function () {
           console.log('Got: ', xhr.response);
         };
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
           if (this.readyState === 4) {
             console.log('Done!');
           }
@@ -53,7 +51,7 @@
         xhr.send(null);
       }
     </script>
-    </head>
+  </head>
   <body>
     <button onclick="missing();">Foo</button>
     <div id="server-button" class="server button btn">
@@ -62,7 +60,12 @@
       </span>
     </div>
     <div>
-      <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter">
+      <input
+        type="checkbox"
+        id="subscribeNews"
+        name="subscribe"
+        value="newsletter"
+      />
       <label for="subscribeNews">Subscribe to newsletter?</label>
     </div>
     <select id="myCoolSelect" name="select">

@@ -7,7 +7,7 @@ console.log('Background extension is running.');
 var _rollbarConfig = {
   accessToken: 'ROLLBAR_CLIENT_TOKEN',
   captureUncaught: true,
-  captureUnhandledRejections: true
+  captureUnhandledRejections: true,
 };
 
 // Rollbar Snippet

@@ -2,7 +2,7 @@ var globals = require('./globalSetup');
 var wrapGlobals = require('./wrapGlobals');
 
 function _wrapInternalErr(f) {
-  return function() {
+  return function () {
     try {
       return f.apply(this, arguments);
     } catch (e) {
@@ -22,17 +22,19 @@ function Shim(options, wrap) {
   this.options = options;
   this._rollbarOldOnError = null;
   var shimId = _shimIdCounter++;
-  this.shimId = function() { return shimId; };
-  if ((typeof window !== 'undefined') && window._rollbarShims) {
-    window._rollbarShims[shimId] = {handler: wrap, messages: []};
+  this.shimId = function () {
+    return shimId;
+  };
+  if (typeof window !== 'undefined' && window._rollbarShims) {
+    window._rollbarShims[shimId] = { handler: wrap, messages: [] };
   }
 }
 
 var Wrapper = require('./rollbarWrapper');
-var ShimImpl = function(options, wrap) {
+var ShimImpl = function (options, wrap) {
   return new Shim(options, wrap);
 };
-var Rollbar = function(options) {
+var Rollbar = function (options) {
   return new Wrapper(ShimImpl, options);
 };
 
@@ -49,7 +51,7 @@ function setupShim(window, options) {
   window._rollbarWrappedError = null;
 
   var handler = new Rollbar(options);
-  return _wrapInternalErr(function() {
+  return _wrapInternalErr(function () {
     if (options.captureUncaught) {
       handler._rollbarOldOnError = window.onerror;
       globals.captureUncaughtExceptions(window, handler, true);
@@ -74,7 +76,10 @@ function setupShim(window, options) {
       if (ai === undefined || ai === true || pageTelemetryEnabled(ai)) {
         if (window.addEventListener) {
           window.addEventListener('load', handler.captureLoad.bind(handler));
-          window.addEventListener('DOMContentLoaded', handler.captureDomContentLoaded.bind(handler));
+          window.addEventListener(
+            'DOMContentLoaded',
+            handler.captureDomContentLoaded.bind(handler),
+          );
         }
       }
     }
@@ -84,12 +89,22 @@ function setupShim(window, options) {
   })();
 }
 
-Shim.prototype.loadFull = function(window, document, immediate, options, callback) {
+Shim.prototype.loadFull = function (
+  window,
+  document,
+  immediate,
+  options,
+  callback,
+) {
   var onload = function () {
     var err;
     if (window._rollbarDidLoad === undefined) {
       err = new Error('rollbar.js did not load');
-      var i=0, queue, obj, args, cb;
+      var i = 0,
+        queue,
+        obj,
+        args,
+        cb;
       while ((queue = window._rollbarShims[i++])) {
         queue = queue.messages || [];
         while ((obj = queue.shift())) {
@@ -121,8 +136,13 @@ Shim.prototype.loadFull = function(window, document, immediate, options, callbac
     s.async = true;
   }
 
-  s.onload = s.onreadystatechange = _wrapInternalErr(function() {
-    if (!done && (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete')) {
+  s.onload = s.onreadystatechange = _wrapInternalErr(function () {
+    if (
+      !done &&
+      (!this.readyState ||
+        this.readyState === 'loaded' ||
+        this.readyState === 'complete')
+    ) {
       s.onload = s.onreadystatechange = null;
       try {
         parentNode.removeChild(s);
@@ -137,13 +157,15 @@ Shim.prototype.loadFull = function(window, document, immediate, options, callbac
   parentNode.insertBefore(s, f);
 };
 
-Shim.prototype.wrap = function(f, context, _before) {
+Shim.prototype.wrap = function (f, context, _before) {
   try {
     var ctxFn;
     if (typeof context === 'function') {
       ctxFn = context;
     } else {
-      ctxFn = function() { return context || {}; };
+      ctxFn = function () {
+        return context || {};
+      };
     }
 
     if (typeof f !== 'function') {
@@ -161,7 +183,7 @@ Shim.prototype.wrap = function(f, context, _before) {
         }
         try {
           return f.apply(this, arguments);
-        } catch(exc) {
+        } catch (exc) {
           var e = exc;
           if (e) {
             if (typeof e === 'string') {
@@ -195,16 +217,18 @@ Shim.prototype.wrap = function(f, context, _before) {
 };
 
 function stub(method) {
-  return _wrapInternalErr(function() {
+  return _wrapInternalErr(function () {
     var shim = this;
     var args = Array.prototype.slice.call(arguments, 0);
-    var data = {shim: shim, method: method, args: args, ts: new Date()};
+    var data = { shim: shim, method: method, args: args, ts: new Date() };
     window._rollbarShims[this.shimId()].messages.push(data);
   });
 }
 
 var _methods =
-  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,captureDomContentLoaded,captureLoad'.split(',');
+  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,captureDomContentLoaded,captureLoad'.split(
+    ',',
+  );
 
 for (var i = 0; i < _methods.length; ++i) {
   Shim.prototype[_methods[i]] = stub(_methods[i]);
@@ -212,5 +236,5 @@ for (var i = 0; i < _methods.length; ++i) {
 
 module.exports = {
   setupShim: setupShim,
-  Rollbar: Rollbar
+  Rollbar: Rollbar,
 };

@@ -8,7 +8,7 @@ function traverse(obj, func, seen) {
   var seenIndex;
 
   // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
-  seen = seen || { obj: [], mapped: []};
+  seen = seen || { obj: [], mapped: [] };
 
   if (isObj) {
     seenIndex = seen.obj.indexOf(obj);

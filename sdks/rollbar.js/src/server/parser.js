@@ -14,18 +14,15 @@ var tracePattern =
 var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 
-
-var cache = new lru({max: 100});
+var cache = new lru({ max: 100 });
 var pendingReads = {};
 
 exports.cache = cache;
 exports.pendingReads = pendingReads;
 
-
 /*
  * Internal
  */
-
 
 function getMultipleErrors(errors) {
   var errArray, key;
@@ -52,10 +49,19 @@ function getMultipleErrors(errors) {
   return errArray;
 }
 
-
 function parseJadeDebugFrame(body) {
-  var lines, lineNumSep, filename, lineno, numLines, msg, i,
-    contextLine, preContext, postContext, line, jadeMatch;
+  var lines,
+    lineNumSep,
+    filename,
+    lineno,
+    numLines,
+    msg,
+    i,
+    contextLine,
+    preContext,
+    postContext,
+    line,
+    jadeMatch;
 
   // Given a Jade exception body, return a frame object
   lines = body.split('\n');
@@ -90,7 +96,10 @@ function parseJadeDebugFrame(body) {
   }
 
   preContext = preContext.slice(0, Math.min(preContext.length, linesOfContext));
-  postContext = postContext.slice(0, Math.min(postContext.length, linesOfContext));
+  postContext = postContext.slice(
+    0,
+    Math.min(postContext.length, linesOfContext),
+  );
 
   return {
     frame: {
@@ -100,29 +109,32 @@ function parseJadeDebugFrame(body) {
       code: contextLine,
       context: {
         pre: preContext,
-        post: postContext
-      }
+        post: postContext,
+      },
     },
-    message: msg
+    message: msg,
   };
 }
-
 
 function extractContextLines(frame, fileLines) {
   frame.code = fileLines[frame.lineno - 1];
   frame.context = {
-    pre: fileLines.slice(Math.max(0, frame.lineno - (linesOfContext + 1)), frame.lineno - 1),
-    post: fileLines.slice(frame.lineno, frame.lineno + linesOfContext)
+    pre: fileLines.slice(
+      Math.max(0, frame.lineno - (linesOfContext + 1)),
+      frame.lineno - 1,
+    ),
+    post: fileLines.slice(frame.lineno, frame.lineno + linesOfContext),
   };
 }
 
 function mapPosition(position, diagnostic) {
-  return stackTrace.mapSourcePosition({
+  return stackTrace.mapSourcePosition(
+    {
       source: position.source,
       line: position.line,
-      column: position.column
+      column: position.column,
     },
-    diagnostic
+    diagnostic,
   );
 }
 
@@ -144,7 +156,7 @@ function parseFrameLine(line, callback) {
   var runtimePosition = {
     source: data[1],
     line: Math.floor(data[2]),
-    column: Math.floor(data[3]) - 1
+    column: Math.floor(data[3]) - 1,
   };
   if (this.useSourceMaps) {
     position = mapPosition(runtimePosition, this.diagnostic);
@@ -157,7 +169,7 @@ function parseFrameLine(line, callback) {
     filename: position.source,
     lineno: position.line,
     colno: position.column,
-    runtimePosition: runtimePosition // Used to match frames for locals
+    runtimePosition: runtimePosition, // Used to match frames for locals
   };
 
   // For coffeescript, lineno and colno refer to the .coffee positions
@@ -173,7 +185,6 @@ function parseFrameLine(line, callback) {
   callback(null, frame);
 }
 
-
 function shouldReadFrameFile(frameFilename, callback) {
   var isValidFilename, isCached, isPending;
 
@@ -183,7 +194,6 @@ function shouldReadFrameFile(frameFilename, callback) {
 
   callback(null, isValidFilename && !isCached && !isPending);
 }
-
 
 function readFileLines(filename, callback) {
   try {
@@ -209,7 +219,6 @@ function checkFileExists(filename, callback) {
     callback(null, !err);
   });
 }
-
 
 function gatherContexts(frames, callback) {
   var frameFilenames = [];
@@ -280,14 +289,12 @@ function gatherContexts(frames, callback) {
         });
       });
     });
-
   });
 }
 
 /*
  * Public API
  */
-
 
 exports.parseException = function (exc, options, item, callback) {
   var multipleErrs = getMultipleErrors(exc.errors);
@@ -299,13 +306,13 @@ exports.parseException = function (exc, options, item, callback) {
       logger.error('could not parse exception, err: ' + err);
       return callback(err);
     }
-    message = String(exc.message || '<no message>') ;
+    message = String(exc.message || '<no message>');
     clss = String(exc.name || '<unknown>');
 
     ret = {
       class: clss,
       message: message,
-      frames: stack
+      frames: stack,
     };
 
     if (multipleErrs && multipleErrs.length) {
@@ -313,7 +320,7 @@ exports.parseException = function (exc, options, item, callback) {
       ret = {
         class: clss,
         message: String(firstErr.message || '<no message>'),
-        frames: stack
+        frames: stack,
       };
     }
 
@@ -325,25 +332,30 @@ exports.parseException = function (exc, options, item, callback) {
     }
 
     if (item.localsMap) {
-      item.notifier.locals.mergeLocals(item.localsMap, stack, exc.stack, function (err) {
-        if (err) {
-          logger.error('could not parse locals, err: ' + err);
+      item.notifier.locals.mergeLocals(
+        item.localsMap,
+        stack,
+        exc.stack,
+        function (err) {
+          if (err) {
+            logger.error('could not parse locals, err: ' + err);
 
-          // Don't reject the occurrence, record the error instead.
-          item.diagnostic['error parsing locals'] = err;
-        }
+            // Don't reject the occurrence, record the error instead.
+            item.diagnostic['error parsing locals'] = err;
+          }
 
-        return callback(null, ret);
-      });
+          return callback(null, ret);
+        },
+      );
     } else {
       return callback(null, ret);
     }
   });
 };
 
-
 exports.parseStack = function (stack, options, item, callback) {
-  var lines, _stack = stack;
+  var lines,
+    _stack = stack;
 
   // Some JS frameworks (e.g. Meteor) might bury the stack property
   while (typeof _stack === 'object') {
@@ -359,14 +371,27 @@ exports.parseStack = function (stack, options, item, callback) {
   }
 
   // Parse out all of the frame and filename info
-  async.map(lines, parseFrameLine.bind({ useSourceMaps: options.nodeSourceMaps, diagnostic: item.diagnostic }), function (err, frames) {
-    if (err) {
-      return callback(err);
-    }
-    frames.reverse();
-    async.filter(frames, function (frame, callback) { callback(null, !!frame); }, function (err, results) {
-      if (err) return callback(err);
-      gatherContexts(results, callback);
-    });
-  });
+  async.map(
+    lines,
+    parseFrameLine.bind({
+      useSourceMaps: options.nodeSourceMaps,
+      diagnostic: item.diagnostic,
+    }),
+    function (err, frames) {
+      if (err) {
+        return callback(err);
+      }
+      frames.reverse();
+      async.filter(
+        frames,
+        function (frame, callback) {
+          callback(null, !!frame);
+        },
+        function (err, results) {
+          if (err) return callback(err);
+          gatherContexts(results, callback);
+        },
+      );
+    },
+  );
 };

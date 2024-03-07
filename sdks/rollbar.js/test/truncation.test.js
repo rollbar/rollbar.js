@@ -6,8 +6,8 @@ var t = require('../src/truncation');
 var utility = require('../src/utility');
 utility.setupJSON();
 
-describe('truncate', function() {
-  it('should not truncate something small enough', function() {
+describe('truncate', function () {
+  it('should not truncate something small enough', function () {
     var payload = messagePayload('hello world');
     var result = t.truncate(payload);
     expect(result.value).to.be.ok();
@@ -16,7 +16,7 @@ describe('truncate', function() {
     expect(resultValue).to.eql(payload);
   });
 
-  it('should try all strategies if payload too big', function() {
+  it('should try all strategies if payload too big', function () {
     var payload = tracePayload(10, repeat('a', 500));
     var result = t.truncate(payload, undefined, 1);
     expect(result.value).to.be.ok();
@@ -24,11 +24,13 @@ describe('truncate', function() {
     var resultValue = JSON.parse(result.value);
 
     expect(resultValue.data.body.trace.exception.description).to.not.be.ok();
-    expect(resultValue.data.body.trace.exception.message.length).to.be.below(256);
+    expect(resultValue.data.body.trace.exception.message.length).to.be.below(
+      256,
+    );
     expect(resultValue.data.body.trace.frames.length).to.be.below(3);
   });
 
-  it('should not truncate ascii payload close to max size', function() {
+  it('should not truncate ascii payload close to max size', function () {
     var payload = tracePayload(10, repeat('i', 500));
     var result = t.truncate(payload, undefined, 1100); // payload will be 500 + 528
     expect(result.value).to.be.ok();
@@ -37,7 +39,7 @@ describe('truncate', function() {
     expect(resultValue).to.eql(payload);
   });
 
-  it('should truncate non-ascii payload when oversize', function() {
+  it('should truncate non-ascii payload when oversize', function () {
     var payload = tracePayload(10, repeat('あ', 500)); // あ is 3 utf-8 bytes (U+3042)
     var result = t.truncate(payload, undefined, 1100); // payload will be 1500 + 528
     expect(result.value).to.be.ok();
@@ -47,39 +49,39 @@ describe('truncate', function() {
   });
 });
 
-describe('raw', function() {
-  it('should do nothing', function() {
+describe('raw', function () {
+  it('should do nothing', function () {
     var payload = messagePayload('something');
     var rawResult = t.raw(payload);
     expect(rawResult[0]).to.eql(payload);
   });
 });
 
-describe('truncateFrames', function() {
-  it('should do nothing with small number of frames', function() {
-    var payload = tracePayload(5)
+describe('truncateFrames', function () {
+  it('should do nothing with small number of frames', function () {
+    var payload = tracePayload(5);
     var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace.frames.length).to.eql(5);
   });
 
-  it('should cut out middle frames if too many', function() {
-    var payload = tracePayload(20)
+  it('should cut out middle frames if too many', function () {
+    var payload = tracePayload(20);
     var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace.frames.length).to.eql(10);
   });
 
-  it('should do nothing with small number of frames trace_chain', function() {
-    var payload = traceChainPayload(4, 5)
+  it('should do nothing with small number of frames trace_chain', function () {
+    var payload = traceChainPayload(4, 5);
     var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace_chain[0].frames.length).to.eql(5);
     expect(resultP.data.body.trace_chain[3].frames.length).to.eql(5);
   });
 
-  it('should cut out middle frames if too many trace_chain', function() {
-    var payload = traceChainPayload(4, 20)
+  it('should cut out middle frames if too many trace_chain', function () {
+    var payload = traceChainPayload(4, 20);
     var result = t.truncateFrames(payload, undefined, 5);
     var resultP = result[0];
     expect(resultP.data.body.trace_chain[0].frames.length).to.eql(10);
@@ -87,8 +89,8 @@ describe('truncateFrames', function() {
   });
 });
 
-describe('truncateStrings', function() {
-  it('should work recursively on different string sizes', function() {
+describe('truncateStrings', function () {
+  it('should work recursively on different string sizes', function () {
     var payload = {
       access_token: 'abc',
       data: {
@@ -96,11 +98,11 @@ describe('truncateStrings', function() {
           small: 'i am a small string',
           big: repeat('hello world', 20),
           exact: repeat('a', 50),
-          exactPlusOne: repeat('a', 51)
+          exactPlusOne: repeat('a', 51),
         },
         other: 'this is ok',
-        not: repeat('too big', 30)
-      }
+        not: repeat('too big', 30),
+      },
     };
 
     var result = t.truncateStrings(50, payload);
@@ -118,42 +120,42 @@ describe('truncateStrings', function() {
   });
 });
 
-describe('maybeTruncateValue', function() {
-  it('should handle falsey things', function() {
+describe('maybeTruncateValue', function () {
+  it('should handle falsey things', function () {
     expect(t.maybeTruncateValue(42, null)).to.be(null);
     expect(t.maybeTruncateValue(42, false)).to.eql(false);
     expect(t.maybeTruncateValue(42, undefined)).to.be(undefined);
   });
 
-  it('should handle strings shorter than the length', function() {
+  it('should handle strings shorter than the length', function () {
     var len = 10;
     var val = 'hello';
     var result = t.maybeTruncateValue(len, val);
     expect(result).to.eql(val);
-    expect(result.length).to.be.below(len+1);
+    expect(result.length).to.be.below(len + 1);
   });
-  it('should handle strings longer than the length', function() {
+  it('should handle strings longer than the length', function () {
     var len = 10;
     var val = repeat('hello', 3);
     var result = t.maybeTruncateValue(len, val);
     expect(result).to.not.eql(val);
-    expect(result.length).to.be.below(len+1);
+    expect(result.length).to.be.below(len + 1);
   });
-  it('should handle arrays shorter than the length', function() {
+  it('should handle arrays shorter than the length', function () {
     var len = 10;
-    var val = repeat('a,',8).split(',');
+    var val = repeat('a,', 8).split(',');
     val.pop();
     var result = t.maybeTruncateValue(len, val);
     expect(result).to.eql(val);
-    expect(result.length).to.be.below(len+1);
+    expect(result.length).to.be.below(len + 1);
   });
-  it('should handle arrays longer than the length', function() {
+  it('should handle arrays longer than the length', function () {
     var len = 10;
-    var val = repeat('a,',12).split(',');
+    var val = repeat('a,', 12).split(',');
     val.pop();
     var result = t.maybeTruncateValue(len, val);
     expect(result).to.not.eql(val);
-    expect(result.length).to.be.below(len+1);
+    expect(result.length).to.be.below(len + 1);
   });
 });
 
@@ -163,20 +165,20 @@ function messagePayload(message) {
     data: {
       body: {
         message: {
-          body: message
-        }
-      }
-    }
+          body: message,
+        },
+      },
+    },
   };
 }
 
 function tracePayload(frameCount, message) {
-  message = (typeof message !== 'undefined') ? message : 'EXCEPTION MESSAGE';
+  message = typeof message !== 'undefined' ? message : 'EXCEPTION MESSAGE';
   var frames = [];
   for (var i = 0; i < frameCount; i++) {
     frames.push({
       filename: 'some/file/name',
-      lineno: i
+      lineno: i,
     });
   }
   return {
@@ -186,41 +188,41 @@ function tracePayload(frameCount, message) {
         trace: {
           exception: {
             description: 'ALL YOUR BASE',
-            message: message
+            message: message,
           },
-          frames: frames
-        }
-      }
-    }
+          frames: frames,
+        },
+      },
+    },
   };
 }
 
 function traceChainPayload(traceCount, frameCount, message) {
-  message = (typeof message !== 'undefined') ? message : 'EXCEPTION MESSAGE';
+  message = typeof message !== 'undefined' ? message : 'EXCEPTION MESSAGE';
   var chain = [];
   for (var c = 0; c < traceCount; c++) {
     var frames = [];
     for (var i = 0; i < frameCount; i++) {
       frames.push({
-        filename: 'some/file/name::'+c,
-        lineno: i
+        filename: 'some/file/name::' + c,
+        lineno: i,
       });
     }
     chain.push({
       exception: {
         description: 'ALL YOUR BASE :: ' + c,
-        message: message
+        message: message,
       },
-      frames: frames
+      frames: frames,
     });
   }
   return {
     access_token: 'abc',
     data: {
       body: {
-        trace_chain: chain
-      }
-    }
+        trace_chain: chain,
+      },
+    },
   };
 }
 

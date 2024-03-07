@@ -1,9 +1,7 @@
 /* globals jQuery */
 /* globals __JQUERY_PLUGIN_VERSION__ */
 
-
-(function(jQuery, window, document) {
-
+(function (jQuery, window, document) {
   var rb = window.Rollbar;
   if (!rb) {
     return;
@@ -16,14 +14,14 @@
       notifier: {
         plugins: {
           jquery: {
-            version: JQUERY_PLUGIN_VERSION
-          }
-        }
-      }
-    }
+            version: JQUERY_PLUGIN_VERSION,
+          },
+        },
+      },
+    },
   });
 
-  var logError = function(e) {
+  var logError = function (e) {
     rb.error(e);
     if (window.console) {
       var msg = '[reported to Rollbar]';
@@ -35,35 +33,37 @@
   };
 
   // Report any ajax errors to Rollbar
-  jQuery(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
-    var status = jqXHR.status;
-    var url = ajaxSettings.url;
-    var type = ajaxSettings.type;
+  jQuery(document).ajaxError(
+    function (event, jqXHR, ajaxSettings, thrownError) {
+      var status = jqXHR.status;
+      var url = ajaxSettings.url;
+      var type = ajaxSettings.type;
 
-    // If status === 0 it means the user left the page before the ajax event finished
-    // or other uninteresting events.
-    if (!status) {
-      return;
-    }
+      // If status === 0 it means the user left the page before the ajax event finished
+      // or other uninteresting events.
+      if (!status) {
+        return;
+      }
 
-    var extra = {
-      status: status,
-      url: url,
-      type: type,
-      isAjax: true,
-      data: ajaxSettings.data,
-      jqXHR_responseText: jqXHR.responseText,
-      jqXHR_statusText: jqXHR.statusText
-    };
-    var msg = thrownError ? thrownError : 'jQuery ajax error for ' + type;
-    rb.warning(msg, extra);
-  });
+      var extra = {
+        status: status,
+        url: url,
+        type: type,
+        isAjax: true,
+        data: ajaxSettings.data,
+        jqXHR_responseText: jqXHR.responseText,
+        jqXHR_statusText: jqXHR.statusText,
+      };
+      var msg = thrownError ? thrownError : 'jQuery ajax error for ' + type;
+      rb.warning(msg, extra);
+    },
+  );
 
   // Wraps functions passed into jQuery's ready() with try/catch to
   // report errors to Rollbar
   var origReady = jQuery.fn.ready;
-  jQuery.fn.ready = function(fn) {
-    return origReady.call(this, function($) {
+  jQuery.fn.ready = function (fn) {
+    return origReady.call(this, function ($) {
       try {
         fn($);
       } catch (e) {
@@ -75,10 +75,10 @@
   // Modified from the code removed from Tracekit in this commit
   // https://github.com/occ/TraceKit/commit/0d39401
   var _oldEventAdd = jQuery.event.add;
-  jQuery.event.add = function(elem, types, handler, data, selector) {
+  jQuery.event.add = function (elem, types, handler, data, selector) {
     var _handler;
-    var wrap = function(fn) {
-      return function() {
+    var wrap = function (fn) {
+      return function () {
         try {
           return fn.apply(this, arguments);
         } catch (e) {
