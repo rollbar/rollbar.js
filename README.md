@@ -45,7 +45,6 @@ For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rol
 
 To set up a development environment, you'll need Node.js and npm.
 
-1. `git submodule update --init`
 2. `npm install -D`
 3. `make`
 

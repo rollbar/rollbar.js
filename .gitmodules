@@ -1,3 +1,0 @@
-[submodule "vendor/JSON-js"]
-	path = vendor/JSON-js
-	url = https://github.com/rollbar/JSON-js.git
