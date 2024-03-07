@@ -2,10 +2,10 @@ name: Rollbar.js CI
 
 on:
   push:
-    branches: [ master ]
-    tags: [ v* ]
+    branches: [master]
+    tags: [v*]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
@@ -15,15 +15,15 @@ jobs:
       matrix:
         include:
           - node: 14
-            npm: 8
+            npm: ^8
           - node: 16
-            npm: 8
+            npm: ^8
           - node: 18
-            npm: 9
+            npm: ^9
           - node: 20
-            npm: 10
-          - node: 21
-            npm: 10
+            npm: ^10
+          - node: latest
+            npm: latest
 
     steps:
       - name: Checkout
@@ -37,7 +37,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Update npm
-        run: npm install -g npm@^${{ matrix.npm }}
+        run: npm install -g npm@${{ matrix.npm }}
 
       - name: npm install
         run: npm install
