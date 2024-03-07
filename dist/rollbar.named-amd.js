@@ -4695,7 +4695,7 @@ module.exports = {
 
 
 module.exports = {
-  version: '2.26.2',
+  version: '2.26.3',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -5147,7 +5147,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
     var xhrp = this._window.XMLHttpRequest.prototype;
     replace(xhrp, 'open', function(orig) {
       return function(method, url) {
-        if (_.isType(url, 'string')) {
+        var isUrlObject = _isUrlObject(url)
+        if (_.isType(url, 'string') || isUrlObject) {
+          url = isUrlObject ? url.toString() : url;
           if (this.__rollbar_xhr) {
             this.__rollbar_xhr.method = method;
             this.__rollbar_xhr.url = url;
@@ -5310,8 +5312,9 @@ Instrumenter.prototype.instrumentNetwork = function() {
         var input = args[0];
         var method = 'GET';
         var url;
-        if (_.isType(input, 'string')) {
-          url = input;
+        var isUrlObject = _isUrlObject(input)
+        if (_.isType(input, 'string') || isUrlObject) {
+          url = isUrlObject ? input.toString() : input;
         } else if (input) {
           url = input.url;
           if (input.method) {
@@ -5737,6 +5740,10 @@ Instrumenter.prototype.removeListeners = function(section) {
     r();
   }
 };
+
+function _isUrlObject(input) {
+  return typeof URL !== 'undefined' && input instanceof URL
+}
 
 module.exports = Instrumenter;
 
