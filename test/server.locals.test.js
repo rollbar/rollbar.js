@@ -135,16 +135,25 @@ function verifyThrownError(r) {
 
   if (nodeMajorVersion >= 18) {
     // Node >=18; locals only in top frame
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   } else if (nodeMajorVersion >= 10) {
     // Node >=10; locals enabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 2].locals.timer,
+      '<Timeout object>',
+    );
   } else {
     // Node <=8; locals disabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   }
   addItemStub.restore();
 }
@@ -160,15 +169,24 @@ function verifyCaughtError(r) {
 
   if (nodeMajorVersion >= 18) {
     // Node >=18; locals only in top frame
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   } else if (nodeMajorVersion >= 10) {
     // Node 10..<18; locals enabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 2].locals.timer,
+      '<Timeout object>',
+    );
   } else {
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   }
   addItemStub.restore();
 }
@@ -185,35 +203,80 @@ function verifyNestedError(r) {
 
   if (nodeMajorVersion >= 18) {
     // Node >=18; locals only in top frame
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.message, 'test error');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.password, '********');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.newMessage, 'nested test error');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.message,
+      'test error',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.password,
+      '********',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.err,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.newMessage,
+      'nested test error',
+    );
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
 
     length = data.body.trace_chain[1].frames.length;
     assert.ok(length > 1);
-    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
-    assert.equal(data.body.trace_chain[1].frames[length-1].locals._password, '123456');
-    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
-    assert.equal(data.body.trace_chain[1].frames[length-2].locals, undefined);
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 1].locals.nestedMessage,
+      'nested test error',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 1].locals._password,
+      '123456',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 1].locals.nestedError,
+      '<Error object>',
+    );
+    assert.equal(data.body.trace_chain[1].frames[length - 2].locals, undefined);
   } else if (nodeMajorVersion >= 10) {
     // Node >=10; locals enabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.err,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 2].locals.timer,
+      '<Timeout object>',
+    );
 
     length = data.body.trace_chain[1].frames.length;
     assert.ok(length > 1);
-    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
-    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
-    assert.equal(data.body.trace_chain[1].frames[length-2].locals.message, 'test error');
-    assert.equal(data.body.trace_chain[1].frames[length-2].locals.password, '********');
-    assert.equal(data.body.trace_chain[1].frames[length-2].locals.err, '<Error object>');
-    assert.equal(data.body.trace_chain[1].frames[length-2].locals.newMessage, 'nested test error');
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 1].locals.nestedMessage,
+      'nested test error',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 1].locals.nestedError,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 2].locals.message,
+      'test error',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 2].locals.password,
+      '********',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 2].locals.err,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[1].frames[length - 2].locals.newMessage,
+      'nested test error',
+    );
   } else {
     // Node <=8; locals disabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   }
   addItemStub.restore();
 }
@@ -229,20 +292,41 @@ function verifyRejectedPromise(r) {
 
   if (nodeMajorVersion >= 18) {
     // Node >=18; locals only in top frame
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.callback, '<Function object>');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.callback,
+      '<Function object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.rollbar,
+      '<Rollbar object>',
+    );
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   } else if (nodeMajorVersion >= 10) {
     // Node >=10; locals enabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals.notifier, '<Notifier object>');
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals.r, '<Rollbar object>');
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.error,
+      '<Error object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 1].locals.rollbar,
+      '<Rollbar object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 2].locals.notifier,
+      '<Notifier object>',
+    );
+    assert.equal(
+      data.body.trace_chain[0].frames[length - 2].locals.r,
+      '<Rollbar object>',
+    );
   } else {
     // Node <=8; locals disabled
-    assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 1].locals, undefined);
+    assert.equal(data.body.trace_chain[0].frames[length - 2].locals, undefined);
   }
   addItemStub.restore();
 }
@@ -299,8 +383,14 @@ vows
           );
           var length = data.body.trace_chain[0].frames.length;
           assert.ok(length > 1);
-          assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-          assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+          assert.equal(
+            data.body.trace_chain[0].frames[length - 1].locals,
+            undefined,
+          );
+          assert.equal(
+            data.body.trace_chain[0].frames[length - 2].locals,
+            undefined,
+          );
           addItemStub.restore();
         },
         'then enabled': {
@@ -345,8 +435,14 @@ vows
           );
           var length = data.body.trace_chain[0].frames.length;
           assert.ok(length > 1);
-          assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-          assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+          assert.equal(
+            data.body.trace_chain[0].frames[length - 1].locals,
+            undefined,
+          );
+          assert.equal(
+            data.body.trace_chain[0].frames[length - 2].locals,
+            undefined,
+          );
 
           addItemStub.restore();
         },
@@ -519,23 +615,47 @@ vows
 
           assert.isTrue(addItemStub.called);
           var data = addItemStub.getCall(0).args[3].data;
-          assert.equal(data.body.trace_chain[0].exception.message, 'deep stack error, limit=3');
+          assert.equal(
+            data.body.trace_chain[0].exception.message,
+            'deep stack error, limit=3',
+          );
           var length = data.body.trace_chain[0].frames.length;
           assert.ok(length > 1);
 
           if (nodeMajorVersion >= 18) {
             // Node >=18; locals only in top frame
-            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals, { curr: 3, limit: 3 });
-            assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-            assert.equal(data.body.trace_chain[0].frames[length-3].locals, undefined);
+            assert.deepEqual(
+              data.body.trace_chain[0].frames[length - 1].locals,
+              { curr: 3, limit: 3 },
+            );
+            assert.equal(
+              data.body.trace_chain[0].frames[length - 2].locals,
+              undefined,
+            );
+            assert.equal(
+              data.body.trace_chain[0].frames[length - 3].locals,
+              undefined,
+            );
           } else if (nodeMajorVersion >= 10) {
             // Node >=10; locals enabled
-            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals, { curr: 3, limit: 3 });
-            assert.deepEqual(data.body.trace_chain[0].frames[length-2].locals, { curr: 2, limit: 3 });
-            assert.deepEqual(data.body.trace_chain[0].frames[length-3].locals, { curr: 1, limit: 3 });
+            assert.deepEqual(
+              data.body.trace_chain[0].frames[length - 1].locals,
+              { curr: 3, limit: 3 },
+            );
+            assert.deepEqual(
+              data.body.trace_chain[0].frames[length - 2].locals,
+              { curr: 2, limit: 3 },
+            );
+            assert.deepEqual(
+              data.body.trace_chain[0].frames[length - 3].locals,
+              { curr: 1, limit: 3 },
+            );
           } else {
             // Node <=8; locals disabled
-            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
+            assert.equal(
+              data.body.trace_chain[0].frames[length - 1].locals,
+              undefined,
+            );
           }
           addItemStub.reset();
           Locals.session = undefined;
