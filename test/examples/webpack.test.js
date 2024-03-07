@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-describe('webpack app', function() {
+describe('webpack app', function () {
   this.timeout(4000);
 
   before(function (done) {
@@ -12,7 +12,7 @@ describe('webpack app', function() {
 
     // Set a timer before stubbing the XHR server, else it will interfere with
     // scripts loaded from the HTML page.
-    setTimeout(function() {
+    setTimeout(function () {
       // Stub the xhr interface.
       window.server = sinon.createFakeServer();
 
@@ -25,16 +25,14 @@ describe('webpack app', function() {
   });
 
   function stubResponse(server) {
-    server.respondWith('POST', 'api/1/item',
-      [
-        200,
-        { 'Content-Type': 'application/json' },
-        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
-      ]
-    );
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
   }
 
-  it('should send a valid log event', function(done) {
+  it('should send a valid log event', function (done) {
     var server = window.server;
 
     stubResponse(server);
@@ -52,10 +50,10 @@ describe('webpack app', function() {
     done();
   });
 
-  it('should report uncaught error', function(done) {
+  it('should report uncaught error', function (done) {
     var server = window.server;
 
-    stubResponse(server)
+    stubResponse(server);
     server.requests.length = 0;
 
     var element = document.getElementById('throw-error');
@@ -69,7 +67,11 @@ describe('webpack app', function() {
     // This has become necessary because Travis switched their Chrome stable
     // version _down_ from 76 to 62, which handles this test case differently.
     // 2020-05-06: Travis Chrome 62 is now returning the original message.
-    var version = parseInt(window.navigator.userAgent.match(new RegExp('^.*HeadlessChrome/([0-9]*).*$'))[1]);
+    var version = parseInt(
+      window.navigator.userAgent.match(
+        new RegExp('^.*HeadlessChrome/([0-9]*).*$'),
+      )[1],
+    );
     var message = version >= 62 ? 'webpack test error' : 'Script error.';
 
     expect(body.data.body.trace.exception.message).to.eql(message);
@@ -77,7 +79,7 @@ describe('webpack app', function() {
     done();
   });
 
-  it('should store a payload and send stored payload', function(done) {
+  it('should store a payload and send stored payload', function (done) {
     var server = window.server;
 
     stubResponse(server);

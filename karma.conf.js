@@ -13,11 +13,11 @@ module.exports = function (config) {
     //  BROWSER_STACK_USERNAME, BROWSER_STACK_ACCESS_KEY
     browserStack: {
       username: null,
-      accessKey: null
+      accessKey: null,
     },
 
     client: {
-      captureConsole: true
+      captureConsole: true,
     },
 
     // Files are specified in the grunt-karma configuration in Gruntfile.js
@@ -33,12 +33,12 @@ module.exports = function (config) {
     // run the bundle through the webpack and sourcemap plugins
     preprocessors: {
       'test/**/!(requirejs).test.js': ['webpack', 'sourcemap'],
-      '**/*.html': ['html2js']
+      '**/*.html': ['html2js'],
     },
 
     proxies: {
       '/dist/': '/base/dist/',
-      '/examples/': '/base/examples/'
+      '/examples/': '/base/examples/',
     },
 
     customHeaders: [
@@ -47,8 +47,8 @@ module.exports = function (config) {
       {
         match: '\\.html',
         name: 'Content-Security-Policy',
-        value: "default-src 'self' 'unsafe-inline' 'unsafe-eval';"
-      }
+        value: "default-src 'self' 'unsafe-inline' 'unsafe-eval';",
+      },
     ],
 
     reporters: ['progress'],
@@ -71,30 +71,30 @@ module.exports = function (config) {
             loader: 'eslint-loader',
             exclude: [/node_modules/, /vendor/, /lib/, /dist/],
             options: {
-              configFile: path.resolve(__dirname, '.eslintrc')
-            }
+              configFile: path.resolve(__dirname, '.eslintrc'),
+            },
           },
           {
             test: /\.js$/,
             loader: 'strict-loader',
-            exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/]
+            exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
           },
           {
             test: /(mootootls|requirejs)\.js$/,
-            loader: 'script'
+            loader: 'script',
           },
           {
             enforce: 'post',
             test: /\.js$/,
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
-            loader: 'coverage-istanbul-loader'
-          }
+            loader: 'coverage-istanbul-loader',
+          },
         ],
-      }
+      },
     },
 
     webpackMiddleware: {
-      noInfo: true
-    }
+      noInfo: true,
+    },
   });
 };

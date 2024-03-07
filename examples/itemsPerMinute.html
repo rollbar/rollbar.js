@@ -2,13 +2,13 @@
   <head>
     <script>
       var _rollbarConfig = {
-        accessToken: "POST_CLIENT_ITEM_ACCESS_TOKEN",
+        accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
         captureUncaught: true,
         payload: {
-          environment: "test"
+          environment: 'test',
         },
         itemsPerMinute: 3,
-        rollbarJsUrl: '../dist/rollbar.umd.js'
+        rollbarJsUrl: '../dist/rollbar.umd.js',
       };
 
       // Rollbar Snippet
@@ -17,7 +17,7 @@
 
       function send(num) {
         for (var i = 0; i < num; ++i) {
-          Rollbar.info('send10', {num: num});
+          Rollbar.info('send10', { num: num });
         }
       }
     </script>

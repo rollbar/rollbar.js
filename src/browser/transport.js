@@ -24,22 +24,41 @@ function Transport(truncation) {
   this.truncation = truncation;
 }
 
-Transport.prototype.get = function(accessToken, options, params, callback, requestFactory) {
+Transport.prototype.get = function (
+  accessToken,
+  options,
+  params,
+  callback,
+  requestFactory,
+) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
 
   var method = 'GET';
   var url = _.formatUrl(options);
   this._makeZoneRequest(
-    accessToken, url, method, null, callback, requestFactory, options.timeout, options.transport
+    accessToken,
+    url,
+    method,
+    null,
+    callback,
+    requestFactory,
+    options.timeout,
+    options.transport,
   );
-}
+};
 
-Transport.prototype.post = function(accessToken, options, payload, callback, requestFactory) {
+Transport.prototype.post = function (
+  accessToken,
+  options,
+  payload,
+  callback,
+  requestFactory,
+) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
 
   if (!payload) {
@@ -50,7 +69,7 @@ Transport.prototype.post = function(accessToken, options, payload, callback, req
   if (this.truncation) {
     stringifyResult = this.truncation.truncate(payload);
   } else {
-    stringifyResult = _.stringify(payload)
+    stringifyResult = _.stringify(payload);
   }
   if (stringifyResult.error) {
     return callback(stringifyResult.error);
@@ -60,29 +79,50 @@ Transport.prototype.post = function(accessToken, options, payload, callback, req
   var method = 'POST';
   var url = _.formatUrl(options);
   this._makeZoneRequest(
-    accessToken, url, method, writeData, callback, requestFactory, options.timeout, options.transport
+    accessToken,
+    url,
+    method,
+    writeData,
+    callback,
+    requestFactory,
+    options.timeout,
+    options.transport,
   );
-}
+};
 
-Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
+Transport.prototype.postJsonPayload = function (
+  accessToken,
+  options,
+  jsonPayload,
+  callback,
+  requestFactory,
+) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() {};
+    callback = function () {};
   }
 
   var method = 'POST';
   var url = _.formatUrl(options);
   this._makeZoneRequest(
-    accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout, options.transport
+    accessToken,
+    url,
+    method,
+    jsonPayload,
+    callback,
+    requestFactory,
+    options.timeout,
+    options.transport,
   );
-}
-
+};
 
 // Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
 // so Angular change detection isn't triggered on each API call.
 // This is the equivalent of runOutsideAngular().
 //
 Transport.prototype._makeZoneRequest = function () {
-  var gWindow = ((typeof window != 'undefined') && window) || ((typeof self != 'undefined') && self);
+  var gWindow =
+    (typeof window != 'undefined' && window) ||
+    (typeof self != 'undefined' && self);
   var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
   var args = Array.prototype.slice.call(arguments);
 
@@ -95,31 +135,48 @@ Transport.prototype._makeZoneRequest = function () {
   } else {
     this._makeRequest.apply(undefined, args);
   }
-}
+};
 
 Transport.prototype._makeRequest = function (
-  accessToken, url, method, data, callback, requestFactory, timeout, transport
+  accessToken,
+  url,
+  method,
+  data,
+  callback,
+  requestFactory,
+  timeout,
+  transport,
 ) {
   if (typeof RollbarProxy !== 'undefined') {
     return _proxyRequest(data, callback);
   }
 
   if (transport === 'fetch') {
-    makeFetchRequest(accessToken, url, method, data, callback, timeout)
+    makeFetchRequest(accessToken, url, method, data, callback, timeout);
   } else {
-    makeXhrRequest(accessToken, url, method, data, callback, requestFactory, timeout)
+    makeXhrRequest(
+      accessToken,
+      url,
+      method,
+      data,
+      callback,
+      requestFactory,
+      timeout,
+    );
   }
-}
+};
 
 /* global RollbarProxy */
 function _proxyRequest(json, callback) {
   var rollbarProxy = new RollbarProxy();
   rollbarProxy.sendJsonPayload(
     json,
-    function(_msg) { /* do nothing */ }, // eslint-disable-line no-unused-vars
-    function(err) {
+    function (_msg) {
+      /* do nothing */
+    }, // eslint-disable-line no-unused-vars
+    function (err) {
       callback(new Error(err));
-    }
+    },
   );
 }
 

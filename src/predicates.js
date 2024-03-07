@@ -13,7 +13,7 @@ function checkLevel(item, settings) {
 }
 
 function userCheckIgnore(logger) {
-  return function(item, settings) {
+  return function (item, settings) {
     var isUncaught = !!item._isUncaught;
     delete item._isUncaught;
     var args = item._originalArgs;
@@ -27,7 +27,10 @@ function userCheckIgnore(logger) {
       logger.error('Error while calling onSendCallback, removing', e);
     }
     try {
-      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+      if (
+        _.isFunction(settings.checkIgnore) &&
+        settings.checkIgnore(isUncaught, args, item)
+      ) {
         return false;
       }
     } catch (e) {
@@ -35,27 +38,31 @@ function userCheckIgnore(logger) {
       logger.error('Error while calling custom checkIgnore(), removing', e);
     }
     return true;
-  }
+  };
 }
 
 function urlIsNotBlockListed(logger) {
-  return function(item, settings) {
+  return function (item, settings) {
     return !urlIsOnAList(item, settings, 'blocklist', logger);
-  }
+  };
 }
 
 function urlIsSafeListed(logger) {
-  return function(item, settings) {
+  return function (item, settings) {
     return urlIsOnAList(item, settings, 'safelist', logger);
-  }
+  };
 }
 
 function matchFrames(trace, list, block) {
-  if (!trace) { return !block }
+  if (!trace) {
+    return !block;
+  }
 
   var frames = trace.frames;
 
-  if (!frames || frames.length === 0) { return !block; }
+  if (!frames || frames.length === 0) {
+    return !block;
+  }
 
   var frame, filename, url, urlRegex;
   var listLength = list.length;
@@ -64,7 +71,9 @@ function matchFrames(trace, list, block) {
     frame = frames[i];
     filename = frame.filename;
 
-    if (!_.isType(filename, 'string')) { return !block; }
+    if (!_.isType(filename, 'string')) {
+      return !block;
+    }
 
     for (var j = 0; j < listLength; j++) {
       url = list[j];
@@ -101,27 +110,35 @@ function urlIsOnAList(item, settings, safeOrBlock, logger) {
 
     var tracesLength = traces.length;
     for (var i = 0; i < tracesLength; i++) {
-      if(matchFrames(traces[i], list, block)) {
+      if (matchFrames(traces[i], list, block)) {
         return true;
       }
     }
-  } catch (e)
-  /* istanbul ignore next */
-  {
+  } catch (
+    e
+    /* istanbul ignore next */
+  ) {
     if (block) {
       settings.hostBlockList = null;
     } else {
       settings.hostSafeList = null;
     }
     var listName = block ? 'hostBlockList' : 'hostSafeList';
-    logger.error('Error while reading your configuration\'s ' + listName + ' option. Removing custom ' + listName + '.', e);
+    logger.error(
+      "Error while reading your configuration's " +
+        listName +
+        ' option. Removing custom ' +
+        listName +
+        '.',
+      e,
+    );
     return !block;
   }
   return false;
 }
 
 function messageIsIgnored(logger) {
-  return function(item, settings) {
+  return function (item, settings) {
     var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
 
     try {
@@ -134,7 +151,7 @@ function messageIsIgnored(logger) {
 
       messages = messagesFromItem(item);
 
-      if (messages.length === 0){
+      if (messages.length === 0) {
         return true;
       }
 
@@ -150,15 +167,18 @@ function messageIsIgnored(logger) {
           }
         }
       }
-    } catch(e)
-    /* istanbul ignore next */
-    {
+    } catch (
+      e
+      /* istanbul ignore next */
+    ) {
       settings.ignoredMessages = null;
-      logger.error('Error while reading your configuration\'s ignoredMessages option. Removing custom ignoredMessages.');
+      logger.error(
+        "Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.",
+      );
     }
 
     return true;
-  }
+  };
 }
 
 function messagesFromItem(item) {
@@ -189,5 +209,5 @@ module.exports = {
   userCheckIgnore: userCheckIgnore,
   urlIsNotBlockListed: urlIsNotBlockListed,
   urlIsSafeListed: urlIsSafeListed,
-  messageIsIgnored: messageIsIgnored
+  messageIsIgnored: messageIsIgnored,
 };

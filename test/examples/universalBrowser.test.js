@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-describe('Rollbar loaded by snippet', function() {
+describe('Rollbar loaded by snippet', function () {
   before(function (done) {
     // Stub the xhr interface.
     window.server = sinon.createFakeServer();
@@ -18,7 +18,7 @@ describe('Rollbar loaded by snippet', function() {
     document.dispatchEvent(event);
 
     // Give the snippet time to load and init.
-    setTimeout(function() {
+    setTimeout(function () {
       done();
     }, 1000);
   });
@@ -27,21 +27,19 @@ describe('Rollbar loaded by snippet', function() {
     window.server.restore();
   });
 
-  it('should send a valid log event', function(done) {
+  it('should send a valid log event', function (done) {
     var server = window.server;
     var rollbar = document.defaultView.Rollbar;
 
-    server.respondWith('POST', 'api/1/item',
-      [
-        200,
-        { 'Content-Type': 'application/json' },
-        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
-      ]
-    );
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
 
     var ret = rollbar.info('test');
 
-    setTimeout(function() {
+    setTimeout(function () {
       server.respond();
 
       var body = JSON.parse(server.requests[0].requestBody);
@@ -52,7 +50,9 @@ describe('Rollbar loaded by snippet', function() {
 
       // Assert load telemetry was added.
       expect(body.data.body.telemetry[0].type).to.eql('navigation');
-      expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
+      expect(body.data.body.telemetry[0].body.subtype).to.eql(
+        'DOMContentLoaded',
+      );
 
       done();
     }, 1);

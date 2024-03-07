@@ -8,14 +8,15 @@ function setupJSON(polyfillJSON) {
 
   if (isDefined(JSON)) {
     // If polyfill is provided, prefer it over existing non-native shims.
-    if(polyfillJSON) {
+    if (polyfillJSON) {
       if (isNativeFunction(JSON.stringify)) {
         RollbarJSON.stringify = JSON.stringify;
       }
       if (isNativeFunction(JSON.parse)) {
         RollbarJSON.parse = JSON.parse;
       }
-    } else { // else accept any interface that is present.
+    } else {
+      // else accept any interface that is present.
       if (isFunction(JSON.stringify)) {
         RollbarJSON.stringify = JSON.stringify;
       }
@@ -65,7 +66,10 @@ function typeName(x) {
   if (x instanceof Error) {
     return 'error';
   }
-  return ({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+  return {}.toString
+    .call(x)
+    .match(/\s([a-zA-Z]+)/)[1]
+    .toLowerCase();
 }
 
 /* isFunction - a convenience function for checking if a value is a function
@@ -84,7 +88,8 @@ function isFunction(f) {
  */
 function isNativeFunction(f) {
   var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-  var funcMatchString = Function.prototype.toString.call(Object.prototype.hasOwnProperty)
+  var funcMatchString = Function.prototype.toString
+    .call(Object.prototype.hasOwnProperty)
     .replace(reRegExpChar, '\\$&')
     .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?');
   var reIsNative = RegExp('^' + funcMatchString + '$');
@@ -95,7 +100,7 @@ function isNativeFunction(f) {
  *
  * @param value - any value
  * @returns true is value is an object function is an object)
-*/
+ */
 function isObject(value) {
   var type = typeof value;
   return value != null && (type == 'object' || type == 'function');
@@ -105,9 +110,9 @@ function isObject(value) {
  *
  * @param value - any value
  * @returns true if value is a string
-*/
+ */
 function isString(value) {
-  return typeof value === 'string' || value instanceof String
+  return typeof value === 'string' || value instanceof String;
 }
 
 /**
@@ -116,7 +121,7 @@ function isString(value) {
  * @param {*} n - any value
  * @returns true if value is a finite number
  */
- function isFiniteNumber(n) {
+function isFiniteNumber(n) {
   return Number.isFinite(n);
 }
 
@@ -139,7 +144,7 @@ function isDefined(u) {
  */
 function isIterable(i) {
   var type = typeName(i);
-  return (type === 'object' || type === 'array');
+  return type === 'object' || type === 'array';
 }
 
 /*
@@ -169,11 +174,14 @@ function redact() {
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
   var d = now();
-  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = (d + Math.random() * 16) % 16 | 0;
-    d = Math.floor(d / 16);
-    return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
-  });
+  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+    /[xy]/g,
+    function (c) {
+      var r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === 'x' ? r : (r & 0x7) | 0x8).toString(16);
+    },
+  );
   return uuid;
 }
 
@@ -182,7 +190,7 @@ var LEVELS = {
   info: 1,
   warning: 2,
   error: 3,
-  critical: 4
+  critical: 4,
 };
 
 function sanitizeUrl(url) {
@@ -216,16 +224,18 @@ var parseUriOptions = {
     'directory',
     'file',
     'query',
-    'anchor'
+    'anchor',
   ],
   q: {
     name: 'queryKey',
-    parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    parser: /(?:^|&)([^&=]*)=?([^&]*)/g,
   },
   parser: {
-    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-    loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-  }
+    strict:
+      /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+    loose:
+      /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/,
+  },
 };
 
 function parseUri(str) {
@@ -270,11 +280,11 @@ function addParamsAndAccessTokenToPath(accessToken, options, params) {
   var p;
   if (qs !== -1 && (h === -1 || h > qs)) {
     p = options.path;
-    options.path = p.substring(0,qs) + query + '&' + p.substring(qs+1);
+    options.path = p.substring(0, qs) + query + '&' + p.substring(qs + 1);
   } else {
     if (h !== -1) {
       p = options.path;
-      options.path = p.substring(0,h) + query + p.substring(h);
+      options.path = p.substring(0, h) + query + p.substring(h);
     } else {
       options.path = options.path + query;
     }
@@ -320,7 +330,7 @@ function stringify(obj, backup) {
       error = jsonError;
     }
   }
-  return {error: error, value: value};
+  return { error: error, value: value };
 }
 
 function maxByteSize(string) {
@@ -338,11 +348,14 @@ function maxByteSize(string) {
 
   for (var i = 0; i < length; i++) {
     var code = string.charCodeAt(i);
-    if (code < 128) { // up to 7 bits
+    if (code < 128) {
+      // up to 7 bits
       count = count + 1;
-    } else if (code < 2048) { // up to 11 bits
+    } else if (code < 2048) {
+      // up to 11 bits
       count = count + 2;
-    } else if (code < 65536) { // up to 16 bits
+    } else if (code < 65536) {
+      // up to 16 bits
       count = count + 3;
     }
   }
@@ -357,7 +370,7 @@ function jsonParse(s) {
   } catch (e) {
     error = e;
   }
-  return {error: error, value: value};
+  return { error: error, value: value };
 }
 
 function makeUnhandledStackInfo(
@@ -368,28 +381,36 @@ function makeUnhandledStackInfo(
   error,
   mode,
   backupMessage,
-  errorParser
+  errorParser,
 ) {
   var location = {
     url: url || '',
     line: lineno,
-    column: colno
+    column: colno,
   };
   location.func = errorParser.guessFunctionName(location.url, location.line);
   location.context = errorParser.gatherContext(location.url, location.line);
-  var href = typeof document !== 'undefined' && document && document.location && document.location.href;
-  var useragent = typeof window !== 'undefined' && window && window.navigator && window.navigator.userAgent;
+  var href =
+    typeof document !== 'undefined' &&
+    document &&
+    document.location &&
+    document.location.href;
+  var useragent =
+    typeof window !== 'undefined' &&
+    window &&
+    window.navigator &&
+    window.navigator.userAgent;
   return {
-    'mode': mode,
-    'message': error ? String(error) : (message || backupMessage),
-    'url': href,
-    'stack': [location],
-    'useragent': useragent
+    mode: mode,
+    message: error ? String(error) : message || backupMessage,
+    url: href,
+    stack: [location],
+    useragent: useragent,
   };
 }
 
 function wrapCallback(logger, f) {
-  return function(err, resp) {
+  return function (err, resp) {
     try {
       f(err, resp);
     } catch (e) {
@@ -402,7 +423,10 @@ function nonCircularClone(obj) {
   var seen = [obj];
 
   function clone(obj, seen) {
-    var value, name, newSeen, result = {};
+    var value,
+      name,
+      newSeen,
+      result = {};
 
     try {
       for (name in obj) {
@@ -445,7 +469,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'undefined':
         break;
       case 'string':
-        message ? extraArgs.push(arg) : message = arg;
+        message ? extraArgs.push(arg) : (message = arg);
         break;
       case 'function':
         callback = wrapCallback(logger, arg);
@@ -456,12 +480,15 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'error':
       case 'domexception':
       case 'exception': // Firefox Exception type
-        err ? extraArgs.push(arg) : err = arg;
+        err ? extraArgs.push(arg) : (err = arg);
         break;
       case 'object':
       case 'array':
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-          err ? extraArgs.push(arg) : err = arg;
+        if (
+          arg instanceof Error ||
+          (typeof DOMException !== 'undefined' && arg instanceof DOMException)
+        ) {
+          err ? extraArgs.push(arg) : (err = arg);
           break;
         }
         if (requestKeys && typ === 'object' && !request) {
@@ -475,11 +502,14 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
             break;
           }
         }
-        custom ? extraArgs.push(arg) : custom = arg;
+        custom ? extraArgs.push(arg) : (custom = arg);
         break;
       default:
-        if (arg instanceof Error || (typeof DOMException !== 'undefined' && arg instanceof DOMException)) {
-          err ? extraArgs.push(arg) : err = arg;
+        if (
+          arg instanceof Error ||
+          (typeof DOMException !== 'undefined' && arg instanceof DOMException)
+        ) {
+          err ? extraArgs.push(arg) : (err = arg);
           break;
         }
         extraArgs.push(arg);
@@ -502,7 +532,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     callback: callback,
     notifier: notifier,
     diagnostic: diagnostic,
-    uuid: uuid4()
+    uuid: uuid4(),
   };
 
   setCustomItemKeys(item, custom);
@@ -550,7 +580,14 @@ function addErrorContext(item, errors) {
   }
 }
 
-var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
+var TELEMETRY_TYPES = [
+  'log',
+  'network',
+  'dom',
+  'navigation',
+  'error',
+  'manual',
+];
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
 function arrayIncludes(arr, val) {
@@ -589,7 +626,7 @@ function createTelemetryEvent(args) {
   var event = {
     type: type || 'manual',
     metadata: metadata || {},
-    level: level
+    level: level,
   };
 
   return event;
@@ -639,7 +676,7 @@ function set(obj, path, value) {
       temp[keys[i]] = temp[keys[i]] || {};
       temp = temp[keys[i]];
     }
-    temp[keys[len-1]] = value;
+    temp[keys[len - 1]] = value;
     obj[keys[0]] = replacement;
   } catch (e) {
     return;
@@ -730,12 +767,12 @@ function handleOptions(current, input, payload, logger) {
 }
 
 function updateDeprecatedOptions(options, logger) {
-  if(options.hostWhiteList && !options.hostSafeList) {
+  if (options.hostWhiteList && !options.hostSafeList) {
     options.hostSafeList = options.hostWhiteList;
     options.hostWhiteList = undefined;
     logger && logger.log('hostWhiteList is deprecated. Use hostSafeList.');
   }
-  if(options.hostBlackList && !options.hostBlockList) {
+  if (options.hostBlackList && !options.hostBlockList) {
     options.hostBlockList = options.hostBlackList;
     options.hostBlackList = undefined;
     logger && logger.log('hostBlackList is deprecated. Use hostBlockList.');
@@ -775,5 +812,5 @@ module.exports = {
   stringify: stringify,
   maxByteSize: maxByteSize,
   typeName: typeName,
-  uuid4: uuid4
+  uuid4: uuid4,
 };

@@ -10,9 +10,9 @@ const app = express();
 app.use(express.static(path.join(__dirname)));
 app.get('/rollbar.js', function response(req, res) {
   var t = (req.query.t || 0.01) * 100;
-  console.log("Waiting: ", t, "ms");
-  setTimeout(function() {
-    res.sendFile(path.join(__dirname, '../../dist/rollbar.umd.js'))
+  console.log('Waiting: ', t, 'ms');
+  setTimeout(function () {
+    res.sendFile(path.join(__dirname, '../../dist/rollbar.umd.js'));
   }, t);
 });
 
@@ -21,12 +21,16 @@ app.get('/test', function response(req, res) {
 });
 
 app.get('/sample', function response(req, res) {
-  res.status(200).json({'hello': 'world'});
+  res.status(200).json({ hello: 'world' });
 });
 
 app.listen(port, '0.0.0.0', function onStart(err) {
   if (err) {
     console.log(err);
   }
-  console.info('==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.', port, port);
+  console.info(
+    '==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.',
+    port,
+    port,
+  );
 });

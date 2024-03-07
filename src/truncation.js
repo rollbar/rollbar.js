@@ -14,7 +14,7 @@ function selectFrames(frames, range) {
 }
 
 function truncateFrames(payload, jsonBackup, range) {
-  range = (typeof range === 'undefined') ? 30 : range;
+  range = typeof range === 'undefined' ? 30 : range;
   var body = payload.data.body;
   var frames;
   if (body.trace_chain) {
@@ -61,7 +61,10 @@ function truncateStrings(len, payload, jsonBackup) {
 function truncateTraceData(traceData) {
   if (traceData.exception) {
     delete traceData.exception.description;
-    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+    traceData.exception.message = maybeTruncateValue(
+      255,
+      traceData.exception.message,
+    );
   }
   traceData.frames = selectFrames(traceData.frames, 1);
   return traceData;
@@ -85,14 +88,14 @@ function needsTruncation(payload, maxSize) {
 }
 
 function truncate(payload, jsonBackup, maxSize) {
-  maxSize = (typeof maxSize === 'undefined') ? (512 * 1024) : maxSize;
+  maxSize = typeof maxSize === 'undefined' ? 512 * 1024 : maxSize;
   var strategies = [
     raw,
     truncateFrames,
     truncateStrings.bind(null, 1024),
     truncateStrings.bind(null, 512),
     truncateStrings.bind(null, 256),
-    minBody
+    minBody,
   ];
   var strategy, results, result;
 
@@ -114,5 +117,5 @@ module.exports = {
   raw: raw,
   truncateFrames: truncateFrames,
   truncateStrings: truncateStrings,
-  maybeTruncateValue: maybeTruncateValue
+  maybeTruncateValue: maybeTruncateValue,
 };

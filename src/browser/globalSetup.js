@@ -1,5 +1,7 @@
 function captureUncaughtExceptions(window, handler, shim) {
-  if (!window) { return; }
+  if (!window) {
+    return;
+  }
   var oldOnError;
 
   if (typeof handler._rollbarOldOnError === 'function') {
@@ -14,7 +16,7 @@ function captureUncaughtExceptions(window, handler, shim) {
 
   handler.handleAnonymousErrors();
 
-  var fn = function() {
+  var fn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     _rollbarWindowOnError(window, handler, oldOnError, args);
   };
@@ -50,9 +52,14 @@ function _rollbarWindowOnError(window, r, old, args) {
 }
 
 function captureUnhandledRejections(window, handler, shim) {
-  if (!window) { return; }
+  if (!window) {
+    return;
+  }
 
-  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
+  if (
+    typeof window._rollbarURH === 'function' &&
+    window._rollbarURH.belongsToShim
+  ) {
     window.removeEventListener('unhandledrejection', window._rollbarURH);
   }
 
@@ -90,8 +97,7 @@ function captureUnhandledRejections(window, handler, shim) {
   window.addEventListener('unhandledrejection', rejectionHandler);
 }
 
-
 module.exports = {
   captureUncaughtExceptions: captureUncaughtExceptions,
-  captureUnhandledRejections: captureUnhandledRejections
+  captureUnhandledRejections: captureUnhandledRejections,
 };

@@ -11,7 +11,7 @@ var rollbarConfig = {
   captureUncaught: true,
   payload: {
     environment: 'development',
-  }
+  },
 };
 var Rollbar = rollbar.init(rollbarConfig);
 window.Rollbar = Rollbar;
@@ -29,9 +29,10 @@ try {
 ```
 
 ## To build and test the example
+
 1. Edit index.js and add your Rollbar `POST_CLIENT_ITEM_ACCESS_TOKEN`
    - Sign up for a free account [here](https://rollbar.com/signup/)
-2. ```browserify index.js > all.js```
+2. `browserify index.js > all.js`
 3. Open test.html in your browser and click the button
 4. Go to your project dashboard and see the error
 

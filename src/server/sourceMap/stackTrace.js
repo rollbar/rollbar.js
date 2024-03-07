@@ -31,10 +31,10 @@ function retrieveFile(path) {
   path = path.trim();
   if (/^file:/.test(path)) {
     // existsSync/readFileSync can't handle file protocol, but once stripped, it works
-    path = path.replace(/file:\/\/\/(\w:)?/, function(_protocol, drive) {
-      return drive ?
-        '' : // file:///C:/dir/file -> C:/dir/file
-        '/'; // file:///root-dir/file -> /root-dir/file
+    path = path.replace(/file:\/\/\/(\w:)?/, function (_protocol, drive) {
+      return drive
+        ? '' // file:///C:/dir/file -> C:/dir/file
+        : '/'; // file:///root-dir/file -> /root-dir/file
     });
   }
   if (path in fileContentsCache) {
@@ -50,7 +50,7 @@ function retrieveFile(path) {
     /* ignore any errors */
   }
 
-  return fileContentsCache[path] = contents;
+  return (fileContentsCache[path] = contents);
 }
 
 // Support URLs relative to a directory, but be careful about a protocol prefix
@@ -64,7 +64,10 @@ function supportRelativeURL(file, url) {
   if (protocol && /^\/\w\:/.test(startPath)) {
     // handle file:///C:/ paths
     protocol += '/';
-    return protocol + path.resolve(dir.slice(protocol.length), url).replace(/\\/g, '/');
+    return (
+      protocol +
+      path.resolve(dir.slice(protocol.length), url).replace(/\\/g, '/')
+    );
   }
   return protocol + path.resolve(dir.slice(protocol.length), url);
 }
@@ -74,7 +77,8 @@ function retrieveSourceMapURL(source) {
 
   // Get the URL of the source map
   fileData = retrieveFile(source);
-  var re = /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/)[ \t]*$)/mg;
+  var re =
+    /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
   // Keep executing the search to find the *last* sourceMappingURL to avoid
   // picking up sourceMappingURLs from comments, strings, etc.
   var lastMatch, match;
@@ -110,7 +114,7 @@ function retrieveSourceMap(source) {
 
   return {
     url: sourceMappingURL,
-    map: sourceMapData
+    map: sourceMapData,
   };
 }
 
@@ -122,7 +126,10 @@ function cacheSourceContent(sourceMap, originalSource, newSource) {
   // The sourceContentFor lookup needs the original source url as found in the
   // map file. However the client lookup in sourcesContentCache will use
   // a rewritten form of the url, hence originalSource and newSource.
-  sourcesContentCache[newSource] = sourceMap.map.sourceContentFor(originalSource, true);
+  sourcesContentCache[newSource] = sourceMap.map.sourceContentFor(
+    originalSource,
+    true,
+  );
 }
 
 exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
@@ -133,14 +140,15 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
     if (urlAndMap) {
       sourceMap = sourceMapCache[position.source] = {
         url: urlAndMap.url,
-        map: new SourceMapConsumer(urlAndMap.map)
+        map: new SourceMapConsumer(urlAndMap.map),
       };
-      diagnostic.node_source_maps.source_mapping_urls[position.source] = urlAndMap.url;
+      diagnostic.node_source_maps.source_mapping_urls[position.source] =
+        urlAndMap.url;
 
       // Load all sources stored inline with the source map into the file cache
       // to pretend like they are already loaded. They may not exist on disk.
       if (sourceMap.map.sourcesContent) {
-        sourceMap.map.sources.forEach(function(source, i) {
+        sourceMap.map.sources.forEach(function (source, i) {
           var contents = sourceMap.map.sourcesContent[i];
           if (contents) {
             var url = supportRelativeURL(sourceMap.url, source);
@@ -151,14 +159,19 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
     } else {
       sourceMap = sourceMapCache[position.source] = {
         url: null,
-        map: null
+        map: null,
       };
-      diagnostic.node_source_maps.source_mapping_urls[position.source] = 'not found';
+      diagnostic.node_source_maps.source_mapping_urls[position.source] =
+        'not found';
     }
   }
 
   // Resolve the source URL relative to the URL of the source map
-  if (sourceMap && sourceMap.map && typeof sourceMap.map.originalPositionFor === 'function') {
+  if (
+    sourceMap &&
+    sourceMap.map &&
+    typeof sourceMap.map.originalPositionFor === 'function'
+  ) {
     var originalPosition = sourceMap.map.originalPositionFor(position);
 
     // Only return the original position if a matching line was found. If no
@@ -169,15 +182,17 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
     if (originalPosition.source !== null) {
       var originalSource = originalPosition.source;
       originalPosition.source = supportRelativeURL(
-        sourceMap.url, originalPosition.source);
+        sourceMap.url,
+        originalPosition.source,
+      );
       cacheSourceContent(sourceMap, originalSource, originalPosition.source);
       return originalPosition;
     }
   }
 
   return position;
-}
+};
 
 exports.sourceContent = function sourceContent(source) {
   return sourcesContentCache[source];
-}
+};

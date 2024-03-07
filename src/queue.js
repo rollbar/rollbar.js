@@ -32,7 +32,7 @@ function Queue(rateLimiter, api, logger, options) {
  *
  * @param options
  */
-Queue.prototype.configure = function(options) {
+Queue.prototype.configure = function (options) {
   this.api && this.api.configure(options);
   var oldOptions = this.options;
   this.options = _.merge(oldOptions, options);
@@ -48,18 +48,18 @@ Queue.prototype.configure = function(options) {
  *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
  *  Returning {err: undefined} is equivalent to returning true but don't do that
  */
-Queue.prototype.addPredicate = function(predicate) {
+Queue.prototype.addPredicate = function (predicate) {
   if (_.isFunction(predicate)) {
     this.predicates.push(predicate);
   }
   return this;
 };
 
-Queue.prototype.addPendingItem = function(item) {
+Queue.prototype.addPendingItem = function (item) {
   this.pendingItems.push(item);
 };
 
-Queue.prototype.removePendingItem = function(item) {
+Queue.prototype.removePendingItem = function (item) {
   var idx = this.pendingItems.indexOf(item);
   if (idx !== -1) {
     this.pendingItems.splice(idx, 1);
@@ -76,9 +76,16 @@ Queue.prototype.removePendingItem = function(item) {
  *  to be an error condition, but nonetheless did not send the item to the API.
  *  @param originalError - The original error before any transformations that is to be logged if any
  */
-Queue.prototype.addItem = function(item, callback, originalError, originalItem) {
+Queue.prototype.addItem = function (
+  item,
+  callback,
+  originalError,
+  originalItem,
+) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function() { return; };
+    callback = function () {
+      return;
+    };
   }
   var predicateResult = this._applyPredicates(item);
   if (predicateResult.stop) {
@@ -94,10 +101,13 @@ Queue.prototype.addItem = function(item, callback, originalError, originalItem) 
   }
   this.pendingRequests.push(item);
   try {
-    this._makeApiRequest(item, function(err, resp) {
-      this._dequeuePendingRequest(item);
-      callback(err, resp);
-    }.bind(this));
+    this._makeApiRequest(
+      item,
+      function (err, resp) {
+        this._dequeuePendingRequest(item);
+        callback(err, resp);
+      }.bind(this),
+    );
   } catch (e) {
     this._dequeuePendingRequest(item);
     callback(e);
@@ -110,7 +120,7 @@ Queue.prototype.addItem = function(item, callback, originalError, originalItem) 
  *
  * @param callback - function() called when all pending items have been sent
  */
-Queue.prototype.wait = function(callback) {
+Queue.prototype.wait = function (callback) {
   if (!_.isFunction(callback)) {
     return;
   }
@@ -121,9 +131,12 @@ Queue.prototype.wait = function(callback) {
   if (this.waitIntervalID) {
     this.waitIntervalID = clearInterval(this.waitIntervalID);
   }
-  this.waitIntervalID = setInterval(function() {
-    this._maybeCallWait();
-  }.bind(this), 500);
+  this.waitIntervalID = setInterval(
+    function () {
+      this._maybeCallWait();
+    }.bind(this),
+    500,
+  );
 };
 
 /* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
@@ -133,15 +146,15 @@ Queue.prototype.wait = function(callback) {
  * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
  *   the error value should be passed up to a callbak if we are stopping.
  */
-Queue.prototype._applyPredicates = function(item) {
+Queue.prototype._applyPredicates = function (item) {
   var p = null;
   for (var i = 0, len = this.predicates.length; i < len; i++) {
     p = this.predicates[i](item, this.options);
     if (!p || p.err !== undefined) {
-      return {stop: true, err: p.err};
+      return { stop: true, err: p.err };
     }
   }
-  return {stop: false, err: null};
+  return { stop: false, err: null };
 };
 
 /*
@@ -151,16 +164,19 @@ Queue.prototype._applyPredicates = function(item) {
  * @param item - an item ready to send to the backend
  * @param callback - function(err, response)
  */
-Queue.prototype._makeApiRequest = function(item, callback) {
+Queue.prototype._makeApiRequest = function (item, callback) {
   var rateLimitResponse = this.rateLimiter.shouldSend(item);
   if (rateLimitResponse.shouldSend) {
-    this.api.postItem(item, function(err, resp) {
-      if (err) {
-        this._maybeRetry(err, item, callback);
-      } else {
-        callback(err, resp);
-      }
-    }.bind(this));
+    this.api.postItem(
+      item,
+      function (err, resp) {
+        if (err) {
+          this._maybeRetry(err, item, callback);
+        } else {
+          callback(err, resp);
+        }
+      }.bind(this),
+    );
   } else if (rateLimitResponse.error) {
     callback(rateLimitResponse.error);
   } else {
@@ -169,7 +185,16 @@ Queue.prototype._makeApiRequest = function(item, callback) {
 };
 
 // These are errors basically mean there is no internet connection
-var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN'];
+var RETRIABLE_ERRORS = [
+  'ECONNRESET',
+  'ENOTFOUND',
+  'ESOCKETTIMEDOUT',
+  'ETIMEDOUT',
+  'ECONNREFUSED',
+  'EHOSTUNREACH',
+  'EPIPE',
+  'EAI_AGAIN',
+];
 
 /*
  * _maybeRetry - Given the error returned by the API, decide if we should retry or just callback
@@ -179,7 +204,7 @@ var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT
  * @param item - the item that was trying to be sent when this error occured
  * @param callback - function(err, response)
  */
-Queue.prototype._maybeRetry = function(err, item, callback) {
+Queue.prototype._maybeRetry = function (err, item, callback) {
   var shouldRetry = false;
   if (this.options.retryInterval) {
     for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
@@ -209,16 +234,19 @@ Queue.prototype._maybeRetry = function(err, item, callback) {
  * @param item - an item that failed to send due to an error we deem retriable
  * @param callback - function(err, response)
  */
-Queue.prototype._retryApiRequest = function(item, callback) {
-  this.retryQueue.push({item: item, callback: callback});
+Queue.prototype._retryApiRequest = function (item, callback) {
+  this.retryQueue.push({ item: item, callback: callback });
 
   if (!this.retryHandle) {
-    this.retryHandle = setInterval(function() {
-      while (this.retryQueue.length) {
-        var retryObject = this.retryQueue.shift();
-        this._makeApiRequest(retryObject.item, retryObject.callback);
-      }
-    }.bind(this), this.options.retryInterval);
+    this.retryHandle = setInterval(
+      function () {
+        while (this.retryQueue.length) {
+          var retryObject = this.retryQueue.shift();
+          this._makeApiRequest(retryObject.item, retryObject.callback);
+        }
+      }.bind(this),
+      this.options.retryInterval,
+    );
   }
 };
 
@@ -230,7 +258,7 @@ Queue.prototype._retryApiRequest = function(item, callback) {
  *
  * @param item - the item previously added to the pending request queue
  */
-Queue.prototype._dequeuePendingRequest = function(item) {
+Queue.prototype._dequeuePendingRequest = function (item) {
   var idx = this.pendingRequests.indexOf(item);
   if (idx !== -1) {
     this.pendingRequests.splice(idx, 1);
@@ -238,7 +266,7 @@ Queue.prototype._dequeuePendingRequest = function(item) {
   }
 };
 
-Queue.prototype._maybeLog = function(data, originalError) {
+Queue.prototype._maybeLog = function (data, originalError) {
   if (this.logger && this.options.verbose) {
     var message = originalError;
     message = message || _.get(data, 'body.trace.exception.message');
@@ -254,8 +282,12 @@ Queue.prototype._maybeLog = function(data, originalError) {
   }
 };
 
-Queue.prototype._maybeCallWait = function() {
-  if (_.isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
+Queue.prototype._maybeCallWait = function () {
+  if (
+    _.isFunction(this.waitCallback) &&
+    this.pendingItems.length === 0 &&
+    this.pendingRequests.length === 0
+  ) {
     if (this.waitIntervalID) {
       this.waitIntervalID = clearInterval(this.waitIntervalID);
     }

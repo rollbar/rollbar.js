@@ -12,8 +12,11 @@ function mergeOptions(input, options, cb) {
   if (typeof input === 'string') {
     const urlStr = input;
     input = urlToHttpOptions(new URL(urlStr));
-  } else if (input && input[url.searchParamsSymbol] &&
-             input[url.searchParamsSymbol][url.searchParamsSymbol]) {
+  } else if (
+    input &&
+    input[url.searchParamsSymbol] &&
+    input[url.searchParamsSymbol][url.searchParamsSymbol]
+  ) {
     // url.URL instance
     input = urlToHttpOptions(input);
   } else {
@@ -28,7 +31,7 @@ function mergeOptions(input, options, cb) {
   } else {
     options = merge(input || {}, options);
   }
-  return {options: options, cb: cb};
+  return { options: options, cb: cb };
 }
 
 // This function replicates the relevant logic in node/lib/url.js as closely
@@ -40,15 +43,15 @@ function mergeOptions(input, options, cb) {
 function urlToHttpOptions(url) {
   const options = {
     protocol: url.protocol,
-    hostname: typeof url.hostname === 'string' &&
-              url.hostname.startsWith('[') ?
-      url.hostname.slice(1, -1) :
-      url.hostname,
+    hostname:
+      typeof url.hostname === 'string' && url.hostname.startsWith('[')
+        ? url.hostname.slice(1, -1)
+        : url.hostname,
     hash: url.hash,
     search: url.search,
     pathname: url.pathname,
     path: `${url.pathname || ''}${url.search || ''}`,
-    href: url.href
+    href: url.href,
   };
   if (url.port !== '') {
     options.port = Number(url.port);
@@ -67,7 +70,7 @@ function constructUrl(options) {
   }
   url += options.hostname || options.host || 'localhost';
   if (options.port) {
-    url += `:${options.port}`
+    url += `:${options.port}`;
   }
   url += options.path || '/';
 
@@ -76,5 +79,5 @@ function constructUrl(options) {
 
 module.exports = {
   mergeOptions,
-  constructUrl
+  constructUrl,
 };

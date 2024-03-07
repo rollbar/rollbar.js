@@ -42,5 +42,14 @@ jobs:
       - name: npm install
         run: npm install
 
+      - name: Lint
+        uses: wearerequired/lint-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prettier: true
+          eslint: true
+          eslint_args: '--max-warnings 0'
+          eslint_extensions: js
+
       - name: Run tests
         run: npm run test_ci

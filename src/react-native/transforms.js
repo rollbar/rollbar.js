@@ -3,7 +3,8 @@ var scrub = require('../scrub');
 var errorParser = require('../errorParser');
 
 function baseData(item, options, callback) {
-  var environment = (options.payload && options.payload.environment) || options.environment;
+  var environment =
+    (options.payload && options.payload.environment) || options.environment;
   var data = {
     timestamp: Math.round(item.timestamp / 1000),
     environment: item.environment || environment,
@@ -13,7 +14,7 @@ function baseData(item, options, callback) {
     framework: item.framework || options.framework,
     uuid: item.uuid,
     notifier: JSON.parse(JSON.stringify(options.notifier)),
-    custom: item.custom
+    custom: item.custom,
   };
 
   if (options.codeVersion) {
@@ -38,7 +39,7 @@ function addMessageData(item, options, callback) {
   item.data.body = item.data.body || {};
   var message = item.message || 'Item sent with null or missing arguments.';
   item.data.body.message = {
-    body: message
+    body: message,
   };
   callback(null, item);
 }
@@ -77,8 +78,8 @@ function handleItemWithError(item, options, callback) {
     frames: _buildFrames(parsedError.stack, options),
     exception: {
       class: _errorClass(parsedError.name, guess[0], options),
-      message: message
-    }
+      message: message,
+    },
   };
   if (err.description) {
     stackInfo.exception.description = String(err.description);
@@ -120,8 +121,11 @@ function _buildFrames(stack, options) {
     var frame = {
       filename: _rewriteFilename(filename, options),
       lineno: stackFrame.line || null,
-      method: (!stackFrame.func || stackFrame.func === '?') ? '[anonymous]' : stackFrame.func,
-      colno: stackFrame.column
+      method:
+        !stackFrame.func || stackFrame.func === '?'
+          ? '[anonymous]'
+          : stackFrame.func,
+      colno: stackFrame.column,
     };
     frames.push(frame);
   }
@@ -141,7 +145,7 @@ function _matchFilename(filename, options) {
   var patterns = options.rewriteFilenamePatterns || [];
   var length = patterns.length || 0;
 
-  for(var i = 0; i < length; i++) {
+  for (var i = 0; i < length; i++) {
     var pattern = new RegExp(patterns[i]);
     var match = filename.match(pattern);
     if (match && match[1]) {
@@ -156,5 +160,5 @@ module.exports = {
   handleItemWithError: handleItemWithError,
   addBody: addBody,
   scrubPayload: scrubPayload,
-  _matchFilename: _matchFilename // to enable unit test
+  _matchFilename: _matchFilename, // to enable unit test
 };
