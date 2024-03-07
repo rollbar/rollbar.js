@@ -1,6 +1,7 @@
 var http = require('http');
 var https = require('https');
 var _ = require('../utility');
+var replace = require('../utility/replace');
 var urlHelpers = require('./telemetry/urlHelpers');
 
 var defaults = {
@@ -148,20 +149,6 @@ Instrumenter.prototype.instrumentConsole = function() {
     }
   }, this.replacements, 'log');
 };
-
-// TODO: These helpers are duplicated in src/browser/telemetry.js,
-// and may be candidates for extraction into a shared module.
-// It is recommended that before doing so, the author should allow
-// for more telemetry types to be implemented for the Node target
-// to ensure that the implementations of these helpers don't diverge.
-// If they do diverge, there's little point in the shared module.
-function replace(obj, name, replacement, replacements, type) {
-  var orig = obj[name];
-  obj[name] = replacement(orig);
-  if (replacements) {
-    replacements[type].push([obj, name, orig]);
-  }
-}
 
 function restore(replacements, type) {
   var b;
