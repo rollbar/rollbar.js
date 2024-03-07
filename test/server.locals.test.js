@@ -131,14 +131,19 @@ function verifyThrownError(r) {
   assert.isTrue(addItemStub.called);
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'node error');
-  if (nodeMajorVersion >= 10) {
-    // Node 10+; locals enabled
-    var length = data.body.trace_chain[0].frames.length;
+  var length = data.body.trace_chain[0].frames.length;
+  assert.ok(length > 1);
+
+  if (nodeMajorVersion >= 18) {
+    // Node >=18; locals only in top frame
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else if (nodeMajorVersion >= 10) {
+    // Node >=10; locals enabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
   } else {
-    // Node 8; locals disabled
-    var length = data.body.trace_chain[0].frames.length;
+    // Node <=8; locals disabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
     assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
   }
@@ -151,13 +156,18 @@ function verifyCaughtError(r) {
   assert.isTrue(addItemStub.called);
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'caught error');
-  if (nodeMajorVersion >= 10) {
-    // Node 10+; locals enabled
-    var length = data.body.trace_chain[0].frames.length;
+  var length = data.body.trace_chain[0].frames.length;
+  assert.ok(length > 1);
+
+  if (nodeMajorVersion >= 18) {
+    // Node >=18; locals only in top frame
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else if (nodeMajorVersion >= 10) {
+    // Node 10..<18; locals enabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
   } else {
-    var length = data.body.trace_chain[0].frames.length;
     assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
     assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
   }
@@ -171,13 +181,30 @@ function verifyNestedError(r) {
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'test error');
   assert.equal(data.body.trace_chain[1].exception.message, 'nested test error');
-  if (nodeMajorVersion >= 10) {
-    // Node 10+; locals enabled
-    var length = data.body.trace_chain[0].frames.length;
+  var length = data.body.trace_chain[0].frames.length;
+  assert.ok(length > 1);
+
+  if (nodeMajorVersion >= 18) {
+    // Node >=18; locals only in top frame
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.message, 'test error');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.password, '********');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.newMessage, 'nested test error');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+
+    length = data.body.trace_chain[1].frames.length;
+    assert.ok(length > 1);
+    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
+    assert.equal(data.body.trace_chain[1].frames[length-1].locals._password, '123456');
+    assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
+    assert.equal(data.body.trace_chain[1].frames[length-2].locals, undefined);
+  } else if (nodeMajorVersion >= 10) {
+    // Node >=10; locals enabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.err, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.timer, '<Timeout object>');
 
     length = data.body.trace_chain[1].frames.length;
+    assert.ok(length > 1);
     assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedMessage, 'nested test error');
     assert.equal(data.body.trace_chain[1].frames[length-1].locals.nestedError, '<Error object>');
     assert.equal(data.body.trace_chain[1].frames[length-2].locals.message, 'test error');
@@ -185,11 +212,10 @@ function verifyNestedError(r) {
     assert.equal(data.body.trace_chain[1].frames[length-2].locals.err, '<Error object>');
     assert.equal(data.body.trace_chain[1].frames[length-2].locals.newMessage, 'nested test error');
   } else {
-    // Node 8; locals disabled
-    var length = data.body.trace_chain[0].frames.length;
+    // Node <=8; locals disabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
     assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-}
+  }
   addItemStub.restore();
 }
 
@@ -199,19 +225,26 @@ function verifyRejectedPromise(r) {
   assert.isTrue(addItemStub.called);
   var data = addItemStub.getCall(0).args[3].data;
   assert.equal(data.body.trace_chain[0].exception.message, 'promise reject');
-  if (nodeMajorVersion >= 10) {
-    // Node 10+; locals enabled
-    var length = data.body.trace_chain[0].frames.length;
+  var length = data.body.trace_chain[0].frames.length;
+  assert.ok(length > 1);
+
+  if (nodeMajorVersion >= 18) {
+    // Node >=18; locals only in top frame
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.callback, '<Function object>');
+    assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
+    assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+  } else if (nodeMajorVersion >= 10) {
+    // Node >=10; locals enabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.error, '<Error object>');
     assert.equal(data.body.trace_chain[0].frames[length-1].locals.rollbar, '<Rollbar object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.notifier, '<Notifier object>');
     assert.equal(data.body.trace_chain[0].frames[length-2].locals.r, '<Rollbar object>');
   } else {
-    // Node 8; locals disabled
-    var length = data.body.trace_chain[0].frames.length;
+    // Node <=8; locals disabled
     assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
     assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
-}
+  }
   addItemStub.restore();
 }
 
@@ -245,18 +278,21 @@ vows.describe('locals')
         topic: function(_err, r) {
           r.configure({ locals: { enabled: false }});
           var notifier = r.client.notifier;
+          assert.ok(notifier);
           r.addItemStub = sinon.stub(notifier.queue, 'addItem');
 
           nodeThrowNested(r, this.callback);
         },
         'should not include locals': function(_err, r) {
           var addItemStub = r.addItemStub;
+          assert.ok(addItemStub);
 
           assert.isTrue(addItemStub.called);
           var data = addItemStub.getCall(0).args[3].data;
           assert.equal(data.body.trace_chain[0].exception.message, 'test error');
           assert.equal(data.body.trace_chain[1].exception.message, 'nested test error');
           var length = data.body.trace_chain[0].frames.length;
+          assert.ok(length > 1);
           assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
           assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
           addItemStub.restore();
@@ -299,6 +335,7 @@ vows.describe('locals')
           var data = addItemStub.getCall(0).args[3].data;
           assert.equal(data.body.trace_chain[0].exception.message, 'caught error');
           var length = data.body.trace_chain[0].frames.length;
+          assert.ok(length > 1);
           assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
           assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
 
@@ -445,15 +482,22 @@ vows.describe('locals')
           assert.isTrue(addItemStub.called);
           var data = addItemStub.getCall(0).args[3].data;
           assert.equal(data.body.trace_chain[0].exception.message, 'deep stack error, limit=3');
-          if (nodeMajorVersion < 10) {
-            // Node 8; locals disabled
-            var length = data.body.trace_chain[0].frames.length;
-            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
-          } else {
-            var length = data.body.trace_chain[0].frames.length;
+          var length = data.body.trace_chain[0].frames.length;
+          assert.ok(length > 1);
+
+          if (nodeMajorVersion >= 18) {
+            // Node >=18; locals only in top frame
+            assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals, { curr: 3, limit: 3 });
+            assert.equal(data.body.trace_chain[0].frames[length-2].locals, undefined);
+            assert.equal(data.body.trace_chain[0].frames[length-3].locals, undefined);
+          } else if (nodeMajorVersion >= 10) {
+            // Node >=10; locals enabled
             assert.deepEqual(data.body.trace_chain[0].frames[length-1].locals, { curr: 3, limit: 3 });
             assert.deepEqual(data.body.trace_chain[0].frames[length-2].locals, { curr: 2, limit: 3 });
             assert.deepEqual(data.body.trace_chain[0].frames[length-3].locals, { curr: 1, limit: 3 });
+          } else {
+            // Node <=8; locals disabled
+            assert.equal(data.body.trace_chain[0].frames[length-1].locals, undefined);
           }
           addItemStub.reset();
           Locals.session = undefined;
