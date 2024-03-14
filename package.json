@@ -1,0 +1,19 @@
+{
+  "name": "@rollbar/js",
+  "private": true,
+  "workspaces": [
+    "examples/*",
+    "libs/*",
+    "sdks/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "test": "turbo test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "turbo": "^1.12.5"
+  }
+}
