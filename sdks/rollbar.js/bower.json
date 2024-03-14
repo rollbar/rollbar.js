@@ -1,0 +1,25 @@
+{
+  "name": "rollbar",
+  "dependencies": {},
+  "main": ["dist/rollbar.umd.js"],
+  "ignore": [
+    "dist/*.nojson*",
+    "dist/*.named-amd*",
+    "docs",
+    "src",
+    "vendor",
+    "examples",
+    "release",
+    "test",
+    "karma.conf.js",
+    ".gitignore",
+    ".gitmodules",
+    ".travis.yml",
+    "Gruntfile.js",
+    "Makefile",
+    "travis.yml",
+    "package.json",
+    "webpack.config.js",
+    "browserstack*"
+  ]
+}

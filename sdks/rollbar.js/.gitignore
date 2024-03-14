@@ -1,0 +1,10 @@
+node_modules
+bower_components
+.idea
+vendor/*.min.js
+test/*.bundle.js*
+sauce_connect.log
+coverage
+.DS_Store
+*.swp
+npm-debug.log

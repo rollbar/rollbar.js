@@ -1,0 +1,8 @@
+path_classifiers:
+  generated:
+    - release
+    - dist
+  docs:
+    - examples
+  test:
+    - test

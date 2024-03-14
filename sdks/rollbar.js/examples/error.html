@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Generate errors for test automation</title>
+    <!-- Throwing inside karma test files won't work,
+    but you can do it here and let karma load this file. -->
+    <script>
+      window.throwError = function throwError() {
+        // Example error, which will be reported to rollbar when `captureUncaught`
+        // is true in the config.
+        throw new Error('test error');
+      };
+      window.throwDomException = function throwDomException() {
+        // Example error, which will be reported to rollbar when `captureUncaught`
+        // is true in the config.
+        throw new DOMException('test DOMException');
+      };
+      // Deep stack error
+      window.throwDeepStackError = function throwDeepStackError(curr, limit) {
+        if (curr < limit) {
+          throwDeepStackError(curr + 1, limit);
+        } else {
+          throw new Error('deep stack error');
+        }
+      };
+      window.throwEventHandlerError = function throwError() {
+        // Set error to throw inside an event handler,
+        // and then trigger the event.
+        window.addEventListener(
+          'hashchange',
+          function () {
+            throw new Error('event handler error');
+          },
+          false,
+        );
+
+        // set hash location
+        window.location.hash = 'test';
+      };
+    </script>
+  </head>
+  <body>
+    <div style="text-align: center">
+      <h1>Generate errors for test automation</h1>
+    </div>
+    <button id="throw-error" onclick="throwError()">Throw Error</button>
+    <button id="throw-dom-exception" onclick="throwDomException()">
+      Throw DOMException
+    </button>
+    <button id="throw-depp-stack-error" onclick="throwDeepStackError(0,20)">
+      Throw deep stack Error
+    </button>
+    <button
+      id="throw-event-handler-error"
+      onclick="throwEventHandlerError(0,20)"
+    >
+      Throw event handler Error
+    </button>
+  </body>
+</html>

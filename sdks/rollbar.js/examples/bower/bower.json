@@ -1,0 +1,8 @@
+{
+  "name": "RollbarTest",
+  "version": "0.0.1",
+  "homepage": "https://github.com/rollbar/rollbar.js",
+  "dependencies": {
+    "rollbar": "~1.7.0"
+  }
+}

@@ -1,0 +1,21 @@
+name: Upload Rollbar.js release to S3
+
+on:
+  release:
+    types: [created, edited]
+
+jobs:
+  upload-distros-to-s3:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: jakejarvis/s3-sync-action@v0.5.1
+      with:
+        args: --cache-control max-age=30672000,public --follow-symlinks --delete
+      env:
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-east-1'
+        SOURCE_DIR: 'dist'
+        DEST_DIR: rollbarjs/$GITHUB_REF # GITHUB_REF is the tag of the release

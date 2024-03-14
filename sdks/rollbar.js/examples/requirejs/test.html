@@ -1,0 +1,39 @@
+<html>
+  <body>
+    <script src="../functions.js"></script>
+    <script src="http://requirejs.org/docs/release/2.1.14/minified/require.js"></script>
+    <script>
+      var _rollbarConfig = {
+        accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+        rollbarJsUrl: '../../dist/rollbar.umd.js',
+        captureUncaught: true,
+        payload: {
+          environment: 'development',
+        },
+      };
+
+      // You can either use the snippet or load asynchronously via requirejs
+
+      // Use requirejs to asynchronously load the full Rollbar implementation.
+      // NOTE: you must use the name "rollbar" here.
+      require.config({
+        paths: {
+          rollbar: '../../dist/rollbar.umd',
+        },
+      });
+
+      require([
+        'rollbar',
+      ], // Note: clicking on the "Foo" button below before the Rollbar
+      // module is loaded and initialized will not Report the
+      // exception to Rollbar.
+      function (Rollbar) {
+        var rollbar = new Rollbar(_rollbarConfig);
+
+        rollbar.info('Hello world');
+      });
+    </script>
+    <button onclick="foo();">Foo</button>
+    <button onclick="functionC();">Bar</button>
+  </body>
+</html>
