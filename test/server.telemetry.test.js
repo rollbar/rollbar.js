@@ -9,6 +9,8 @@ var https = require('https');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
 var Rollbar = require('../src/server/rollbar');
+var { mergeOptions } = require('../src/server/telemetry/urlHelpers');
+const { URL } = require('url');
 
 function wait(ms) {
   return new Promise((resolve) => {
@@ -410,6 +412,31 @@ vows
         assert.deepStrictEqual(telemetry[3].body.error, 'Error: dns error');
 
         addItemStub.restore();
+      },
+    },
+  })
+  .addBatch({
+    'while using autoinstrument': {
+      topic: function () {
+        const optionsUsingStringUrl = mergeOptions(
+          'http://example.com/api/users',
+          { method: 'GET', headers: testHeaders1 },
+        );
+        const optionsUsingClassUrl = mergeOptions(
+          new URL('http://example.com/api/users'),
+          { method: 'GET', headers: testHeaders1 },
+        );
+
+        return {
+          optionsUsingStringUrl,
+          optionsUsingClassUrl,
+        };
+      },
+      'mergeOptions should correctly handle URL and options': function ({
+        optionsUsingStringUrl,
+        optionsUsingClassUrl,
+      }) {
+        assert.deepStrictEqual(optionsUsingStringUrl, optionsUsingClassUrl);
       },
     },
   })

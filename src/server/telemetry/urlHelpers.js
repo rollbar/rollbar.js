@@ -1,4 +1,3 @@
-var url = require('url');
 var { URL } = require('url');
 var merge = require('../../merge');
 
@@ -12,11 +11,7 @@ function mergeOptions(input, options, cb) {
   if (typeof input === 'string') {
     const urlStr = input;
     input = urlToHttpOptions(new URL(urlStr));
-  } else if (
-    input &&
-    input[url.searchParamsSymbol] &&
-    input[url.searchParamsSymbol][url.searchParamsSymbol]
-  ) {
+  } else if (input && input instanceof URL) {
     // url.URL instance
     input = urlToHttpOptions(input);
   } else {
