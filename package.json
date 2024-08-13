@@ -83,9 +83,6 @@
     "vows": "^0.8.3",
     "webpack": "^5.88.2"
   },
-  "optionalDependencies": {
-    "decache": "^3.0.5"
-  },
   "scripts": {
     "build": "./node_modules/.bin/grunt",
     "test": "./node_modules/.bin/grunt test",
