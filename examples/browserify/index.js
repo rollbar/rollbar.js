@@ -5,7 +5,7 @@ var rollbarConfig = {
   captureUncaught: true,
   payload: {
     environment: 'development',
-  }
+  },
 };
 
 var Rollbar = rollbar.init(rollbarConfig);

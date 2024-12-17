@@ -1,11 +1,6 @@
 /**
  * Build and test rollbar.js
- *
- * Test with browserstack:
- *   $> BROWSER_STACK_USERNAME=username BROWSER_STACK_ACCESS_KEY=12345asdf grunt test --browsers=bs_ie_latest
- *
  */
-
 
 'use strict';
 
@@ -15,8 +10,6 @@ var pkg = require('./package.json');
 var fs = require('fs');
 
 var webpackConfig = require('./webpack.config.js');
-var browserStackBrowsers = require('./browserstack.browsers');
-
 
 function findTests(context) {
   if (context !== 'browser') {
@@ -25,7 +18,7 @@ function findTests(context) {
   var files = glob.sync('test/**/!(server.)*.test.js');
   var mapping = {};
 
-  files.forEach(function(file) {
+  files.forEach(function (file) {
     var testName = path.basename(file, '.test.js');
     mapping[testName] = file;
   });
@@ -33,7 +26,7 @@ function findTests(context) {
   return mapping;
 }
 
-function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
+function buildGruntKarmaConfig(singleRun, tests, reporters) {
   var config = {
     options: {
       configFile: './karma.conf.js',
@@ -44,19 +37,19 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
           pattern: 'dist/**/*.js',
           included: false,
           served: true,
-          watched: false
+          watched: false,
         },
         {
           pattern: 'src/**/*.js',
           included: false,
           served: true,
-          watched: false
+          watched: false,
         },
         {
           pattern: 'examples/**/*.js',
           included: false,
           served: true,
-          watched: false
+          watched: false,
         },
 
         // Examples HTML, set `included: true`, but they won't be executed or added
@@ -65,15 +58,11 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
           pattern: 'examples/**/*.html',
           included: true,
           served: true,
-          watched: false
-        }
-      ]
+          watched: false,
+        },
+      ],
     },
   };
-
-  if (browsers && browsers.length) {
-    config.options.browsers = browsers;
-  }
 
   if (reporters && reporters.length) {
     config.options.reporters = reporters;
@@ -81,20 +70,18 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
 
   for (var testName in tests) {
     var testFile = tests[testName];
-    var testConfig = config[testName] = {};
+    var testConfig = (config[testName] = {});
 
     // Special case for testing requirejs integration.
     // Include the requirejs module as a framework so
     // Karma will inclue it in the web page.
     if (testName === 'requirejs') {
-      testConfig.files = [
-        {src: './dist/rollbar.umd.js', included: false}
-      ];
+      testConfig.files = [{ src: './dist/rollbar.umd.js', included: false }];
       // NOTE: requirejs should go first in case the subsequent libraries
       // check for the existence of `define()`
       testConfig.frameworks = ['requirejs', 'expect', 'mocha'];
     } else {
-      testConfig.files = [{src: [testFile]}];
+      testConfig.files = [{ src: [testFile] }];
     }
 
     // Special config for BrowserStack IE tests
@@ -107,32 +94,10 @@ function buildGruntKarmaConfig(singleRun, browsers, tests, reporters) {
   return config;
 }
 
-
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   require('time-grunt')(grunt);
 
   var browserTests = findTests('browser');
-  var browsers = grunt.option('browsers');
-  if (browsers) {
-    browsers = browsers.split(',');
-
-    var browserStackAliases = [];
-    var nonBrowserStackAliases = [];
-    browsers.forEach(function(browserName) {
-      if (browserName.slice(0, 3) === 'bs_') {
-        browserStackAliases.push(browserName);
-      } else {
-        nonBrowserStackAliases.push(browserName);
-      }
-    });
-
-    var expandedBrowsers = browserStackBrowsers.filter.apply(null, browserStackAliases);
-    var expandedBrowserNames = [];
-    expandedBrowsers.forEach(function(browser) {
-      expandedBrowserNames.push(browser._alias);
-    });
-    browsers = nonBrowserStackAliases.concat(expandedBrowserNames);
-  }
 
   var singleRun = grunt.option('singleRun');
   if (singleRun === undefined) {
@@ -149,7 +114,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-vows');
 
-
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
   var rollbarjQuerySnippet = fs.readFileSync('dist/plugins/jquery.min.js');
 
@@ -159,46 +123,62 @@ module.exports = function(grunt) {
     vows: {
       all: {
         options: {
-          reporter: 'spec'
+          reporter: 'spec',
         },
-        src: ['test/server.*.test.js']
-      }
+        src: ['test/server.*.test.js'],
+      },
     },
 
-    karma: buildGruntKarmaConfig(singleRun, browsers, browserTests, reporters),
+    karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
 
     replace: {
       snippets: {
-        src: ['*.md', 'src/**/*.js', 'examples/*.+(html|js)', 'examples/*/*.+(html|js)', 'docs/**/*.md'],
+        src: [
+          '*.md',
+          'src/**/*.js',
+          'examples/*.+(html|js)',
+          'examples/*/*.+(html|js)',
+          'docs/**/*.md',
+        ],
         overwrite: true,
         replacements: [
           // Main rollbar snippet
           {
-            from: new RegExp('^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)', 'm'), // eslint-disable-line no-control-regex
-            to: function(match, index, fullText, captures) {
+            from: new RegExp(
+              /* eslint-disable-next-line no-control-regex */
+              '^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)',
+              'm',
+            ),
+            to: function (match, index, fullText, captures) {
               captures[1] = rollbarJsSnippet;
               return captures.join('\n');
-            }
+            },
           },
           // jQuery rollbar plugin snippet
           {
-            from: new RegExp('^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)', 'm'), // eslint-disable-line no-control-regex
-            to: function(match, index, fullText, captures) {
+            from: new RegExp(
+              /* eslint-disable-next-line no-control-regex */
+              '^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)',
+              'm',
+            ),
+            to: function (match, index, fullText, captures) {
               captures[1] = rollbarjQuerySnippet;
               return captures.join('\n');
-            }
+            },
           },
-          // README travis link
+          // README CI link
           {
-            from: new RegExp('(https://github\\.com/rollbar/rollbar\\.js/workflows/Rollbar\\.js%20CI/badge\\.svg\\?branch=v)([0-9a-zA-Z.-]+)'),
-            to: function(match, index, fullText, captures) {
+            from: new RegExp(
+              '(https://github\\.com/rollbar/rollbar\\.js/workflows/Rollbar\\.js%20CI/badge\\.svg\\?branch=v)([0-9a-zA-Z.-]+)',
+            ),
+            to: function (match, index, fullText, captures) {
               captures[1] = pkg.version;
               return captures.join('');
-            }
-          }
-        ]
-      }
-    }
+            },
+          },
+        ],
+      },
+    },
   });
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
@@ -206,12 +186,12 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['test-server', 'test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  grunt.registerTask('test-server', function(_target) {
+  grunt.registerTask('test-server', function (_target) {
     var tasks = ['vows'];
     grunt.task.run.apply(grunt.task, tasks);
   });
 
-  grunt.registerTask('test-browser', function(target) {
+  grunt.registerTask('test-browser', function (target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
     var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
@@ -226,11 +206,11 @@ module.exports = function(grunt) {
       var minJs = 'dist/rollbar' + buildName + '.min.js';
 
       var releaseJs = 'release/rollbar' + buildName + '-' + version + '.js';
-      var releaseMinJs = 'release/rollbar' + buildName + '-' + version + '.min.js';
+      var releaseMinJs =
+        'release/rollbar' + buildName + '-' + version + '.min.js';
 
       grunt.file.copy(js, releaseJs);
       grunt.file.copy(minJs, releaseMinJs);
     });
   });
-
 };

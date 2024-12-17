@@ -5,10 +5,13 @@ import * as Rollbar from 'rollbar';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  constructor(@Inject(RollbarService) private rollbar: Rollbar, private ngZone: NgZone) {
+  constructor(
+    @Inject(RollbarService) private rollbar: Rollbar,
+    private ngZone: NgZone,
+  ) {
     // Used by rollbar.js tests
     window['angularAppComponent'] = this;
   }

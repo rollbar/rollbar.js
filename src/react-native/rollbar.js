@@ -28,15 +28,16 @@ function Rollbar(options, client) {
 
   var transport = new Transport(truncation);
   var api = new API(this.options, transport, urllib, truncation);
-  var telemeter = new Telemeter(this.options)
-  this.client = client || new Client(this.options, api, logger, telemeter, 'react-native');
+  var telemeter = new Telemeter(this.options);
+  this.client =
+    client || new Client(this.options, api, logger, telemeter, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;
-Rollbar.init = function(options, client) {
+Rollbar.init = function (options, client) {
   if (_instance) {
     return _instance.global(options).configure(options);
   }
@@ -52,11 +53,11 @@ function handleUninitialized(maybeCallback) {
   }
 }
 
-Rollbar.prototype.global = function(options) {
+Rollbar.prototype.global = function (options) {
   this.client.global(options);
   return this;
 };
-Rollbar.global = function(options) {
+Rollbar.global = function (options) {
   if (_instance) {
     return _instance.global(options);
   } else {
@@ -64,18 +65,22 @@ Rollbar.global = function(options) {
   }
 };
 
-Rollbar.prototype.configure = function(options, payloadData) {
+Rollbar.prototype.configure = function (options, payloadData) {
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
-    payload = {payload: payloadData};
+    payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload, logger);
-  this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
+  this.options._configuredOptions = _.handleOptions(
+    oldOptions._configuredOptions,
+    options,
+    payload,
+  );
   this.client.configure(options, payloadData);
   return this;
 };
-Rollbar.configure = function(options, payloadData) {
+Rollbar.configure = function (options, payloadData) {
   if (_instance) {
     return _instance.configure(options, payloadData);
   } else {
@@ -83,10 +88,10 @@ Rollbar.configure = function(options, payloadData) {
   }
 };
 
-Rollbar.prototype.lastError = function() {
+Rollbar.prototype.lastError = function () {
   return this.client.lastError;
 };
-Rollbar.lastError = function() {
+Rollbar.lastError = function () {
   if (_instance) {
     return _instance.lastError();
   } else {
@@ -94,13 +99,13 @@ Rollbar.lastError = function() {
   }
 };
 
-Rollbar.prototype.log = function() {
+Rollbar.prototype.log = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.log(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.log = function() {
+Rollbar.log = function () {
   if (_instance) {
     return _instance.log.apply(_instance, arguments);
   } else {
@@ -109,13 +114,13 @@ Rollbar.log = function() {
   }
 };
 
-Rollbar.prototype.debug = function() {
+Rollbar.prototype.debug = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.debug(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.debug = function() {
+Rollbar.debug = function () {
   if (_instance) {
     return _instance.debug.apply(_instance, arguments);
   } else {
@@ -124,13 +129,13 @@ Rollbar.debug = function() {
   }
 };
 
-Rollbar.prototype.info = function() {
+Rollbar.prototype.info = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.info(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.info = function() {
+Rollbar.info = function () {
   if (_instance) {
     return _instance.info.apply(_instance, arguments);
   } else {
@@ -139,13 +144,13 @@ Rollbar.info = function() {
   }
 };
 
-Rollbar.prototype.warn = function() {
+Rollbar.prototype.warn = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.warn(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.warn = function() {
+Rollbar.warn = function () {
   if (_instance) {
     return _instance.warn.apply(_instance, arguments);
   } else {
@@ -154,14 +159,13 @@ Rollbar.warn = function() {
   }
 };
 
-
-Rollbar.prototype.warning = function() {
+Rollbar.prototype.warning = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.warning(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.warning = function() {
+Rollbar.warning = function () {
   if (_instance) {
     return _instance.warning.apply(_instance, arguments);
   } else {
@@ -170,14 +174,13 @@ Rollbar.warning = function() {
   }
 };
 
-
-Rollbar.prototype.error = function() {
+Rollbar.prototype.error = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.error(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.error = function() {
+Rollbar.error = function () {
   if (_instance) {
     return _instance.error.apply(_instance, arguments);
   } else {
@@ -185,21 +188,21 @@ Rollbar.error = function() {
     handleUninitialized(maybeCallback);
   }
 };
-Rollbar.prototype._uncaughtError = function() {
+Rollbar.prototype._uncaughtError = function () {
   var item = this._createItem(arguments);
   item._isUncaught = true;
   var uuid = item.uuid;
   this.client.error(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
 
-Rollbar.prototype.critical = function() {
+Rollbar.prototype.critical = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
   this.client.critical(item);
-  return {uuid: uuid};
+  return { uuid: uuid };
 };
-Rollbar.critical = function() {
+Rollbar.critical = function () {
   if (_instance) {
     return _instance.critical.apply(_instance, arguments);
   } else {
@@ -208,10 +211,10 @@ Rollbar.critical = function() {
   }
 };
 
-Rollbar.prototype.buildJsonPayload = function(item) {
+Rollbar.prototype.buildJsonPayload = function (item) {
   return this.client.buildJsonPayload(item);
 };
-Rollbar.buildJsonPayload = function() {
+Rollbar.buildJsonPayload = function () {
   if (_instance) {
     return _instance.buildJsonPayload.apply(_instance, arguments);
   } else {
@@ -219,10 +222,10 @@ Rollbar.buildJsonPayload = function() {
   }
 };
 
-Rollbar.prototype.sendJsonPayload = function(jsonPayload) {
+Rollbar.prototype.sendJsonPayload = function (jsonPayload) {
   return this.client.sendJsonPayload(jsonPayload);
 };
-Rollbar.sendJsonPayload = function() {
+Rollbar.sendJsonPayload = function () {
   if (_instance) {
     return _instance.sendJsonPayload.apply(_instance, arguments);
   } else {
@@ -230,23 +233,23 @@ Rollbar.sendJsonPayload = function() {
   }
 };
 
-Rollbar.prototype.wait = function(callback) {
+Rollbar.prototype.wait = function (callback) {
   this.client.wait(callback);
 };
-Rollbar.wait = function(callback) {
+Rollbar.wait = function (callback) {
   if (_instance) {
-    return _instance.wait(callback)
+    return _instance.wait(callback);
   } else {
     var maybeCallback = _getFirstFunction(arguments);
     handleUninitialized(maybeCallback);
   }
 };
 
-Rollbar.prototype.captureEvent = function() {
+Rollbar.prototype.captureEvent = function () {
   var event = _.createTelemetryEvent(arguments);
   return this.client.captureEvent(event.type, event.metadata, event.level);
 };
-Rollbar.captureEvent = function() {
+Rollbar.captureEvent = function () {
   if (_instance) {
     return _instance.captureEvent.apply(_instance, arguments);
   } else {
@@ -254,10 +257,10 @@ Rollbar.captureEvent = function() {
   }
 };
 
-Rollbar.prototype.setPerson = function(personInfo) {
-  this.configure({}, {person: personInfo});
+Rollbar.prototype.setPerson = function (personInfo) {
+  this.configure({}, { person: personInfo });
 };
-Rollbar.setPerson = function(personInfo) {
+Rollbar.setPerson = function (personInfo) {
   if (_instance) {
     return _instance.setPerson(personInfo);
   } else {
@@ -265,10 +268,10 @@ Rollbar.setPerson = function(personInfo) {
   }
 };
 
-Rollbar.prototype.clearPerson = function() {
-  this.configure({}, {person: {}});
+Rollbar.prototype.clearPerson = function () {
+  this.configure({}, { person: {} });
 };
-Rollbar.clearPerson = function() {
+Rollbar.clearPerson = function () {
   if (_instance) {
     return _instance.clearPerson();
   } else {
@@ -286,6 +289,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
+    .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
@@ -298,7 +302,7 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.userCheckIgnore(logger));
 }
 
-Rollbar.prototype._createItem = function(args) {
+Rollbar.prototype._createItem = function (args) {
   return _.createItem(args, logger, this);
 };
 
@@ -318,18 +322,19 @@ Rollbar.defaultOptions = {
   showReportedMessageTraces: false,
   notifier: {
     name: 'rollbar-react-native',
-    version: packageJson.version
+    version: packageJson.version,
   },
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
   reportLevel: packageJson.defaults.reportLevel,
-  rewriteFilenamePatterns: packageJson.defaults.reactNative.rewriteFilenamePatterns,
+  rewriteFilenamePatterns:
+    packageJson.defaults.reactNative.rewriteFilenamePatterns,
   verbose: false,
   enabled: true,
   transmit: true,
   sendConfig: false,
   includeItemsInTelemetry: true,
-  ignoreDuplicateErrors: true
+  ignoreDuplicateErrors: true,
 };
 
 module.exports = Rollbar;

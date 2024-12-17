@@ -6,25 +6,24 @@
 // Will return an integer on IE (i.e. 8)
 // Will return undefined otherwise
 function getIEVersion() {
-	var undef;
-	if (typeof document === 'undefined') {
-		return undef;
-	}
+  var undef;
+  if (typeof document === 'undefined') {
+    return undef;
+  }
 
   var v = 3,
     div = document.createElement('div'),
     all = div.getElementsByTagName('i');
 
   while (
-    div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->',
-      all[0]
-    );
+    ((div.innerHTML = '<!--[if gt IE ' + ++v + ']><i></i><![endif]-->'), all[0])
+  );
 
   return v > 4 ? v : undef;
 }
 
 var Detection = {
-  ieVersion: getIEVersion
+  ieVersion: getIEVersion,
 };
 
 module.exports = Detection;

@@ -39,9 +39,14 @@ function Rollbar(options, client) {
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
-  var telemeter = new Telemeter(this.options)
-  this.client = client || new Client(this.options, api, logger, telemeter, 'server');
-  this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this);
+  var telemeter = new Telemeter(this.options);
+  this.client =
+    client || new Client(this.options, api, logger, telemeter, 'server');
+  this.instrumenter = new Instrumenter(
+    this.options,
+    this.client.telemeter,
+    this,
+  );
   this.instrumenter.instrument();
   if (this.options.locals) {
     this.locals = initLocals(this.options.locals, logger);
@@ -55,7 +60,9 @@ function Rollbar(options, client) {
 function initLocals(localsOptions, logger) {
   // Capturing stack local variables is only supported in Node 10 and higher.
   var nodeMajorVersion = process.versions.node.split('.')[0];
-  if (nodeMajorVersion < 10) { return null; }
+  if (nodeMajorVersion < 10) {
+    return null;
+  }
 
   var Locals;
   if (typeof localsOptions === 'function') {
@@ -65,7 +72,9 @@ function initLocals(localsOptions, logger) {
     Locals = localsOptions.module;
     delete localsOptions.module;
   } else {
-    logger.error('options.locals or options.locals.module must be a Locals module');
+    logger.error(
+      'options.locals or options.locals.module must be a Locals module',
+    );
     return null;
   }
   return new Locals(localsOptions, logger);
@@ -110,7 +119,11 @@ Rollbar.prototype.configure = function (options, payloadData) {
     payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload, logger);
-  this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
+  this.options._configuredOptions = _.handleOptions(
+    oldOptions._configuredOptions,
+    options,
+    payload,
+  );
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   logger.setVerbose(this.options.verbose);
@@ -121,7 +134,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
     if (this.locals) {
       this.locals.updateOptions(this.options.locals);
     } else {
-      this.locals = initLocals(this.options.locals, logger)
+      this.locals = initLocals(this.options.locals, logger);
     }
   }
   return this;
@@ -205,7 +218,6 @@ Rollbar.warn = function () {
   }
 };
 
-
 Rollbar.prototype.warning = function () {
   var item = this._createItem(arguments);
   var uuid = item.uuid;
@@ -220,7 +232,6 @@ Rollbar.warning = function () {
     handleUninitialized(maybeCallback);
   }
 };
-
 
 Rollbar.prototype.error = function () {
   var item = this._createItem(arguments);
@@ -286,7 +297,7 @@ Rollbar.prototype.wait = function (callback) {
 };
 Rollbar.wait = function (callback) {
   if (_instance) {
-    return _instance.wait(callback)
+    return _instance.wait(callback);
   } else {
     var maybeCallback = _getFirstFunction(arguments);
     handleUninitialized(maybeCallback);
@@ -313,7 +324,7 @@ Rollbar.prototype.errorHandler = function () {
 };
 Rollbar.errorHandler = function () {
   if (_instance) {
-    return _instance.errorHandler()
+    return _instance.errorHandler();
   } else {
     handleUninitialized();
   }
@@ -341,8 +352,15 @@ Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
     return new Promise(function (resolve, reject) {
       self.lambdaContext = context;
       if (shouldReportTimeouts) {
-        var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context);
-        self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+        var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+          null,
+          event,
+          context,
+        );
+        self.lambdaTimeoutHandle = setTimeout(
+          timeoutCb,
+          context.getRemainingTimeInMillis() - 1000,
+        );
       }
       handler(event, context)
         .then(function (resp) {
@@ -375,8 +393,16 @@ Rollbar.prototype.syncLambdaHandler = function (handler, timeoutHandler) {
   return function (event, context, callback) {
     self.lambdaContext = context;
     if (shouldReportTimeouts) {
-      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
-      self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+        null,
+        event,
+        context,
+        callback,
+      );
+      self.lambdaTimeoutHandle = setTimeout(
+        timeoutCb,
+        context.getRemainingTimeInMillis() - 1000,
+      );
     }
     try {
       handler(event, context, function (err, resp) {
@@ -456,18 +482,32 @@ Rollbar.reportMessage = function (message, level, request, callback) {
   }
 };
 
-Rollbar.prototype.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
+Rollbar.prototype.reportMessageWithPayloadData = function (
+  message,
+  payloadData,
+  request,
+  callback,
+) {
   logger.log('reportMessageWithPayloadData is deprecated');
   return this.error(message, request, payloadData, callback);
 };
-Rollbar.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
+Rollbar.reportMessageWithPayloadData = function (
+  message,
+  payloadData,
+  request,
+  callback,
+) {
   if (_instance) {
-    return _instance.reportMessageWithPayloadData(message, payloadData, request, callback);
+    return _instance.reportMessageWithPayloadData(
+      message,
+      payloadData,
+      request,
+      callback,
+    );
   } else {
     handleUninitialized(callback);
   }
 };
-
 
 Rollbar.prototype.handleError = function (err, request, callback) {
   logger.log('handleError is deprecated');
@@ -481,14 +521,28 @@ Rollbar.handleError = function (err, request, callback) {
   }
 };
 
-
-Rollbar.prototype.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
+Rollbar.prototype.handleErrorWithPayloadData = function (
+  err,
+  payloadData,
+  request,
+  callback,
+) {
   logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, payloadData, callback);
 };
-Rollbar.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
+Rollbar.handleErrorWithPayloadData = function (
+  err,
+  payloadData,
+  request,
+  callback,
+) {
   if (_instance) {
-    return _instance.handleErrorWithPayloadData(err, payloadData, request, callback);
+    return _instance.handleErrorWithPayloadData(
+      err,
+      payloadData,
+      request,
+      callback,
+    );
   } else {
     handleUninitialized(callback);
   }
@@ -514,7 +568,10 @@ Rollbar.handleUnhandledRejections = function (accessToken, options) {
   }
 };
 
-Rollbar.handleUncaughtExceptionsAndRejections = function (accessToken, options) {
+Rollbar.handleUncaughtExceptionsAndRejections = function (
+  accessToken,
+  options,
+) {
   if (_instance) {
     options = options || {};
     options.accessToken = accessToken;
@@ -537,6 +594,7 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addLambdaData)
     .addTransform(sharedTransforms.addConfigToPayload)
     .addTransform(transforms.scrubPayload)
+    .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
     .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
@@ -576,7 +634,10 @@ Rollbar.prototype.setupUnhandledCapture = function () {
   if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
     this.handleUncaughtExceptions();
   }
-  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+  if (
+    this.options.captureUnhandledRejections ||
+    this.options.handleUnhandledRejections
+  ) {
     this.handleUnhandledRejections();
   }
 };
@@ -585,40 +646,58 @@ Rollbar.prototype.handleUncaughtExceptions = function () {
   var exitOnUncaught = !!this.options.exitOnUncaughtException;
   delete this.options.exitOnUncaughtException;
 
-  addOrReplaceRollbarHandler('uncaughtException', function (err) {
-    if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
-      return;
-    }
-
-    this._uncaughtError(err, function (err) {
-      if (err) {
-        logger.error('Encountered error while handling an uncaught exception.');
-        logger.error(err);
+  addOrReplaceRollbarHandler(
+    'uncaughtException',
+    function (err) {
+      if (
+        !this.options.captureUncaught &&
+        !this.options.handleUncaughtExceptions
+      ) {
+        return;
       }
-    });
-    if (exitOnUncaught) {
-      setImmediate(function () {
-        this.wait(function () {
-          process.exit(1);
-        });
-      }.bind(this));
-    }
-  }.bind(this));
+
+      this._uncaughtError(err, function (err) {
+        if (err) {
+          logger.error(
+            'Encountered error while handling an uncaught exception.',
+          );
+          logger.error(err);
+        }
+      });
+      if (exitOnUncaught) {
+        setImmediate(
+          function () {
+            this.wait(function () {
+              process.exit(1);
+            });
+          }.bind(this),
+        );
+      }
+    }.bind(this),
+  );
 };
 
 Rollbar.prototype.handleUnhandledRejections = function () {
-  addOrReplaceRollbarHandler('unhandledRejection', function (reason) {
-    if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
-      return;
-    }
-
-    this._uncaughtError(reason, function (err) {
-      if (err) {
-        logger.error('Encountered error while handling an uncaught exception.');
-        logger.error(err);
+  addOrReplaceRollbarHandler(
+    'unhandledRejection',
+    function (reason) {
+      if (
+        !this.options.captureUnhandledRejections &&
+        !this.options.handleUnhandledRejections
+      ) {
+        return;
       }
-    });
-  }.bind(this));
+
+      this._uncaughtError(reason, function (err) {
+        if (err) {
+          logger.error(
+            'Encountered error while handling an uncaught exception.',
+          );
+          logger.error(err);
+        }
+      });
+    }.bind(this),
+  );
 };
 
 function addOrReplaceRollbarHandler(event, action) {
@@ -657,7 +736,7 @@ Rollbar.defaultOptions = {
   showReportedMessageTraces: false,
   notifier: {
     name: 'node_rollbar',
-    version: packageJson.version
+    version: packageJson.version,
   },
   scrubHeaders: packageJson.defaults.server.scrubHeaders,
   scrubFields: packageJson.defaults.server.scrubFields,
@@ -674,7 +753,7 @@ Rollbar.defaultOptions = {
   captureLambdaTimeouts: true,
   ignoreDuplicateErrors: true,
   scrubRequestBody: true,
-  autoInstrument: false
+  autoInstrument: false,
 };
 
 module.exports = Rollbar;

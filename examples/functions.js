@@ -3,7 +3,7 @@ function functionA() {
 
   try {
     var a = b;
-  } catch(e) {
+  } catch (e) {
     Rollbar.error(e);
   }
 

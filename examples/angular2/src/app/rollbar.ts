@@ -3,10 +3,10 @@ import {
   Injectable,
   Inject,
   InjectionToken,
-  ErrorHandler
+  ErrorHandler,
 } from '@angular/core';
 
-const rollbarConfig:Rollbar.Configuration = {
+const rollbarConfig: Rollbar.Configuration = {
   accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
@@ -16,7 +16,7 @@ const rollbarConfig:Rollbar.Configuration = {
   wrapGlobalEventHandlers: false,
   scrubRequestBody: true,
   exitOnUncaughtException: false,
-  stackTraceLimit: 20
+  stackTraceLimit: 20,
 };
 
 export const RollbarService = new InjectionToken<Rollbar>('rollbar');
@@ -25,7 +25,7 @@ export const RollbarService = new InjectionToken<Rollbar>('rollbar');
 export class RollbarErrorHandler implements ErrorHandler {
   constructor(@Inject(RollbarService) private rollbar: Rollbar) {}
 
-  handleError(err:any) : void {
+  handleError(err: any): void {
     this.rollbar.error(err.originalError || err);
   }
 }

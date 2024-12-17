@@ -15,8 +15,8 @@ var DEFAULT_OPTIONS = {
   uncaughtOnly: true,
   depth: 1,
   maxProperties: 30,
-  maxArray: 5
-}
+  maxArray: 5,
+};
 
 function Locals(options, logger) {
   if (!(this instanceof Locals)) {
@@ -31,7 +31,7 @@ function Locals(options, logger) {
   this.initSession();
 }
 
-Locals.prototype.initSession = function() {
+Locals.prototype.initSession = function () {
   if (Locals.session) {
     this.disconnectSession();
   }
@@ -62,33 +62,39 @@ Locals.prototype.initSession = function() {
     self.initialized = true;
     updatePauseState(self.options, self.logger);
   });
-}
+};
 
-Locals.prototype.disconnectSession = function() {
+Locals.prototype.disconnectSession = function () {
   if (Locals.session) {
     updatePauseState({ enabled: false }, this.logger);
     Locals.session.disconnect();
     Locals.session = null;
   }
-}
+};
 
-Locals.prototype.updateOptions = function(options) {
-  var pauseStateChanged = this.options.enabled != options.enabled || this.options.uncaughtOnly != options.uncaughtOnly;
+Locals.prototype.updateOptions = function (options) {
+  var pauseStateChanged =
+    this.options.enabled != options.enabled ||
+    this.options.uncaughtOnly != options.uncaughtOnly;
 
   this.options = _.merge(this.options, options);
 
   if (this.initialized && pauseStateChanged) {
     updatePauseState(this.options, this.logger);
   }
-}
+};
 
 function updatePauseState(options, logger) {
   var state = pauseStateFromOptions(options);
-  Locals.session.post('Debugger.setPauseOnExceptions', { state: state}, (err, _result) => {
-    if (err) {
-      logger.error('error in setPauseOnExceptions', err);
-    }
-  });
+  Locals.session.post(
+    'Debugger.setPauseOnExceptions',
+    { state: state },
+    (err, _result) => {
+      if (err) {
+        logger.error('error in setPauseOnExceptions', err);
+      }
+    },
+  );
 }
 
 function pauseStateFromOptions(options) {
@@ -103,11 +109,11 @@ function pauseStateFromOptions(options) {
   }
 }
 
-Locals.prototype.currentLocalsMap = function() {
+Locals.prototype.currentLocalsMap = function () {
   return new Map(Locals.currentErrors);
-}
+};
 
-Locals.prototype.mergeLocals = function(localsMap, stack, key, callback) {
+Locals.prototype.mergeLocals = function (localsMap, stack, key, callback) {
   var matchedFrames;
 
   try {
@@ -124,22 +130,26 @@ Locals.prototype.mergeLocals = function(localsMap, stack, key, callback) {
   }
 
   getLocalScopesForFrames(matchedFrames, this.options, callback);
-}
+};
 
 // Finds frames in localParams that match file and line locations in stack.
 function matchFrames(localParams, stack) {
   var matchedFrames = [];
-  var localIndex = 0, stackIndex = 0;
+  var localIndex = 0,
+    stackIndex = 0;
   var stackLength = stack.length;
   var callFrames = localParams.callFrames;
   var callFramesLength = callFrames.length;
 
   for (; stackIndex < stackLength; stackIndex++) {
     while (localIndex < callFramesLength) {
-      if (firstFrame(localIndex, stackIndex) || matchedFrame(callFrames[localIndex], stack[stackIndex])) {
+      if (
+        firstFrame(localIndex, stackIndex) ||
+        matchedFrame(callFrames[localIndex], stack[stackIndex])
+      ) {
         matchedFrames.push({
           stackLocation: stack[stackIndex],
-          callFrame: callFrames[localIndex]
+          callFrame: callFrames[localIndex],
         });
         localIndex++;
         break;
@@ -165,32 +175,38 @@ function matchedFrame(callFrame, stackLocation) {
 
   // Node.js prefixes filename some URLs with 'file:///' in Debugger.callFrame,
   // but with only '/' in the error.stack string. Remove the prefix to facilitate a match.
-  var callFrameUrl = callFrame.url.replace(/file:\/\//,'');
+  var callFrameUrl = callFrame.url.replace(/file:\/\//, '');
 
   // lineNumber is zero indexed, so offset it.
   var callFrameLine = callFrame.location.lineNumber + 1;
   var callFrameColumn = callFrame.location.columnNumber;
 
-  return callFrameUrl === position.source &&
+  return (
+    callFrameUrl === position.source &&
     callFrameLine === position.line &&
-    callFrameColumn === position.column;
+    callFrameColumn === position.column
+  );
 }
 
 function getLocalScopesForFrames(matchedFrames, options, callback) {
-  async.each(matchedFrames, getLocalScopeForFrame.bind({ options: options }), callback);
+  async.each(
+    matchedFrames,
+    getLocalScopeForFrame.bind({ options: options }),
+    callback,
+  );
 }
 
 function getLocalScopeForFrame(matchedFrame, callback) {
   var options = this.options;
   var scopes = matchedFrame.callFrame.scopeChain;
 
-  var scope = scopes.find(scope => scope.type === 'local');
+  var scope = scopes.find((scope) => scope.type === 'local');
 
   if (!scope) {
     return callback(null); // Do nothing return success.
   }
 
-  getProperties(scope.object.objectId, function(err, response){
+  getProperties(scope.object.objectId, function (err, response) {
     if (err) {
       return callback(err);
     }
@@ -200,8 +216,8 @@ function getLocalScopeForFrame(matchedFrame, callback) {
     var localsContext = {
       localsObject: matchedFrame.stackLocation.locals,
       options: options,
-      depth: options.depth
-    }
+      depth: options.depth,
+    };
     async.each(locals, getLocalValue.bind(localsContext), callback);
   });
 }
@@ -234,11 +250,21 @@ function getLocalValue(local, callback) {
   }
 
   switch (local.value.type) {
-    case 'undefined': cb(null, 'undefined'); break;
-    case 'object': getObjectValue(local, options, depth, cb); break;
-    case 'function': cb(null, getObjectType(local)); break;
-    case 'symbol': cb(null, getSymbolValue(local)); break;
-    default: cb(null, local.value.value); break;
+    case 'undefined':
+      cb(null, 'undefined');
+      break;
+    case 'object':
+      getObjectValue(local, options, depth, cb);
+      break;
+    case 'function':
+      cb(null, getObjectType(local));
+      break;
+    case 'symbol':
+      cb(null, getSymbolValue(local));
+      break;
+    default:
+      cb(null, local.value.value);
+      break;
   }
 }
 
@@ -266,7 +292,7 @@ function getObjectValue(local, options, depth, callback) {
     return callback(null, getObjectType(local));
   }
 
-  getProperties(local.value.objectId, function(err, response){
+  getProperties(local.value.objectId, function (err, response) {
     if (err) {
       return callback(err);
     }
@@ -277,13 +303,13 @@ function getObjectValue(local, options, depth, callback) {
     var localsContext = {
       localsObject: isArray ? [] : {},
       options: options,
-      depth: depth - 1
-    }
+      depth: depth - 1,
+    };
 
     // For arrays, use eachSeries to ensure order is preserved.
     // Otherwise, use each for faster completion.
     var iterator = isArray ? async.eachSeries : async.each;
-    iterator(properties, getLocalValue.bind(localsContext), function(error){
+    iterator(properties, getLocalValue.bind(localsContext), function (error) {
       if (error) {
         return callback(error);
       }
@@ -294,7 +320,11 @@ function getObjectValue(local, options, depth, callback) {
 }
 
 function getProperties(objectId, callback) {
-  Locals.session.post('Runtime.getProperties', { objectId : objectId, ownProperties: true }, callback);
+  Locals.session.post(
+    'Runtime.getProperties',
+    { objectId: objectId, ownProperties: true },
+    callback,
+  );
 }
 
 module.exports = Locals;

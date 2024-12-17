@@ -1,17 +1,17 @@
 var ErrorStackParser = require('error-stack-parser');
 
 var UNKNOWN_FUNCTION = '?';
-var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+var ERR_CLASS_REGEXP = new RegExp(
+  '^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ',
+);
 
 function guessFunctionName() {
   return UNKNOWN_FUNCTION;
 }
 
-
 function gatherContext() {
   return null;
 }
-
 
 function Frame(stackFrame) {
   var data = {};
@@ -29,7 +29,6 @@ function Frame(stackFrame) {
   return data;
 }
 
-
 function Stack(exception, skip) {
   function getStack() {
     var parserStack = [];
@@ -38,7 +37,7 @@ function Stack(exception, skip) {
 
     try {
       parserStack = ErrorStackParser.parse(exception);
-    } catch(e) {
+    } catch (e) {
       parserStack = [];
     }
 
@@ -56,19 +55,18 @@ function Stack(exception, skip) {
     message: exception.message,
     name: _mostSpecificErrorName(exception),
     rawStack: exception.stack,
-    rawException: exception
+    rawException: exception,
   };
 }
-
 
 function parse(e, skip) {
   var err = e;
 
-  if (err.nested) {
+  if (err.nested || err.cause) {
     var traceChain = [];
     while (err) {
       traceChain.push(new Stack(err, skip));
-      err = err.nested;
+      err = err.nested || err.cause;
 
       skip = 0; // Only apply skip value to primary error
     }
@@ -81,7 +79,6 @@ function parse(e, skip) {
   }
 }
 
-
 function guessErrorClass(errMsg) {
   if (!errMsg || !errMsg.match) {
     return ['Unknown error. There was no error message to display.', ''];
@@ -91,7 +88,10 @@ function guessErrorClass(errMsg) {
 
   if (errClassMatch) {
     errClass = errClassMatch[errClassMatch.length - 1];
-    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(
+      (errClassMatch[errClassMatch.length - 2] || '') + errClass + ':',
+      '',
+    );
     errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
   }
   return [errClass, errMsg];
@@ -102,7 +102,10 @@ function guessErrorClass(errMsg) {
 // * Prefers name over constructor.name when both are more specific than 'Error'
 function _mostSpecificErrorName(error) {
   var name = error.name && error.name.length && error.name;
-  var constructorName = error.constructor.name && error.constructor.name.length && error.constructor.name;
+  var constructorName =
+    error.constructor.name &&
+    error.constructor.name.length &&
+    error.constructor.name;
 
   if (!name || !constructorName) {
     return name || constructorName;
@@ -120,5 +123,5 @@ module.exports = {
   gatherContext: gatherContext,
   parse: parse,
   Stack: Stack,
-  Frame: Frame
+  Frame: Frame,
 };

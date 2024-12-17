@@ -6,7 +6,8 @@ var _ = require('../utility');
 var scrub = require('../scrub');
 
 function baseData(item, options, callback) {
-  var environment = (options.payload && options.payload.environment) || options.environment;
+  var environment =
+    (options.payload && options.payload.environment) || options.environment;
   var data = {
     timestamp: Math.round(item.timestamp / 1000),
     environment: item.environment || environment,
@@ -15,7 +16,7 @@ function baseData(item, options, callback) {
     framework: item.framework || options.framework,
     uuid: item.uuid,
     notifier: JSON.parse(JSON.stringify(options.notifier)),
-    custom: item.custom
+    custom: item.custom,
   };
 
   if (options.codeVersion) {
@@ -34,7 +35,7 @@ function baseData(item, options, callback) {
   data.server = {
     host: options.host,
     argv: process.argv.concat(),
-    pid: process.pid
+    pid: process.pid,
   };
 
   if (options.branch) {
@@ -53,7 +54,7 @@ function addMessageData(item, options, callback) {
   item.data.body = item.data.body || {};
   var message = item.message || 'Item sent with null or missing arguments.';
   item.data.body.message = {
-    body: message
+    body: message,
   };
   callback(null, item);
 }
@@ -85,7 +86,7 @@ function handleItemWithError(item, options, callback) {
   var chain = [];
   do {
     errors.push(err);
-    err = err.nested;
+    err = err.nested || err.cause;
   } while (err);
   item.stackInfo = chain;
 
@@ -93,9 +94,13 @@ function handleItemWithError(item, options, callback) {
     _.addErrorContext(item, errors);
   }
 
-  var cb = function(e) {
+  var cb = function (e) {
     if (e) {
-      item.message = item.err.message || item.err.description || item.message || String(item.err);
+      item.message =
+        item.err.message ||
+        item.err.description ||
+        item.message ||
+        String(item.err);
       item.diagnostic.buildTraceData = e.message;
       delete item.stackInfo;
     }
@@ -129,11 +134,13 @@ function addRequestData(item, options, callback) {
 
   if (req.route) {
     routePath = req.route.path;
-    item.data.context = baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
+    item.data.context =
+      baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
   } else {
     try {
       routePath = req.app._router.matchRequest(req).path;
-      item.data.context = baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
+      item.data.context =
+        baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
     } catch (ignore) {
       // Ignored
     }
@@ -151,7 +158,7 @@ function addRequestData(item, options, callback) {
     }
     item.data.person = person;
   } else if (req.user) {
-    item.data.person = {id: req.user.id};
+    item.data.person = { id: req.user.id };
     if (req.user.username && captureUsername) {
       item.data.person.username = req.user.username;
     }
@@ -163,7 +170,7 @@ function addRequestData(item, options, callback) {
     if (_.isFunction(userId)) {
       userId = userId();
     }
-    item.data.person = {id: userId};
+    item.data.person = { id: userId };
   }
 
   callback(null, item);
@@ -182,7 +189,7 @@ function addLambdaData(item, options, callback) {
     functionName: c.functionName,
     functionVersion: c.functionVersion,
     arn: c.invokedFunctionArn,
-    requestId: c.awsRequestId
+    requestId: c.awsRequestId,
   };
 
   item.data = item.data || {};
@@ -206,7 +213,9 @@ function scrubPayload(item, options, callback) {
 }
 
 function parseRequestBody(req, options) {
-  if (!req || !options.scrubRequestBody) { return }
+  if (!req || !options.scrubRequestBody) {
+    return;
+  }
 
   try {
     if (_.isString(req.body) && _isJsonContentType(req)) {
@@ -219,7 +228,9 @@ function parseRequestBody(req, options) {
 }
 
 function serializeRequestBody(req, options) {
-  if (!req || !options.scrubRequestBody) { return }
+  if (!req || !options.scrubRequestBody) {
+    return;
+  }
 
   try {
     if (_.isObject(req.body) && _isJsonContentType(req)) {
@@ -234,11 +245,15 @@ function serializeRequestBody(req, options) {
 /** Helpers **/
 
 function _isJsonContentType(req) {
-  return req.headers && req.headers['content-type'] && req.headers['content-type'].includes('json');
+  return (
+    req.headers &&
+    req.headers['content-type'] &&
+    req.headers['content-type'].includes('json')
+  );
 }
 
 function _buildTraceData(chain, options, item) {
-  return function(ex, cb) {
+  return function (ex, cb) {
     parser.parseException(ex, options, item, function (err, errData) {
       if (err) {
         return cb(err);
@@ -248,8 +263,8 @@ function _buildTraceData(chain, options, item) {
         frames: errData.frames,
         exception: {
           class: errData['class'],
-          message: errData.message
-        }
+          message: errData.message,
+        },
       });
 
       return cb(null);
@@ -268,11 +283,12 @@ function _extractIp(req) {
 function _buildRequestData(req) {
   var headers = req.headers || {};
   var host = headers.host || '<no host>';
-  var proto = req.protocol || ((req.socket && req.socket.encrypted) ? 'https' : 'http' );
+  var proto =
+    req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http');
   var parsedUrl;
   var baseUrl = req.baseUrl || '';
   if (_.isType(req.url, 'string')) {
-    var fullUrl = baseUrl && baseUrl.length ? baseUrl + req.url : req.url
+    var fullUrl = baseUrl && baseUrl.length ? baseUrl + req.url : req.url;
     parsedUrl = url.parse(fullUrl, true);
   } else {
     parsedUrl = req.url || {};
@@ -284,7 +300,7 @@ function _buildRequestData(req) {
     url: reqUrl,
     user_ip: _extractIp(req),
     headers: headers,
-    method: req.method
+    method: req.method,
   };
   if (parsedUrl.search && parsedUrl.search.length > 0) {
     data.GET = parsedUrl.query;
@@ -315,5 +331,5 @@ module.exports = {
   addErrorData: addErrorData,
   addRequestData: addRequestData,
   addLambdaData: addLambdaData,
-  scrubPayload: scrubPayload
+  scrubPayload: scrubPayload,
 };

@@ -38,7 +38,7 @@ function Rollbar(options, api, logger, telemeter, platform) {
 
 var defaultOptions = {
   maxItems: 0,
-  itemsPerMinute: 60
+  itemsPerMinute: 60,
 };
 
 Rollbar.rateLimiter = new RateLimiter(defaultOptions);
@@ -74,7 +74,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
   this.global(this.options);
 
   if (validateTracer(options.tracer)) {
-    this.tracer = options.tracer
+    this.tracer = options.tracer;
   }
 
   return this;
@@ -153,7 +153,8 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
     this.telemeter && this.telemeter._captureRollbarItem(item);
-    item.telemetryEvents = (this.telemeter && this.telemeter.copyEvents()) || [];
+    item.telemetryEvents =
+      (this.telemeter && this.telemeter.copyEvents()) || [];
     this.notifier.log(item, callback);
   } catch (e) {
     if (callback) {
@@ -191,8 +192,14 @@ Rollbar.prototype._addTracingInfo = function (item) {
       span.setTag('rollbar.error_uuid', item.uuid);
       span.setTag('rollbar.has_error', true);
       span.setTag('error', true);
-      span.setTag('rollbar.item_url', `https://rollbar.com/item/uuid/?uuid=${item.uuid}`);
-      span.setTag('rollbar.occurrence_url', `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`);
+      span.setTag(
+        'rollbar.item_url',
+        `https://rollbar.com/item/uuid/?uuid=${item.uuid}`,
+      );
+      span.setTag(
+        'rollbar.occurrence_url',
+        `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`,
+      );
 
       // add span ID & trace ID to occurrence
       var opentracingSpanId = span.context().toSpanId();
@@ -204,12 +211,12 @@ Rollbar.prototype._addTracingInfo = function (item) {
       } else {
         item.custom = {
           opentracing_span_id: opentracingSpanId,
-          opentracing_trace_id: opentracingTraceId
+          opentracing_trace_id: opentracingTraceId,
         };
       }
     }
   }
-}
+};
 
 function generateItemHash(item) {
   var message = item.message || '';
@@ -260,12 +267,14 @@ function validateSpan(span) {
 
   var spanContext = span.context();
 
-  if (!spanContext
-    || !spanContext.toSpanId
-    || !spanContext.toTraceId
-    || typeof spanContext.toSpanId !== 'function'
-    || typeof spanContext.toTraceId !== 'function') {
-    return false
+  if (
+    !spanContext ||
+    !spanContext.toSpanId ||
+    !spanContext.toTraceId ||
+    typeof spanContext.toSpanId !== 'function' ||
+    typeof spanContext.toTraceId !== 'function'
+  ) {
+    return false;
   }
 
   return true;

@@ -1,9 +1,7 @@
 {
   "name": "rollbar",
   "dependencies": {},
-  "main": [
-    "dist/rollbar.umd.js"
-  ],
+  "main": ["dist/rollbar.umd.js"],
   "ignore": [
     "dist/*.nojson*",
     "dist/*.named-amd*",

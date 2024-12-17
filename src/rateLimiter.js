@@ -17,7 +17,7 @@ function RateLimiter(options) {
 RateLimiter.globalSettings = {
   startTime: _.now(),
   maxItems: undefined,
-  itemsPerMinute: undefined
+  itemsPerMinute: undefined,
 };
 
 /*
@@ -28,7 +28,7 @@ RateLimiter.globalSettings = {
  *    maxItems: the maximum items
  *    itemsPerMinute: the max number of items to send in a given minute
  */
-RateLimiter.prototype.configureGlobal = function(options) {
+RateLimiter.prototype.configureGlobal = function (options) {
   if (options.startTime !== undefined) {
     RateLimiter.globalSettings.startTime = options.startTime;
   }
@@ -55,7 +55,7 @@ RateLimiter.prototype.configureGlobal = function(options) {
  *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
  *  place of the passed in item.
  */
-RateLimiter.prototype.shouldSend = function(item, now) {
+RateLimiter.prototype.shouldSend = function (item, now) {
   now = now || _.now();
   var elapsedTime = now - this.startTime;
   if (elapsedTime < 0 || elapsedTime >= 60000) {
@@ -67,20 +67,39 @@ RateLimiter.prototype.shouldSend = function(item, now) {
   var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
 
   if (checkRate(item, globalRateLimit, this.counter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
+    return shouldSendValue(
+      this.platform,
+      this.platformOptions,
+      globalRateLimit + ' max items reached',
+      false,
+    );
   } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
+    return shouldSendValue(
+      this.platform,
+      this.platformOptions,
+      globalRateLimitPerMin + ' items per minute reached',
+      false,
+    );
   }
   this.counter++;
   this.perMinCounter++;
 
   var shouldSend = !checkRate(item, globalRateLimit, this.counter);
   var perMinute = shouldSend;
-  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
-  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
+  shouldSend =
+    shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
+  return shouldSendValue(
+    this.platform,
+    this.platformOptions,
+    null,
+    shouldSend,
+    globalRateLimit,
+    globalRateLimitPerMin,
+    perMinute,
+  );
 };
 
-RateLimiter.prototype.setPlatformOptions = function(platform, options) {
+RateLimiter.prototype.setPlatformOptions = function (platform, options) {
   this.platform = platform;
   this.platformOptions = options;
 };
@@ -91,19 +110,40 @@ function checkRate(item, limit, counter) {
   return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 }
 
-function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
+function shouldSendValue(
+  platform,
+  options,
+  error,
+  shouldSend,
+  globalRateLimit,
+  limitPerMin,
+  perMinute,
+) {
   var payload = null;
   if (error) {
     error = new Error(error);
   }
   if (!error && !shouldSend) {
-    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
+    payload = rateLimitPayload(
+      platform,
+      options,
+      globalRateLimit,
+      limitPerMin,
+      perMinute,
+    );
   }
-  return {error: error, shouldSend: shouldSend, payload: payload};
+  return { error: error, shouldSend: shouldSend, payload: payload };
 }
 
-function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
-  var environment = options.environment || (options.payload && options.payload.environment);
+function rateLimitPayload(
+  platform,
+  options,
+  globalRateLimit,
+  limitPerMin,
+  perMinute,
+) {
+  var environment =
+    options.environment || (options.payload && options.payload.environment);
   var msg;
   if (perMinute) {
     msg = 'item per minute limit reached, ignoring errors until timeout';
@@ -116,15 +156,16 @@ function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMi
         body: msg,
         extra: {
           maxItems: globalRateLimit,
-          itemsPerMinute: limitPerMin
-        }
-      }
+          itemsPerMinute: limitPerMin,
+        },
+      },
     },
     language: 'javascript',
     environment: environment,
     notifier: {
-      version: (options.notifier && options.notifier.version) || options.version
-    }
+      version:
+        (options.notifier && options.notifier.version) || options.version,
+    },
   };
   if (platform === 'browser') {
     item.platform = 'browser';

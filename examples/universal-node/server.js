@@ -16,32 +16,37 @@ var token = 'POST_SERVER_ITEM_TOKEN';
 const rollbar = Rollbar.init({
   accessToken: token,
   handleUncaughtExceptions: true,
-  verbose: false
+  verbose: false,
 });
 const other = require('./other');
 
-app.get('/error', function(req, res) {
-  req.user_id = "test-user";
+app.get('/error', function (req, res) {
+  req.user_id = 'test-user';
   throw new Error('Hello World');
 });
-app.get('/dolog', function(req, res) {
-  var u = rollbar.log('hello there', req, {
-    customName: 'bork bork',
-  }, function(err, resp) {
-    if (err) {
-      console.log('Error');
-      console.log(err);
-    } else {
-      console.log('Response');
-      console.log(resp);
-    }
-  });
+app.get('/dolog', function (req, res) {
+  var u = rollbar.log(
+    'hello there',
+    req,
+    {
+      customName: 'bork bork',
+    },
+    function (err, resp) {
+      if (err) {
+        console.log('Error');
+        console.log(err);
+      } else {
+        console.log('Response');
+        console.log(resp);
+      }
+    },
+  );
   res.send(JSON.stringify(u));
 });
-app.get('/other', function(req, res) {
+app.get('/other', function (req, res) {
   other.doSomeLog('hello', req);
   other.doSomeError('bork bork bork', req);
-  res.json({'hello': 'world'});
+  res.json({ hello: 'world' });
 });
 
 app.use(express.static(path.join(__dirname)));
@@ -55,5 +60,9 @@ app.listen(port, '0.0.0.0', function onStart(err) {
   if (err) {
     console.log(err);
   }
-  console.info('==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.', port, port);
+  console.info(
+    '==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.',
+    port,
+    port,
+  );
 });

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var assert = require('assert');
 var util = require('util');
@@ -16,7 +16,7 @@ function CustomError(message, nested) {
 util.inherits(CustomError, rollbar.Error);
 
 async function wait(ms) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
@@ -30,31 +30,45 @@ async function throwInScriptFile(rollbar, filepath, callback) {
   callback(rollbar);
 }
 
-vows.describe('transforms')
+var nodeVersion = (function () {
+  var version = process.versions.node.split('.');
+
+  return [parseInt(version[0]), parseInt(version[1]), parseInt(version[2])];
+})();
+
+var isMinNodeVersion = function (major, minor) {
+  return (
+    nodeVersion[0] > major ||
+    (nodeVersion[0] === major && nodeVersion[1] >= minor)
+  );
+};
+
+vows
+  .describe('transforms')
   .addBatch({
-    'baseData': {
-      'options': {
-        'defaults': {
-          topic: function() {
+    baseData: {
+      options: {
+        defaults: {
+          topic: function () {
             return rollbar.defaultOptions;
           },
-          'item': {
-            'empty': {
-              topic: function(options) {
+          item: {
+            empty: {
+              topic: function (options) {
                 var item = {};
                 t.baseData(item, options, this.callback);
               },
-              'should have a timestamp': function(err, item) {
+              'should have a timestamp': function (err, item) {
                 assert.ifError(err);
                 assert.notEqual(item.data, undefined);
                 assert.notEqual(item.data.timestamp, undefined);
               },
-              'should have an error level': function(err, item) {
+              'should have an error level': function (err, item) {
                 assert.ifError(err);
                 assert.notEqual(item.data, undefined);
                 assert.equal(item.data.level, 'error');
               },
-              'should have some defaults': function(err, item) {
+              'should have some defaults': function (err, item) {
                 assert.ifError(err);
                 var data = item.data;
                 assert.equal(data.environment, process.env.NODE_ENV);
@@ -63,10 +77,10 @@ vows.describe('transforms')
                 assert.ok(data.server);
                 assert.ok(data.server.host);
                 assert.ok(data.server.pid);
-              }
+              },
             },
             'with values': {
-              topic: function(options) {
+              topic: function (options) {
                 var item = {
                   level: 'critical',
                   framework: 'star-wars',
@@ -75,58 +89,64 @@ vows.describe('transforms')
                   custom: {
                     one: 'a1',
                     stuff: 'b2',
-                    language: 'english'
-                  }
+                    language: 'english',
+                  },
                 };
                 t.baseData(item, options, this.callback);
               },
-              'should have a critical level': function(err, item) {
+              'should have a critical level': function (err, item) {
                 assert.ifError(err);
                 assert.equal(item.data.level, 'critical');
               },
-              'should have the defaults overriden by the item': function(err, item) {
+              'should have the defaults overriden by the item': function (
+                err,
+                item,
+              ) {
                 assert.ifError(err);
                 assert.equal(item.data.environment, 'production');
                 assert.equal(item.data.framework, 'star-wars');
                 assert.equal(item.data.language, 'javascript');
                 assert.equal(item.data.uuid, '12345');
               },
-              'should have data from custom': function(err, item) {
+              'should have data from custom': function (err, item) {
                 assert.equal(item.data.one, 'a1');
                 assert.equal(item.data.stuff, 'b2');
                 assert.notEqual(item.data.language, 'english');
-              }
-            }
-          }
+              },
+            },
+          },
         },
         'with values': {
-          topic: function() {
+          topic: function () {
             return _.merge(rollbar.defaultOptions, {
               payload: {
                 environment: 'payload-prod',
               },
               framework: 'opt-node',
               host: 'opt-host',
-              branch: 'opt-master'
+              branch: 'opt-master',
             });
           },
-          'item': {
-            'empty': {
-              topic: function(options) {
+          item: {
+            empty: {
+              topic: function (options) {
                 var item = {};
                 t.baseData(item, options, this.callback);
               },
-              'should have a timestamp': function(err, item) {
+              'should have a timestamp': function (err, item) {
                 assert.ifError(err);
                 assert.notEqual(item.data, undefined);
                 assert.notEqual(item.data.timestamp, undefined);
               },
-              'should have an error level': function(err, item) {
+              'should have an error level': function (err, item) {
                 assert.ifError(err);
                 assert.notEqual(item.data, undefined);
                 assert.equal(item.data.level, 'error');
               },
-              'should have data from options and defaults': function(err, item) {
+              'should have data from options and defaults': function (
+                err,
+                item,
+              ) {
                 assert.ifError(err);
                 var data = item.data;
                 assert.equal(data.environment, 'payload-prod');
@@ -136,10 +156,10 @@ vows.describe('transforms')
                 assert.equal(data.server.host, 'opt-host');
                 assert.equal(data.server.branch, 'opt-master');
                 assert.ok(data.server.pid);
-              }
+              },
             },
             'with values': {
-              topic: function(options) {
+              topic: function (options) {
                 var item = {
                   level: 'critical',
                   environment: 'production',
@@ -148,147 +168,161 @@ vows.describe('transforms')
                   custom: {
                     one: 'a1',
                     stuff: 'b2',
-                    language: 'english'
-                  }
+                    language: 'english',
+                  },
                 };
                 t.baseData(item, options, this.callback);
               },
-              'should have a critical level': function(err, item) {
+              'should have a critical level': function (err, item) {
                 assert.ifError(err);
                 assert.equal(item.data.level, 'critical');
               },
-              'should have the defaults overriden by the item': function(err, item) {
+              'should have the defaults overriden by the item': function (
+                err,
+                item,
+              ) {
                 assert.ifError(err);
                 assert.equal(item.data.environment, 'production');
                 assert.equal(item.data.framework, 'star-wars');
                 assert.equal(item.data.language, 'javascript');
                 assert.equal(item.data.uuid, '12345');
               },
-              'should have data from custom': function(err, item) {
+              'should have data from custom': function (err, item) {
                 assert.equal(item.data.one, 'a1');
                 assert.equal(item.data.stuff, 'b2');
                 assert.notEqual(item.data.language, 'english');
-              }
-            }
-          }
-        }
-      }
-    }
+              },
+            },
+          },
+        },
+      },
+    },
   })
   .addBatch({
-    'addBody': {
-      'options': {
-        'anything': {
-          topic: function() {
-            return {whatever: 'stuff'};
+    addBody: {
+      options: {
+        anything: {
+          topic: function () {
+            return { whatever: 'stuff' };
           },
-          'item': {
+          item: {
             'with stackInfo': {
-              topic: function(options) {
-                var item = {stackInfo: [{message: 'hey'}]};
+              topic: function (options) {
+                var item = { stackInfo: [{ message: 'hey' }] };
                 t.addBody(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should set the trace_chain': function(err, item) {
+              'should set the trace_chain': function (err, item) {
                 assert.ok(item.data.body.trace_chain);
               },
-              'should not set a message': function(err, item) {
+              'should not set a message': function (err, item) {
                 assert.ok(!item.data.body.message);
-              }
+              },
             },
             'with no stackInfo': {
-              topic: function(options) {
-                var item = {message: 'hello'};
+              topic: function (options) {
+                var item = { message: 'hello' };
                 t.addBody(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should not set the trace_chain': function(err, item) {
+              'should not set the trace_chain': function (err, item) {
                 assert.ok(!item.data.body.trace_chain);
               },
-              'should set a message': function(err, item) {
+              'should set a message': function (err, item) {
                 assert.ok(item.data.body.message);
-              }
-            }
-          }
-        }
-      }
-    }
+              },
+            },
+          },
+        },
+      },
+    },
   })
   .addBatch({
-    'addMessageData': {
-      'options': {
-        'anything': {
-          topic: function() {
-            return {random: 'stuff'};
+    addMessageData: {
+      options: {
+        anything: {
+          topic: function () {
+            return { random: 'stuff' };
           },
-          'item': {
+          item: {
             'no message': {
-              topic: function(options) {
-                var item = {err: 'stuff', not: 'a message'};
+              topic: function (options) {
+                var item = { err: 'stuff', not: 'a message' };
                 t.addMessageData(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should add an empty body': function(err, item) {
+              'should add an empty body': function (err, item) {
                 assert.ok(item.data.body);
-              }
+              },
             },
             'with a message': {
-              topic: function(options) {
-                var item = {message: 'this is awesome'};
+              topic: function (options) {
+                var item = { message: 'this is awesome' };
                 t.addMessageData(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should add a body with the message': function(err, item) {
+              'should add a body with the message': function (err, item) {
                 assert.equal(item.data.body.message.body, 'this is awesome');
-              }
-            }
-          }
-        }
-      }
-    }
+              },
+            },
+          },
+        },
+      },
+    },
   })
   .addBatch({
-    'nodeSourceMaps': {
+    nodeSourceMaps: {
       'with original source present': {
-        topic: function() {
+        topic: function () {
           var Rollbar = new rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            nodeSourceMaps: true
+            nodeSourceMaps: true,
           });
           var queue = Rollbar.client.notifier.queue;
           Rollbar.addItemStub = sinon.stub(queue, 'addItem');
 
-          throwInScriptFile(Rollbar, '../examples/node-typescript/dist/index',
-            this.callback);
+          throwInScriptFile(
+            Rollbar,
+            '../examples/node-typescript/dist/index',
+            this.callback,
+          );
         },
-        'should map the stack with context': function(r) {
+        'should map the stack with context': function (r) {
           var addItem = r.addItemStub;
 
           assert.isTrue(addItem.called);
           if (addItem.called) {
-            var frame = addItem.getCall(0).args[0].body.trace_chain[0].frames.pop();
+            var frame = addItem
+              .getCall(0)
+              .args[0].body.trace_chain[0].frames.pop();
             assert.ok(frame.filename.includes('src/index.ts'));
             assert.equal(frame.lineno, 10);
             assert.equal(frame.colno, 22);
-            assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+            assert.equal(
+              frame.code,
+              "  var error = <Error> new CustomError('foo');",
+            );
             assert.equal(frame.context.pre[0], '    }');
             assert.equal(frame.context.pre[1], '  }');
-            assert.equal(frame.context.pre[2],
-              '  // TypeScript code snippet will include `<Error>`');
+            assert.equal(
+              frame.context.pre[2],
+              '  // TypeScript code snippet will include `<Error>`',
+            );
             assert.equal(frame.context.post[0], '  throw error;');
             assert.equal(frame.context.post[1], '}');
 
-            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic
-              .node_source_maps.source_mapping_urls;
+            var sourceMappingURLs =
+              addItem.getCall(0).args[0].notifier.diagnostic.node_source_maps
+                .source_mapping_urls;
             var urls = Object.keys(sourceMappingURLs);
             assert.ok(urls[0].includes('index.js'));
             assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
@@ -303,97 +337,109 @@ vows.describe('transforms')
             assert.ok(sourceMappingURLs[urls[2]].includes('not found'));
           }
           addItem.reset();
-        }
-      }
-    }
+        },
+      },
+    },
   })
   .addBatch({
-    'nodeSourceMaps': {
+    nodeSourceMaps: {
       'using sourcesContent': {
-        topic: function() {
+        topic: function () {
           var Rollbar = new rollbar({
             accessToken: 'abc123',
             captureUncaught: true,
-            nodeSourceMaps: true
+            nodeSourceMaps: true,
           });
           var queue = Rollbar.client.notifier.queue;
           Rollbar.addItemStub = sinon.stub(queue, 'addItem');
 
-          throwInScriptFile(Rollbar, '../examples/node-dist/index', this.callback);
+          throwInScriptFile(
+            Rollbar,
+            '../examples/node-dist/index',
+            this.callback,
+          );
         },
-        'should map the stack with context': function(r) {
+        'should map the stack with context': function (r) {
           var addItem = r.addItemStub;
 
           assert.isTrue(addItem.called);
           if (addItem.called) {
-            var frame = addItem.getCall(0).args[0].body.trace_chain[0].frames.pop();
+            var frame = addItem
+              .getCall(0)
+              .args[0].body.trace_chain[0].frames.pop();
             assert.ok(frame.filename.includes('src/index.ts'));
             assert.equal(frame.lineno, 10);
             assert.equal(frame.colno, 22);
-            assert.equal(frame.code, "  var error = <Error> new CustomError('foo');");
+            assert.equal(
+              frame.code,
+              "  var error = <Error> new CustomError('foo');",
+            );
             assert.equal(frame.context.pre[0], '    }');
             assert.equal(frame.context.pre[1], '  }');
-            assert.equal(frame.context.pre[2],
-              '  // TypeScript code snippet will include `<Error>`');
+            assert.equal(
+              frame.context.pre[2],
+              '  // TypeScript code snippet will include `<Error>`',
+            );
             assert.equal(frame.context.post[0], '  throw error;');
             assert.equal(frame.context.post[1], '}');
 
-            var sourceMappingURLs = addItem.getCall(0).args[0].notifier.diagnostic
-              .node_source_maps.source_mapping_urls;
+            var sourceMappingURLs =
+              addItem.getCall(0).args[0].notifier.diagnostic.node_source_maps
+                .source_mapping_urls;
             var urls = Object.keys(sourceMappingURLs);
             assert.ok(urls.length === 1);
             assert.ok(urls[0].includes('index.js'));
             assert.ok(sourceMappingURLs[urls[0]].includes('index.js.map'));
           }
           addItem.reset();
-        }
-      }
-    }
+        },
+      },
+    },
   })
   .addBatch({
-    'handleItemWithError': {
-      'options': {
-        'anything': {
-          topic: function() {
+    handleItemWithError: {
+      options: {
+        anything: {
+          topic: function () {
             return {
               some: 'stuff',
               captureIp: true,
             };
           },
-          'item': {
+          item: {
             'no error': {
-              topic: function(options) {
+              topic: function (options) {
                 var item = {
-                  data: {body: {yo: 'hey'}},
-                  message: 'hey'
+                  data: { body: { yo: 'hey' } },
+                  message: 'hey',
                 };
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should not change the item': function(err, item) {
+              'should not change the item': function (err, item) {
                 assert.equal(item.data.body.yo, 'hey');
-              }
+              },
             },
             'with a simple error': {
               topic: function (options) {
                 var item = {
-                  data: {body: {}},
-                  err: new Error('wookie')
+                  data: { body: {} },
+                  err: new Error('wookie'),
                 };
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should add some data to the trace_chain': function(err, item) {
+              'should add some data to the trace_chain': function (err, item) {
                 assert.ok(item.stackInfo);
-              }
+              },
             },
             'with a normal error': {
               topic: function (options) {
-                var test = function() {
+                var test = function () {
                   var x = thisVariableIsNotDefined;
                 };
                 var err;
@@ -403,21 +449,21 @@ vows.describe('transforms')
                   err = e;
                 }
                 var item = {
-                  data: {body: {}},
-                  err: err
+                  data: { body: {} },
+                  err: err,
                 };
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should add some data to the trace_chain': function(err, item) {
+              'should add some data to the trace_chain': function (err, item) {
                 assert.ok(item.stackInfo);
-              }
+              },
             },
             'with a nested error': {
               topic: function (options) {
-                var test = function() {
+                var test = function () {
                   var x = thisVariableIsNotDefined;
                 };
                 var err;
@@ -427,21 +473,27 @@ vows.describe('transforms')
                   err = new CustomError('nested-message', e);
                 }
                 var item = {
-                  data: {body: {}},
-                  err: err
+                  data: { body: {} },
+                  err: err,
                 };
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should have the right data in the trace_chain': function(err, item) {
+              'should have the right data in the trace_chain': function (
+                err,
+                item,
+              ) {
                 var trace_chain = item.stackInfo;
                 assert.lengthOf(trace_chain, 2);
                 assert.equal(trace_chain[0].exception.class, 'CustomError');
-                assert.equal(trace_chain[0].exception.message, 'nested-message');
+                assert.equal(
+                  trace_chain[0].exception.message,
+                  'nested-message',
+                );
                 assert.equal(trace_chain[1].exception.class, 'ReferenceError');
-              }
+              },
             },
             'with a null nested error': {
               topic: function (options) {
@@ -451,23 +503,26 @@ vows.describe('transforms')
                 err.nested = null;
 
                 var item = {
-                  data: {body: {}},
-                  err: err
+                  data: { body: {} },
+                  err: err,
                 };
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should have the right data in the trace_chain': function(err, item) {
+              'should have the right data in the trace_chain': function (
+                err,
+                item,
+              ) {
                 var trace_chain = item.stackInfo;
                 assert.lengthOf(trace_chain, 1);
                 assert.equal(trace_chain[0].exception.class, 'CustomError');
-              }
+              },
             },
             'with error context': {
               topic: function (options) {
-                var test = function() {
+                var test = function () {
                   var x = thisVariableIsNotDefined;
                 };
                 var err;
@@ -479,78 +534,116 @@ vows.describe('transforms')
                   err.rollbarContext = { err2: 'error context' };
                 }
                 var item = {
-                  data: {body: {}},
-                  err: err
+                  data: { body: {} },
+                  err: err,
                 };
                 options.addErrorContext = true;
                 t.handleItemWithError(item, options, this.callback);
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should add the error context': function(err, item) {
+              'should add the error context': function (err, item) {
                 var trace_chain = item.stackInfo;
                 assert.lengthOf(trace_chain, 2);
                 assert.equal(item.data.custom.err1, 'nested context');
                 assert.equal(item.data.custom.err2, 'error context');
-              }
-            }
-          }
-        }
-      }
-    }
+              },
+            },
+            'with an error cause': {
+              topic: function (options) {
+                var test = function () {
+                  var x = thisVariableIsNotDefined;
+                };
+                var err;
+                try {
+                  test();
+                } catch (e) {
+                  err = new Error('cause message', { cause: e });
+                  e.rollbarContext = { err1: 'cause context' };
+                  err.rollbarContext = { err2: 'error context' };
+                }
+                var item = {
+                  data: { body: {} },
+                  err: err,
+                };
+                t.handleItemWithError(item, options, this.callback);
+              },
+              'should not error': function (err, item) {
+                assert.ifError(err);
+              },
+              'should have the right data in the trace_chain': function (
+                err,
+                item,
+              ) {
+                // Error cause was introduced in Node 16.9.
+                if (!isMinNodeVersion(16, 9)) return;
+
+                var trace_chain = item.stackInfo;
+                assert.lengthOf(trace_chain, 2);
+                assert.equal(trace_chain[0].exception.class, 'Error');
+                assert.equal(trace_chain[0].exception.message, 'cause message');
+                assert.equal(trace_chain[1].exception.class, 'ReferenceError');
+                assert.equal(item.data.custom.err1, 'cause context');
+                assert.equal(item.data.custom.err2, 'error context');
+              },
+            },
+          },
+        },
+      },
+    },
   })
   .addBatch({
-    'addRequestData': {
-      'options': {
+    addRequestData: {
+      options: {
         'without custom addRequestData method': {
           'without scrub fields': {
-            topic: function() {
+            topic: function () {
               return {
                 nothing: 'here',
                 captureEmail: true,
                 captureUsername: true,
-                captureIp: true
+                captureIp: true,
               };
             },
-            'item': {
+            item: {
               'without a request': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
-                    data: {body: {message: 'hey'}}
+                    data: { body: { message: 'hey' } },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should not change the item': function(err, item) {
+                'should not change the item': function (err, item) {
                   assert.equal(item.request, undefined);
                   assert.equal(item.data.request, undefined);
-                }
+                },
               },
               'with an empty request object': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {},
-                    data: {body: {message: 'hey'}}
+                    data: { body: { message: 'hey' } },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should not change request object': function(err, item) {
+                'should not change request object': function (err, item) {
                   assert.equal(item.request.headers, undefined);
-                }
+                },
               },
               'with a request': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: '/some/endpoint',
@@ -558,30 +651,39 @@ vows.describe('transforms')
                       method: 'GET',
                       body: {
                         token: 'abc123',
-                        something: 'else'
+                        something: 'else',
                       },
                       route: { path: '/api/:bork' },
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should have a request object inside data': function(err, item) {
+                'should have a request object inside data': function (
+                  err,
+                  item,
+                ) {
                   assert.ok(item.data.request);
                 },
-                'should set a person based on request user': function(err, item) {
+                'should set a person based on request user': function (
+                  err,
+                  item,
+                ) {
                   assert.equal(item.data.person.id, 42);
                   assert.equal(item.data.person.email, 'fake@example.com');
                 },
-                'should set some fields based on request data': function(err, item) {
+                'should set some fields based on request data': function (
+                  err,
+                  item,
+                ) {
                   var r = item.data.request;
                   assert.equal(r.url, 'https://example.com/some/endpoint');
                   assert.equal(r.user_ip, '192.192.192.1');
@@ -591,12 +693,12 @@ vows.describe('transforms')
                 },
               },
               'with a request for a nested router with a baseURL': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: '/some/endpoint',
@@ -605,38 +707,47 @@ vows.describe('transforms')
                       method: 'GET',
                       body: {
                         token: 'abc123',
-                        something: 'else'
+                        something: 'else',
                       },
                       route: { path: '/api/:bork' },
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should have a request object inside data': function(err, item) {
+                'should have a request object inside data': function (
+                  err,
+                  item,
+                ) {
                   assert.ok(item.data.request);
                 },
-                'should set some fields based on request data': function(err, item) {
+                'should set some fields based on request data': function (
+                  err,
+                  item,
+                ) {
                   var r = item.data.request;
-                  assert.equal(r.url, 'https://example.com/nested/some/endpoint');
+                  assert.equal(
+                    r.url,
+                    'https://example.com/nested/some/endpoint',
+                  );
                   assert.equal(item.data.context, '/nested/api/:bork');
                 },
               },
               'with a request like from hapi': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: {
@@ -651,36 +762,45 @@ vows.describe('transforms')
                         query: {},
                         pathname: '/some/endpoint',
                         path: '/some/endpoint',
-                        href: '/some/endpoint'
+                        href: '/some/endpoint',
                       },
                       ip: '192.192.192.1',
                       method: 'POST',
                       payload: {
                         token: 'abc123',
-                        something: 'else'
+                        something: 'else',
                       },
                       route: { path: '/api/:bork' },
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should have a request object inside data': function(err, item) {
+                'should have a request object inside data': function (
+                  err,
+                  item,
+                ) {
                   assert.ok(item.data.request);
                 },
-                'should set a person based on request user': function(err, item) {
+                'should set a person based on request user': function (
+                  err,
+                  item,
+                ) {
                   assert.equal(item.data.person.id, 42);
                   assert.equal(item.data.person.email, 'fake@example.com');
                 },
-                'should set some fields based on request data': function(err, item) {
+                'should set some fields based on request data': function (
+                  err,
+                  item,
+                ) {
                   var r = item.data.request;
                   assert.equal(r.url, 'https://example.com/some/endpoint');
                   assert.equal(r.user_ip, '192.192.192.1');
@@ -691,42 +811,54 @@ vows.describe('transforms')
                 },
               },
               'with a request with an array body': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: '/some/endpoint',
                       ip: '192.192.192.1',
                       method: 'POST',
-                      body: [{
-                        token: 'abc123',
-                        something: 'else'
-                      }, 'otherStuff'],
+                      body: [
+                        {
+                          token: 'abc123',
+                          something: 'else',
+                        },
+                        'otherStuff',
+                      ],
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should have a request object inside data': function(err, item) {
+                'should have a request object inside data': function (
+                  err,
+                  item,
+                ) {
                   assert.ok(item.data.request);
                 },
-                'should set a person based on request user': function(err, item) {
+                'should set a person based on request user': function (
+                  err,
+                  item,
+                ) {
                   assert.equal(item.data.person.id, 42);
                   assert.equal(item.data.person.email, 'fake@example.com');
                 },
-                'should set some fields based on request data': function(err, item) {
+                'should set some fields based on request data': function (
+                  err,
+                  item,
+                ) {
                   var r = item.data.request;
                   assert.equal(r.url, 'https://example.com/some/endpoint');
                   assert.equal(r.user_ip, '192.192.192.1');
@@ -734,30 +866,24 @@ vows.describe('transforms')
                   assert.equal(r.POST['0'].something, 'else');
                   assert.equal(r.POST['1'], 'otherStuff');
                 },
-              }
-            }
+              },
+            },
           },
           'with scrub fields': {
-            topic: function() {
+            topic: function () {
               return {
-                scrubHeaders: [
-                  'x-auth-token'
-                ],
-                scrubFields: [
-                  'passwd',
-                  'access_token',
-                  'request.cookie'
-                ]
+                scrubHeaders: ['x-auth-token'],
+                scrubFields: ['passwd', 'access_token', 'request.cookie'],
               };
             },
-            'item': {
+            item: {
               'with a request': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: '/some/endpoint',
@@ -765,35 +891,38 @@ vows.describe('transforms')
                       method: 'GET',
                       body: {
                         token: 'abc123',
-                        something: 'else'
+                        something: 'else',
                       },
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should have a request object inside data': function(err, item) {
+                'should have a request object inside data': function (
+                  err,
+                  item,
+                ) {
                   assert.ok(item.data.request);
                 },
-              }
-            }
-          }
+              },
+            },
+          },
         },
         'with custom addRequestData': {
           'with scrub fields': {
-            topic: function() {
-              var customFn = function(i, r) {
+            topic: function () {
+              var customFn = function (i, r) {
                 assert.equal(i.stuff, undefined);
                 assert.equal(i.other, 'thing');
-                i.myRequest = {body: r.body.token};
+                i.myRequest = { body: r.body.token };
               };
               return {
                 captureIp: true,
@@ -802,18 +931,18 @@ vows.describe('transforms')
                   'passwd',
                   'access_token',
                   'token',
-                  'request.cookie'
-                ]
+                  'request.cookie',
+                ],
               };
             },
-            'item': {
+            item: {
               'with a request': {
-                topic: function(options) {
+                topic: function (options) {
                   var item = {
                     request: {
                       headers: {
                         host: 'example.com',
-                        'x-auth-token': '12345'
+                        'x-auth-token': '12345',
                       },
                       protocol: 'https',
                       url: '/some/endpoint',
@@ -821,88 +950,86 @@ vows.describe('transforms')
                       method: 'GET',
                       body: {
                         token: 'abc123',
-                        something: 'else'
+                        something: 'else',
                       },
                       user: {
                         id: 42,
-                        email: 'fake@example.com'
-                      }
+                        email: 'fake@example.com',
+                      },
                     },
                     stuff: 'hey',
-                    data: {other: 'thing'}
+                    data: { other: 'thing' },
                   };
                   t.addRequestData(item, options, this.callback);
                 },
-                'should not error': function(err, item) {
+                'should not error': function (err, item) {
                   assert.ifError(err);
                 },
-                'should do what the function does': function(err, item) {
+                'should do what the function does': function (err, item) {
                   assert.equal(item.data.request, undefined);
                   assert.equal(item.data.myRequest.body, 'abc123');
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
   .addBatch({
-    'scrubPayload': {
-      'options': {
+    scrubPayload: {
+      options: {
         'without scrub fields': {
-          topic: function() {
+          topic: function () {
             return rollbar.defaultOptions;
           },
-          'item': {
-            topic: function(options) {
+          item: {
+            topic: function (options) {
               var item = {
                 data: {
                   body: {
                     message: 'hey',
                     password: '123',
-                    secret: {stuff: 'here'}
-                  }
-                }
+                    secret: { stuff: 'here' },
+                  },
+                },
               };
               t.scrubPayload(item, options, this.callback);
             },
-            'should not error': function(err, item) {
+            'should not error': function (err, item) {
               assert.ifError(err);
             },
-            'should not scrub okay keys': function(err, item) {
+            'should not scrub okay keys': function (err, item) {
               assert.equal(item.data.body.message, 'hey');
             },
-            'should scrub key/value based on defaults': function(err, item) {
+            'should scrub key/value based on defaults': function (err, item) {
               assert.matches(item.data.body.password, /\*+/);
               assert.matches(item.data.body.secret, /\*+/);
-            }
-          }
+            },
+          },
         },
         'with scrub fields': {
-          topic: function() {
+          topic: function () {
             return {
               captureIp: true,
-              scrubHeaders: [
-                'x-auth-token'
-              ],
+              scrubHeaders: ['x-auth-token'],
               scrubFields: [
                 'passwd',
                 'access_token',
                 'request.cookie',
-                'sauce'
+                'sauce',
               ],
-              scrubRequestBody: true
+              scrubRequestBody: true,
             };
           },
-          'item': {
+          item: {
             'with a request': {
-              topic: function(options) {
+              topic: function (options) {
                 var item = {
                   request: {
                     headers: {
                       host: 'example.com',
-                      'x-auth-token': '12345'
+                      'x-auth-token': '12345',
                     },
                     protocol: 'https',
                     url: '/some/endpoint',
@@ -910,35 +1037,39 @@ vows.describe('transforms')
                     method: 'GET',
                     body: {
                       token: 'abc123',
-                      something: 'else'
+                      something: 'else',
                     },
                     user: {
                       id: 42,
-                      email: 'fake@example.com'
-                    }
+                      email: 'fake@example.com',
+                    },
                   },
                   stuff: 'hey',
                   data: {
                     other: 'thing',
                     sauce: 'secrets',
-                    someParams: 'foo=okay&passwd=iamhere'
-                  }
+                    someParams: 'foo=okay&passwd=iamhere',
+                  },
                 };
-                t.addRequestData(item, options, function(e, i) {
-                  if (e) {
-                    this.callback(e);
-                    return;
-                  }
-                  t.scrubPayload(i, options, this.callback)
-                }.bind(this));
+                t.addRequestData(
+                  item,
+                  options,
+                  function (e, i) {
+                    if (e) {
+                      this.callback(e);
+                      return;
+                    }
+                    t.scrubPayload(i, options, this.callback);
+                  }.bind(this),
+                );
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should have a request object inside data': function(err, item) {
+              'should have a request object inside data': function (err, item) {
                 assert.ok(item.data.request);
               },
-              'should scrub based on the options': function(err, item) {
+              'should scrub based on the options': function (err, item) {
                 var r = item.data.request;
                 assert.equal(r.GET.token, 'abc123');
                 assert.match(r.headers['x-auth-token'], /\*+/);
@@ -946,21 +1077,21 @@ vows.describe('transforms')
                 assert.match(item.data.sauce, /\*+/);
                 assert.equal(item.data.other, 'thing');
                 assert.match(item.data.someParams, /foo=okay&passwd=\*+/);
-              }
+              },
             },
             'with a json request body': {
-              topic: function(options) {
+              topic: function (options) {
                 var requestBody = JSON.stringify({
                   token: 'abc123',
                   something: 'else',
-                  passwd: '123456'
+                  passwd: '123456',
                 });
                 var item = {
                   request: {
                     headers: {
                       host: 'example.com',
                       'content-type': 'application/json',
-                      'x-auth-token': '12345'
+                      'x-auth-token': '12345',
                     },
                     protocol: 'https',
                     url: '/some/endpoint',
@@ -969,31 +1100,35 @@ vows.describe('transforms')
                     body: requestBody,
                     user: {
                       id: 42,
-                      email: 'fake@example.com'
-                    }
+                      email: 'fake@example.com',
+                    },
                   },
                   stuff: 'hey',
                   data: {
                     other: 'thing',
                     sauce: 'secrets',
-                    someParams: 'foo=okay&passwd=iamhere'
-                  }
+                    someParams: 'foo=okay&passwd=iamhere',
+                  },
                 };
-                t.addRequestData(item, options, function(e, i) {
-                  if (e) {
-                    this.callback(e);
-                    return;
-                  }
-                  t.scrubPayload(i, options, this.callback)
-                }.bind(this));
+                t.addRequestData(
+                  item,
+                  options,
+                  function (e, i) {
+                    if (e) {
+                      this.callback(e);
+                      return;
+                    }
+                    t.scrubPayload(i, options, this.callback);
+                  }.bind(this),
+                );
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should have a request object inside data': function(err, item) {
+              'should have a request object inside data': function (err, item) {
                 assert.ok(item.data.request);
               },
-              'should scrub based on the options': function(err, item) {
+              'should scrub based on the options': function (err, item) {
                 var r = item.data.request;
                 assert.match(r.headers['x-auth-token'], /\*+/);
                 assert.equal(r.headers['host'], 'example.com');
@@ -1003,46 +1138,56 @@ vows.describe('transforms')
 
                 var requestBody = JSON.parse(item.data.request.body);
                 assert.match(requestBody.passwd, /\*+/);
-              }
+              },
             },
             'with a bad json request body': {
-              topic: function(options) {
+              topic: function (options) {
                 var requestBody = 'not valid json';
                 var item = {
                   request: {
                     headers: {
-                      'content-type': 'application/json'
+                      'content-type': 'application/json',
                     },
                     protocol: 'https',
                     url: '/some/endpoint',
                     ip: '192.192.192.192',
                     method: 'GET',
-                    body: requestBody
-                  }
+                    body: requestBody,
+                  },
                 };
-                t.addRequestData(item, options, function(e, i) {
-                  if (e) {
-                    this.callback(e);
-                    return;
-                  }
-                  t.scrubPayload(i, options, this.callback)
-                }.bind(this));
+                t.addRequestData(
+                  item,
+                  options,
+                  function (e, i) {
+                    if (e) {
+                      this.callback(e);
+                      return;
+                    }
+                    t.scrubPayload(i, options, this.callback);
+                  }.bind(this),
+                );
               },
-              'should not error': function(err, item) {
+              'should not error': function (err, item) {
                 assert.ifError(err);
               },
-              'should have a request object inside data': function(err, item) {
+              'should have a request object inside data': function (err, item) {
                 assert.ok(item.data.request);
               },
-              'should delete the body and add a diagnostic error': function(err, item) {
+              'should delete the body and add a diagnostic error': function (
+                err,
+                item,
+              ) {
                 var requestBody = JSON.parse(item.data.request.body);
                 assert.equal(requestBody, null);
-                assert.match(item.data.request.error, /request.body parse failed/);
-              }
-            }
-          }
-        }
-      }
-    }
+                assert.match(
+                  item.data.request.error,
+                  /request.body parse failed/,
+                );
+              },
+            },
+          },
+        },
+      },
+    },
   })
-  .export(module, {error: false});
+  .export(module, { error: false });

@@ -2,35 +2,34 @@
 
 1. Require and initialize the Rollbar javascript module:
 
-  ```js
+```js
+//
+// Download the latest rollbar.umd.nojson.min.js and place in current directory.
+var rollbarConfig = {
+  accessToken: '...',
+  captureUncaught: true,
+  payload: {
+    environment: 'development',
+  },
+};
 
-  //
-  // Download the latest rollbar.umd.nojson.min.js and place in current directory.
-  var rollbarConfig = {
-    accessToken: '...',
-    captureUncaught: true,
-    payload: {
-      environment: 'development',
-    }
-  };
-
-  // Require the Rollbar library
-  require(["rollbar.umd.nojson.min.js"], function(Rollbar) {
-    var rollbar = Rollbar.init(rollbarConfig);
-    rollbar.info('Hello world');
-  });
-  ```
+// Require the Rollbar library
+require(['rollbar.umd.nojson.min.js'], function (Rollbar) {
+  var rollbar = Rollbar.init(rollbarConfig);
+  rollbar.info('Hello world');
+});
+```
 
 2. Report exceptions and messages in your code:
 
-  ```js
-  try {
-    foo();
-    rollbar.debug('foo() called');
-  } catch (e) {
-    rollbar.error('Problem calling foo()', e);
-  }
-  ```
+```js
+try {
+  foo();
+  rollbar.debug('foo() called');
+} catch (e) {
+  rollbar.error('Problem calling foo()', e);
+}
+```
 
 ## Test the example
 
