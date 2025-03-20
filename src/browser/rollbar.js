@@ -1,10 +1,11 @@
-var Rollbar = require('./core');
-var telemeter = require('../telemetry');
-var instrumenter = require('./telemetry');
-var polyfillJSON = require('../utility/polyfillJSON');
-var wrapGlobals = require('./wrapGlobals');
-var scrub = require('../scrub');
-var truncation = require('../truncation');
+const Rollbar = require('./core');
+const telemeter = require('../telemetry');
+const instrumenter = require('./telemetry');
+const polyfillJSON = require('../utility/polyfillJSON');
+const wrapGlobals = require('./wrapGlobals');
+const scrub = require('../scrub');
+const truncation = require('../truncation');
+const Tracing = require('../tracing/tracing');
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -13,6 +14,7 @@ Rollbar.setComponents({
   wrapGlobals: wrapGlobals,
   scrub: scrub,
   truncation: truncation,
+  tracing: Tracing.default,
 });
 
 module.exports = Rollbar;

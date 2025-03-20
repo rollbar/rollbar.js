@@ -16,17 +16,22 @@ var errorParser = require('../errorParser');
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
-  var Telemeter = this.components.telemeter;
-  var Instrumenter = this.components.instrumenter;
-  var polyfillJSON = this.components.polyfillJSON;
+  const Telemeter = this.components.telemeter;
+  const Instrumenter = this.components.instrumenter;
+  const polyfillJSON = this.components.polyfillJSON;
   this.wrapGlobals = this.components.wrapGlobals;
   this.scrub = this.components.scrub;
-  var truncation = this.components.truncation;
+  const truncation = this.components.truncation;
+  const Tracing = this.components.tracing;
 
-  var transport = new Transport(truncation);
-  var api = new API(this.options, transport, urllib, truncation);
+  const transport = new Transport(truncation);
+  const api = new API(this.options, transport, urllib, truncation);
   if (Telemeter) {
     this.telemeter = new Telemeter(this.options);
+  }
+  if (Tracing) {
+    this.tracing = new Tracing(_gWindow(), this.options);
+    this.tracing.initSession();
   }
   this.client =
     client || new Client(this.options, api, logger, this.telemeter, 'browser');
