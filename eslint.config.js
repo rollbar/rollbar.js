@@ -1,0 +1,22 @@
+import { defineConfig } from 'eslint/config';
+
+export default defineConfig([
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2021,
+      sourceType: 'module',
+    },
+    rules: {
+      'strict': 0,
+      'camelcase': [2, {'properties': 'never'}],
+      'quotes': [2, 'single', 'avoid-escape'],
+      'no-underscore-dangle': 0,
+      'no-useless-escape': 0,
+      'complexity': [2, { 'max': 35 }],
+      'no-use-before-define': [0, { 'functions': false }],
+      'no-unused-vars': [2, { 'argsIgnorePattern': '^_' }],
+      'no-prototype-builtins': 0,
+    }
+  }
+]);
