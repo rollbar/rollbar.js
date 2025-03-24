@@ -115,19 +115,21 @@ Transport.prototype.postJsonPayload = function (
   );
 };
 
-// Wraps _makeRequest and if Angular 2+ Zone.js is detected, changes scope
-// so Angular change detection isn't triggered on each API call.
-// This is the equivalent of runOutsideAngular().
-//
+// Wraps `_makeRequest` if zone.js is being used, ensuring that Rollbar
+// API calls are not intercepted by any child forked zones.
+// This is equivalent to `NgZone.runOutsideAngular` in Angular.
 Transport.prototype._makeZoneRequest = function () {
   var gWindow =
     (typeof window != 'undefined' && window) ||
     (typeof self != 'undefined' && self);
-  var currentZone = gWindow && gWindow.Zone && gWindow.Zone.current;
+  // Whenever zone.js is loaded and `Zone` is exposed globally, access
+  // the root zone to ensure that requests are always made within it.
+  // This approach is framework-agnostic, regardless of which
+  // framework zone.js is used with.
+  var rootZone = gWindow && gWindow.Zone && gWindow.Zone.root;
   var args = Array.prototype.slice.call(arguments);
 
-  if (currentZone && currentZone._name === 'angular') {
-    var rootZone = currentZone._parent;
+  if (rootZone) {
     var self = this;
     rootZone.run(function () {
       self._makeRequest.apply(undefined, args);
