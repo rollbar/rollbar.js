@@ -1,15 +1,15 @@
-const HtmlWebPackPlugin = require("html-webpack-plugin");
+const HtmlWebPackPlugin = require('html-webpack-plugin');
 
 const htmlPlugin = new HtmlWebPackPlugin({
-  template: "./src/index.html",
-  filename: "./index.html"
+  template: './src/index.html',
+  filename: './index.html',
 });
 
 module.exports = (_env, argv) => ({
   output: {
     // rollbar.js tests require modified asset path.
     // Detect whether running JIT or building the webpack bundle.
-    publicPath: (argv.build ? '/examples/react/dist/' : '')
+    publicPath: argv.build ? '/examples/react/dist/' : '',
   },
   module: {
     rules: [
@@ -17,10 +17,10 @@ module.exports = (_env, argv) => ({
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader"
-        }
-      }
-    ]
+          loader: 'babel-loader',
+        },
+      },
+    ],
   },
-  plugins: [htmlPlugin]
+  plugins: [htmlPlugin],
 });

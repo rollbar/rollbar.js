@@ -79,7 +79,6 @@ function _getScrubFieldRegexs(scrubFields) {
   return ret;
 }
 
-
 function _getScrubQueryParamRegexs(scrubFields) {
   var ret = [];
   var pat;

@@ -2,13 +2,17 @@
 // tests in separate files. This file is for testing non-default config
 // options during snippet execution. (Before full rollbar.js loads.)
 
-describe('Rollbar loaded by snippet with non-default options', function() {
+describe('Rollbar loaded by snippet with non-default options', function () {
   before(function (done) {
     // Stub the xhr interface.
     window.server = sinon.createFakeServer();
 
     // Load the HTML page.
-    document.write(window.__html__['examples/universal-browser/test-with-non-default-options.html']);
+    document.write(
+      window.__html__[
+        'examples/universal-browser/test-with-non-default-options.html'
+      ],
+    );
 
     // Karma headless chrome won't dispatch DOMContentLoaded,
     // so we need to do it manually.
@@ -17,7 +21,7 @@ describe('Rollbar loaded by snippet with non-default options', function() {
     document.dispatchEvent(event);
 
     // Give the snippet time to load and init.
-    setTimeout(function() {
+    setTimeout(function () {
       done();
     }, 1000);
   });
@@ -26,21 +30,19 @@ describe('Rollbar loaded by snippet with non-default options', function() {
     window.server.restore();
   });
 
-  it('should send a valid log event', function(done) {
+  it('should send a valid log event', function (done) {
     var server = window.server;
     var rollbar = document.defaultView.Rollbar;
 
-    server.respondWith('POST', 'api/1/item',
-      [
-        200,
-        { 'Content-Type': 'application/json' },
-        '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}'
-      ]
-    );
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
 
     var ret = rollbar.info('test');
 
-    setTimeout(function() {
+    setTimeout(function () {
       server.respond();
 
       var body = JSON.parse(server.requests[0].requestBody);

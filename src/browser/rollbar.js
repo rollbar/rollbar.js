@@ -12,7 +12,7 @@ Rollbar.setComponents({
   polyfillJSON: polyfillJSON,
   wrapGlobals: wrapGlobals,
   scrub: scrub,
-  truncation: truncation
+  truncation: truncation,
 });
 
 module.exports = Rollbar;

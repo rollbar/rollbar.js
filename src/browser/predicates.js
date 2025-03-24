@@ -8,5 +8,5 @@ function checkIgnore(item, settings) {
 }
 
 module.exports = {
-  checkIgnore: checkIgnore
+  checkIgnore: checkIgnore,
 };

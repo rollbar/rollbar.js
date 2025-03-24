@@ -1,24 +1,32 @@
 // See https://nodejs.org/docs/latest/api/url.html
 function parse(url) {
   var result = {
-    protocol: null, auth: null, host: null, path: null,
-    hash: null, href: url, hostname: null, port: null,
-    pathname: null, search: null, query: null
+    protocol: null,
+    auth: null,
+    host: null,
+    path: null,
+    hash: null,
+    href: url,
+    hostname: null,
+    port: null,
+    pathname: null,
+    search: null,
+    query: null,
   };
 
   var i, last;
   i = url.indexOf('//');
   if (i !== -1) {
-    result.protocol = url.substring(0,i);
-    last = i+2;
+    result.protocol = url.substring(0, i);
+    last = i + 2;
   } else {
     last = 0;
   }
-  
+
   i = url.indexOf('@', last);
   if (i !== -1) {
     result.auth = url.substring(last, i);
-    last = i+1;
+    last = i + 1;
   }
 
   i = url.indexOf('/', last);
@@ -75,5 +83,5 @@ function parse(url) {
 }
 
 module.exports = {
-  parse: parse
+  parse: parse,
 };

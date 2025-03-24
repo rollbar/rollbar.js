@@ -2,30 +2,52 @@ name: Rollbar.js CI
 
 on:
   push:
-    branches: [ master ]
-    tags: [ v* ]
+    branches: [master]
+    tags: [v*]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
     runs-on: ubuntu-20.04
+
     strategy:
       matrix:
-        node-version: [8, 10, 12, 14, 16]
+        include:
+          - node: 14
+            npm: ^8
+          - node: 16
+            npm: ^8
+          - node: 18
+            npm: ^9
+          - node: 20
+            npm: ^10
+          - node: latest
+            npm: latest
 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install node.js
-        uses: actions/setup-node@v2-beta
+      - name: Set up node ${{ matrix.node }}
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
+
+      - name: Update npm
+        run: npm install -g npm@${{ matrix.npm }}
 
       - name: npm install
         run: npm install
+
+      - name: Lint
+        uses: wearerequired/lint-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prettier: true
+          eslint: true
+          eslint_args: '--max-warnings 0'
+          eslint_extensions: js
 
       - name: Run tests
         run: npm run test_ci

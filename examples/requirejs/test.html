@@ -9,7 +9,7 @@
         captureUncaught: true,
         payload: {
           environment: 'development',
-        }
+        },
       };
 
       // You can either use the snippet or load asynchronously via requirejs
@@ -18,21 +18,20 @@
       // NOTE: you must use the name "rollbar" here.
       require.config({
         paths: {
-          rollbar: '../../dist/rollbar.umd'
-        }
+          rollbar: '../../dist/rollbar.umd',
+        },
       });
 
-      require(['rollbar'],
-          // Note: clicking on the "Foo" button below before the Rollbar
-          // module is loaded and initialized will not Report the
-          // exception to Rollbar.
-        function(Rollbar) {
+      require([
+        'rollbar',
+      ], // Note: clicking on the "Foo" button below before the Rollbar
+      // module is loaded and initialized will not Report the
+      // exception to Rollbar.
+      function (Rollbar) {
+        var rollbar = new Rollbar(_rollbarConfig);
 
-          var rollbar = new Rollbar(_rollbarConfig);
-
-          rollbar.info('Hello world');
-        }
-      );
+        rollbar.info('Hello world');
+      });
     </script>
     <button onclick="foo();">Foo</button>
     <button onclick="functionC();">Bar</button>

@@ -7,7 +7,11 @@ var rollbarConfig = {
   checkIgnore: function (_isUncaught, _args, payload) {
     // Example checkIgnore: take action and tell rollbar.js to ignore event if
     // condition is met, else return false.
-    if (payload.body.message && payload.body.message.extra && payload.body.message.extra.storePayload) {
+    if (
+      payload.body.message &&
+      payload.body.message.extra &&
+      payload.body.message.extra.storePayload
+    ) {
       // Example building fully prepared json from the payload object.
       window.jsonPayload = window.Rollbar.buildJsonPayload(payload);
 
@@ -15,7 +19,7 @@ var rollbarConfig = {
     }
 
     return false;
-  }
+  },
 };
 
 window.Rollbar = new rollbar(rollbarConfig);
