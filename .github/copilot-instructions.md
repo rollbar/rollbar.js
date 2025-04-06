@@ -13,6 +13,8 @@ The SDK is designed to work across platforms, supporting both browser and server
 - Automatic error grouping to reduce noise
 - Real-time notifications for critical issues
 - Detailed stack traces with source maps support
+- Distributed tracing and session management
+- Session replay capabilities for reproducing user actions
 
 ## Architecture Overview
 
@@ -74,3 +76,31 @@ When suggesting code, be aware of these common patterns:
 - Queue-based sending with retry logic
 - Environment and context detection
 - Scrubbing of sensitive data
+
+## Tracing & Session Replay
+
+The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implementation that powers both distributed tracing and session recording features:
+
+### Components
+
+- **Context & ContextManager**: Manages propagation of tracing context through the application
+- **Span**: Represents a unit of work or operation with timing information and attributes
+- **Tracer**: Creates and manages spans for tracking operations
+- **SpanProcessor & SpanExporter**: Processes and exports spans to their destination 
+- **Session**: Manages browser session data persistence and creation
+
+### Usage Patterns
+
+- **Tracing initialization**: Initialize via the main Tracing class with appropriate configuration
+- **Context propagation**: Use context to pass trace information between components
+- **Span creation**: Create spans to measure operations with `startSpan()`
+- **Attributes and events**: Add metadata to spans with `setAttribute()` and `addEvent()`
+- **Session management**: Automatically manages user sessions via browser sessionStorage
+
+### Integration with Session Replay
+
+The Session Replay feature utilizes this tracing infrastructure to:
+- Track and record user sessions with unique identifiers
+- Associate spans with specific user sessions for complete context
+- Capture timing information for accurate playback
+- Store interaction events as span attributes and events
