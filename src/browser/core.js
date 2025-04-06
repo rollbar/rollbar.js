@@ -12,6 +12,7 @@ var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
+const recorderDefaults = require('./replay/defaults');
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -23,6 +24,7 @@ function Rollbar(options, client) {
   this.scrub = this.components.scrub;
   const truncation = this.components.truncation;
   const Tracing = this.components.tracing;
+  const Recorder = this.components.recorder;
 
   const transport = new Transport(truncation);
   const api = new API(this.options, transport, urllib, truncation);
@@ -30,9 +32,19 @@ function Rollbar(options, client) {
     this.telemeter = new Telemeter(this.options);
   }
   if (Tracing) {
-    this.tracing = new Tracing(_gWindow(), this.options);
+    this.tracing = new Tracing(_gWindow(), api, this.options);
     this.tracing.initSession();
   }
+
+  if (Tracing && Recorder) {
+    const recorderOptions = this.options.recorder;
+    this.recorder = new Recorder(this.tracing, recorderOptions);
+
+    if (recorderOptions.enabled && recorderOptions.autoStart === true) {
+      this.recorder.start();
+    }
+  }
+
   this.client =
     client || new Client(this.options, api, logger, this.telemeter, 'browser');
   var gWindow = _gWindow();
@@ -99,12 +111,15 @@ Rollbar.prototype.configure = function (options, payloadData) {
   if (payloadData) {
     payload = { payload: payloadData };
   }
+
   this.options = _.handleOptions(oldOptions, options, payload, logger);
   this.options._configuredOptions = _.handleOptions(
     oldOptions._configuredOptions,
     options,
     payload,
   );
+
+  this.recorder?.configure(this.options);
   this.client.configure(this.options, payloadData);
   this.instrumenter && this.instrumenter.configure(this.options);
   this.setupUnhandledCapture();
@@ -349,7 +364,6 @@ Rollbar.prototype.handleAnonymousErrors = function () {
 
   var r = this;
   function prepareStackTrace(error, _stack) {
-     
     if (r.options.inspectAnonymousErrors) {
       if (r.anonymousErrorsPending) {
         // This is the only known way to detect that onerror saw an anonymous error.
@@ -605,6 +619,7 @@ var defaultOptions = {
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
+  recorder: recorderDefaults,
 };
 
 module.exports = Rollbar;
