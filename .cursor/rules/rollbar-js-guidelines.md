@@ -26,6 +26,7 @@ src/
 - Lint: `npm run lint` (ESLint)
 - Test: `npm run test` (all tests), `npm run test-browser` (browser only), `npm run test-server` (server only)
 - Run specific test: `grunt test-browser:specificTestName`
+- Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
 ## Coding Standards
 
@@ -42,12 +43,23 @@ When working with this codebase, please follow these guidelines:
 
 ## Error Handling and Logging
 
-The library uses different log levels for appropriate error categorization:
+The library's error handling approach follows specific guidelines:
+- Always use try/catch blocks around risky operations
+- Log errors through Rollbar's own logger system
+- Scrub sensitive fields in error payloads (see package.json defaults)
+
+Different log levels are used for appropriate error categorization:
 - `debug`: Development information
 - `info`: General information
 - `warning`: Non-critical issues
 - `error`: Serious problems
 - `critical`: Critical failures
+
+## TypeScript Support
+
+- Type definitions are located in index.d.ts
+- Add JSDoc types to enable intellisense when needed
+- When suggesting TypeScript-compatible code, ensure it aligns with existing type definitions
 
 ## Code Suggestions
 

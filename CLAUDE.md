@@ -34,6 +34,7 @@ src/
 - Test server only: `npm run test-server`
 - Test specific browser test: `grunt test-browser:specificTestName`
   - Example: `grunt test-browser:transforms`
+- Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
 ## Code Style Guidelines
 
@@ -50,10 +51,18 @@ src/
 
 ## Error Handling
 
-The codebase uses a comprehensive error tracking approach with appropriate levels:
-- Debug level for development info
-- Warning level for non-critical issues
-- Error level for uncaught exceptions
+- Prefer try/catch blocks around risky operations
+- Log errors through Rollbar's own logger system
+- Scrub sensitive fields in error payloads (see package.json defaults)
+- The codebase uses a comprehensive error tracking approach with appropriate levels:
+  - Debug level for development info
+  - Warning level for non-critical issues
+  - Error level for uncaught exceptions
+
+## TypeScript Support
+
+- Type definitions in index.d.ts
+- Add JSDoc types to enable intellisense when needed
 
 ## Common Patterns
 

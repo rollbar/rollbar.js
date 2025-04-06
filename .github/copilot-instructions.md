@@ -20,6 +20,7 @@ The codebase is organized with separate implementations for:
 - Browser-based JavaScript (`src/browser/`)
 - Server-side Node.js (`src/server/`)
 - React Native (`src/react-native/`)
+- Distributed tracing (`src/tracing/`)
 
 Common functionality is shared in the root `src/` directory.
 
@@ -31,6 +32,7 @@ Common functionality is shared in the root `src/` directory.
 - Test browser only: `npm run test-browser`
 - Test server only: `npm run test-server`
 - Test specific browser test: `grunt test-browser:specificTestName`
+- Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
 ## Code Style Guidelines
 
@@ -49,10 +51,20 @@ When contributing to Rollbar.js, please follow these style guidelines:
 
 ## Error Handling
 
-The codebase uses a comprehensive error tracking approach with different log levels:
-- Debug level for development info
-- Warning level for non-critical issues
-- Error level for uncaught exceptions
+The error handling approach in Rollbar.js follows these guidelines:
+- Prefer try/catch blocks around risky operations
+- Log errors through Rollbar's own logger system
+- Scrub sensitive fields in error payloads (see package.json defaults)
+- Use appropriate log levels:
+  - Debug level for development info
+  - Warning level for non-critical issues
+  - Error level for uncaught exceptions
+
+## TypeScript Support
+
+- Type definitions are located in index.d.ts
+- Add JSDoc types to enable intellisense when needed
+- When suggesting TypeScript-compatible code, ensure it aligns with existing type definitions
 
 ## Common Patterns
 
