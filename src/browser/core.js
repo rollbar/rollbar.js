@@ -12,6 +12,7 @@ var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
+var replayDefaults = require('./defaults/replayOptions');
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -32,6 +33,12 @@ function Rollbar(options, client) {
   if (Tracing) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
+  }
+  
+  // Initialize replay if enabled in options
+  const Replay = this.components.replay;
+  if (Replay && this.options.replay && this.options.replay.enabled) {
+    this.replayRecorder = Replay.createReplayRecorder(this);
   }
   this.client =
     client || new Client(this.options, api, logger, this.telemeter, 'browser');
@@ -100,6 +107,16 @@ Rollbar.prototype.configure = function (options, payloadData) {
     payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload, logger);
+  
+  // Update replay configuration if options change
+  if (options && options.replay && this.components.replay) {
+    if (options.replay.enabled && !this.replayRecorder) {
+      this.replayRecorder = this.components.replay.createReplayRecorder(this);
+    } else if (this.replayRecorder && options.replay.enabled === false) {
+      this.replayRecorder.stop();
+      this.replayRecorder = null;
+    }
+  }
   this.options._configuredOptions = _.handleOptions(
     oldOptions._configuredOptions,
     options,
@@ -605,6 +622,7 @@ var defaultOptions = {
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
+  replay: replayDefaults,
 };
 
 module.exports = Rollbar;
