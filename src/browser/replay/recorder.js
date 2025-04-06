@@ -1,7 +1,8 @@
 import * as record from '@rrweb/record';
 
 export class ReplayRecorder {
-  constructor(options = {}) {
+  constructor(tracing, options = {}) {
+    this.tracing = tracing;
     this.options = {
       // Default replay options
       checkoutEveryNms: 5 * 60 * 1000, // Checkout every 5 minutes (for time-based approach)
@@ -24,6 +25,11 @@ export class ReplayRecorder {
       return;
     }
     
+    // Ensure tracing is ready
+    if (!this.tracing) {
+      throw new Error('Tracing is required for recording');
+    }
+    
     // Reset events matrix when starting recording
     this.eventsMatrix = [[]];
     
@@ -42,6 +48,9 @@ export class ReplayRecorder {
       ...this.options
     });
     
+    // Create a span for the recording session
+    this.recordingSpan = this.tracing.startSpan('replay.recording');
+    
     this.isRecording = true;
     return this;
   }
@@ -54,6 +63,13 @@ export class ReplayRecorder {
     this.stopFn();
     this.isRecording = false;
     this.stopFn = null;
+    
+    // End the recording span if it exists
+    if (this.recordingSpan) {
+      this.recordingSpan.end();
+      this.recordingSpan = null;
+    }
+    
     return this;
   }
 

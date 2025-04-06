@@ -1,21 +1,17 @@
 import { ReplayRecorder } from './recorder';
-import { TracingReplayIntegration } from './tracingIntegration';
 
 export function createReplayRecorder(rollbar) {
   if (!rollbar || !rollbar.options) {
     throw new Error('Rollbar instance is required to create a ReplayRecorder');
   }
   
-  const options = rollbar.options.replay || {};
-  
-  // If tracing is available, create the integration
-  if (rollbar.tracing) {
-    return new TracingReplayIntegration(rollbar.tracing, options);
+  if (!rollbar.tracing) {
+    throw new Error('Tracing must be available to create a ReplayRecorder');
   }
   
-  // Fallback to basic recorder if tracing isn't available
-  return new ReplayRecorder(options);
+  const options = rollbar.options.replay || {};
+  return new ReplayRecorder(rollbar.tracing, options);
 }
 
 // Export the classes for direct use if needed
-export { ReplayRecorder, TracingReplayIntegration };
+export { ReplayRecorder };
