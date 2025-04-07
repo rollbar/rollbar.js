@@ -9,23 +9,23 @@ export class ContextManager {
     return this.currentContext;
   }
 
-  startSpan(context) {
+  enterContext(context) {
     const previousContext = this.currentContext;
     this.currentContext = context || ROOT_CONTEXT;
     return previousContext;
   }
 
-  endSpan(context) {
+  exitContext(context) {
     this.currentContext = context;
     return this.currentContext;
   }
 
   with(context, fn, thisArg, ...args) {
-    const previousContext = this.startSpan(context);
+    const previousContext = this.enterContext(context);
     try {
       return fn.call(thisArg, ...args);
     } finally {
-      this.endSpan(previousContext);
+      this.exitContext(previousContext);
     }
   }
 }
