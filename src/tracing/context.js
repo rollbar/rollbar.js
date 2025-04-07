@@ -8,7 +8,7 @@ export class Context {
   }
 
   setValue (key, value) {
-    const context = new Context(self._currentContext);
+    const context = new Context(this._currentContext);
     context._currentContext.set(key, value);
     return context;
   }
