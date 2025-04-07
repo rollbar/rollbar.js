@@ -9,7 +9,7 @@ export class Tracer {
   startSpan(
     name,
     options = {},
-    context = this.tracing.active()
+    context = this.tracing.contextManager.active()
   ) {
     const parentSpan = this.tracing.getSpan(context);
     const parentSpanContext = parentSpan?.spanContext();
