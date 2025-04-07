@@ -344,7 +344,7 @@ Rollbar.prototype.handleAnonymousErrors = function () {
 
   var r = this;
   function prepareStackTrace(error, _stack) {
-    // eslint-disable-line no-unused-vars
+     
     if (r.options.inspectAnonymousErrors) {
       if (r.anonymousErrorsPending) {
         // This is the only known way to detect that onerror saw an anonymous error.

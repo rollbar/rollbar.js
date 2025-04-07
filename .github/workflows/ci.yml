@@ -9,18 +9,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
         include:
-          - node: 14
-            npm: ^8
-          - node: 16
-            npm: ^8
           - node: 18
             npm: ^9
           - node: 20
+            npm: ^10
+          - node: 22
             npm: ^10
           - node: latest
             npm: latest

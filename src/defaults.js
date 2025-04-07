@@ -1,5 +1,5 @@
 module.exports = {
-  version: '2.26.4',
+  version: '3.0.0-alpha.0',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',

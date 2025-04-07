@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "2.26.4",
+  "version": "3.0.0-alpha.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -28,14 +28,15 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
+    "@babel/eslint-parser": "^7.27.0",
+    "@babel/preset-env": "^7.26.9",
     "babel-eslint": "^10.0.3",
-    "babel-loader": "^8.0.4",
+    "babel-loader": "^9.2.1",
     "bluebird": "^3.3.5",
     "chai": "^4.2.0",
     "chalk": "^1.1.1",
     "coverage-istanbul-loader": "^3.0.5",
-    "eslint": "^6.8.0",
-    "eslint-loader": "^3.0.3",
+    "eslint": "^9.24.0",
     "express": "^4.21.2",
     "glob": "^5.0.14",
     "grunt": "^1.1.0",
@@ -78,7 +79,6 @@
     "script-loader": "0.6.1",
     "sinon": "^8.1.1",
     "stackframe": "^0.2.2",
-    "strict-loader": "^1.2.0",
     "time-grunt": "^1.0.0",
     "vows": "^0.8.3",
     "webpack": "^5.98.0"
@@ -89,7 +89,7 @@
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "./node_modules/.bin/grunt test-server",
     "test_ci": "./node_modules/.bin/grunt test",
-    "lint": "./node_modules/.bin/eslint . --ext .js"
+    "lint": "./node_modules/.bin/eslint ."
   },
   "cdn": {
     "host": "cdn.rollbar.com"
