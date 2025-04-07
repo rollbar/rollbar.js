@@ -36,6 +36,25 @@ Common functionality is shared in the root `src/` directory.
 - Test specific browser test: `grunt test-browser:specificTestName`
 - Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
+## Modern Development Environment
+
+As of version 3.0.0, the SDK has been updated to use modern JavaScript features with appropriate transpilation:
+
+- **ES Modules**: The codebase supports ES modules (`import/export`) syntax
+- **Target Compatibility**: 
+  - Source code uses ECMAScript 2021 features
+  - Builds target ES5 for broad browser compatibility
+  - Lower versions can use the ES5/CommonJS compatible bundles
+- **Build System**: 
+  - Webpack 5 with Babel for transpilation
+  - ESLint for code quality
+  - Configurable output formats (UMD, AMD, vanilla)
+- **Minimum Node.js**: Version 18+ for absolute imports
+- **Toolchain Configuration**:
+  - `babel.config.json`: Controls transpilation options
+  - `eslint.config.mjs`: Modern ESLint flat config format
+  - `webpack.config.js`: Manages bundling and output formats
+
 ## Code Style Guidelines
 
 When contributing to Rollbar.js, please follow these style guidelines:
@@ -48,6 +67,8 @@ When contributing to Rollbar.js, please follow these style guidelines:
 - Unused parameters prefixed with underscore: `function(a, _unused) {}`
 - No whitespace in empty lines
 - Files should end with exactly one newline
+- Control statements (if, for, while, etc.) MUST use braces and newlines, even for single statements
+- Opening braces should be on the same line as the control statement
 - Follow ESLint rules in the project
 - Use Prettier for code formatting
 

@@ -30,6 +30,25 @@ src/
 - Run specific test: `grunt test-browser:specificTestName`
 - Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
+## Modern Development Environment
+
+As of version 3.0.0, the SDK has been updated to use modern JavaScript features with appropriate transpilation:
+
+- **ES Modules**: The codebase supports ES modules (`import/export`) syntax
+- **Target Compatibility**: 
+  - Source code uses ECMAScript 2021 features
+  - Builds target ES5 for broad browser compatibility
+  - Lower versions can use the ES5/CommonJS compatible bundles
+- **Build System**: 
+  - Webpack 5 with Babel for transpilation
+  - ESLint for code quality
+  - Configurable output formats (UMD, AMD, vanilla)
+- **Minimum Node.js**: Version 18+ for absolute imports
+- **Toolchain Configuration**:
+  - `babel.config.json`: Controls transpilation options
+  - `eslint.config.mjs`: Modern ESLint flat config format
+  - `webpack.config.js`: Manages bundling and output formats
+
 ## Coding Standards
 
 When working with this codebase, please follow these guidelines:
@@ -42,6 +61,8 @@ When working with this codebase, please follow these guidelines:
 - All files must end with exactly one newline
 - Function complexity: Maximum complexity of 35
 - Unused parameters: Prefix with underscore (`function(a, _unused) {}`)
+- Control statements: All if/for/while blocks MUST use braces and newlines, even for single statements
+- Opening braces: Should be on the same line as the control statement
 
 ## Error Handling and Logging
 
