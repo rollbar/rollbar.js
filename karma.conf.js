@@ -1,8 +1,8 @@
-var path = require('path');
-var webpack = require('webpack');
-var defaults = require('./defaults');
+const path = require('path');
+const webpack = require('webpack');
+const defaults = require('./defaults');
 
-var defaultsPlugin = new webpack.DefinePlugin(defaults);
+const defaultsPlugin = new webpack.DefinePlugin(defaults);
 
 module.exports = function (config) {
   config.set({
@@ -66,17 +66,8 @@ module.exports = function (config) {
       module: {
         rules: [
           {
-            enforce: 'pre',
             test: /\.js$/,
-            loader: 'eslint-loader',
-            exclude: [/node_modules/, /vendor/, /lib/, /dist/],
-            options: {
-              configFile: path.resolve(__dirname, '.eslintrc'),
-            },
-          },
-          {
-            test: /\.js$/,
-            loader: 'strict-loader',
+            loader: 'babel-loader',
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
           },
           {
