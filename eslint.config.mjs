@@ -4,14 +4,14 @@ import { defineConfig } from 'eslint/config';
 export default defineConfig([
   {
     files: ['**/*.js', '**/*.mjs'],
-		languageOptions: {
+    languageOptions: {
       ecmaVersion: 2021,
       sourceType: 'module',
-			parser: babelParser,
-      parserOptions:{
+      parser: babelParser,
+      parserOptions: {
         ecmaVersion: 2021,
       },
-		},
+    },
     rules: {
       'comma-dangle': 'off',
       'strict': 0,
