@@ -24,18 +24,8 @@ var snippetConfig = {
   module: {
     rules: [
       {
-        enforce: 'pre',
         test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/, /vendor/],
-        options: {
-          failOnError: true,
-          configFile: path.resolve(__dirname, '.eslintrc'),
-        },
-      },
-      {
-        test: /\.js$/,
-        loader: 'strict-loader',
+        loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
     ],
@@ -55,18 +45,8 @@ var pluginConfig = {
   module: {
     rules: [
       {
-        enforce: 'pre',
         test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/, /vendor/],
-        options: {
-          failOnError: true,
-          configFile: path.resolve(__dirname, '.eslintrc'),
-        },
-      },
-      {
-        test: /\.js$/,
-        loader: 'strict-loader',
+        loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
     ],
@@ -80,23 +60,14 @@ var vanillaConfigBase = {
   output: {
     path: outputPath,
   },
+  target: ['web', 'es5'],
   plugins: [defaultsPlugin],
   devtool: 'hidden-source-map',
   module: {
     rules: [
       {
-        enforce: 'pre',
         test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/, /vendor/],
-        options: {
-          failOnError: true,
-          configFile: path.resolve(__dirname, '.eslintrc'),
-        },
-      },
-      {
-        test: /\.js$/,
-        loader: 'strict-loader',
+        loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
     ],
@@ -113,22 +84,13 @@ var UMDConfigBase = {
     libraryTarget: 'umd',
     globalObject: 'this',
   },
+  target: ['web', 'es5'],
   devtool: 'source-map',
   module: {
     rules: [
       {
-        enforce: 'pre',
         test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/, /vendor/],
-        options: {
-          failOnError: true,
-          configFile: path.resolve(__dirname, '.eslintrc'),
-        },
-      },
-      {
-        test: /\.js$/,
-        loader: 'strict-loader',
+        loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
     ],
