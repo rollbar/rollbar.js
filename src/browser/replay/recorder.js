@@ -3,16 +3,7 @@ import * as record from '@rrweb/record';
 export class ReplayRecorder {
   constructor(tracing, options = {}) {
     this.tracing = tracing;
-    this.options = {
-      // Default replay options
-      checkoutEveryNms: 5 * 60 * 1000, // Checkout every 5 minutes (for time-based approach)
-      blockClass: 'rr-block',
-      maskTextClass: 'rr-mask',
-      maskInputs: true,
-      recordCanvas: false,
-      // Override with user options
-      ...options
-    };
+    this.options = options;
     
     // We use a two-dimensional array to store events by checkpoint
     this.eventsMatrix = [[]];

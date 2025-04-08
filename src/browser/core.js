@@ -34,7 +34,7 @@ function Rollbar(options, client) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
-  
+
   // Initialize replay if enabled in options
   const Replay = this.components.replay;
   if (Replay && this.options.replay && this.options.replay.enabled) {
@@ -107,7 +107,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
     payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload, logger);
-  
+
   // Update replay configuration if options change
   if (options && options.replay && this.components.replay) {
     if (options.replay.enabled && !this.replayRecorder) {
@@ -366,7 +366,6 @@ Rollbar.prototype.handleAnonymousErrors = function () {
 
   var r = this;
   function prepareStackTrace(error, _stack) {
-     
     if (r.options.inspectAnonymousErrors) {
       if (r.anonymousErrorsPending) {
         // This is the only known way to detect that onerror saw an anonymous error.
