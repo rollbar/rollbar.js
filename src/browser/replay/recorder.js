@@ -1,48 +1,57 @@
 import * as record from '@rrweb/record';
+import { Tracing } from '../../tracing/tracing';
 
 export class ReplayRecorder {
-  constructor(tracing, options = {}) {
+  tracing = null;
+  options = {};
+  stopFn = null;
+
+  #eventsMatrix = [[]];
+  #recordingSpan = null;
+
+  constructor(tracing, options) {
+    if (!(tracing instanceof Tracing)) {
+      throw new Error('tracing must be an instance of Tracing');
+    }
+
     this.tracing = tracing;
-    this.options = options;
-    
-    // We use a two-dimensional array to store events by checkpoint
-    this.eventsMatrix = [[]];
-    this.stopFn = null;
-    this.isRecording = false;
+    this.options = options ?? {};
+  }
+
+  get isRecording() {
+    return this.recordingSpan !== null;
+  }
+
+  get events() {
+    return this.eventsMatrix.flat();
   }
 
   start() {
     if (this.isRecording) {
       return;
     }
-    
-    // Ensure tracing is ready
-    if (!this.tracing) {
-      throw new Error('Tracing is required for recording');
-    }
-    
+
     // Reset events matrix when starting recording
     this.eventsMatrix = [[]];
-    
+
     this.stopFn = record.record({
       emit: (event, isCheckout) => {
         // If this is a checkout event, start a new array in the matrix
         if (isCheckout) {
           this.eventsMatrix.push([]);
         }
-        
+
         // Add the event to the latest array in the matrix
         const lastEvents = this.eventsMatrix[this.eventsMatrix.length - 1];
         lastEvents.push(event);
       },
       checkoutEveryNms: this.options.checkoutEveryNms,
-      ...this.options
+      ...this.options,
     });
-    
+
     // Create a span for the recording session
     this.recordingSpan = this.tracing.startSpan('replay.recording');
-    
-    this.isRecording = true;
+
     return this;
   }
 
@@ -50,23 +59,17 @@ export class ReplayRecorder {
     if (!this.isRecording || !this.stopFn) {
       return;
     }
-    
+
     this.stopFn();
-    this.isRecording = false;
     this.stopFn = null;
-    
+
     // End the recording span if it exists
     if (this.recordingSpan) {
       this.recordingSpan.end();
       this.recordingSpan = null;
     }
-    
-    return this;
-  }
 
-  // Get all recorded events flattened into a single array
-  getAllEvents() {
-    return this.eventsMatrix.flat();
+    return this;
   }
 
   // Get last N minutes of events (approximately)
@@ -74,13 +77,16 @@ export class ReplayRecorder {
   getLastNMinutes(minutes = 5) {
     const checkpointsToInclude = Math.max(
       2, // Always include at least 2 checkpoints for proper replay
-      Math.ceil((minutes * 60 * 1000) / this.options.checkoutEveryNms)
+      Math.ceil((minutes * 60 * 1000) / this.options.checkoutEveryNms),
     );
-    
+
     // Get the last N checkpoints (or all if we have fewer)
-    const startIdx = Math.max(0, this.eventsMatrix.length - checkpointsToInclude);
+    const startIdx = Math.max(
+      0,
+      this.eventsMatrix.length - checkpointsToInclude,
+    );
     const relevantCheckpoints = this.eventsMatrix.slice(startIdx);
-    
+
     // Flatten the checkpoints into a single array of events
     return relevantCheckpoints.flat();
   }
