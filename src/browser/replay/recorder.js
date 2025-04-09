@@ -72,40 +72,6 @@ export class ReplayRecorder {
     return this;
   }
 
-  // Get last N minutes of events (approximately)
-  // This returns the last 1-2 checkpoints which should cover roughly the requested time
-  getLastNMinutes(minutes = 5) {
-    const checkpointsToInclude = Math.max(
-      2, // Always include at least 2 checkpoints for proper replay
-      Math.ceil((minutes * 60 * 1000) / this.options.checkoutEveryNms),
-    );
-
-    // Get the last N checkpoints (or all if we have fewer)
-    const startIdx = Math.max(
-      0,
-      this.eventsMatrix.length - checkpointsToInclude,
-    );
-    const relevantCheckpoints = this.eventsMatrix.slice(startIdx);
-
-    // Flatten the checkpoints into a single array of events
-    return relevantCheckpoints.flat();
-  }
-
-  // Get the events since the last checkpoint
-  // This is useful for getting just the most recent events
-  getRecentEvents() {
-    if (this.eventsMatrix.length === 0) {
-      return [];
-    }
-    return this.eventsMatrix[this.eventsMatrix.length - 1];
-  }
-
-  // Get the latest N checkpoints of events
-  getLatestCheckpoints(count = 2) {
-    const startIdx = Math.max(0, this.eventsMatrix.length - count);
-    return this.eventsMatrix.slice(startIdx).flat();
-  }
-
   clear() {
     this.eventsMatrix = [[]];
     return this;
