@@ -1,16 +1,15 @@
 export class SpanProcessor {
   constructor(exporter) {
     this.exporter = exporter;
+    this.pendingSpans = new Map()
   }
 
   onStart(span, _parentContext) {
-    pendingSpans.set(span.spanContext.spanId, span);
+    this.pendingSpans.set(span.span.spanContext.spanId, span);
   }
 
   onEnd(span) {
     this.exporter.export([span.export()])
-    pendingSpans.delete(span.spanContext.spanId);
+    this.pendingSpans.delete(span.span.spanContext.spanId);
   }
 }
-
-export const pendingSpans = new Map();
