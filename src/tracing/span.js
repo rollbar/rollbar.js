@@ -17,7 +17,7 @@ export class Span {
       kind: options.kind,
       spanContext: options.spanContext,
       parentSpanId: options.parentSpanId,
-      startTime: this.hrTimeNow(),
+      startTime: options.startTime || this.hrTimeNow(),
       endTime: [0, 0],
       status: {code: 0, message: ''},
       attributes: {'session.id': options.session.id},
@@ -52,13 +52,13 @@ export class Span {
     return this;
   }
 
-  addEvent(name, attributes) {
+  addEvent(name, attributes = {}, time) {
     if (this.span.ended) return this;
 
     this.span.events.push({
       name,
       attributes,
-      time: this.hrTimeNow(),
+      time: time || this.hrTimeNow(),
       droppedAttributesCount: 0,
     });
 
@@ -69,9 +69,9 @@ export class Span {
     return this.span.ended === false;
   }
 
-  end(attributes) {
+  end(attributes, time) {
     if (attributes) this.setAttributes(attributes);
-    this.span.endTime = this.hrTimeNow();
+    this.span.endTime = time || this.hrTimeNow();
     this.span.ended = true;
     this.spanProcessor.onEnd(this);
   }
