@@ -1,6 +1,7 @@
 var merge = require('./merge');
 
 var RollbarJSON = {};
+
 function setupJSON(polyfillJSON) {
   if (isFunction(RollbarJSON.stringify) && isFunction(RollbarJSON.parse)) {
     return;
@@ -450,6 +451,7 @@ function nonCircularClone(obj) {
     }
     return result;
   }
+
   return clone(obj, seen);
 }
 
@@ -689,6 +691,18 @@ function formatArgsAsString(args) {
   for (i = 0, len = args.length; i < len; ++i) {
     arg = args[i];
     switch (typeName(arg)) {
+      case 'array':
+        var trimLimit = 10;
+        var trimmedArgs = arg.slice(0, trimLimit);
+        var argsToFormat =
+          trimmedArgs.length === trimLimit
+            ? trimmedArgs.concat(
+                '...output trimmed to ' + trimLimit + ' items...',
+              )
+            : trimmedArgs;
+
+        arg = '[' + formatArgsAsString(argsToFormat) + ']';
+        break;
       case 'object':
         arg = stringify(arg);
         arg = arg.error || arg.value;
