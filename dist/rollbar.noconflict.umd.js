@@ -290,877 +290,7 @@ module.exports = Queue;
 
 /***/ }),
 
-/***/ 49:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-var helpers = __webpack_require__(93);
-var defaultOptions = {
-  hostname: 'api.rollbar.com',
-  path: '/api/1/item/',
-  search: null,
-  version: '1',
-  protocol: 'https:',
-  port: 443
-};
-
-/**
- * Api is an object that encapsulates methods of communicating with
- * the Rollbar API.  It is a standard interface with some parts implemented
- * differently for server or browser contexts.  It is an object that should
- * be instantiated when used so it can contain non-global options that may
- * be different for another instance of RollbarApi.
- *
- * @param options {
- *    accessToken: the accessToken to use for posting items to rollbar
- *    endpoint: an alternative endpoint to send errors to
- *        must be a valid, fully qualified URL.
- *        The default is: https://api.rollbar.com/api/1/item
- *    proxy: if you wish to proxy requests provide an object
- *        with the following keys:
- *          host or hostname (required): foo.example.com
- *          port (optional): 123
- *          protocol (optional): https
- * }
- */
-function Api(options, transport, urllib, truncation, jsonBackup) {
-  this.options = options;
-  this.transport = transport;
-  this.url = urllib;
-  this.truncation = truncation;
-  this.jsonBackup = jsonBackup;
-  this.accessToken = options.accessToken;
-  this.transportOptions = _getTransport(options, urllib);
-}
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.postItem = function (data, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
-  var self = this;
-
-  // ensure the network request is scheduled after the current tick.
-  setTimeout(function () {
-    self.transport.post(self.accessToken, transportOptions, payload, callback);
-  }, 0);
-};
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.buildJsonPayload = function (data, callback) {
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
-  var stringifyResult;
-  if (this.truncation) {
-    stringifyResult = this.truncation.truncate(payload);
-  } else {
-    stringifyResult = _.stringify(payload);
-  }
-  if (stringifyResult.error) {
-    if (callback) {
-      callback(stringifyResult.error);
-    }
-    return null;
-  }
-  return stringifyResult.value;
-};
-
-/**
- *
- * @param jsonPayload
- * @param callback
- */
-Api.prototype.postJsonPayload = function (jsonPayload, callback) {
-  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
-  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
-};
-Api.prototype.configure = function (options) {
-  var oldOptions = this.oldOptions;
-  this.options = _.merge(oldOptions, options);
-  this.transportOptions = _getTransport(this.options, this.url);
-  if (this.options.accessToken !== undefined) {
-    this.accessToken = this.options.accessToken;
-  }
-  return this;
-};
-function _getTransport(options, url) {
-  return helpers.getTransportFromOptions(options, defaultOptions, url);
-}
-module.exports = Api;
-
-/***/ }),
-
-/***/ 93:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-function buildPayload(accessToken, data, jsonBackup) {
-  if (!_.isType(data.context, 'string')) {
-    var contextResult = _.stringify(data.context, jsonBackup);
-    if (contextResult.error) {
-      data.context = "Error: could not serialize 'context'";
-    } else {
-      data.context = contextResult.value || '';
-    }
-    if (data.context.length > 255) {
-      data.context = data.context.substr(0, 255);
-    }
-  }
-  return {
-    access_token: accessToken,
-    data: data
-  };
-}
-function getTransportFromOptions(options, defaults, url) {
-  var hostname = defaults.hostname;
-  var protocol = defaults.protocol;
-  var port = defaults.port;
-  var path = defaults.path;
-  var search = defaults.search;
-  var timeout = options.timeout;
-  var transport = detectTransport(options);
-  var proxy = options.proxy;
-  if (options.endpoint) {
-    var opts = url.parse(options.endpoint);
-    hostname = opts.hostname;
-    protocol = opts.protocol;
-    port = opts.port;
-    path = opts.pathname;
-    search = opts.search;
-  }
-  return {
-    timeout: timeout,
-    hostname: hostname,
-    protocol: protocol,
-    port: port,
-    path: path,
-    search: search,
-    proxy: proxy,
-    transport: transport
-  };
-}
-function detectTransport(options) {
-  var gWindow = typeof window != 'undefined' && window || typeof self != 'undefined' && self;
-  var transport = options.defaultTransport || 'xhr';
-  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
-  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
-  return transport;
-}
-function transportOptions(transport, method) {
-  var protocol = transport.protocol || 'https:';
-  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
-  var hostname = transport.hostname;
-  var path = transport.path;
-  var timeout = transport.timeout;
-  var transportAPI = transport.transport;
-  if (transport.search) {
-    path = path + transport.search;
-  }
-  if (transport.proxy) {
-    path = protocol + '//' + hostname + path;
-    hostname = transport.proxy.host || transport.proxy.hostname;
-    port = transport.proxy.port;
-    protocol = transport.proxy.protocol || protocol;
-  }
-  return {
-    timeout: timeout,
-    protocol: protocol,
-    hostname: hostname,
-    path: path,
-    port: port,
-    method: method,
-    transport: transportAPI
-  };
-}
-function appendPathToPath(base, path) {
-  var baseTrailingSlash = /\/$/.test(base);
-  var pathBeginningSlash = /^\//.test(path);
-  if (baseTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!baseTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-  return base + path;
-}
-module.exports = {
-  buildPayload: buildPayload,
-  getTransportFromOptions: getTransportFromOptions,
-  transportOptions: transportOptions,
-  appendPathToPath: appendPathToPath
-};
-
-/***/ }),
-
-/***/ 98:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-function traverse(obj, func, seen) {
-  var k, v, i;
-  var isObj = _.isType(obj, 'object');
-  var isArray = _.isType(obj, 'array');
-  var keys = [];
-  var seenIndex;
-
-  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
-  seen = seen || {
-    obj: [],
-    mapped: []
-  };
-  if (isObj) {
-    seenIndex = seen.obj.indexOf(obj);
-    if (isObj && seenIndex !== -1) {
-      // Prefer the mapped object if there is one.
-      return seen.mapped[seenIndex] || seen.obj[seenIndex];
-    }
-    seen.obj.push(obj);
-    seenIndex = seen.obj.length - 1;
-  }
-  if (isObj) {
-    for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
-        keys.push(k);
-      }
-    }
-  } else if (isArray) {
-    for (i = 0; i < obj.length; ++i) {
-      keys.push(i);
-    }
-  }
-  var result = isObj ? {} : [];
-  var same = true;
-  for (i = 0; i < keys.length; ++i) {
-    k = keys[i];
-    v = obj[k];
-    result[k] = func(k, v, seen);
-    same = same && result[k] === obj[k];
-  }
-  if (isObj && !same) {
-    seen.mapped[seenIndex] = result;
-  }
-  return !same ? result : obj;
-}
-module.exports = traverse;
-
-/***/ }),
-
-/***/ 108:
-/***/ (function(module, exports) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
-    'use strict';
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-
-    /* istanbul ignore next */
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else {}
-}(this, function() {
-    'use strict';
-    function _isNumber(n) {
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
-
-    function _capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.substring(1);
-    }
-
-    function _getter(p) {
-        return function() {
-            return this[p];
-        };
-    }
-
-    var booleanProps = ['isConstructor', 'isEval', 'isNative', 'isToplevel'];
-    var numericProps = ['columnNumber', 'lineNumber'];
-    var stringProps = ['fileName', 'functionName', 'source'];
-    var arrayProps = ['args'];
-    var objectProps = ['evalOrigin'];
-
-    var props = booleanProps.concat(numericProps, stringProps, arrayProps, objectProps);
-
-    function StackFrame(obj) {
-        if (!obj) return;
-        for (var i = 0; i < props.length; i++) {
-            if (obj[props[i]] !== undefined) {
-                this['set' + _capitalize(props[i])](obj[props[i]]);
-            }
-        }
-    }
-
-    StackFrame.prototype = {
-        getArgs: function() {
-            return this.args;
-        },
-        setArgs: function(v) {
-            if (Object.prototype.toString.call(v) !== '[object Array]') {
-                throw new TypeError('Args must be an Array');
-            }
-            this.args = v;
-        },
-
-        getEvalOrigin: function() {
-            return this.evalOrigin;
-        },
-        setEvalOrigin: function(v) {
-            if (v instanceof StackFrame) {
-                this.evalOrigin = v;
-            } else if (v instanceof Object) {
-                this.evalOrigin = new StackFrame(v);
-            } else {
-                throw new TypeError('Eval Origin must be an Object or StackFrame');
-            }
-        },
-
-        toString: function() {
-            var fileName = this.getFileName() || '';
-            var lineNumber = this.getLineNumber() || '';
-            var columnNumber = this.getColumnNumber() || '';
-            var functionName = this.getFunctionName() || '';
-            if (this.getIsEval()) {
-                if (fileName) {
-                    return '[eval] (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
-                }
-                return '[eval]:' + lineNumber + ':' + columnNumber;
-            }
-            if (functionName) {
-                return functionName + ' (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
-            }
-            return fileName + ':' + lineNumber + ':' + columnNumber;
-        }
-    };
-
-    StackFrame.fromString = function StackFrame$$fromString(str) {
-        var argsStartIndex = str.indexOf('(');
-        var argsEndIndex = str.lastIndexOf(')');
-
-        var functionName = str.substring(0, argsStartIndex);
-        var args = str.substring(argsStartIndex + 1, argsEndIndex).split(',');
-        var locationString = str.substring(argsEndIndex + 1);
-
-        if (locationString.indexOf('@') === 0) {
-            var parts = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(locationString, '');
-            var fileName = parts[1];
-            var lineNumber = parts[2];
-            var columnNumber = parts[3];
-        }
-
-        return new StackFrame({
-            functionName: functionName,
-            args: args || undefined,
-            fileName: fileName,
-            lineNumber: lineNumber || undefined,
-            columnNumber: columnNumber || undefined
-        });
-    };
-
-    for (var i = 0; i < booleanProps.length; i++) {
-        StackFrame.prototype['get' + _capitalize(booleanProps[i])] = _getter(booleanProps[i]);
-        StackFrame.prototype['set' + _capitalize(booleanProps[i])] = (function(p) {
-            return function(v) {
-                this[p] = Boolean(v);
-            };
-        })(booleanProps[i]);
-    }
-
-    for (var j = 0; j < numericProps.length; j++) {
-        StackFrame.prototype['get' + _capitalize(numericProps[j])] = _getter(numericProps[j]);
-        StackFrame.prototype['set' + _capitalize(numericProps[j])] = (function(p) {
-            return function(v) {
-                if (!_isNumber(v)) {
-                    throw new TypeError(p + ' must be a Number');
-                }
-                this[p] = Number(v);
-            };
-        })(numericProps[j]);
-    }
-
-    for (var k = 0; k < stringProps.length; k++) {
-        StackFrame.prototype['get' + _capitalize(stringProps[k])] = _getter(stringProps[k]);
-        StackFrame.prototype['set' + _capitalize(stringProps[k])] = (function(p) {
-            return function(v) {
-                this[p] = String(v);
-            };
-        })(stringProps[k]);
-    }
-
-    return StackFrame;
-}));
-
-
-/***/ }),
-
-/***/ 136:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var ErrorStackParser = __webpack_require__(263);
-var UNKNOWN_FUNCTION = '?';
-var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
-function guessFunctionName() {
-  return UNKNOWN_FUNCTION;
-}
-function gatherContext() {
-  return null;
-}
-function Frame(stackFrame) {
-  var data = {};
-  data._stackFrame = stackFrame;
-  data.url = stackFrame.fileName;
-  data.line = stackFrame.lineNumber;
-  data.func = stackFrame.functionName;
-  data.column = stackFrame.columnNumber;
-  data.args = stackFrame.args;
-  data.context = gatherContext();
-  return data;
-}
-function Stack(exception, skip) {
-  function getStack() {
-    var parserStack = [];
-    skip = skip || 0;
-    try {
-      parserStack = ErrorStackParser.parse(exception);
-    } catch (e) {
-      parserStack = [];
-    }
-    var stack = [];
-    for (var i = skip; i < parserStack.length; i++) {
-      stack.push(new Frame(parserStack[i]));
-    }
-    return stack;
-  }
-  return {
-    stack: getStack(),
-    message: exception.message,
-    name: _mostSpecificErrorName(exception),
-    rawStack: exception.stack,
-    rawException: exception
-  };
-}
-function parse(e, skip) {
-  var err = e;
-  if (err.nested || err.cause) {
-    var traceChain = [];
-    while (err) {
-      traceChain.push(new Stack(err, skip));
-      err = err.nested || err.cause;
-      skip = 0; // Only apply skip value to primary error
-    }
-
-    // Return primary error with full trace chain attached.
-    traceChain[0].traceChain = traceChain;
-    return traceChain[0];
-  } else {
-    return new Stack(err, skip);
-  }
-}
-function guessErrorClass(errMsg) {
-  if (!errMsg || !errMsg.match) {
-    return ['Unknown error. There was no error message to display.', ''];
-  }
-  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
-  var errClass = '(unknown)';
-  if (errClassMatch) {
-    errClass = errClassMatch[errClassMatch.length - 1];
-    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
-    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
-  }
-  return [errClass, errMsg];
-}
-
-// * Prefers any value over an empty string
-// * Prefers any value over 'Error' where possible
-// * Prefers name over constructor.name when both are more specific than 'Error'
-function _mostSpecificErrorName(error) {
-  var name = error.name && error.name.length && error.name;
-  var constructorName = error.constructor.name && error.constructor.name.length && error.constructor.name;
-  if (!name || !constructorName) {
-    return name || constructorName;
-  }
-  if (name === 'Error') {
-    return constructorName;
-  }
-  return name;
-}
-module.exports = {
-  guessFunctionName: guessFunctionName,
-  guessErrorClass: guessErrorClass,
-  gatherContext: gatherContext,
-  parse: parse,
-  Stack: Stack,
-  Frame: Frame
-};
-
-/***/ }),
-
-/***/ 144:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-/* eslint-disable no-console */
-__webpack_require__(738);
-var detection = __webpack_require__(629);
-var _ = __webpack_require__(585);
-function error() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.error(_.formatArgsAsString(args));
-  } else {
-    console.error.apply(console, args);
-  }
-}
-function info() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.info(_.formatArgsAsString(args));
-  } else {
-    console.info.apply(console, args);
-  }
-}
-function log() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.log(_.formatArgsAsString(args));
-  } else {
-    console.log.apply(console, args);
-  }
-}
-
-/* eslint-enable no-console */
-
-module.exports = {
-  error: error,
-  info: info,
-  log: log
-};
-
-/***/ }),
-
-/***/ 245:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var rollbar = __webpack_require__(402);
-if (typeof window !== 'undefined' && !window._rollbarStartTime) {
-  window._rollbarStartTime = new Date().getTime();
-}
-module.exports = rollbar;
-
-/***/ }),
-
-/***/ 262:
-/***/ (function(module) {
-
-function captureUncaughtExceptions(window, handler, shim) {
-  if (!window) {
-    return;
-  }
-  var oldOnError;
-  if (typeof handler._rollbarOldOnError === 'function') {
-    oldOnError = handler._rollbarOldOnError;
-  } else if (window.onerror) {
-    oldOnError = window.onerror;
-    while (oldOnError._rollbarOldOnError) {
-      oldOnError = oldOnError._rollbarOldOnError;
-    }
-    handler._rollbarOldOnError = oldOnError;
-  }
-  handler.handleAnonymousErrors();
-  var fn = function fn() {
-    var args = Array.prototype.slice.call(arguments, 0);
-    _rollbarWindowOnError(window, handler, oldOnError, args);
-  };
-  if (shim) {
-    fn._rollbarOldOnError = oldOnError;
-  }
-  window.onerror = fn;
-}
-function _rollbarWindowOnError(window, r, old, args) {
-  if (window._rollbarWrappedError) {
-    if (!args[4]) {
-      args[4] = window._rollbarWrappedError;
-    }
-    if (!args[5]) {
-      args[5] = window._rollbarWrappedError._rollbarContext;
-    }
-    window._rollbarWrappedError = null;
-  }
-  var ret = r.handleUncaughtException.apply(r, args);
-  if (old) {
-    old.apply(window, args);
-  }
-
-  // Let other chained onerror handlers above run before setting this.
-  // If an error is thrown and caught within a chained onerror handler,
-  // Error.prepareStackTrace() will see that one before the one we want.
-  if (ret === 'anonymous') {
-    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
-  }
-}
-function captureUnhandledRejections(window, handler, shim) {
-  if (!window) {
-    return;
-  }
-  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
-    window.removeEventListener('unhandledrejection', window._rollbarURH);
-  }
-  var rejectionHandler = function rejectionHandler(evt) {
-    var reason, promise, detail;
-    try {
-      reason = evt.reason;
-    } catch (e) {
-      reason = undefined;
-    }
-    try {
-      promise = evt.promise;
-    } catch (e) {
-      promise = '[unhandledrejection] error getting `promise` from event';
-    }
-    try {
-      detail = evt.detail;
-      if (!reason && detail) {
-        reason = detail.reason;
-        promise = detail.promise;
-      }
-    } catch (e) {
-      // Ignore
-    }
-    if (!reason) {
-      reason = '[unhandledrejection] error getting `reason` from event';
-    }
-    if (handler && handler.handleUnhandledRejection) {
-      handler.handleUnhandledRejection(reason, promise);
-    }
-  };
-  rejectionHandler.belongsToShim = shim;
-  window._rollbarURH = rejectionHandler;
-  window.addEventListener('unhandledrejection', rejectionHandler);
-}
-module.exports = {
-  captureUncaughtExceptions: captureUncaughtExceptions,
-  captureUnhandledRejections: captureUnhandledRejections
-};
-
-/***/ }),
-
-/***/ 263:
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
-    'use strict';
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
-
-    /* istanbul ignore next */
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(108)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else {}
-}(this, function ErrorStackParser(StackFrame) {
-    'use strict';
-
-    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+:\d+/;
-    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+:\d+|\(native\))/m;
-    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code])?$/;
-
-    return {
-        /**
-         * Given an Error object, extract the most information from it.
-         *
-         * @param {Error} error object
-         * @return {Array} of StackFrames
-         */
-        parse: function ErrorStackParser$$parse(error) {
-            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
-                return this.parseOpera(error);
-            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
-                return this.parseV8OrIE(error);
-            } else if (error.stack) {
-                return this.parseFFOrSafari(error);
-            } else {
-                throw new Error('Cannot parse given Error object');
-            }
-        },
-
-        // Separate line and column numbers from a string of the form: (URI:Line:Column)
-        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
-            // Fail-fast but return locations like "(native)"
-            if (urlLike.indexOf(':') === -1) {
-                return [urlLike];
-            }
-
-            var regExp = /(.+?)(?::(\d+))?(?::(\d+))?$/;
-            var parts = regExp.exec(urlLike.replace(/[()]/g, ''));
-            return [parts[1], parts[2] || undefined, parts[3] || undefined];
-        },
-
-        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !!line.match(CHROME_IE_STACK_REGEXP);
-            }, this);
-
-            return filtered.map(function(line) {
-                if (line.indexOf('(eval ') > -1) {
-                    // Throw away eval information until we implement stacktrace.js/stackframe#8
-                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
-                }
-                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
-
-                // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
-                // case it has spaces in it, as the string is split on \s+ later on
-                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
-
-                // remove the parenthesized location from the line, if it was matched
-                sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
-
-                var tokens = sanitizedLine.split(/\s+/).slice(1);
-                // if a location was matched, pass it to extractLocation() otherwise pop the last token
-                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
-                var functionName = tokens.join(' ') || undefined;
-                var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
-
-                return new StackFrame({
-                    functionName: functionName,
-                    fileName: fileName,
-                    lineNumber: locationParts[1],
-                    columnNumber: locationParts[2],
-                    source: line
-                });
-            }, this);
-        },
-
-        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
-            }, this);
-
-            return filtered.map(function(line) {
-                // Throw away eval information until we implement stacktrace.js/stackframe#8
-                if (line.indexOf(' > eval') > -1) {
-                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ':$1');
-                }
-
-                if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
-                    // Safari eval frames only have function names and nothing else
-                    return new StackFrame({
-                        functionName: line
-                    });
-                } else {
-                    var functionNameRegex = /((.*".+"[^@]*)?[^@]*)(?:@)/;
-                    var matches = line.match(functionNameRegex);
-                    var functionName = matches && matches[1] ? matches[1] : undefined;
-                    var locationParts = this.extractLocation(line.replace(functionNameRegex, ''));
-
-                    return new StackFrame({
-                        functionName: functionName,
-                        fileName: locationParts[0],
-                        lineNumber: locationParts[1],
-                        columnNumber: locationParts[2],
-                        source: line
-                    });
-                }
-            }, this);
-        },
-
-        parseOpera: function ErrorStackParser$$parseOpera(e) {
-            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
-                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
-                return this.parseOpera9(e);
-            } else if (!e.stack) {
-                return this.parseOpera10(e);
-            } else {
-                return this.parseOpera11(e);
-            }
-        },
-
-        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
-            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
-            var lines = e.message.split('\n');
-            var result = [];
-
-            for (var i = 2, len = lines.length; i < len; i += 2) {
-                var match = lineRE.exec(lines[i]);
-                if (match) {
-                    result.push(new StackFrame({
-                        fileName: match[2],
-                        lineNumber: match[1],
-                        source: lines[i]
-                    }));
-                }
-            }
-
-            return result;
-        },
-
-        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
-            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
-            var lines = e.stacktrace.split('\n');
-            var result = [];
-
-            for (var i = 0, len = lines.length; i < len; i += 2) {
-                var match = lineRE.exec(lines[i]);
-                if (match) {
-                    result.push(
-                        new StackFrame({
-                            functionName: match[3] || undefined,
-                            fileName: match[2],
-                            lineNumber: match[1],
-                            source: lines[i]
-                        })
-                    );
-                }
-            }
-
-            return result;
-        },
-
-        // Opera 10.65+ Error.stack very similar to FF/Safari
-        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
-            var filtered = error.stack.split('\n').filter(function(line) {
-                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
-            }, this);
-
-            return filtered.map(function(line) {
-                var tokens = line.split('@');
-                var locationParts = this.extractLocation(tokens.pop());
-                var functionCall = (tokens.shift() || '');
-                var functionName = functionCall
-                    .replace(/<anonymous function(: (\w+))?>/, '$2')
-                    .replace(/\([^)]*\)/g, '') || undefined;
-                var argsRaw;
-                if (functionCall.match(/\(([^)]*)\)/)) {
-                    argsRaw = functionCall.replace(/^[^(]+\(([^)]*)\)$/, '$1');
-                }
-                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
-                    undefined : argsRaw.split(',');
-
-                return new StackFrame({
-                    functionName: functionName,
-                    args: args,
-                    fileName: locationParts[0],
-                    lineNumber: locationParts[1],
-                    columnNumber: locationParts[2],
-                    source: line
-                });
-            }, this);
-        }
-    };
-}));
-
-
-/***/ }),
-
-/***/ 269:
+/***/ 38:
 /***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1169,1357 +299,7 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "default": function() { return /* binding */ Tracing; }
-});
-
-;// ./src/tracing/context.js
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var Context = /*#__PURE__*/function () {
-  function Context(parentContext) {
-    _classCallCheck(this, Context);
-    this._currentContext = parentContext ? new Map(parentContext) : new Map();
-  }
-  return _createClass(Context, [{
-    key: "getValue",
-    value: function getValue(key) {
-      return this._currentContext.get(key);
-    }
-  }, {
-    key: "setValue",
-    value: function setValue(key, value) {
-      var context = new Context(self._currentContext);
-      context._currentContext.set(key, value);
-      return context;
-    }
-  }, {
-    key: "deleteValue",
-    value: function deleteValue(key) {
-      var context = new Context(self._currentContext);
-      context._currentContext["delete"](key);
-      return context;
-    }
-  }]);
-}();
-var ROOT_CONTEXT = new Context();
-;// ./src/tracing/contextManager.js
-function contextManager_typeof(o) { "@babel/helpers - typeof"; return contextManager_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, contextManager_typeof(o); }
-function contextManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function contextManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, contextManager_toPropertyKey(o.key), o); } }
-function contextManager_createClass(e, r, t) { return r && contextManager_defineProperties(e.prototype, r), t && contextManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function contextManager_toPropertyKey(t) { var i = contextManager_toPrimitive(t, "string"); return "symbol" == contextManager_typeof(i) ? i : i + ""; }
-function contextManager_toPrimitive(t, r) { if ("object" != contextManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != contextManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
-var ContextManager = /*#__PURE__*/function () {
-  function ContextManager() {
-    contextManager_classCallCheck(this, ContextManager);
-    this.currentContext = ROOT_CONTEXT;
-  }
-  return contextManager_createClass(ContextManager, [{
-    key: "active",
-    value: function active() {
-      return this.currentContext;
-    }
-  }, {
-    key: "enterContext",
-    value: function enterContext(context) {
-      var previousContext = this.currentContext;
-      this.currentContext = context || ROOT_CONTEXT;
-      return previousContext;
-    }
-  }, {
-    key: "exitContext",
-    value: function exitContext(context) {
-      this.currentContext = context;
-      return this.currentContext;
-    }
-  }, {
-    key: "with",
-    value: function _with(context, fn, thisArg) {
-      var previousContext = this.enterContext(context);
-      try {
-        for (var _len = arguments.length, args = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
-          args[_key - 3] = arguments[_key];
-        }
-        return fn.call.apply(fn, [thisArg].concat(args));
-      } finally {
-        this.exitContext(previousContext);
-      }
-    }
-  }]);
-}();
-function createContextKey(key) {
-  // Use Symbol for OpenTelemetry compatibility.
-  return Symbol["for"](key);
-}
-;// ./src/tracing/session.js
-function session_typeof(o) { "@babel/helpers - typeof"; return session_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, session_typeof(o); }
-function session_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function session_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, session_toPropertyKey(o.key), o); } }
-function session_createClass(e, r, t) { return r && session_defineProperties(e.prototype, r), t && session_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function session_toPropertyKey(t) { var i = session_toPrimitive(t, "string"); return "symbol" == session_typeof(i) ? i : i + ""; }
-function session_toPrimitive(t, r) { if ("object" != session_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != session_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var SESSION_KEY = 'RollbarSession';
-var Session = /*#__PURE__*/function () {
-  function Session(tracing, options) {
-    session_classCallCheck(this, Session);
-    this.options = options;
-    this.tracing = tracing;
-    this.window = tracing.window;
-    this.session = null;
-  }
-  return session_createClass(Session, [{
-    key: "init",
-    value: function init() {
-      if (this.session) {
-        return this;
-      }
-      return this.getSession() || this.createSession();
-    }
-  }, {
-    key: "getSession",
-    value: function getSession() {
-      try {
-        var serializedSession = this.window.sessionStorage.getItem(SESSION_KEY);
-        if (!serializedSession) {
-          return null;
-        }
-        this.session = JSON.parse(serializedSession);
-      } catch (_unused) {
-        return null;
-      }
-      return this;
-    }
-  }, {
-    key: "createSession",
-    value: function createSession() {
-      this.session = {
-        id: this.tracing.hexId(),
-        createdAt: Date.now()
-      };
-      return this.setSession(this.session);
-    }
-  }, {
-    key: "setSession",
-    value: function setSession(session) {
-      var sessionString = JSON.stringify(session);
-      try {
-        this.window.sessionStorage.setItem(SESSION_KEY, sessionString);
-      } catch (_unused2) {
-        return null;
-      }
-      return this;
-    }
-  }]);
-}();
-;// ./src/tracing/exporter.js
-function exporter_typeof(o) { "@babel/helpers - typeof"; return exporter_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, exporter_typeof(o); }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function exporter_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function exporter_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, exporter_toPropertyKey(o.key), o); } }
-function exporter_createClass(e, r, t) { return r && exporter_defineProperties(e.prototype, r), t && exporter_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function exporter_toPropertyKey(t) { var i = exporter_toPrimitive(t, "string"); return "symbol" == exporter_typeof(i) ? i : i + ""; }
-function exporter_toPrimitive(t, r) { if ("object" != exporter_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != exporter_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var SpanExporter = /*#__PURE__*/function () {
-  function SpanExporter() {
-    exporter_classCallCheck(this, SpanExporter);
-  }
-  return exporter_createClass(SpanExporter, [{
-    key: "export",
-    value: function _export(spans, _resultCallback) {
-      console.log(spans); // console exporter, TODO: make optional
-      spanExportQueue.push.apply(spanExportQueue, _toConsumableArray(spans));
-    }
-  }]);
-}();
-var spanExportQueue = [];
-;// ./src/tracing/spanProcessor.js
-function spanProcessor_typeof(o) { "@babel/helpers - typeof"; return spanProcessor_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, spanProcessor_typeof(o); }
-function spanProcessor_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function spanProcessor_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, spanProcessor_toPropertyKey(o.key), o); } }
-function spanProcessor_createClass(e, r, t) { return r && spanProcessor_defineProperties(e.prototype, r), t && spanProcessor_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function spanProcessor_toPropertyKey(t) { var i = spanProcessor_toPrimitive(t, "string"); return "symbol" == spanProcessor_typeof(i) ? i : i + ""; }
-function spanProcessor_toPrimitive(t, r) { if ("object" != spanProcessor_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != spanProcessor_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var SpanProcessor = /*#__PURE__*/function () {
-  function SpanProcessor(exporter) {
-    spanProcessor_classCallCheck(this, SpanProcessor);
-    this.exporter = exporter;
-  }
-  return spanProcessor_createClass(SpanProcessor, [{
-    key: "onStart",
-    value: function onStart(span, _parentContext) {
-      pendingSpans.set(span.spanContext.spanId, span);
-    }
-  }, {
-    key: "onEnd",
-    value: function onEnd(span) {
-      this.exporter["export"]([span["export"]()]);
-      pendingSpans["delete"](span.spanContext.spanId);
-    }
-  }]);
-}();
-var pendingSpans = new Map();
-;// ./src/tracing/span.js
-function span_typeof(o) { "@babel/helpers - typeof"; return span_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, span_typeof(o); }
-function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || span_unsupportedIterableToArray(r, e) || _nonIterableRest(); }
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function span_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return span_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? span_arrayLikeToArray(r, a) : void 0; } }
-function span_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
-function span_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function span_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, span_toPropertyKey(o.key), o); } }
-function span_createClass(e, r, t) { return r && span_defineProperties(e.prototype, r), t && span_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function span_toPropertyKey(t) { var i = span_toPrimitive(t, "string"); return "symbol" == span_typeof(i) ? i : i + ""; }
-function span_toPrimitive(t, r) { if ("object" != span_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != span_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var Span = /*#__PURE__*/function () {
-  function Span(options) {
-    span_classCallCheck(this, Span);
-    this.initReadableSpan(options);
-    this.spanProcessor = options.spanProcessor;
-    this.spanProcessor.onStart(this, options.context);
-    if (options.attributes) {
-      this.setAttributes(options.attributes);
-    }
-    return this;
-  }
-  return span_createClass(Span, [{
-    key: "initReadableSpan",
-    value: function initReadableSpan(options) {
-      this.span = {
-        name: options.name,
-        kind: options.kind,
-        spanContext: options.spanContext,
-        parentSpanId: options.parentSpanId,
-        startTime: this.hrTimeNow(),
-        endTime: [0, 0],
-        status: {
-          code: 0,
-          message: ''
-        },
-        attributes: {
-          'session.id': options.session.id
-        },
-        links: [],
-        events: [],
-        duration: 0,
-        ended: false,
-        resource: options.resource,
-        instrumentationScope: options.scope,
-        droppedAttributesCount: 0,
-        droppedEventsCount: 0,
-        droppedLinksCount: 0
-      };
-    }
-  }, {
-    key: "spanContext",
-    value: function spanContext() {
-      return this.span.spanContext;
-    }
-  }, {
-    key: "setAttribute",
-    value: function setAttribute(key, value) {
-      if (value == null || this.ended) return this;
-      if (key.length === 0) return this;
-      this.span.attributes[key] = value;
-      return this;
-    }
-  }, {
-    key: "setAttributes",
-    value: function setAttributes(attributes) {
-      for (var _i = 0, _Object$entries = Object.entries(attributes); _i < _Object$entries.length; _i++) {
-        var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-          k = _Object$entries$_i[0],
-          v = _Object$entries$_i[1];
-        this.setAttribute(k, v);
-      }
-      return this;
-    }
-  }, {
-    key: "addEvent",
-    value: function addEvent(name, attributes) {
-      if (this.span.ended) return this;
-      this.span.events.push({
-        name: name,
-        attributes: attributes,
-        time: this.hrTimeNow(),
-        droppedAttributesCount: 0
-      });
-      return this;
-    }
-  }, {
-    key: "isRecording",
-    value: function isRecording() {
-      return this.span.ended === false;
-    }
-  }, {
-    key: "end",
-    value: function end(attributes) {
-      if (attributes) this.setAttributes(attributes);
-      this.span.endTime = this.hrTimeNow();
-      this.span.ended = true;
-      this.spanProcessor.onEnd(this);
-    }
-
-    /*
-     * Methods for handling hrtime.
-     * OpenTelemetry uses the [seconds, nanoseconds] format for hrtime in the
-     * ReadableSpan interface.
-     */
-  }, {
-    key: "toHrTime",
-    value: function toHrTime(millis) {
-      return [Math.trunc(millis / 1000), Math.round(millis % 1000 * 1e6)];
-    }
-  }, {
-    key: "sumHrTime",
-    value: function sumHrTime(a, b) {
-      return [a[0] + b[0] + Math.trunc((a[1] + b[1]) / 1e9), (a[1] + b[1]) % 1e9];
-    }
-  }, {
-    key: "hrTimeNow",
-    value: function hrTimeNow() {
-      return this.sumHrTime(this.toHrTime(performance.timeOrigin), this.toHrTime(performance.now()));
-    }
-  }, {
-    key: "export",
-    value: function _export() {
-      return this.span;
-    }
-  }]);
-}();
-;// ./src/tracing/tracer.js
-function tracer_typeof(o) { "@babel/helpers - typeof"; return tracer_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, tracer_typeof(o); }
-function tracer_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function tracer_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, tracer_toPropertyKey(o.key), o); } }
-function tracer_createClass(e, r, t) { return r && tracer_defineProperties(e.prototype, r), t && tracer_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function tracer_toPropertyKey(t) { var i = tracer_toPrimitive(t, "string"); return "symbol" == tracer_typeof(i) ? i : i + ""; }
-function tracer_toPrimitive(t, r) { if ("object" != tracer_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracer_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
-var Tracer = /*#__PURE__*/function () {
-  function Tracer(tracing, spanProcessor) {
-    tracer_classCallCheck(this, Tracer);
-    this.spanProcessor = spanProcessor;
-    this.tracing = tracing;
-  }
-  return tracer_createClass(Tracer, [{
-    key: "startSpan",
-    value: function startSpan(name) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tracing.active();
-      var parentSpan = this.tracing.getSpan(context);
-      var parentSpanContext = parentSpan === null || parentSpan === void 0 ? void 0 : parentSpan.spanContext();
-      var spanId = this.tracing.hexId(8);
-      var traceId;
-      var traceFlags = 0;
-      var traceState = null;
-      var parentSpanId;
-      if (parentSpanContext) {
-        traceId = parentSpanContext.traceId;
-        traceState = parentSpanContext.traceState;
-        parentSpanId = parentSpanContext.spanId;
-      } else {
-        traceId = this.tracing.hexId(16);
-      }
-      var kind = 0;
-      var spanContext = {
-        traceId: traceId,
-        spanId: spanId,
-        traceFlags: traceFlags,
-        traceState: traceState
-      };
-      var span = new Span({
-        resource: this.tracing.resource,
-        scope: this.tracing.scope,
-        session: this.tracing.session.session,
-        context: context,
-        spanContext: spanContext,
-        name: name,
-        kind: kind,
-        parentSpanId: parentSpanId,
-        spanProcessor: this.spanProcessor
-      });
-      return span;
-    }
-  }]);
-}();
-;// ./src/tracing/tracing.js
-function tracing_typeof(o) { "@babel/helpers - typeof"; return tracing_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, tracing_typeof(o); }
-function tracing_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function tracing_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, tracing_toPropertyKey(o.key), o); } }
-function tracing_createClass(e, r, t) { return r && tracing_defineProperties(e.prototype, r), t && tracing_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function tracing_toPropertyKey(t) { var i = tracing_toPrimitive(t, "string"); return "symbol" == tracing_typeof(i) ? i : i + ""; }
-function tracing_toPrimitive(t, r) { if ("object" != tracing_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracing_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
-
-
-
-
-var SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
-var Tracing = /*#__PURE__*/function () {
-  function Tracing(gWindow, options) {
-    tracing_classCallCheck(this, Tracing);
-    this.options = options;
-    this.resource = options.resource;
-    this.scope = options.notifier;
-    this.window = gWindow;
-    this.session = new Session(this, options);
-    this.createTracer();
-  }
-  return tracing_createClass(Tracing, [{
-    key: "initSession",
-    value: function initSession() {
-      if (this.session) {
-        this.session.init();
-      }
-    }
-  }, {
-    key: "createTracer",
-    value: function createTracer() {
-      this.contextManager = new ContextManager();
-      this.exporter = new SpanExporter();
-      this.spanProcessor = new SpanProcessor(this.exporter);
-      this.tracer = new Tracer(this, this.spanProcessor);
-    }
-  }, {
-    key: "getTracer",
-    value: function getTracer() {
-      return this.tracer;
-    }
-  }, {
-    key: "getSpan",
-    value: function getSpan() {
-      var context = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.contextManager.active();
-      return context.getValue(SPAN_KEY);
-    }
-  }, {
-    key: "setSpan",
-    value: function setSpan() {
-      var context = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.contextManager.active();
-      var span = arguments.length > 1 ? arguments[1] : undefined;
-      return context.setValue(SPAN_KEY, span);
-    }
-  }, {
-    key: "startSpan",
-    value: function startSpan(name) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.contextManager.active();
-      return this.tracer.startSpan(name, options, context);
-    }
-  }, {
-    key: "with",
-    value: function _with(context, fn, thisArg) {
-      var _this$contextManager;
-      for (var _len = arguments.length, args = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
-        args[_key - 3] = arguments[_key];
-      }
-      return (_this$contextManager = this.contextManager)["with"].apply(_this$contextManager, [context, fn, thisArg].concat(args));
-    }
-  }, {
-    key: "withSpan",
-    value: function withSpan(name, options, fn, thisArg) {
-      var span = this.startSpan(name, options);
-      return this["with"](this.setSpan(this.contextManager.active(), span), fn, thisArg, span);
-    }
-  }, {
-    key: "hexId",
-    value: function hexId() {
-      var bytes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 16;
-      var randomBytes = new Uint8Array(bytes);
-      crypto.getRandomValues(randomBytes);
-      var randHex = Array.from(randomBytes, function (_byte) {
-        return _byte.toString(16).padStart(2, '0');
-      }).join('');
-      return randHex;
-    }
-  }]);
-}();
-
-
-/***/ }),
-
-/***/ 299:
-/***/ (function(module) {
-
-module.exports = {
-  version: '3.0.0-alpha.0',
-  endpoint: 'api.rollbar.com/api/1/item/',
-  logLevel: 'debug',
-  reportLevel: 'debug',
-  uncaughtErrorLevel: 'error',
-  maxItems: 0,
-  itemsPerMin: 60
-};
-
-/***/ }),
-
-/***/ 379:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-function checkLevel(item, settings) {
-  var level = item.level;
-  var levelVal = _.LEVELS[level] || 0;
-  var reportLevel = settings.reportLevel;
-  var reportLevelVal = _.LEVELS[reportLevel] || 0;
-  if (levelVal < reportLevelVal) {
-    return false;
-  }
-  return true;
-}
-function userCheckIgnore(logger) {
-  return function (item, settings) {
-    var isUncaught = !!item._isUncaught;
-    delete item._isUncaught;
-    var args = item._originalArgs;
-    delete item._originalArgs;
-    try {
-      if (_.isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
-      }
-    } catch (e) {
-      settings.onSendCallback = null;
-      logger.error('Error while calling onSendCallback, removing', e);
-    }
-    try {
-      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
-        return false;
-      }
-    } catch (e) {
-      settings.checkIgnore = null;
-      logger.error('Error while calling custom checkIgnore(), removing', e);
-    }
-    return true;
-  };
-}
-function urlIsNotBlockListed(logger) {
-  return function (item, settings) {
-    return !urlIsOnAList(item, settings, 'blocklist', logger);
-  };
-}
-function urlIsSafeListed(logger) {
-  return function (item, settings) {
-    return urlIsOnAList(item, settings, 'safelist', logger);
-  };
-}
-function matchFrames(trace, list, block) {
-  if (!trace) {
-    return !block;
-  }
-  var frames = trace.frames;
-  if (!frames || frames.length === 0) {
-    return !block;
-  }
-  var frame, filename, url, urlRegex;
-  var listLength = list.length;
-  var frameLength = frames.length;
-  for (var i = 0; i < frameLength; i++) {
-    frame = frames[i];
-    filename = frame.filename;
-    if (!_.isType(filename, 'string')) {
-      return !block;
-    }
-    for (var j = 0; j < listLength; j++) {
-      url = list[j];
-      urlRegex = new RegExp(url);
-      if (urlRegex.test(filename)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-function urlIsOnAList(item, settings, safeOrBlock, logger) {
-  // safelist is the default
-  var block = false;
-  if (safeOrBlock === 'blocklist') {
-    block = true;
-  }
-  var list, traces;
-  try {
-    list = block ? settings.hostBlockList : settings.hostSafeList;
-    traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
-
-    // These two checks are important to come first as they are defaults
-    // in case the list is missing or the trace is missing or not well-formed
-    if (!list || list.length === 0) {
-      return !block;
-    }
-    if (traces.length === 0 || !traces[0]) {
-      return !block;
-    }
-    var tracesLength = traces.length;
-    for (var i = 0; i < tracesLength; i++) {
-      if (matchFrames(traces[i], list, block)) {
-        return true;
-      }
-    }
-  } catch (e
-  /* istanbul ignore next */) {
-    if (block) {
-      settings.hostBlockList = null;
-    } else {
-      settings.hostSafeList = null;
-    }
-    var listName = block ? 'hostBlockList' : 'hostSafeList';
-    logger.error("Error while reading your configuration's " + listName + ' option. Removing custom ' + listName + '.', e);
-    return !block;
-  }
-  return false;
-}
-function messageIsIgnored(logger) {
-  return function (item, settings) {
-    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
-    try {
-      messageIsIgnored = false;
-      ignoredMessages = settings.ignoredMessages;
-      if (!ignoredMessages || ignoredMessages.length === 0) {
-        return true;
-      }
-      messages = messagesFromItem(item);
-      if (messages.length === 0) {
-        return true;
-      }
-      len = ignoredMessages.length;
-      for (i = 0; i < len; i++) {
-        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-        for (j = 0; j < messages.length; j++) {
-          messageIsIgnored = rIgnoredMessage.test(messages[j]);
-          if (messageIsIgnored) {
-            return false;
-          }
-        }
-      }
-    } catch (e
-    /* istanbul ignore next */) {
-      settings.ignoredMessages = null;
-      logger.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
-    }
-    return true;
-  };
-}
-function messagesFromItem(item) {
-  var body = item.body;
-  var messages = [];
-
-  // The payload schema only allows one of trace_chain, message, or trace.
-  // However, existing test cases are based on having both trace and message present.
-  // So here we preserve the ability to collect strings from any combination of these keys.
-  if (body.trace_chain) {
-    var traceChain = body.trace_chain;
-    for (var i = 0; i < traceChain.length; i++) {
-      var trace = traceChain[i];
-      messages.push(_.get(trace, 'exception.message'));
-    }
-  }
-  if (body.trace) {
-    messages.push(_.get(body, 'trace.exception.message'));
-  }
-  if (body.message) {
-    messages.push(_.get(body, 'message.body'));
-  }
-  return messages;
-}
-module.exports = {
-  checkLevel: checkLevel,
-  userCheckIgnore: userCheckIgnore,
-  urlIsNotBlockListed: urlIsNotBlockListed,
-  urlIsSafeListed: urlIsSafeListed,
-  messageIsIgnored: messageIsIgnored
-};
-
-/***/ }),
-
-/***/ 392:
-/***/ (function(module) {
-
-function getElementType(e) {
-  return (e.getAttribute('type') || '').toLowerCase();
-}
-function isDescribedElement(element, type, subtypes) {
-  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
-    return false;
-  }
-  if (!subtypes) {
-    return true;
-  }
-  element = getElementType(element);
-  for (var i = 0; i < subtypes.length; i++) {
-    if (subtypes[i] === element) {
-      return true;
-    }
-  }
-  return false;
-}
-function getElementFromEvent(evt, doc) {
-  if (evt.target) {
-    return evt.target;
-  }
-  if (doc && doc.elementFromPoint) {
-    return doc.elementFromPoint(evt.clientX, evt.clientY);
-  }
-  return undefined;
-}
-function treeToArray(elem) {
-  var MAX_HEIGHT = 5;
-  var out = [];
-  var nextDescription;
-  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
-    nextDescription = describeElement(elem);
-    if (nextDescription.tagName === 'html') {
-      break;
-    }
-    out.unshift(nextDescription);
-    elem = elem.parentNode;
-  }
-  return out;
-}
-function elementArrayToString(a) {
-  var MAX_LENGTH = 80;
-  var separator = ' > ',
-    separatorLength = separator.length;
-  var out = [],
-    len = 0,
-    nextStr,
-    totalLength;
-  for (var i = a.length - 1; i >= 0; i--) {
-    nextStr = descriptionToString(a[i]);
-    totalLength = len + out.length * separatorLength + nextStr.length;
-    if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
-      out.unshift('...');
-      break;
-    }
-    out.unshift(nextStr);
-    len += nextStr.length;
-  }
-  return out.join(separator);
-}
-function descriptionToString(desc) {
-  if (!desc || !desc.tagName) {
-    return '';
-  }
-  var out = [desc.tagName];
-  if (desc.id) {
-    out.push('#' + desc.id);
-  }
-  if (desc.classes) {
-    out.push('.' + desc.classes.join('.'));
-  }
-  for (var i = 0; i < desc.attributes.length; i++) {
-    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
-  }
-  return out.join('');
-}
-
-/**
- * Input: a dom element
- * Output: null if tagName is falsey or input is falsey, else
- *  {
- *    tagName: String,
- *    id: String | undefined,
- *    classes: [String] | undefined,
- *    attributes: [
- *      {
- *        key: OneOf(type, name, title, alt),
- *        value: String
- *      }
- *    ]
- *  }
- */
-function describeElement(elem) {
-  if (!elem || !elem.tagName) {
-    return null;
-  }
-  var out = {},
-    className,
-    key,
-    attr,
-    i;
-  out.tagName = elem.tagName.toLowerCase();
-  if (elem.id) {
-    out.id = elem.id;
-  }
-  className = elem.className;
-  if (className && typeof className === 'string') {
-    out.classes = className.split(/\s+/);
-  }
-  var attributes = ['type', 'name', 'title', 'alt'];
-  out.attributes = [];
-  for (i = 0; i < attributes.length; i++) {
-    key = attributes[i];
-    attr = elem.getAttribute(key);
-    if (attr) {
-      out.attributes.push({
-        key: key,
-        value: attr
-      });
-    }
-  }
-  return out;
-}
-module.exports = {
-  describeElement: describeElement,
-  descriptionToString: descriptionToString,
-  elementArrayToString: elementArrayToString,
-  treeToArray: treeToArray,
-  getElementFromEvent: getElementFromEvent,
-  isDescribedElement: isDescribedElement,
-  getElementType: getElementType
-};
-
-/***/ }),
-
-/***/ 398:
-/***/ (function(module) {
-
-function replace(obj, name, replacement, replacements, type) {
-  var orig = obj[name];
-  obj[name] = replacement(orig);
-  if (replacements) {
-    replacements[type].push([obj, name, orig]);
-  }
-}
-module.exports = replace;
-
-/***/ }),
-
-/***/ 402:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var Rollbar = __webpack_require__(583);
-var telemeter = __webpack_require__(618);
-var instrumenter = __webpack_require__(705);
-var polyfillJSON = __webpack_require__(657);
-var wrapGlobals = __webpack_require__(706);
-var scrub = __webpack_require__(541);
-var truncation = __webpack_require__(622);
-var Tracing = __webpack_require__(269);
-var replay = __webpack_require__(528);
-Rollbar.setComponents({
-  telemeter: telemeter,
-  instrumenter: instrumenter,
-  polyfillJSON: polyfillJSON,
-  wrapGlobals: wrapGlobals,
-  scrub: scrub,
-  truncation: truncation,
-  tracing: Tracing["default"],
-  replay: replay
-});
-module.exports = Rollbar;
-
-/***/ }),
-
-/***/ 472:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var logger = __webpack_require__(144);
-var _ = __webpack_require__(585);
-function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
-  var controller;
-  var timeoutId;
-  if (_.isFiniteNumber(timeout)) {
-    controller = new AbortController();
-    timeoutId = setTimeout(function () {
-      controller.abort();
-    }, timeout);
-  }
-  fetch(url, {
-    method: method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Rollbar-Access-Token': accessToken,
-      signal: controller && controller.signal
-    },
-    body: data
-  }).then(function (response) {
-    if (timeoutId) clearTimeout(timeoutId);
-    return response.json();
-  }).then(function (data) {
-    callback(null, data);
-  })["catch"](function (error) {
-    logger.error(error.message);
-    callback(error);
-  });
-}
-module.exports = makeFetchRequest;
-
-/***/ }),
-
-/***/ 485:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-var errorParser = __webpack_require__(136);
-var logger = __webpack_require__(144);
-function handleDomException(item, options, callback) {
-  if (item.err && errorParser.Stack(item.err).name === 'DOMException') {
-    var originalError = new Error();
-    originalError.name = item.err.name;
-    originalError.message = item.err.message;
-    originalError.stack = item.err.stack;
-    originalError.nested = item.err;
-    item.err = originalError;
-  }
-  callback(null, item);
-}
-function handleItemWithError(item, options, callback) {
-  item.data = item.data || {};
-  if (item.err) {
-    try {
-      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
-      if (options.addErrorContext) {
-        addErrorContext(item);
-      }
-    } catch (e) {
-      logger.error('Error while parsing the error object.', e);
-      try {
-        item.message = item.err.message || item.err.description || item.message || String(item.err);
-      } catch (e2) {
-        item.message = String(item.err) || String(e2);
-      }
-      delete item.err;
-    }
-  }
-  callback(null, item);
-}
-function addErrorContext(item) {
-  var chain = [];
-  var err = item.err;
-  chain.push(err);
-  while (err.nested || err.cause) {
-    err = err.nested || err.cause;
-    chain.push(err);
-  }
-  _.addErrorContext(item, chain);
-}
-function ensureItemHasSomethingToSay(item, options, callback) {
-  if (!item.message && !item.stackInfo && !item.custom) {
-    callback(new Error('No message, stack info, or custom data'), null);
-  }
-  callback(null, item);
-}
-function addBaseInfo(item, options, callback) {
-  var environment = options.payload && options.payload.environment || options.environment;
-  item.data = _.merge(item.data, {
-    environment: environment,
-    level: item.level,
-    endpoint: options.endpoint,
-    platform: 'browser',
-    framework: 'browser-js',
-    language: 'javascript',
-    server: {},
-    uuid: item.uuid,
-    notifier: {
-      name: 'rollbar-browser-js',
-      version: options.version
-    },
-    custom: item.custom
-  });
-  callback(null, item);
-}
-function addRequestInfo(window) {
-  return function (item, options, callback) {
-    var requestInfo = {};
-    if (window && window.location) {
-      requestInfo.url = window.location.href;
-      requestInfo.query_string = window.location.search;
-    }
-    var remoteString = '$remote_ip';
-    if (!options.captureIp) {
-      remoteString = null;
-    } else if (options.captureIp !== true) {
-      remoteString += '_anonymize';
-    }
-    if (remoteString) requestInfo.user_ip = remoteString;
-    if (Object.keys(requestInfo).length > 0) {
-      _.set(item, 'data.request', requestInfo);
-    }
-    callback(null, item);
-  };
-}
-function addClientInfo(window) {
-  return function (item, options, callback) {
-    if (!window) {
-      return callback(null, item);
-    }
-    var nav = window.navigator || {};
-    var scr = window.screen || {};
-    _.set(item, 'data.client', {
-      runtime_ms: item.timestamp - window._rollbarStartTime,
-      timestamp: Math.round(item.timestamp / 1000),
-      javascript: {
-        browser: nav.userAgent,
-        language: nav.language,
-        cookie_enabled: nav.cookieEnabled,
-        screen: {
-          width: scr.width,
-          height: scr.height
-        }
-      }
-    });
-    callback(null, item);
-  };
-}
-function addPluginInfo(window) {
-  return function (item, options, callback) {
-    if (!window || !window.navigator) {
-      return callback(null, item);
-    }
-    var plugins = [];
-    var navPlugins = window.navigator.plugins || [];
-    var cur;
-    for (var i = 0, l = navPlugins.length; i < l; ++i) {
-      cur = navPlugins[i];
-      plugins.push({
-        name: cur.name,
-        description: cur.description
-      });
-    }
-    _.set(item, 'data.client.javascript.plugins', plugins);
-    callback(null, item);
-  };
-}
-function addBody(item, options, callback) {
-  if (item.stackInfo) {
-    if (item.stackInfo.traceChain) {
-      addBodyTraceChain(item, options, callback);
-    } else {
-      addBodyTrace(item, options, callback);
-    }
-  } else {
-    addBodyMessage(item, options, callback);
-  }
-}
-function addBodyMessage(item, options, callback) {
-  var message = item.message;
-  var custom = item.custom;
-  if (!message) {
-    message = 'Item sent with null or missing arguments.';
-  }
-  var result = {
-    body: message
-  };
-  if (custom) {
-    result.extra = _.merge(custom);
-  }
-  _.set(item, 'data.body', {
-    message: result
-  });
-  callback(null, item);
-}
-function stackFromItem(item) {
-  // Transform a TraceKit stackInfo object into a Rollbar trace
-  var stack = item.stackInfo.stack;
-  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
-    stack = item._unhandledStackInfo.stack;
-  }
-  return stack;
-}
-function addBodyTraceChain(item, options, callback) {
-  var traceChain = item.stackInfo.traceChain;
-  var traces = [];
-  var traceChainLength = traceChain.length;
-  for (var i = 0; i < traceChainLength; i++) {
-    var trace = buildTrace(item, traceChain[i], options);
-    traces.push(trace);
-  }
-  _.set(item, 'data.body', {
-    trace_chain: traces
-  });
-  callback(null, item);
-}
-function addBodyTrace(item, options, callback) {
-  var stack = stackFromItem(item);
-  if (stack) {
-    var trace = buildTrace(item, item.stackInfo, options);
-    _.set(item, 'data.body', {
-      trace: trace
-    });
-    callback(null, item);
-  } else {
-    var stackInfo = item.stackInfo;
-    var guess = errorParser.guessErrorClass(stackInfo.message);
-    var className = errorClass(stackInfo, guess[0], options);
-    var message = guess[1];
-    item.message = className + ': ' + message;
-    addBodyMessage(item, options, callback);
-  }
-}
-function buildTrace(item, stackInfo, options) {
-  var description = item && item.data.description;
-  var custom = item && item.custom;
-  var stack = stackFromItem(item);
-  var guess = errorParser.guessErrorClass(stackInfo.message);
-  var className = errorClass(stackInfo, guess[0], options);
-  var message = guess[1];
-  var trace = {
-    exception: {
-      "class": className,
-      message: message
-    }
-  };
-  if (description) {
-    trace.exception.description = description;
-  }
-  if (stack) {
-    if (stack.length === 0) {
-      trace.exception.stack = stackInfo.rawStack;
-      trace.exception.raw = String(stackInfo.rawException);
-    }
-    var stackFrame;
-    var frame;
-    var code;
-    var pre;
-    var post;
-    var contextLength;
-    var i, mid;
-    trace.frames = [];
-    for (i = 0; i < stack.length; ++i) {
-      stackFrame = stack[i];
-      frame = {
-        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
-        lineno: stackFrame.line || null,
-        method: !stackFrame.func || stackFrame.func === '?' ? '[anonymous]' : stackFrame.func,
-        colno: stackFrame.column
-      };
-      if (options.sendFrameUrl) {
-        frame.url = stackFrame.url;
-      }
-      if (frame.method && frame.method.endsWith && frame.method.endsWith('_rollbar_wrapped')) {
-        continue;
-      }
-      code = pre = post = null;
-      contextLength = stackFrame.context ? stackFrame.context.length : 0;
-      if (contextLength) {
-        mid = Math.floor(contextLength / 2);
-        pre = stackFrame.context.slice(0, mid);
-        code = stackFrame.context[mid];
-        post = stackFrame.context.slice(mid);
-      }
-      if (code) {
-        frame.code = code;
-      }
-      if (pre || post) {
-        frame.context = {};
-        if (pre && pre.length) {
-          frame.context.pre = pre;
-        }
-        if (post && post.length) {
-          frame.context.post = post;
-        }
-      }
-      if (stackFrame.args) {
-        frame.args = stackFrame.args;
-      }
-      trace.frames.push(frame);
-    }
-
-    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
-    trace.frames.reverse();
-    if (custom) {
-      trace.extra = _.merge(custom);
-    }
-  }
-  return trace;
-}
-function errorClass(stackInfo, guess, options) {
-  if (stackInfo.name) {
-    return stackInfo.name;
-  } else if (options.guessErrorClass) {
-    return guess;
-  } else {
-    return '(unknown)';
-  }
-}
-function addScrubber(scrubFn) {
-  return function (item, options, callback) {
-    if (scrubFn) {
-      var scrubFields = options.scrubFields || [];
-      var scrubPaths = options.scrubPaths || [];
-      item.data = scrubFn(item.data, scrubFields, scrubPaths);
-    }
-    callback(null, item);
-  };
-}
-module.exports = {
-  handleDomException: handleDomException,
-  handleItemWithError: handleItemWithError,
-  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
-  addBaseInfo: addBaseInfo,
-  addRequestInfo: addRequestInfo,
-  addClientInfo: addClientInfo,
-  addPluginInfo: addPluginInfo,
-  addBody: addBody,
-  addScrubber: addScrubber
-};
-
-/***/ }),
-
-/***/ 511:
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var _ = __webpack_require__(585);
-
-/*
- * RateLimiter - an object that encapsulates the logic for counting items sent to Rollbar
- *
- * @param options - the same options that are accepted by configureGlobal offered as a convenience
- */
-function RateLimiter(options) {
-  this.startTime = _.now();
-  this.counter = 0;
-  this.perMinCounter = 0;
-  this.platform = null;
-  this.platformOptions = {};
-  this.configureGlobal(options);
-}
-RateLimiter.globalSettings = {
-  startTime: _.now(),
-  maxItems: undefined,
-  itemsPerMinute: undefined
-};
-
-/*
- * configureGlobal - set the global rate limiter options
- *
- * @param options - Only the following values are recognized:
- *    startTime: a timestamp of the form returned by (new Date()).getTime()
- *    maxItems: the maximum items
- *    itemsPerMinute: the max number of items to send in a given minute
- */
-RateLimiter.prototype.configureGlobal = function (options) {
-  if (options.startTime !== undefined) {
-    RateLimiter.globalSettings.startTime = options.startTime;
-  }
-  if (options.maxItems !== undefined) {
-    RateLimiter.globalSettings.maxItems = options.maxItems;
-  }
-  if (options.itemsPerMinute !== undefined) {
-    RateLimiter.globalSettings.itemsPerMinute = options.itemsPerMinute;
-  }
-};
-
-/*
- * shouldSend - determine if we should send a given item based on rate limit settings
- *
- * @param item - the item we are about to send
- * @returns An object with the following structure:
- *  error: (Error|null)
- *  shouldSend: bool
- *  payload: (Object|null)
- *  If shouldSend is false, the item passed as a parameter should not be sent to Rollbar, and
- *  exactly one of error or payload will be non-null. If error is non-null, the returned Error will
- *  describe the situation, but it means that we were already over a rate limit (either globally or
- *  per minute) when this item was checked. If error is null, and therefore payload is non-null, it
- *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
- *  place of the passed in item.
- */
-RateLimiter.prototype.shouldSend = function (item, now) {
-  now = now || _.now();
-  var elapsedTime = now - this.startTime;
-  if (elapsedTime < 0 || elapsedTime >= 60000) {
-    this.startTime = now;
-    this.perMinCounter = 0;
-  }
-  var globalRateLimit = RateLimiter.globalSettings.maxItems;
-  var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
-  if (checkRate(item, globalRateLimit, this.counter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
-  } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
-  }
-  this.counter++;
-  this.perMinCounter++;
-  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
-  var perMinute = shouldSend;
-  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
-  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
-};
-RateLimiter.prototype.setPlatformOptions = function (platform, options) {
-  this.platform = platform;
-  this.platformOptions = options;
-};
-
-/* Helpers */
-
-function checkRate(item, limit, counter) {
-  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
-}
-function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
-  var payload = null;
-  if (error) {
-    error = new Error(error);
-  }
-  if (!error && !shouldSend) {
-    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
-  }
-  return {
-    error: error,
-    shouldSend: shouldSend,
-    payload: payload
-  };
-}
-function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
-  var environment = options.environment || options.payload && options.payload.environment;
-  var msg;
-  if (perMinute) {
-    msg = 'item per minute limit reached, ignoring errors until timeout';
-  } else {
-    msg = 'maxItems has been hit, ignoring errors until reset.';
-  }
-  var item = {
-    body: {
-      message: {
-        body: msg,
-        extra: {
-          maxItems: globalRateLimit,
-          itemsPerMinute: limitPerMin
-        }
-      }
-    },
-    language: 'javascript',
-    environment: environment,
-    notifier: {
-      version: options.notifier && options.notifier.version || options.version
-    }
-  };
-  if (platform === 'browser') {
-    item.platform = 'browser';
-    item.framework = 'browser-js';
-    item.notifier.name = 'rollbar-browser-js';
-  } else if (platform === 'server') {
-    item.framework = options.framework || 'node-js';
-    item.notifier.name = options.notifier.name;
-  } else if (platform === 'react-native') {
-    item.framework = options.framework || 'react-native';
-    item.notifier.name = options.notifier.name;
-  }
-  return item;
-}
-module.exports = RateLimiter;
-
-/***/ }),
-
-/***/ 528:
-/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-// ESM COMPAT FLAG
-__webpack_require__.r(__webpack_exports__);
-
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  ReplayRecorder: function() { return /* reexport */ ReplayRecorder; },
-  createReplayRecorder: function() { return /* binding */ createReplayRecorder; }
+  "default": function() { return /* binding */ Recorder; }
 });
 
 ;// ./node_modules/@rrweb/record/dist/record.js
@@ -14603,156 +12383,2337 @@ var n;
 
 //# sourceMappingURL=record.js.map
 
-;// ./src/browser/replay/recorder.js
+;// ./src/browser/recorder.js
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
+function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
+function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
+function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
-var ReplayRecorder = /*#__PURE__*/function () {
-  function ReplayRecorder(tracing) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    _classCallCheck(this, ReplayRecorder);
+var _options = /*#__PURE__*/new WeakMap();
+var _tracing = /*#__PURE__*/new WeakMap();
+var _stopFn = /*#__PURE__*/new WeakMap();
+var _earliestTimestamp = /*#__PURE__*/new WeakMap();
+var _eventsMatrix = /*#__PURE__*/new WeakMap();
+var Recorder = /*#__PURE__*/function () {
+  function Recorder(tracing, options) {
+    _classCallCheck(this, Recorder);
+    _classPrivateFieldInitSpec(this, _options, {});
+    _classPrivateFieldInitSpec(this, _tracing, null);
+    _classPrivateFieldInitSpec(this, _stopFn, null);
+    _classPrivateFieldInitSpec(this, _earliestTimestamp, 0);
+    _classPrivateFieldInitSpec(this, _eventsMatrix, [[]]);
+    console.log('Recorder: Initializing...');
     this.tracing = tracing;
-    this.options = _objectSpread({
-      // Default replay options
-      checkoutEveryNms: 5 * 60 * 1000,
-      // Checkout every 5 minutes (for time-based approach)
-      blockClass: 'rr-block',
-      maskTextClass: 'rr-mask',
-      maskInputs: true,
-      recordCanvas: false
-    }, options);
-
-    // We use a two-dimensional array to store events by checkpoint
-    this.eventsMatrix = [[]];
-    this.stopFn = null;
-    this.isRecording = false;
+    this.options = options !== null && options !== void 0 ? options : {};
   }
-  return _createClass(ReplayRecorder, [{
+  return _createClass(Recorder, [{
+    key: "isRecording",
+    get: function get() {
+      return _classPrivateFieldGet(_stopFn, this) !== null;
+    }
+  }, {
+    key: "options",
+    get: function get() {
+      return _classPrivateFieldGet(_options, this);
+    }
+
+    // dump(context) {
+    //   // Create a span for the recording session
+    //   this.recordingSpan = this.tracing.startSpan('replay.recording');
+    //   this.recordingSpan.startTime = earliestTimestamp;
+    //   this.recordingSpan.endTime = events[-1].endTime;
+
+    //   for event in events {
+    //     this.recordingSpan.addEvent('rrweb-replay-events', {
+    //       eventType: event.type,
+    //       json: event.data,
+    //     });
+    //   }
+    // }
+  }, {
+    key: "configure",
+    value: function configure(options) {
+      // ...
+    }
+  }, {
     key: "start",
     value: function start() {
-      var _this = this;
-      if (this.isRecording) {
+      if (this.isRecording || this.options.enabled === false) {
+        if (this.isRecording) {
+          console.log('Recorder: Already started');
+        } else {
+          console.log('Recorder: Disabled');
+        }
         return;
       }
+      console.log('Recorder: Starting...');
+      _classPrivateFieldSet(_eventsMatrix, this, [[]]);
+      _classPrivateFieldSet(_stopFn, this, function () {});
+      // this.stopFn = record.record({
+      //   emit: (event, isCheckout) => {
+      //     if (isCheckout) {
+      //       this.#eventsMatrix.push([]);
+      //     }
 
-      // Ensure tracing is ready
-      if (!this.tracing) {
-        throw new Error('Tracing is required for recording');
-      }
+      //     // Add the event to the latest array in the matrix
+      //     const lastEvents = this.#eventsMatrix[this.#eventsMatrix.length - 1];
+      //     lastEvents.push(event);
+      //   },
+      //   checkoutEveryNms: this.options.checkoutEveryNms,
+      //   ...this.options,
+      // });
 
-      // Reset events matrix when starting recording
-      this.eventsMatrix = [[]];
-      this.stopFn = record(_objectSpread({
-        emit: function emit(event, isCheckout) {
-          // If this is a checkout event, start a new array in the matrix
-          if (isCheckout) {
-            _this.eventsMatrix.push([]);
-          }
-
-          // Add the event to the latest array in the matrix
-          var lastEvents = _this.eventsMatrix[_this.eventsMatrix.length - 1];
-          lastEvents.push(event);
-        },
-        checkoutEveryNms: this.options.checkoutEveryNms
-      }, this.options));
-
-      // Create a span for the recording session
-      this.recordingSpan = this.tracing.startSpan('replay.recording');
-      this.isRecording = true;
+      console.log('Recorder: Started');
       return this;
     }
   }, {
     key: "stop",
     value: function stop() {
-      if (!this.isRecording || !this.stopFn) {
+      if (!this.isRecording) {
+        console.log('Recorder: Already stopped');
         return;
       }
-      this.stopFn();
-      this.isRecording = false;
-      this.stopFn = null;
-
-      // End the recording span if it exists
-      if (this.recordingSpan) {
-        this.recordingSpan.end();
-        this.recordingSpan = null;
-      }
+      console.log('Recorder: Stopping...');
+      _classPrivateFieldGet(_stopFn, this).call(this);
+      _classPrivateFieldSet(_stopFn, this, null);
+      console.log('Recorder: Stopped');
       return this;
-    }
-
-    // Get all recorded events flattened into a single array
-  }, {
-    key: "getAllEvents",
-    value: function getAllEvents() {
-      return this.eventsMatrix.flat();
-    }
-
-    // Get last N minutes of events (approximately)
-    // This returns the last 1-2 checkpoints which should cover roughly the requested time
-  }, {
-    key: "getLastNMinutes",
-    value: function getLastNMinutes() {
-      var minutes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
-      var checkpointsToInclude = Math.max(2,
-      // Always include at least 2 checkpoints for proper replay
-      Math.ceil(minutes * 60 * 1000 / this.options.checkoutEveryNms));
-
-      // Get the last N checkpoints (or all if we have fewer)
-      var startIdx = Math.max(0, this.eventsMatrix.length - checkpointsToInclude);
-      var relevantCheckpoints = this.eventsMatrix.slice(startIdx);
-
-      // Flatten the checkpoints into a single array of events
-      return relevantCheckpoints.flat();
-    }
-
-    // Get the events since the last checkpoint
-    // This is useful for getting just the most recent events
-  }, {
-    key: "getRecentEvents",
-    value: function getRecentEvents() {
-      if (this.eventsMatrix.length === 0) {
-        return [];
-      }
-      return this.eventsMatrix[this.eventsMatrix.length - 1];
-    }
-
-    // Get the latest N checkpoints of events
-  }, {
-    key: "getLatestCheckpoints",
-    value: function getLatestCheckpoints() {
-      var count = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 2;
-      var startIdx = Math.max(0, this.eventsMatrix.length - count);
-      return this.eventsMatrix.slice(startIdx).flat();
     }
   }, {
     key: "clear",
     value: function clear() {
-      this.eventsMatrix = [[]];
+      _classPrivateFieldSet(_eventsMatrix, this, [[]]);
       return this;
     }
   }]);
 }();
-;// ./src/browser/replay/index.js
 
-function createReplayRecorder(rollbar) {
-  if (!rollbar || !rollbar.options) {
-    throw new Error('Rollbar instance is required to create a ReplayRecorder');
-  }
-  if (!rollbar.tracing) {
-    throw new Error('Tracing must be available to create a ReplayRecorder');
-  }
-  var options = rollbar.options.replay || {};
-  return new ReplayRecorder(rollbar.tracing, options);
+
+/***/ }),
+
+/***/ 49:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+var helpers = __webpack_require__(93);
+var defaultOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/item/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443
+};
+
+/**
+ * Api is an object that encapsulates methods of communicating with
+ * the Rollbar API.  It is a standard interface with some parts implemented
+ * differently for server or browser contexts.  It is an object that should
+ * be instantiated when used so it can contain non-global options that may
+ * be different for another instance of RollbarApi.
+ *
+ * @param options {
+ *    accessToken: the accessToken to use for posting items to rollbar
+ *    endpoint: an alternative endpoint to send errors to
+ *        must be a valid, fully qualified URL.
+ *        The default is: https://api.rollbar.com/api/1/item
+ *    proxy: if you wish to proxy requests provide an object
+ *        with the following keys:
+ *          host or hostname (required): foo.example.com
+ *          port (optional): 123
+ *          protocol (optional): https
+ * }
+ */
+function Api(options, transport, urllib, truncation, jsonBackup) {
+  this.options = options;
+  this.transport = transport;
+  this.url = urllib;
+  this.truncation = truncation;
+  this.jsonBackup = jsonBackup;
+  this.accessToken = options.accessToken;
+  this.transportOptions = _getTransport(options, urllib);
 }
 
-// Export the classes for direct use if needed
+/**
+ *
+ * @param data
+ * @param callback
+ */
+Api.prototype.postItem = function (data, callback) {
+  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  var self = this;
 
+  // ensure the network request is scheduled after the current tick.
+  setTimeout(function () {
+    self.transport.post(self.accessToken, transportOptions, payload, callback);
+  }, 0);
+};
+
+/**
+ *
+ * @param data
+ * @param callback
+ */
+Api.prototype.buildJsonPayload = function (data, callback) {
+  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  var stringifyResult;
+  if (this.truncation) {
+    stringifyResult = this.truncation.truncate(payload);
+  } else {
+    stringifyResult = _.stringify(payload);
+  }
+  if (stringifyResult.error) {
+    if (callback) {
+      callback(stringifyResult.error);
+    }
+    return null;
+  }
+  return stringifyResult.value;
+};
+
+/**
+ *
+ * @param jsonPayload
+ * @param callback
+ */
+Api.prototype.postJsonPayload = function (jsonPayload, callback) {
+  var transportOptions = helpers.transportOptions(this.transportOptions, 'POST');
+  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
+};
+Api.prototype.configure = function (options) {
+  var oldOptions = this.oldOptions;
+  this.options = _.merge(oldOptions, options);
+  this.transportOptions = _getTransport(this.options, this.url);
+  if (this.options.accessToken !== undefined) {
+    this.accessToken = this.options.accessToken;
+  }
+  return this;
+};
+function _getTransport(options, url) {
+  return helpers.getTransportFromOptions(options, defaultOptions, url);
+}
+module.exports = Api;
+
+/***/ }),
+
+/***/ 93:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+function buildPayload(accessToken, data, jsonBackup) {
+  if (!_.isType(data.context, 'string')) {
+    var contextResult = _.stringify(data.context, jsonBackup);
+    if (contextResult.error) {
+      data.context = "Error: could not serialize 'context'";
+    } else {
+      data.context = contextResult.value || '';
+    }
+    if (data.context.length > 255) {
+      data.context = data.context.substr(0, 255);
+    }
+  }
+  return {
+    access_token: accessToken,
+    data: data
+  };
+}
+function getTransportFromOptions(options, defaults, url) {
+  var hostname = defaults.hostname;
+  var protocol = defaults.protocol;
+  var port = defaults.port;
+  var path = defaults.path;
+  var search = defaults.search;
+  var timeout = options.timeout;
+  var transport = detectTransport(options);
+  var proxy = options.proxy;
+  if (options.endpoint) {
+    var opts = url.parse(options.endpoint);
+    hostname = opts.hostname;
+    protocol = opts.protocol;
+    port = opts.port;
+    path = opts.pathname;
+    search = opts.search;
+  }
+  return {
+    timeout: timeout,
+    hostname: hostname,
+    protocol: protocol,
+    port: port,
+    path: path,
+    search: search,
+    proxy: proxy,
+    transport: transport
+  };
+}
+function detectTransport(options) {
+  var gWindow = typeof window != 'undefined' && window || typeof self != 'undefined' && self;
+  var transport = options.defaultTransport || 'xhr';
+  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
+  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
+  return transport;
+}
+function transportOptions(transport, method) {
+  var protocol = transport.protocol || 'https:';
+  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
+  var hostname = transport.hostname;
+  var path = transport.path;
+  var timeout = transport.timeout;
+  var transportAPI = transport.transport;
+  if (transport.search) {
+    path = path + transport.search;
+  }
+  if (transport.proxy) {
+    path = protocol + '//' + hostname + path;
+    hostname = transport.proxy.host || transport.proxy.hostname;
+    port = transport.proxy.port;
+    protocol = transport.proxy.protocol || protocol;
+  }
+  return {
+    timeout: timeout,
+    protocol: protocol,
+    hostname: hostname,
+    path: path,
+    port: port,
+    method: method,
+    transport: transportAPI
+  };
+}
+function appendPathToPath(base, path) {
+  var baseTrailingSlash = /\/$/.test(base);
+  var pathBeginningSlash = /^\//.test(path);
+  if (baseTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!baseTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+  return base + path;
+}
+module.exports = {
+  buildPayload: buildPayload,
+  getTransportFromOptions: getTransportFromOptions,
+  transportOptions: transportOptions,
+  appendPathToPath: appendPathToPath
+};
+
+/***/ }),
+
+/***/ 98:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+function traverse(obj, func, seen) {
+  var k, v, i;
+  var isObj = _.isType(obj, 'object');
+  var isArray = _.isType(obj, 'array');
+  var keys = [];
+  var seenIndex;
+
+  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
+  seen = seen || {
+    obj: [],
+    mapped: []
+  };
+  if (isObj) {
+    seenIndex = seen.obj.indexOf(obj);
+    if (isObj && seenIndex !== -1) {
+      // Prefer the mapped object if there is one.
+      return seen.mapped[seenIndex] || seen.obj[seenIndex];
+    }
+    seen.obj.push(obj);
+    seenIndex = seen.obj.length - 1;
+  }
+  if (isObj) {
+    for (k in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+        keys.push(k);
+      }
+    }
+  } else if (isArray) {
+    for (i = 0; i < obj.length; ++i) {
+      keys.push(i);
+    }
+  }
+  var result = isObj ? {} : [];
+  var same = true;
+  for (i = 0; i < keys.length; ++i) {
+    k = keys[i];
+    v = obj[k];
+    result[k] = func(k, v, seen);
+    same = same && result[k] === obj[k];
+  }
+  if (isObj && !same) {
+    seen.mapped[seenIndex] = result;
+  }
+  return !same ? result : obj;
+}
+module.exports = traverse;
+
+/***/ }),
+
+/***/ 108:
+/***/ (function(module, exports) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
+    'use strict';
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+
+    /* istanbul ignore next */
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else {}
+}(this, function() {
+    'use strict';
+    function _isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
+
+    function _capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.substring(1);
+    }
+
+    function _getter(p) {
+        return function() {
+            return this[p];
+        };
+    }
+
+    var booleanProps = ['isConstructor', 'isEval', 'isNative', 'isToplevel'];
+    var numericProps = ['columnNumber', 'lineNumber'];
+    var stringProps = ['fileName', 'functionName', 'source'];
+    var arrayProps = ['args'];
+    var objectProps = ['evalOrigin'];
+
+    var props = booleanProps.concat(numericProps, stringProps, arrayProps, objectProps);
+
+    function StackFrame(obj) {
+        if (!obj) return;
+        for (var i = 0; i < props.length; i++) {
+            if (obj[props[i]] !== undefined) {
+                this['set' + _capitalize(props[i])](obj[props[i]]);
+            }
+        }
+    }
+
+    StackFrame.prototype = {
+        getArgs: function() {
+            return this.args;
+        },
+        setArgs: function(v) {
+            if (Object.prototype.toString.call(v) !== '[object Array]') {
+                throw new TypeError('Args must be an Array');
+            }
+            this.args = v;
+        },
+
+        getEvalOrigin: function() {
+            return this.evalOrigin;
+        },
+        setEvalOrigin: function(v) {
+            if (v instanceof StackFrame) {
+                this.evalOrigin = v;
+            } else if (v instanceof Object) {
+                this.evalOrigin = new StackFrame(v);
+            } else {
+                throw new TypeError('Eval Origin must be an Object or StackFrame');
+            }
+        },
+
+        toString: function() {
+            var fileName = this.getFileName() || '';
+            var lineNumber = this.getLineNumber() || '';
+            var columnNumber = this.getColumnNumber() || '';
+            var functionName = this.getFunctionName() || '';
+            if (this.getIsEval()) {
+                if (fileName) {
+                    return '[eval] (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+                }
+                return '[eval]:' + lineNumber + ':' + columnNumber;
+            }
+            if (functionName) {
+                return functionName + ' (' + fileName + ':' + lineNumber + ':' + columnNumber + ')';
+            }
+            return fileName + ':' + lineNumber + ':' + columnNumber;
+        }
+    };
+
+    StackFrame.fromString = function StackFrame$$fromString(str) {
+        var argsStartIndex = str.indexOf('(');
+        var argsEndIndex = str.lastIndexOf(')');
+
+        var functionName = str.substring(0, argsStartIndex);
+        var args = str.substring(argsStartIndex + 1, argsEndIndex).split(',');
+        var locationString = str.substring(argsEndIndex + 1);
+
+        if (locationString.indexOf('@') === 0) {
+            var parts = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(locationString, '');
+            var fileName = parts[1];
+            var lineNumber = parts[2];
+            var columnNumber = parts[3];
+        }
+
+        return new StackFrame({
+            functionName: functionName,
+            args: args || undefined,
+            fileName: fileName,
+            lineNumber: lineNumber || undefined,
+            columnNumber: columnNumber || undefined
+        });
+    };
+
+    for (var i = 0; i < booleanProps.length; i++) {
+        StackFrame.prototype['get' + _capitalize(booleanProps[i])] = _getter(booleanProps[i]);
+        StackFrame.prototype['set' + _capitalize(booleanProps[i])] = (function(p) {
+            return function(v) {
+                this[p] = Boolean(v);
+            };
+        })(booleanProps[i]);
+    }
+
+    for (var j = 0; j < numericProps.length; j++) {
+        StackFrame.prototype['get' + _capitalize(numericProps[j])] = _getter(numericProps[j]);
+        StackFrame.prototype['set' + _capitalize(numericProps[j])] = (function(p) {
+            return function(v) {
+                if (!_isNumber(v)) {
+                    throw new TypeError(p + ' must be a Number');
+                }
+                this[p] = Number(v);
+            };
+        })(numericProps[j]);
+    }
+
+    for (var k = 0; k < stringProps.length; k++) {
+        StackFrame.prototype['get' + _capitalize(stringProps[k])] = _getter(stringProps[k]);
+        StackFrame.prototype['set' + _capitalize(stringProps[k])] = (function(p) {
+            return function(v) {
+                this[p] = String(v);
+            };
+        })(stringProps[k]);
+    }
+
+    return StackFrame;
+}));
+
+
+/***/ }),
+
+/***/ 136:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var ErrorStackParser = __webpack_require__(263);
+var UNKNOWN_FUNCTION = '?';
+var ERR_CLASS_REGEXP = new RegExp('^(([a-zA-Z0-9-_$ ]*): *)?(Uncaught )?([a-zA-Z0-9-_$ ]*): ');
+function guessFunctionName() {
+  return UNKNOWN_FUNCTION;
+}
+function gatherContext() {
+  return null;
+}
+function Frame(stackFrame) {
+  var data = {};
+  data._stackFrame = stackFrame;
+  data.url = stackFrame.fileName;
+  data.line = stackFrame.lineNumber;
+  data.func = stackFrame.functionName;
+  data.column = stackFrame.columnNumber;
+  data.args = stackFrame.args;
+  data.context = gatherContext();
+  return data;
+}
+function Stack(exception, skip) {
+  function getStack() {
+    var parserStack = [];
+    skip = skip || 0;
+    try {
+      parserStack = ErrorStackParser.parse(exception);
+    } catch (e) {
+      parserStack = [];
+    }
+    var stack = [];
+    for (var i = skip; i < parserStack.length; i++) {
+      stack.push(new Frame(parserStack[i]));
+    }
+    return stack;
+  }
+  return {
+    stack: getStack(),
+    message: exception.message,
+    name: _mostSpecificErrorName(exception),
+    rawStack: exception.stack,
+    rawException: exception
+  };
+}
+function parse(e, skip) {
+  var err = e;
+  if (err.nested || err.cause) {
+    var traceChain = [];
+    while (err) {
+      traceChain.push(new Stack(err, skip));
+      err = err.nested || err.cause;
+      skip = 0; // Only apply skip value to primary error
+    }
+
+    // Return primary error with full trace chain attached.
+    traceChain[0].traceChain = traceChain;
+    return traceChain[0];
+  } else {
+    return new Stack(err, skip);
+  }
+}
+function guessErrorClass(errMsg) {
+  if (!errMsg || !errMsg.match) {
+    return ['Unknown error. There was no error message to display.', ''];
+  }
+  var errClassMatch = errMsg.match(ERR_CLASS_REGEXP);
+  var errClass = '(unknown)';
+  if (errClassMatch) {
+    errClass = errClassMatch[errClassMatch.length - 1];
+    errMsg = errMsg.replace((errClassMatch[errClassMatch.length - 2] || '') + errClass + ':', '');
+    errMsg = errMsg.replace(/(^[\s]+|[\s]+$)/g, '');
+  }
+  return [errClass, errMsg];
+}
+
+// * Prefers any value over an empty string
+// * Prefers any value over 'Error' where possible
+// * Prefers name over constructor.name when both are more specific than 'Error'
+function _mostSpecificErrorName(error) {
+  var name = error.name && error.name.length && error.name;
+  var constructorName = error.constructor.name && error.constructor.name.length && error.constructor.name;
+  if (!name || !constructorName) {
+    return name || constructorName;
+  }
+  if (name === 'Error') {
+    return constructorName;
+  }
+  return name;
+}
+module.exports = {
+  guessFunctionName: guessFunctionName,
+  guessErrorClass: guessErrorClass,
+  gatherContext: gatherContext,
+  parse: parse,
+  Stack: Stack,
+  Frame: Frame
+};
+
+/***/ }),
+
+/***/ 144:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+/* eslint-disable no-console */
+__webpack_require__(738);
+var detection = __webpack_require__(629);
+var _ = __webpack_require__(585);
+function error() {
+  var args = Array.prototype.slice.call(arguments, 0);
+  args.unshift('Rollbar:');
+  if (detection.ieVersion() <= 8) {
+    console.error(_.formatArgsAsString(args));
+  } else {
+    console.error.apply(console, args);
+  }
+}
+function info() {
+  var args = Array.prototype.slice.call(arguments, 0);
+  args.unshift('Rollbar:');
+  if (detection.ieVersion() <= 8) {
+    console.info(_.formatArgsAsString(args));
+  } else {
+    console.info.apply(console, args);
+  }
+}
+function log() {
+  var args = Array.prototype.slice.call(arguments, 0);
+  args.unshift('Rollbar:');
+  if (detection.ieVersion() <= 8) {
+    console.log(_.formatArgsAsString(args));
+  } else {
+    console.log.apply(console, args);
+  }
+}
+
+/* eslint-enable no-console */
+
+module.exports = {
+  error: error,
+  info: info,
+  log: log
+};
+
+/***/ }),
+
+/***/ 245:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var rollbar = __webpack_require__(402);
+if (typeof window !== 'undefined' && !window._rollbarStartTime) {
+  window._rollbarStartTime = new Date().getTime();
+}
+module.exports = rollbar;
+
+/***/ }),
+
+/***/ 262:
+/***/ (function(module) {
+
+function captureUncaughtExceptions(window, handler, shim) {
+  if (!window) {
+    return;
+  }
+  var oldOnError;
+  if (typeof handler._rollbarOldOnError === 'function') {
+    oldOnError = handler._rollbarOldOnError;
+  } else if (window.onerror) {
+    oldOnError = window.onerror;
+    while (oldOnError._rollbarOldOnError) {
+      oldOnError = oldOnError._rollbarOldOnError;
+    }
+    handler._rollbarOldOnError = oldOnError;
+  }
+  handler.handleAnonymousErrors();
+  var fn = function fn() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    _rollbarWindowOnError(window, handler, oldOnError, args);
+  };
+  if (shim) {
+    fn._rollbarOldOnError = oldOnError;
+  }
+  window.onerror = fn;
+}
+function _rollbarWindowOnError(window, r, old, args) {
+  if (window._rollbarWrappedError) {
+    if (!args[4]) {
+      args[4] = window._rollbarWrappedError;
+    }
+    if (!args[5]) {
+      args[5] = window._rollbarWrappedError._rollbarContext;
+    }
+    window._rollbarWrappedError = null;
+  }
+  var ret = r.handleUncaughtException.apply(r, args);
+  if (old) {
+    old.apply(window, args);
+  }
+
+  // Let other chained onerror handlers above run before setting this.
+  // If an error is thrown and caught within a chained onerror handler,
+  // Error.prepareStackTrace() will see that one before the one we want.
+  if (ret === 'anonymous') {
+    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+  }
+}
+function captureUnhandledRejections(window, handler, shim) {
+  if (!window) {
+    return;
+  }
+  if (typeof window._rollbarURH === 'function' && window._rollbarURH.belongsToShim) {
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
+  }
+  var rejectionHandler = function rejectionHandler(evt) {
+    var reason, promise, detail;
+    try {
+      reason = evt.reason;
+    } catch (e) {
+      reason = undefined;
+    }
+    try {
+      promise = evt.promise;
+    } catch (e) {
+      promise = '[unhandledrejection] error getting `promise` from event';
+    }
+    try {
+      detail = evt.detail;
+      if (!reason && detail) {
+        reason = detail.reason;
+        promise = detail.promise;
+      }
+    } catch (e) {
+      // Ignore
+    }
+    if (!reason) {
+      reason = '[unhandledrejection] error getting `reason` from event';
+    }
+    if (handler && handler.handleUnhandledRejection) {
+      handler.handleUnhandledRejection(reason, promise);
+    }
+  };
+  rejectionHandler.belongsToShim = shim;
+  window._rollbarURH = rejectionHandler;
+  window.addEventListener('unhandledrejection', rejectionHandler);
+}
+module.exports = {
+  captureUncaughtExceptions: captureUncaughtExceptions,
+  captureUnhandledRejections: captureUnhandledRejections
+};
+
+/***/ }),
+
+/***/ 263:
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
+    'use strict';
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, Rhino, and browsers.
+
+    /* istanbul ignore next */
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(108)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else {}
+}(this, function ErrorStackParser(StackFrame) {
+    'use strict';
+
+    var FIREFOX_SAFARI_STACK_REGEXP = /(^|@)\S+:\d+/;
+    var CHROME_IE_STACK_REGEXP = /^\s*at .*(\S+:\d+|\(native\))/m;
+    var SAFARI_NATIVE_CODE_REGEXP = /^(eval@)?(\[native code])?$/;
+
+    return {
+        /**
+         * Given an Error object, extract the most information from it.
+         *
+         * @param {Error} error object
+         * @return {Array} of StackFrames
+         */
+        parse: function ErrorStackParser$$parse(error) {
+            if (typeof error.stacktrace !== 'undefined' || typeof error['opera#sourceloc'] !== 'undefined') {
+                return this.parseOpera(error);
+            } else if (error.stack && error.stack.match(CHROME_IE_STACK_REGEXP)) {
+                return this.parseV8OrIE(error);
+            } else if (error.stack) {
+                return this.parseFFOrSafari(error);
+            } else {
+                throw new Error('Cannot parse given Error object');
+            }
+        },
+
+        // Separate line and column numbers from a string of the form: (URI:Line:Column)
+        extractLocation: function ErrorStackParser$$extractLocation(urlLike) {
+            // Fail-fast but return locations like "(native)"
+            if (urlLike.indexOf(':') === -1) {
+                return [urlLike];
+            }
+
+            var regExp = /(.+?)(?::(\d+))?(?::(\d+))?$/;
+            var parts = regExp.exec(urlLike.replace(/[()]/g, ''));
+            return [parts[1], parts[2] || undefined, parts[3] || undefined];
+        },
+
+        parseV8OrIE: function ErrorStackParser$$parseV8OrIE(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !!line.match(CHROME_IE_STACK_REGEXP);
+            }, this);
+
+            return filtered.map(function(line) {
+                if (line.indexOf('(eval ') > -1) {
+                    // Throw away eval information until we implement stacktrace.js/stackframe#8
+                    line = line.replace(/eval code/g, 'eval').replace(/(\(eval at [^()]*)|(\),.*$)/g, '');
+                }
+                var sanitizedLine = line.replace(/^\s+/, '').replace(/\(eval code/g, '(');
+
+                // capture and preseve the parenthesized location "(/foo/my bar.js:12:87)" in
+                // case it has spaces in it, as the string is split on \s+ later on
+                var location = sanitizedLine.match(/ (\((.+):(\d+):(\d+)\)$)/);
+
+                // remove the parenthesized location from the line, if it was matched
+                sanitizedLine = location ? sanitizedLine.replace(location[0], '') : sanitizedLine;
+
+                var tokens = sanitizedLine.split(/\s+/).slice(1);
+                // if a location was matched, pass it to extractLocation() otherwise pop the last token
+                var locationParts = this.extractLocation(location ? location[1] : tokens.pop());
+                var functionName = tokens.join(' ') || undefined;
+                var fileName = ['eval', '<anonymous>'].indexOf(locationParts[0]) > -1 ? undefined : locationParts[0];
+
+                return new StackFrame({
+                    functionName: functionName,
+                    fileName: fileName,
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
+            }, this);
+        },
+
+        parseFFOrSafari: function ErrorStackParser$$parseFFOrSafari(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !line.match(SAFARI_NATIVE_CODE_REGEXP);
+            }, this);
+
+            return filtered.map(function(line) {
+                // Throw away eval information until we implement stacktrace.js/stackframe#8
+                if (line.indexOf(' > eval') > -1) {
+                    line = line.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ':$1');
+                }
+
+                if (line.indexOf('@') === -1 && line.indexOf(':') === -1) {
+                    // Safari eval frames only have function names and nothing else
+                    return new StackFrame({
+                        functionName: line
+                    });
+                } else {
+                    var functionNameRegex = /((.*".+"[^@]*)?[^@]*)(?:@)/;
+                    var matches = line.match(functionNameRegex);
+                    var functionName = matches && matches[1] ? matches[1] : undefined;
+                    var locationParts = this.extractLocation(line.replace(functionNameRegex, ''));
+
+                    return new StackFrame({
+                        functionName: functionName,
+                        fileName: locationParts[0],
+                        lineNumber: locationParts[1],
+                        columnNumber: locationParts[2],
+                        source: line
+                    });
+                }
+            }, this);
+        },
+
+        parseOpera: function ErrorStackParser$$parseOpera(e) {
+            if (!e.stacktrace || (e.message.indexOf('\n') > -1 &&
+                e.message.split('\n').length > e.stacktrace.split('\n').length)) {
+                return this.parseOpera9(e);
+            } else if (!e.stack) {
+                return this.parseOpera10(e);
+            } else {
+                return this.parseOpera11(e);
+            }
+        },
+
+        parseOpera9: function ErrorStackParser$$parseOpera9(e) {
+            var lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
+            var lines = e.message.split('\n');
+            var result = [];
+
+            for (var i = 2, len = lines.length; i < len; i += 2) {
+                var match = lineRE.exec(lines[i]);
+                if (match) {
+                    result.push(new StackFrame({
+                        fileName: match[2],
+                        lineNumber: match[1],
+                        source: lines[i]
+                    }));
+                }
+            }
+
+            return result;
+        },
+
+        parseOpera10: function ErrorStackParser$$parseOpera10(e) {
+            var lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
+            var lines = e.stacktrace.split('\n');
+            var result = [];
+
+            for (var i = 0, len = lines.length; i < len; i += 2) {
+                var match = lineRE.exec(lines[i]);
+                if (match) {
+                    result.push(
+                        new StackFrame({
+                            functionName: match[3] || undefined,
+                            fileName: match[2],
+                            lineNumber: match[1],
+                            source: lines[i]
+                        })
+                    );
+                }
+            }
+
+            return result;
+        },
+
+        // Opera 10.65+ Error.stack very similar to FF/Safari
+        parseOpera11: function ErrorStackParser$$parseOpera11(error) {
+            var filtered = error.stack.split('\n').filter(function(line) {
+                return !!line.match(FIREFOX_SAFARI_STACK_REGEXP) && !line.match(/^Error created at/);
+            }, this);
+
+            return filtered.map(function(line) {
+                var tokens = line.split('@');
+                var locationParts = this.extractLocation(tokens.pop());
+                var functionCall = (tokens.shift() || '');
+                var functionName = functionCall
+                    .replace(/<anonymous function(: (\w+))?>/, '$2')
+                    .replace(/\([^)]*\)/g, '') || undefined;
+                var argsRaw;
+                if (functionCall.match(/\(([^)]*)\)/)) {
+                    argsRaw = functionCall.replace(/^[^(]+\(([^)]*)\)$/, '$1');
+                }
+                var args = (argsRaw === undefined || argsRaw === '[arguments not available]') ?
+                    undefined : argsRaw.split(',');
+
+                return new StackFrame({
+                    functionName: functionName,
+                    args: args,
+                    fileName: locationParts[0],
+                    lineNumber: locationParts[1],
+                    columnNumber: locationParts[2],
+                    source: line
+                });
+            }, this);
+        }
+    };
+}));
+
+
+/***/ }),
+
+/***/ 269:
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+// ESM COMPAT FLAG
+__webpack_require__.r(__webpack_exports__);
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "default": function() { return /* binding */ Tracing; }
+});
+
+;// ./src/tracing/context.js
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var Context = /*#__PURE__*/function () {
+  function Context(parentContext) {
+    _classCallCheck(this, Context);
+    this._currentContext = parentContext ? new Map(parentContext) : new Map();
+  }
+  return _createClass(Context, [{
+    key: "getValue",
+    value: function getValue(key) {
+      return this._currentContext.get(key);
+    }
+  }, {
+    key: "setValue",
+    value: function setValue(key, value) {
+      var context = new Context(this._currentContext);
+      context._currentContext.set(key, value);
+      return context;
+    }
+  }, {
+    key: "deleteValue",
+    value: function deleteValue(key) {
+      var context = new Context(self._currentContext);
+      context._currentContext["delete"](key);
+      return context;
+    }
+  }]);
+}();
+var ROOT_CONTEXT = new Context();
+;// ./src/tracing/contextManager.js
+function contextManager_typeof(o) { "@babel/helpers - typeof"; return contextManager_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, contextManager_typeof(o); }
+function contextManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function contextManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, contextManager_toPropertyKey(o.key), o); } }
+function contextManager_createClass(e, r, t) { return r && contextManager_defineProperties(e.prototype, r), t && contextManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function contextManager_toPropertyKey(t) { var i = contextManager_toPrimitive(t, "string"); return "symbol" == contextManager_typeof(i) ? i : i + ""; }
+function contextManager_toPrimitive(t, r) { if ("object" != contextManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != contextManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+var ContextManager = /*#__PURE__*/function () {
+  function ContextManager() {
+    contextManager_classCallCheck(this, ContextManager);
+    this.currentContext = ROOT_CONTEXT;
+  }
+  return contextManager_createClass(ContextManager, [{
+    key: "active",
+    value: function active() {
+      return this.currentContext;
+    }
+  }, {
+    key: "enterContext",
+    value: function enterContext(context) {
+      var previousContext = this.currentContext;
+      this.currentContext = context || ROOT_CONTEXT;
+      return previousContext;
+    }
+  }, {
+    key: "exitContext",
+    value: function exitContext(context) {
+      this.currentContext = context;
+      return this.currentContext;
+    }
+  }, {
+    key: "with",
+    value: function _with(context, fn, thisArg) {
+      var previousContext = this.enterContext(context);
+      try {
+        for (var _len = arguments.length, args = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+          args[_key - 3] = arguments[_key];
+        }
+        return fn.call.apply(fn, [thisArg].concat(args));
+      } finally {
+        this.exitContext(previousContext);
+      }
+    }
+  }]);
+}();
+function createContextKey(key) {
+  // Use Symbol for OpenTelemetry compatibility.
+  return Symbol["for"](key);
+}
+;// ./src/tracing/session.js
+function session_typeof(o) { "@babel/helpers - typeof"; return session_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, session_typeof(o); }
+function session_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function session_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, session_toPropertyKey(o.key), o); } }
+function session_createClass(e, r, t) { return r && session_defineProperties(e.prototype, r), t && session_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function session_toPropertyKey(t) { var i = session_toPrimitive(t, "string"); return "symbol" == session_typeof(i) ? i : i + ""; }
+function session_toPrimitive(t, r) { if ("object" != session_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != session_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var SESSION_KEY = 'RollbarSession';
+var Session = /*#__PURE__*/function () {
+  function Session(tracing, options) {
+    session_classCallCheck(this, Session);
+    this.options = options;
+    this.tracing = tracing;
+    this.window = tracing.window;
+    this.session = null;
+  }
+  return session_createClass(Session, [{
+    key: "init",
+    value: function init() {
+      if (this.session) {
+        return this;
+      }
+      return this.getSession() || this.createSession();
+    }
+  }, {
+    key: "getSession",
+    value: function getSession() {
+      try {
+        var serializedSession = this.window.sessionStorage.getItem(SESSION_KEY);
+        if (!serializedSession) {
+          return null;
+        }
+        this.session = JSON.parse(serializedSession);
+      } catch (_unused) {
+        return null;
+      }
+      return this;
+    }
+  }, {
+    key: "createSession",
+    value: function createSession() {
+      this.session = {
+        id: this.tracing.hexId(),
+        createdAt: Date.now()
+      };
+      return this.setSession(this.session);
+    }
+  }, {
+    key: "setSession",
+    value: function setSession(session) {
+      var sessionString = JSON.stringify(session);
+      try {
+        this.window.sessionStorage.setItem(SESSION_KEY, sessionString);
+      } catch (_unused2) {
+        return null;
+      }
+      return this;
+    }
+  }]);
+}();
+;// ./src/tracing/exporter.js
+function exporter_typeof(o) { "@babel/helpers - typeof"; return exporter_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, exporter_typeof(o); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function exporter_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function exporter_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, exporter_toPropertyKey(o.key), o); } }
+function exporter_createClass(e, r, t) { return r && exporter_defineProperties(e.prototype, r), t && exporter_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function exporter_toPropertyKey(t) { var i = exporter_toPrimitive(t, "string"); return "symbol" == exporter_typeof(i) ? i : i + ""; }
+function exporter_toPrimitive(t, r) { if ("object" != exporter_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != exporter_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var SpanExporter = /*#__PURE__*/function () {
+  function SpanExporter() {
+    exporter_classCallCheck(this, SpanExporter);
+  }
+  return exporter_createClass(SpanExporter, [{
+    key: "export",
+    value: function _export(spans, _resultCallback) {
+      console.log(spans); // console exporter, TODO: make optional
+      spanExportQueue.push.apply(spanExportQueue, _toConsumableArray(spans));
+    }
+  }]);
+}();
+var spanExportQueue = [];
+;// ./src/tracing/spanProcessor.js
+function spanProcessor_typeof(o) { "@babel/helpers - typeof"; return spanProcessor_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, spanProcessor_typeof(o); }
+function spanProcessor_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function spanProcessor_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, spanProcessor_toPropertyKey(o.key), o); } }
+function spanProcessor_createClass(e, r, t) { return r && spanProcessor_defineProperties(e.prototype, r), t && spanProcessor_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function spanProcessor_toPropertyKey(t) { var i = spanProcessor_toPrimitive(t, "string"); return "symbol" == spanProcessor_typeof(i) ? i : i + ""; }
+function spanProcessor_toPrimitive(t, r) { if ("object" != spanProcessor_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != spanProcessor_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var SpanProcessor = /*#__PURE__*/function () {
+  function SpanProcessor(exporter) {
+    spanProcessor_classCallCheck(this, SpanProcessor);
+    this.exporter = exporter;
+  }
+  return spanProcessor_createClass(SpanProcessor, [{
+    key: "onStart",
+    value: function onStart(span, _parentContext) {
+      pendingSpans.set(span.spanContext.spanId, span);
+    }
+  }, {
+    key: "onEnd",
+    value: function onEnd(span) {
+      this.exporter["export"]([span["export"]()]);
+      pendingSpans["delete"](span.spanContext.spanId);
+    }
+  }]);
+}();
+var pendingSpans = new Map();
+;// ./src/tracing/span.js
+function span_typeof(o) { "@babel/helpers - typeof"; return span_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, span_typeof(o); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || span_unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function span_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return span_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? span_arrayLikeToArray(r, a) : void 0; } }
+function span_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function span_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function span_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, span_toPropertyKey(o.key), o); } }
+function span_createClass(e, r, t) { return r && span_defineProperties(e.prototype, r), t && span_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function span_toPropertyKey(t) { var i = span_toPrimitive(t, "string"); return "symbol" == span_typeof(i) ? i : i + ""; }
+function span_toPrimitive(t, r) { if ("object" != span_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != span_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var Span = /*#__PURE__*/function () {
+  function Span(options) {
+    span_classCallCheck(this, Span);
+    this.initReadableSpan(options);
+    this.spanProcessor = options.spanProcessor;
+    this.spanProcessor.onStart(this, options.context);
+    if (options.attributes) {
+      this.setAttributes(options.attributes);
+    }
+    return this;
+  }
+  return span_createClass(Span, [{
+    key: "initReadableSpan",
+    value: function initReadableSpan(options) {
+      this.span = {
+        name: options.name,
+        kind: options.kind,
+        spanContext: options.spanContext,
+        parentSpanId: options.parentSpanId,
+        startTime: this.hrTimeNow(),
+        endTime: [0, 0],
+        status: {
+          code: 0,
+          message: ''
+        },
+        attributes: {
+          'session.id': options.session.id
+        },
+        links: [],
+        events: [],
+        duration: 0,
+        ended: false,
+        resource: options.resource,
+        instrumentationScope: options.scope,
+        droppedAttributesCount: 0,
+        droppedEventsCount: 0,
+        droppedLinksCount: 0
+      };
+    }
+  }, {
+    key: "spanContext",
+    value: function spanContext() {
+      return this.span.spanContext;
+    }
+  }, {
+    key: "setAttribute",
+    value: function setAttribute(key, value) {
+      if (value == null || this.ended) return this;
+      if (key.length === 0) return this;
+      this.span.attributes[key] = value;
+      return this;
+    }
+  }, {
+    key: "setAttributes",
+    value: function setAttributes(attributes) {
+      for (var _i = 0, _Object$entries = Object.entries(attributes); _i < _Object$entries.length; _i++) {
+        var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+          k = _Object$entries$_i[0],
+          v = _Object$entries$_i[1];
+        this.setAttribute(k, v);
+      }
+      return this;
+    }
+  }, {
+    key: "addEvent",
+    value: function addEvent(name, attributes) {
+      if (this.span.ended) return this;
+      this.span.events.push({
+        name: name,
+        attributes: attributes,
+        time: this.hrTimeNow(),
+        droppedAttributesCount: 0
+      });
+      return this;
+    }
+  }, {
+    key: "isRecording",
+    value: function isRecording() {
+      return this.span.ended === false;
+    }
+  }, {
+    key: "end",
+    value: function end(attributes) {
+      if (attributes) this.setAttributes(attributes);
+      this.span.endTime = this.hrTimeNow();
+      this.span.ended = true;
+      this.spanProcessor.onEnd(this);
+    }
+
+    /*
+     * Methods for handling hrtime.
+     * OpenTelemetry uses the [seconds, nanoseconds] format for hrtime in the
+     * ReadableSpan interface.
+     */
+  }, {
+    key: "toHrTime",
+    value: function toHrTime(millis) {
+      return [Math.trunc(millis / 1000), Math.round(millis % 1000 * 1e6)];
+    }
+  }, {
+    key: "sumHrTime",
+    value: function sumHrTime(a, b) {
+      return [a[0] + b[0] + Math.trunc((a[1] + b[1]) / 1e9), (a[1] + b[1]) % 1e9];
+    }
+  }, {
+    key: "hrTimeNow",
+    value: function hrTimeNow() {
+      return this.sumHrTime(this.toHrTime(performance.timeOrigin), this.toHrTime(performance.now()));
+    }
+  }, {
+    key: "export",
+    value: function _export() {
+      return this.span;
+    }
+  }]);
+}();
+;// ./src/tracing/tracer.js
+function tracer_typeof(o) { "@babel/helpers - typeof"; return tracer_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, tracer_typeof(o); }
+function tracer_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function tracer_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, tracer_toPropertyKey(o.key), o); } }
+function tracer_createClass(e, r, t) { return r && tracer_defineProperties(e.prototype, r), t && tracer_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function tracer_toPropertyKey(t) { var i = tracer_toPrimitive(t, "string"); return "symbol" == tracer_typeof(i) ? i : i + ""; }
+function tracer_toPrimitive(t, r) { if ("object" != tracer_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracer_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+var Tracer = /*#__PURE__*/function () {
+  function Tracer(tracing, spanProcessor) {
+    tracer_classCallCheck(this, Tracer);
+    this.spanProcessor = spanProcessor;
+    this.tracing = tracing;
+  }
+  return tracer_createClass(Tracer, [{
+    key: "startSpan",
+    value: function startSpan(name) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tracing.contextManager.active();
+      var parentSpan = this.tracing.getSpan(context);
+      var parentSpanContext = parentSpan === null || parentSpan === void 0 ? void 0 : parentSpan.spanContext();
+      var spanId = this.tracing.hexId(8);
+      var traceId;
+      var traceFlags = 0;
+      var traceState = null;
+      var parentSpanId;
+      if (parentSpanContext) {
+        traceId = parentSpanContext.traceId;
+        traceState = parentSpanContext.traceState;
+        parentSpanId = parentSpanContext.spanId;
+      } else {
+        traceId = this.tracing.hexId(16);
+      }
+      var kind = 0;
+      var spanContext = {
+        traceId: traceId,
+        spanId: spanId,
+        traceFlags: traceFlags,
+        traceState: traceState
+      };
+      var span = new Span({
+        resource: this.tracing.resource,
+        scope: this.tracing.scope,
+        session: this.tracing.session.session,
+        context: context,
+        spanContext: spanContext,
+        name: name,
+        kind: kind,
+        parentSpanId: parentSpanId,
+        spanProcessor: this.spanProcessor
+      });
+      return span;
+    }
+  }]);
+}();
+;// ./src/tracing/tracing.js
+function tracing_typeof(o) { "@babel/helpers - typeof"; return tracing_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, tracing_typeof(o); }
+function tracing_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function tracing_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, tracing_toPropertyKey(o.key), o); } }
+function tracing_createClass(e, r, t) { return r && tracing_defineProperties(e.prototype, r), t && tracing_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function tracing_toPropertyKey(t) { var i = tracing_toPrimitive(t, "string"); return "symbol" == tracing_typeof(i) ? i : i + ""; }
+function tracing_toPrimitive(t, r) { if ("object" != tracing_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracing_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+
+
+var SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
+var Tracing = /*#__PURE__*/function () {
+  function Tracing(gWindow, options) {
+    tracing_classCallCheck(this, Tracing);
+    this.options = options;
+    this.resource = options.resource;
+    this.scope = options.notifier;
+    this.window = gWindow;
+    this.session = new Session(this, options);
+    this.createTracer();
+  }
+  return tracing_createClass(Tracing, [{
+    key: "initSession",
+    value: function initSession() {
+      if (this.session) {
+        this.session.init();
+      }
+    }
+  }, {
+    key: "createTracer",
+    value: function createTracer() {
+      this.contextManager = new ContextManager();
+      this.exporter = new SpanExporter();
+      this.spanProcessor = new SpanProcessor(this.exporter);
+      this.tracer = new Tracer(this, this.spanProcessor);
+    }
+  }, {
+    key: "getTracer",
+    value: function getTracer() {
+      return this.tracer;
+    }
+  }, {
+    key: "getSpan",
+    value: function getSpan() {
+      var context = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.contextManager.active();
+      return context.getValue(SPAN_KEY);
+    }
+  }, {
+    key: "setSpan",
+    value: function setSpan() {
+      var context = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.contextManager.active();
+      var span = arguments.length > 1 ? arguments[1] : undefined;
+      return context.setValue(SPAN_KEY, span);
+    }
+  }, {
+    key: "startSpan",
+    value: function startSpan(name) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.contextManager.active();
+      return this.tracer.startSpan(name, options, context);
+    }
+  }, {
+    key: "with",
+    value: function _with(context, fn, thisArg) {
+      var _this$contextManager;
+      for (var _len = arguments.length, args = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+        args[_key - 3] = arguments[_key];
+      }
+      return (_this$contextManager = this.contextManager)["with"].apply(_this$contextManager, [context, fn, thisArg].concat(args));
+    }
+  }, {
+    key: "withSpan",
+    value: function withSpan(name, options, fn, thisArg) {
+      var span = this.startSpan(name, options);
+      return this["with"](this.setSpan(this.contextManager.active(), span), fn, thisArg, span);
+    }
+  }, {
+    key: "hexId",
+    value: function hexId() {
+      var bytes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 16;
+      var randomBytes = new Uint8Array(bytes);
+      crypto.getRandomValues(randomBytes);
+      var randHex = Array.from(randomBytes, function (_byte) {
+        return _byte.toString(16).padStart(2, '0');
+      }).join('');
+      return randHex;
+    }
+  }]);
+}();
+
+
+/***/ }),
+
+/***/ 299:
+/***/ (function(module) {
+
+module.exports = {
+  version: '2.26.4',
+  endpoint: 'api.rollbar.com/api/1/item/',
+  logLevel: 'debug',
+  reportLevel: 'debug',
+  uncaughtErrorLevel: 'error',
+  maxItems: 0,
+  itemsPerMin: 60
+};
+
+/***/ }),
+
+/***/ 379:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+function checkLevel(item, settings) {
+  var level = item.level;
+  var levelVal = _.LEVELS[level] || 0;
+  var reportLevel = settings.reportLevel;
+  var reportLevelVal = _.LEVELS[reportLevel] || 0;
+  if (levelVal < reportLevelVal) {
+    return false;
+  }
+  return true;
+}
+function userCheckIgnore(logger) {
+  return function (item, settings) {
+    var isUncaught = !!item._isUncaught;
+    delete item._isUncaught;
+    var args = item._originalArgs;
+    delete item._originalArgs;
+    try {
+      if (_.isFunction(settings.onSendCallback)) {
+        settings.onSendCallback(isUncaught, args, item);
+      }
+    } catch (e) {
+      settings.onSendCallback = null;
+      logger.error('Error while calling onSendCallback, removing', e);
+    }
+    try {
+      if (_.isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+        return false;
+      }
+    } catch (e) {
+      settings.checkIgnore = null;
+      logger.error('Error while calling custom checkIgnore(), removing', e);
+    }
+    return true;
+  };
+}
+function urlIsNotBlockListed(logger) {
+  return function (item, settings) {
+    return !urlIsOnAList(item, settings, 'blocklist', logger);
+  };
+}
+function urlIsSafeListed(logger) {
+  return function (item, settings) {
+    return urlIsOnAList(item, settings, 'safelist', logger);
+  };
+}
+function matchFrames(trace, list, block) {
+  if (!trace) {
+    return !block;
+  }
+  var frames = trace.frames;
+  if (!frames || frames.length === 0) {
+    return !block;
+  }
+  var frame, filename, url, urlRegex;
+  var listLength = list.length;
+  var frameLength = frames.length;
+  for (var i = 0; i < frameLength; i++) {
+    frame = frames[i];
+    filename = frame.filename;
+    if (!_.isType(filename, 'string')) {
+      return !block;
+    }
+    for (var j = 0; j < listLength; j++) {
+      url = list[j];
+      urlRegex = new RegExp(url);
+      if (urlRegex.test(filename)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function urlIsOnAList(item, settings, safeOrBlock, logger) {
+  // safelist is the default
+  var block = false;
+  if (safeOrBlock === 'blocklist') {
+    block = true;
+  }
+  var list, traces;
+  try {
+    list = block ? settings.hostBlockList : settings.hostSafeList;
+    traces = _.get(item, 'body.trace_chain') || [_.get(item, 'body.trace')];
+
+    // These two checks are important to come first as they are defaults
+    // in case the list is missing or the trace is missing or not well-formed
+    if (!list || list.length === 0) {
+      return !block;
+    }
+    if (traces.length === 0 || !traces[0]) {
+      return !block;
+    }
+    var tracesLength = traces.length;
+    for (var i = 0; i < tracesLength; i++) {
+      if (matchFrames(traces[i], list, block)) {
+        return true;
+      }
+    }
+  } catch (e
+  /* istanbul ignore next */) {
+    if (block) {
+      settings.hostBlockList = null;
+    } else {
+      settings.hostSafeList = null;
+    }
+    var listName = block ? 'hostBlockList' : 'hostSafeList';
+    logger.error("Error while reading your configuration's " + listName + ' option. Removing custom ' + listName + '.', e);
+    return !block;
+  }
+  return false;
+}
+function messageIsIgnored(logger) {
+  return function (item, settings) {
+    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
+    try {
+      messageIsIgnored = false;
+      ignoredMessages = settings.ignoredMessages;
+      if (!ignoredMessages || ignoredMessages.length === 0) {
+        return true;
+      }
+      messages = messagesFromItem(item);
+      if (messages.length === 0) {
+        return true;
+      }
+      len = ignoredMessages.length;
+      for (i = 0; i < len; i++) {
+        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
+        for (j = 0; j < messages.length; j++) {
+          messageIsIgnored = rIgnoredMessage.test(messages[j]);
+          if (messageIsIgnored) {
+            return false;
+          }
+        }
+      }
+    } catch (e
+    /* istanbul ignore next */) {
+      settings.ignoredMessages = null;
+      logger.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+    }
+    return true;
+  };
+}
+function messagesFromItem(item) {
+  var body = item.body;
+  var messages = [];
+
+  // The payload schema only allows one of trace_chain, message, or trace.
+  // However, existing test cases are based on having both trace and message present.
+  // So here we preserve the ability to collect strings from any combination of these keys.
+  if (body.trace_chain) {
+    var traceChain = body.trace_chain;
+    for (var i = 0; i < traceChain.length; i++) {
+      var trace = traceChain[i];
+      messages.push(_.get(trace, 'exception.message'));
+    }
+  }
+  if (body.trace) {
+    messages.push(_.get(body, 'trace.exception.message'));
+  }
+  if (body.message) {
+    messages.push(_.get(body, 'message.body'));
+  }
+  return messages;
+}
+module.exports = {
+  checkLevel: checkLevel,
+  userCheckIgnore: userCheckIgnore,
+  urlIsNotBlockListed: urlIsNotBlockListed,
+  urlIsSafeListed: urlIsSafeListed,
+  messageIsIgnored: messageIsIgnored
+};
+
+/***/ }),
+
+/***/ 392:
+/***/ (function(module) {
+
+function getElementType(e) {
+  return (e.getAttribute('type') || '').toLowerCase();
+}
+function isDescribedElement(element, type, subtypes) {
+  if (element.tagName.toLowerCase() !== type.toLowerCase()) {
+    return false;
+  }
+  if (!subtypes) {
+    return true;
+  }
+  element = getElementType(element);
+  for (var i = 0; i < subtypes.length; i++) {
+    if (subtypes[i] === element) {
+      return true;
+    }
+  }
+  return false;
+}
+function getElementFromEvent(evt, doc) {
+  if (evt.target) {
+    return evt.target;
+  }
+  if (doc && doc.elementFromPoint) {
+    return doc.elementFromPoint(evt.clientX, evt.clientY);
+  }
+  return undefined;
+}
+function treeToArray(elem) {
+  var MAX_HEIGHT = 5;
+  var out = [];
+  var nextDescription;
+  for (var height = 0; elem && height < MAX_HEIGHT; height++) {
+    nextDescription = describeElement(elem);
+    if (nextDescription.tagName === 'html') {
+      break;
+    }
+    out.unshift(nextDescription);
+    elem = elem.parentNode;
+  }
+  return out;
+}
+function elementArrayToString(a) {
+  var MAX_LENGTH = 80;
+  var separator = ' > ',
+    separatorLength = separator.length;
+  var out = [],
+    len = 0,
+    nextStr,
+    totalLength;
+  for (var i = a.length - 1; i >= 0; i--) {
+    nextStr = descriptionToString(a[i]);
+    totalLength = len + out.length * separatorLength + nextStr.length;
+    if (i < a.length - 1 && totalLength >= MAX_LENGTH + 3) {
+      out.unshift('...');
+      break;
+    }
+    out.unshift(nextStr);
+    len += nextStr.length;
+  }
+  return out.join(separator);
+}
+function descriptionToString(desc) {
+  if (!desc || !desc.tagName) {
+    return '';
+  }
+  var out = [desc.tagName];
+  if (desc.id) {
+    out.push('#' + desc.id);
+  }
+  if (desc.classes) {
+    out.push('.' + desc.classes.join('.'));
+  }
+  for (var i = 0; i < desc.attributes.length; i++) {
+    out.push('[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]');
+  }
+  return out.join('');
+}
+
+/**
+ * Input: a dom element
+ * Output: null if tagName is falsey or input is falsey, else
+ *  {
+ *    tagName: String,
+ *    id: String | undefined,
+ *    classes: [String] | undefined,
+ *    attributes: [
+ *      {
+ *        key: OneOf(type, name, title, alt),
+ *        value: String
+ *      }
+ *    ]
+ *  }
+ */
+function describeElement(elem) {
+  if (!elem || !elem.tagName) {
+    return null;
+  }
+  var out = {},
+    className,
+    key,
+    attr,
+    i;
+  out.tagName = elem.tagName.toLowerCase();
+  if (elem.id) {
+    out.id = elem.id;
+  }
+  className = elem.className;
+  if (className && typeof className === 'string') {
+    out.classes = className.split(/\s+/);
+  }
+  var attributes = ['type', 'name', 'title', 'alt'];
+  out.attributes = [];
+  for (i = 0; i < attributes.length; i++) {
+    key = attributes[i];
+    attr = elem.getAttribute(key);
+    if (attr) {
+      out.attributes.push({
+        key: key,
+        value: attr
+      });
+    }
+  }
+  return out;
+}
+module.exports = {
+  describeElement: describeElement,
+  descriptionToString: descriptionToString,
+  elementArrayToString: elementArrayToString,
+  treeToArray: treeToArray,
+  getElementFromEvent: getElementFromEvent,
+  isDescribedElement: isDescribedElement,
+  getElementType: getElementType
+};
+
+/***/ }),
+
+/***/ 398:
+/***/ (function(module) {
+
+function replace(obj, name, replacement, replacements, type) {
+  var orig = obj[name];
+  obj[name] = replacement(orig);
+  if (replacements) {
+    replacements[type].push([obj, name, orig]);
+  }
+}
+module.exports = replace;
+
+/***/ }),
+
+/***/ 402:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var Rollbar = __webpack_require__(583);
+var telemeter = __webpack_require__(618);
+var instrumenter = __webpack_require__(705);
+var polyfillJSON = __webpack_require__(657);
+var wrapGlobals = __webpack_require__(706);
+var scrub = __webpack_require__(541);
+var truncation = __webpack_require__(622);
+var Tracing = __webpack_require__(269);
+var Recorder = __webpack_require__(38);
+Rollbar.setComponents({
+  telemeter: telemeter,
+  instrumenter: instrumenter,
+  polyfillJSON: polyfillJSON,
+  wrapGlobals: wrapGlobals,
+  scrub: scrub,
+  truncation: truncation,
+  tracing: Tracing["default"],
+  recorder: Recorder["default"]
+});
+module.exports = Rollbar;
+
+/***/ }),
+
+/***/ 472:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var logger = __webpack_require__(144);
+var _ = __webpack_require__(585);
+function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
+  var controller;
+  var timeoutId;
+  if (_.isFiniteNumber(timeout)) {
+    controller = new AbortController();
+    timeoutId = setTimeout(function () {
+      controller.abort();
+    }, timeout);
+  }
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Rollbar-Access-Token': accessToken,
+      signal: controller && controller.signal
+    },
+    body: data
+  }).then(function (response) {
+    if (timeoutId) clearTimeout(timeoutId);
+    return response.json();
+  }).then(function (data) {
+    callback(null, data);
+  })["catch"](function (error) {
+    logger.error(error.message);
+    callback(error);
+  });
+}
+module.exports = makeFetchRequest;
+
+/***/ }),
+
+/***/ 485:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+var errorParser = __webpack_require__(136);
+var logger = __webpack_require__(144);
+function handleDomException(item, options, callback) {
+  if (item.err && errorParser.Stack(item.err).name === 'DOMException') {
+    var originalError = new Error();
+    originalError.name = item.err.name;
+    originalError.message = item.err.message;
+    originalError.stack = item.err.stack;
+    originalError.nested = item.err;
+    item.err = originalError;
+  }
+  callback(null, item);
+}
+function handleItemWithError(item, options, callback) {
+  item.data = item.data || {};
+  if (item.err) {
+    try {
+      item.stackInfo = item.err._savedStackTrace || errorParser.parse(item.err, item.skipFrames);
+      if (options.addErrorContext) {
+        addErrorContext(item);
+      }
+    } catch (e) {
+      logger.error('Error while parsing the error object.', e);
+      try {
+        item.message = item.err.message || item.err.description || item.message || String(item.err);
+      } catch (e2) {
+        item.message = String(item.err) || String(e2);
+      }
+      delete item.err;
+    }
+  }
+  callback(null, item);
+}
+function addErrorContext(item) {
+  var chain = [];
+  var err = item.err;
+  chain.push(err);
+  while (err.nested || err.cause) {
+    err = err.nested || err.cause;
+    chain.push(err);
+  }
+  _.addErrorContext(item, chain);
+}
+function ensureItemHasSomethingToSay(item, options, callback) {
+  if (!item.message && !item.stackInfo && !item.custom) {
+    callback(new Error('No message, stack info, or custom data'), null);
+  }
+  callback(null, item);
+}
+function addBaseInfo(item, options, callback) {
+  var environment = options.payload && options.payload.environment || options.environment;
+  item.data = _.merge(item.data, {
+    environment: environment,
+    level: item.level,
+    endpoint: options.endpoint,
+    platform: 'browser',
+    framework: 'browser-js',
+    language: 'javascript',
+    server: {},
+    uuid: item.uuid,
+    notifier: {
+      name: 'rollbar-browser-js',
+      version: options.version
+    },
+    custom: item.custom
+  });
+  callback(null, item);
+}
+function addRequestInfo(window) {
+  return function (item, options, callback) {
+    var requestInfo = {};
+    if (window && window.location) {
+      requestInfo.url = window.location.href;
+      requestInfo.query_string = window.location.search;
+    }
+    var remoteString = '$remote_ip';
+    if (!options.captureIp) {
+      remoteString = null;
+    } else if (options.captureIp !== true) {
+      remoteString += '_anonymize';
+    }
+    if (remoteString) requestInfo.user_ip = remoteString;
+    if (Object.keys(requestInfo).length > 0) {
+      _.set(item, 'data.request', requestInfo);
+    }
+    callback(null, item);
+  };
+}
+function addClientInfo(window) {
+  return function (item, options, callback) {
+    if (!window) {
+      return callback(null, item);
+    }
+    var nav = window.navigator || {};
+    var scr = window.screen || {};
+    _.set(item, 'data.client', {
+      runtime_ms: item.timestamp - window._rollbarStartTime,
+      timestamp: Math.round(item.timestamp / 1000),
+      javascript: {
+        browser: nav.userAgent,
+        language: nav.language,
+        cookie_enabled: nav.cookieEnabled,
+        screen: {
+          width: scr.width,
+          height: scr.height
+        }
+      }
+    });
+    callback(null, item);
+  };
+}
+function addPluginInfo(window) {
+  return function (item, options, callback) {
+    if (!window || !window.navigator) {
+      return callback(null, item);
+    }
+    var plugins = [];
+    var navPlugins = window.navigator.plugins || [];
+    var cur;
+    for (var i = 0, l = navPlugins.length; i < l; ++i) {
+      cur = navPlugins[i];
+      plugins.push({
+        name: cur.name,
+        description: cur.description
+      });
+    }
+    _.set(item, 'data.client.javascript.plugins', plugins);
+    callback(null, item);
+  };
+}
+function addBody(item, options, callback) {
+  if (item.stackInfo) {
+    if (item.stackInfo.traceChain) {
+      addBodyTraceChain(item, options, callback);
+    } else {
+      addBodyTrace(item, options, callback);
+    }
+  } else {
+    addBodyMessage(item, options, callback);
+  }
+}
+function addBodyMessage(item, options, callback) {
+  var message = item.message;
+  var custom = item.custom;
+  if (!message) {
+    message = 'Item sent with null or missing arguments.';
+  }
+  var result = {
+    body: message
+  };
+  if (custom) {
+    result.extra = _.merge(custom);
+  }
+  _.set(item, 'data.body', {
+    message: result
+  });
+  callback(null, item);
+}
+function stackFromItem(item) {
+  // Transform a TraceKit stackInfo object into a Rollbar trace
+  var stack = item.stackInfo.stack;
+  if (stack && stack.length === 0 && item._unhandledStackInfo && item._unhandledStackInfo.stack) {
+    stack = item._unhandledStackInfo.stack;
+  }
+  return stack;
+}
+function addBodyTraceChain(item, options, callback) {
+  var traceChain = item.stackInfo.traceChain;
+  var traces = [];
+  var traceChainLength = traceChain.length;
+  for (var i = 0; i < traceChainLength; i++) {
+    var trace = buildTrace(item, traceChain[i], options);
+    traces.push(trace);
+  }
+  _.set(item, 'data.body', {
+    trace_chain: traces
+  });
+  callback(null, item);
+}
+function addBodyTrace(item, options, callback) {
+  var stack = stackFromItem(item);
+  if (stack) {
+    var trace = buildTrace(item, item.stackInfo, options);
+    _.set(item, 'data.body', {
+      trace: trace
+    });
+    callback(null, item);
+  } else {
+    var stackInfo = item.stackInfo;
+    var guess = errorParser.guessErrorClass(stackInfo.message);
+    var className = errorClass(stackInfo, guess[0], options);
+    var message = guess[1];
+    item.message = className + ': ' + message;
+    addBodyMessage(item, options, callback);
+  }
+}
+function buildTrace(item, stackInfo, options) {
+  var description = item && item.data.description;
+  var custom = item && item.custom;
+  var stack = stackFromItem(item);
+  var guess = errorParser.guessErrorClass(stackInfo.message);
+  var className = errorClass(stackInfo, guess[0], options);
+  var message = guess[1];
+  var trace = {
+    exception: {
+      "class": className,
+      message: message
+    }
+  };
+  if (description) {
+    trace.exception.description = description;
+  }
+  if (stack) {
+    if (stack.length === 0) {
+      trace.exception.stack = stackInfo.rawStack;
+      trace.exception.raw = String(stackInfo.rawException);
+    }
+    var stackFrame;
+    var frame;
+    var code;
+    var pre;
+    var post;
+    var contextLength;
+    var i, mid;
+    trace.frames = [];
+    for (i = 0; i < stack.length; ++i) {
+      stackFrame = stack[i];
+      frame = {
+        filename: stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '(unknown)',
+        lineno: stackFrame.line || null,
+        method: !stackFrame.func || stackFrame.func === '?' ? '[anonymous]' : stackFrame.func,
+        colno: stackFrame.column
+      };
+      if (options.sendFrameUrl) {
+        frame.url = stackFrame.url;
+      }
+      if (frame.method && frame.method.endsWith && frame.method.endsWith('_rollbar_wrapped')) {
+        continue;
+      }
+      code = pre = post = null;
+      contextLength = stackFrame.context ? stackFrame.context.length : 0;
+      if (contextLength) {
+        mid = Math.floor(contextLength / 2);
+        pre = stackFrame.context.slice(0, mid);
+        code = stackFrame.context[mid];
+        post = stackFrame.context.slice(mid);
+      }
+      if (code) {
+        frame.code = code;
+      }
+      if (pre || post) {
+        frame.context = {};
+        if (pre && pre.length) {
+          frame.context.pre = pre;
+        }
+        if (post && post.length) {
+          frame.context.post = post;
+        }
+      }
+      if (stackFrame.args) {
+        frame.args = stackFrame.args;
+      }
+      trace.frames.push(frame);
+    }
+
+    // NOTE(cory): reverse the frames since rollbar.com expects the most recent call last
+    trace.frames.reverse();
+    if (custom) {
+      trace.extra = _.merge(custom);
+    }
+  }
+  return trace;
+}
+function errorClass(stackInfo, guess, options) {
+  if (stackInfo.name) {
+    return stackInfo.name;
+  } else if (options.guessErrorClass) {
+    return guess;
+  } else {
+    return '(unknown)';
+  }
+}
+function addScrubber(scrubFn) {
+  return function (item, options, callback) {
+    if (scrubFn) {
+      var scrubFields = options.scrubFields || [];
+      var scrubPaths = options.scrubPaths || [];
+      item.data = scrubFn(item.data, scrubFields, scrubPaths);
+    }
+    callback(null, item);
+  };
+}
+module.exports = {
+  handleDomException: handleDomException,
+  handleItemWithError: handleItemWithError,
+  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
+  addBaseInfo: addBaseInfo,
+  addRequestInfo: addRequestInfo,
+  addClientInfo: addClientInfo,
+  addPluginInfo: addPluginInfo,
+  addBody: addBody,
+  addScrubber: addScrubber
+};
+
+/***/ }),
+
+/***/ 511:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var _ = __webpack_require__(585);
+
+/*
+ * RateLimiter - an object that encapsulates the logic for counting items sent to Rollbar
+ *
+ * @param options - the same options that are accepted by configureGlobal offered as a convenience
+ */
+function RateLimiter(options) {
+  this.startTime = _.now();
+  this.counter = 0;
+  this.perMinCounter = 0;
+  this.platform = null;
+  this.platformOptions = {};
+  this.configureGlobal(options);
+}
+RateLimiter.globalSettings = {
+  startTime: _.now(),
+  maxItems: undefined,
+  itemsPerMinute: undefined
+};
+
+/*
+ * configureGlobal - set the global rate limiter options
+ *
+ * @param options - Only the following values are recognized:
+ *    startTime: a timestamp of the form returned by (new Date()).getTime()
+ *    maxItems: the maximum items
+ *    itemsPerMinute: the max number of items to send in a given minute
+ */
+RateLimiter.prototype.configureGlobal = function (options) {
+  if (options.startTime !== undefined) {
+    RateLimiter.globalSettings.startTime = options.startTime;
+  }
+  if (options.maxItems !== undefined) {
+    RateLimiter.globalSettings.maxItems = options.maxItems;
+  }
+  if (options.itemsPerMinute !== undefined) {
+    RateLimiter.globalSettings.itemsPerMinute = options.itemsPerMinute;
+  }
+};
+
+/*
+ * shouldSend - determine if we should send a given item based on rate limit settings
+ *
+ * @param item - the item we are about to send
+ * @returns An object with the following structure:
+ *  error: (Error|null)
+ *  shouldSend: bool
+ *  payload: (Object|null)
+ *  If shouldSend is false, the item passed as a parameter should not be sent to Rollbar, and
+ *  exactly one of error or payload will be non-null. If error is non-null, the returned Error will
+ *  describe the situation, but it means that we were already over a rate limit (either globally or
+ *  per minute) when this item was checked. If error is null, and therefore payload is non-null, it
+ *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
+ *  place of the passed in item.
+ */
+RateLimiter.prototype.shouldSend = function (item, now) {
+  now = now || _.now();
+  var elapsedTime = now - this.startTime;
+  if (elapsedTime < 0 || elapsedTime >= 60000) {
+    this.startTime = now;
+    this.perMinCounter = 0;
+  }
+  var globalRateLimit = RateLimiter.globalSettings.maxItems;
+  var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
+  if (checkRate(item, globalRateLimit, this.counter)) {
+    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
+  } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
+    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
+  }
+  this.counter++;
+  this.perMinCounter++;
+  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
+  var perMinute = shouldSend;
+  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
+  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
+};
+RateLimiter.prototype.setPlatformOptions = function (platform, options) {
+  this.platform = platform;
+  this.platformOptions = options;
+};
+
+/* Helpers */
+
+function checkRate(item, limit, counter) {
+  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
+}
+function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
+  var payload = null;
+  if (error) {
+    error = new Error(error);
+  }
+  if (!error && !shouldSend) {
+    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
+  }
+  return {
+    error: error,
+    shouldSend: shouldSend,
+    payload: payload
+  };
+}
+function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
+  var environment = options.environment || options.payload && options.payload.environment;
+  var msg;
+  if (perMinute) {
+    msg = 'item per minute limit reached, ignoring errors until timeout';
+  } else {
+    msg = 'maxItems has been hit, ignoring errors until reset.';
+  }
+  var item = {
+    body: {
+      message: {
+        body: msg,
+        extra: {
+          maxItems: globalRateLimit,
+          itemsPerMinute: limitPerMin
+        }
+      }
+    },
+    language: 'javascript',
+    environment: environment,
+    notifier: {
+      version: options.notifier && options.notifier.version || options.version
+    }
+  };
+  if (platform === 'browser') {
+    item.platform = 'browser';
+    item.framework = 'browser-js';
+    item.notifier.name = 'rollbar-browser-js';
+  } else if (platform === 'server') {
+    item.framework = options.framework || 'node-js';
+    item.notifier.name = options.notifier.name;
+  } else if (platform === 'react-native') {
+    item.framework = options.framework || 'react-native';
+    item.notifier.name = options.notifier.name;
+  }
+  return item;
+}
+module.exports = RateLimiter;
 
 /***/ }),
 
@@ -15629,6 +15590,7 @@ var sharedPredicates = __webpack_require__(379);
 var errorParser = __webpack_require__(136);
 var replayDefaults = __webpack_require__(922);
 function Rollbar(options, client) {
+  console.log('Rollbar constructor called');
   this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   var Telemeter = this.components.telemeter;
@@ -15638,6 +15600,7 @@ function Rollbar(options, client) {
   this.scrub = this.components.scrub;
   var truncation = this.components.truncation;
   var Tracing = this.components.tracing;
+  var Recorder = this.components.recorder;
   var transport = new Transport(truncation);
   var api = new API(this.options, transport, urllib, truncation);
   if (Telemeter) {
@@ -15647,11 +15610,10 @@ function Rollbar(options, client) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
-
-  // Initialize replay if enabled in options
-  var Replay = this.components.replay;
-  if (Replay && this.options.replay && this.options.replay.enabled) {
-    this.replayRecorder = Replay.createReplayRecorder(this);
+  if (Tracing && Recorder) {
+    this.recorder = new Recorder(this.tracing, this.options.replay);
+  } else {
+    this.recorder = null;
   }
   this.client = client || new Client(this.options, api, logger, this.telemeter, 'browser');
   var gWindow = _gWindow();
@@ -15669,6 +15631,7 @@ function Rollbar(options, client) {
 
   // Used with rollbar-react for rollbar-react-native compatibility.
   this.rollbar = this;
+  console.log('Rollbar constructor finished');
 }
 var _instance = null;
 Rollbar.init = function (options, client) {
@@ -15701,6 +15664,8 @@ Rollbar.global = function (options) {
   }
 };
 Rollbar.prototype.configure = function (options, payloadData) {
+  var _this$recorder, _this$recorder3;
+  console.log('Rollbar.configure called');
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
@@ -15711,13 +15676,12 @@ Rollbar.prototype.configure = function (options, payloadData) {
   this.options = _.handleOptions(oldOptions, options, payload, logger);
 
   // Update replay configuration if options change
-  if (options && options.replay && this.components.replay) {
-    if (options.replay.enabled && !this.replayRecorder) {
-      this.replayRecorder = this.components.replay.createReplayRecorder(this);
-    } else if (this.replayRecorder && options.replay.enabled === false) {
-      this.replayRecorder.stop();
-      this.replayRecorder = null;
-    }
+  if (((_this$recorder = this.recorder) === null || _this$recorder === void 0 ? void 0 : _this$recorder.options.enabled) === true && !options.replay.enabled) {
+    var _this$recorder2;
+    (_this$recorder2 = this.recorder) === null || _this$recorder2 === void 0 || _this$recorder2.stop();
+  } else if (((_this$recorder3 = this.recorder) === null || _this$recorder3 === void 0 ? void 0 : _this$recorder3.options.enabled) === false && options.replay.enabled) {
+    var _this$recorder4;
+    (_this$recorder4 = this.recorder) === null || _this$recorder4 === void 0 || _this$recorder4.start();
   }
   this.options._configuredOptions = _.handleOptions(oldOptions._configuredOptions, options, payload);
   this.client.configure(this.options, payloadData);
@@ -18435,7 +18399,7 @@ module.exports = makeXhrRequest;
 /***/ (function(module) {
 
 module.exports = {
-  enabled: false,
+  enabled: true,
   autoStart: true,
   associateWithSpans: true,
   bufferDuration: 300000,
