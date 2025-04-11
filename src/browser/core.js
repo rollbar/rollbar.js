@@ -12,8 +12,12 @@ var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
+const recorderDefaults = require('./defaults/recorder');
 
 function Rollbar(options, client) {
+  console.log('Rollbar constructor called');
+  console.log('defaultOptions', defaultOptions);
+  console.log('options', options);
   this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   const Telemeter = this.components.telemeter;
@@ -23,6 +27,7 @@ function Rollbar(options, client) {
   this.scrub = this.components.scrub;
   const truncation = this.components.truncation;
   const Tracing = this.components.tracing;
+  const Recorder = this.components.recorder;
 
   const transport = new Transport(truncation);
   const api = new API(this.options, transport, urllib, truncation);
@@ -33,6 +38,18 @@ function Rollbar(options, client) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
+
+  if (Tracing && Recorder) {
+    var recorderOptions = this.options.recorder;
+    this.recorder = new Recorder(this.tracing, recorderOptions);
+
+    if (recorderOptions.enabled && recorderOptions.autoStart !== false) {
+      this.recorder.start();
+    }
+  } else {
+    this.recorder = null;
+  }
+
   this.client =
     client || new Client(this.options, api, logger, this.telemeter, 'browser');
   var gWindow = _gWindow();
@@ -56,6 +73,8 @@ function Rollbar(options, client) {
 
   // Used with rollbar-react for rollbar-react-native compatibility.
   this.rollbar = this;
+
+  console.log('Rollbar constructor finished');
 }
 
 var _instance = null;
@@ -94,12 +113,24 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  console.log('Rollbar.configure called');
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
     payload = { payload: payloadData };
   }
   this.options = _.handleOptions(oldOptions, options, payload, logger);
+
+  // Update recorder configuration if options change
+  if (this.recorder?.options.enabled === true && !options.recorder.enabled) {
+    this.recorder?.stop();
+  } else if (
+    this.recorder?.options.enabled === false &&
+    options.recorder.enabled
+  ) {
+    this.recorder?.start();
+  }
+
   this.options._configuredOptions = _.handleOptions(
     oldOptions._configuredOptions,
     options,
@@ -349,7 +380,6 @@ Rollbar.prototype.handleAnonymousErrors = function () {
 
   var r = this;
   function prepareStackTrace(error, _stack) {
-     
     if (r.options.inspectAnonymousErrors) {
       if (r.anonymousErrorsPending) {
         // This is the only known way to detect that onerror saw an anonymous error.
@@ -605,6 +635,7 @@ var defaultOptions = {
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
+  recorder: recorderDefaults,
 };
 
 module.exports = Rollbar;
