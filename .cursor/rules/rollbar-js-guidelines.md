@@ -7,6 +7,8 @@ Rollbar.js is the official JavaScript SDK for the Rollbar error monitoring platf
 - Works as a client for the Rollbar cloud service, not as a standalone library
 - Supports multiple JavaScript environments (browser, Node.js, React Native)
 - Provides error tracking, telemetry, and diagnostic capabilities
+- Enables distributed tracing and session management
+- Includes Session Replay features for reproducing user actions
 - Requires a Rollbar account and access token to function
 
 ## Project Structure
@@ -28,6 +30,25 @@ src/
 - Run specific test: `grunt test-browser:specificTestName`
 - Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
 
+## Modern Development Environment
+
+As of version 3.0.0, the SDK has been updated to use modern JavaScript features with appropriate transpilation:
+
+- **ES Modules**: The codebase supports ES modules (`import/export`) syntax
+- **Target Compatibility**: 
+  - Source code uses ECMAScript 2021 features
+  - Builds target ES5 for broad browser compatibility
+  - Lower versions can use the ES5/CommonJS compatible bundles
+- **Build System**: 
+  - Webpack 5 with Babel for transpilation
+  - ESLint for code quality
+  - Configurable output formats (UMD, AMD, vanilla)
+- **Minimum Node.js**: Version 18+ for absolute imports
+- **Toolchain Configuration**:
+  - `babel.config.json`: Controls transpilation options
+  - `eslint.config.mjs`: Modern ESLint flat config format
+  - `webpack.config.js`: Manages bundling and output formats
+
 ## Coding Standards
 
 When working with this codebase, please follow these guidelines:
@@ -40,6 +61,8 @@ When working with this codebase, please follow these guidelines:
 - All files must end with exactly one newline
 - Function complexity: Maximum complexity of 35
 - Unused parameters: Prefix with underscore (`function(a, _unused) {}`)
+- Control statements: All if/for/while blocks MUST use braces and newlines, even for single statements
+- Opening braces: Should be on the same line as the control statement
 
 ## Error Handling and Logging
 
@@ -61,6 +84,34 @@ Different log levels are used for appropriate error categorization:
 - Add JSDoc types to enable intellisense when needed
 - When suggesting TypeScript-compatible code, ensure it aligns with existing type definitions
 
+## Tracing & Session Replay
+
+The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implementation that powers both distributed tracing and session recording features:
+
+### Components
+
+- **Context & ContextManager**: Manages propagation of tracing context through the application
+- **Span**: Represents a unit of work or operation with timing information and attributes
+- **Tracer**: Creates and manages spans for tracking operations
+- **SpanProcessor & SpanExporter**: Processes and exports spans to their destination 
+- **Session**: Manages browser session data persistence and creation
+
+### Usage Patterns
+
+- **Tracing initialization**: Initialize via the main Tracing class with appropriate configuration
+- **Context propagation**: Use context to pass trace information between components
+- **Span creation**: Create spans to measure operations with `startSpan()`
+- **Attributes and events**: Add metadata to spans with `setAttribute()` and `addEvent()`
+- **Session management**: Automatically manages user sessions via browser sessionStorage
+
+### Integration with Session Replay
+
+The Session Replay feature utilizes this tracing infrastructure to:
+- Track and record user sessions with unique identifiers
+- Associate spans with specific user sessions for complete context
+- Capture timing information for accurate playback
+- Store interaction events as span attributes and events
+
 ## Code Suggestions
 
 When suggesting code changes, keep in mind:
@@ -71,3 +122,4 @@ When suggesting code changes, keep in mind:
 4. Performance impact should be minimized
 5. Sensitive data must be properly scrubbed 
 6. Backward compatibility is important
+7. Tracing and session data should follow OpenTelemetry concepts
