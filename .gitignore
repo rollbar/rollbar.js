@@ -8,3 +8,6 @@ coverage
 .DS_Store
 *.swp
 npm-debug.log
+
+.local
+CLAUDE.local.md
