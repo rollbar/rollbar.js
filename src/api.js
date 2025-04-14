@@ -10,6 +10,15 @@ var defaultOptions = {
   port: 443,
 };
 
+var sessionOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/session/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443,
+};
+
 /**
  * Api is an object that encapsulates methods of communicating with
  * the Rollbar API.  It is a standard interface with some parts implemented
@@ -37,6 +46,7 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
   this.jsonBackup = jsonBackup;
   this.accessToken = options.accessToken;
   this.transportOptions = _getTransport(options, urllib);
+  this.sessionTransportOptions = _getSessionTransport(options, urllib);
 }
 
 /**
@@ -53,6 +63,31 @@ Api.prototype.postItem = function (data, callback) {
   var self = this;
 
   // ensure the network request is scheduled after the current tick.
+  setTimeout(function () {
+    self.transport.post(self.accessToken, transportOptions, payload, callback);
+  }, 0);
+};
+
+/**
+ * Posts span data to the Rollbar API in OpenTelemetry format
+ * 
+ * @param {Array} spans - Array of span objects to send
+ * @param {Function} callback - Callback function to be called after the request completes
+ */
+Api.prototype.postSpans = function (spans, callback) {
+  var transportOptions = helpers.transportOptions(
+    this.sessionTransportOptions,
+    'POST',
+  );
+  var payload = {
+    access_token: this.accessToken,
+    data: {
+      resourceSpans: spans
+    }
+  };
+  var self = this;
+
+  // ensure the network request is scheduled after the current tick
   setTimeout(function () {
     self.transport.post(self.accessToken, transportOptions, payload, callback);
   }, 0);
@@ -105,6 +140,7 @@ Api.prototype.configure = function (options) {
   var oldOptions = this.oldOptions;
   this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);
+  this.sessionTransportOptions = _getSessionTransport(this.options, this.url);
   if (this.options.accessToken !== undefined) {
     this.accessToken = this.options.accessToken;
   }
@@ -113,6 +149,10 @@ Api.prototype.configure = function (options) {
 
 function _getTransport(options, url) {
   return helpers.getTransportFromOptions(options, defaultOptions, url);
+}
+
+function _getSessionTransport(options, url) {
+  return helpers.getTransportFromOptions(options, sessionOptions, url);
 }
 
 module.exports = Api;
