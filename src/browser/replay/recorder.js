@@ -72,7 +72,7 @@ export default class Recorder {
     console.log(`Recorder.dump: Latest event: ${latestEvent}`);
 
     const recordingSpan = this.#tracing.startSpan(
-      'replay-recording',
+      'rrweb-replay-recording',
       {},
       context,
     );
@@ -82,7 +82,7 @@ export default class Recorder {
         'rrweb-replay-events',
         {
           eventType: event.type,
-          json: JSON.stringify(event),
+          json: JSON.stringify(event.data),
         },
         event.timestamp ? recordingSpan.toHrTime(event.timestamp) : null,
       );
@@ -94,10 +94,7 @@ export default class Recorder {
       );
     }
 
-    recordingSpan.end(
-      {},
-      latestEvent ? recordingSpan.toHrTime(latestEvent.timestamp) : null,
-    );
+    recordingSpan.end();
 
     if (options.clear) {
       this.clear();
