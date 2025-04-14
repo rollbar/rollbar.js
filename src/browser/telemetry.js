@@ -1,6 +1,6 @@
 var _ = require('../utility');
 var headers = require('../utility/headers');
-var replace = require('../utility/replace');
+var replace = require('../utility/replace.ts');
 var scrub = require('../scrub');
 var urlparser = require('./url');
 var domUtil = require('./domUtility');

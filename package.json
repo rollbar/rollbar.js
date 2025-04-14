@@ -83,6 +83,7 @@
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
     "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vows": "^0.8.3",
     "webpack": "^5.98.0"
