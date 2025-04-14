@@ -24,7 +24,7 @@ var snippetConfig = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -45,7 +45,7 @@ var pluginConfig = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -66,7 +66,7 @@ var vanillaConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -89,7 +89,7 @@ var UMDConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },

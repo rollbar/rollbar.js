@@ -1,0 +1,21 @@
+{
+  "name": "typescript-example",
+  "version": "1.0.0",
+  "description": "Example of using Rollbar with TypeScript",
+  "main": "dist/example.js",
+  "scripts": {
+    "tsc": "tsc",
+    "build": "tsc",
+    "start": "node ./dist/example.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/node": "^18.0.0",
+    "rollbar": "file:../../"
+  }
+}
