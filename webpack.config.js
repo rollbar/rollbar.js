@@ -21,6 +21,9 @@ var snippetConfig = {
     filename: '[name].js',
   },
   plugins: [defaultsPlugin],
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
@@ -42,6 +45,9 @@ var pluginConfig = {
     filename: '[name].min.js',
   },
   plugins: [defaultsPlugin],
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
@@ -63,6 +69,9 @@ var vanillaConfigBase = {
   target: ['web', 'es5'],
   plugins: [defaultsPlugin],
   devtool: 'hidden-source-map',
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
@@ -86,6 +95,9 @@ var UMDConfigBase = {
   },
   target: ['web', 'es5'],
   devtool: 'source-map',
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
