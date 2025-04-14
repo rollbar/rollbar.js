@@ -18,6 +18,7 @@
   "browser": "dist/rollbar.umd.min.js",
   "types": "./index.d.ts",
   "dependencies": {
+    "@rrweb/record": "^2.0.0-alpha.18",
     "async": "~3.2.3",
     "console-polyfill": "0.3.0",
     "error-stack-parser": "^2.0.4",
