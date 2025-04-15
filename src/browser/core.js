@@ -32,7 +32,7 @@ function Rollbar(options, client) {
     this.telemeter = new Telemeter(this.options);
   }
   if (Tracing) {
-    this.tracing = new Tracing(_gWindow(), api, this.options);
+    this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
 
