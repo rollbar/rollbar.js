@@ -1,18 +1,30 @@
-import * as record from '@rrweb/record';
+import { record as rrwebRecordFn } from '@rrweb/record';
 
 export default class Recorder {
-  #options = {};
-
-  #tracing = null;
+  #tracing;
+  #options;
   #stopFn = null;
-  #events = null;
+  #recordFn;
+  #events = {
+    previous: [],
+    current: [],
+  };
 
-  constructor(tracing, options) {
+  constructor(tracing, options, recordFn = rrwebRecordFn) {
+    if (!tracing) {
+      throw new TypeError("Expected 'tracing' to be provided");
+    }
+
+    if (!recordFn) {
+      throw new TypeError("Expected 'recordFn' to be provided");
+    }
+
     console.log('Recorder: Initializing...');
     console.log('options', options);
+
     this.#tracing = tracing;
     this.#options = options ?? {};
-    this.clear();
+    this.#recordFn = recordFn;
   }
 
   get isRecording() {
@@ -32,7 +44,27 @@ export default class Recorder {
       this.stop();
     }
 
-    this.options = newOptions;
+    this.#options = newOptions;
+  }
+
+  /**
+   * Find the earliest and latest events in a list of events based on timestamp
+   *
+   * @param {Array} events - Array of events with timestamp property
+   * @returns {Object} Object containing the earliest and latest events
+   */
+  findEventBoundaries(events) {
+    if (!events || events.length === 0) {
+      return { earliest: null, latest: null };
+    }
+
+    return events.reduce(
+      (acc, e) => ({
+        earliest: e.timestamp < acc.earliest.timestamp ? e : acc.earliest,
+        latest: e.timestamp > acc.latest.timestamp ? e : acc.latest,
+      }),
+      { earliest: events[0], latest: events[0] },
+    );
   }
 
   /**
@@ -45,13 +77,6 @@ export default class Recorder {
    * @returns {Object} The created span
    */
   dump(context, options = {}) {
-    if (!this.#tracing) {
-      console.error(
-        'Recorder.dump: Cannot dump events - tracing is not initialized',
-      );
-      return null;
-    }
-
     const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length === 0) {
@@ -61,17 +86,8 @@ export default class Recorder {
 
     console.log(`Recorder.dump: Dumping ${events.length} events`);
 
-    const { earliestEvent, latestEvent } = events.reduce(
-      (acc, event) => ({
-        earliestEvent:
-          event.timestamp < acc.earliestEvent.timestamp
-            ? event
-            : acc.earliestEvent,
-        latestEvent:
-          event.timestamp > acc.latestEvent.timestamp ? event : acc.latestEvent,
-      }),
-      { earliestEvent: events[0], latestEvent: events[0] },
-    );
+    const { earliest: earliestEvent, latest: latestEvent } =
+      this.findEventBoundaries(events);
 
     console.log(`Recorder.dump: Earliest event: ${earliestEvent}`);
     console.log(`Recorder.dump: Latest event: ${latestEvent}`);
@@ -122,7 +138,7 @@ export default class Recorder {
 
     this.clear();
 
-    this.#stopFn = record.record({
+    this.#stopFn = this.#recordFn({
       emit: (event, isCheckout) => {
         if (isCheckout) {
           this.#events.previous = this.#events.current;
