@@ -5,13 +5,14 @@ export default class Recorder {
 
   #tracing = null;
   #stopFn = null;
-  #eventsMatrix = [[]];
+  #events = null;
 
   constructor(tracing, options) {
     console.log('Recorder: Initializing...');
     console.log('options', options);
     this.#tracing = tracing;
     this.#options = options ?? {};
+    this.clear();
   }
 
   get isRecording() {
@@ -23,11 +24,15 @@ export default class Recorder {
   }
 
   set options(newOptions) {
-    this.#options = newOptions;
+    this.configure(newOptions);
   }
 
-  get events() {
-    return this.#eventsMatrix.flat();
+  configure(newOptions) {
+    if (this.isRecording && newOptions.enabled === false) {
+      this.stop();
+    }
+
+    this.options = newOptions;
   }
 
   /**
@@ -47,7 +52,7 @@ export default class Recorder {
       return null;
     }
 
-    const events = this.events;
+    const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length === 0) {
       console.warn('Recorder.dump: No events to dump');
@@ -103,14 +108,6 @@ export default class Recorder {
     return recordingSpan;
   }
 
-  configure(newOptions) {
-    if (this.isRecording && newOptions.enabled === false) {
-      this.stop();
-    }
-
-    this.options = newOptions;
-  }
-
   start() {
     if (this.isRecording || this.options.enabled === false) {
       if (this.isRecording) {
@@ -123,18 +120,18 @@ export default class Recorder {
 
     console.log('Recorder: Starting...');
 
-    this.#eventsMatrix = [[]];
+    this.clear();
 
     this.#stopFn = record.record({
       emit: (event, isCheckout) => {
         if (isCheckout) {
-          this.#eventsMatrix.push([]);
+          this.#events.previous = this.#events.current;
+          this.#events.current = [];
         }
 
-        const lastEvents = this.#eventsMatrix[this.#eventsMatrix.length - 1];
-        lastEvents.push(event);
+        this.#events.current.push(event);
       },
-      checkoutEveryNms: 300000,
+      checkoutEveryNms: 300000, // 5 minutes
       ...this.options,
     });
 
@@ -160,7 +157,9 @@ export default class Recorder {
   }
 
   clear() {
-    this.#eventsMatrix = [[]];
-    return this;
+    this.#events = {
+      previous: [],
+      current: [],
+    };
   }
 }
