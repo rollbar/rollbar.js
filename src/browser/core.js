@@ -40,7 +40,7 @@ function Rollbar(options, client) {
     const recorderOptions = this.options.recorder;
     this.recorder = new Recorder(this.tracing, recorderOptions);
 
-    if (recorderOptions.enabled && recorderOptions.autoStart === true) {
+    if (recorderOptions.enabled && recorderOptions.autoStart) {
       this.recorder.start();
     }
   }
