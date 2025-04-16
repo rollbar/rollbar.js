@@ -6,6 +6,7 @@ const wrapGlobals = require('./wrapGlobals');
 const scrub = require('../scrub');
 const truncation = require('../truncation');
 const Tracing = require('../tracing/tracing');
+const Recorder = require('./replay/recorder');
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -15,6 +16,7 @@ Rollbar.setComponents({
   scrub: scrub,
   truncation: truncation,
   tracing: Tracing.default,
+  recorder: Recorder.default,
 });
 
 module.exports = Rollbar;
