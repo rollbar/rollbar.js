@@ -1,3 +1,9 @@
+---
+description: Rollbar JS SDK Guidelines
+globs:
+alwaysApply: true
+---
+
 ## About Rollbar.js
 
 Rollbar.js is the official JavaScript SDK for the Rollbar error monitoring service. This library is not standalone - it works in tandem with the Rollbar platform to help developers detect, diagnose, and fix errors in real-time. The SDK sends error data to Rollbar's cloud service where errors are processed, grouped, and notifications are triggered.
