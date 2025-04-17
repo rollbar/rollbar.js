@@ -167,6 +167,15 @@ function isPromise(p) {
   return isObject(p) && isType(p.then, 'function');
 }
 
+/**
+ * isBrowser - a convenience function for checking if the code is running in a browser
+ *
+ * @returns true if the code is running in a browser environment
+ */
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
 function redact() {
   return '********';
 }
@@ -799,6 +808,7 @@ module.exports = {
   isString: isString,
   isType: isType,
   isPromise: isPromise,
+  isBrowser: isBrowser,
   jsonParse: jsonParse,
   LEVELS: LEVELS,
   makeUnhandledStackInfo: makeUnhandledStackInfo,
