@@ -36,7 +36,7 @@ function Rollbar(options, client) {
     this.tracing.initSession();
   }
 
-  if (Tracing && Recorder) {
+  if (Tracing && Recorder && _.isBrowser()) {
     const recorderOptions = this.options.recorder;
     this.recorder = new Recorder(this.tracing, recorderOptions);
 
