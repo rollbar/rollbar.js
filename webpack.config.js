@@ -21,10 +21,13 @@ var snippetConfig = {
     filename: '[name].js',
   },
   plugins: [defaultsPlugin],
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -42,10 +45,13 @@ var pluginConfig = {
     filename: '[name].min.js',
   },
   plugins: [defaultsPlugin],
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -63,10 +69,13 @@ var vanillaConfigBase = {
   target: ['web', 'es5'],
   plugins: [defaultsPlugin],
   devtool: 'hidden-source-map',
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
@@ -86,10 +95,13 @@ var UMDConfigBase = {
   },
   target: ['web', 'es5'],
   devtool: 'source-map',
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         loader: 'babel-loader',
         exclude: [/node_modules/, /vendor/],
       },
