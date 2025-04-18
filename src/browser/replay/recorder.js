@@ -140,7 +140,7 @@ export default class Recorder {
 
     this.#stopFn = this.#recordFn({
       emit: (event, isCheckout) => {
-        if (this.options.debug.logEmits) {
+        if (this.options.debug?.logEmits) {
           this._logEvent(event, isCheckout);
         }
 
