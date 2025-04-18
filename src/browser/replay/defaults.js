@@ -5,6 +5,9 @@
 module.exports = {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
+  debug: {
+    logEmits: false, // Whether to log emitted events
+  },
 
   // Recording options
   inlineStylesheet: true, // Whether to inline stylesheets to improve replay accuracy
