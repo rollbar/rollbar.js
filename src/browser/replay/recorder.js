@@ -140,6 +140,10 @@ export default class Recorder {
 
     this.#stopFn = this.#recordFn({
       emit: (event, isCheckout) => {
+        if (this.options.debug?.logEmits) {
+          this._logEvent(event, isCheckout);
+        }
+
         if (isCheckout) {
           this.#events.previous = this.#events.current;
           this.#events.current = [];
@@ -147,7 +151,7 @@ export default class Recorder {
 
         this.#events.current.push(event);
       },
-      checkoutEveryNms: 300000, // 5 minutes
+      checkoutEveryNms: 5 * 60 * 1000, // 5 minutes
       ...this.options,
     });
 
@@ -177,5 +181,25 @@ export default class Recorder {
       previous: [],
       current: [],
     };
+  }
+
+  _logEvent(event, isCheckout) {
+    console.log(
+      `Recorder: ${isCheckout ? 'checkout' : ''} event\n`,
+      ((e) => {
+        const seen = new WeakSet();
+        return JSON.stringify(
+          e,
+          (_, v) => {
+            if (typeof v === 'object' && v !== null) {
+              if (seen.has(v)) return '[Circular]';
+              seen.add(v);
+            }
+            return v;
+          },
+          2,
+        );
+      })(event),
+    );
   }
 }
