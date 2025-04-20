@@ -89,6 +89,7 @@
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "./node_modules/.bin/grunt test-server",
+    "test-replay": "./node_modules/.bin/grunt test-replay",
     "test_ci": "./node_modules/.bin/grunt test",
     "lint": "./node_modules/.bin/eslint ."
   },

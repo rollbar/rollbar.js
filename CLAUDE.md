@@ -138,11 +138,24 @@ The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implemen
 - **Attributes and events**: Add metadata to spans with `setAttribute()` and `addEvent()`
 - **Session management**: Automatically manages user sessions via browser sessionStorage
 
-### Integration with Session Replay
+### Session Replay Implementation
 
-The Session Replay feature utilizes this tracing infrastructure to:
+The `src/browser/replay` directory contains the implementation of the Session Replay feature:
 
-- Track and record user sessions with unique identifiers
-- Associate spans with specific user sessions for complete context
-- Capture timing information for accurate playback
-- Store interaction events as span attributes and events
+- **Recorder**: Core class that integrates with rrweb to record DOM events
+- **Configuration**: Configurable options in `defaults.js` for replay behavior
+
+The Session Replay feature utilizes our tracing infrastructure to:
+
+- Record user interactions using rrweb in a memory-efficient way
+- Store recordings with checkpoints for better performance
+- Generate spans that contain replay events with proper timing
+- Associate recordings with user sessions for complete context
+- Transport recordings to Rollbar servers via the API
+
+### Testing Approach
+
+- **Mock Implementation**: `test/replay/mockRecordFn.js` provides a deterministic mock of rrweb
+- **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
+- **Integration Tests**: Verify interaction between Recorder and Tracing system
+- **Edge Cases**: Test handling of empty events, checkpoints, and error conditions
