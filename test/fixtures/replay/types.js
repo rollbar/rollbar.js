@@ -3,7 +3,7 @@
  * Extracted from @rrweb/types/dist/index.d.ts
  */
 
-const EventType = {
+export const EventType = {
   DomContentLoaded: 0,
   Load: 1,
   FullSnapshot: 2,
@@ -13,7 +13,7 @@ const EventType = {
   Plugin: 6,
 };
 
-const IncrementalSource = {
+export const IncrementalSource = {
   Mutation: 0,
   MouseMove: 1,
   MouseInteraction: 2,
@@ -33,7 +33,7 @@ const IncrementalSource = {
   CustomElement: 16,
 };
 
-const MouseInteractions = {
+export const MouseInteractions = {
   MouseUp: 0,
   MouseDown: 1,
   Click: 2,
@@ -47,7 +47,7 @@ const MouseInteractions = {
   TouchCancel: 10,
 };
 
-const MediaInteractions = {
+export const MediaInteractions = {
   Play: 0,
   Pause: 1,
   Seeked: 2,
@@ -55,7 +55,7 @@ const MediaInteractions = {
   RateChange: 4,
 };
 
-const NodeType = {
+export const NodeType = {
   Document: 0,
   DocumentType: 1,
   Element: 2,
@@ -64,7 +64,7 @@ const NodeType = {
   Comment: 5,
 };
 
-const PointerTypes = {
+export const PointerTypes = {
   Mouse: 0,
   Pen: 1,
   Touch: 2,
