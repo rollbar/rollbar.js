@@ -4,13 +4,14 @@
  * type definitions in @rrweb/types to ensure complete test coverage.
  */
 
-const types = require('./types');
-const EventType = types.EventType;
-const IncrementalSource = types.IncrementalSource;
-const MouseInteractions = types.MouseInteractions;
-const MediaInteractions = types.MediaInteractions;
-const NodeType = types.NodeType;
-const PointerTypes = types.PointerTypes;
+import {
+  EventType,
+  IncrementalSource,
+  MouseInteractions,
+  MediaInteractions,
+  NodeType,
+  PointerTypes,
+} from './types.js';
 
 /**
  * Synthetic events created from type definitions for testing
@@ -327,12 +328,4 @@ const syntheticEvents = {
   },
 };
 
-module.exports = {
-  EventType,
-  IncrementalSource,
-  MouseInteractions,
-  MediaInteractions,
-  NodeType,
-  PointerTypes,
-  syntheticEvents,
-};
+export { syntheticEvents };

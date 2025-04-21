@@ -3,12 +3,13 @@
  * Extracted from real session recordings and categorized by type
  */
 
-const types = require('./types');
-const EventType = types.EventType;
-const IncrementalSource = types.IncrementalSource;
-const MouseInteractions = types.MouseInteractions;
-const NodeType = types.NodeType;
-const PointerTypes = types.PointerTypes;
+import {
+  EventType,
+  IncrementalSource,
+  MouseInteractions,
+  NodeType,
+  PointerTypes,
+} from './types.js';
 
 /**
  * A collection of unique rrweb events for testing
@@ -249,11 +250,4 @@ const rrwebEvents = {
   },
 };
 
-module.exports = {
-  EventType,
-  IncrementalSource,
-  MouseInteractions,
-  NodeType,
-  PointerTypes,
-  rrwebEvents,
-};
+export { rrwebEvents };

@@ -2,23 +2,20 @@
  * Export all rrweb fixture events in a single module
  */
 
-const types = require('./types');
-const realEvents = require('./rrwebEvents.fixtures');
-const syntheticEvents = require('./rrwebSyntheticEvents.fixtures');
+import * as types from './types.js';
+import { rrwebEvents } from './rrwebEvents.fixtures.js';
+import { syntheticEvents } from './rrwebSyntheticEvents.fixtures.js';
 
-module.exports = {
-  EventType: types.EventType,
-  IncrementalSource: types.IncrementalSource,
-  MouseInteractions: types.MouseInteractions,
-  MediaInteractions: types.MediaInteractions,
-  NodeType: types.NodeType,
-  PointerTypes: types.PointerTypes,
+export const EventType = types.EventType;
+export const IncrementalSource = types.IncrementalSource;
+export const MouseInteractions = types.MouseInteractions;
+export const MediaInteractions = types.MediaInteractions;
+export const NodeType = types.NodeType;
+export const PointerTypes = types.PointerTypes;
 
-  // Event collections
-  realEvents: realEvents.rrwebEvents,
-  syntheticEvents: syntheticEvents.syntheticEvents,
-  allEvents: {
-    ...realEvents.rrwebEvents,
-    ...syntheticEvents.syntheticEvents,
-  },
+// Event collections
+export const realEvents = rrwebEvents;
+export const allEvents = {
+  ...rrwebEvents,
+  ...syntheticEvents,
 };
