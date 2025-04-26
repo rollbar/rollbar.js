@@ -15,7 +15,7 @@ import {
  * A collection of unique rrweb events for testing
  * Extracted from real recordings
  */
-const rrwebEvents = {
+export const rrwebEvents = {
   fullSnapshot: {
     type: EventType.FullSnapshot,
     data: {
@@ -249,5 +249,3 @@ const rrwebEvents = {
     // Missing data and timestamp
   },
 };
-
-export { rrwebEvents };
