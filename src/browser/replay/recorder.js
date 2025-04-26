@@ -1,4 +1,5 @@
 import { record as rrwebRecordFn } from '@rrweb/record';
+import { EventType } from '@rrweb/types';
 
 export default class Recorder {
   #tracing;
@@ -144,7 +145,7 @@ export default class Recorder {
           this._logEvent(event, isCheckout);
         }
 
-        if (isCheckout) {
+        if (isCheckout && event.type === EventType.Meta) {
           this.#events.previous = this.#events.current;
           this.#events.current = [];
         }

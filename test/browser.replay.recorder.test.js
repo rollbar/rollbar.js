@@ -5,6 +5,7 @@
 /* globals sinon */
 
 import { expect } from 'chai';
+import { EventType } from '@rrweb/types';
 
 import Recorder from '../src/browser/replay/recorder.js';
 
@@ -163,29 +164,122 @@ describe('Recorder', function () {
       recorder.start();
 
       // First checkout
-      emitCallback({ timestamp: 0, type: 'fullSnapshot' }, true);
-      const event1 = { timestamp: 1000, type: 'event1', data: { a: 1 } };
-      const event2 = { timestamp: 2000, type: 'event2', data: { b: 2 } };
-      emitCallback(event1, false);
-      emitCallback(event2, false);
+      emitCallback({ timestamp: 0, type: EventType.Meta, data: {} }, true);
+      emitCallback(
+        { timestamp: 10, type: EventType.FullSnapshot, data: {} },
+        true,
+      );
+      emitCallback(
+        {
+          timestamp: 1000,
+          type: EventType.IncrementalSnapshot,
+          data: { a: 1 },
+        },
+        false,
+      );
+      emitCallback(
+        {
+          timestamp: 2000,
+          type: EventType.IncrementalSnapshot,
+          data: { b: 2 },
+        },
+        false,
+      );
 
       // Second checkout
-      emitCallback({ timestamp: 3100, type: 'fullSnapshot' }, true);
-      const event3 = { timestamp: 4000, type: 'event3', data: { c: 3 } };
-      emitCallback(event3, false);
+      emitCallback({ timestamp: 3050, type: EventType.Meta, data: {} }, true);
+      emitCallback(
+        { timestamp: 3100, type: EventType.FullSnapshot, data: {} },
+        true,
+      );
+      emitCallback(
+        {
+          timestamp: 4000,
+          type: EventType.IncrementalSnapshot,
+          data: { c: 3 },
+        },
+        false,
+      );
 
       // Third checkout
-      emitCallback({ timestamp: 5000, type: 'fullSnapshot' }, true);
-      const event4 = { timestamp: 6000, type: 'event4', data: { d: 4 } };
-      emitCallback(event4, false);
+      emitCallback({ timestamp: 4500, type: EventType.Meta, data: {} }, true);
+      emitCallback(
+        { timestamp: 5000, type: EventType.FullSnapshot, data: {} },
+        true,
+      );
+      emitCallback(
+        {
+          timestamp: 6000,
+          type: EventType.IncrementalSnapshot,
+          data: { d: 4 },
+        },
+        false,
+      );
 
       const context = { spanId: '123' };
       recorder.dump(context);
 
-      // 2nd checkout + event3 + 3rd checkout + event4
-      expect(mockSpan.addEvent.callCount).to.equal(4);
-      expect(mockSpan.span.startTime).to.be.deep.equal([3, 100000000]); // otel time
+      // 2nd checkout (meta + fs) + event3 + 3rd checkout (meta + fs) + event4
+      expect(mockSpan.span.startTime).to.be.deep.equal([3, 50000000]); // otel time
       expect(mockSpan.span.endTime).not.to.be.null;
+
+      expect(mockSpan.addEvent.callCount).to.equal(6);
+
+      [
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.Meta,
+            json: JSON.stringify({}),
+          },
+          timestamp: [3, 50000000],
+        },
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.FullSnapshot,
+            json: JSON.stringify({}),
+          },
+          timestamp: [3, 100000000],
+        },
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.IncrementalSnapshot,
+            json: JSON.stringify({ c: 3 }),
+          },
+          timestamp: [4, 0],
+        },
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.Meta,
+            json: JSON.stringify({}),
+          },
+          timestamp: [4, 500000000],
+        },
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.FullSnapshot,
+            json: JSON.stringify({}),
+          },
+          timestamp: [5, 0],
+        },
+        {
+          name: 'rrweb-replay-events',
+          attributes: {
+            eventType: EventType.IncrementalSnapshot,
+            json: JSON.stringify({ d: 4 }),
+          },
+          timestamp: [6, 0],
+        },
+      ].forEach((expected, index) => {
+        const call = mockSpan.addEvent.getCall(index);
+        expect(call.args[0]).to.equal(expected.name);
+        expect(call.args[1]).to.deep.equal(expected.attributes);
+        expect(call.args[2]).to.deep.equal(expected.timestamp);
+      });
     });
   });
 
