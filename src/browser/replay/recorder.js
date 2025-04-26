@@ -48,26 +48,6 @@ export default class Recorder {
   }
 
   /**
-   * Find the earliest and latest events in a list of events based on timestamp
-   *
-   * @param {Array} events - Array of events with timestamp property
-   * @returns {Object} Object containing the earliest and latest events
-   */
-  findEventBoundaries(events) {
-    if (!events || events.length === 0) {
-      return { earliest: null, latest: null };
-    }
-
-    return events.reduce(
-      (acc, e) => ({
-        earliest: e.timestamp < acc.earliest.timestamp ? e : acc.earliest,
-        latest: e.timestamp > acc.latest.timestamp ? e : acc.latest,
-      }),
-      { earliest: events[0], latest: events[0] },
-    );
-  }
-
-  /**
    * Dumps the recorded events into a span that can be exported
    * Creates a span for the recording session and adds all events as span events
    *
@@ -86,16 +66,18 @@ export default class Recorder {
 
     console.log(`Recorder.dump: Dumping ${events.length} events`);
 
-    const { earliest: earliestEvent, latest: latestEvent } =
-      this.findEventBoundaries(events);
-
-    console.log(`Recorder.dump: Earliest event: ${earliestEvent}`);
-    console.log(`Recorder.dump: Latest event: ${latestEvent}`);
-
     const recordingSpan = this.#tracing.startSpan(
       'rrweb-replay-recording',
       {},
       context,
+    );
+
+    const earliestEvent = events.reduce((earliestEvent, event) =>
+      event.timestamp < earliestEvent.timestamp ? event : earliestEvent,
+    );
+
+    recordingSpan.span.startTime = recordingSpan.toHrTime(
+      earliestEvent.timestamp,
     );
 
     for (const event of events) {
@@ -105,13 +87,7 @@ export default class Recorder {
           eventType: event.type,
           json: JSON.stringify(event.data),
         },
-        event.timestamp ? recordingSpan.toHrTime(event.timestamp) : null,
-      );
-    }
-
-    if (earliestEvent) {
-      recordingSpan.span.startTime = recordingSpan.toHrTime(
-        earliestEvent.timestamp,
+        recordingSpan.toHrTime(event.timestamp),
       );
     }
 
