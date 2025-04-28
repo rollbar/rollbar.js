@@ -9,7 +9,7 @@ import {
   MouseInteractions,
   NodeType,
   PointerTypes,
-} from './types.js';
+} from '@rrweb/types';
 
 /**
  * A collection of unique rrweb events for testing
