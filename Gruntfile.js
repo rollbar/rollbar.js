@@ -196,6 +196,33 @@ module.exports = function (grunt) {
     var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
+  
+  // Custom task for running all replay-related tests
+  grunt.registerTask('test-replay', function () {
+    // Find all replay-related test files:
+    // 1. Tests in test/replay/ directory
+    // 2. Tests in test/tracing/ directory (underlying infrastructure)
+    // 3. Browser replay tests (browser.replay.*.test.js)
+    var replayTests = Object.keys(browserTests).filter(function(testName) {
+      var testPath = browserTests[testName];
+      return (
+        testPath.includes('test/replay/') || 
+        testPath.includes('test/tracing/') ||
+        testPath.match(/test\/browser\.replay\..*\.test\.js/)
+      );
+    });
+    
+    // Log which tests will be run
+    grunt.log.writeln('Running replay-related tests:');
+    replayTests.forEach(function(testName) {
+      grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
+    });
+    
+    // Run each test
+    replayTests.forEach(function(testName) {
+      grunt.task.run('karma:' + testName);
+    });
+  });
 
   grunt.registerTask('copyrelease', function createRelease() {
     var version = pkg.version;
