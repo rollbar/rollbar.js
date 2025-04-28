@@ -9,7 +9,6 @@ import {
   IncrementalSource,
   MouseInteractions,
   MediaInteractions,
-  NodeType,
   PointerTypes,
 } from './types.js';
 
@@ -17,7 +16,7 @@ import {
  * Synthetic events created from type definitions for testing
  * These cover sources and interactions not in the real recordings
  */
-const syntheticEvents = {
+export const syntheticEvents = {
   domContentLoaded: {
     type: EventType.DomContentLoaded,
     data: {}, // Empty object confirmed in rrweb/src/record/index.ts
@@ -327,5 +326,3 @@ const syntheticEvents = {
     timestamp: 1744983335490,
   },
 };
-
-export { syntheticEvents };

@@ -69,12 +69,3 @@ export const PointerTypes = {
   Pen: 1,
   Touch: 2,
 };
-
-module.exports = {
-  EventType,
-  IncrementalSource,
-  MouseInteractions,
-  MediaInteractions,
-  NodeType,
-  PointerTypes,
-};

@@ -2,7 +2,7 @@
  * Default options for the rrweb recorder
  * See https://github.com/rrweb-io/rrweb/blob/master/guide.md#options for details
  */
-module.exports = {
+export default {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
   debug: {
