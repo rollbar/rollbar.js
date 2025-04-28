@@ -10,7 +10,7 @@ import {
   MouseInteractions,
   MediaInteractions,
   PointerTypes,
-} from './types.js';
+} from '@rrweb/types';
 
 /**
  * Synthetic events created from type definitions for testing

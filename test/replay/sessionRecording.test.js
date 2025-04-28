@@ -8,6 +8,8 @@
 /* globals afterEach */
 
 import { expect } from 'chai';
+import { EventType } from '@rrweb/types';
+
 import Tracing from '../../src/tracing/tracing.js';
 import { Span } from '../../src/tracing/span.js';
 import { Context } from '../../src/tracing/context.js';
@@ -15,7 +17,6 @@ import Recorder from '../../src/browser/replay/recorder.js';
 import recorderDefaults from '../../src/browser/replay/defaults.js';
 import { spanExportQueue } from '../../src/tracing/exporter.js';
 import mockRecordFn from './mockRecordFn.js';
-import { EventType } from '../fixtures/replay/types.js';
 
 const mockWindow = {
   sessionStorage: {},
