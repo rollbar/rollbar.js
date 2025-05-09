@@ -82,6 +82,17 @@ module.exports = function (config) {
           },
         ],
       },
+      resolve: {
+        alias: {
+          '@rollbar': path.resolve(__dirname, 'src'),
+          '@browser': path.resolve(__dirname, 'src/browser'),
+          '@server': path.resolve(__dirname, 'src/server'),
+          '@tracing': path.resolve(__dirname, 'src/tracing'),
+          '@utility': path.resolve(__dirname, 'src/utility'),
+          '@react-native': path.resolve(__dirname, 'src/react-native')
+        },
+        extensions: ['.js', '.json']
+      },
     },
 
     webpackMiddleware: {

@@ -10,8 +10,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import Queue from '../../../src/queue.js';
-import Api from '../../../src/api.js';
+import Queue from '@rollbar/queue.js';
+import Api from '@rollbar/api.js';
 
 describe('Queue ReplayMap Integration', function () {
   let queue;

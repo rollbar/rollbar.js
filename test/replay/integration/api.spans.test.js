@@ -10,7 +10,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import Api from '../../../src/api.js';
+import Api from '@rollbar/api.js';
 
 describe('API Span Transport', function () {
   let api;

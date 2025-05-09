@@ -12,7 +12,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 // We need to use require since the API module is a CommonJS module
-const Api = require('../../../src/api');
+const Api = require('@rollbar/api');
 
 describe('Api', function () {
   let api;

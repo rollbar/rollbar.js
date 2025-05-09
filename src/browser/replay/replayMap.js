@@ -1,4 +1,4 @@
-import { spanExportQueue } from '../../tracing/exporter.js';
+import { spanExportQueue } from '@tracing/exporter.js';
 
 /**
  * ReplayMap - Manages the mapping between error occurrences and their associated
