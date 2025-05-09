@@ -11,6 +11,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
+import { spanExportQueue } from '../../../src/tracing/exporter.js';
 
 // Mock objects for testing
 class MockSpan {
@@ -30,7 +31,7 @@ class MockRecorder {
 class MockExporter {
   constructor() {
     this.spans = [{ id: 'span1' }, { id: 'span2' }];
-    this.export = sinon.stub().returns(this.spans);
+    this.export = sinon.stub();
   }
 }
 
@@ -44,8 +45,7 @@ class MockApi {
 
 class MockTracing {
   constructor() {
-    this.contextObj = { active: sinon.stub().returns('activeContext') };
-    this.context = sinon.stub().returns(this.contextObj);
+    this.contextManager = { active: sinon.stub().returns('activeContext') };
     this.hexId = sinon.stub().returns('1234567890abcdef');
   }
 }
@@ -58,10 +58,21 @@ describe('ReplayMap', function() {
   let mockTracing;
   
   beforeEach(function() {
+    // Clear the spanExportQueue before each test
+    spanExportQueue.length = 0;
+    
     mockRecorder = new MockRecorder();
     mockExporter = new MockExporter();
     mockApi = new MockApi();
     mockTracing = new MockTracing();
+    
+    // Set up fake spans that will be placed on the spanExportQueue when exporter.export is called
+    const mockSpans = [{ id: 'span1' }, { id: 'span2' }];
+    mockExporter.export.callsFake((spans) => {
+      // Push the mock spans to the queue to simulate what the real exporter does
+      spanExportQueue.push(...mockSpans);
+      return true;
+    });
     
     replayMap = new ReplayMap({
       recorder: mockRecorder,
@@ -99,18 +110,28 @@ describe('ReplayMap', function() {
   describe('_processReplay', function() {
     it('should dump recording and add spans to the map', async function() {
       const replayId = '1234567890abcdef';
+      
+      // Define the expected mock spans for validation
+      const expectedSpans = [{ id: 'span1' }, { id: 'span2' }];
+      
       const result = await replayMap._processReplay(replayId);
       
       expect(result).to.be.true;
-      expect(mockTracing.context.called).to.be.true;
-      expect(mockTracing.contextObj.active.called).to.be.true;
+      expect(mockTracing.contextManager.active.called).to.be.true;
       expect(mockRecorder.dump.called).to.be.true;
       expect(mockRecorder.span.setAttribute.calledWith('rollbar.replay.id', replayId)).to.be.true;
       expect(mockExporter.export.called).to.be.true;
       
+      // Verify spanExportQueue contains our expected spans
+      expect(spanExportQueue.length).to.equal(expectedSpans.length);
+      expect(spanExportQueue).to.deep.include.members(expectedSpans);
+      
       // Check if the spans are stored in the map with the replayId
-      // Using the private map through the size getter
       expect(replayMap.size).to.equal(1);
+      
+      // Verify we can get the exact same spans back from the map
+      const retrievedSpans = replayMap.getSpans(replayId);
+      expect(retrievedSpans).to.deep.equal(expectedSpans);
     });
     
     it('should return false if no recording span is created', async function() {
@@ -185,15 +206,16 @@ describe('ReplayMap', function() {
   
   describe('send', function() {
     it('should send spans and remove them from the map', async function() {
-      // Add a mock replay to the map
-      await replayMap._processReplay('testReplayId');
+      // Set up direct spans in the map for testing send
+      const mockMapSpans = [{ id: 'mapSpan1' }, { id: 'mapSpan2' }];
+      replayMap.setSpans('testReplayId', mockMapSpans);
       expect(replayMap.size).to.equal(1);
       
       const result = await replayMap.send('testReplayId');
       
       expect(result).to.be.true;
       expect(mockApi.postSpans.called).to.be.true;
-      expect(mockApi.postSpans.firstCall.args[0]).to.deep.equal(mockExporter.spans);
+      expect(mockApi.postSpans.firstCall.args[0]).to.deep.equal(mockMapSpans);
       
       // Map should be empty after sending
       expect(replayMap.size).to.equal(0);
@@ -312,19 +334,20 @@ describe('ReplayMap', function() {
   });
   
   describe('size and clear', function() {
-    it('should report correct size of the map', async function() {
+    it('should report correct size of the map', function() {
       expect(replayMap.size).to.equal(0);
       
-      await replayMap._processReplay('id1');
+      // Directly set spans in the map for testing size
+      replayMap.setSpans('id1', [{ id: 'span1' }]);
       expect(replayMap.size).to.equal(1);
       
-      await replayMap._processReplay('id2');
+      replayMap.setSpans('id2', [{ id: 'span2' }]);
       expect(replayMap.size).to.equal(2);
     });
     
-    it('should clear all entries from the map', async function() {
-      await replayMap._processReplay('id1');
-      await replayMap._processReplay('id2');
+    it('should clear all entries from the map', function() {
+      replayMap.setSpans('id1', [{ id: 'span1' }]);
+      replayMap.setSpans('id2', [{ id: 'span2' }]);
       expect(replayMap.size).to.equal(2);
       
       replayMap.clear();

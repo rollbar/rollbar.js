@@ -317,28 +317,33 @@ Queue.prototype._maybeCallWait = function () {
  *
  * @param {string} replayId - The ID of the replay to handle
  * @param {Object} response - The API response
+ * @returns {Promise<boolean>} A promise that resolves to true if replay was sent successfully,
+ *                             false if replay was discarded or an error occurred
  * @private
  */
 Queue.prototype._handleReplayResponse = async function (replayId, response) {
   if (!this.replayMap) {
     console.warn('Queue._handleReplayResponse: ReplayMap not available');
-    return;
+    return false;
   }
   
   if (!replayId) {
     console.warn('Queue._handleReplayResponse: No replayId provided');
-    return;
+    return false;
   }
 
   try {
     // Success condition might need adjustment based on API response structure
     if (response && response.err === 0) {
-      await this.replayMap.send(replayId);
+      const result = await this.replayMap.send(replayId);
+      return result;
     } else {
       this.replayMap.discard(replayId);
+      return false;
     }
   } catch (error) {
     console.error('Error handling replay response:', error);
+    return false;
   }
 };
 

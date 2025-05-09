@@ -293,11 +293,14 @@ describe('Session Replay Transport Integration', function() {
     });
   });
   
-  it('should handle full end-to-end flow from error to spans', function(done) {
+  it('should handle full end-to-end flow from error to spans', async function() {
     const addSpy = sinon.spy(replayMap, 'add');
     const sendSpy = sinon.spy(replayMap, 'send');
     const getSpansSpy = sinon.spy(replayMap, 'getSpans');
     const postSpansSpy = sinon.spy(api, 'postSpans');
+    
+    // Create a spy for _handleReplayResponse so we can await its completion
+    const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
     
     const errorItem = {
       body: {
@@ -309,26 +312,41 @@ describe('Session Replay Transport Integration', function() {
       }
     };
     
+    // Prepare mock spans that will be returned when recorder.dump() is called
     const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans('fake-id', mockSpans);
     
-    sinon.stub(replayMap, '_processReplay').resolves(true);
-    
-    queue.addItem(errorItem, function(err, resp) {
-      expect(errorItem).to.have.property('replayId');
-      expect(addSpy.calledOnce).to.be.true;
-      
-      setTimeout(function() {
-        expect(sendSpy.calledOnce).to.be.true;
-        expect(getSpansSpy.called).to.be.true;
-        expect(postSpansSpy.calledOnce).to.be.true;
-        
-        const callArgs = postSpansSpy.firstCall.args;
-        expect(callArgs[0]).to.be.an('array');
-        
-        done();
-      }, 100);
+    // When _processReplay is called with a replayId, set up the mock spans for that id
+    sinon.stub(replayMap, '_processReplay').callsFake(async (replayId) => {
+      replayMap.setSpans(replayId, mockSpans);
+      return true;
     });
+    
+    // Create a promise to handle the callback-based API
+    const addItemPromise = new Promise((resolve, reject) => {
+      queue.addItem(errorItem, (err, resp) => {
+        if (err) reject(err);
+        else resolve(resp);
+      });
+    });
+    
+    // Wait for the API call to complete
+    await addItemPromise;
+    
+    // Verify the item was processed correctly
+    expect(errorItem).to.have.property('replayId');
+    expect(addSpy.calledOnce).to.be.true;
+    
+    // Get the promise from the handleReplayResponseSpy and wait for it to complete
+    const responsePromise = handleReplayResponseSpy.returnValues[0];
+    await responsePromise;
+    
+    // After response handling is complete, check all expected behaviors
+    expect(sendSpy.calledOnce).to.be.true;
+    expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
+    expect(postSpansSpy.calledOnce).to.be.true;
+    
+    const callArgs = postSpansSpy.firstCall.args;
+    expect(callArgs[0]).to.be.an('array');
   });
   
   it('should not add replayId when replayMap is not provided', function(done) {
