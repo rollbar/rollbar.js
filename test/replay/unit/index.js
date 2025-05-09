@@ -1,6 +1,6 @@
 /**
  * Session Replay Unit Tests
- * 
+ *
  * This index exports all unit tests for the session replay feature.
  */
 

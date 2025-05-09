@@ -1,6 +1,6 @@
 /**
  * Session Replay Integration Tests
- * 
+ *
  * This index exports all integration tests for the session replay feature.
  */
 

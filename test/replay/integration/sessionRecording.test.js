@@ -59,11 +59,13 @@ const options = {
 
 const createMockTransport = () => {
   return {
-    post: sinon.stub().callsFake((accessToken, transportOptions, payload, callback) => {
-      setTimeout(() => {
-        callback(null, { err: 0, result: { id: '12345' } });
-      }, 10);
-    }),
+    post: sinon
+      .stub()
+      .callsFake((accessToken, transportOptions, payload, callback) => {
+        setTimeout(() => {
+          callback(null, { err: 0, result: { id: '12345' } });
+        }, 10);
+      }),
     postJsonPayload: sinon.stub(),
   };
 };
@@ -175,7 +177,7 @@ describe('Session Replay Integration', function () {
   });
 });
 
-describe('Session Replay Transport Integration', function() {
+describe('Session Replay Transport Integration', function () {
   let tracing;
   let recorder;
   let api;
@@ -183,144 +185,153 @@ describe('Session Replay Transport Integration', function() {
   let exporter;
   let replayMap;
   let queue;
-  
-  beforeEach(function() {
+
+  beforeEach(function () {
     spanExportQueue.length = 0;
-    
+
     transport = createMockTransport();
     const urlMock = { parse: sinon.stub().returns({}) };
-    const truncationMock = { truncate: sinon.stub().returns({ error: null, value: '{}' }) };
-    
+    const truncationMock = {
+      truncate: sinon.stub().returns({ error: null, value: '{}' }),
+    };
+
     tracing = new Tracing(mockWindow, options);
     tracing.initSession();
-    
-    api = new Api({ accessToken: 'test-token' }, transport, urlMock, truncationMock);
-    
+
+    api = new Api(
+      { accessToken: 'test-token' },
+      transport,
+      urlMock,
+      truncationMock,
+    );
+
     recorder = new Recorder(tracing, options.recorder, mockRecordFn);
-    
+
     exporter = new SpanExporter();
     sinon.stub(exporter, 'export').callsFake(() => {
       return spanExportQueue.slice();
     });
-    
+
     replayMap = new ReplayMap({
       recorder,
       exporter,
       api,
-      tracing
+      tracing,
     });
-    
+
     queue = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },
       api,
       console,
       { transmit: true, retryInterval: 500 },
-      replayMap
+      replayMap,
     );
 
     recorder.start();
   });
-  
-  afterEach(function() {
+
+  afterEach(function () {
     if (recorder) {
       recorder.stop();
     }
     sinon.restore();
   });
-  
-  it('should add replayId to error item and send replay on success', function(done) {
+
+  it('should add replayId to error item and send replay on success', function (done) {
     const addSpy = sinon.spy(replayMap, 'add');
     const sendSpy = sinon.spy(replayMap, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
-    
+
     const errorItem = {
       body: {
         trace: {
           exception: {
-            message: 'Test error for session replay'
-          }
-        }
-      }
+            message: 'Test error for session replay',
+          },
+        },
+      },
     };
-    
-    queue.addItem(errorItem, function(err, resp) {
+
+    queue.addItem(errorItem, function (err, resp) {
       expect(errorItem).to.have.property('replayId');
       expect(addSpy.calledOnce).to.be.true;
-      
+
       expect(err).to.be.null;
       expect(resp).to.have.property('err', 0);
-      
-      setTimeout(function() {
+
+      setTimeout(function () {
         expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
         expect(postSpansSpy.calledOnce).to.be.true;
-        
+
         done();
       }, 50);
     });
   });
-  
-  it('should discard replay when API returns an error', function(done) {
-    transport.post = sinon.stub().callsFake((accessToken, transportOptions, payload, callback) => {
-      setTimeout(() => {
-        callback(null, { err: 1, message: 'API Error' });
-      }, 10);
-    });
-    
+
+  it('should discard replay when API returns an error', function (done) {
+    transport.post = sinon
+      .stub()
+      .callsFake((accessToken, transportOptions, payload, callback) => {
+        setTimeout(() => {
+          callback(null, { err: 1, message: 'API Error' });
+        }, 10);
+      });
+
     const addSpy = sinon.spy(replayMap, 'add');
     const sendSpy = sinon.spy(replayMap, 'send');
     const discardSpy = sinon.spy(replayMap, 'discard');
-    
+
     const errorItem = {
       body: {
         trace: {
           exception: {
-            message: 'Test error with API failure'
-          }
-        }
-      }
+            message: 'Test error with API failure',
+          },
+        },
+      },
     };
-    
-    queue.addItem(errorItem, function(err, resp) {
+
+    queue.addItem(errorItem, function (err, resp) {
       expect(errorItem).to.have.property('replayId');
       expect(addSpy.calledOnce).to.be.true;
-      
-      setTimeout(function() {
+
+      setTimeout(function () {
         expect(discardSpy.calledWith(errorItem.replayId)).to.be.true;
         expect(sendSpy.called).to.be.false;
-        
+
         done();
       }, 50);
     });
   });
-  
-  it('should handle full end-to-end flow from error to spans', async function() {
+
+  it('should handle full end-to-end flow from error to spans', async function () {
     const addSpy = sinon.spy(replayMap, 'add');
     const sendSpy = sinon.spy(replayMap, 'send');
     const getSpansSpy = sinon.spy(replayMap, 'getSpans');
     const postSpansSpy = sinon.spy(api, 'postSpans');
-    
+
     // Create a spy for _handleReplayResponse so we can await its completion
     const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
-    
+
     const errorItem = {
       body: {
         trace: {
           exception: {
-            message: 'Test E2E flow'
-          }
-        }
-      }
+            message: 'Test E2E flow',
+          },
+        },
+      },
     };
-    
+
     // Prepare mock spans that will be returned when recorder.dump() is called
     const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-    
+
     // When _processReplay is called with a replayId, set up the mock spans for that id
     sinon.stub(replayMap, '_processReplay').callsFake(async (replayId) => {
       replayMap.setSpans(replayId, mockSpans);
       return true;
     });
-    
+
     // Create a promise to handle the callback-based API
     const addItemPromise = new Promise((resolve, reject) => {
       queue.addItem(errorItem, (err, resp) => {
@@ -328,46 +339,46 @@ describe('Session Replay Transport Integration', function() {
         else resolve(resp);
       });
     });
-    
+
     // Wait for the API call to complete
     await addItemPromise;
-    
+
     // Verify the item was processed correctly
     expect(errorItem).to.have.property('replayId');
     expect(addSpy.calledOnce).to.be.true;
-    
+
     // Get the promise from the handleReplayResponseSpy and wait for it to complete
     const responsePromise = handleReplayResponseSpy.returnValues[0];
     await responsePromise;
-    
+
     // After response handling is complete, check all expected behaviors
     expect(sendSpy.calledOnce).to.be.true;
     expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
-    
+
     const callArgs = postSpansSpy.firstCall.args;
     expect(callArgs[0]).to.be.an('array');
   });
-  
-  it('should not add replayId when replayMap is not provided', function(done) {
+
+  it('should not add replayId when replayMap is not provided', function (done) {
     const queueWithoutReplayMap = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },
       api,
       console,
-      { transmit: true }
+      { transmit: true },
     );
-    
+
     const errorItem = {
       body: {
         trace: {
           exception: {
-            message: 'Test without replayMap'
-          }
-        }
-      }
+            message: 'Test without replayMap',
+          },
+        },
+      },
     };
-    
-    queueWithoutReplayMap.addItem(errorItem, function(err, resp) {
+
+    queueWithoutReplayMap.addItem(errorItem, function (err, resp) {
       expect(errorItem).to.not.have.property('replayId');
       done();
     });
