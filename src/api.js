@@ -10,6 +10,15 @@ var defaultOptions = {
   port: 443,
 };
 
+var sessionDefaultOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/session/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443,
+};
+
 /**
  * Api is an object that encapsulates methods of communicating with
  * the Rollbar API.  It is a standard interface with some parts implemented
@@ -37,7 +46,27 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
   this.jsonBackup = jsonBackup;
   this.accessToken = options.accessToken;
   this.transportOptions = _getTransport(options, urllib);
+  this.sessionTransportOptions = _getSessionTransport(options, urllib);
 }
+
+/**
+ * Wraps transport.post in a Promise to support async/await
+ * 
+ * @param {Object} options - Options for the API request
+ * @param {string} options.accessToken - The access token for authentication
+ * @param {Object} options.transportOptions - Options for the transport
+ * @param {Object} options.payload - The data payload to send
+ * @returns {Promise} A promise that resolves with the response or rejects with an error
+ * @private
+ */
+Api.prototype._postPromise = function({ accessToken, transportOptions, payload }) {
+  const self = this;
+  return new Promise((resolve, reject) => {
+    self.transport.post(accessToken, transportOptions, payload, (err, resp) => 
+      err ? reject(err) : resolve(resp)
+    );
+  });
+};
 
 /**
  *
@@ -56,6 +85,31 @@ Api.prototype.postItem = function (data, callback) {
   setTimeout(function () {
     self.transport.post(self.accessToken, transportOptions, payload, callback);
   }, 0);
+};
+
+/**
+ * Posts spans to the Rollbar API using the session endpoint
+ * 
+ * @param {Array} spans - The spans to send
+ * @returns {Promise<Object>} A promise that resolves with the API response
+ */
+Api.prototype.postSpans = async function (spans) {
+  const transportOptions = helpers.transportOptions(
+    this.sessionTransportOptions,
+    'POST',
+  );
+  
+  const payload = helpers.buildPayload(
+    this.accessToken, 
+    { resourceSpans: spans }, 
+    this.jsonBackup
+  );
+
+  return await this._postPromise({
+    accessToken: this.accessToken, 
+    transportOptions, 
+    payload
+  });
 };
 
 /**
@@ -105,6 +159,7 @@ Api.prototype.configure = function (options) {
   var oldOptions = this.oldOptions;
   this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);
+  this.sessionTransportOptions = _getSessionTransport(this.options, this.url);
   if (this.options.accessToken !== undefined) {
     this.accessToken = this.options.accessToken;
   }
@@ -113,6 +168,10 @@ Api.prototype.configure = function (options) {
 
 function _getTransport(options, url) {
   return helpers.getTransportFromOptions(options, defaultOptions, url);
+}
+
+function _getSessionTransport(options, url) {
+  return helpers.getTransportFromOptions(options, sessionDefaultOptions, url);
 }
 
 module.exports = Api;

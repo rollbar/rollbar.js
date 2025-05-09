@@ -197,13 +197,8 @@ module.exports = function (grunt) {
     grunt.task.run.apply(grunt.task, tasks);
   });
   
-  // Custom task for running all replay-related tests
-  grunt.registerTask('test-replay', function () {
-    // Find all replay-related test files:
-    // 1. Tests in test/replay/ directory
-    // 2. Tests in test/tracing/ directory (underlying infrastructure)
-    // 3. Browser replay tests (browser.replay.*.test.js)
-    var replayTests = Object.keys(browserTests).filter(function(testName) {
+  function findReplayTests() {
+    return Object.keys(browserTests).filter(function(testName) {
       var testPath = browserTests[testName];
       return (
         testPath.includes('test/replay/') || 
@@ -211,15 +206,49 @@ module.exports = function (grunt) {
         testPath.match(/test\/browser\.replay\..*\.test\.js/)
       );
     });
+  }
+
+  grunt.registerTask('test-replay', function () {
+    var replayTests = findReplayTests();
     
-    // Log which tests will be run
-    grunt.log.writeln('Running replay-related tests:');
+    grunt.log.writeln('Running all replay-related tests:');
     replayTests.forEach(function(testName) {
       grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
     });
     
-    // Run each test
     replayTests.forEach(function(testName) {
+      grunt.task.run('karma:' + testName);
+    });
+  });
+  
+  grunt.registerTask('test-replay-unit', function () {
+    var unitTests = findReplayTests().filter(function(testName) {
+      var testPath = browserTests[testName];
+      return testPath.includes('/replay/unit/');
+    });
+    
+    grunt.log.writeln('Running replay unit tests:');
+    unitTests.forEach(function(testName) {
+      grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
+    });
+    
+    unitTests.forEach(function(testName) {
+      grunt.task.run('karma:' + testName);
+    });
+  });
+  
+  grunt.registerTask('test-replay-integration', function () {
+    var integrationTests = findReplayTests().filter(function(testName) {
+      var testPath = browserTests[testName];
+      return testPath.includes('/replay/integration/');
+    });
+    
+    grunt.log.writeln('Running replay integration tests:');
+    integrationTests.forEach(function(testName) {
+      grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
+    });
+    
+    integrationTests.forEach(function(testName) {
       grunt.task.run('karma:' + testName);
     });
   });

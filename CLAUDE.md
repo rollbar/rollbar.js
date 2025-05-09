@@ -68,6 +68,29 @@ As of version 3.0.0, the SDK has been updated to use modern JavaScript features 
 - ESLint is used for enforcing code style
 - Prettier for code formatting
 
+### Documentation vs. Comments
+
+- **Function Documentation (JSDoc/TSDoc)**: Always include comprehensive documentation for functions, classes, and methods using JSDoc/TSDoc format (`/** ... */`). These serve as API documentation, appear in IDE tooltips, and help developers understand purpose, parameters, and return values.
+
+- **Inline Code Comments**: Avoid redundant comments that merely restate what the code is doing. Only add comments to explain:
+  - Why the code works a certain way (decisions and reasoning)
+  - Non-obvious behavior or edge cases
+  - Complex algorithms or business logic
+  - Workarounds for bugs or limitations
+  
+- **Self-documenting Code**: Write clear, readable code that explains itself through descriptive variable/function names and straightforward logic. Well-written code rarely needs explanatory comments.
+
+- **Examples**:
+  ```javascript
+  // BAD - Redundant comment
+  // Add one to x
+  x += 1;
+  
+  // GOOD - Explains the non-obvious "why"
+  // Increment before sending to API to account for zero-indexing
+  x += 1;
+  ```
+
 ## SDK Design Principles
 
 - **User Problems Are SDK Improvement Opportunities**: When users encounter integration issues, treat these as SDK design improvements rather than user implementation mistakes.
@@ -143,6 +166,7 @@ The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implemen
 The `src/browser/replay` directory contains the implementation of the Session Replay feature:
 
 - **Recorder**: Core class that integrates with rrweb to record DOM events
+- **ReplayMap**: Manages the mapping between error occurrences and session recordings
 - **Configuration**: Configurable options in `defaults.js` for replay behavior
 
 The Session Replay feature utilizes our tracing infrastructure to:
@@ -153,9 +177,25 @@ The Session Replay feature utilizes our tracing infrastructure to:
 - Associate recordings with user sessions for complete context
 - Transport recordings to Rollbar servers via the API
 
-### Testing Approach
+### Session Replay Flow
 
-- **Mock Implementation**: `test/replay/mockRecordFn.js` provides a deterministic mock of rrweb
+1. **Recording**: The Recorder class continuously records DOM events using rrweb
+2. **Error Occurrence**: When an error occurs, Queue.addItem() calls ReplayMap.add()
+3. **Correlation**: ReplayMap generates a replayId and attaches it to the error
+4. **Coordination**: After successful error submission, Queue triggers ReplayMap.send()
+5. **Transport**: ReplayMap retrieves stored replay data and sends via api.postSpans()
+
+### Testing Infrastructure
+
+- **Unit Tests**: Component-focused tests in `test/replay/unit/`
+- **Integration Tests**: Test component interactions in `test/replay/integration/`
+- **End-to-End Tests**: Full flow verification in `test/replay/integration/e2e.test.js`
+- **Mock Implementation**: `test/replay/util/mockRecordFn.js` provides a deterministic mock of rrweb
 - **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
-- **Integration Tests**: Verify interaction between Recorder and Tracing system
-- **Edge Cases**: Test handling of empty events, checkpoints, and error conditions
+- **Test Tasks**: Custom Grunt tasks for testing replay code specifically
+
+## File Creation Guidelines
+
+- **Newlines**: All new files MUST end with exactly one newline character
+- **Encoding**: Use UTF-8 encoding for all text files
+- **Line Endings**: Use LF (Unix-style) line endings, not CRLF

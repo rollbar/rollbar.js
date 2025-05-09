@@ -10,6 +10,6 @@ coverage
 npm-debug.log
 
 .local
-CLAUDE.local.md
+CLAUDE.*.*
 .aider*
 .codex/instructions.md
