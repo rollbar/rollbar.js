@@ -172,23 +172,21 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 };
 
 Rollbar.prototype._addTracingAttributes = function (item) {
-  if (this.tracing) {
-    const span = this.tracing.getSpan();
-    if (!span) {
-      return;
-    }
-    const attributes = [
-      {key: 'session_id', value: this.tracing.sessionId()},
-      {key: 'span_id', value: span.spanId()},
-      {key: 'trace_id', value: span.traceId()},
-    ];
-    _.addItemAttributes(item, attributes);
-
-    span.addEvent(
-      'rollbar.occurrence',
-      [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
-    );
+  const span = this.tracing?.getSpan();
+  if (!span) {
+    return;
   }
+  const attributes = [
+    {key: 'session_id', value: this.tracing.sessionId},
+    {key: 'span_id', value: span.spanId},
+    {key: 'trace_id', value: span.traceId},
+  ];
+  _.addItemAttributes(item, attributes);
+
+  span.addEvent(
+    'rollbar.occurrence',
+    [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
+  );
 };
 
 Rollbar.prototype._defaultLogLevel = function () {

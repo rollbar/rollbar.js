@@ -23,7 +23,7 @@ export default class Tracing {
     }
   }
 
-  sessionId() {
+  get sessionId() {
     if (this.session) {
       return this.session.session.id;
     }

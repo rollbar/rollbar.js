@@ -37,11 +37,11 @@ export class Span {
     return this.span.spanContext;
   }
 
-  spanId() {
+  get spanId() {
     return this.span.spanContext.spanId;
   }
 
-  traceId() {
+  get traceId() {
     return this.span.spanContext.traceId;
   }
 
