@@ -10,7 +10,7 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
@@ -18,6 +18,9 @@ function Rollbar(options, api, logger, telemeter, platform) {
   this.api = api;
   this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
 
+  this.tracing = tracing;
+
+  // Legacy OpenTracing support
   // This must happen before the Notifier is created
   var tracer = this.options.tracer || null;
   if (validateTracer(tracer)) {
@@ -57,6 +60,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
 
   this.options = _.merge(oldOptions, options, payload);
 
+  // Legacy OpenTracing support
   // This must happen before the Notifier is configured
   var tracer = this.options.tracer || null;
   if (validateTracer(tracer)) {
@@ -150,6 +154,9 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     return;
   }
   try {
+    this._addTracingAttributes(item);
+
+    // Legacy OpenTracing support
     this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
     this.telemeter && this.telemeter._captureRollbarItem(item);
@@ -162,6 +169,24 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     }
     this.logger.error(e);
   }
+};
+
+Rollbar.prototype._addTracingAttributes = function (item) {
+  const span = this.tracing?.getSpan();
+  if (!span) {
+    return;
+  }
+  const attributes = [
+    {key: 'session_id', value: this.tracing.sessionId},
+    {key: 'span_id', value: span.spanId},
+    {key: 'trace_id', value: span.traceId},
+  ];
+  _.addItemAttributes(item, attributes);
+
+  span.addEvent(
+    'rollbar.occurrence',
+    [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
+  );
 };
 
 Rollbar.prototype._defaultLogLevel = function () {

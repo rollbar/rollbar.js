@@ -61,6 +61,8 @@ describe('Tracing()', function () {
     const t = new Tracing(window, options);
     t.initSession()
 
+    expect(t.sessionId).to.match(/^[a-f0-9]{32}$/);
+
     const span = t.startSpan('test.span');
 
     expect(span.span.name).to.equal('test.span')

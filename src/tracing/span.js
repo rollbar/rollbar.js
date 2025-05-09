@@ -37,6 +37,14 @@ export class Span {
     return this.span.spanContext;
   }
 
+  get spanId() {
+    return this.span.spanContext.spanId;
+  }
+
+  get traceId() {
+    return this.span.spanContext.traceId;
+  }
+
   setAttribute(key, value) {
     if (value == null || this.ended) return this;
     if (key.length === 0) return this;

@@ -191,6 +191,7 @@ describe('Rollbar()', function () {
     done();
   });
 
+  // Legacy OpenTracing support
   it('should have a tracer if valid tracer is provided', function (done) {
     var options = { tracer: ValidOpenTracingTracerStub };
     var rollbar = (window.rollbar = new Rollbar(options));
@@ -200,6 +201,7 @@ describe('Rollbar()', function () {
     done();
   });
 
+  // Legacy OpenTracing support
   it('should not have a tracer if invalid tracer is provided', function (done) {
     var options = { tracer: InvalidOpenTracingTracerStub };
     var rollbar = (window.rollbar = new Rollbar(options));
@@ -880,6 +882,46 @@ describe('log', function () {
       done();
     }, 1);
   });
+
+  it('should add tracing attributes when called in an active span', function (done) {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const err = new Error('test error');
+
+    rollbar.tracing.withSpan('test', {}, () => {
+      rollbar.error(err);
+    });
+
+    setTimeout(function () {
+      try{
+        server.respond();
+
+        var body = JSON.parse(server.requests[0].requestBody);
+
+        expect(body.data.body.trace.exception.message).to.eql('test error');
+        expect(body.data.attributes).to.be.an('array');
+        expect(body.data.attributes.length).to.eql(3);
+        expect(body.data.attributes[0].key).to.eql('session_id');
+        expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{32}$/);
+        expect(body.data.attributes[1].key).to.eql('span_id');
+        expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{16}$/);
+        expect(body.data.attributes[2].key).to.eql('trace_id');
+        expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{32}$/);
+
+        done();
+      } catch (e) {
+        done(e);
+      }
+    }, 1);
+  });
+
 
   it('should send message when called with only null arguments', function (done) {
     var server = window.server;
