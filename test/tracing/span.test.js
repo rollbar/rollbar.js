@@ -167,6 +167,8 @@ describe('Span()', function () {
   it('should keep valid state', function (done) {
     const span = new Span(spanOptions());
     expect(span.isRecording()).to.equal(true);
+    expect(span.spanId()).to.match(/^[a-f0-9]{16}$/);
+    expect(span.traceId()).to.match(/^[a-f0-9]{32}$/);
 
     span.end();
     expect(span.isRecording()).to.equal(false);

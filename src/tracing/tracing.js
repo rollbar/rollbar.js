@@ -23,6 +23,14 @@ export default class Tracing {
     }
   }
 
+  sessionId() {
+    if (this.session) {
+      return this.session.session.id;
+    }
+    return null;
+  }
+
+
   createTracer() {
     this.contextManager = new ContextManager();
     this.exporter = new SpanExporter();

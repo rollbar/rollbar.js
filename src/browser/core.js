@@ -46,7 +46,7 @@ function Rollbar(options, client) {
   }
 
   this.client =
-    client || new Client(this.options, api, logger, this.telemeter, 'browser');
+    client || new Client(this.options, api, logger, this.telemeter, this.tracing, 'browser');
   var gWindow = _gWindow();
   var gDocument = typeof document != 'undefined' && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers

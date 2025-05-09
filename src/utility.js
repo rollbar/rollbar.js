@@ -544,6 +544,8 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     uuid: uuid4(),
   };
 
+  item.data = item.data || {};
+
   setCustomItemKeys(item, custom);
 
   if (requestKeys && request) {
@@ -639,6 +641,13 @@ function createTelemetryEvent(args) {
   };
 
   return event;
+}
+
+function addItemAttributes(item, attributes) {
+  item.data.attributes = item.data.attributes || [];
+  if (attributes) {
+    item.data.attributes.push(...attributes);
+  }
 }
 
 /*
@@ -794,6 +803,7 @@ module.exports = {
   createItem: createItem,
   addErrorContext: addErrorContext,
   createTelemetryEvent: createTelemetryEvent,
+  addItemAttributes: addItemAttributes,
   filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
   formatUrl: formatUrl,

@@ -41,7 +41,7 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, 'server');
+    client || new Client(this.options, api, logger, telemeter, null, 'server');
   this.instrumenter = new Instrumenter(
     this.options,
     this.client.telemeter,
