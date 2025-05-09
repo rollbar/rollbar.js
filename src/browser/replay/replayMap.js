@@ -64,7 +64,6 @@ export default class ReplayMap {
       }
 
       recordingSpan.setAttribute('rollbar.replay.id', replayId);
-      this.#exporter.export([recordingSpan.span]);
       const spans = spanExportQueue.slice();
       this.#map.set(replayId, spans);
 

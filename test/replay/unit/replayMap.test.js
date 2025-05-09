@@ -66,13 +66,10 @@ describe('ReplayMap', function () {
     mockApi = new MockApi();
     mockTracing = new MockTracing();
 
-    // Set up fake spans that will be placed on the spanExportQueue when exporter.export is called
+    // Set up fake spans for the spanExportQueue
     const mockSpans = [{ id: 'span1' }, { id: 'span2' }];
-    mockExporter.export.callsFake((spans) => {
-      // Push the mock spans to the queue to simulate what the real exporter does
-      spanExportQueue.push(...mockSpans);
-      return true;
-    });
+    // Add spans directly to the queue
+    spanExportQueue.push(...mockSpans);
 
     replayMap = new ReplayMap({
       recorder: mockRecorder,
@@ -135,7 +132,6 @@ describe('ReplayMap', function () {
           replayId,
         ),
       ).to.be.true;
-      expect(mockExporter.export.called).to.be.true;
 
       // Verify spanExportQueue contains our expected spans
       expect(spanExportQueue.length).to.equal(expectedSpans.length);
