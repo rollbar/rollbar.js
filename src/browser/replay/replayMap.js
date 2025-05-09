@@ -14,7 +14,7 @@ export default class ReplayMap {
 
   /**
    * Creates a new ReplayMap instance
-   * 
+   *
    * @param {Object} props - Configuration props
    * @param {Object} props.recorder - The recorder instance that will dump replay data
    * @param {Object} props.exporter - The exporter that retrieves completed spans
@@ -47,9 +47,8 @@ export default class ReplayMap {
 
   /**
    * Processes a replay by dumping it from the recorder, adding the replay ID attribute,
-   * and storing it in the map. This method encapsulates the async workflow for
-   * better testability.
-   * 
+   * and storing it in the map.
+   *
    * @param {string} replayId - The ID to use for this replay
    * @returns {Promise<boolean>} A promise that resolves to true if processing was successful
    * @private
@@ -58,17 +57,17 @@ export default class ReplayMap {
     try {
       const context = this.#tracing.contextManager.active();
       const recordingSpan = this.#recorder.dump(context, { clear: false });
-      
+
       if (!recordingSpan) {
         console.warn('ReplayMap._processReplay: No recording span was created');
         return false;
       }
-      
+
       recordingSpan.setAttribute('rollbar.replay.id', replayId);
       this.#exporter.export([recordingSpan.span]);
       const spans = spanExportQueue.slice();
       this.#map.set(replayId, spans);
-      
+
       return true;
     } catch (error) {
       console.error('Error processing replay:', error);
@@ -80,14 +79,14 @@ export default class ReplayMap {
    * Adds a replay to the map and returns a uniquely generated replay ID.
    * This method immediately returns the ID while asynchronously performing
    * the operations needed to dump and store the replay for later sending.
-   * 
+   *
    * @returns {string} A unique identifier for this replay
    */
   add() {
     // 8 bytes hexId matches the span ID size in the tracing system
     const replayId = this.#tracing.hexId(8);
-    
-    this._processReplay(replayId).catch(error => {
+
+    this._processReplay(replayId).catch((error) => {
       console.error('Failed to process replay:', error);
     });
 
@@ -97,7 +96,7 @@ export default class ReplayMap {
   /**
    * Sends the replay associated with the given replay ID to the backend
    * and removes it from the map.
-   * 
+   *
    * @param {string} replayId - The ID of the replay to send
    * @returns {Promise<boolean>} A promise that resolves to true if a replay was found and sent, false otherwise
    */
@@ -106,7 +105,7 @@ export default class ReplayMap {
       console.warn('ReplayMap.send: No replayId provided');
       return false;
     }
-    
+
     if (!this.#map.has(replayId)) {
       console.warn(`ReplayMap.send: No replay found for replayId: ${replayId}`);
       return false;
@@ -133,7 +132,7 @@ export default class ReplayMap {
   /**
    * Discards the replay associated with the given replay ID by removing
    * it from the map without sending it.
-   * 
+   *
    * @param {string} replayId - The ID of the replay to discard
    * @returns {boolean} True if a replay was found and discarded, false otherwise
    */
@@ -142,9 +141,11 @@ export default class ReplayMap {
       console.warn('ReplayMap.discard: No replayId provided');
       return false;
     }
-    
+
     if (!this.#map.has(replayId)) {
-      console.warn(`ReplayMap.discard: No replay found for replayId: ${replayId}`);
+      console.warn(
+        `ReplayMap.discard: No replay found for replayId: ${replayId}`,
+      );
       return false;
     }
 
@@ -154,7 +155,7 @@ export default class ReplayMap {
 
   /**
    * Gets spans for the given replay ID
-   * 
+   *
    * @param {string} replayId - The ID to retrieve spans for
    * @returns {Array|null} The spans array or null if not found
    */
@@ -164,7 +165,7 @@ export default class ReplayMap {
 
   /**
    * Sets spans for a given replay ID
-   * 
+   *
    * @param {string} replayId - The ID to set spans for
    * @param {Array} spans - The spans to set
    */
@@ -174,7 +175,7 @@ export default class ReplayMap {
 
   /**
    * Returns the size of the map (number of stored replays)
-   * 
+   *
    * @returns {number} The number of replays currently stored
    */
   get size() {

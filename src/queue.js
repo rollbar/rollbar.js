@@ -101,23 +101,23 @@ Queue.prototype.addItem = function (
     callback(new Error('Transmit disabled'));
     return;
   }
-  
+
   if (this.replayMap && item.body) {
     const replayId = this.replayMap.add();
     item.replayId = replayId;
   }
-  
+
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(
       item,
       function (err, resp) {
         this._dequeuePendingRequest(item);
-        
+
         if (!err && resp && item.replayId) {
           this._handleReplayResponse(item.replayId, resp);
         }
-        
+
         callback(err, resp);
       }.bind(this),
     );
@@ -326,7 +326,7 @@ Queue.prototype._handleReplayResponse = async function (replayId, response) {
     console.warn('Queue._handleReplayResponse: ReplayMap not available');
     return false;
   }
-  
+
   if (!replayId) {
     console.warn('Queue._handleReplayResponse: No replayId provided');
     return false;
