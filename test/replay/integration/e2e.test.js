@@ -18,7 +18,7 @@ import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
-import mockRecordFn from '../mockRecordFn.js';
+import { mockRecordFn } from '../util';
 
 const mockWindow = {
   sessionStorage: {},

@@ -3,7 +3,7 @@
  * Emits fixture events on a schedule to test the Recorder
  */
 
-import { allEvents } from '../fixtures/replay/index.js';
+import { allEvents } from '../../fixtures/replay/index.js';
 
 /**
  * Mock implementation of rrweb's record function

@@ -19,7 +19,7 @@ import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import { spanExportQueue } from '../../../src/tracing/exporter.js';
-import mockRecordFn from '../mockRecordFn.js';
+import { mockRecordFn } from '../util';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
 

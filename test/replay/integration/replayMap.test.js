@@ -16,7 +16,7 @@ import Tracing from '../../../src/tracing/tracing.js';
 import { SpanExporter } from '../../../src/tracing/exporter.js';
 import { spanExportQueue } from '../../../src/tracing/exporter.js';
 import Api from '../../../src/api.js';
-import mockRecordFn from '../mockRecordFn.js';
+import { mockRecordFn } from '../util';
 
 const mockWindow = {
   sessionStorage: {},
