@@ -52,22 +52,19 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
 /**
  * Wraps transport.post in a Promise to support async/await
  * 
- * @param {string} accessToken - The access token for authentication
- * @param {Object} transportOptions - Options for the transport
- * @param {Object} payload - The data payload to send
+ * @param {Object} options - Options for the API request
+ * @param {string} options.accessToken - The access token for authentication
+ * @param {Object} options.transportOptions - Options for the transport
+ * @param {Object} options.payload - The data payload to send
  * @returns {Promise} A promise that resolves with the response or rejects with an error
  * @private
  */
-Api.prototype._postPromise = function(accessToken, transportOptions, payload) {
+Api.prototype._postPromise = function({ accessToken, transportOptions, payload }) {
   const self = this;
   return new Promise((resolve, reject) => {
-    self.transport.post(accessToken, transportOptions, payload, (err, resp) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(resp);
-      }
-    });
+    self.transport.post(accessToken, transportOptions, payload, (err, resp) => 
+      err ? reject(err) : resolve(resp)
+    );
   });
 };
 
@@ -108,11 +105,11 @@ Api.prototype.postSpans = async function (spans) {
     this.jsonBackup
   );
 
-  return await this._postPromise(
-    this.accessToken, 
+  return await this._postPromise({
+    accessToken: this.accessToken, 
     transportOptions, 
     payload
-  );
+  });
 };
 
 /**
