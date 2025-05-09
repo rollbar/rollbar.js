@@ -68,6 +68,29 @@ As of version 3.0.0, the SDK has been updated to use modern JavaScript features 
 - ESLint is used for enforcing code style
 - Prettier for code formatting
 
+### Documentation vs. Comments
+
+- **Function Documentation (JSDoc/TSDoc)**: Always include comprehensive documentation for functions, classes, and methods using JSDoc/TSDoc format (`/** ... */`). These serve as API documentation, appear in IDE tooltips, and help developers understand purpose, parameters, and return values.
+
+- **Inline Code Comments**: Avoid redundant comments that merely restate what the code is doing. Only add comments to explain:
+  - Why the code works a certain way (decisions and reasoning)
+  - Non-obvious behavior or edge cases
+  - Complex algorithms or business logic
+  - Workarounds for bugs or limitations
+  
+- **Self-documenting Code**: Write clear, readable code that explains itself through descriptive variable/function names and straightforward logic. Well-written code rarely needs explanatory comments.
+
+- **Examples**:
+  ```javascript
+  // BAD - Redundant comment
+  // Add one to x
+  x += 1;
+  
+  // GOOD - Explains the non-obvious "why"
+  // Increment before sending to API to account for zero-indexing
+  x += 1;
+  ```
+
 ## SDK Design Principles
 
 - **User Problems Are SDK Improvement Opportunities**: When users encounter integration issues, treat these as SDK design improvements rather than user implementation mistakes.

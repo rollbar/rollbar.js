@@ -12,12 +12,14 @@ var _ = require('./utility');
  *    api.postItem(payload, function(err, response))
  * @param logger - An object used to log verbose messages if desired
  * @param options - see Queue.prototype.configure
+ * @param replayMap - Optional ReplayMap for coordinating session replay with error occurrences
  */
-function Queue(rateLimiter, api, logger, options) {
+function Queue(rateLimiter, api, logger, options, replayMap) {
   this.rateLimiter = rateLimiter;
   this.api = api;
   this.logger = logger;
   this.options = options;
+  this.replayMap = replayMap;
   this.predicates = [];
   this.pendingItems = [];
   this.pendingRequests = [];
@@ -99,12 +101,23 @@ Queue.prototype.addItem = function (
     callback(new Error('Transmit disabled'));
     return;
   }
+  
+  if (this.replayMap && item.body) {
+    const replayId = this.replayMap.add();
+    item.replayId = replayId;
+  }
+  
   this.pendingRequests.push(item);
   try {
     this._makeApiRequest(
       item,
       function (err, resp) {
         this._dequeuePendingRequest(item);
+        
+        if (!err && resp && item.replayId) {
+          this._handleReplayResponse(item.replayId, resp);
+        }
+        
         callback(err, resp);
       }.bind(this),
     );
@@ -295,6 +308,38 @@ Queue.prototype._maybeCallWait = function () {
     return true;
   }
   return false;
+};
+
+/**
+ * Handles the API response for an item with a replay ID.
+ * Based on the success or failure status of the response,
+ * it either sends or discards the associated session replay.
+ *
+ * @param {string} replayId - The ID of the replay to handle
+ * @param {Object} response - The API response
+ * @private
+ */
+Queue.prototype._handleReplayResponse = async function (replayId, response) {
+  if (!this.replayMap) {
+    console.warn('Queue._handleReplayResponse: ReplayMap not available');
+    return;
+  }
+  
+  if (!replayId) {
+    console.warn('Queue._handleReplayResponse: No replayId provided');
+    return;
+  }
+
+  try {
+    // Success condition might need adjustment based on API response structure
+    if (response && response.err === 0) {
+      await this.replayMap.send(replayId);
+    } else {
+      this.replayMap.discard(replayId);
+    }
+  } catch (error) {
+    console.error('Error handling replay response:', error);
+  }
 };
 
 module.exports = Queue;
