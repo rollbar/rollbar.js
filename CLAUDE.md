@@ -166,6 +166,7 @@ The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implemen
 The `src/browser/replay` directory contains the implementation of the Session Replay feature:
 
 - **Recorder**: Core class that integrates with rrweb to record DOM events
+- **ReplayMap**: Manages the mapping between error occurrences and session recordings
 - **Configuration**: Configurable options in `defaults.js` for replay behavior
 
 The Session Replay feature utilizes our tracing infrastructure to:
@@ -176,12 +177,22 @@ The Session Replay feature utilizes our tracing infrastructure to:
 - Associate recordings with user sessions for complete context
 - Transport recordings to Rollbar servers via the API
 
-### Testing Approach
+### Session Replay Flow
 
-- **Mock Implementation**: `test/replay/mockRecordFn.js` provides a deterministic mock of rrweb
+1. **Recording**: The Recorder class continuously records DOM events using rrweb
+2. **Error Occurrence**: When an error occurs, Queue.addItem() calls ReplayMap.add()
+3. **Correlation**: ReplayMap generates a replayId and attaches it to the error
+4. **Coordination**: After successful error submission, Queue triggers ReplayMap.send()
+5. **Transport**: ReplayMap retrieves stored replay data and sends via api.postSpans()
+
+### Testing Infrastructure
+
+- **Unit Tests**: Component-focused tests in `test/replay/unit/`
+- **Integration Tests**: Test component interactions in `test/replay/integration/`
+- **End-to-End Tests**: Full flow verification in `test/replay/integration/e2e.test.js`
+- **Mock Implementation**: `test/replay/util/mockRecordFn.js` provides a deterministic mock of rrweb
 - **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
-- **Integration Tests**: Verify interaction between Recorder and Tracing system
-- **Edge Cases**: Test handling of empty events, checkpoints, and error conditions
+- **Test Tasks**: Custom Grunt tasks for testing replay code specifically
 
 ## File Creation Guidelines
 
