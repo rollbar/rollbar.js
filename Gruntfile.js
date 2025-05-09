@@ -199,16 +199,16 @@ module.exports = function (grunt) {
   
   // Custom task for running all replay-related tests
   grunt.registerTask('test-replay', function () {
-    // Find all replay-related test files:
-    // 1. Tests in test/replay/ directory
-    // 2. Tests in test/tracing/ directory (underlying infrastructure)
-    // 3. Browser replay tests (browser.replay.*.test.js)
+    // Find all replay and transport-related test files
     var replayTests = Object.keys(browserTests).filter(function(testName) {
       var testPath = browserTests[testName];
       return (
         testPath.includes('test/replay/') || 
         testPath.includes('test/tracing/') ||
-        testPath.match(/test\/browser\.replay\..*\.test\.js/)
+        testPath.match(/test\/browser\.replay\..*\.test\.js/) ||
+        testPath.includes('replayMap.test.js') ||
+        testPath.includes('api.postSpans.test.js') ||
+        testPath.includes('queue.replayMap.test.js')
       );
     });
     
