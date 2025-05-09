@@ -1,3 +1,5 @@
+import { spanExportQueue } from '../../tracing/exporter.js';
+
 /**
  * ReplayMap - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
@@ -54,7 +56,7 @@ export default class ReplayMap {
    */
   async _processReplay(replayId) {
     try {
-      const context = this.#tracing.context().active();
+      const context = this.#tracing.contextManager.active();
       const recordingSpan = this.#recorder.dump(context, { clear: false });
       
       if (!recordingSpan) {
@@ -63,7 +65,8 @@ export default class ReplayMap {
       }
       
       recordingSpan.setAttribute('rollbar.replay.id', replayId);
-      const spans = this.#exporter.export();
+      this.#exporter.export([recordingSpan.span]);
+      const spans = spanExportQueue.slice();
       this.#map.set(replayId, spans);
       
       return true;

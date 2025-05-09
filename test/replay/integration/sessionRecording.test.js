@@ -260,7 +260,6 @@ describe('Session Replay Transport Integration', function() {
   });
   
   it('should discard replay when API returns an error', function(done) {
-    transport.post.restore();
     transport.post = sinon.stub().callsFake((accessToken, transportOptions, payload, callback) => {
       setTimeout(() => {
         callback(null, { err: 1, message: 'API Error' });

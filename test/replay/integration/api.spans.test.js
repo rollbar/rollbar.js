@@ -117,7 +117,7 @@ describe('API Span Transport', function() {
     
     expect(api.options).to.not.equal(originalOptions);
     expect(api.options).to.have.property('endpoint', 'https://custom.rollbar.com/api/');
-    expect(api.options).to.have.property('accessToken', accessToken);
+    expect(api.accessToken).to.equal(accessToken);
   });
   
   it('should update sessionTransportOptions when reconfigured', function() {
