@@ -182,3 +182,9 @@ The Session Replay feature utilizes our tracing infrastructure to:
 - **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
 - **Integration Tests**: Verify interaction between Recorder and Tracing system
 - **Edge Cases**: Test handling of empty events, checkpoints, and error conditions
+
+## File Creation Guidelines
+
+- **Newlines**: All new files MUST end with exactly one newline character
+- **Encoding**: Use UTF-8 encoding for all text files
+- **Line Endings**: Use LF (Unix-style) line endings, not CRLF
