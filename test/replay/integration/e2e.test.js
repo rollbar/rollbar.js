@@ -20,18 +20,6 @@ import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
 import { mockRecordFn } from '../util';
 
-const mockWindow = {
-  sessionStorage: {},
-  document: {
-    location: {
-      href: 'https://example.com/test',
-    },
-  },
-  navigator: {
-    userAgent: 'Mozilla/5.0 Test',
-  },
-};
-
 const options = {
   enabled: true,
   resource: {
@@ -87,7 +75,7 @@ describe('Session Replay E2E', function () {
     const logger = { error: sinon.spy(), log: sinon.spy() };
 
     // Setup tracing
-    tracing = new Tracing(mockWindow, options);
+    tracing = new Tracing(window, options);
     tracing.initSession();
 
     // Setup API

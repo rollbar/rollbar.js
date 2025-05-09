@@ -23,18 +23,6 @@ import { mockRecordFn } from '../util';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
 
-const mockWindow = {
-  sessionStorage: {},
-  document: {
-    location: {
-      href: 'https://example.com/test',
-    },
-  },
-  navigator: {
-    userAgent: 'Mozilla/5.0 Test',
-  },
-};
-
 const options = {
   enabled: true,
   resource: {
@@ -77,7 +65,7 @@ describe('Session Replay Integration', function () {
   beforeEach(function () {
     spanExportQueue.length = 0;
 
-    tracing = new Tracing(mockWindow, options);
+    tracing = new Tracing(window, options);
     tracing.initSession();
   });
 
@@ -195,7 +183,7 @@ describe('Session Replay Transport Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(mockWindow, options);
+    tracing = new Tracing(window, options);
     tracing.initSession();
 
     api = new Api(

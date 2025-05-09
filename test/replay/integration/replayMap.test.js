@@ -18,18 +18,6 @@ import { spanExportQueue } from '../../../src/tracing/exporter.js';
 import Api from '../../../src/api.js';
 import { mockRecordFn } from '../util';
 
-const mockWindow = {
-  sessionStorage: {},
-  document: {
-    location: {
-      href: 'https://example.com/test',
-    },
-  },
-  navigator: {
-    userAgent: 'Mozilla/5.0 Test',
-  },
-};
-
 const options = {
   enabled: true,
   recorder: {
@@ -65,7 +53,7 @@ describe('ReplayMap API Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(mockWindow, options);
+    tracing = new Tracing(window, options);
     tracing.initSession();
 
     api = new Api(
