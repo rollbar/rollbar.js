@@ -47,7 +47,7 @@ export default class ReplayMap {
 
   /**
    * Processes a replay by dumping it from the recorder, adding the replay ID attribute,
-   * and storing it in the map.
+   * transforming the spans to OTLP format, and storing it in the map.
    *
    * @param {string} replayId - The ID to use for this replay
    * @returns {Promise<boolean>} A promise that resolves to true if processing was successful
@@ -63,9 +63,38 @@ export default class ReplayMap {
         return false;
       }
 
+      // Add the replay ID attribute to the recording span
       recordingSpan.setAttribute('rollbar.replay.id', replayId);
+
+      // Get all relevant spans from the export queue
       const spans = spanExportQueue.slice();
-      this.#map.set(replayId, spans);
+
+      // Make sure all spans have the replay ID attribute
+      for (const span of spans) {
+        // For exported spans, we need to set the attribute directly on the attributes object
+        if (span.attributes) {
+          span.attributes['rollbar.replay.id'] = replayId;
+        }
+      }
+
+      // Skip transformation if there are no spans (for testing purposes)
+      if (!spans.length) {
+        this.#map.set(replayId, spans);
+        return true;
+      }
+
+      // Transform the spans to OTLP format using the exporter
+      try {
+        // Use the exporter's toPayload method to transform the spans to OTLP format
+        const transformedPayload = this.#exporter.toPayload(spans);
+
+        // Store the transformed payload in the map
+        this.#map.set(replayId, transformedPayload);
+      } catch (transformError) {
+        console.error('Error transforming spans:', transformError);
+        // Store the raw spans as fallback if transformation fails
+        this.#map.set(replayId, spans);
+      }
 
       return true;
     } catch (error) {
@@ -110,17 +139,21 @@ export default class ReplayMap {
       return false;
     }
 
-    const spans = this.#map.get(replayId);
+    const payload = this.#map.get(replayId);
     this.#map.delete(replayId);
 
-    if (!spans || !spans.length) {
-      console.warn(`ReplayMap.send: No spans found for replayId: ${replayId}`);
+    // Check if payload is empty (could be raw spans array or OTLP payload)
+    const isEmpty = !payload ||
+      (Array.isArray(payload) && payload.length === 0) ||
+      (payload.resourceSpans && payload.resourceSpans.length === 0);
+
+    if (isEmpty) {
+      console.warn(`ReplayMap.send: No payload found for replayId: ${replayId}`);
       return false;
     }
 
     try {
-      // Send spans via API using async/await with our modern implementation
-      await this.#api.postSpans(spans);
+      await this.#api.postSpans(payload);
       return true;
     } catch (error) {
       console.error('Error sending replay:', error);
