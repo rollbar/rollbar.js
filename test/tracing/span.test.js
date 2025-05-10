@@ -7,6 +7,7 @@ import { Span } from '../../src/tracing/span.js';
 import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
 import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 import { ROOT_CONTEXT } from '../../src/tracing/context.js';
+import hrtime from '../../src/tracing/hrtime.js';
 
 const spanOptions = function (options = {}) {
   const exporter = new SpanExporter();
@@ -41,7 +42,7 @@ const spanOptions = function (options = {}) {
     spanProcessor: spanProcessor,
     ...options,
   };
-}
+};
 
 const expectReadableSpan = function (span, overrides = {}) {
   const expected = {
@@ -92,11 +93,15 @@ const expectReadableSpan = function (span, overrides = {}) {
   expect(span.span.duration).to.equal(expected.duration);
   expect(span.span.ended).to.equal(expected.ended);
   expect(span.span.resource).to.deep.equal(expected.resource);
-  expect(span.span.instrumentationScope).to.deep.equal(expected.instrumentationScope);
-  expect(span.span.droppedAttributesCount).to.equal(expected.droppedAttributesCount);
+  expect(span.span.instrumentationScope).to.deep.equal(
+    expected.instrumentationScope,
+  );
+  expect(span.span.droppedAttributesCount).to.equal(
+    expected.droppedAttributesCount,
+  );
   expect(span.span.droppedEventsCount).to.equal(expected.droppedEventsCount);
   expect(span.span.droppedLinksCount).to.equal(expected.droppedLinksCount);
-}
+};
 
 describe('Span()', function () {
   it('should create a readable span', function (done) {
@@ -111,7 +116,7 @@ describe('Span()', function () {
     };
     span.setAttributes(attributes);
 
-    const eventTime = span.hrTimeNow()
+    const eventTime = hrtime.now();
     const events = [
       {
         name: 'event1',
@@ -143,7 +148,7 @@ describe('Span()', function () {
 
     expectReadableSpan(span, overrides);
 
-    const endTime = span.hrTimeNow()
+    const endTime = hrtime.now();
     const endAttributes = {
       key3: 'value3',
       key4: 'value4',
@@ -162,7 +167,6 @@ describe('Span()', function () {
 
     done();
   });
-
 
   it('should keep valid state', function (done) {
     const span = new Span(spanOptions());

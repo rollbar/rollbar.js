@@ -19,10 +19,6 @@ describe('Recorder', function () {
   beforeEach(function () {
     mockSpan = {
       addEvent: sinon.spy(),
-      toHrTime: (timestamp) => [
-        Math.floor(timestamp / 1000),
-        (timestamp % 1000) * 1000000,
-      ],
       span: { startTime: null },
       end: sinon.spy(),
     };

@@ -1,6 +1,8 @@
 import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
 
+import hrtime from '../../tracing/hrtime.js';
+
 export default class Recorder {
   #tracing;
   #options;
@@ -77,9 +79,7 @@ export default class Recorder {
       event.timestamp < earliestEvent.timestamp ? event : earliestEvent,
     );
 
-    recordingSpan.span.startTime = recordingSpan.toHrTime(
-      earliestEvent.timestamp,
-    );
+    recordingSpan.span.startTime = hrtime.fromMillis(earliestEvent.timestamp);
 
     for (const event of events) {
       recordingSpan.addEvent(
@@ -88,7 +88,7 @@ export default class Recorder {
           eventType: event.type,
           json: JSON.stringify(event.data),
         },
-        recordingSpan.toHrTime(event.timestamp),
+        hrtime.fromMillis(event.timestamp),
       );
     }
 
