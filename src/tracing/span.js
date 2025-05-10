@@ -1,6 +1,8 @@
+import hrtime from './hrtime.js';
+
 export class Span {
   constructor(options) {
-    this.initReadableSpan(options)
+    this.initReadableSpan(options);
 
     this.spanProcessor = options.spanProcessor;
     this.spanProcessor.onStart(this, options.context);
@@ -17,10 +19,10 @@ export class Span {
       kind: options.kind,
       spanContext: options.spanContext,
       parentSpanId: options.parentSpanId,
-      startTime: options.startTime || this.hrTimeNow(),
+      startTime: options.startTime || hrtime.now(),
       endTime: [0, 0],
-      status: {code: 0, message: ''},
-      attributes: {'session.id': options.session.id},
+      status: { code: 0, message: '' },
+      attributes: { 'session.id': options.session.id },
       links: [],
       events: [],
       duration: 0,
@@ -30,7 +32,7 @@ export class Span {
       droppedAttributesCount: 0,
       droppedEventsCount: 0,
       droppedLinksCount: 0,
-    }
+    };
   }
 
   spanContext() {
@@ -66,7 +68,7 @@ export class Span {
     this.span.events.push({
       name,
       attributes,
-      time: time || this.hrTimeNow(),
+      time: time || hrtime.now(),
       droppedAttributesCount: 0,
     });
 
@@ -79,29 +81,9 @@ export class Span {
 
   end(attributes, time) {
     if (attributes) this.setAttributes(attributes);
-    this.span.endTime = time || this.hrTimeNow();
+    this.span.endTime = time || hrtime.now();
     this.span.ended = true;
     this.spanProcessor.onEnd(this);
-  }
-
-  /*
-   * Methods for handling hrtime.
-   * OpenTelemetry uses the [seconds, nanoseconds] format for hrtime in the
-   * ReadableSpan interface.
-   */
-  toHrTime(millis) {
-    return [Math.trunc(millis / 1000), Math.round((millis % 1000) * 1e6)];
-  }
-
-  sumHrTime(a, b) {
-    return [a[0] + b[0] + Math.trunc((a[1] + b[1]) / 1e9), (a[1] + b[1]) % 1e9];
-  }
-
-  hrTimeNow() {
-    return this.sumHrTime(
-      this.toHrTime(performance.timeOrigin),
-      this.toHrTime(performance.now())
-    );
   }
 
   export() {
