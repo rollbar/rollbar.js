@@ -10,14 +10,14 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import Tracing from '../../../src/tracing/tracing.js';
-import { SpanExporter } from '../../../src/tracing/exporter.js';
-import { spanExportQueue } from '../../../src/tracing/exporter.js';
-import Recorder from '../../../src/browser/replay/recorder.js';
-import ReplayMap from '../../../src/browser/replay/replayMap.js';
-import recorderDefaults from '../../../src/browser/replay/defaults.js';
-import Api from '../../../src/api.js';
-import Queue from '../../../src/queue.js';
+import Tracing from '@tracing/tracing.js';
+import { SpanExporter } from '@tracing/exporter.js';
+import { spanExportQueue } from '@tracing/exporter.js';
+import Recorder from '@browser/replay/recorder.js';
+import ReplayMap from '@browser/replay/replayMap.js';
+import recorderDefaults from '@browser/replay/defaults.js';
+import Api from '@rollbar/api.js';
+import Queue from '@rollbar/queue.js';
 import { mockRecordFn } from '../util';
 
 const options = {

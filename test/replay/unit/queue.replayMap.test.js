@@ -12,7 +12,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 // We need to use require since the Queue module is CommonJS
-const Queue = require('../../../src/queue');
+const Queue = require('@rollbar/queue');
 
 // Mock ReplayMap implementation
 class MockReplayMap {

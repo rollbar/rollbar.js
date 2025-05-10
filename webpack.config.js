@@ -5,6 +5,7 @@ var defaults = require('./defaults');
 var TerserPlugin = require('terser-webpack-plugin');
 
 var outputPath = path.resolve(__dirname, 'dist');
+var srcPath = path.resolve(__dirname, 'src');
 
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new TerserPlugin({
@@ -29,6 +30,17 @@ var snippetConfig = {
         exclude: [/node_modules/, /vendor/],
       },
     ],
+  },
+  resolve: {
+    alias: {
+      '@rollbar': srcPath,
+      '@browser': path.resolve(srcPath, 'browser'),
+      '@server': path.resolve(srcPath, 'server'),
+      '@tracing': path.resolve(srcPath, 'tracing'),
+      '@utility': path.resolve(srcPath, 'utility'),
+      '@react-native': path.resolve(srcPath, 'react-native')
+    },
+    extensions: ['.js', '.json']
   },
 };
 
@@ -72,6 +84,17 @@ var vanillaConfigBase = {
       },
     ],
   },
+  resolve: {
+    alias: {
+      '@rollbar': srcPath,
+      '@browser': path.resolve(srcPath, 'browser'),
+      '@server': path.resolve(srcPath, 'server'),
+      '@tracing': path.resolve(srcPath, 'tracing'),
+      '@utility': path.resolve(srcPath, 'utility'),
+      '@react-native': path.resolve(srcPath, 'react-native')
+    },
+    extensions: ['.js', '.json']
+  },
 };
 
 var UMDConfigBase = {
@@ -94,6 +117,17 @@ var UMDConfigBase = {
         exclude: [/node_modules/, /vendor/],
       },
     ],
+  },
+  resolve: {
+    alias: {
+      '@rollbar': srcPath,
+      '@browser': path.resolve(srcPath, 'browser'),
+      '@server': path.resolve(srcPath, 'server'),
+      '@tracing': path.resolve(srcPath, 'tracing'),
+      '@utility': path.resolve(srcPath, 'utility'),
+      '@react-native': path.resolve(srcPath, 'react-native')
+    },
+    extensions: ['.js', '.json']
   },
 };
 

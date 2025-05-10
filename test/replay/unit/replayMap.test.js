@@ -10,8 +10,8 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import ReplayMap from '../../../src/browser/replay/replayMap.js';
-import { spanExportQueue } from '../../../src/tracing/exporter.js';
+import ReplayMap from '@browser/replay/replayMap.js';
+import { spanExportQueue } from '@tracing/exporter.js';
 
 // Mock objects for testing
 class MockSpan {
