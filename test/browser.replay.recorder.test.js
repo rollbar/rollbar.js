@@ -15,18 +15,24 @@ describe('Recorder', function () {
   let stopFnSpy;
   let recordFnStub;
   let emitCallback;
+  let testReplayId;
 
   beforeEach(function () {
     mockSpan = {
       addEvent: sinon.spy(),
+      setAttribute: sinon.spy(),
       span: { startTime: null },
       end: sinon.spy(),
     };
 
     mockTracing = {
       startSpan: sinon.stub().returns(mockSpan),
+      exporter: {
+        toPayload: sinon.stub().returns([{ id: 'span1' }]),
+      },
     };
 
+    testReplayId = 'test-replay-id-123';
     stopFnSpy = sinon.spy();
     recordFnStub = sinon.stub().callsFake(function (options) {
       emitCallback = options.emit;
@@ -36,7 +42,7 @@ describe('Recorder', function () {
 
   describe('constructor', function () {
     it('should initialize with default properties', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
 
       expect(recorder.isRecording).to.equal(false);
       expect(recorder.options).to.deep.equal({});
@@ -44,20 +50,13 @@ describe('Recorder', function () {
 
     it('should initialize with provided options', function () {
       const options = { enabled: true, checkoutEveryNms: 1000 };
-      const recorder = new Recorder(mockTracing, options, recordFnStub);
+      const recorder = new Recorder(options, recordFnStub);
 
       expect(recorder.options).to.deep.equal(options);
     });
 
-    it('should throw error if no tracing is passed', function () {
-      expect(() => new Recorder(null)).to.throw(
-        TypeError,
-        "Expected 'tracing' to be provided",
-      );
-    });
-
     it('should throw error if no record function is passed', function () {
-      expect(() => new Recorder(mockTracing, {}, null)).to.throw(
+      expect(() => new Recorder({}, null)).to.throw(
         TypeError,
         "Expected 'recordFn' to be provided",
       );
@@ -67,7 +66,6 @@ describe('Recorder', function () {
   describe('recording management', function () {
     it('should start recording correctly', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: true },
         recordFnStub,
       );
@@ -84,7 +82,6 @@ describe('Recorder', function () {
 
     it('should not start if already recording', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: true },
         recordFnStub,
       );
@@ -96,7 +93,6 @@ describe('Recorder', function () {
 
     it('should not start if disabled', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: false },
         recordFnStub,
       );
@@ -108,7 +104,6 @@ describe('Recorder', function () {
 
     it('should stop recording correctly', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: true },
         recordFnStub,
       );
@@ -121,7 +116,7 @@ describe('Recorder', function () {
     });
 
     it('should handle stop when not recording', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
       recorder.stop();
 
       expect(recorder.isRecording).to.be.false;
@@ -131,7 +126,7 @@ describe('Recorder', function () {
 
   describe('event handling', function () {
     it('should handle events correctly', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
       recorder.start();
 
       const event1 = { timestamp: 1000, type: 'event1', data: { a: 1 } };
@@ -140,23 +135,26 @@ describe('Recorder', function () {
       emitCallback(event1, false);
       emitCallback(event2, false);
 
-      const context = { spanId: '123' };
-      recorder.dump(context);
+      const result = recorder.dump(mockTracing, testReplayId);
 
       expect(mockTracing.startSpan.calledOnce).to.be.true;
       expect(mockSpan.addEvent.calledTwice).to.be.true;
+      expect(mockSpan.setAttribute.calledOnce).to.be.true;
+      expect(mockSpan.setAttribute.calledWith('rollbar.replay.id', testReplayId)).to.be.true;
 
       const firstCallData = mockSpan.addEvent.firstCall.args[1];
       expect(firstCallData.eventType).to.equal('event1');
       expect(JSON.parse(firstCallData.json)).to.deep.equal({ a: 1 });
+      expect(firstCallData['rollbar.replay.id']).to.equal(testReplayId);
 
       const secondCallData = mockSpan.addEvent.secondCall.args[1];
       expect(secondCallData.eventType).to.equal('event2');
       expect(JSON.parse(secondCallData.json)).to.deep.equal({ b: 2 });
+      expect(secondCallData['rollbar.replay.id']).to.equal(testReplayId);
     });
 
     it('should handle checkout events correctly', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
       recorder.start();
 
       // First checkout
@@ -212,8 +210,7 @@ describe('Recorder', function () {
         false,
       );
 
-      const context = { spanId: '123' };
-      recorder.dump(context);
+      recorder.dump(mockTracing, testReplayId);
 
       // 2nd checkout (meta + fs) + event3 + 3rd checkout (meta + fs) + event4
       expect(mockSpan.span.startTime).to.be.deep.equal([3, 50000000]); // otel time
@@ -227,6 +224,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.Meta,
             json: JSON.stringify({}),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [3, 50000000],
         },
@@ -235,6 +233,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.FullSnapshot,
             json: JSON.stringify({}),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [3, 100000000],
         },
@@ -243,6 +242,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.IncrementalSnapshot,
             json: JSON.stringify({ c: 3 }),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [4, 0],
         },
@@ -251,6 +251,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.Meta,
             json: JSON.stringify({}),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [4, 500000000],
         },
@@ -259,6 +260,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.FullSnapshot,
             json: JSON.stringify({}),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [5, 0],
         },
@@ -267,6 +269,7 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.IncrementalSnapshot,
             json: JSON.stringify({ d: 4 }),
+            'rollbar.replay.id': testReplayId,
           },
           timestamp: [6, 0],
         },
@@ -280,38 +283,37 @@ describe('Recorder', function () {
   });
 
   describe('dump functionality', function () {
-    it('should create a span with events', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+    it('should create a span with events and return formatted payload', function () {
+      const recorder = new Recorder({}, recordFnStub);
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
       emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
 
-      const context = { spanId: '123' };
-      const result = recorder.dump(context);
+      const result = recorder.dump(mockTracing, testReplayId);
 
-      expect(result).to.equal(mockSpan);
+      expect(result).to.deep.equal([{ id: 'span1' }]);
       expect(mockTracing.startSpan.calledOnce).to.be.true;
       expect(mockSpan.addEvent.calledTwice).to.be.true;
       expect(mockSpan.end.calledOnce).to.be.true;
+      expect(mockTracing.exporter.toPayload.calledOnce).to.be.true;
     });
 
     it('should create a span with the correct span name', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
 
-      const context = { spanId: '123' };
-      recorder.dump(context);
+      recorder.dump(mockTracing, testReplayId);
 
       expect(mockTracing.startSpan.calledOnce).to.be.true;
       const spanName = mockTracing.startSpan.firstCall.args[0];
       expect(spanName).to.equal('rrweb-replay-recording');
     });
 
-    it('should add events with the correct event name', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+    it('should add events with the correct event name and replayId', function () {
+      const recorder = new Recorder({}, recordFnStub);
       recorder.start();
 
       emitCallback(
@@ -324,50 +326,35 @@ describe('Recorder', function () {
       );
       emitCallback({ timestamp: 3000, type: 'input', data: { c: 3 } }, false);
 
-      const context = { spanId: '123' };
-      recorder.dump(context);
+      recorder.dump(mockTracing, testReplayId);
 
       expect(mockSpan.addEvent.callCount).to.equal(3);
 
       for (let i = 0; i < mockSpan.addEvent.callCount; i++) {
         const eventName = mockSpan.addEvent.getCall(i).args[0];
+        const eventAttrs = mockSpan.addEvent.getCall(i).args[1];
         expect(eventName).to.equal(
           'rrweb-replay-events',
-          `Event at index ${i} should have name "rrweb-replay-events"`,
+          `Event at index ${i} should have name "rrweb-replay-events"`
         );
+        expect(eventAttrs['rollbar.replay.id']).to.equal(testReplayId);
       }
     });
 
     it('should handle no events', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
+      const recorder = new Recorder({}, recordFnStub);
 
-      const context = { spanId: '123' };
-      const result = recorder.dump(context);
+      const result = recorder.dump(mockTracing, testReplayId);
 
       expect(result).to.be.null;
       expect(mockTracing.startSpan.called).to.be.false;
-    });
-
-    it('should clear events if clear option is true', function () {
-      const recorder = new Recorder(mockTracing, {}, recordFnStub);
-      recorder.start();
-
-      emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
-
-      const context = { spanId: '123' };
-      recorder.dump(context, { clear: true });
-
-      emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
-      recorder.dump(context);
-
-      expect(mockSpan.addEvent.callCount).to.equal(2);
+      expect(mockTracing.exporter.toPayload.called).to.be.false;
     });
   });
 
   describe('configure', function () {
     it('should update options', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: true },
         recordFnStub,
       );
@@ -382,7 +369,6 @@ describe('Recorder', function () {
 
     it('should stop recording if enabled set to false', function () {
       const recorder = new Recorder(
-        mockTracing,
         { enabled: true },
         recordFnStub,
       );

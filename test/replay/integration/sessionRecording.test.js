@@ -14,14 +14,18 @@ import sinon from 'sinon';
 import Tracing from '../../../src/tracing/tracing.js';
 import { Span } from '../../../src/tracing/span.js';
 import { Context } from '../../../src/tracing/context.js';
-import { SpanExporter } from '../../../src/tracing/exporter.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
-import { spanExportQueue } from '../../../src/tracing/exporter.js';
 import { mockRecordFn } from '../util';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
+import {
+  standardPayload,
+  checkpointPayload,
+  singleCheckpointPayload,
+  createPayloadWithReplayId,
+} from '../../fixtures/replay';
 
 const options = {
   enabled: true,
@@ -63,10 +67,12 @@ describe('Session Replay Integration', function () {
   let recorder;
 
   beforeEach(function () {
-    spanExportQueue.length = 0;
-
     tracing = new Tracing(window, options);
     tracing.initSession();
+
+    tracing.exporter = {
+      toPayload: sinon.stub().returns(standardPayload),
+    };
   });
 
   afterEach(function () {
@@ -77,28 +83,30 @@ describe('Session Replay Integration', function () {
   });
 
   it('dumping recording should export tracing', function (done) {
-    recorder = new Recorder(tracing, options.recorder, mockRecordFn);
+    recorder = new Recorder(options.recorder, mockRecordFn);
     recorder.start();
 
     const tracingContext = tracing.contextManager.active();
     expect(tracingContext).to.be.instanceOf(Context);
 
     const dumpRecording = () => {
-      const recordingSpan = recorder.dump(tracingContext);
-      expect(recordingSpan).to.be.instanceOf(Span);
-      expect(recordingSpan.span.name).to.be.equal('rrweb-replay-recording');
+      const replayId = 'test-replay-id';
+      const payload = recorder.dump(tracing, replayId);
 
-      const events = recordingSpan.span.events;
+      expect(payload).to.not.be.null;
+      expect(payload).to.be.an('object');
+      expect(payload).to.deep.equal(standardPayload);
+
+      const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
       expect(events.length).to.be.greaterThan(0);
       expect(events.every((e) => e.name === 'rrweb-replay-events')).to.be.true;
-      expect(events[0].attributes).to.have.property('eventType');
-      expect(events[0].attributes).to.have.property('json');
 
-      expect(spanExportQueue.length).to.be.equal(1);
-      expect(spanExportQueue[0]).to.be.deep.equal(recordingSpan.span);
-      expect(spanExportQueue[0].events.length).to.be.equal(events.length);
-      expect(spanExportQueue[0].events).to.be.deep.equal(events);
-      expect(spanExportQueue[0].name).to.be.equal('rrweb-replay-recording');
+      const eventAttrs = events[0].attributes;
+      const eventTypeAttr = eventAttrs.find((attr) => attr.key === 'eventType');
+      const jsonAttr = eventAttrs.find((attr) => attr.key === 'json');
+
+      expect(eventTypeAttr).to.exist;
+      expect(jsonAttr).to.exist;
 
       done();
     };
@@ -107,8 +115,11 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle checkouts correctly', function (done) {
+    tracing.exporter = {
+      toPayload: sinon.stub().returns(checkpointPayload),
+    };
+
     recorder = new Recorder(
-      tracing,
       {
         ...options.recorder,
         checkoutEveryNms: 250,
@@ -119,14 +130,26 @@ describe('Session Replay Integration', function () {
     recorder.start();
 
     const dumpRecording = () => {
-      const recordingSpan = recorder.dump();
+      const replayId = 'test-replay-id';
+      const payload = recorder.dump(tracing, replayId);
 
-      const events = recordingSpan.span.events;
+      expect(payload).to.not.be.null;
+      expect(payload).to.deep.equal(checkpointPayload);
+
+      const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
+
+      const eventTypes = events.map((event) => {
+        const eventTypeAttr = event.attributes.find(
+          (attr) => attr.key === 'eventType',
+        );
+        return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
+      });
+
       expect(
-        events.filter((e) => e.attributes.eventType === EventType.Meta),
+        eventTypes.filter((type) => type === String(EventType.Meta)),
       ).to.have.lengthOf(2);
       expect(
-        events.filter((e) => e.attributes.eventType === EventType.FullSnapshot),
+        eventTypes.filter((type) => type === String(EventType.FullSnapshot)),
       ).to.have.lengthOf(2);
 
       done();
@@ -136,8 +159,11 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle no checkouts correctly', function (done) {
+    tracing.exporter = {
+      toPayload: sinon.stub().returns(singleCheckpointPayload),
+    };
+
     recorder = new Recorder(
-      tracing,
       {
         ...options.recorder,
         checkoutEveryNms: 500,
@@ -148,14 +174,26 @@ describe('Session Replay Integration', function () {
     recorder.start();
 
     const dumpRecording = () => {
-      const recordingSpan = recorder.dump();
+      const replayId = 'test-replay-id';
+      const payload = recorder.dump(tracing, replayId);
 
-      const events = recordingSpan.span.events;
+      expect(payload).to.not.be.null;
+      expect(payload).to.deep.equal(singleCheckpointPayload);
+
+      const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
+
+      const eventTypes = events.map((event) => {
+        const eventTypeAttr = event.attributes.find(
+          (attr) => attr.key === 'eventType',
+        );
+        return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
+      });
+
       expect(
-        events.filter((e) => e.attributes.eventType === EventType.Meta),
+        eventTypes.filter((type) => type === String(EventType.Meta)),
       ).to.have.lengthOf(1);
       expect(
-        events.filter((e) => e.attributes.eventType === EventType.FullSnapshot),
+        eventTypes.filter((type) => type === String(EventType.FullSnapshot)),
       ).to.have.lengthOf(1);
 
       done();
@@ -170,13 +208,10 @@ describe('Session Replay Transport Integration', function () {
   let recorder;
   let api;
   let transport;
-  let exporter;
   let replayMap;
   let queue;
 
   beforeEach(function () {
-    spanExportQueue.length = 0;
-
     transport = createMockTransport();
     const urlMock = { parse: sinon.stub().returns({}) };
     const truncationMock = {
@@ -186,6 +221,10 @@ describe('Session Replay Transport Integration', function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
 
+    tracing.exporter = {
+      toPayload: sinon.stub().returns(standardPayload),
+    };
+
     api = new Api(
       { accessToken: 'test-token' },
       transport,
@@ -193,16 +232,14 @@ describe('Session Replay Transport Integration', function () {
       truncationMock,
     );
 
-    recorder = new Recorder(tracing, options.recorder, mockRecordFn);
+    recorder = new Recorder(options.recorder, mockRecordFn);
 
-    exporter = new SpanExporter();
-    sinon.stub(exporter, 'export').callsFake(() => {
-      return spanExportQueue.slice();
+    sinon.stub(recorder, 'dump').callsFake((tracing, replayId) => {
+      return createPayloadWithReplayId(replayId);
     });
 
     replayMap = new ReplayMap({
       recorder,
-      exporter,
       api,
       tracing,
     });
@@ -295,10 +332,8 @@ describe('Session Replay Transport Integration', function () {
   it('should handle full end-to-end flow from error to spans', async function () {
     const addSpy = sinon.spy(replayMap, 'add');
     const sendSpy = sinon.spy(replayMap, 'send');
-    const getSpansSpy = sinon.spy(replayMap, 'getSpans');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    // Create a spy for _handleReplayResponse so we can await its completion
     const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
 
     const errorItem = {
@@ -311,16 +346,6 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    // Prepare mock spans that will be returned when recorder.dump() is called
-    const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-
-    // When _processReplay is called with a replayId, set up the mock spans for that id
-    sinon.stub(replayMap, '_processReplay').callsFake(async (replayId) => {
-      replayMap.setSpans(replayId, mockSpans);
-      return true;
-    });
-
-    // Create a promise to handle the callback-based API
     const addItemPromise = new Promise((resolve, reject) => {
       queue.addItem(errorItem, (err, resp) => {
         if (err) reject(err);
@@ -328,24 +353,23 @@ describe('Session Replay Transport Integration', function () {
       });
     });
 
-    // Wait for the API call to complete
     await addItemPromise;
-
-    // Verify the item was processed correctly
     expect(errorItem).to.have.property('replayId');
     expect(addSpy.calledOnce).to.be.true;
 
-    // Get the promise from the handleReplayResponseSpy and wait for it to complete
     const responsePromise = handleReplayResponseSpy.returnValues[0];
     await responsePromise;
-
-    // After response handling is complete, check all expected behaviors
     expect(sendSpy.calledOnce).to.be.true;
     expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
 
+    expect(recorder.dump.called).to.be.true;
+    expect(recorder.dump.calledWith(tracing, errorItem.replayId)).to.be.true;
     const callArgs = postSpansSpy.firstCall.args;
-    expect(callArgs[0]).to.be.an('array');
+    expect(callArgs[0]).to.be.an('object');
+    expect(callArgs[0].resourceSpans[0].scopeSpans[0].spans[0].name).to.equal(
+      'rrweb-replay-recording',
+    );
   });
 
   it('should not add replayId when replayMap is not provided', function (done) {
