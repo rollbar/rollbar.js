@@ -26,6 +26,16 @@ function toMillis(hrtime) {
 }
 
 /**
+ * Convert an OpenTelemetry hrtime tuple back to a duration in nanoseconds.
+ *
+ * @param {[number, number]} hrtime - The hrtime tuple [seconds, nanoseconds].
+ * @returns {number} The total duration in nanoseconds.
+ */
+function toNanos(hrtime) {
+  return hrtime[0] * 1e9 + hrtime[1];
+}
+
+/**
  * Adds two OpenTelemetry hrtime tuples.
  *
  * @param {[number, number]} a - The first hrtime tuple [s, ns].
@@ -85,4 +95,4 @@ function isHrTime(value) {
  * hrtime.now();
  * hrtime.isHrTime([0, 1000]);
  */
-export default { fromMillis, toMillis, add, now, isHrTime };
+export default { fromMillis, toMillis, toNanos, add, now, isHrTime };
