@@ -70,7 +70,6 @@ describe('Session Replay Integration', function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
     
-    // Set up the mock exporter with standard payload by default
     tracing.exporter = {
       toPayload: sinon.stub().returns(standardPayload)
     };
@@ -98,12 +97,10 @@ describe('Session Replay Integration', function () {
       expect(payload).to.be.an('object');
       expect(payload).to.equal(standardPayload);
       
-      // Verify events are properly formatted
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
       expect(events.length).to.be.greaterThan(0);
       expect(events.every((e) => e.name === 'rrweb-replay-events')).to.be.true;
-      
-      // Check event attributes
+
       const eventAttrs = events[0].attributes;
       const eventTypeAttr = eventAttrs.find(attr => attr.key === 'eventType');
       const jsonAttr = eventAttrs.find(attr => attr.key === 'json');
@@ -118,7 +115,6 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle checkouts correctly', function (done) {
-    // Replace the standard payload with the checkpoint payload for this test
     tracing.exporter = {
       toPayload: sinon.stub().returns(checkpointPayload)
     };
@@ -140,16 +136,13 @@ describe('Session Replay Integration', function () {
       expect(payload).to.not.be.null;
       expect(payload).to.equal(checkpointPayload);
       
-      // Get events from the payload
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
-      
-      // Extract eventTypes from attributes
+
       const eventTypes = events.map(event => {
         const eventTypeAttr = event.attributes.find(attr => attr.key === 'eventType');
         return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
       });
-      
-      // Check for Meta and FullSnapshot events
+
       expect(
         eventTypes.filter(type => type === String(EventType.Meta)),
       ).to.have.lengthOf(2);
@@ -164,7 +157,6 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle no checkouts correctly', function (done) {
-    // Replace the standard payload with the single checkpoint payload for this test
     tracing.exporter = {
       toPayload: sinon.stub().returns(singleCheckpointPayload)
     };
@@ -186,16 +178,13 @@ describe('Session Replay Integration', function () {
       expect(payload).to.not.be.null;
       expect(payload).to.equal(singleCheckpointPayload);
       
-      // Get events from the payload
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
-      
-      // Extract eventTypes from attributes
+
       const eventTypes = events.map(event => {
         const eventTypeAttr = event.attributes.find(attr => attr.key === 'eventType');
         return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
       });
-      
-      // Check for Meta and FullSnapshot events
+
       expect(
         eventTypes.filter(type => type === String(EventType.Meta)),
       ).to.have.lengthOf(1);
@@ -228,7 +217,6 @@ describe('Session Replay Transport Integration', function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
 
-    // Create a mock exporter with toPayload method
     tracing.exporter = {
       toPayload: sinon.stub().returns(standardPayload)
     };
@@ -242,9 +230,7 @@ describe('Session Replay Transport Integration', function () {
 
     recorder = new Recorder(options.recorder, mockRecordFn);
     
-    // Stub the dump method to return a known payload
     sinon.stub(recorder, 'dump').callsFake((tracing, replayId) => {
-      // Use the utility function to create a payload with the right replay ID
       return createPayloadWithReplayId(replayId);
     });
 
@@ -344,7 +330,6 @@ describe('Session Replay Transport Integration', function () {
     const sendSpy = sinon.spy(replayMap, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    // Create a spy for _handleReplayResponse so we can await its completion
     const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
 
     const errorItem = {
@@ -357,7 +342,6 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    // Create a promise to handle the callback-based API
     const addItemPromise = new Promise((resolve, reject) => {
       queue.addItem(errorItem, (err, resp) => {
         if (err) reject(err);
@@ -365,27 +349,18 @@ describe('Session Replay Transport Integration', function () {
       });
     });
 
-    // Wait for the API call to complete
     await addItemPromise;
-
-    // Verify the item was processed correctly
     expect(errorItem).to.have.property('replayId');
     expect(addSpy.calledOnce).to.be.true;
 
-    // Get the promise from the handleReplayResponseSpy and wait for it to complete
     const responsePromise = handleReplayResponseSpy.returnValues[0];
     await responsePromise;
-
-    // After response handling is complete, check all expected behaviors
     expect(sendSpy.calledOnce).to.be.true;
     expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
     
-    // Verify the recorder.dump was called with correct parameters
     expect(recorder.dump.called).to.be.true;
     expect(recorder.dump.calledWith(tracing, errorItem.replayId)).to.be.true;
-    
-    // Verify the postSpans call receives the correct payload
     const callArgs = postSpansSpy.firstCall.args;
     expect(callArgs[0]).to.be.an('object');
     expect(callArgs[0].resourceSpans[0].scopeSpans[0].spans[0].name).to.equal('rrweb-replay-recording');

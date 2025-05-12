@@ -51,7 +51,6 @@ describe('ReplayMap API Integration', function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
 
-    // Create a mock payload for the recorder to return
     const mockPayload = [{ id: 'span1', name: 'recording-span' }];
 
     api = new Api(
@@ -85,14 +84,11 @@ describe('ReplayMap API Integration', function () {
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
-    // Wait for processReplay to complete asynchronously
     await new Promise((r) => setTimeout(r, 1000));
 
-    // Verify that recorder.dump was called with the correct parameters
     expect(recorder.dump.calledOnce).to.be.true;
     expect(recorder.dump.calledWith(tracing, replayId)).to.be.true;
 
-    // Verify that the map contains the replay payload
     const payload = replayMap.getSpans(replayId);
     expect(payload).to.not.be.null;
     expect(payload).to.be.an('array');
@@ -102,19 +98,16 @@ describe('ReplayMap API Integration', function () {
   it('should successfully send replay to API', async function () {
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    // Create mock payload and add to replayMap
     const replayId = 'test-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
     replayMap.setSpans(replayId, mockPayload);
 
-    // Send the replay
     const result = await replayMap.send(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
     expect(postSpansSpy.calledWith(mockPayload)).to.be.true;
 
-    // Verify the map entry was removed
     expect(replayMap.getSpans(replayId)).to.be.null;
   });
 
@@ -133,7 +126,6 @@ describe('ReplayMap API Integration', function () {
     expect(result).to.be.false;
     expect(consoleSpy.calledWith('Error sending replay:', apiError)).to.be.true;
 
-    // Verify the map entry was still removed despite the error
     expect(replayMap.getSpans(replayId)).to.be.null;
   });
 
@@ -149,14 +141,12 @@ describe('ReplayMap API Integration', function () {
     expect(result).to.be.true;
     expect(postSpansSpy.called).to.be.false;
 
-    // Verify the map entry was removed
     expect(replayMap.getSpans(replayId)).to.be.null;
   });
 
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
 
-    // Mock _processReplay to avoid actual processing
     sinon.stub(replayMap, '_processReplay').resolves();
 
     for (let i = 0; i < 100; i++) {

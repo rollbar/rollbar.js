@@ -50,7 +50,6 @@ describe('Session Replay E2E', function () {
   let rateLimiter;
 
   beforeEach(function () {
-    // Create mock transport that tracks API calls
     transport = {
       post: sinon
         .stub()
@@ -61,19 +60,14 @@ describe('Session Replay E2E', function () {
         }),
       postJsonPayload: sinon.stub(),
     };
-
-    // Create mock utils
     const urlMock = { parse: sinon.stub().returns({}) };
     const truncationMock = {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
     const logger = { error: sinon.spy(), log: sinon.spy() };
 
-    // Setup tracing
     tracing = new Tracing(window, options);
     tracing.initSession();
-
-    // Setup API
     api = new Api(
       { accessToken: 'test-token-12345' },
       transport,
@@ -81,7 +75,6 @@ describe('Session Replay E2E', function () {
       truncationMock,
     );
 
-    // Create mock payload for the recorder to return
     const mockPayload = [{
       name: 'rrweb-replay-recording',
       events: [{
@@ -93,11 +86,8 @@ describe('Session Replay E2E', function () {
       }],
       attributes: {}
     }];
-
-    // Setup recorder with a stubbed dump method
     recorder = new Recorder(options.recorder, mockRecordFn);
     sinon.stub(recorder, 'dump').callsFake((tracing, replayId) => {
-      // Add the replayId to the mock payload
       mockPayload[0].attributes['rollbar.replay.id'] = replayId;
       mockPayload[0].events[0].attributes['rollbar.replay.id'] = replayId;
       return mockPayload;
@@ -125,19 +115,15 @@ describe('Session Replay E2E', function () {
   });
 
   it('should handle complete session replay flow from error to API call', function (done) {
-    // Start test
     recorder.start();
 
-    // Record some events by waiting
     setTimeout(() => {
-      // Spy on key methods
       const recorderDumpSpy = recorder.dump;
       const replayMapAddSpy = sinon.spy(replayMap, 'add');
       const replayMapSendSpy = sinon.spy(replayMap, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
       const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
-      // Create an error to trigger the flow
       const errorItem = {
         body: {
           trace: {
@@ -148,26 +134,17 @@ describe('Session Replay E2E', function () {
         },
       };
 
-      // Add the error to the queue
       queue.addItem(errorItem, function (err, resp) {
-        // Verify error was processed
         expect(errorItem).to.have.property('replayId');
         expect(replayMapAddSpy.calledOnce).to.be.true;
         expect(apiPostItemSpy.calledOnce).to.be.true;
 
-        // Make sure enough time passes for async operations
         setTimeout(() => {
-          // Verify recorder.dump was called by ReplayMap
           expect(recorderDumpSpy.called).to.be.true;
           expect(recorderDumpSpy.calledWith(tracing, errorItem.replayId)).to.be.true;
-
-          // Verify ReplayMap.send was called as part of API response
           expect(replayMapSendSpy.calledWith(errorItem.replayId)).to.be.true;
-
-          // Verify API.postSpans was called by ReplayMap.send
           expect(apiPostSpansSpy.calledOnce).to.be.true;
 
-          // Verify spans payload format
           const payload = apiPostSpansSpy.firstCall.args[0];
           expect(payload).to.be.an('array');
 
@@ -182,7 +159,6 @@ describe('Session Replay E2E', function () {
             expect(span.attributes).to.have.property('rollbar.replay.id', errorItem.replayId);
           }
 
-          // Verify transport details
           const transportArgs = transport.post.lastCall.args;
           expect(transportArgs[1].path).to.include('/api/1/session/');
 
@@ -193,10 +169,8 @@ describe('Session Replay E2E', function () {
   });
 
   it('should integrate with real components in failure scenario', function (done) {
-    // Configure transport to fail
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
-        // Fail only for item API calls
         if (transportOptions.path.includes('/api/1/item/')) {
           setTimeout(() => {
             callback(null, { err: 1, message: 'API Error' });
@@ -209,15 +183,12 @@ describe('Session Replay E2E', function () {
       },
     );
 
-    // Spy on key methods
     const replayMapAddSpy = sinon.spy(replayMap, 'add');
     const replayMapDiscardSpy = sinon.spy(replayMap, 'discard');
     const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
-    // Start recording
     recorder.start();
 
-    // Create an error to trigger the flow
     const errorItem = {
       body: {
         trace: {
@@ -228,24 +199,14 @@ describe('Session Replay E2E', function () {
       },
     };
 
-    // Add the error to the queue
     queue.addItem(errorItem, function (err, resp) {
-      // Verify error was processed
       expect(errorItem).to.have.property('replayId');
       expect(replayMapAddSpy.calledOnce).to.be.true;
-
-      // Error response should be returned
       expect(resp).to.have.property('err', 1);
 
-      // Make sure enough time passes for async operations
       setTimeout(() => {
-        // Verify ReplayMap.discard was called for the error response
         expect(replayMapDiscardSpy.calledWith(errorItem.replayId)).to.be.true;
-
-        // Verify API.postSpans was NOT called
         expect(apiPostSpansSpy.called).to.be.false;
-
-        // Verify that the replay was removed from the map
         expect(replayMap.getSpans(errorItem.replayId)).to.be.null;
 
         done();
