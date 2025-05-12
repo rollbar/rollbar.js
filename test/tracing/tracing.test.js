@@ -42,7 +42,6 @@ describe('Tracing()', function () {
     expect(t).to.have.property('setSpan').and.to.be.a('function');
     expect(t).to.have.property('with').and.to.be.a('function');
     expect(t).to.have.property('withSpan').and.to.be.a('function');
-    expect(t).to.have.property('hexId').and.to.be.a('function');
 
     expect(t.contextManager).to.be.an.instanceOf(ContextManager);
     expect(t.session).to.be.an.instanceOf(Session);

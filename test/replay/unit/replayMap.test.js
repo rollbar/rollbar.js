@@ -12,6 +12,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import { spanExportQueue } from '../../../src/tracing/exporter.js';
+import id from '../../../src/tracing/id.js';
 
 // Mock objects for testing
 class MockSpan {
@@ -60,6 +61,9 @@ describe('ReplayMap', function () {
   beforeEach(function () {
     // Clear the spanExportQueue before each test
     spanExportQueue.length = 0;
+
+    // Stub id.gen to return a predictable value
+    sinon.stub(id, 'gen').returns('1234567890abcdef');
 
     mockRecorder = new MockRecorder();
     mockExporter = new MockExporter();
@@ -190,7 +194,7 @@ describe('ReplayMap', function () {
       const replayId = replayMap.add();
 
       expect(replayId).to.equal('1234567890abcdef');
-      expect(mockTracing.hexId.calledWith(8)).to.be.true;
+      expect(id.gen.calledWith(8)).to.be.true;
       expect(processStub.calledWith(replayId)).to.be.true;
     });
 

@@ -1,4 +1,5 @@
 import { Span } from './span.js';
+import id from './id.js';
 
 export class Tracer {
   constructor(tracing, spanProcessor) {
@@ -13,7 +14,7 @@ export class Tracer {
   ) {
     const parentSpan = this.tracing.getSpan(context);
     const parentSpanContext = parentSpan?.spanContext();
-    const spanId = this.tracing.hexId(8);
+    const spanId = id.gen(8);
     let traceId;
     let traceFlags = 0;
     let traceState = null;
@@ -23,7 +24,7 @@ export class Tracer {
       traceState = parentSpanContext.traceState;
       parentSpanId = parentSpanContext.spanId;
     } else {
-      traceId = this.tracing.hexId(16);
+      traceId = id.gen(16);
     }
 
     const kind = 0;
