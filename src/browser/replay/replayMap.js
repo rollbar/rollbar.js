@@ -1,4 +1,5 @@
 import { spanExportQueue } from '../../tracing/exporter.js';
+import id from '../../tracing/id.js';
 
 /**
  * ReplayMap - Manages the mapping between error occurrences and their associated
@@ -83,7 +84,7 @@ export default class ReplayMap {
    */
   add() {
     // 8 bytes hexId matches the span ID size in the tracing system
-    const replayId = this.#tracing.hexId(8);
+    const replayId = id.gen(8);
 
     this._processReplay(replayId).catch((error) => {
       console.error('Failed to process replay:', error);

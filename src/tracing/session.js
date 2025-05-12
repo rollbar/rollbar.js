@@ -1,3 +1,5 @@
+import id from './id.js';
+
 const SESSION_KEY = 'RollbarSession';
 
 export class Session {
@@ -32,7 +34,7 @@ export class Session {
 
   createSession() {
     this.session = {
-      id: this.tracing.hexId(),
+      id: id.gen(),
       createdAt: Date.now(),
     };
 

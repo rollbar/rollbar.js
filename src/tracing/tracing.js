@@ -62,11 +62,4 @@ export default class Tracing {
     const span = this.startSpan(name, options);
     return this.with(this.setSpan(this.contextManager.active(), span), fn, thisArg, span);
   }
-
-  hexId(bytes = 16) {
-    let randomBytes = new Uint8Array(bytes);
-    crypto.getRandomValues(randomBytes);
-    let randHex = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
-    return randHex;
-  }
 }
