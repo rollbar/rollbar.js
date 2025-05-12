@@ -4,7 +4,6 @@ import { EventType } from '@rrweb/types';
 import hrtime from '../../tracing/hrtime.js';
 
 export default class Recorder {
-  #tracing;
   #options;
   #stopFn = null;
   #recordFn;
@@ -13,11 +12,13 @@ export default class Recorder {
     current: [],
   };
 
-  constructor(tracing, options, recordFn = rrwebRecordFn) {
-    if (!tracing) {
-      throw new TypeError("Expected 'tracing' to be provided");
-    }
-
+  /**
+   * Creates a new Recorder instance for capturing DOM events
+   *
+   * @param {Object} options - Configuration options for the recorder
+   * @param {Function} [recordFn=rrwebRecordFn] - The recording function to use
+   */
+  constructor(options, recordFn = rrwebRecordFn) {
     if (!recordFn) {
       throw new TypeError("Expected 'recordFn' to be provided");
     }
@@ -25,7 +26,6 @@ export default class Recorder {
     console.log('Recorder: Initializing...');
     console.log('options', options);
 
-    this.#tracing = tracing;
     this.#options = options ?? {};
     this.#recordFn = recordFn;
   }
@@ -51,15 +51,17 @@ export default class Recorder {
   }
 
   /**
-   * Dumps the recorded events into a span that can be exported
-   * Creates a span for the recording session and adds all events as span events
+   * Converts recorded events into a formatted payload ready for transport.
    *
-   * @param {Object} context - The tracing context to use for the span
-   * @param {Object} [options] - Options for dumping
-   * @param {boolean} [options.clear=false] - Whether to clear the events after dumping
-   * @returns {Object} The created span
+   * This method takes the recorder's stored events, creates a new span with the
+   * provided tracing context, attaches all events with their timestamps as span
+   * events, and then returns a payload ready for transport to the server.
+   *
+   * @param {Object} tracing - The tracing system instance to create spans
+   * @param {string} replayId - Unique identifier to associate with this replay recording
+   * @returns {Object|null} A formatted payload containing spans data in OTLP format, or null if no events exist
    */
-  dump(context, options = {}) {
+  dump(tracing, replayId) {
     const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length === 0) {
@@ -69,11 +71,9 @@ export default class Recorder {
 
     console.log(`Recorder.dump: Dumping ${events.length} events`);
 
-    const recordingSpan = this.#tracing.startSpan(
-      'rrweb-replay-recording',
-      {},
-      context,
-    );
+    const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
+
+    recordingSpan.setAttribute('rollbar.replay.id', replayId);
 
     const earliestEvent = events.reduce((earliestEvent, event) =>
       event.timestamp < earliestEvent.timestamp ? event : earliestEvent,
@@ -87,6 +87,7 @@ export default class Recorder {
         {
           eventType: event.type,
           json: JSON.stringify(event.data),
+          'rollbar.replay.id': replayId,
         },
         hrtime.fromMillis(event.timestamp),
       );
@@ -94,11 +95,7 @@ export default class Recorder {
 
     recordingSpan.end();
 
-    if (options.clear) {
-      this.clear();
-    }
-
-    return recordingSpan;
+    return tracing.exporter.toPayload();
   }
 
   start() {

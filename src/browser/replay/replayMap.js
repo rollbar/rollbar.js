@@ -1,4 +1,3 @@
-import { spanExportQueue } from '../../tracing/exporter.js';
 import id from '../../tracing/id.js';
 
 /**
@@ -9,7 +8,6 @@ import id from '../../tracing/id.js';
 export default class ReplayMap {
   #map;
   #recorder;
-  #exporter;
   #api;
   #tracing;
 
@@ -17,18 +15,13 @@ export default class ReplayMap {
    * Creates a new ReplayMap instance
    *
    * @param {Object} props - Configuration props
-   * @param {Object} props.recorder - The recorder instance that will dump replay data
-   * @param {Object} props.exporter - The exporter that retrieves completed spans
-   * @param {Object} props.api - The API instance used to send spans
-   * @param {Object} props.tracing - The tracing instance to create contexts
+   * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
+   * @param {Object} props.api - The API instance used to send replay payloads to the backend
+   * @param {Object} props.tracing - The tracing instance used to create spans and manage context
    */
-  constructor({ recorder, exporter, api, tracing }) {
+  constructor({ recorder, api, tracing }) {
     if (!recorder) {
       throw new TypeError("Expected 'recorder' to be provided");
-    }
-
-    if (!exporter) {
-      throw new TypeError("Expected 'exporter' to be provided");
     }
 
     if (!api) {
@@ -41,49 +34,44 @@ export default class ReplayMap {
 
     this.#map = new Map();
     this.#recorder = recorder;
-    this.#exporter = exporter;
     this.#api = api;
     this.#tracing = tracing;
   }
 
   /**
-   * Processes a replay by dumping it from the recorder, adding the replay ID attribute,
-   * and storing it in the map.
+   * Processes a replay by converting recorder events into a transport-ready payload.
    *
-   * @param {string} replayId - The ID to use for this replay
-   * @returns {Promise<boolean>} A promise that resolves to true if processing was successful
+   * Calls recorder.dump() to capture events as spans, formats them into a proper payload,
+   * and stores the result in the map using replayId as the key.
+   *
+   * @param {string} replayId - The unique ID for this replay
+   * @returns {Promise<string>} A promise resolving to the processed replayId
    * @private
    */
   async _processReplay(replayId) {
     try {
-      const context = this.#tracing.contextManager.active();
-      const recordingSpan = this.#recorder.dump(context, { clear: false });
+      const payload = this.#recorder.dump(this.#tracing, replayId);
 
-      if (!recordingSpan) {
-        console.warn('ReplayMap._processReplay: No recording span was created');
-        return false;
-      }
+      this.#map.set(replayId, payload);
+    } catch (transformError) {
+      console.error('Error transforming spans:', transformError);
 
-      recordingSpan.setAttribute('rollbar.replay.id', replayId);
-      const spans = spanExportQueue.slice();
-      this.#map.set(replayId, spans);
-
-      return true;
-    } catch (error) {
-      console.error('Error processing replay:', error);
-      return false;
+      this.#map.set(replayId, null); // TODO(matux): Error span?
     }
+
+    return replayId;
   }
 
   /**
    * Adds a replay to the map and returns a uniquely generated replay ID.
-   * This method immediately returns the ID while asynchronously performing
-   * the operations needed to dump and store the replay for later sending.
+   *
+   * This method immediately returns the replayId and asynchronously processes
+   * the replay data in the background. The processing involves converting
+   * recorder events into a payload format and storing it in the map.
    *
    * @returns {string} A unique identifier for this replay
    */
   add() {
-    // 8 bytes hexId matches the span ID size in the tracing system
     const replayId = id.gen(8);
 
     this._processReplay(replayId).catch((error) => {
@@ -94,11 +82,15 @@ export default class ReplayMap {
   }
 
   /**
-   * Sends the replay associated with the given replay ID to the backend
+   * Sends the replay payload associated with the given replayId to the backend
    * and removes it from the map.
    *
+   * Retrieves the payload from the map, checks if it's valid, then sends it
+   * to the API endpoint for processing. The payload can be either a spans array
+   * or a formatted OTLP payload object.
+   *
    * @param {string} replayId - The ID of the replay to send
-   * @returns {Promise<boolean>} A promise that resolves to true if a replay was found and sent, false otherwise
+   * @returns {Promise<boolean>} A promise that resolves to true if the payload was found and sent, false otherwise
    */
   async send(replayId) {
     if (!replayId) {
@@ -111,17 +103,24 @@ export default class ReplayMap {
       return false;
     }
 
-    const spans = this.#map.get(replayId);
+    const payload = this.#map.get(replayId);
     this.#map.delete(replayId);
 
-    if (!spans || !spans.length) {
-      console.warn(`ReplayMap.send: No spans found for replayId: ${replayId}`);
+    // Check if payload is empty (could be raw spans array or OTLP payload)
+    const isEmpty =
+      !payload ||
+      (Array.isArray(payload) && payload.length === 0) ||
+      (payload.resourceSpans && payload.resourceSpans.length === 0);
+
+    if (isEmpty) {
+      console.warn(
+        `ReplayMap.send: No payload found for replayId: ${replayId}`,
+      );
       return false;
     }
 
     try {
-      // Send spans via API using async/await with our modern implementation
-      await this.#api.postSpans(spans);
+      await this.#api.postSpans(payload);
       return true;
     } catch (error) {
       console.error('Error sending replay:', error);
