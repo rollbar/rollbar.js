@@ -95,7 +95,7 @@ describe('Session Replay Integration', function () {
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
-      expect(payload).to.equal(standardPayload);
+      expect(payload).to.deep.equal(standardPayload);
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
       expect(events.length).to.be.greaterThan(0);
@@ -134,7 +134,7 @@ describe('Session Replay Integration', function () {
       const payload = recorder.dump(tracing, replayId);
 
       expect(payload).to.not.be.null;
-      expect(payload).to.equal(checkpointPayload);
+      expect(payload).to.deep.equal(checkpointPayload);
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
 
@@ -178,7 +178,7 @@ describe('Session Replay Integration', function () {
       const payload = recorder.dump(tracing, replayId);
 
       expect(payload).to.not.be.null;
-      expect(payload).to.equal(singleCheckpointPayload);
+      expect(payload).to.deep.equal(singleCheckpointPayload);
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
 
