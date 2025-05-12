@@ -12,16 +12,23 @@ export const standardPayload = {
       resource: { attributes: [] },
       scopeSpans: [
         {
-          scope: { name: 'rollbar.js', version: '1.0.0' },
+          scope: { name: 'rollbar.js', version: '1.0.0', attributes: [] },
           spans: [
             {
               name: 'rrweb-replay-recording',
+              traceId: 'abcdef1234567890abcdef1234567890',
+              spanId: '1234567890abcdef',
+              parentSpanId: '',
+              kind: 1,
+              startTimeUnixNano: '1600000000000000000',
+              endTimeUnixNano: '1600000100000000000',
               attributes: [
                 { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000050000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -29,6 +36,7 @@ export const standardPayload = {
                 },
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000060000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -53,16 +61,23 @@ export const checkpointPayload = {
       resource: { attributes: [] },
       scopeSpans: [
         {
-          scope: { name: 'rollbar.js', version: '1.0.0' },
+          scope: { name: 'rollbar.js', version: '1.0.0', attributes: [] },
           spans: [
             {
               name: 'rrweb-replay-recording',
+              traceId: 'abcdef1234567890abcdef1234567890',
+              spanId: '1234567890abcdef',
+              parentSpanId: '',
+              kind: 1,
+              startTimeUnixNano: '1600000000000000000',
+              endTimeUnixNano: '1600000400000000000',
               attributes: [
                 { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000050000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -70,6 +85,7 @@ export const checkpointPayload = {
                 },
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000060000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -77,6 +93,7 @@ export const checkpointPayload = {
                 },
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000250000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -84,6 +101,7 @@ export const checkpointPayload = {
                 },
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000260000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -107,16 +125,23 @@ export const singleCheckpointPayload = {
       resource: { attributes: [] },
       scopeSpans: [
         {
-          scope: { name: 'rollbar.js', version: '1.0.0' },
+          scope: { name: 'rollbar.js', version: '1.0.0', attributes: [] },
           spans: [
             {
               name: 'rrweb-replay-recording',
+              traceId: 'abcdef1234567890abcdef1234567890',
+              spanId: '1234567890abcdef',
+              parentSpanId: '',
+              kind: 1,
+              startTimeUnixNano: '1600000000000000000',
+              endTimeUnixNano: '1600000100000000000',
               attributes: [
                 { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000050000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
                     { key: 'json', value: { stringValue: '{}' } }
@@ -124,6 +149,7 @@ export const singleCheckpointPayload = {
                 },
                 {
                   name: 'rrweb-replay-events',
+                  timeUnixNano: '1600000060000000000',
                   attributes: [
                     { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
                     { key: 'json', value: { stringValue: '{}' } }
