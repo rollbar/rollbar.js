@@ -13,8 +13,6 @@ import sinon from 'sinon';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import Tracing from '../../../src/tracing/tracing.js';
-import { SpanExporter } from '../../../src/tracing/exporter.js';
-import { spanExportQueue } from '../../../src/tracing/exporter.js';
 import Api from '../../../src/api.js';
 import { mockRecordFn } from '../util';
 
@@ -31,12 +29,9 @@ describe('ReplayMap API Integration', function () {
   let recorder;
   let api;
   let transport;
-  let exporter;
   let replayMap;
 
   beforeEach(function () {
-    spanExportQueue.length = 0;
-
     transport = {
       post: sinon
         .stub()
@@ -56,6 +51,9 @@ describe('ReplayMap API Integration', function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
 
+    // Create a mock payload for the recorder to return
+    const mockPayload = [{ id: 'span1', name: 'recording-span' }];
+
     api = new Api(
       { accessToken: 'test-token' },
       transport,
@@ -63,16 +61,11 @@ describe('ReplayMap API Integration', function () {
       truncationMock,
     );
 
-    recorder = new Recorder(tracing, options.recorder, mockRecordFn);
-
-    exporter = new SpanExporter();
-    sinon.stub(exporter, 'export').callsFake(() => {
-      return spanExportQueue.slice();
-    });
+    recorder = new Recorder(options.recorder, mockRecordFn);
+    sinon.stub(recorder, 'dump').returns(mockPayload);
 
     replayMap = new ReplayMap({
       recorder,
-      exporter,
       api,
       tracing,
     });
@@ -95,25 +88,31 @@ describe('ReplayMap API Integration', function () {
     // Wait for processReplay to complete asynchronously
     await new Promise((r) => setTimeout(r, 1000));
 
-    // Verify that the map contains the replay
-    const spans = replayMap.getSpans(replayId);
-    expect(spans).to.not.be.null;
+    // Verify that recorder.dump was called with the correct parameters
+    expect(recorder.dump.calledOnce).to.be.true;
+    expect(recorder.dump.calledWith(tracing, replayId)).to.be.true;
+
+    // Verify that the map contains the replay payload
+    const payload = replayMap.getSpans(replayId);
+    expect(payload).to.not.be.null;
+    expect(payload).to.be.an('array');
+    expect(payload[0]).to.have.property('name', 'recording-span');
   });
 
   it('should successfully send replay to API', async function () {
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    // Create mock spans and add to replayMap
+    // Create mock payload and add to replayMap
     const replayId = 'test-replay-id';
-    const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockSpans);
+    const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+    replayMap.setSpans(replayId, mockPayload);
 
     // Send the replay
     const result = await replayMap.send(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
-    expect(postSpansSpy.calledWith(mockSpans)).to.be.true;
+    expect(postSpansSpy.calledWith(mockPayload)).to.be.true;
 
     // Verify the map entry was removed
     expect(replayMap.getSpans(replayId)).to.be.null;
@@ -126,8 +125,8 @@ describe('ReplayMap API Integration', function () {
     const consoleSpy = sinon.spy(console, 'error');
 
     const replayId = 'error-replay-id';
-    const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockSpans);
+    const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+    replayMap.setSpans(replayId, mockPayload);
 
     const result = await replayMap.send(replayId);
 
@@ -142,8 +141,8 @@ describe('ReplayMap API Integration', function () {
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
     const replayId = 'discard-replay-id';
-    const mockSpans = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockSpans);
+    const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+    replayMap.setSpans(replayId, mockPayload);
 
     const result = replayMap.discard(replayId);
 
@@ -156,6 +155,9 @@ describe('ReplayMap API Integration', function () {
 
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
+
+    // Mock _processReplay to avoid actual processing
+    sinon.stub(replayMap, '_processReplay').resolves();
 
     for (let i = 0; i < 100; i++) {
       const replayId = replayMap.add();

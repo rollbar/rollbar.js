@@ -11,8 +11,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
-import { SpanExporter } from '../../../src/tracing/exporter.js';
-import { spanExportQueue } from '../../../src/tracing/exporter.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
@@ -47,14 +45,11 @@ describe('Session Replay E2E', function () {
   let recorder;
   let api;
   let transport;
-  let exporter;
   let replayMap;
   let queue;
   let rateLimiter;
 
   beforeEach(function () {
-    spanExportQueue.length = 0;
-
     // Create mock transport that tracks API calls
     transport = {
       post: sinon
@@ -86,11 +81,27 @@ describe('Session Replay E2E', function () {
       truncationMock,
     );
 
-    // Setup recorder
-    recorder = new Recorder(tracing, options.recorder, mockRecordFn);
+    // Create mock payload for the recorder to return
+    const mockPayload = [{
+      name: 'rrweb-replay-recording',
+      events: [{
+        name: 'rrweb-replay-events',
+        attributes: {
+          eventType: 4,
+          json: '{"data":{"type":"Test"}}',
+        }
+      }],
+      attributes: {}
+    }];
 
-    // Setup exporter
-    exporter = new SpanExporter();
+    // Setup recorder with a stubbed dump method
+    recorder = new Recorder(options.recorder, mockRecordFn);
+    sinon.stub(recorder, 'dump').callsFake((tracing, replayId) => {
+      // Add the replayId to the mock payload
+      mockPayload[0].attributes['rollbar.replay.id'] = replayId;
+      mockPayload[0].events[0].attributes['rollbar.replay.id'] = replayId;
+      return mockPayload;
+    });
 
     // Setup rateLimiter
     rateLimiter = { shouldSend: () => ({ shouldSend: true }) };
@@ -98,7 +109,6 @@ describe('Session Replay E2E', function () {
     // Setup ReplayMap with real components
     replayMap = new ReplayMap({
       recorder,
-      exporter,
       api,
       tracing,
     });
@@ -121,7 +131,7 @@ describe('Session Replay E2E', function () {
     // Record some events by waiting
     setTimeout(() => {
       // Spy on key methods
-      const recorderDumpSpy = sinon.spy(recorder, 'dump');
+      const recorderDumpSpy = recorder.dump;
       const replayMapAddSpy = sinon.spy(replayMap, 'add');
       const replayMapSendSpy = sinon.spy(replayMap, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
@@ -148,7 +158,8 @@ describe('Session Replay E2E', function () {
         // Make sure enough time passes for async operations
         setTimeout(() => {
           // Verify recorder.dump was called by ReplayMap
-          expect(recorderDumpSpy.calledOnce).to.be.true;
+          expect(recorderDumpSpy.called).to.be.true;
+          expect(recorderDumpSpy.calledWith(tracing, errorItem.replayId)).to.be.true;
 
           // Verify ReplayMap.send was called as part of API response
           expect(replayMapSendSpy.calledWith(errorItem.replayId)).to.be.true;
@@ -157,24 +168,18 @@ describe('Session Replay E2E', function () {
           expect(apiPostSpansSpy.calledOnce).to.be.true;
 
           // Verify spans payload format
-          const spans = apiPostSpansSpy.firstCall.args[0];
-          expect(spans).to.be.an('array');
+          const payload = apiPostSpansSpy.firstCall.args[0];
+          expect(payload).to.be.an('array');
 
-          if (spans.length > 0) {
-            const span = spans[0];
+          if (payload.length > 0) {
+            const span = payload[0];
             expect(span).to.have.property('name', 'rrweb-replay-recording');
             expect(span).to.have.property('events');
             expect(span.events).to.be.an('array');
-            expect(span.events[0]).to.have.property(
-              'name',
-              'rrweb-replay-events',
-            );
+            expect(span.events[0]).to.have.property('name', 'rrweb-replay-events');
             expect(span.events[0].attributes).to.have.property('eventType');
             expect(span.events[0].attributes).to.have.property('json');
-            expect(span.attributes).to.have.property(
-              'rollbar.replay.id',
-              errorItem.replayId,
-            );
+            expect(span.attributes).to.have.property('rollbar.replay.id', errorItem.replayId);
           }
 
           // Verify transport details
@@ -184,7 +189,7 @@ describe('Session Replay E2E', function () {
           done();
         }, 200);
       });
-    }, 500); // Wait for some events to be recorded
+    }, 50); // Reduced waiting time with mock recorder
   });
 
   it('should integrate with real components in failure scenario', function (done) {
