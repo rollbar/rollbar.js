@@ -30,7 +30,7 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, null, 'react-native');
+    client || new Client(this.options, api, logger, telemeter, null, null, 'react-native');
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   _.setupJSON(polyfillJSON);

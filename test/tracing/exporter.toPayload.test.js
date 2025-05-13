@@ -56,7 +56,7 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(mockSpan);
+    exporter.export([mockSpan]);
     const payload = exporter.toPayload();
 
     expect(payload).to.have.property('resourceSpans').that.is.an('array');
@@ -70,7 +70,7 @@ describe('SpanExporter.toPayload()', function () {
     expect(transformedSpan).to.have.property('name', 'test-span');
     expect(transformedSpan).to.have.property('traceId', 'abcdef1234567890abcdef1234567890');
     expect(transformedSpan).to.have.property('spanId', '1234567890abcdef');
-    
+
     // Verify attributes
     expect(transformedSpan).to.have.property('attributes').that.is.an('array');
     const attribute = transformedSpan.attributes.find(attr => attr.key === 'test.attribute');
@@ -102,29 +102,29 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(mockSpan);
+    exporter.export([mockSpan]);
     const payload = exporter.toPayload();
     const attributes = payload.resourceSpans[0].scopeSpans[0].spans[0].attributes;
 
     const stringAttr = attributes.find(a => a.key === 'stringAttr');
     expect(stringAttr.value).to.have.property('stringValue', 'string-value');
-    
+
     const intAttr = attributes.find(a => a.key === 'intAttr');
     expect(intAttr.value).to.have.property('intValue', '42');
-    
+
     const floatAttr = attributes.find(a => a.key === 'floatAttr');
     expect(floatAttr.value).to.have.property('doubleValue', 3.14);
-    
+
     const boolAttr = attributes.find(a => a.key === 'boolAttr');
     expect(boolAttr.value).to.have.property('boolValue', true);
-    
+
     const nullAttr = attributes.find(a => a.key === 'nullAttr');
     expect(nullAttr.value).to.have.property('stringValue', '');
-    
+
     const arrayAttr = attributes.find(a => a.key === 'arrayAttr');
     expect(arrayAttr.value).to.have.property('arrayValue');
     expect(arrayAttr.value.arrayValue.values).to.have.lengthOf(3);
-    
+
     const objectAttr = attributes.find(a => a.key === 'objectAttr');
     expect(objectAttr.value).to.have.property('kvlistValue');
   });
@@ -162,16 +162,16 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(mockSpan);
+    exporter.export([mockSpan]);
     const payload = exporter.toPayload();
     const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
-    
+
     expect(events).to.have.lengthOf(2);
     expect(events[0]).to.have.property('name', 'test-event-1');
     expect(events[1]).to.have.property('name', 'test-event-2');
-    
+
     expect(events[0]).to.have.property('timeUnixNano').that.is.a('number');
-    
+
     const eventAttribute = events[0].attributes.find(a => a.key === 'event.key1');
     expect(eventAttribute).to.exist;
     expect(eventAttribute.value).to.have.property('stringValue', 'value1');
@@ -196,7 +196,7 @@ describe('SpanExporter.toPayload()', function () {
         attributes: {},
       },
     };
-    
+
     const span2 = {
       name: 'span2',
       spanContext: {
@@ -215,7 +215,7 @@ describe('SpanExporter.toPayload()', function () {
         attributes: {},
       },
     };
-    
+
     const span3 = {
       name: 'span3',
       spanContext: {
@@ -235,7 +235,7 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(span1, span2, span3);
+    exporter.export([span1, span2, span3]);
     const payload = exporter.toPayload();
 
     expect(payload.resourceSpans).to.have.lengthOf(1);
@@ -268,9 +268,9 @@ describe('SpanExporter.toPayload()', function () {
       // No instrumentationScope property
     };
 
-    spanExportQueue.push(mockSpan);
+    exporter.export([mockSpan]);
     const payload = exporter.toPayload();
-    
+
     const scope = payload.resourceSpans[0].scopeSpans[0].scope;
     expect(scope).to.deep.equal({
       name: 'default',
@@ -297,8 +297,8 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(mockSpan);
-    
+    exporter.export([mockSpan]);
+
     const options = {
       resource: {
         attributes: {
@@ -306,7 +306,7 @@ describe('SpanExporter.toPayload()', function () {
         },
       },
     };
-    
+
     const payload = exporter.toPayload(options);
     const resourceAttrs = payload.resourceSpans[0].resource.attributes;
 
@@ -357,7 +357,7 @@ describe('SpanExporter.toPayload()', function () {
       },
     };
 
-    spanExportQueue.push(span);
+    exporter.export([span]);
     const payload = exporter.toPayload();
 
     // Create a standardPayload-based expected object with the stubbed IDs
