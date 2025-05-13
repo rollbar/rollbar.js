@@ -9,8 +9,6 @@ const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 export default class Tracing {
   constructor(gWindow, options) {
     this.options = options;
-    this.resource = options.resource;
-    this.scope = options.notifier;
     this.window = gWindow;
 
     this.session = new Session(this, options);
@@ -30,6 +28,19 @@ export default class Tracing {
     return null;
   }
 
+  get resource() {
+    return {
+      ...(this.options.resource || {}),
+      'rollbar.environment': this.options.environment,
+    };
+  }
+
+  get scope() {
+    return {
+      name: 'rollbar-browser-js',
+      version: this.options.version,
+    };
+  }
 
   createTracer() {
     this.contextManager = new ContextManager();
