@@ -13,6 +13,7 @@ var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
 const recorderDefaults = require('./replay/defaults');
+const tracingDefaults = require('../tracing/defaults');
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -620,6 +621,7 @@ var defaultOptions = {
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
   recorder: recorderDefaults,
+  tracing: tracingDefaults,
 };
 
 module.exports = Rollbar;

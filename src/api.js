@@ -10,7 +10,7 @@ var defaultOptions = {
   port: 443,
 };
 
-var sessionDefaultOptions = {
+var OTLPDefaultOptions = {
   hostname: 'api.rollbar.com',
   path: '/api/1/session/',
   search: null,
@@ -38,20 +38,19 @@ var sessionDefaultOptions = {
  *          protocol (optional): https
  * }
  */
-function Api(options, transport, urllib, truncation, jsonBackup) {
+function Api(options, transport, urllib, truncation) {
   this.options = options;
   this.transport = transport;
   this.url = urllib;
   this.truncation = truncation;
-  this.jsonBackup = jsonBackup;
   this.accessToken = options.accessToken;
   this.transportOptions = _getTransport(options, urllib);
-  this.sessionTransportOptions = _getSessionTransport(options, urllib);
+  this.OTLPTransportOptions = _getOTLPTransport(options, urllib);
 }
 
 /**
  * Wraps transport.post in a Promise to support async/await
- * 
+ *
  * @param {Object} options - Options for the API request
  * @param {string} options.accessToken - The access token for authentication
  * @param {Object} options.transportOptions - Options for the transport
@@ -62,7 +61,7 @@ function Api(options, transport, urllib, truncation, jsonBackup) {
 Api.prototype._postPromise = function({ accessToken, transportOptions, payload }) {
   const self = this;
   return new Promise((resolve, reject) => {
-    self.transport.post(accessToken, transportOptions, payload, (err, resp) => 
+    self.transport.post(accessToken, transportOptions, payload, (err, resp) =>
       err ? reject(err) : resolve(resp)
     );
   });
@@ -78,7 +77,7 @@ Api.prototype.postItem = function (data, callback) {
     this.transportOptions,
     'POST',
   );
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  var payload = helpers.buildPayload(data);
   var self = this;
 
   // ensure the network request is scheduled after the current tick.
@@ -89,25 +88,19 @@ Api.prototype.postItem = function (data, callback) {
 
 /**
  * Posts spans to the Rollbar API using the session endpoint
- * 
- * @param {Array} spans - The spans to send
+ *
+ * @param {Array} payload - The spans to send
  * @returns {Promise<Object>} A promise that resolves with the API response
  */
-Api.prototype.postSpans = async function (spans) {
+Api.prototype.postSpans = async function (payload) {
   const transportOptions = helpers.transportOptions(
-    this.sessionTransportOptions,
+    this.OTLPTransportOptions,
     'POST',
-  );
-  
-  const payload = helpers.buildPayload(
-    this.accessToken, 
-    { resourceSpans: spans }, 
-    this.jsonBackup
   );
 
   return await this._postPromise({
-    accessToken: this.accessToken, 
-    transportOptions, 
+    accessToken: this.accessToken,
+    transportOptions,
     payload
   });
 };
@@ -118,7 +111,7 @@ Api.prototype.postSpans = async function (spans) {
  * @param callback
  */
 Api.prototype.buildJsonPayload = function (data, callback) {
-  var payload = helpers.buildPayload(this.accessToken, data, this.jsonBackup);
+  var payload = helpers.buildPayload(data);
 
   var stringifyResult;
   if (this.truncation) {
@@ -159,7 +152,7 @@ Api.prototype.configure = function (options) {
   var oldOptions = this.oldOptions;
   this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);
-  this.sessionTransportOptions = _getSessionTransport(this.options, this.url);
+  this.OTLPTransportOptions = _getOTLPTransport(this.options, this.url);
   if (this.options.accessToken !== undefined) {
     this.accessToken = this.options.accessToken;
   }
@@ -170,8 +163,9 @@ function _getTransport(options, url) {
   return helpers.getTransportFromOptions(options, defaultOptions, url);
 }
 
-function _getSessionTransport(options, url) {
-  return helpers.getTransportFromOptions(options, sessionDefaultOptions, url);
+function _getOTLPTransport(options, url) {
+  options = {...options, endpoint: options.tracing?.endpoint};
+  return helpers.getTransportFromOptions(options, OTLPDefaultOptions, url);
 }
 
 module.exports = Api;

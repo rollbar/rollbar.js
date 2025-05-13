@@ -353,7 +353,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test error');
       expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
         'test error',
@@ -401,7 +400,6 @@ describe('options.captureUncaught', function () {
 
         var body = JSON.parse(server.requests[0].requestBody);
 
-        expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
         expect(body.data.body.trace.exception.message).to.eql('test error');
         expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
 
@@ -455,7 +453,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('anon error');
       expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
 
@@ -496,7 +493,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test error');
 
       // karma doesn't unload the browser between tests, so the onerror handler
@@ -537,7 +533,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test error');
 
       // karma doesn't unload the browser between tests, so the onerror handler
@@ -569,7 +564,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace_chain[0].exception.message).to.eql(
         'test DOMException',
       );
@@ -606,7 +600,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('deep stack error');
       expect(body.data.body.trace.frames.length).to.be.above(20);
 
@@ -642,7 +635,6 @@ describe('options.captureUncaught', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql(
         'event handler error',
       );
@@ -698,7 +690,6 @@ describe('options.captureUnhandledRejections', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test reject');
       expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
@@ -733,7 +724,6 @@ describe('options.captureUnhandledRejections', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql('test reject');
 
       server.requests.length = 0;
@@ -1061,7 +1051,6 @@ describe('onerror', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
       expect(body.data.body.trace.exception.message).to.eql(
         'testing window.onerror',
       );

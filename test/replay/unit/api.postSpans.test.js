@@ -47,7 +47,6 @@ describe('Api', function () {
       transport,
       mockUrl,
       null, // truncation
-      null, // jsonBackup
     );
   });
 
@@ -69,17 +68,15 @@ describe('Api', function () {
     });
 
     it('should create a payload with resourceSpans', async function () {
-      const spans = [{ id: 'span1' }];
+      const spans = {resourceSpans: [{ id: 'span1' }]};
       await api.postSpans(spans);
 
       expect(transport.post.called).to.be.true;
 
       // Get the payload argument (third parameter)
       const payload = transport.post.firstCall.args[2];
-      expect(payload).to.have.property('access_token', 'test_token');
-      expect(payload).to.have.property('data');
-      expect(payload.data).to.have.property('resourceSpans');
-      expect(payload.data.resourceSpans).to.deep.equal(spans);
+      expect(payload).to.have.property('resourceSpans');
+      expect(payload).to.deep.equal(spans);
     });
 
     it('should return a promise that resolves with the response', async function () {

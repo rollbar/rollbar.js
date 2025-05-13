@@ -55,27 +55,27 @@ describe('API Span Transport', function () {
   });
 
   it('should format spans payload correctly', async function () {
-    const spans = [
-      {
-        id: 'span-1',
-        name: 'recording-span-1',
-        attributes: { 'attr.key': 'value' },
-      },
-      {
-        id: 'span-2',
-        name: 'recording-span-2',
-        events: [{ name: 'event-1', attributes: { type: 'click' } }],
-      },
-    ];
+    const spans = {
+      resourceSpans: [
+        {
+          id: 'span-1',
+          name: 'recording-span-1',
+          attributes: { 'attr.key': 'value' },
+        },
+        {
+          id: 'span-2',
+          name: 'recording-span-2',
+          events: [{ name: 'event-1', attributes: { type: 'click' } }],
+        },
+      ],
+    }
 
     await api.postSpans(spans);
 
     const payload = transport.post.firstCall.args[2];
 
-    expect(payload).to.have.property('access_token', accessToken);
-    expect(payload).to.have.property('data');
-    expect(payload.data).to.have.property('resourceSpans');
-    expect(payload.data.resourceSpans).to.deep.equal(spans);
+    expect(payload).to.have.property('resourceSpans');
+    expect(payload).to.deep.equal(spans);
   });
 
   it('should handle transport errors', async function () {
@@ -132,12 +132,14 @@ describe('API Span Transport', function () {
   });
 
   it('should update sessionTransportOptions when reconfigured', function () {
-    const originalTransportOptions = api.sessionTransportOptions;
+    const originalTransportOptions = api.OTLPTransportOptions;
 
     api.configure({
-      endpoint: 'https://custom.rollbar.com/api/',
+      tracing: {
+        endpoint: 'https://custom.rollbar.com/api/',
+      }
     });
 
-    expect(api.sessionTransportOptions).to.not.equal(originalTransportOptions);
+    expect(api.OTLPTransportOptions).to.not.equal(originalTransportOptions);
   });
 });
