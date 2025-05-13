@@ -14,6 +14,8 @@ import { standardPayload } from '../fixtures/replay/payloads.fixtures.js';
 
 describe('SpanExporter.toPayload()', function () {
   let exporter;
+  let hrtimeStub;
+  let idStub;
 
   beforeEach(function () {
     spanExportQueue.length = 0;
