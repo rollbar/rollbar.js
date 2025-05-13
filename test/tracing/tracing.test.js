@@ -21,10 +21,7 @@ const tracingOptions = function (options = {}) {
         'telemetry.sdk.version': '0.1.0',
       },
     },
-    notifier: {
-      name: 'rollbar.js',
-      version: '0.1.0',
-    },
+    version: '0.1.0',
     ...options,
   };
 };
@@ -50,7 +47,7 @@ describe('Tracing()', function () {
     expect(t.tracer).to.be.an.instanceOf(Tracer);
 
     expect(t.options.resource).to.deep.equal(options.resource);
-    expect(t.options.notifier).to.deep.equal(options.notifier);
+    expect(t.options.version).to.equal(options.version);
     expect(t.session.session.id).to.match(/^[a-f0-9]{32}$/)
     done();
   });
@@ -68,7 +65,8 @@ describe('Tracing()', function () {
     expect(span.span.spanContext.traceId).to.match(/^[a-f0-9]{32}$/)
     expect(span.span.spanContext.spanId).to.match(/^[a-f0-9]{16}$/)
     expect(span.span.resource.attributes['service.name']).to.equal('unknown_service')
-    expect(span.span.instrumentationScope.name).to.equal('rollbar.js')
+    expect(span.span.instrumentationScope.name).to.equal('rollbar-browser-js')
+    expect(span.span.instrumentationScope.version).to.equal('0.1.0')
     expect(span.isRecording()).to.equal(true)
     expect(t.contextManager.active()).to.equal(ROOT_CONTEXT)
 
