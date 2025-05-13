@@ -11,7 +11,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-// We need to use require since the API module is a CommonJS module
 const Api = require('../../../src/api');
 
 describe('Api', function () {
@@ -20,7 +19,6 @@ describe('Api', function () {
   let mockUrl;
 
   beforeEach(function () {
-    // Create mock transport
     transport = {
       post: sinon
         .stub()
@@ -30,7 +28,6 @@ describe('Api', function () {
       postJsonPayload: sinon.stub(),
     };
 
-    // Create mock URL module
     mockUrl = {
       parse: sinon.stub().returns({
         hostname: 'api.rollbar.com',
@@ -41,7 +38,6 @@ describe('Api', function () {
       }),
     };
 
-    // Create API instance
     api = new Api(
       { accessToken: 'test_token' },
       transport,
@@ -61,7 +57,6 @@ describe('Api', function () {
 
       expect(transport.post.called).to.be.true;
 
-      // Get the options argument (second parameter)
       const options = transport.post.firstCall.args[1];
       expect(options.path).to.include('/session/');
       expect(options.method).to.equal('POST');
@@ -73,7 +68,6 @@ describe('Api', function () {
 
       expect(transport.post.called).to.be.true;
 
-      // Get the payload argument (third parameter)
       const payload = transport.post.firstCall.args[2];
       expect(payload).to.have.property('resourceSpans');
       expect(payload).to.deep.equal(spans);
@@ -91,7 +85,6 @@ describe('Api', function () {
       const spans = [{ id: 'span1' }];
       const expectedError = new Error('Transport error');
 
-      // Make transport.post fail
       transport.post.callsFake((accessToken, options, payload, callback) => {
         callback(expectedError);
       });
@@ -114,20 +107,16 @@ describe('Api', function () {
     });
 
     it('should update transport options when API is reconfigured', async function () {
-      // First request with default options
       await api.postSpans([{ id: 'span1' }]);
 
-      // Reconfigure the API with a new endpoint
       api.configure({
         endpoint: 'https://custom.rollbar.com/api/1/session/',
       });
 
-      // Send another request with new configuration
       await api.postSpans([{ id: 'span2' }]);
 
       expect(transport.post.callCount).to.equal(2);
 
-      // Get the options from the second call
       const optionsAfterConfig = transport.post.secondCall.args[1];
       expect(optionsAfterConfig.hostname).to.equal('api.rollbar.com');
     });

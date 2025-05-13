@@ -14,7 +14,6 @@ import sinon from 'sinon';
 // We need to use require since the Queue module is CommonJS
 const Queue = require('../../../src/queue');
 
-// Mock ReplayMap implementation
 class MockReplayMap {
   constructor() {
     this.add = sinon.stub().returns('test-replay-id');
@@ -23,7 +22,6 @@ class MockReplayMap {
   }
 }
 
-// Mock API implementation
 class MockApi {
   constructor() {
     this.postItem = sinon.stub().callsFake((item, callback) => {
@@ -32,7 +30,6 @@ class MockApi {
   }
 }
 
-// Mock rate limiter implementation
 class MockRateLimiter {
   constructor() {
     this.shouldSend = sinon.stub().returns({ shouldSend: true });
@@ -47,13 +44,11 @@ describe('Queue with ReplayMap', function () {
   let logger;
 
   beforeEach(function () {
-    // Set up mocks
     replayMap = new MockReplayMap();
     api = new MockApi();
     rateLimiter = new MockRateLimiter();
     logger = { error: sinon.stub(), log: sinon.stub() };
 
-    // Create Queue instance with replayMap
     queue = new Queue(rateLimiter, api, logger, { transmit: true }, replayMap);
   });
 
@@ -83,7 +78,6 @@ describe('Queue with ReplayMap', function () {
     });
 
     it('should not add replayId when replayMap is not available', function () {
-      // Create queue without replayMap
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = { body: { message: 'test error' } };
@@ -117,7 +111,6 @@ describe('Queue with ReplayMap', function () {
     });
 
     it('should log a warning when replayMap is not available', async function () {
-      // Create queue without replayMap
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const consoleSpy = sinon.spy(console, 'warn');
@@ -141,12 +134,10 @@ describe('Queue with ReplayMap', function () {
       const replayId = 'test-replay-id';
       const response = { err: 0 };
 
-      // Make replayMap.send throw an error
       replayMap.send.rejects(new Error('Send error'));
 
       const consoleSpy = sinon.spy(console, 'error');
 
-      // Should not throw despite the error
       await queue._handleReplayResponse(replayId, response);
 
       expect(consoleSpy.called).to.be.true;
@@ -158,7 +149,6 @@ describe('Queue with ReplayMap', function () {
 
   describe('API callback handling', function () {
     it('should call _handleReplayResponse with replayId and response on success', function () {
-      // Stub the _handleReplayResponse method
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
       const item = { body: { message: 'test error' } };
@@ -166,19 +156,16 @@ describe('Queue with ReplayMap', function () {
 
       queue.addItem(item, callback);
 
-      // The handler should be called with the replayId and response
       expect(handleStub.called).to.be.true;
       expect(handleStub.firstCall.args[0]).to.equal('test-replay-id');
       expect(handleStub.firstCall.args[1]).to.deep.equal({ err: 0 });
     });
 
     it('should not call _handleReplayResponse when there is an API error', function () {
-      // Make the API call fail
       api.postItem.callsFake((item, callback) => {
         callback(new Error('API error'));
       });
 
-      // Stub the _handleReplayResponse method
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
       const item = { body: { message: 'test error' } };
@@ -186,15 +173,12 @@ describe('Queue with ReplayMap', function () {
 
       queue.addItem(item, callback);
 
-      // The handler should not be called on API error
       expect(handleStub.called).to.be.false;
     });
 
     it('should not call _handleReplayResponse when item has no replayId', function () {
-      // Stub the _handleReplayResponse method
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
-      // Create queue without replayMap
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = { body: { message: 'test error' } };
@@ -202,7 +186,6 @@ describe('Queue with ReplayMap', function () {
 
       queue.addItem(item, callback);
 
-      // The handler should not be called when there's no replayId
       expect(handleStub.called).to.be.false;
     });
   });

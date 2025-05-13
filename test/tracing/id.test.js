@@ -14,11 +14,9 @@ describe('id', function () {
     expect(id16).to.match(/^[a-f0-9]{32}$/);
     expect(id32).to.match(/^[a-f0-9]{64}$/);
 
-    // Default should be 16 bytes (32 hex chars)
     const defaultId = id.gen();
     expect(defaultId).to.match(/^[a-f0-9]{32}$/);
 
-    // Should generate different IDs
     expect(id.gen()).to.not.equal(id.gen());
 
     done();

@@ -43,7 +43,6 @@ describe('Queue ReplayMap Integration', function () {
       truncationMock,
     );
 
-    // Mock ReplayMap - use a minimal implementation with spies
     replayMap = {
       add: sinon.stub().returns('test-replay-id'),
       send: sinon.stub().resolves(true),
@@ -52,7 +51,6 @@ describe('Queue ReplayMap Integration', function () {
       setSpans: sinon.stub(),
     };
 
-    // Create Queue with mocked rateLimiter
     queue = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },
       api,
@@ -96,7 +94,6 @@ describe('Queue ReplayMap Integration', function () {
     };
 
     queue.addItem(item, function () {
-      // Wait for handleReplayResponse to complete
       setTimeout(function () {
         expect(replayMap.send.calledWith('test-replay-id')).to.be.true;
         done();
@@ -105,7 +102,6 @@ describe('Queue ReplayMap Integration', function () {
   });
 
   it('should call replayMap.discard when API response has error', function (done) {
-    // Make API return an error
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
@@ -125,7 +121,6 @@ describe('Queue ReplayMap Integration', function () {
     };
 
     queue.addItem(item, function () {
-      // Wait for handleReplayResponse to complete
       setTimeout(function () {
         expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
         expect(replayMap.send.called).to.be.false;
@@ -135,7 +130,6 @@ describe('Queue ReplayMap Integration', function () {
   });
 
   it('should handle retrying items with replayId', function (done) {
-    // Make the first API call fail with network error, then succeed
     let apiCallCount = 0;
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
@@ -152,7 +146,6 @@ describe('Queue ReplayMap Integration', function () {
       },
     );
 
-    // Set retry interval to be fast for testing
     queue.configure({ retryInterval: 50, maxRetries: 3 });
 
     const item = {
@@ -167,10 +160,8 @@ describe('Queue ReplayMap Integration', function () {
 
     queue.addItem(item, function (err, resp) {
       if (resp) {
-        // Item was eventually sent successfully after retry
         expect(item).to.have.property('replayId', 'test-replay-id');
 
-        // Wait for handleReplayResponse to complete
         setTimeout(function () {
           expect(replayMap.send.calledWith('test-replay-id')).to.be.true;
           done();
@@ -181,7 +172,6 @@ describe('Queue ReplayMap Integration', function () {
 
   it('should not add replayId to items without a body', function (done) {
     const item = {
-      // No body field
       level: 'error',
       message: 'Test error without body',
     };
@@ -194,7 +184,6 @@ describe('Queue ReplayMap Integration', function () {
   });
 
   it('should handle null response in _handleReplayResponse', function (done) {
-    // Make API return null response
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
@@ -216,7 +205,6 @@ describe('Queue ReplayMap Integration', function () {
     };
 
     queue.addItem(item, function () {
-      // Wait for handleReplayResponse to complete
       setTimeout(function () {
         expect(replayMap.send.called).to.be.false;
         expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
