@@ -144,9 +144,6 @@ describe('Session Replay E2E', function () {
             expect(span).to.have.property('events');
             expect(span.events).to.be.an('array');
             expect(span).to.have.property('attributes').that.is.an('array');
-
-            console.log('Test replayId:', errorItem.replayId);
-            console.log('Span attributes:', JSON.stringify(span.attributes));
           }
 
           const transportArgs = transport.post.lastCall.args;
