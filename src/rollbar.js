@@ -1,7 +1,7 @@
-var RateLimiter = require('./rateLimiter');
-var Queue = require('./queue');
-var Notifier = require('./notifier');
-var _ = require('./utility');
+const RateLimiter = require('./rateLimiter');
+const Queue = require('./queue');
+const Notifier = require('./notifier');
+const _ = require('./utility');
 
 /*
  * Rollbar - the interface to Rollbar
@@ -10,13 +10,13 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, tracing, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, replayMap, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
+  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options, replayMap);
 
   this.tracing = tracing;
 

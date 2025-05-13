@@ -28,6 +28,7 @@ export class SpanExporter {
    */
   toPayload(options = {}) {
     const spans = spanExportQueue.slice();
+    spanExportQueue.length = 0;
 
     if (!spans || !spans.length) {
       return { resourceSpans: [] };

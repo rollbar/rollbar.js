@@ -14,6 +14,7 @@ var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
 const recorderDefaults = require('./replay/defaults');
 const tracingDefaults = require('../tracing/defaults');
+const ReplayMap = require('./replay/replayMap').default;
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -40,6 +41,11 @@ function Rollbar(options, client) {
   if (Recorder && _.isBrowser()) {
     const recorderOptions = this.options.recorder;
     this.recorder = new Recorder(recorderOptions);
+    this.replayMap = new ReplayMap({
+      recorder: this.recorder,
+      api: api,
+      tracing: this.tracing
+    });
 
     if (recorderOptions.enabled && recorderOptions.autoStart) {
       this.recorder.start();
@@ -47,7 +53,7 @@ function Rollbar(options, client) {
   }
 
   this.client =
-    client || new Client(this.options, api, logger, this.telemeter, this.tracing, 'browser');
+    client || new Client(this.options, api, logger, this.telemeter, this.tracing, this.replayMap, 'browser');
   var gWindow = _gWindow();
   var gDocument = typeof document != 'undefined' && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
