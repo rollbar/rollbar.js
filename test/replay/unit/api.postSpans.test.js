@@ -68,7 +68,7 @@ describe('Api', function () {
     });
 
     it('should create a payload with resourceSpans', async function () {
-      const spans = {resourceSpans: [{ id: 'span1' }]};
+      const spans = { resourceSpans: [{ id: 'span1' }] };
       await api.postSpans(spans);
 
       expect(transport.post.called).to.be.true;

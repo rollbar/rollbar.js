@@ -23,32 +23,41 @@ export const standardPayload = {
               startTimeUnixNano: '1600000000000000000',
               endTimeUnixNano: '1600000100000000000',
               attributes: [
-                { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
+                {
+                  key: 'rollbar.replay.id',
+                  value: { stringValue: 'test-replay-id' },
+                },
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000050000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.Meta) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
                 },
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000060000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.FullSnapshot) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 /**
@@ -72,48 +81,63 @@ export const checkpointPayload = {
               startTimeUnixNano: '1600000000000000000',
               endTimeUnixNano: '1600000400000000000',
               attributes: [
-                { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
+                {
+                  key: 'rollbar.replay.id',
+                  value: { stringValue: 'test-replay-id' },
+                },
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000050000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.Meta) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
                 },
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000060000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.FullSnapshot) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
                 },
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000250000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.Meta) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
                 },
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000260000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.FullSnapshot) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 /**
@@ -136,32 +160,41 @@ export const singleCheckpointPayload = {
               startTimeUnixNano: '1600000000000000000',
               endTimeUnixNano: '1600000100000000000',
               attributes: [
-                { key: 'rollbar.replay.id', value: { stringValue: 'test-replay-id' } }
+                {
+                  key: 'rollbar.replay.id',
+                  value: { stringValue: 'test-replay-id' },
+                },
               ],
               events: [
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000050000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.Meta) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.Meta) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
                 },
                 {
                   name: 'rrweb-replay-events',
                   timeUnixNano: '1600000060000000000',
                   attributes: [
-                    { key: 'eventType', value: { stringValue: String(EventType.FullSnapshot) } },
-                    { key: 'json', value: { stringValue: '{}' } }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                    {
+                      key: 'eventType',
+                      value: { stringValue: String(EventType.FullSnapshot) },
+                    },
+                    { key: 'json', value: { stringValue: '{}' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 /**
@@ -171,14 +204,15 @@ export const singleCheckpointPayload = {
  */
 export function createPayloadWithReplayId(replayId) {
   const payload = JSON.parse(JSON.stringify(standardPayload));
-  
-  const idAttr = payload.resourceSpans[0].scopeSpans[0].spans[0].attributes.find(
-    attr => attr.key === 'rollbar.replay.id'
-  );
-  
+
+  const idAttr =
+    payload.resourceSpans[0].scopeSpans[0].spans[0].attributes.find(
+      (attr) => attr.key === 'rollbar.replay.id',
+    );
+
   if (idAttr) {
     idAttr.value.stringValue = replayId;
   }
-  
+
   return payload;
 }

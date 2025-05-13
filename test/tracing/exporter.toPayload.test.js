@@ -14,8 +14,6 @@ import { standardPayload } from '../fixtures/replay/payloads.fixtures.js';
 
 describe('SpanExporter.toPayload()', function () {
   let exporter;
-  let hrtimeStub;
-  let idStub;
 
   beforeEach(function () {
     spanExportQueue.length = 0;
@@ -62,18 +60,23 @@ describe('SpanExporter.toPayload()', function () {
     expect(payload).to.have.property('resourceSpans').that.is.an('array');
     expect(payload.resourceSpans).to.have.lengthOf(1);
     expect(payload.resourceSpans[0]).to.have.property('resource');
-    expect(payload.resourceSpans[0]).to.have.property('scopeSpans').that.is.an('array');
+    expect(payload.resourceSpans[0])
+      .to.have.property('scopeSpans')
+      .that.is.an('array');
     expect(payload.resourceSpans[0].scopeSpans).to.have.lengthOf(1);
 
-    // Verify span data
     const transformedSpan = payload.resourceSpans[0].scopeSpans[0].spans[0];
     expect(transformedSpan).to.have.property('name', 'test-span');
-    expect(transformedSpan).to.have.property('traceId', 'abcdef1234567890abcdef1234567890');
+    expect(transformedSpan).to.have.property(
+      'traceId',
+      'abcdef1234567890abcdef1234567890',
+    );
     expect(transformedSpan).to.have.property('spanId', '1234567890abcdef');
 
-    // Verify attributes
     expect(transformedSpan).to.have.property('attributes').that.is.an('array');
-    const attribute = transformedSpan.attributes.find(attr => attr.key === 'test.attribute');
+    const attribute = transformedSpan.attributes.find(
+      (attr) => attr.key === 'test.attribute',
+    );
     expect(attribute).to.exist;
     expect(attribute.value).to.have.property('stringValue', 'test-value');
   });
@@ -104,28 +107,29 @@ describe('SpanExporter.toPayload()', function () {
 
     exporter.export([mockSpan]);
     const payload = exporter.toPayload();
-    const attributes = payload.resourceSpans[0].scopeSpans[0].spans[0].attributes;
+    const attributes =
+      payload.resourceSpans[0].scopeSpans[0].spans[0].attributes;
 
-    const stringAttr = attributes.find(a => a.key === 'stringAttr');
+    const stringAttr = attributes.find((a) => a.key === 'stringAttr');
     expect(stringAttr.value).to.have.property('stringValue', 'string-value');
 
-    const intAttr = attributes.find(a => a.key === 'intAttr');
+    const intAttr = attributes.find((a) => a.key === 'intAttr');
     expect(intAttr.value).to.have.property('intValue', '42');
 
-    const floatAttr = attributes.find(a => a.key === 'floatAttr');
+    const floatAttr = attributes.find((a) => a.key === 'floatAttr');
     expect(floatAttr.value).to.have.property('doubleValue', 3.14);
 
-    const boolAttr = attributes.find(a => a.key === 'boolAttr');
+    const boolAttr = attributes.find((a) => a.key === 'boolAttr');
     expect(boolAttr.value).to.have.property('boolValue', true);
 
-    const nullAttr = attributes.find(a => a.key === 'nullAttr');
+    const nullAttr = attributes.find((a) => a.key === 'nullAttr');
     expect(nullAttr.value).to.have.property('stringValue', '');
 
-    const arrayAttr = attributes.find(a => a.key === 'arrayAttr');
+    const arrayAttr = attributes.find((a) => a.key === 'arrayAttr');
     expect(arrayAttr.value).to.have.property('arrayValue');
     expect(arrayAttr.value.arrayValue.values).to.have.lengthOf(3);
 
-    const objectAttr = attributes.find(a => a.key === 'objectAttr');
+    const objectAttr = attributes.find((a) => a.key === 'objectAttr');
     expect(objectAttr.value).to.have.property('kvlistValue');
   });
 
@@ -172,7 +176,9 @@ describe('SpanExporter.toPayload()', function () {
 
     expect(events[0]).to.have.property('timeUnixNano').that.is.a('number');
 
-    const eventAttribute = events[0].attributes.find(a => a.key === 'event.key1');
+    const eventAttribute = events[0].attributes.find(
+      (a) => a.key === 'event.key1',
+    );
     expect(eventAttribute).to.exist;
     expect(eventAttribute.value).to.have.property('stringValue', 'value1');
   });
@@ -241,8 +247,12 @@ describe('SpanExporter.toPayload()', function () {
     expect(payload.resourceSpans).to.have.lengthOf(1);
     expect(payload.resourceSpans[0].scopeSpans).to.have.lengthOf(2);
 
-    const scope1 = payload.resourceSpans[0].scopeSpans.find(s => s.scope.name === 'scope1');
-    const scope2 = payload.resourceSpans[0].scopeSpans.find(s => s.scope.name === 'scope2');
+    const scope1 = payload.resourceSpans[0].scopeSpans.find(
+      (s) => s.scope.name === 'scope1',
+    );
+    const scope2 = payload.resourceSpans[0].scopeSpans.find(
+      (s) => s.scope.name === 'scope2',
+    );
 
     expect(scope1).to.exist;
     expect(scope2).to.exist;
@@ -310,11 +320,11 @@ describe('SpanExporter.toPayload()', function () {
     const payload = exporter.toPayload(options);
     const resourceAttrs = payload.resourceSpans[0].resource.attributes;
 
-    const optionsAttr = resourceAttrs.find(a => a.key === 'options.resource');
+    const optionsAttr = resourceAttrs.find((a) => a.key === 'options.resource');
     expect(optionsAttr).to.exist;
     expect(optionsAttr.value).to.have.property('stringValue', 'override');
 
-    const spanAttr = resourceAttrs.find(a => a.key === 'span.resource');
+    const spanAttr = resourceAttrs.find((a) => a.key === 'span.resource');
     expect(spanAttr).to.not.exist;
   });
 
@@ -335,16 +345,16 @@ describe('SpanExporter.toPayload()', function () {
           name: 'rrweb-replay-events',
           time: hrtime.now(),
           attributes: {
-            'eventType': String(EventType.Meta),
-            'json': '{}',
+            eventType: String(EventType.Meta),
+            json: '{}',
           },
         },
         {
           name: 'rrweb-replay-events',
           time: hrtime.now(),
           attributes: {
-            'eventType': String(EventType.FullSnapshot),
-            'json': '{}',
+            eventType: String(EventType.FullSnapshot),
+            json: '{}',
           },
         },
       ],
@@ -360,27 +370,19 @@ describe('SpanExporter.toPayload()', function () {
     exporter.export([span]);
     const payload = exporter.toPayload();
 
-    // Create a standardPayload-based expected object with the stubbed IDs
     const expected = JSON.parse(JSON.stringify(standardPayload));
-
-    // Verify specific fields match before deep comparison
     const actualSpan = payload.resourceSpans[0].scopeSpans[0].spans[0];
 
-    // IDs should match our mock data
     expect(actualSpan.traceId).to.equal('abcdef1234567890abcdef1234567890');
     expect(actualSpan.spanId).to.equal('1234567890abcdef');
 
-    // Timestamps should be consistent
     expect(actualSpan.startTimeUnixNano).to.equal(1000000000);
     expect(actualSpan.endTimeUnixNano).to.equal(1000000000);
 
-    // Event timestamps should be consistent
-    actualSpan.events.forEach(event => {
+    actualSpan.events.forEach((event) => {
       expect(event.timeUnixNano).to.equal(1000000000);
     });
 
-    // Create a modified copy of payload and standardPayload for structure comparison
-    // that ignores the dynamic values we've already verified separately
     function createComparablePayload(payload) {
       const clone = JSON.parse(JSON.stringify(payload));
 
@@ -393,7 +395,7 @@ describe('SpanExporter.toPayload()', function () {
       delete span.endTimeUnixNano;
       delete span.kind;
 
-      span.events.forEach(event => {
+      span.events.forEach((event) => {
         delete event.timeUnixNano;
       });
 
@@ -403,24 +405,30 @@ describe('SpanExporter.toPayload()', function () {
     const comparablePayload = createComparablePayload(payload);
     const comparableStandard = createComparablePayload(standardPayload);
 
-    // Log the actual values to debug the difference
-    console.log('Actual events:', JSON.stringify(comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].events, null, 2));
-    console.log('Expected events:', JSON.stringify(comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].events, null, 2));
+    expect(
+      comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].name,
+    ).to.deep.equal(
+      comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].name,
+      'Span names should match',
+    );
 
-    // Log the scope objects to debug differences
-    console.log('Actual scope:', JSON.stringify(comparablePayload.resourceSpans[0].scopeSpans[0].scope, null, 2));
-    console.log('Expected scope:', JSON.stringify(comparableStandard.resourceSpans[0].scopeSpans[0].scope, null, 2));
+    expect(
+      comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].attributes,
+    ).to.deep.equal(
+      comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].attributes,
+      'Span attributes should match',
+    );
 
-    expect(comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].name)
-      .to.deep.equal(comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].name, 'Span names should match');
+    expect(
+      comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].events,
+    ).to.deep.equal(
+      comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].events,
+      'Span events should match',
+    );
 
-    expect(comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].attributes)
-      .to.deep.equal(comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].attributes, 'Span attributes should match');
-
-    expect(comparablePayload.resourceSpans[0].scopeSpans[0].spans[0].events)
-      .to.deep.equal(comparableStandard.resourceSpans[0].scopeSpans[0].spans[0].events, 'Span events should match');
-
-    // Verify the structure is identical between our payload and the standard
-    expect(comparablePayload).to.deep.equal(comparableStandard, 'Complete payload structure should match');
+    expect(comparablePayload).to.deep.equal(
+      comparableStandard,
+      'Complete payload structure should match',
+    );
   });
 });

@@ -11,6 +11,10 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Api from '../../../src/api.js';
+import {
+  standardPayload,
+  createPayloadWithReplayId,
+} from '../../fixtures/replay/payloads.fixtures.js';
 
 describe('API Span Transport', function () {
   let api;
@@ -44,7 +48,7 @@ describe('API Span Transport', function () {
   });
 
   it('should use the session endpoint for spans', async function () {
-    const spans = [{ id: 'test-span', name: 'recording-span' }];
+    const spans = standardPayload;
 
     await api.postSpans(spans);
 
@@ -55,20 +59,8 @@ describe('API Span Transport', function () {
   });
 
   it('should format spans payload correctly', async function () {
-    const spans = {
-      resourceSpans: [
-        {
-          id: 'span-1',
-          name: 'recording-span-1',
-          attributes: { 'attr.key': 'value' },
-        },
-        {
-          id: 'span-2',
-          name: 'recording-span-2',
-          events: [{ name: 'event-1', attributes: { type: 'click' } }],
-        },
-      ],
-    }
+    const testReplayId = 'test-replay-api-12345';
+    const spans = createPayloadWithReplayId(testReplayId);
 
     await api.postSpans(spans);
 
@@ -92,8 +84,7 @@ describe('API Span Transport', function () {
 
     try {
       await api.postSpans(spans);
-      // Should not reach here
-      expect(true).to.be.false;
+      expect.fail('Expected error not thrown');
     } catch (error) {
       expect(error).to.equal(testError);
     }
@@ -137,7 +128,7 @@ describe('API Span Transport', function () {
     api.configure({
       tracing: {
         endpoint: 'https://custom.rollbar.com/api/',
-      }
+      },
     });
 
     expect(api.OTLPTransportOptions).to.not.equal(originalTransportOptions);
