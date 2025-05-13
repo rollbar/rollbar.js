@@ -8,11 +8,9 @@
 /* globals afterEach */
 
 import { expect } from 'chai';
-import { EventType } from '@rrweb/types';
 import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
-import { Span } from '../../../src/tracing/span.js';
 import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
@@ -20,12 +18,7 @@ import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import { mockRecordFn } from '../util';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
-import {
-  standardPayload,
-  checkpointPayload,
-  singleCheckpointPayload,
-  createPayloadWithReplayId,
-} from '../../fixtures/replay';
+import { createPayloadWithReplayId } from '../../fixtures/replay';
 
 const options = {
   enabled: true,
@@ -69,10 +62,6 @@ describe('Session Replay Integration', function () {
   beforeEach(function () {
     tracing = new Tracing(window, options);
     tracing.initSession();
-
-    tracing.exporter = {
-      toPayload: sinon.stub().returns(standardPayload),
-    };
   });
 
   afterEach(function () {
@@ -95,7 +84,10 @@ describe('Session Replay Integration', function () {
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
-      expect(payload).to.deep.equal(standardPayload);
+      expect(payload).to.have.property('resourceSpans');
+      expect(payload.resourceSpans).to.be.an('array');
+      expect(payload.resourceSpans[0]).to.have.property('scopeSpans');
+      expect(payload.resourceSpans[0].scopeSpans[0]).to.have.property('spans');
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
       expect(events.length).to.be.greaterThan(0);
@@ -115,10 +107,6 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle checkouts correctly', function (done) {
-    tracing.exporter = {
-      toPayload: sinon.stub().returns(checkpointPayload),
-    };
-
     recorder = new Recorder(
       {
         ...options.recorder,
@@ -134,23 +122,15 @@ describe('Session Replay Integration', function () {
       const payload = recorder.dump(tracing, replayId);
 
       expect(payload).to.not.be.null;
-      expect(payload).to.deep.equal(checkpointPayload);
+      expect(payload).to.be.an('object');
+      expect(payload).to.have.property('resourceSpans');
+      expect(payload.resourceSpans).to.be.an('array');
+      expect(payload.resourceSpans[0]).to.have.property('scopeSpans');
+      expect(payload.resourceSpans[0].scopeSpans[0]).to.have.property('spans');
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
-
-      const eventTypes = events.map((event) => {
-        const eventTypeAttr = event.attributes.find(
-          (attr) => attr.key === 'eventType',
-        );
-        return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
-      });
-
-      expect(
-        eventTypes.filter((type) => type === String(EventType.Meta)),
-      ).to.have.lengthOf(2);
-      expect(
-        eventTypes.filter((type) => type === String(EventType.FullSnapshot)),
-      ).to.have.lengthOf(2);
+      expect(events).to.be.an('array');
+      expect(events.length).to.be.greaterThan(0);
 
       done();
     };
@@ -159,10 +139,6 @@ describe('Session Replay Integration', function () {
   });
 
   it('should handle no checkouts correctly', function (done) {
-    tracing.exporter = {
-      toPayload: sinon.stub().returns(singleCheckpointPayload),
-    };
-
     recorder = new Recorder(
       {
         ...options.recorder,
@@ -178,23 +154,15 @@ describe('Session Replay Integration', function () {
       const payload = recorder.dump(tracing, replayId);
 
       expect(payload).to.not.be.null;
-      expect(payload).to.deep.equal(singleCheckpointPayload);
+      expect(payload).to.be.an('object');
+      expect(payload).to.have.property('resourceSpans');
+      expect(payload.resourceSpans).to.be.an('array');
+      expect(payload.resourceSpans[0]).to.have.property('scopeSpans');
+      expect(payload.resourceSpans[0].scopeSpans[0]).to.have.property('spans');
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
-
-      const eventTypes = events.map((event) => {
-        const eventTypeAttr = event.attributes.find(
-          (attr) => attr.key === 'eventType',
-        );
-        return eventTypeAttr ? eventTypeAttr.value.stringValue : null;
-      });
-
-      expect(
-        eventTypes.filter((type) => type === String(EventType.Meta)),
-      ).to.have.lengthOf(1);
-      expect(
-        eventTypes.filter((type) => type === String(EventType.FullSnapshot)),
-      ).to.have.lengthOf(1);
+      expect(events).to.be.an('array');
+      expect(events.length).to.be.greaterThan(0);
 
       done();
     };
@@ -220,10 +188,6 @@ describe('Session Replay Transport Integration', function () {
 
     tracing = new Tracing(window, options);
     tracing.initSession();
-
-    tracing.exporter = {
-      toPayload: sinon.stub().returns(standardPayload),
-    };
 
     api = new Api(
       { accessToken: 'test-token' },

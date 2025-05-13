@@ -13,7 +13,6 @@ import sinon from 'sinon';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import id from '../../../src/tracing/id.js';
 
-// Mock objects for testing
 class MockRecorder {
   constructor(returnPayload = true) {
     this.payload = returnPayload ? [{ id: 'span1' }, { id: 'span2' }] : null;
@@ -24,7 +23,6 @@ class MockRecorder {
 class MockApi {
   constructor() {
     this.postSpans = sinon.stub();
-    // Default success response
     this.postSpans.resolves({ success: true });
   }
 }
@@ -44,7 +42,6 @@ describe('ReplayMap', function () {
   let mockTracing;
 
   beforeEach(function () {
-    // Stub id.gen to return a predictable value
     sinon.stub(id, 'gen').returns('1234567890abcdef');
 
     mockRecorder = new MockRecorder();
@@ -76,7 +73,6 @@ describe('ReplayMap', function () {
           }),
       ).to.throw(TypeError);
 
-      // Should not throw with all dependencies
       expect(
         () =>
           new ReplayMap({
@@ -92,7 +88,6 @@ describe('ReplayMap', function () {
     it('should dump recording and add payload to the map', async function () {
       const replayId = '1234567890abcdef';
 
-      // Define the expected payload for validation
       const expectedPayload = [{ id: 'span1' }, { id: 'span2' }];
 
       const result = await replayMap._processReplay(replayId);
@@ -101,16 +96,13 @@ describe('ReplayMap', function () {
       expect(mockRecorder.dump.called).to.be.true;
       expect(mockRecorder.dump.calledWith(mockTracing, replayId)).to.be.true;
 
-      // Check if the payload is stored in the map with the replayId
       expect(replayMap.size).to.equal(1);
 
-      // Verify we can get the exact same payload back from the map
       const retrievedPayload = replayMap.getSpans(replayId);
       expect(retrievedPayload).to.deep.equal(expectedPayload);
     });
 
     it('should store null in map when dump returns null', async function () {
-      // Use recorder that returns null from dump
       mockRecorder = new MockRecorder(false);
       replayMap = new ReplayMap({
         recorder: mockRecorder,
@@ -125,7 +117,6 @@ describe('ReplayMap', function () {
       expect(mockRecorder.dump.called).to.be.true;
       expect(mockRecorder.dump.calledWith(mockTracing, replayId)).to.be.true;
 
-      // Null should have been added to the map
       expect(replayMap.size).to.equal(1);
       expect(replayMap.getSpans(replayId)).to.be.null;
     });
@@ -142,7 +133,6 @@ describe('ReplayMap', function () {
       expect(consoleSpy.called).to.be.true;
       expect(consoleSpy.args[0][0]).to.include('Error transforming spans');
 
-      // Error entry should be added to the map
       expect(replayMap.size).to.equal(1);
       expect(replayMap.getSpans(replayId)).to.be.null;
     });
@@ -150,7 +140,6 @@ describe('ReplayMap', function () {
 
   describe('add', function () {
     it('should generate a replayId and initiate async processing', function () {
-      // Stub _processReplay to avoid actual processing
       const processStub = sinon
         .stub(replayMap, '_processReplay')
         .resolves('1234567890abcdef');
@@ -163,17 +152,13 @@ describe('ReplayMap', function () {
     });
 
     it('should handle errors from _processReplay', function (done) {
-      // Make _processReplay reject
       sinon.stub(replayMap, '_processReplay').rejects(new Error('Test error'));
 
-      // Create console.error spy
       const errorSpy = sinon.spy(console, 'error');
 
-      // Should not throw despite the rejection
       try {
         replayMap.add();
 
-        // Wait for the async operation to complete
         setTimeout(() => {
           expect(errorSpy.called).to.be.true;
           expect(errorSpy.args[0][0]).to.include('Failed to process replay');
@@ -187,7 +172,6 @@ describe('ReplayMap', function () {
 
   describe('send', function () {
     it('should send payload and remove it from the map', async function () {
-      // Set up direct payload in the map for testing send
       const mockPayload = [{ id: 'payload1' }, { id: 'payload2' }];
       replayMap.setSpans('testReplayId', mockPayload);
       expect(replayMap.size).to.equal(1);
@@ -198,7 +182,6 @@ describe('ReplayMap', function () {
       expect(mockApi.postSpans.called).to.be.true;
       expect(mockApi.postSpans.firstCall.args[0]).to.deep.equal(mockPayload);
 
-      // Map should be empty after sending
       expect(replayMap.size).to.equal(0);
     });
 
@@ -249,10 +232,8 @@ describe('ReplayMap', function () {
     });
 
     it('should handle API errors during sending', async function () {
-      // Add a mock payload to the map
       replayMap.setSpans('errorReplayId', [{ id: 'span1' }]);
 
-      // Make API throw error
       mockApi.postSpans.rejects(new Error('API error'));
 
       const consoleSpy = sinon.spy(console, 'error');
@@ -263,14 +244,12 @@ describe('ReplayMap', function () {
       expect(consoleSpy.args[0][0]).to.include('Error sending replay');
       expect(mockApi.postSpans.called).to.be.true;
 
-      // Should still remove from map even on error
       expect(replayMap.size).to.equal(0);
     });
   });
 
   describe('discard', function () {
     it('should remove the replay from the map without sending', function () {
-      // Add a mock replay to the map
       replayMap.setSpans('discardReplayId', [{ id: 'span1' }]);
       expect(replayMap.size).to.equal(1);
 
@@ -332,7 +311,6 @@ describe('ReplayMap', function () {
     it('should report correct size of the map', function () {
       expect(replayMap.size).to.equal(0);
 
-      // Directly set payloads in the map for testing size
       replayMap.setSpans('id1', [{ id: 'span1' }]);
       expect(replayMap.size).to.equal(1);
 
