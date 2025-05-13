@@ -1,8 +1,8 @@
 var _ = require('./utility');
 
-function buildPayload(accessToken, data, jsonBackup) {
+function buildPayload(data) {
   if (!_.isType(data.context, 'string')) {
-    var contextResult = _.stringify(data.context, jsonBackup);
+    var contextResult = _.stringify(data.context);
     if (contextResult.error) {
       data.context = "Error: could not serialize 'context'";
     } else {
@@ -13,7 +13,6 @@ function buildPayload(accessToken, data, jsonBackup) {
     }
   }
   return {
-    access_token: accessToken,
     data: data,
   };
 }

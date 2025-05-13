@@ -34,10 +34,9 @@ describe('Api()', function () {
         expect(false).to.be.ok();
       },
     };
-    var backup = null;
     var accessToken = 'abc123';
     var options = { accessToken: accessToken };
-    var api = new API(options, transport, url, backup);
+    var api = new API(options, transport, url);
     // I know this is testing internal state but it
     // is the most expedient way to do this
     expect(api.accessToken).to.eql(accessToken);
@@ -60,10 +59,9 @@ describe('Api()', function () {
         };
       },
     };
-    var backup = null;
     var accessToken = 'abc123';
     var options = { accessToken: accessToken, endpoint: endpoint };
-    var api = new API(options, transport, url, backup);
+    var api = new API(options, transport, url);
     expect(api.accessToken).to.eql(accessToken);
     expect(api.transportOptions.hostname).to.eql('woo.foo.com');
     expect(api.transportOptions.path).to.match(/\/api\/42/);
@@ -81,10 +79,9 @@ describe('postItem', function () {
         expect(false).to.be.ok();
       },
     };
-    var backup = null;
     var accessToken = 'abc123';
     var options = { accessToken: accessToken };
-    var api = new API(options, transport, url, backup);
+    var api = new API(options, transport, url);
 
     var data = { a: 1 };
     api.postItem(data, function (err, resp) {
@@ -93,7 +90,6 @@ describe('postItem', function () {
       expect(transport.postArgs.length).to.eql(1);
       expect(transport.postArgs[0][0]).to.eql(accessToken);
       expect(transport.postArgs[0][1].path).to.match(/\/item\//);
-      expect(transport.postArgs[0][2].access_token).to.eql(accessToken);
       expect(transport.postArgs[0][2].data.a).to.eql(1);
       done();
     });
@@ -106,10 +102,9 @@ describe('postItem', function () {
         expect(false).to.be.ok();
       },
     };
-    var backup = null;
     var accessToken = 'abc123';
     var options = { accessToken: accessToken };
-    var api = new API(options, transport, url, backup);
+    var api = new API(options, transport, url);
 
     var data = { a: 1, context: { some: [1, 2, 'stuff'] } };
     api.postItem(data, function (err, resp) {
@@ -119,12 +114,62 @@ describe('postItem', function () {
       expect(transport.postArgs[0][0]).to.eql(accessToken);
       expect(transport.postArgs[0][1].path).to.match(/\/item\//);
       expect(transport.postArgs[0][1].method).to.eql('POST');
-      expect(transport.postArgs[0][2].access_token).to.eql(accessToken);
       expect(transport.postArgs[0][2].data.a).to.eql(1);
       expect(transport.postArgs[0][2].data.context).to.eql(
         '{"some":[1,2,"stuff"]}',
       );
       done();
     });
+  });
+});
+
+describe('postSpans', function () {
+  let transport;
+
+  beforeEach(function () {
+    // Create mock transport
+    transport = {
+      post: sinon
+        .stub()
+        .callsFake((accessToken, options, payload, callback) => {
+          callback(null, { result: 'ok' });
+        }),
+      postJsonPayload: sinon.stub(),
+    };
+  });
+
+  afterEach(function () {
+    sinon.restore();
+  });
+
+  it('should call post on the transport object', async function () {
+    const urllib = require('../src/browser/url');
+    const response = 'yes';
+    const url = {
+      parse: function (e) {
+        expect(false).to.be.ok();
+      },
+    };
+    const accessToken = 'abc123';
+    const options = {
+      accessToken: accessToken,
+      tracing: {
+        enabled: true,
+        endpoint: 'https://api.rollbar.com/api/1/session/',
+      },
+    };
+    const api = new API(options, transport, urllib);
+
+    const data = { a: 1 };
+    await api.postSpans(data)
+
+    expect(transport.post.called).to.be.true;
+
+    expect(transport.post.callCount).to.eql(1);
+    expect(transport.post.firstCall.args.length).to.eql(4);
+    expect(transport.post.firstCall.args[0]).to.eql(accessToken);
+    expect(transport.post.firstCall.args[1].path).to.match(/\/session\//);
+    expect(transport.post.firstCall.args[1].method).to.eql('POST');
+    expect(transport.post.firstCall.args[2].a).to.eql(1);
   });
 });

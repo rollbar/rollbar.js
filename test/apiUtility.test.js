@@ -11,9 +11,8 @@ describe('buildPayload', function () {
   it('should package up the input into a payload', function () {
     var token = 'abc123';
     var data = { context: 'not an object', other: 'stuff' };
-    var payload = u.buildPayload(token, data);
+    var payload = u.buildPayload(data);
 
-    expect(payload.access_token).to.eql(token);
     expect(payload.data).to.eql(data);
   });
   it('should stringify context', function () {
@@ -23,7 +22,7 @@ describe('buildPayload', function () {
       context: context,
       other: 'stuff',
     };
-    var payload = u.buildPayload(token, data);
+    var payload = u.buildPayload(data);
 
     expect(payload.data.context).to.not.eql(context);
     expect(payload.data.context).to.eql('{"a":1,"b":"other"}');
@@ -38,7 +37,7 @@ describe('buildPayload', function () {
       context: context,
       other: 'stuff',
     };
-    var payload = u.buildPayload(token, data);
+    var payload = u.buildPayload(data);
 
     expect(payload.data.context).to.not.eql(context);
     expect(payload.data.context.length).to.eql(255);
