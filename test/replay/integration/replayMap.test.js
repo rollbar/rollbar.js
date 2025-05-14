@@ -80,14 +80,15 @@ describe('ReplayMap API Integration', function () {
   });
 
   it('should add replay data to map', async function () {
-    const replayId = replayMap.add();
+    const uuid = 'test-uuid';
+    const replayId = replayMap.add(uuid);
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
     await new Promise((r) => setTimeout(r, 1000));
 
     expect(recorder.dump.calledOnce).to.be.true;
-    expect(recorder.dump.calledWith(tracing, replayId)).to.be.true;
+    expect(recorder.dump.calledWith(tracing, replayId, uuid)).to.be.true;
 
     const payload = replayMap.getSpans(replayId);
     expect(payload).to.not.be.null;

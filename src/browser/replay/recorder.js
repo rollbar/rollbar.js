@@ -61,7 +61,7 @@ export default class Recorder {
    * @param {string} replayId - Unique identifier to associate with this replay recording
    * @returns {Object|null} A formatted payload containing spans data in OTLP format, or null if no events exist
    */
-  dump(tracing, replayId) {
+  dump(tracing, replayId, occurrenceUuid) {
     const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length === 0) {
@@ -74,6 +74,10 @@ export default class Recorder {
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
 
     recordingSpan.setAttribute('rollbar.replay.id', replayId);
+
+    if (occurrenceUuid) {
+      recordingSpan.setAttribute('occurrence.uuid', occurrenceUuid);
+    }
 
     const earliestEvent = events.reduce((earliestEvent, event) =>
       event.timestamp < earliestEvent.timestamp ? event : earliestEvent,
