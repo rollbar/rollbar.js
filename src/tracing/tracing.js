@@ -30,8 +30,10 @@ export default class Tracing {
 
   get resource() {
     return {
-      ...(this.options.resource || {}),
-      'rollbar.environment': this.options.environment,
+      attributes: {
+        ...(this.options.resource || {}),
+        'rollbar.environment': this.options.environment,
+      }
     };
   }
 

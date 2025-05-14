@@ -14,12 +14,10 @@ import Tracing from '../../src/tracing/tracing';
 const tracingOptions = function (options = {}) {
   return {
     resource: {
-      attributes: {
-        'service.name': 'unknown_service',
-        'telemetry.sdk.language': 'webjs',
-        'telemetry.sdk.name': 'rollbar',
-        'telemetry.sdk.version': '0.1.0',
-      },
+      'service.name': 'unknown_service',
+      'telemetry.sdk.language': 'webjs',
+      'telemetry.sdk.name': 'rollbar',
+      'telemetry.sdk.version': '0.1.0',
     },
     version: '0.1.0',
     ...options,

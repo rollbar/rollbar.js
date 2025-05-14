@@ -21,12 +21,9 @@ export class SpanExporter {
    * compatible with the Rollbar API. This follows the OpenTelemetry protocol
    * specification for traces.
    *
-   * @param {Array} spans - Array of ReadableSpan objects to transform
-   * @param {Object} options - Additional options for the transformation
-   * @param {Object} options.resource - Resource information
    * @returns {Object} OTLP format payload for API transmission
    */
-  toPayload(options = {}) {
+  toPayload() {
     const spans = spanExportQueue.slice();
     spanExportQueue.length = 0;
 
@@ -34,7 +31,7 @@ export class SpanExporter {
       return { resourceSpans: [] };
     }
 
-    const resource = options.resource || (spans[0] && spans[0].resource) || {};
+    const resource = (spans[0] && spans[0].resource) || {};
 
     const scopeMap = new Map();
 
