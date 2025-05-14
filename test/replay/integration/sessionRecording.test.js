@@ -97,7 +97,7 @@ describe('Session Replay Integration', function () {
 
       const uuidValue = getAttributeValue(
         payload.resourceSpans[0].scopeSpans[0].spans[0].attributes,
-        'occurrence.uuid',
+        'rollbar.occurrence.uuid',
       );
       expect(uuidValue['stringValue']).to.equal(uuid);
 

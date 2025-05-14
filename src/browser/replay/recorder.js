@@ -76,7 +76,7 @@ export default class Recorder {
     recordingSpan.setAttribute('rollbar.replay.id', replayId);
 
     if (occurrenceUuid) {
-      recordingSpan.setAttribute('occurrence.uuid', occurrenceUuid);
+      recordingSpan.setAttribute('rollbar.occurrence.uuid', occurrenceUuid);
     }
 
     const earliestEvent = events.reduce((earliestEvent, event) =>
