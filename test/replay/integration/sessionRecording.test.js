@@ -55,6 +55,11 @@ const createMockTransport = () => {
   };
 };
 
+const getAttributeValue = (attributes, key) => {
+  const attr = attributes.find((attr) => attr.key === key);
+  return attr ? attr.value : null;
+};
+
 describe('Session Replay Integration', function () {
   let tracing;
   let recorder;
@@ -80,7 +85,8 @@ describe('Session Replay Integration', function () {
 
     const dumpRecording = () => {
       const replayId = 'test-replay-id';
-      const payload = recorder.dump(tracing, replayId);
+      const uuid = 'test-uuid';
+      const payload = recorder.dump(tracing, replayId, uuid);
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
@@ -88,6 +94,12 @@ describe('Session Replay Integration', function () {
       expect(payload.resourceSpans).to.be.an('array');
       expect(payload.resourceSpans[0]).to.have.property('scopeSpans');
       expect(payload.resourceSpans[0].scopeSpans[0]).to.have.property('spans');
+
+      const uuidValue = getAttributeValue(
+        payload.resourceSpans[0].scopeSpans[0].spans[0].attributes,
+        'rollbar.occurrence.uuid',
+      );
+      expect(uuidValue['stringValue']).to.equal(uuid);
 
       const events = payload.resourceSpans[0].scopeSpans[0].spans[0].events;
       expect(events.length).to.be.greaterThan(0);

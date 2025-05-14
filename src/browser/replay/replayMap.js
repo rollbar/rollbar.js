@@ -48,9 +48,9 @@ export default class ReplayMap {
    * @returns {Promise<string>} A promise resolving to the processed replayId
    * @private
    */
-  async _processReplay(replayId) {
+  async _processReplay(replayId, occurrenceUuid) {
     try {
-      const payload = this.#recorder.dump(this.#tracing, replayId);
+      const payload = this.#recorder.dump(this.#tracing, replayId, occurrenceUuid);
 
       this.#map.set(replayId, payload);
     } catch (transformError) {
@@ -71,10 +71,10 @@ export default class ReplayMap {
    *
    * @returns {string} A unique identifier for this replay
    */
-  add() {
+  add(occurrenceUuid) {
     const replayId = id.gen(8);
 
-    this._processReplay(replayId).catch((error) => {
+    this._processReplay(replayId, occurrenceUuid).catch((error) => {
       console.error('Failed to process replay:', error);
     });
 
