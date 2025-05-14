@@ -112,7 +112,11 @@ As of version 3.0.0, the SDK has been updated to use modern JavaScript features 
 
 ## TypeScript Support
 
+- Full TypeScript support for mixed JS/TS codebases
 - Type definitions in index.d.ts
+- TypeScript compilation via babel-preset-typescript
+- See examples/typescript for a complete example
+- For new development, both .js and .ts files are supported
 - Add JSDoc types to enable intellisense when needed
 
 ## Common Patterns
