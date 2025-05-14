@@ -291,45 +291,6 @@ describe('SpanExporter.toPayload()', function () {
     });
   });
 
-  it('should use resource from options if provided', function () {
-    const mockSpan = {
-      name: 'resource-test-span',
-      spanContext: {
-        traceId: 'abcdef1234567890abcdef1234567890',
-        spanId: '1234567890abcdef',
-      },
-      startTime: hrtime.now(),
-      endTime: hrtime.now(),
-      attributes: {},
-      events: [],
-      resource: {
-        attributes: {
-          'span.resource': 'value',
-        },
-      },
-    };
-
-    exporter.export([mockSpan]);
-
-    const options = {
-      resource: {
-        attributes: {
-          'options.resource': 'override',
-        },
-      },
-    };
-
-    const payload = exporter.toPayload(options);
-    const resourceAttrs = payload.resourceSpans[0].resource.attributes;
-
-    const optionsAttr = resourceAttrs.find((a) => a.key === 'options.resource');
-    expect(optionsAttr).to.exist;
-    expect(optionsAttr.value).to.have.property('stringValue', 'override');
-
-    const spanAttr = resourceAttrs.find((a) => a.key === 'span.resource');
-    expect(spanAttr).to.not.exist;
-  });
-
   it('should produce a payload compatible with standardPayload fixture', function () {
     const span = {
       name: 'rrweb-replay-recording',

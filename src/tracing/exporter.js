@@ -34,7 +34,7 @@ export class SpanExporter {
       return { resourceSpans: [] };
     }
 
-    const resource = options.resource || (spans[0] && spans[0].resource) || {};
+    const resource = (spans[0] && spans[0].resource) || {};
 
     const scopeMap = new Map();
 
