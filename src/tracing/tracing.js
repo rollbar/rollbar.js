@@ -32,8 +32,9 @@ export default class Tracing {
     return {
       attributes: {
         ...(this.options.resource || {}),
-        'rollbar.environment': this.options.environment,
-      }
+        'rollbar.environment':
+          this.options.payload?.environment ?? this.options.environment,
+      },
     };
   }
 
@@ -73,6 +74,11 @@ export default class Tracing {
 
   withSpan(name, options, fn, thisArg) {
     const span = this.startSpan(name, options);
-    return this.with(this.setSpan(this.contextManager.active(), span), fn, thisArg, span);
+    return this.with(
+      this.setSpan(this.contextManager.active(), span),
+      fn,
+      thisArg,
+      span,
+    );
   }
 }
