@@ -326,7 +326,10 @@ describe('SpanExporter.toPayload()', function () {
         version: '1.0.0',
       },
       resource: {
-        attributes: {},
+        attributes: {
+          'service.name': 'test_service',
+          'rollbar.environment': 'testenv',
+        },
       },
     };
 
