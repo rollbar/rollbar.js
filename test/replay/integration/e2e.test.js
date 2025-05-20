@@ -17,16 +17,12 @@ import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
 import { mockRecordFn } from '../util';
+import * as payloads from '../../fixtures/replay/payloads.fixtures.js';
 
 const options = {
   enabled: true,
   resource: {
-    attributes: {
-      'service.name': 'test_service',
-      'telemetry.sdk.language': 'webjs',
-      'telemetry.sdk.name': 'rollbar',
-      'telemetry.sdk.version': '0.1.0',
-    },
+    'service.name': 'test_service',
   },
   notifier: {
     name: 'rollbar.js',
@@ -37,6 +33,9 @@ const options = {
     enabled: true,
     autoStart: true,
     emitEveryNms: 50,
+  },
+  payload: {
+    environment: 'testenv',
   },
 };
 
@@ -117,6 +116,9 @@ describe('Session Replay E2E', function () {
 
       queue.addItem(errorItem, function (err, resp) {
         expect(errorItem).to.have.property('replayId');
+        const expectedReplayId = errorItem.replayId;
+        expect(expectedReplayId).to.match(/^[0-9a-fA-F]{16}$/);
+
         expect(replayMapAddSpy.calledOnce).to.be.true;
         expect(apiPostItemSpy.calledOnce).to.be.true;
 
@@ -131,20 +133,33 @@ describe('Session Replay E2E', function () {
           expect(payload).to.be.an('object');
           expect(payload).to.have.property('resourceSpans');
           expect(payload.resourceSpans).to.be.an('array');
+          expect(payload.resourceSpans).to.have.length.greaterThan(0);
 
-          if (
-            payload.resourceSpans.length > 0 &&
-            payload.resourceSpans[0].scopeSpans &&
-            payload.resourceSpans[0].scopeSpans.length > 0 &&
-            payload.resourceSpans[0].scopeSpans[0].spans &&
-            payload.resourceSpans[0].scopeSpans[0].spans.length > 0
-          ) {
-            const span = payload.resourceSpans[0].scopeSpans[0].spans[0];
-            expect(span).to.have.property('name', 'rrweb-replay-recording');
-            expect(span).to.have.property('events');
-            expect(span.events).to.be.an('array');
-            expect(span).to.have.property('attributes').that.is.an('array');
-          }
+          const resourceSpan = payload.resourceSpans[0];
+          expect(resourceSpan).to.have.property('resource');
+
+          const resource = payload.resourceSpans[0].resource;
+          expect(resource).to.deep.equal(
+            payloads.standardPayload.resourceSpans[0].resource,
+          );
+
+          const span = resourceSpan.scopeSpans[0].spans[0];
+          expect(span).to.have.property('name', 'rrweb-replay-recording');
+          expect(span).to.have.property('events');
+          expect(span.events).to.be.an('array');
+          expect(span).to.have.property('attributes').that.is.an('array');
+          expect(span.attributes).to.have.lengthOf(2);
+
+          expect(span.attributes).to.deep.include({
+            key: 'rollbar.replay.id',
+            value: { stringValue: expectedReplayId },
+          });
+
+          const sessionIdAttr = span.attributes.find(
+            (attr) => attr.key === 'session.id',
+          );
+          expect(sessionIdAttr).to.exist;
+          expect(sessionIdAttr.value.stringValue).to.match(/^[0-9a-fA-F]{32}$/);
 
           const transportArgs = transport.post.lastCall.args;
           expect(transportArgs[1].path).to.include('/api/1/session/');

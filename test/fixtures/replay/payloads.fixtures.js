@@ -9,7 +9,18 @@ import { EventType } from '@rrweb/types';
 export const standardPayload = {
   resourceSpans: [
     {
-      resource: { attributes: [] },
+      resource: {
+        attributes: [
+          {
+            key: 'service.name',
+            value: { stringValue: 'test_service' },
+          },
+          {
+            key: 'rollbar.environment',
+            value: { stringValue: 'testenv' },
+          },
+        ],
+      },
       scopeSpans: [
         {
           scope: { name: 'rollbar.js', version: '1.0.0', attributes: [] },
