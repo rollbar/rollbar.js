@@ -304,6 +304,7 @@ describe('Recorder', function () {
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
+      emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
 
       recorder.dump(mockTracing, testReplayId);
 
@@ -346,6 +347,19 @@ describe('Recorder', function () {
 
       const result = recorder.dump(mockTracing, testReplayId);
 
+      expect(result).to.be.null;
+      expect(mockTracing.startSpan.called).to.be.false;
+      expect(mockTracing.exporter.toPayload.called).to.be.false;
+    });
+
+    it('should handle less than 2 events (invalid recording)', function () {
+      const recorder = new Recorder({}, recordFnStub);
+      recorder.start();
+      
+      emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
+      
+      const result = recorder.dump(mockTracing, testReplayId);
+      
       expect(result).to.be.null;
       expect(mockTracing.startSpan.called).to.be.false;
       expect(mockTracing.exporter.toPayload.called).to.be.false;

@@ -64,8 +64,8 @@ export default class Recorder {
   dump(tracing, replayId, occurrenceUuid) {
     const events = this.#events.previous.concat(this.#events.current);
 
-    if (events.length === 0) {
-      console.warn('Recorder.dump: No events to dump');
+    if (events.length < 2) {
+      console.warn(`Recorder.dump: Min 2 events req. Found ${events.length}`);
       return null;
     }
 
