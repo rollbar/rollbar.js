@@ -30,9 +30,6 @@ function Rollbar(options, client) {
 
   const transport = new Transport(truncation);
   const api = new API(this.options, transport, urllib, truncation);
-  if (Telemeter) {
-    this.telemeter = new Telemeter(this.options);
-  }
   if (Tracing) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
@@ -52,6 +49,9 @@ function Rollbar(options, client) {
     }
   }
 
+  if (Telemeter) {
+    this.telemeter = new Telemeter(this.options, this.tracing);
+  }
   this.client =
     client || new Client(this.options, api, logger, this.telemeter, this.tracing, this.replayMap, 'browser');
   var gWindow = _gWindow();

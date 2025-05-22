@@ -613,7 +613,7 @@ Instrumenter.prototype.instrumentConsole = function () {
     c[method] = function () {
       var args = Array.prototype.slice.call(arguments);
       var message = _.formatArgsAsString(args);
-      self.telemeter.captureLog(message, level);
+      self.telemeter.captureLog(message, level, null, _.now());
       if (orig) {
         Function.prototype.apply.call(orig, origConsole, args);
       }
@@ -822,7 +822,7 @@ Instrumenter.prototype.handleUrlChange = function (from, to) {
   ) {
     from = parsedFrom.path + (parsedFrom.hash || '');
   }
-  this.telemeter.captureNavigation(from, to);
+  this.telemeter.captureNavigation(from, to, _.now());
 };
 
 Instrumenter.prototype.deinstrumentConnectivity = function () {
@@ -922,7 +922,7 @@ Instrumenter.prototype.handleCspEvent = function (cspEvent) {
 
   message += 'originalPolicy: ' + cspEvent.originalPolicy;
 
-  this.telemeter.captureLog(message, 'error');
+  this.telemeter.captureLog(message, 'error', null, _.now());
   this.handleCspError(message);
 };
 

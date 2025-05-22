@@ -1,12 +1,15 @@
 var _ = require('./utility');
+const hrtime = require('./tracing/hrtime').default;
 
-var MAX_EVENTS = 100;
+const MAX_EVENTS = 100;
 
-function Telemeter(options) {
+function Telemeter(options, tracing) {
   this.queue = [];
   this.options = _.merge(options);
   var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
   this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+  this.tracing = tracing;
+  this.telemetrySpan = this.tracing?.startSpan('rollbar-telemetry', {});
 }
 
 Telemeter.prototype.configure = function (options) {
@@ -87,12 +90,25 @@ Telemeter.prototype.captureError = function (
   rollbarUUID,
   timestamp,
 ) {
-  var metadata = {
-    message: err.message || String(err),
-  };
+  const message = err.message || String(err);
+  var metadata = {message};
   if (err.stack) {
     metadata.stack = err.stack;
   }
+  this.telemetrySpan?.addEvent(
+    'rollbar-occurrence-event',
+    {
+      message,
+      level,
+      type: 'error',
+      uuid: rollbarUUID,
+      'occurrence.type': 'error', // deprecated
+      'occurrence.uuid': rollbarUUID, // deprecated
+    },
+
+    hrtime.fromMillis(timestamp),
+  );
+
   return this.capture('error', metadata, level, rollbarUUID, timestamp);
 };
 
@@ -102,11 +118,31 @@ Telemeter.prototype.captureLog = function (
   rollbarUUID,
   timestamp,
 ) {
+  // If the uuid is present, this is a message occurrence.
+  if (rollbarUUID) {
+    this.telemetrySpan?.addEvent(
+      'rollbar-occurrence-event',
+      {
+        message,
+        level,
+        type: 'message',
+        uuid: rollbarUUID,
+        'occurrence.type': 'message', // deprecated
+        'occurrence.uuid': rollbarUUID, // deprecated
+      },
+      hrtime.fromMillis(timestamp),
+    );
+  } else {
+    this.telemetrySpan?.addEvent(
+      'log-event',
+      {message, level},
+      hrtime.fromMillis(timestamp),
+    );
+  }
+
   return this.capture(
     'log',
-    {
-      message: message,
-    },
+    {message},
     level,
     rollbarUUID,
     timestamp,
@@ -158,12 +194,19 @@ Telemeter.prototype.captureDom = function (
   return this.capture('dom', metadata, 'info', rollbarUUID);
 };
 
-Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID) {
+Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID, timestamp) {
+  this.telemetrySpan?.addEvent(
+    'session-navigation-event',
+    {'previous.url.full': from, 'url.full': to},
+    hrtime.fromMillis(timestamp),
+  );
+
   return this.capture(
     'navigation',
-    { from: from, to: to },
+    {from, to},
     'info',
     rollbarUUID,
+    timestamp,
   );
 };
 

@@ -3,7 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-var Telemeter = require('../src/telemetry');
+const Telemeter = require('../src/telemetry');
+const Tracing = require('../src/tracing/tracing').default;
 
 describe('Telemetry()', function () {
   it('should have all of the expected methods', function (done) {
@@ -43,6 +44,96 @@ describe('captureEvent', function () {
     expect(event.level).to.equal('info');
     expect(event.body.message).to.equal('bar');
 
+    done();
+  });
+});
+
+describe('capture events', function () {
+  beforeEach(function () {
+    const tracing = new Tracing(
+      window,
+      {
+        resource: {
+          'service.name': 'Test',
+        },
+      }
+    );
+    tracing.initSession();
+    this.t = new Telemeter({includeItemsInTelemetry: true}, tracing);
+  });
+
+  it('should return a valid log event', function (done) {
+    const timestamp = 12345.678;
+    const event = this.t.captureLog('foo', 'info', null, timestamp);
+    expect(event.type).to.equal('log');
+    expect(event.level).to.equal('info');
+    expect(event.body.message).to.equal('foo');
+    expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(this.t.telemetrySpan).to.be.an('object');
+    const otelEvent = this.t.telemetrySpan.span.events[0];
+    expect(otelEvent.name).to.equal('log-event');
+    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.attributes).to.eql({ message: 'foo', level: 'info' });
+    done();
+  });
+
+  it('should return a valid error event', function (done) {
+    const timestamp = 12345.678;
+    const error = new Error('foo');
+    const uuid = '12345-67890';
+    const event = this.t.captureError(error, 'info', uuid, timestamp);
+    expect(event.type).to.eql('error');
+    expect(event.level).to.equal('info');
+    expect(event.body.message).to.equal('foo');
+    expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(this.t.telemetrySpan).to.be.an('object');
+    const otelEvent = this.t.telemetrySpan.span.events[0];
+    expect(otelEvent.name).to.eql('rollbar-occurrence-event');
+    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.attributes).to.eql(
+      { type: 'error', 'occurrence.type': 'error', message: 'foo', level: 'info', uuid: uuid, 'occurrence.uuid': uuid }
+    );
+    done();
+  });
+
+  it('should return a valid message event', function (done) {
+    const timestamp = 12345.678;
+    const uuid = '12345-67890';
+    const item = { message: 'foo', level: 'info', uuid: uuid, timestamp: timestamp };
+    const event = this.t._captureRollbarItem(item);
+    expect(event.type).to.eql('log');
+    expect(event.level).to.equal('info');
+    expect(event.body.message).to.equal('foo');
+    expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(this.t.telemetrySpan).to.be.an('object');
+    const otelEvent = this.t.telemetrySpan.span.events[0];
+    expect(otelEvent.name).to.eql('rollbar-occurrence-event');
+    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.attributes).to.eql(
+      { type: 'message', 'occurrence.type': 'message', message: 'foo', level: 'info', uuid: uuid, 'occurrence.uuid': uuid }
+    );
+    done();
+  });
+
+  it('should return a valid navigation event', function (done) {
+    const timestamp = 12345.678;
+    const from = 'foo';
+    const to = 'bar';
+    const event = this.t.captureNavigation(from, to, null, timestamp);
+    expect(event.type).to.equal('navigation');
+    expect(event.level).to.equal('info');
+    expect(event.body.from).to.equal('foo');
+    expect(event.body.to).to.equal('bar');
+    expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(this.t.telemetrySpan).to.be.an('object');
+    const otelEvent = this.t.telemetrySpan.span.events[0];
+    expect(otelEvent.name).to.equal('session-navigation-event');
+    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.attributes).to.eql({ 'previous.url.full': 'foo', 'url.full': 'bar' });
     done();
   });
 });
