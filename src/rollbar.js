@@ -158,10 +158,21 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
+
     item.level = item.level || defaultLevel;
-    this.telemeter && this.telemeter._captureRollbarItem(item);
-    item.telemetryEvents =
-      (this.telemeter && this.telemeter.copyEvents()) || [];
+
+
+    const telemeter = this.telemeter;
+    if (telemeter) {
+      telemeter._captureRollbarItem(item);
+      item.telemetryEvents = telemeter.copyEvents() || [];
+
+      if (telemeter.telemetrySpan) {
+        telemeter.telemetrySpan.end();
+        telemeter.telemetrySpan = telemeter.tracing.startSpan('rollbar-telemetry', {});
+      }
+    }
+
     this.notifier.log(item, callback);
   } catch (e) {
     if (callback) {
