@@ -1,7 +1,11 @@
 var _ = require('./utility');
-const hrtime = require('./tracing/hrtime').default;
 
 const MAX_EVENTS = 100;
+
+// Temporary workaround while solving commonjs -> esm issues in Node 18 - 20.
+function fromMillis(millis) {
+  return [Math.trunc(millis / 1000), Math.round((millis % 1000) * 1e6)];
+}
 
 function Telemeter(options, tracing) {
   this.queue = [];
@@ -106,7 +110,7 @@ Telemeter.prototype.captureError = function (
       'occurrence.uuid': rollbarUUID, // deprecated
     },
 
-    hrtime.fromMillis(timestamp),
+    fromMillis(timestamp),
   );
 
   return this.capture('error', metadata, level, rollbarUUID, timestamp);
@@ -130,13 +134,13 @@ Telemeter.prototype.captureLog = function (
         'occurrence.type': 'message', // deprecated
         'occurrence.uuid': rollbarUUID, // deprecated
       },
-      hrtime.fromMillis(timestamp),
+      fromMillis(timestamp),
     );
   } else {
     this.telemetrySpan?.addEvent(
       'log-event',
       {message, level},
-      hrtime.fromMillis(timestamp),
+      fromMillis(timestamp),
     );
   }
 
@@ -198,7 +202,7 @@ Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID, timesta
   this.telemetrySpan?.addEvent(
     'session-navigation-event',
     {'previous.url.full': from, 'url.full': to},
-    hrtime.fromMillis(timestamp),
+    fromMillis(timestamp),
   );
 
   return this.capture(
