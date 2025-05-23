@@ -1,7 +1,7 @@
 var http = require('http');
 var https = require('https');
 var _ = require('../utility');
-var replace = require('../utility/replace');
+var replace = require('../utility/replace.ts');
 var urlHelpers = require('./telemetry/urlHelpers');
 
 var defaults = {
