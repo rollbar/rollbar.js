@@ -643,11 +643,24 @@ function createTelemetryEvent(args) {
   return event;
 }
 
-function addItemAttributes(item, attributes) {
-  item.data.attributes = item.data.attributes || [];
-  if (attributes) {
-    item.data.attributes.push(...attributes);
+function addItemAttributes(itemData, attributes) {
+  itemData.attributes = itemData.attributes || [];
+  for (const a of attributes) {
+    if (a.value === undefined) {
+      continue;
+    }
+    itemData.attributes.push(a);
   }
+}
+
+function getItemAttribute(itemData, key) {
+  const attributes = itemData.attributes || [];
+  for (let i = 0; i < attributes.length; ++i) {
+    if (attributes[i].key === key) {
+      return attributes[i].value;
+    }
+  }
+  return undefined;
 }
 
 /*
@@ -804,6 +817,7 @@ module.exports = {
   addErrorContext: addErrorContext,
   createTelemetryEvent: createTelemetryEvent,
   addItemAttributes: addItemAttributes,
+  getItemAttribute: getItemAttribute,
   filterIp: filterIp,
   formatArgsAsString: formatArgsAsString,
   formatUrl: formatUrl,

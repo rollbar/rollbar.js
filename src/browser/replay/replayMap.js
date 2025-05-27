@@ -71,8 +71,8 @@ export default class ReplayMap {
    *
    * @returns {string} A unique identifier for this replay
    */
-  add(occurrenceUuid) {
-    const replayId = id.gen(8);
+  add(replayId, occurrenceUuid) {
+    replayId = replayId || id.gen(8);
 
     this._processReplay(replayId, occurrenceUuid).catch((error) => {
       console.error('Failed to process replay:', error);

@@ -91,4 +91,15 @@ describe('Tracing()', function () {
 
     done();
   });
+
+  it('should generate ids', function (done) {
+    const options = tracingOptions();
+    const t = new Tracing(window, options);
+
+    const replayId = t.idGen(8);
+
+    expect(replayId).to.match(/^[a-f0-9]{16}$/);
+
+    done();
+  });
 });

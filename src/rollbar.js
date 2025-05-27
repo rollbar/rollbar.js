@@ -154,13 +154,13 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     return;
   }
   try {
-    this._addTracingAttributes(item);
+    const replayId = this.tracing?.idGen(8);
+    this._addTracingAttributes(item, replayId);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
 
     item.level = item.level || defaultLevel;
-
 
     const telemeter = this.telemeter;
     if (telemeter) {
@@ -168,7 +168,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
       item.telemetryEvents = telemeter.copyEvents() || [];
 
       if (telemeter.telemetrySpan) {
-        telemeter.telemetrySpan.end();
+        telemeter.telemetrySpan.end({'rollbar.replay.id': replayId});
         telemeter.telemetrySpan = telemeter.tracing.startSpan('rollbar-telemetry', {});
       }
     }
@@ -182,19 +182,18 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
 };
 
-Rollbar.prototype._addTracingAttributes = function (item) {
+Rollbar.prototype._addTracingAttributes = function (item, replayId) {
   const span = this.tracing?.getSpan();
-  if (!span) {
-    return;
-  }
-  const attributes = [
-    {key: 'session_id', value: this.tracing.sessionId},
-    {key: 'span_id', value: span.spanId},
-    {key: 'trace_id', value: span.traceId},
-  ];
-  _.addItemAttributes(item, attributes);
 
-  span.addEvent(
+  const attributes = [
+    {key: 'replay_id', value: replayId},
+    {key: 'session_id', value: this.tracing?.sessionId},
+    {key: 'span_id', value: span?.spanId},
+    {key: 'trace_id', value: span?.traceId},
+  ];
+  _.addItemAttributes(item.data, attributes);
+
+  span?.addEvent(
     'rollbar.occurrence',
     [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
   );
