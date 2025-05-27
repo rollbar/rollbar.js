@@ -3,6 +3,7 @@ import { Session } from './session.js';
 import { SpanExporter } from './exporter.js';
 import { SpanProcessor } from './spanProcessor.js';
 import { Tracer } from './tracer.js';
+import id from './id.js';
 
 const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 
@@ -43,6 +44,10 @@ export default class Tracing {
       name: 'rollbar-browser-js',
       version: this.options.version,
     };
+  }
+
+  idGen(bytes = 16) {
+    return id.gen(bytes);
   }
 
   createTracer() {

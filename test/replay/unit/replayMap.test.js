@@ -139,6 +139,20 @@ describe('ReplayMap', function () {
   });
 
   describe('add', function () {
+    it('should use provided replayId and initiate async processing', function () {
+      const replayId = '1122334455667788';
+      const uuid = '12345678-1234-5678-1234-1234567890ab';
+      const processStub = sinon
+        .stub(replayMap, '_processReplay')
+        .resolves('1234567890abcdef');
+
+      const resp = replayMap.add(replayId, uuid);
+
+      expect(resp).to.equal(replayId);
+      expect(id.gen.calledWith(8)).to.be.false;
+      expect(processStub.calledWith(replayId, uuid)).to.be.true;
+    });
+
     it('should generate a replayId and initiate async processing', function () {
       const processStub = sinon
         .stub(replayMap, '_processReplay')

@@ -924,3 +924,36 @@ describe('formatArgsAsString', function () {
   });
   */
 });
+
+describe('addItemAttributes', function () {
+  it('should skip undefined values', function () {
+    const item = { data: {} };
+    const attributes = [
+      {key: 'replay_id', value: '12345'},
+      {key: 'session_id', value: undefined},
+    ];
+    _.addItemAttributes(item.data, attributes);
+    expect(item.data.attributes).to.be.an('array');
+    expect(item.data.attributes.length).to.equal(1);
+    expect(item.data.attributes[0].key).to.equal('replay_id');
+    expect(item.data.attributes[0].value).to.equal('12345');
+  });
+});
+
+describe('getItemAttribute', function () {
+  it('should skip undefined values', function () {
+    const item = {
+      data: {
+        attributes: [
+          {key: 'replay_id', value: '12345'},
+          {key: 'session_id', value: '67890'},
+        ]
+      }
+    };
+    let value = _.getItemAttribute(item.data, 'replay_id');
+    expect(value).to.equal('12345');
+    value = _.getItemAttribute(item.data, 'session_id');
+    expect(value).to.equal('67890');
+  });
+});
+
