@@ -9,5 +9,5 @@ export function multiply(a, b) {
 
 export default {
   add,
-  multiply
+  multiply,
 };
