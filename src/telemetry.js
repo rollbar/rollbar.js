@@ -138,7 +138,7 @@ Telemeter.prototype.captureLog = function (
     );
   } else {
     this.telemetrySpan?.addEvent(
-      'log-event',
+      'rollbar-log-event',
       {message, level},
       fromMillis(timestamp),
     );

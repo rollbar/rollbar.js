@@ -72,7 +72,7 @@ describe('capture events', function () {
 
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
-    expect(otelEvent.name).to.equal('log-event');
+    expect(otelEvent.name).to.equal('rollbar-log-event');
     expect(otelEvent.time).to.eql([ 12, 345678000 ]);
     expect(otelEvent.attributes).to.eql({ message: 'foo', level: 'info' });
     done();
