@@ -2,20 +2,18 @@ import { playwrightLauncher } from '@web/test-runner-playwright';
 
 export default {
   browsers: [playwrightLauncher({ product: 'chromium' })],
-  
-  // Look for bundled test files
+
   files: 'test-dist/**/*.js',
-  
-  // Basic test framework config
+
   testFramework: {
-    config: { 
+    config: {
       ui: 'bdd',
       timeout: 10000, // Match Karma timeout
     },
   },
 
   // Load test framework libraries globally (like Karma did)
-  testRunnerHtml: testFramework => `
+  testRunnerHtml: (testFramework) => `
     <html>
       <body>
         <script src="/node_modules/chai/chai.js"></script>
