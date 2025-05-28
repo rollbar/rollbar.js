@@ -138,7 +138,7 @@ Telemeter.prototype.captureLog = function (
     );
   } else {
     this.telemetrySpan?.addEvent(
-      'log-event',
+      'rollbar-log-event',
       {message, level},
       fromMillis(timestamp),
     );
@@ -218,7 +218,7 @@ Telemeter.prototype.captureDom = function (
 
 Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID, timestamp) {
   this.telemetrySpan?.addEvent(
-    'session-navigation-event',
+    'rollbar-navigation-event',
     {'previous.url.full': from, 'url.full': to},
     fromMillis(timestamp),
   );
