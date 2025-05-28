@@ -165,7 +165,25 @@ Telemeter.prototype.captureNetwork = function (
     metadata.request = requestData;
   }
   var level = this.levelFromStatus(metadata.status_code);
-  return this.capture('network', metadata, level, rollbarUUID);
+
+  const endTimeNano = (metadata.end_time_ms || 0) * 1e6;
+
+  this.telemetrySpan?.addEvent(
+    'rollbar-network-event',
+    {
+      type: metadata.subtype,
+      method: metadata.method,
+      url : metadata.url,
+      statusCode : metadata.status_code,
+      'request.headers': JSON.stringify(metadata.request_headers || {}),
+      'response.headers': JSON.stringify(metadata.response?.headers || {}),
+      'response.timeUnixNano': endTimeNano.toString(),
+    },
+
+    fromMillis(metadata.start_time_ms)
+  );
+
+  return this.capture('network', metadata, level, rollbarUUID, metadata.start_time_ms);
 };
 
 Telemeter.prototype.levelFromStatus = function (statusCode) {

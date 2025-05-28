@@ -136,6 +136,46 @@ describe('capture events', function () {
     expect(otelEvent.attributes).to.eql({ 'previous.url.full': 'foo', 'url.full': 'bar' });
     done();
   });
+
+  it('should return a valid network event', function (done) {
+    const subtype = 'xhr';
+    const timestamp = 12345.678;
+    const metadata = {
+      url: 'https://example.com',
+      method: 'GET',
+      status_code: 400,
+      request_headers: { 'Content-Type': 'application/json' },
+      response: {
+        headers: { 'Content-Type': 'application/json' },
+      },
+      start_time_ms: timestamp,
+      end_time_ms: 12345678,
+    };
+    const event = this.t.captureNetwork(metadata, subtype, null, null);
+    expect(event.type).to.eql('network');
+    expect(event.level).to.equal('error');
+    expect(event.body.url).to.equal(metadata.url);
+    expect(event.body.method).to.equal(metadata.method);
+    expect(event.body.status_code).to.equal(metadata.status_code);
+    expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(this.t.telemetrySpan).to.be.an('object');
+    const otelEvent = this.t.telemetrySpan.span.events[0];
+    expect(otelEvent.name).to.eql('rollbar-network-event');
+    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.attributes).to.eql(
+      {
+        type: subtype,
+        method: metadata.method,
+        statusCode: metadata.status_code,
+        url: metadata.url,
+        'request.headers': JSON.stringify(metadata.request_headers),
+        'response.headers': JSON.stringify(metadata.response.headers),
+        'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
+      }
+    );
+    done();
+  });
 });
 
 describe('filterTelemetry', function () {
