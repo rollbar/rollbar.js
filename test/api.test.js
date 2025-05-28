@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-var API = require('../src/api');
-var utility = require('../src/utility');
+import API from '../src/api.js';
+import utility from '../src/utility.js';
 utility.setupJSON();
 
 function TestTransportGenerator() {
@@ -143,7 +143,7 @@ describe('postSpans', function () {
   });
 
   it('should call post on the transport object', async function () {
-    const urllib = require('../src/browser/url');
+    const urllib = await import('../src/browser/url.js');
     const response = 'yes';
     const url = {
       parse: function (e) {
