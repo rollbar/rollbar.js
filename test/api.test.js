@@ -161,7 +161,7 @@ describe('postSpans', function () {
     const api = new API(options, transport, urllib);
 
     const data = { a: 1 };
-    await api.postSpans(data)
+    await api.postSpans(data);
 
     expect(transport.post.called).to.be.true;
 
