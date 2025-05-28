@@ -822,7 +822,7 @@ Instrumenter.prototype.handleUrlChange = function (from, to) {
   ) {
     from = parsedFrom.path + (parsedFrom.hash || '');
   }
-  this.telemeter.captureNavigation(from, to, _.now());
+  this.telemeter.captureNavigation(from, to, null, _.now());
 };
 
 Instrumenter.prototype.deinstrumentConnectivity = function () {
