@@ -28,9 +28,6 @@ function TestTransportGenerator() {
 
 describe('Api()', function () {
   it('use the defaults if no custom endpoint is given', function (done) {
-    var a = undefined;
-    a.hello();
-
     var transport = new (TestTransportGenerator())();
     var url = {
       parse: function (e) {
