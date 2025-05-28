@@ -3,7 +3,7 @@ import { playwrightLauncher } from '@web/test-runner-playwright';
 export default {
   browsers: [playwrightLauncher({ product: 'chromium' })],
 
-  files: 'test-dist/**/*.js',
+  files: 'test-dist/browser/**/*.js',
 
   testFramework: {
     config: {

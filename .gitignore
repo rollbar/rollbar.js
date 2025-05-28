@@ -13,3 +13,5 @@ npm-debug.log
 CLAUDE.*.*
 .aider*
 .codex/instructions.md
+
+test-dist/
