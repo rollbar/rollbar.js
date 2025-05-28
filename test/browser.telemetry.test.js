@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var Instrumenter = require('../src/browser/telemetry');
+import Instrumenter from '../src/browser/telemetry.js';
 
 describe('instrumentNetwork', function () {
   it('should capture XHR requests with string URL', function (done) {

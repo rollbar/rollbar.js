@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var p = require('../src/predicates');
+import p from '../src/predicates.js';
 var logger = {
   log: function () {},
   error: function () {},

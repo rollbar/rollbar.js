@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-const Telemeter = require('../src/telemetry');
-const Tracing = require('../src/tracing/tracing').default;
+import Telemeter from '../src/telemetry.js';
+import Tracing from '../src/tracing/tracing.js';
 
 describe('Telemetry()', function () {
   it('should have all of the expected methods', function (done) {

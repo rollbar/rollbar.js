@@ -3,7 +3,7 @@
 /* globals it */
 
 // Import Rollbar directly from the source
-var Rollbar = require('../../dist/rollbar.umd.js');
+import Rollbar from '../../dist/rollbar.umd.js';
 
 describe('Angular integration', function () {
   // Utility function to create a test-enabled Rollbar instance

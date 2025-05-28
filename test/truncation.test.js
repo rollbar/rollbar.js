@@ -2,8 +2,8 @@
 /* globals describe */
 /* globals it */
 
-var t = require('../src/truncation');
-var utility = require('../src/utility');
+import t from '../src/truncation.js';
+import utility from '../src/utility.js';
 utility.setupJSON();
 
 describe('truncate', function () {

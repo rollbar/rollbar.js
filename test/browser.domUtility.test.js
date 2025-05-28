@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var d = require('../src/browser/domUtility');
+import * as d from '../src/browser/domUtility.js';
 
 function fullElement() {
   return {

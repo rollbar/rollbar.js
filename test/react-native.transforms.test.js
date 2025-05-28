@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-var Rollbar = require('../src/react-native/rollbar');
-var t = require('../src/react-native/transforms');
+import Rollbar from '../src/react-native/rollbar.js';
+import t from '../src/react-native/transforms.js';
 
 function TestClientGen() {
   var TestClient = function () {

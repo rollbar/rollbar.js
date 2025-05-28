@@ -2,8 +2,8 @@
 /* globals describe */
 /* globals it */
 
-var _ = require('../src/utility');
-var t = require('../src/transforms');
+import _ from '../src/utility.js';
+import t from '../src/transforms.js';
 
 function itemFromArgs(args) {
   var item = _.createItem(args);

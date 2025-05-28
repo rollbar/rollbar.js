@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var p = require('../src/browser/predicates');
+import * as p from '../src/browser/predicates.js';
 
 describe('checkIgnore', function () {
   it('should return false if is ajax and ignoring ajax errors is on', function () {

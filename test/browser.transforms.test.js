@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-var Rollbar = require('../src/browser/rollbar');
-var t = require('../src/browser/transforms');
+import Rollbar from '../src/browser/rollbar.js';
+import t from '../src/browser/transforms.js';
 
 function TestClientGen() {
   var TestClient = function () {
@@ -527,7 +527,7 @@ describe('addBody', function () {
 });
 
 describe('scrubPayload', function () {
-  it('only scrubs payload data', function (done) {
+  it('only scrubs payload data', async function () {
     var args = [
       'a message',
       { scooby: 'doo', okay: 'fizz=buzz&fuzz=baz', user: { id: 42 } },
@@ -547,16 +547,23 @@ describe('scrubPayload', function () {
     expect(payload.data.custom.okay).to.eql('fizz=buzz&fuzz=baz');
     expect(payload.data.custom.user.id).to.eql(42);
 
-    var scrub = require('../src/scrub');
-    t.addScrubber(scrub)(payload, options, function (e, i) {
-      expect(i.access_token).to.eql(accessToken);
-      expect(i.data.custom.scooby).to.not.eql('doo');
-      expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
-      expect(payload.data.custom.okay).to.match(/fizz=\*+&fuzz=baz/);
-      expect(payload.data.custom.user.id).to.not.be.ok();
-      expect(payload.data.custom.user).to.match(/\*+/);
-      expect(i.data.message).to.eql('a message');
-      done(e);
+    const scrubModule = await import('../src/scrub.js');
+    const scrub = scrubModule.default;
+
+    const scrubberFn = t.addScrubber(scrub);
+    const result = await new Promise((resolve, reject) => {
+      scrubberFn(payload, options, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
     });
+
+    expect(result.access_token).to.eql(accessToken);
+    expect(result.data.custom.scooby).to.not.eql('doo');
+    expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
+    expect(payload.data.custom.okay).to.match(/fizz=\*+&fuzz=baz/);
+    expect(payload.data.custom.user.id).to.not.be.ok();
+    expect(payload.data.custom.user).to.match(/\*+/);
+    expect(result.data.message).to.eql('a message');
   });
 });

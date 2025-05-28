@@ -3,10 +3,10 @@
 /* globals it */
 /* globals sinon */
 
-var truncation = require('../src/truncation');
-var Transport = require('../src/browser/transport');
-var t = new Transport(truncation);
-var utility = require('../src/utility');
+import truncation from '../src/truncation.js';
+import Transport from '../src/browser/transport.js';
+const t = new Transport(truncation);
+import * as utility from '../src/utility.js';
 utility.setupJSON();
 
 describe('post', function () {

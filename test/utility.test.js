@@ -3,9 +3,9 @@
 /* globals it */
 /* globals sinon */
 
-var _ = require('../src/utility');
-var utility = require('../src/utility');
-var polyfillJSON = require('../vendor/JSON-js/json3');
+import _ from '../src/utility.js';
+import utility from '../src/utility.js';
+import polyfillJSON from '../vendor/JSON-js/json3.js';
 
 utility.setupJSON();
 
@@ -448,7 +448,7 @@ describe('merge', function () {
   });
 });
 
-var traverse = require('../src/utility/traverse');
+import traverse from '../src/utility/traverse.js';
 describe('traverse', function () {
   describe('should call the func for every key,value', function () {
     it('simple object', function (done) {
@@ -618,7 +618,13 @@ describe('addParamsAndAccessTokenToPath', function () {
 });
 
 describe('json3', function () {
-  var setupCustomJSON = require('../vendor/JSON-js/json3.js');
+  let setupCustomJSON;
+
+  before(async function () {
+    const module = await import('../vendor/JSON-js/json3.js');
+    setupCustomJSON = module.default;
+  });
+
   it('should replace stringify if not there', function () {
     var j = {};
     setupCustomJSON(j);
@@ -767,7 +773,7 @@ describe('set', function () {
   });
 });
 
-var scrub = require('../src/scrub');
+import scrub from '../src/scrub.js';
 describe('scrub', function () {
   it('should not redact fields that are okay', function () {
     var data = {
@@ -929,8 +935,8 @@ describe('addItemAttributes', function () {
   it('should skip undefined values', function () {
     const item = { data: {} };
     const attributes = [
-      {key: 'replay_id', value: '12345'},
-      {key: 'session_id', value: undefined},
+      { key: 'replay_id', value: '12345' },
+      { key: 'session_id', value: undefined },
     ];
     _.addItemAttributes(item.data, attributes);
     expect(item.data.attributes).to.be.an('array');
@@ -945,10 +951,10 @@ describe('getItemAttribute', function () {
     const item = {
       data: {
         attributes: [
-          {key: 'replay_id', value: '12345'},
-          {key: 'session_id', value: '67890'},
-        ]
-      }
+          { key: 'replay_id', value: '12345' },
+          { key: 'session_id', value: '67890' },
+        ],
+      },
     };
     let value = _.getItemAttribute(item.data, 'replay_id');
     expect(value).to.equal('12345');
@@ -956,4 +962,3 @@ describe('getItemAttribute', function () {
     expect(value).to.equal('67890');
   });
 });
-

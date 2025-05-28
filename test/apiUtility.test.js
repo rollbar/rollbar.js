@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-var u = require('../src/apiUtility');
-var utility = require('../src/utility');
+import u from '../src/apiUtility.js';
+import utility from '../src/utility.js';
 utility.setupJSON();
 
 describe('buildPayload', function () {

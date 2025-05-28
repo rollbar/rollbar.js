@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var Rollbar = require('../src/react-native/rollbar');
+import Rollbar from '../src/react-native/rollbar.js';
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: true,

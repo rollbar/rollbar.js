@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var Rollbar = require('../src/browser/rollbar');
+import Rollbar from '../src/browser/rollbar.js';
 
 const DUMMY_TRACE_ID = 'some-trace-id';
 const DUMMY_SPAN_ID = 'some-span-id';
