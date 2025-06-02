@@ -63,7 +63,7 @@ export default class Recorder {
     const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length < 2) {
-      logger.error('Recorder: Cannot dump less than 2 events.');
+      logger.error('Replay recording cannot have less than 2 events');
       return null;
     }
 
