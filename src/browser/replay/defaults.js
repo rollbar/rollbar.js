@@ -3,7 +3,7 @@
  * See https://github.com/rrweb-io/rrweb/blob/master/guide.md#options for details
  */
 export default {
-  enabled: false, // Whether recording is enabled
+  enabled: true, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
   debug: {
     logEmits: false, // Whether to log emitted events
