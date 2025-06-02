@@ -1,4 +1,5 @@
 import id from '../../tracing/id.js';
+import logger from '../logger.js';
 
 /**
  * ReplayMap - Manages the mapping between error occurrences and their associated
@@ -50,11 +51,15 @@ export default class ReplayMap {
    */
   async _processReplay(replayId, occurrenceUuid) {
     try {
-      const payload = this.#recorder.dump(this.#tracing, replayId, occurrenceUuid);
+      const payload = this.#recorder.dump(
+        this.#tracing,
+        replayId,
+        occurrenceUuid,
+      );
 
       this.#map.set(replayId, payload);
     } catch (transformError) {
-      console.error('Error transforming spans:', transformError);
+      logger.error('Error transforming spans:', transformError);
 
       this.#map.set(replayId, null); // TODO(matux): Error span?
     }
@@ -75,7 +80,7 @@ export default class ReplayMap {
     replayId = replayId || id.gen(8);
 
     this._processReplay(replayId, occurrenceUuid).catch((error) => {
-      console.error('Failed to process replay:', error);
+      logger.error('Failed to process replay:', error);
     });
 
     return replayId;
@@ -94,12 +99,12 @@ export default class ReplayMap {
    */
   async send(replayId) {
     if (!replayId) {
-      console.warn('ReplayMap.send: No replayId provided');
+      logger.error('ReplayMap.send: No replayId provided');
       return false;
     }
 
     if (!this.#map.has(replayId)) {
-      console.warn(`ReplayMap.send: No replay found for replayId: ${replayId}`);
+      logger.error(`ReplayMap.send: No replay found for replayId: ${replayId}`);
       return false;
     }
 
@@ -113,7 +118,7 @@ export default class ReplayMap {
       (payload.resourceSpans && payload.resourceSpans.length === 0);
 
     if (isEmpty) {
-      console.warn(
+      logger.error(
         `ReplayMap.send: No payload found for replayId: ${replayId}`,
       );
       return false;
@@ -123,7 +128,7 @@ export default class ReplayMap {
       await this.#api.postSpans(payload);
       return true;
     } catch (error) {
-      console.error('Error sending replay:', error);
+      logger.error('Error sending replay:', error);
       return false;
     }
   }
@@ -137,12 +142,12 @@ export default class ReplayMap {
    */
   discard(replayId) {
     if (!replayId) {
-      console.warn('ReplayMap.discard: No replayId provided');
+      logger.error('ReplayMap.discard: No replayId provided');
       return false;
     }
 
     if (!this.#map.has(replayId)) {
-      console.warn(
+      logger.error(
         `ReplayMap.discard: No replay found for replayId: ${replayId}`,
       );
       return false;

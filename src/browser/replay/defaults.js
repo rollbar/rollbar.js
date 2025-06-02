@@ -6,6 +6,7 @@ export default {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
   debug: {
+    logErrors: true, // Whether to log errors emitted by rrweb.
     logEmits: false, // Whether to log emitted events
   },
 

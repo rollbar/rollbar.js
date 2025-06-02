@@ -2,6 +2,7 @@ import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
 
 import hrtime from '../../tracing/hrtime.js';
+import logger from '../logger.js';
 
 export default class Recorder {
   #options;
@@ -22,9 +23,6 @@ export default class Recorder {
     if (!recordFn) {
       throw new TypeError("Expected 'recordFn' to be provided");
     }
-
-    console.log('Recorder: Initializing...');
-    console.log('options', options);
 
     this.#options = options ?? {};
     this.#recordFn = recordFn;
@@ -65,11 +63,9 @@ export default class Recorder {
     const events = this.#events.previous.concat(this.#events.current);
 
     if (events.length < 2) {
-      console.warn(`Recorder.dump: Min 2 events req. Found ${events.length}`);
+      logger.error('Recorder: Cannot dump less than 2 events.');
       return null;
     }
-
-    console.log(`Recorder.dump: Dumping ${events.length} events`);
 
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
 
@@ -104,15 +100,8 @@ export default class Recorder {
 
   start() {
     if (this.isRecording || this.options.enabled === false) {
-      if (this.isRecording) {
-        console.log('Recorder: Already started');
-      } else {
-        console.log('Recorder: Disabled');
-      }
       return;
     }
-
-    console.log('Recorder: Starting...');
 
     this.clear();
 
@@ -130,26 +119,25 @@ export default class Recorder {
         this.#events.current.push(event);
       },
       checkoutEveryNms: 5 * 60 * 1000, // 5 minutes
+      errorHandler: (error) => {
+        if (this.options.debug?.logErrors) {
+          logger.error('Error during replay recording', error);
+        }
+        return true; // swallow the error instead of throwing it to the window
+      },
       ...this.options,
     });
-
-    console.log('Recorder: Started');
 
     return this;
   }
 
   stop() {
     if (!this.isRecording) {
-      console.log('Recorder: Already stopped');
       return;
     }
 
-    console.log('Recorder: Stopping...');
-
     this.#stopFn();
     this.#stopFn = null;
-
-    console.log('Recorder: Stopped');
 
     return this;
   }
@@ -162,7 +150,7 @@ export default class Recorder {
   }
 
   _logEvent(event, isCheckout) {
-    console.log(
+    logger.log(
       `Recorder: ${isCheckout ? 'checkout' : ''} event\n`,
       ((e) => {
         const seen = new WeakSet();
