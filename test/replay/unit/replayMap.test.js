@@ -131,7 +131,7 @@ describe('ReplayMap', function () {
       expect(result).to.equal(replayId);
       expect(mockRecorder.dump.called).to.be.true;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('Error transforming spans');
+      expect(consoleSpy.args[0][1]).to.include('Error transforming spans');
 
       expect(replayMap.size).to.equal(1);
       expect(replayMap.getSpans(replayId)).to.be.null;
@@ -175,7 +175,7 @@ describe('ReplayMap', function () {
 
         setTimeout(() => {
           expect(errorSpy.called).to.be.true;
-          expect(errorSpy.args[0][0]).to.include('Failed to process replay');
+          expect(errorSpy.args[0][1]).to.include('Failed to process replay');
           done();
         }, 0);
       } catch (error) {
@@ -200,48 +200,50 @@ describe('ReplayMap', function () {
     });
 
     it('should handle missing replayId parameter', async function () {
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
 
       const result = await replayMap.send();
 
       expect(result).to.be.false;
-      expect(consoleSpy.calledWith('ReplayMap.send: No replayId provided')).to
-        .be.true;
+      expect(consoleSpy.called).to.be.true;
+      expect(consoleSpy.args[0][1]).to.include(
+        'ReplayMap.send: No replayId provided',
+      );
       expect(mockApi.postSpans.called).to.be.false;
     });
 
     it('should handle non-existent replayId', async function () {
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
 
       const result = await replayMap.send('nonexistent');
 
       expect(result).to.be.false;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('No replay found for replayId');
+      expect(consoleSpy.args[0][1]).to.include('No replay found for replayId');
       expect(mockApi.postSpans.called).to.be.false;
     });
 
     it('should handle empty array payload', async function () {
       replayMap.setSpans('emptyReplayId', []);
 
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
       const result = await replayMap.send('emptyReplayId');
 
       expect(result).to.be.false;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('No payload found for replayId');
+      expect(consoleSpy.args[0][1]).to.include('No payload found for replayId');
       expect(mockApi.postSpans.called).to.be.false;
     });
 
     it('should handle empty OTLP payload', async function () {
       replayMap.setSpans('emptyOTLPReplayId', { resourceSpans: [] });
 
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
       const result = await replayMap.send('emptyOTLPReplayId');
 
       expect(result).to.be.false;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('No payload found for replayId');
+      expect(consoleSpy.args[0][1]).to.include('No payload found for replayId');
       expect(mockApi.postSpans.called).to.be.false;
     });
 
@@ -255,7 +257,7 @@ describe('ReplayMap', function () {
 
       expect(result).to.be.false;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('Error sending replay');
+      expect(consoleSpy.args[0][1]).to.include('Error sending replay');
       expect(mockApi.postSpans.called).to.be.true;
 
       expect(replayMap.size).to.equal(0);
@@ -275,23 +277,25 @@ describe('ReplayMap', function () {
     });
 
     it('should handle missing replayId parameter', function () {
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
 
       const result = replayMap.discard();
 
       expect(result).to.be.false;
-      expect(consoleSpy.calledWith('ReplayMap.discard: No replayId provided'))
-        .to.be.true;
+      expect(consoleSpy.called).to.be.true;
+      expect(consoleSpy.args[0][1]).to.include(
+        'ReplayMap.discard: No replayId provided',
+      );
     });
 
     it('should handle non-existent replayId', function () {
-      const consoleSpy = sinon.spy(console, 'warn');
+      const consoleSpy = sinon.spy(console, 'error');
 
       const result = replayMap.discard('nonexistent');
 
       expect(result).to.be.false;
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('No replay found for replayId');
+      expect(consoleSpy.args[0][1]).to.include('No replay found for replayId');
     });
   });
 
