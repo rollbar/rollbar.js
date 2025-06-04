@@ -113,6 +113,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-vows');
+  grunt.loadNpmTasks('grunt-mocha-test');
 
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
   var rollbarjQuerySnippet = fs.readFileSync('dist/plugins/jquery.min.js');
@@ -125,7 +126,17 @@ module.exports = function (grunt) {
         options: {
           reporter: 'spec',
         },
-        src: ['test/server.*.test.js'],
+        src: ['test/server.*.test.js', '!test/server.*.mocha.test.js'],
+      },
+    },
+
+    mochaTest: {
+      server: {
+        options: {
+          reporter: 'spec',
+          grep: grunt.option('grep'),
+        },
+        src: ['test/server.*.mocha.test.js'],
       },
     },
 
@@ -145,7 +156,6 @@ module.exports = function (grunt) {
           // Main rollbar snippet
           {
             from: new RegExp(
-              /* eslint-disable-next-line no-control-regex */
               '^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)',
               'm',
             ),
@@ -157,7 +167,6 @@ module.exports = function (grunt) {
           // jQuery rollbar plugin snippet
           {
             from: new RegExp(
-              /* eslint-disable-next-line no-control-regex */
               '^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)',
               'm',
             ),
@@ -183,11 +192,20 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('test', ['test-server', 'test-browser']);
+  grunt.registerTask('test', [
+    'test-server',
+    'test-server-mocha',
+    'test-browser',
+  ]);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
   grunt.registerTask('test-server', function (_target) {
-    var tasks = ['vows'];
+    var tasks = ['vows', 'mochaTest:server'];
+    grunt.task.run.apply(grunt.task, tasks);
+  });
+
+  grunt.registerTask('test-server-mocha', function (_target) {
+    var tasks = ['mochaTest:server'];
     grunt.task.run.apply(grunt.task, tasks);
   });
 
@@ -196,12 +214,12 @@ module.exports = function (grunt) {
     var tasks = [karmaTask];
     grunt.task.run.apply(grunt.task, tasks);
   });
-  
+
   function findReplayTests() {
-    return Object.keys(browserTests).filter(function(testName) {
+    return Object.keys(browserTests).filter(function (testName) {
       var testPath = browserTests[testName];
       return (
-        testPath.includes('test/replay/') || 
+        testPath.includes('test/replay/') ||
         testPath.includes('test/tracing/') ||
         testPath.match(/test\/browser\.replay\..*\.test\.js/)
       );
@@ -210,45 +228,45 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test-replay', function () {
     var replayTests = findReplayTests();
-    
+
     grunt.log.writeln('Running all replay-related tests:');
-    replayTests.forEach(function(testName) {
+    replayTests.forEach(function (testName) {
       grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
     });
-    
-    replayTests.forEach(function(testName) {
+
+    replayTests.forEach(function (testName) {
       grunt.task.run('karma:' + testName);
     });
   });
-  
+
   grunt.registerTask('test-replay-unit', function () {
-    var unitTests = findReplayTests().filter(function(testName) {
+    var unitTests = findReplayTests().filter(function (testName) {
       var testPath = browserTests[testName];
       return testPath.includes('/replay/unit/');
     });
-    
+
     grunt.log.writeln('Running replay unit tests:');
-    unitTests.forEach(function(testName) {
+    unitTests.forEach(function (testName) {
       grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
     });
-    
-    unitTests.forEach(function(testName) {
+
+    unitTests.forEach(function (testName) {
       grunt.task.run('karma:' + testName);
     });
   });
-  
+
   grunt.registerTask('test-replay-integration', function () {
-    var integrationTests = findReplayTests().filter(function(testName) {
+    var integrationTests = findReplayTests().filter(function (testName) {
       var testPath = browserTests[testName];
       return testPath.includes('/replay/integration/');
     });
-    
+
     grunt.log.writeln('Running replay integration tests:');
-    integrationTests.forEach(function(testName) {
+    integrationTests.forEach(function (testName) {
       grunt.log.writeln('- ' + testName + ' (' + browserTests[testName] + ')');
     });
-    
-    integrationTests.forEach(function(testName) {
+
+    integrationTests.forEach(function (testName) {
       grunt.task.run('karma:' + testName);
     });
   });
