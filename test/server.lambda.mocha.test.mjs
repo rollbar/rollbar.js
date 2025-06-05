@@ -6,8 +6,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import Rollbar from '../src/server/rollbar.js';
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
-
 function promisePending(promise, callback) {
   const testValue = 'test-pending';
 
