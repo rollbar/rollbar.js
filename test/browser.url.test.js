@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var url = require('../src/browser/url');
+import * as url from '../src/browser/url.js';
 
 describe('parse', function () {
   it('should return an object full of nulls for a blank url', function () {

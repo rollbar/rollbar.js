@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var Notifier = require('../src/notifier');
+import Notifier from '../src/notifier.js';
 
 var rollbarConfig = {
   accessToken: '12c99de67a444c229fca100e0967486f',

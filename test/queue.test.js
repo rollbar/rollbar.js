@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-var Queue = require('../src/queue');
+import Queue from '../src/queue.js';
 
 function TestRateLimiterGenerator() {
   var TestRateLimiter = function () {

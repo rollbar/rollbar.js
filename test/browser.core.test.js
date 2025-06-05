@@ -4,7 +4,7 @@
 /* globals sinon */
 
 // Use minimal browser package, with no optional components added.
-var Rollbar = require('../src/browser/core');
+import Rollbar from '../src/browser/core.js';
 
 describe('options.captureUncaught', function () {
   beforeEach(function (done) {
