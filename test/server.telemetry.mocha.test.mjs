@@ -22,16 +22,14 @@ function wait(ms) {
 }
 
 async function uncaught() {
-  setTimeout(function () {
+  setTimeout(() => {
     throw new Error('rollbar error');
   }, 1);
   await wait(300);
 }
 
 async function message(rollbar) {
-  setTimeout(function () {
-    rollbar.info('rollbar info message');
-  }, 1);
+  setTimeout(() => rollbar.info('rollbar info message'), 1);
   await wait(300);
 }
 
@@ -41,13 +39,8 @@ function request(transport, url, options, body) {
       ? transport.request(url, options)
       : transport.request(options);
 
-    req.on('response', (res) => {
-      resolve(res);
-    });
-
-    req.on('error', (err) => {
-      reject(err);
-    });
+    req.on('response', resolve);
+    req.on('error', reject);
 
     if (body) {
       req.write(body);
@@ -59,13 +52,9 @@ function request(transport, url, options, body) {
 
 function requestWithCallback(transport, options, body) {
   return new Promise((resolve, reject) => {
-    const req = transport.request(options, function (res) {
-      resolve(res);
-    });
+    const req = transport.request(options, resolve);
 
-    req.on('error', (err) => {
-      reject(err);
-    });
+    req.on('error', reject);
 
     if (body) {
       req.write(body);
@@ -121,8 +110,7 @@ describe('telemetry', function () {
         captureUncaught: true,
         autoInstrument: true,
       });
-      const notifier = rollbar.client.notifier;
-      addItemStub = sinon.stub(notifier.queue, 'addItem');
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
       // These are necessary so nock intercepts these HTTP requests
       stubGetWithResponse('http://example.com', 200, testHeaders3, testBody1);
@@ -212,8 +200,9 @@ describe('telemetry', function () {
           networkRequestHeaders: true,
         },
       });
-      const notifier = rollbar.client.notifier;
-      addItemStub = sinon.stub(notifier.queue, 'addItem');
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+
+      // These are necessary so nock intercepts these HTTP requests
       stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
       stubPostWithResponse('http://example.com', 201, testHeaders4, testBody2);
 
@@ -270,8 +259,9 @@ describe('telemetry', function () {
         accessToken: 'abc123',
         captureUncaught: true,
       });
-      const notifier = rollbar.client.notifier;
-      addItemStub = sinon.stub(notifier.queue, 'addItem');
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+
+      // These are necessary so nock intercepts these HTTP requests
       stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
       stubPostWithResponse('https://example.com', 201, testHeaders4, testBody2);
 
@@ -298,8 +288,6 @@ describe('telemetry', function () {
     it('payload should not have telemetry', function () {
       expect(addItemStub.called).to.be.true;
       const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
-
-      // Verify telemetry is empty
       expect(telemetry).to.deep.equal([]);
     });
   });
@@ -320,8 +308,7 @@ describe('telemetry', function () {
           networkRequestHeaders: true,
         },
       });
-      const notifier = rollbar.client.notifier;
-      addItemStub = sinon.stub(notifier.queue, 'addItem');
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
       const options = {
         method: 'GET',
