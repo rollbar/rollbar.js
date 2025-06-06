@@ -104,15 +104,16 @@ describe('transport', function () {
           baseData.accessToken,
           baseData.options,
           null,
-          function (err, _resp) {
+          (err, resp) => {
             expect(err).to.exist;
+            expect(resp).to.not.exist;
             done();
           },
           factory,
         );
       });
 
-      it('should not error with a payload and no error', function (done) {
+      it('should have the right response data with a payload and no error', function (done) {
         const factory = transportFactory(
           null,
           '{"err": null, "result":{"uuid":"42def", "message":"all good"}}',
@@ -132,25 +133,8 @@ describe('transport', function () {
           baseData.accessToken,
           baseData.options,
           baseData.payload,
-          function (err, _resp) {
+          (err, resp) => {
             expect(err).to.not.exist;
-            done();
-          },
-          factory,
-        );
-      });
-
-      it('should have the right response data with a payload and no error', function (done) {
-        const factory = transportFactory(
-          null,
-          '{"err": null, "result":{"uuid":"42def", "message":"all good"}}',
-        );
-
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          function (_err, resp) {
             expect(resp.message).to.equal('all good');
             done();
           },
@@ -178,43 +162,9 @@ describe('transport', function () {
           baseData.accessToken,
           baseData.options,
           baseData.payload,
-          function (err, _resp) {
+          (err, resp) => {
             expect(err).to.exist;
-            done();
-          },
-          factory,
-        );
-      });
-
-      it('should have the message somewhere with a payload and an error in the response', function (done) {
-        const factory = transportFactory(
-          null,
-          '{"err": "bork", "message":"things broke"}',
-        );
-
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          function (err, _resp) {
             expect(err.message).to.match(/things broke/);
-            done();
-          },
-          factory,
-        );
-      });
-
-      it('should not have a response with a payload and an error in the response', function (done) {
-        const factory = transportFactory(
-          null,
-          '{"err": "bork", "message":"things broke"}',
-        );
-
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          function (_err, resp) {
             expect(resp).to.not.exist;
             done();
           },
@@ -238,37 +188,9 @@ describe('transport', function () {
           baseData.accessToken,
           baseData.options,
           baseData.payload,
-          function (err, _resp) {
+          (err, resp) => {
             expect(err).to.exist;
-            done();
-          },
-          factory,
-        );
-      });
-
-      it('should have the message somewhere with a payload and an error during sending', function (done) {
-        const factory = transportFactory(new Error('bork'), null);
-
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          function (err, _resp) {
             expect(err.message).to.match(/bork/);
-            done();
-          },
-          factory,
-        );
-      });
-
-      it('should not have a response with a payload and an error during sending', function (done) {
-        const factory = transportFactory(new Error('bork'), null);
-
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          function (_err, resp) {
             expect(resp).to.not.exist;
             done();
           },
@@ -285,6 +207,10 @@ describe('transport', function () {
       });
 
       it('should transmit non-rate limited requests', function (done) {
+        const factory = transportFactory(
+          null,
+          '{"err": null, "result": "all good"}',
+        );
         const response = new TestResponse({
           statusCode: 200,
           headers: {
@@ -297,17 +223,12 @@ describe('transport', function () {
 
         transport.handleResponse(response);
 
-        const factory = transportFactory(
-          null,
-          '{"err": null, "result": "all good"}',
-        );
-
         transport.post(
           'token',
           {},
           'payload',
-          function (err) {
-            expect(err).to.be.null;
+          (err) => {
+            expect(err).to.not.exist;
             expect(Math.floor(Date.now() / 1000)).to.be.at.least(
               transport.rateLimitExpires,
             );
@@ -318,6 +239,7 @@ describe('transport', function () {
       });
 
       it('should drop rate limited requests and set timeout', function (done) {
+        const factory = transportFactory(new Error('bork'), null);
         const response = new TestResponse({
           statusCode: 429,
           headers: {
@@ -328,13 +250,19 @@ describe('transport', function () {
 
         transport.handleResponse(response);
 
-        transport.post('token', {}, 'payload', function (err) {
-          expect(err.message).to.match(/Exceeded rate limit/);
-          expect(Math.floor(Date.now() / 1000)).to.be.below(
-            transport.rateLimitExpires,
-          );
-          done();
-        });
+        transport.post(
+          'token',
+          {},
+          'payload',
+          (err) => {
+            expect(err.message).to.match(/Exceeded rate limit/);
+            expect(Math.floor(Date.now() / 1000)).to.be.below(
+              transport.rateLimitExpires,
+            );
+            done();
+          },
+          factory,
+        );
       });
     });
   });
