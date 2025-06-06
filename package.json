@@ -50,7 +50,6 @@
     "grunt-contrib-uglify": "^4.0.0",
     "grunt-contrib-watch": "^1.1.0",
     "grunt-karma": "^4.0.2",
-    "grunt-mocha-test": "^0.13.3",
     "grunt-parallel": "^0.5.1",
     "grunt-text-replace": "^0.4.0",
     "grunt-vows": "^0.4.2",
@@ -90,11 +89,11 @@
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "./node_modules/.bin/grunt test-server",
-    "test-server-mocha": "./node_modules/.bin/grunt test-server-mocha",
+    "test-server-mocha": "mocha 'test/server.*.mocha.test.mjs' --reporter spec",
     "test-replay": "./node_modules/.bin/grunt test-replay",
     "test-replay-unit": "./node_modules/.bin/grunt test-replay-unit",
     "test-replay-integration": "./node_modules/.bin/grunt test-replay-integration",
-    "test_ci": "./node_modules/.bin/grunt test",
+    "test-ci": "./node_modules/.bin/grunt test && npm run test-server-mocha",
     "lint": "./node_modules/.bin/eslint ."
   },
   "cdn": {

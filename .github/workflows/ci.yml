@@ -48,4 +48,4 @@ jobs:
           eslint_extensions: js
 
       - name: Run tests
-        run: npm run test_ci
+        run: npm run test-ci
