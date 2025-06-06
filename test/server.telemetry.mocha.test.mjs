@@ -13,8 +13,6 @@ import { URL } from 'url';
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
-
 function wait(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
