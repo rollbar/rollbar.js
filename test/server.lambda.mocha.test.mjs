@@ -65,6 +65,10 @@ describe('lambda', function () {
       });
     });
 
+    afterEach(function () {
+      requestStub.restore();
+    });
+
     it('invokes handler and receives promise', function () {
       // rollbar.lambdaHandler should have returned a
       // handler with the correct signature. (The callback handler is length = 3)
@@ -127,6 +131,10 @@ describe('lambda', function () {
         // until the API request has completed.
         throw new Error('lambda test error');
       });
+    });
+
+    afterEach(function () {
+      requestStub.restore();
     });
 
     it('invokes handler and receives promise', function () {
