@@ -27,15 +27,11 @@ function promisePending(promise, callback) {
 
 function fakePostItem(_item, callback) {
   // 1000ms simulates low API response, and allows testing the state before completion.
-  setTimeout(function () {
-    callback();
-  }, 1000);
+  setTimeout(callback, 1000);
 }
 
 const stubContext = {
-  getRemainingTimeInMillis: function () {
-    return 2000;
-  },
+  getRemainingTimeInMillis: () => 2000,
 };
 
 describe('lambda', function () {
