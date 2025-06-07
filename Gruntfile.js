@@ -11,6 +11,11 @@ var fs = require('fs');
 
 var webpackConfig = require('./webpack.config.js');
 
+require('ts-node').register({
+  transpileOnly: true,
+  compilerOptions: { module: 'commonjs' },
+});
+
 function findTests(context) {
   if (context !== 'browser') {
     return {};

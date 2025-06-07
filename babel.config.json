@@ -1,9 +1,7 @@
 {
   "parserOpts": {
     "ecmaVersion": 2021,
-    "sourceType": "module",
+    "sourceType": "module"
   },
-  "presets": [
-    "@babel/preset-env"
-  ]
+  "presets": ["@babel/preset-env", "@babel/preset-typescript"]
 }
