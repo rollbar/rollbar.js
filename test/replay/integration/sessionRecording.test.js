@@ -48,7 +48,11 @@ const createMockTransport = () => {
       .stub()
       .callsFake((accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
-          callback(null, { err: 0, result: { id: '12345' } });
+            callback(
+              null,
+              { err: 0, result: { id: '12345' } },
+              { 'Rollbar-Replay-Enabled': 'true' }
+            );
         }, 10);
       }),
     postJsonPayload: sinon.stub(),

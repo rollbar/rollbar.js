@@ -25,7 +25,11 @@ describe('Queue ReplayMap Integration', function () {
         .stub()
         .callsFake((accessToken, transportOptions, payload, callback) => {
           setTimeout(() => {
-            callback(null, { err: 0, result: { id: '12345' } });
+            callback(
+              null,
+              { err: 0, result: { id: '12345' } },
+              { 'Rollbar-Replay-Enabled': 'true' }
+            );
           }, 10);
         }),
       postJsonPayload: sinon.stub(),
@@ -129,6 +133,71 @@ describe('Queue ReplayMap Integration', function () {
     });
   });
 
+  it('should call replayMap.discard when replay is disabled', function (done) {
+    transport.post.callsFake(
+      (accessToken, transportOptions, payload, callback) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'false' }
+          );
+        }, 10);
+      },
+    );
+
+    const item = {
+      body: {
+        trace: {
+          exception: {
+            message: 'Test error with replay disabled',
+          },
+        },
+      },
+    };
+
+    queue.addItem(item, function () {
+      setTimeout(function () {
+        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.send.called).to.be.false;
+        done();
+      }, 50);
+    });
+  });
+
+  it('should call replayMap.discard when over quota', function (done) {
+    transport.post.callsFake(
+      (accessToken, transportOptions, payload, callback) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'true',
+              'Rollbar-Replay-RateLimit-Remaining': '0'}
+          );
+        }, 10);
+      },
+    );
+
+    const item = {
+      body: {
+        trace: {
+          exception: {
+            message: 'Test error with replay over quota',
+          },
+        },
+      },
+    };
+
+    queue.addItem(item, function () {
+      setTimeout(function () {
+        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.send.called).to.be.false;
+        done();
+      }, 50);
+    });
+  });
+
   it('should handle retrying items with replayId', function (done) {
     let apiCallCount = 0;
     transport.post.callsFake(
@@ -140,7 +209,11 @@ describe('Queue ReplayMap Integration', function () {
           }, 10);
         } else {
           setTimeout(() => {
-            callback(null, { err: 0, result: { id: '12345' } });
+            callback(
+              null,
+              { err: 0, result: { id: '12345' } },
+              { 'Rollbar-Replay-Enabled': 'true' }
+            );
           }, 10);
         }
       },
@@ -207,7 +280,7 @@ describe('Queue ReplayMap Integration', function () {
     queue.addItem(item, function () {
       setTimeout(function () {
         expect(replayMap.send.called).to.be.false;
-        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.discard.calledWith('test-replay-id')).to.be.false;
         done();
       }, 50);
     });

@@ -31,7 +31,18 @@ function makeXhrRequest(
 
             var parseResponse = _.jsonParse(request.responseText);
             if (_isSuccess(request)) {
-              callback(parseResponse.error, parseResponse.value);
+              const headers = {
+                'Rollbar-Replay-Enabled': request.getResponseHeader(
+                  'Rollbar-Replay-Enabled'
+                ),
+                'Rollbar-Replay-RateLimit-Remaining': request.getResponseHeader(
+                  'Rollbar-Replay-RateLimit-Remaining'
+                ),
+                'Rollbar-Replay-RateLimit-Reset': request.getResponseHeader(
+                  'Rollbar-Replay-RateLimit-Reset'
+                ),
+              }
+              callback(parseResponse.error, parseResponse.value, headers);
               return;
             } else if (_isNormalFailure(request)) {
               if (request.status === 403) {

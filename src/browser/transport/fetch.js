@@ -23,10 +23,20 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
   })
     .then(function (response) {
       if (timeoutId) clearTimeout(timeoutId);
-      return response.json();
-    })
-    .then(function (data) {
-      callback(null, data);
+      const respHeaders = response.headers;
+      const headers = {
+        'Rollbar-Replay-Enabled': respHeaders.get(
+          'Rollbar-Replay-Enabled'
+        ),
+        'Rollbar-Replay-RateLimit-Remaining': respHeaders.get(
+          'Rollbar-Replay-RateLimit-Remaining'
+        ),
+        'Rollbar-Replay-RateLimit-Reset': respHeaders.get(
+          'Rollbar-Replay-RateLimit-Reset'
+        ),
+      };
+      const json = response.json();
+      callback(null, json, headers);
     })
     .catch(function (error) {
       logger.error(error.message);
