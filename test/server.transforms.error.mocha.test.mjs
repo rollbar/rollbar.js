@@ -121,7 +121,7 @@ describe('transforms.handleItemWithError', function () {
     });
   });
 
-  it('should should add the error context with error context', function (done) {
+  it('should add the error context with error context', function (done) {
     let testError;
 
     const test = function () {
