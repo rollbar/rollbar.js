@@ -322,7 +322,6 @@ Queue.prototype._maybeCallWait = function () {
  * @private
  */
 Queue.prototype._handleReplayResponse = async function (replayId, response, headers) {
-  console.log('Queue._handleReplayResponse:', replayId, response, headers);
   if (!this.replayMap) {
     console.warn('Queue._handleReplayResponse: ReplayMap not available');
     return false;
