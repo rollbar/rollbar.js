@@ -31,6 +31,7 @@
     "@babel/core": "^7.26.10",
     "@babel/eslint-parser": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
+    "@babel/preset-typescript": "^7.27.0",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^9.2.1",
     "bluebird": "^3.3.5",
@@ -81,6 +82,9 @@
     "sinon": "^8.1.1",
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "vows": "^0.8.3",
     "webpack": "^5.98.0"
   },
