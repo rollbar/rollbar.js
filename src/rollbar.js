@@ -154,13 +154,13 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     return;
   }
   try {
-    const replayId = this.tracing?.idGen(8);
+    item.level = item.level || defaultLevel;
+
+    const replayId = this._replayIdIfTriggered(item);
     this._addTracingAttributes(item, replayId);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
-
-    item.level = item.level || defaultLevel;
 
     const telemeter = this.telemeter;
     if (telemeter) {
@@ -198,6 +198,13 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
     [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
   );
 };
+
+Rollbar.prototype._replayIdIfTriggered = function (item) {
+  const levels = this.options.recorder?.triggerOptions?.item?.levels || [];
+  if (levels.includes(item.level)) {
+    return this.tracing?.idGen(8);
+  }
+}
 
 Rollbar.prototype._defaultLogLevel = function () {
   return this.options.logLevel || 'debug';

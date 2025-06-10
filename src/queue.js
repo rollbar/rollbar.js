@@ -104,7 +104,9 @@ Queue.prototype.addItem = function (
 
   if (this.replayMap && item.body) {
     const replayId = _.getItemAttribute(item, 'replay_id');
-    item.replayId = this.replayMap.add(replayId, item.uuid);
+    if (replayId) {
+      item.replayId = this.replayMap.add(replayId, item.uuid);
+    }
   }
 
   this.pendingRequests.push(item);

@@ -116,6 +116,9 @@ describe('Session Replay E2E', function () {
             },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       };
 
       queue.addItem(errorItem, function (err, resp) {
@@ -203,6 +206,9 @@ describe('Session Replay E2E', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(errorItem, function (err, resp) {

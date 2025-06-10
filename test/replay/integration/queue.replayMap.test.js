@@ -48,7 +48,7 @@ describe('Queue ReplayMap Integration', function () {
     );
 
     replayMap = {
-      add: sinon.stub().returns('test-replay-id'),
+      add: sinon.stub().returnsArg(0),
       send: sinon.stub().resolves(true),
       discard: sinon.stub().returns(true),
       getSpans: sinon.stub().returns([{ id: 'test-span' }]),
@@ -77,10 +77,13 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
-      expect(item).to.have.property('replayId', 'test-replay-id');
+      expect(item).to.have.property('replayId', '1234567812345678');
       expect(replayMap.add.calledOnce).to.be.true;
       done();
     });
@@ -95,11 +98,14 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.send.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.send.calledWith('1234567812345678')).to.be.true;
         done();
       }, 50);
     });
@@ -122,11 +128,14 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
         expect(replayMap.send.called).to.be.false;
         done();
       }, 50);
@@ -154,11 +163,14 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
         expect(replayMap.send.called).to.be.false;
         done();
       }, 50);
@@ -187,11 +199,14 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('test-replay-id')).to.be.true;
+        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
         expect(replayMap.send.called).to.be.false;
         done();
       }, 50);
@@ -229,14 +244,17 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function (err, resp) {
       if (resp) {
-        expect(item).to.have.property('replayId', 'test-replay-id');
+        expect(item).to.have.property('replayId', '1234567812345678');
 
         setTimeout(function () {
-          expect(replayMap.send.calledWith('test-replay-id')).to.be.true;
+          expect(replayMap.send.calledWith('1234567812345678')).to.be.true;
           done();
         }, 50);
       }
@@ -247,6 +265,29 @@ describe('Queue ReplayMap Integration', function () {
     const item = {
       level: 'error',
       message: 'Test error without body',
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
+    };
+
+    queue.addItem(item, function () {
+      expect(item).to.not.have.property('replayId');
+      expect(replayMap.add.called).to.be.false;
+      done();
+    });
+  });
+
+  it('should not add replayId to items without a replay_id attribute', function (done) {
+    const item = {
+      level: 'error',
+      message: 'Test error without body',
+      body: {
+        trace: {
+          exception: {
+            message: 'Test error with retry',
+          },
+        },
+      },
     };
 
     queue.addItem(item, function () {
@@ -275,12 +316,15 @@ describe('Queue ReplayMap Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
         expect(replayMap.send.called).to.be.false;
-        expect(replayMap.discard.calledWith('test-replay-id')).to.be.false;
+        expect(replayMap.discard.calledWith('1234567812345678')).to.be.false;
         done();
       }, 50);
     });

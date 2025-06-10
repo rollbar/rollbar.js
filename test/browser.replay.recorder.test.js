@@ -45,14 +45,14 @@ describe('Recorder', function () {
       const recorder = new Recorder({}, recordFnStub);
 
       expect(recorder.isRecording).to.equal(false);
-      expect(recorder.options).to.deep.equal({});
+      expect(recorder.options).to.deep.equal({ enabled: undefined, autoStart: undefined, maxSeconds: undefined, triggerOptions:undefined });
     });
 
-    it('should initialize with provided options', function () {
+    it('should initialize removing disallowed options', function () {
       const options = { enabled: true, checkoutEveryNms: 1000 };
       const recorder = new Recorder(options, recordFnStub);
 
-      expect(recorder.options).to.deep.equal(options);
+      expect(recorder.options).to.deep.equal({ enabled: true, autoStart: undefined, maxSeconds: undefined, triggerOptions:undefined });
     });
 
     it('should throw error if no record function is passed', function () {
@@ -76,7 +76,7 @@ describe('Recorder', function () {
       expect(stopFnSpy.called).to.be.false;
 
       const recordOptions = recordFnStub.firstCall.args[0];
-      expect(recordOptions.checkoutEveryNms).to.equal(300000);
+      expect(recordOptions.checkoutEveryNms).to.equal(5000);
       expect(typeof recordOptions.emit).to.equal('function');
     });
 
@@ -355,11 +355,11 @@ describe('Recorder', function () {
     it('should handle less than 2 events (invalid recording)', function () {
       const recorder = new Recorder({}, recordFnStub);
       recorder.start();
-      
+
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
-      
+
       const result = recorder.dump(mockTracing, testReplayId);
-      
+
       expect(result).to.be.null;
       expect(mockTracing.startSpan.called).to.be.false;
       expect(mockTracing.exporter.toPayload.called).to.be.false;
@@ -373,12 +373,29 @@ describe('Recorder', function () {
         recordFnStub,
       );
 
-      recorder.configure({ enabled: false, checkoutEveryNms: 2000 });
+      recorder.configure({ enabled: false, maxSeconds: 20 });
 
       expect(recorder.options).to.deep.equal({
         enabled: false,
-        checkoutEveryNms: 2000,
+        autoStart: undefined,
+        maxSeconds: 20,
+        triggerOptions:undefined,
       });
+    });
+
+    it('should set correct checkoutEveryNms', function () {
+      const recorder = new Recorder({ enabled: false });
+
+      recorder.configure({ enabled: true, maxSeconds: 15 });
+
+      expect(recorder.options).to.deep.equal({
+        enabled: true,
+        autoStart: undefined,
+        maxSeconds: 15,
+        triggerOptions:undefined,
+      });
+
+      expect(recorder.checkoutEveryNms()).to.equal(7500);
     });
 
     it('should stop recording if enabled set to false', function () {
