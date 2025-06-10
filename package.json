@@ -52,7 +52,6 @@
     "grunt-karma": "^4.0.2",
     "grunt-parallel": "^0.5.1",
     "grunt-text-replace": "^0.4.0",
-    "grunt-vows": "^0.4.2",
     "grunt-webpack": "^5.0.0",
     "jade": "~0.27.7",
     "jasmine-core": "^2.3.4",
@@ -81,19 +80,17 @@
     "sinon": "^8.1.1",
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
-    "vows": "^0.8.3",
     "webpack": "^5.98.0"
   },
   "scripts": {
     "build": "./node_modules/.bin/grunt",
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
-    "test-server": "./node_modules/.bin/grunt test-server",
-    "test-server-mocha": "mocha 'test/server.*.mocha.test.mjs' --reporter spec",
+    "test-server": "mocha 'test/server.*.mocha.test.mjs' --reporter spec",
     "test-replay": "./node_modules/.bin/grunt test-replay",
     "test-replay-unit": "./node_modules/.bin/grunt test-replay-unit",
     "test-replay-integration": "./node_modules/.bin/grunt test-replay-integration",
-    "test-ci": "./node_modules/.bin/grunt test && npm run test-server-mocha",
+    "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
     "lint": "./node_modules/.bin/eslint ."
   },
   "cdn": {

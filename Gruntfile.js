@@ -112,7 +112,6 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-text-replace');
-  grunt.loadNpmTasks('grunt-vows');
 
   var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
   var rollbarjQuerySnippet = fs.readFileSync('dist/plugins/jquery.min.js');
@@ -120,14 +119,6 @@ module.exports = function (grunt) {
   grunt.initConfig({
     pkg: pkg,
     webpack: webpackConfig,
-    vows: {
-      all: {
-        options: {
-          reporter: 'spec',
-        },
-        src: ['test/server.*.test.js', '!test/server.*.mocha.test.js'],
-      },
-    },
 
     karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
 
@@ -182,15 +173,10 @@ module.exports = function (grunt) {
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
   grunt.registerTask('test', [
-    'test-server',
     'test-browser',
   ]);
   grunt.registerTask('release', ['build', 'copyrelease']);
 
-  grunt.registerTask('test-server', function (_target) {
-    var tasks = ['vows'];
-    grunt.task.run.apply(grunt.task, tasks);
-  });
 
   grunt.registerTask('test-browser', function (target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
