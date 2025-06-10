@@ -111,11 +111,11 @@ Queue.prototype.addItem = function (
   try {
     this._makeApiRequest(
       item,
-      function (err, resp) {
+      function (err, resp, headers) {
         this._dequeuePendingRequest(item);
 
         if (!err && resp && item.replayId) {
-          this._handleReplayResponse(item.replayId, resp);
+          this._handleReplayResponse(item.replayId, resp, headers);
         }
 
         callback(err, resp);
@@ -182,11 +182,11 @@ Queue.prototype._makeApiRequest = function (item, callback) {
   if (rateLimitResponse.shouldSend) {
     this.api.postItem(
       item,
-      function (err, resp) {
+      function (err, resp, headers) {
         if (err) {
           this._maybeRetry(err, item, callback);
         } else {
-          callback(err, resp);
+          callback(err, resp, headers);
         }
       }.bind(this),
     );
@@ -321,7 +321,7 @@ Queue.prototype._maybeCallWait = function () {
  *                             false if replay was discarded or an error occurred
  * @private
  */
-Queue.prototype._handleReplayResponse = async function (replayId, response) {
+Queue.prototype._handleReplayResponse = async function (replayId, response, headers) {
   if (!this.replayMap) {
     console.warn('Queue._handleReplayResponse: ReplayMap not available');
     return false;
@@ -333,10 +333,8 @@ Queue.prototype._handleReplayResponse = async function (replayId, response) {
   }
 
   try {
-    // Success condition might need adjustment based on API response structure
-    if (response && response.err === 0) {
-      const result = await this.replayMap.send(replayId);
-      return result;
+    if (this._shouldSendReplay(response, headers)) {
+      return await this.replayMap.send(replayId);
     } else {
       this.replayMap.discard(replayId);
       return false;
@@ -345,6 +343,17 @@ Queue.prototype._handleReplayResponse = async function (replayId, response) {
     console.error('Error handling replay response:', error);
     return false;
   }
+};
+
+Queue.prototype._shouldSendReplay = function (response, headers) {
+  if (response?.err !== 0 ||
+      !headers ||
+      headers['Rollbar-Replay-Enabled'] !== 'true' ||
+      headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
+    return false;
+  }
+
+  return true;
 };
 
 module.exports = Queue;

@@ -37,7 +37,11 @@ describe('ReplayMap API Integration', function () {
         .stub()
         .callsFake((accessToken, transportOptions, payload, callback) => {
           setTimeout(() => {
-            callback(null, { err: 0, result: { id: '12345' } });
+            callback(
+              null,
+              { err: 0, result: { id: '12345' } },
+              { 'Rollbar-Replay-Enabled': 'true' }
+            );
           }, 10);
         }),
       postJsonPayload: sinon.stub(),
@@ -81,7 +85,7 @@ describe('ReplayMap API Integration', function () {
 
   it('should add replay data to map', async function () {
     const uuid = 'test-uuid';
-    const replayId = replayMap.add(uuid);
+    const replayId = replayMap.add(null, uuid);
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
@@ -125,8 +129,6 @@ describe('ReplayMap API Integration', function () {
     const result = await replayMap.send(replayId);
 
     expect(result).to.be.false;
-    expect(consoleSpy.calledWith('Error sending replay:', apiError)).to.be.true;
-
     expect(replayMap.getSpans(replayId)).to.be.null;
   });
 

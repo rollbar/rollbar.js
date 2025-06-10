@@ -166,6 +166,7 @@ var TestRequest = function (response, status, shouldThrowOnSend) {
   this.onreadystatechange = null;
   this.readyState = 0;
   this.shouldThrowOnSend = shouldThrowOnSend;
+  this.getResponseHeader = (key) => undefined;
 };
 TestRequest.prototype.open = function (m, u, a) {
   this.method = m;

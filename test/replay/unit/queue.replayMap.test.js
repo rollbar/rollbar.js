@@ -93,8 +93,9 @@ describe('Queue with ReplayMap', function () {
     it('should send the replay when response is successful', async function () {
       const replayId = 'test-replay-id';
       const response = { err: 0 };
+      const headers = { 'Rollbar-Replay-Enabled': 'true' };
 
-      await queue._handleReplayResponse(replayId, response);
+      await queue._handleReplayResponse(replayId, response, headers);
 
       expect(replayMap.send.calledWith(replayId)).to.be.true;
       expect(replayMap.discard.called).to.be.false;
@@ -103,8 +104,9 @@ describe('Queue with ReplayMap', function () {
     it('should discard the replay when response has an error', async function () {
       const replayId = 'test-replay-id';
       const response = { err: 1 };
+      const headers = { 'Rollbar-Replay-Enabled': 'true' };
 
-      await queue._handleReplayResponse(replayId, response);
+      await queue._handleReplayResponse(replayId, response, headers);
 
       expect(replayMap.send.called).to.be.false;
       expect(replayMap.discard.calledWith(replayId)).to.be.true;
@@ -133,12 +135,13 @@ describe('Queue with ReplayMap', function () {
     it('should handle errors during send/discard', async function () {
       const replayId = 'test-replay-id';
       const response = { err: 0 };
+      const headers = { 'Rollbar-Replay-Enabled': 'true' };
 
       replayMap.send.rejects(new Error('Send error'));
 
       const consoleSpy = sinon.spy(console, 'error');
 
-      await queue._handleReplayResponse(replayId, response);
+      await queue._handleReplayResponse(replayId, response, headers);
 
       expect(consoleSpy.called).to.be.true;
       expect(consoleSpy.args[0][0]).to.include(
