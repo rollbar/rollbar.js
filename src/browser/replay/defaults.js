@@ -5,7 +5,7 @@
 export default {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
-  maxSeconds: 10, // Maximum recording duration in seconds
+  maxSeconds: 300, // Maximum recording duration in seconds
 
   // trigger options
   triggerOptions: {
