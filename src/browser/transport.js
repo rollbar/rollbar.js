@@ -66,7 +66,8 @@ Transport.prototype.post = function (
   }
 
   var stringifyResult;
-  if (this.truncation) {
+  // Check payload.body to ensure only items are truncated.
+  if (this.truncation && payload.body) {
     stringifyResult = this.truncation.truncate(payload);
   } else {
     stringifyResult = _.stringify(payload);
