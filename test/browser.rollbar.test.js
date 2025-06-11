@@ -115,11 +115,21 @@ describe('Rollbar()', function () {
     var client = new (TestClientGen())();
     var options = {
       scrubFields: ['foobar'],
+      recorder: {
+        enabled: true,
+        },
+      tracing: {
+        endpoint: 'api.rollbar.com/api/1/tracing/',
+      },
     };
     var rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
+    expect(rollbar.options.recorder.enabled).to.eql(true);
+    expect(rollbar.options.recorder.triggerOptions.item.levels).to.eql(['error', 'critical']);
+    expect(rollbar.options.tracing.endpoint).to.eql('api.rollbar.com/api/1/tracing/');
+    expect(rollbar.options.tracing.enabled).to.eql(false);
     done();
   });
 
@@ -880,6 +890,9 @@ describe('log', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      recorder: {
+        enabled: true,
+      },
     };
     const rollbar = (window.rollbar = new Rollbar(options));
 

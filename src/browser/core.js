@@ -12,8 +12,8 @@ var sharedTransforms = require('../transforms');
 var predicates = require('./predicates');
 var sharedPredicates = require('../predicates');
 var errorParser = require('../errorParser');
-const recorderDefaults = require('./replay/defaults');
-const tracingDefaults = require('../tracing/defaults');
+const recorderDefaults = require('./replay/defaults').default;
+const tracingDefaults = require('../tracing/defaults').default;
 const ReplayMap = require('./replay/replayMap').default;
 
 function Rollbar(options, client) {
