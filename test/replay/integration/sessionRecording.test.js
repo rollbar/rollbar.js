@@ -255,6 +255,9 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -294,6 +297,9 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -324,6 +330,9 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     const addItemPromise = new Promise((resolve, reject) => {
@@ -368,6 +377,9 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
+      attributes: [
+        { key: 'replay_id', value: '1234567812345678' },
+      ],
     };
 
     queueWithoutReplayMap.addItem(errorItem, function (err, resp) {

@@ -16,7 +16,7 @@ const Queue = require('../../../src/queue');
 
 class MockReplayMap {
   constructor() {
-    this.add = sinon.stub().returns('test-replay-id');
+    this.add = sinon.stub().returnsArg(0);
     this.send = sinon.stub().resolves(true);
     this.discard = sinon.stub().returns(true);
   }
@@ -58,17 +58,27 @@ describe('Queue with ReplayMap', function () {
 
   describe('addItem', function () {
     it('should add replayId to the item when replayMap is available', function () {
-      const item = { body: { message: 'test error' } };
+      const item = {
+        body: { message: 'test error' },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
 
       expect(replayMap.add.called).to.be.true;
-      expect(item.replayId).to.equal('test-replay-id');
+      expect(item.replayId).to.equal('1234567812345678');
     });
 
     it('should not add replayId when item has no body', function () {
-      const item = { noBody: true };
+      const item = {
+        noBody: true,
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
@@ -80,7 +90,12 @@ describe('Queue with ReplayMap', function () {
     it('should not add replayId when replayMap is not available', function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
-      const item = { body: { message: 'test error' } };
+      const item = {
+        body: { message: 'test error' },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
@@ -154,13 +169,18 @@ describe('Queue with ReplayMap', function () {
     it('should call _handleReplayResponse with replayId and response on success', function () {
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
-      const item = { body: { message: 'test error' } };
+      const item = {
+        body: { message: 'test error' },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
 
       expect(handleStub.called).to.be.true;
-      expect(handleStub.firstCall.args[0]).to.equal('test-replay-id');
+      expect(handleStub.firstCall.args[0]).to.equal('1234567812345678');
       expect(handleStub.firstCall.args[1]).to.deep.equal({ err: 0 });
     });
 
@@ -171,7 +191,12 @@ describe('Queue with ReplayMap', function () {
 
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
-      const item = { body: { message: 'test error' } };
+      const item = {
+        body: { message: 'test error' },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
@@ -184,7 +209,12 @@ describe('Queue with ReplayMap', function () {
 
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
-      const item = { body: { message: 'test error' } };
+      const item = {
+        body: { message: 'test error' },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);

@@ -6,6 +6,7 @@ import logger from '../logger.js';
 
 export default class Recorder {
   #options;
+  #rrwebOptions;
   #stopFn = null;
   #recordFn;
   #events = {
@@ -24,7 +25,7 @@ export default class Recorder {
       throw new TypeError("Expected 'recordFn' to be provided");
     }
 
-    this.#options = options ?? {};
+    this.options = options;
     this.#recordFn = recordFn;
   }
 
@@ -41,11 +42,32 @@ export default class Recorder {
   }
 
   configure(newOptions) {
+    const {
+      // Rollbar options
+      enabled,
+      autoStart,
+      maxSeconds,
+      triggerOptions,
+
+      // disallowed rrweb options
+      emit,
+      checkoutEveryNms,
+
+      // rrweb options
+      ...rrwebOptions
+    } = newOptions;
+    this.#options = { enabled, autoStart, maxSeconds, triggerOptions };
+    this.#rrwebOptions = rrwebOptions;
+
     if (this.isRecording && newOptions.enabled === false) {
       this.stop();
     }
+  }
 
-    this.#options = newOptions;
+  checkoutEveryNms() {
+    // Recording may be up to two checkout intervals, therefore the checkout
+    // interval is set to half of the maxSeconds.
+    return (this.options.maxSeconds || 10) * 1000 / 2;
   }
 
   /**
@@ -118,14 +140,14 @@ export default class Recorder {
 
         this.#events.current.push(event);
       },
-      checkoutEveryNms: 5 * 60 * 1000, // 5 minutes
+      checkoutEveryNms: this.checkoutEveryNms(),
       errorHandler: (error) => {
         if (this.options.debug?.logErrors) {
           logger.error('Error during replay recording', error);
         }
         return true; // swallow the error instead of throwing it to the window
       },
-      ...this.options,
+      ...this.rrwebOptions,
     });
 
     return this;

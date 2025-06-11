@@ -5,6 +5,16 @@
 export default {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
+  maxSeconds: 300, // Maximum recording duration in seconds
+
+  // trigger options
+  triggerOptions: {
+    // Trigger replay on specific items (occurrences)
+    item: {
+      levels: ['error', 'critical'], // Trigger on item level
+    }
+  },
+
   debug: {
     logErrors: true, // Whether to log errors emitted by rrweb.
     logEmits: false, // Whether to log emitted events
