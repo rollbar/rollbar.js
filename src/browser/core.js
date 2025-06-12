@@ -1,20 +1,20 @@
-var Client = require('../rollbar');
-var _ = require('../utility');
-var API = require('../api');
-var logger = require('./logger');
-var globals = require('./globalSetup');
+import Client from '../rollbar.js';
+import * as _ from '../utility.js';
+import API from '../api.js';
+import logger from './logger.js';
+import * as globals from './globalSetup.js';
 
-var Transport = require('./transport');
-var urllib = require('./url');
+import Transport from './transport.js';
+import * as urllib from './url.js';
 
-var transforms = require('./transforms');
-var sharedTransforms = require('../transforms');
-var predicates = require('./predicates');
-var sharedPredicates = require('../predicates');
-var errorParser = require('../errorParser');
-const recorderDefaults = require('./replay/defaults').default;
-const tracingDefaults = require('../tracing/defaults').default;
-const ReplayMap = require('./replay/replayMap').default;
+import * as transforms from './transforms.js';
+import * as sharedTransforms from '../transforms.js';
+import * as predicates from './predicates.js';
+import * as sharedPredicates from '../predicates.js';
+import errorParser from '../errorParser.js';
+import recorderDefaults from './replay/defaults.js';
+import tracingDefaults from '../tracing/defaults.js';
+import ReplayMap from './replay/replayMap.js';
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -41,7 +41,7 @@ function Rollbar(options, client) {
     this.replayMap = new ReplayMap({
       recorder: this.recorder,
       api: api,
-      tracing: this.tracing
+      tracing: this.tracing,
     });
 
     if (recorderOptions.enabled && recorderOptions.autoStart) {
@@ -53,7 +53,16 @@ function Rollbar(options, client) {
     this.telemeter = new Telemeter(this.options, this.tracing);
   }
   this.client =
-    client || new Client(this.options, api, logger, this.telemeter, this.tracing, this.replayMap, 'browser');
+    client ||
+    new Client(
+      this.options,
+      api,
+      logger,
+      this.telemeter,
+      this.tracing,
+      this.replayMap,
+      'browser',
+    );
   var gWindow = _gWindow();
   var gDocument = typeof document != 'undefined' && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
@@ -607,8 +616,8 @@ function _gWindow() {
   );
 }
 
-var defaults = require('../defaults');
-var scrubFields = require('./defaults/scrubFields');
+import defaults from '../defaults.js';
+import scrubFields from './defaults/scrubFields.js';
 
 var defaultOptions = {
   version: defaults.version,
@@ -630,4 +639,4 @@ var defaultOptions = {
   tracing: tracingDefaults,
 };
 
-module.exports = Rollbar;
+export default Rollbar;

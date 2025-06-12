@@ -1,7 +1,7 @@
-const RateLimiter = require('./rateLimiter');
-const Queue = require('./queue');
-const Notifier = require('./notifier');
-const _ = require('./utility');
+import RateLimiter from './rateLimiter.js';
+import Queue from './queue.js';
+import Notifier from './notifier.js';
+import * as _ from './utility.js';
 
 /*
  * Rollbar - the interface to Rollbar
@@ -322,4 +322,4 @@ function validateSpan(span) {
   return true;
 }
 
-module.exports = Rollbar;
+export default Rollbar;

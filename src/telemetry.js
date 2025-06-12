@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 const MAX_EVENTS = 100;
 
@@ -95,7 +95,7 @@ Telemeter.prototype.captureError = function (
   timestamp,
 ) {
   const message = err.message || String(err);
-  var metadata = {message};
+  var metadata = { message };
   if (err.stack) {
     metadata.stack = err.stack;
   }
@@ -139,18 +139,12 @@ Telemeter.prototype.captureLog = function (
   } else {
     this.telemetrySpan?.addEvent(
       'rollbar-log-event',
-      {message, level},
+      { message, level },
       fromMillis(timestamp),
     );
   }
 
-  return this.capture(
-    'log',
-    {message},
-    level,
-    rollbarUUID,
-    timestamp,
-  );
+  return this.capture('log', { message }, level, rollbarUUID, timestamp);
 };
 
 Telemeter.prototype.captureNetwork = function (
@@ -173,17 +167,23 @@ Telemeter.prototype.captureNetwork = function (
     {
       type: metadata.subtype,
       method: metadata.method,
-      url : metadata.url,
-      statusCode : metadata.status_code,
+      url: metadata.url,
+      statusCode: metadata.status_code,
       'request.headers': JSON.stringify(metadata.request_headers || {}),
       'response.headers': JSON.stringify(metadata.response?.headers || {}),
       'response.timeUnixNano': endTimeNano.toString(),
     },
 
-    fromMillis(metadata.start_time_ms)
+    fromMillis(metadata.start_time_ms),
   );
 
-  return this.capture('network', metadata, level, rollbarUUID, metadata.start_time_ms);
+  return this.capture(
+    'network',
+    metadata,
+    level,
+    rollbarUUID,
+    metadata.start_time_ms,
+  );
 };
 
 Telemeter.prototype.levelFromStatus = function (statusCode) {
@@ -216,16 +216,21 @@ Telemeter.prototype.captureDom = function (
   return this.capture('dom', metadata, 'info', rollbarUUID);
 };
 
-Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID, timestamp) {
+Telemeter.prototype.captureNavigation = function (
+  from,
+  to,
+  rollbarUUID,
+  timestamp,
+) {
   this.telemetrySpan?.addEvent(
     'rollbar-navigation-event',
-    {'previous.url.full': from, 'url.full': to},
+    { 'previous.url.full': from, 'url.full': to },
     fromMillis(timestamp),
   );
 
   return this.capture(
     'navigation',
-    {from, to},
+    { from, to },
     'info',
     rollbarUUID,
     timestamp,
@@ -303,4 +308,4 @@ function getLevel(type, level) {
   return defaultLevel[type] || 'info';
 }
 
-module.exports = Telemeter;
+export default Telemeter;

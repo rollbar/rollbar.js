@@ -26,4 +26,4 @@ var Detection = {
   ieVersion: getIEVersion,
 };
 
-module.exports = Detection;
+export default Detection;

@@ -1,18 +1,18 @@
-var packageJson = require('../../package.json');
-var Client = require('../rollbar');
-var _ = require('../utility');
-var API = require('../api');
-var logger = require('./logger');
+import packageJson from '../../package.json' with { type: 'json' };
+import Client from '../rollbar.js';
+import * as _ from '../utility.js';
+import API from '../api.js';
+import logger from './logger.js';
 
-var Transport = require('./transport');
-var urllib = require('../browser/url');
+import Transport from './transport.js';
+import * as urllib from '../browser/url.js';
 
-var Telemeter = require('../telemetry');
-var transforms = require('./transforms');
-var sharedTransforms = require('../transforms');
-var sharedPredicates = require('../predicates');
-var truncation = require('../truncation');
-var polyfillJSON = require('../../vendor/JSON-js/json3');
+import Telemeter from '../telemetry.js';
+import * as transforms from './transforms.js';
+import * as sharedTransforms from '../transforms.js';
+import * as sharedPredicates from '../predicates.js';
+import truncation from '../truncation.js';
+import polyfillJSON from '../../vendor/JSON-js/json3.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -30,7 +30,16 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, null, null, 'react-native');
+    client ||
+    new Client(
+      this.options,
+      api,
+      logger,
+      telemeter,
+      null,
+      null,
+      'react-native',
+    );
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   _.setupJSON(polyfillJSON);
@@ -337,4 +346,4 @@ Rollbar.defaultOptions = {
   ignoreDuplicateErrors: true,
 };
 
-module.exports = Rollbar;
+export default Rollbar;

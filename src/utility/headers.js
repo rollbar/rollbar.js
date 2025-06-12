@@ -91,4 +91,4 @@ FetchHeaders.prototype.entries = function () {
   return iteratorFor(items);
 };
 
-module.exports = headers;
+export default headers;

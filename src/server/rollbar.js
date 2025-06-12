@@ -1,23 +1,23 @@
-var util = require('util');
-var os = require('os');
+import util from 'util';
+import os from 'os';
 
-var packageJson = require('../../package.json');
-var Client = require('../rollbar');
-var _ = require('../utility');
-var API = require('../api');
-var logger = require('./logger');
+import packageJson from '../../package.json' with { type: 'json' };
+import Client from '../rollbar.js';
+import * as _ from '../utility.js';
+import API from '../api.js';
+import logger from './logger.js';
 
-var Transport = require('./transport');
-var urllib = require('url');
-var jsonBackup = require('json-stringify-safe');
+import Transport from './transport.js';
+import urllib from 'url';
+import jsonBackup from 'json-stringify-safe';
 
-var Telemeter = require('../telemetry');
-var Instrumenter = require('./telemetry');
-var transforms = require('./transforms');
-var sharedTransforms = require('../transforms');
-var sharedPredicates = require('../predicates');
-var truncation = require('../truncation');
-var polyfillJSON = require('../../vendor/JSON-js/json3');
+import Telemeter from '../telemetry.js';
+import Instrumenter from './telemetry.js';
+import * as transforms from './transforms.js';
+import * as sharedTransforms from '../transforms.js';
+import * as sharedPredicates from '../predicates.js';
+import truncation from '../truncation.js';
+import polyfillJSON from '../../vendor/JSON-js/json3.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -41,7 +41,8 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, null, null, 'server');
+    client ||
+    new Client(this.options, api, logger, telemeter, null, null, 'server');
   this.instrumenter = new Instrumenter(
     this.options,
     this.client.telemeter,
@@ -757,4 +758,4 @@ Rollbar.defaultOptions = {
   autoInstrument: false,
 };
 
-module.exports = Rollbar;
+export default Rollbar;
