@@ -1,6 +1,5 @@
-/* eslint-disable no-console */
 require('console-polyfill');
-var detection = require('./detection');
+var detection = require('./detection').default;
 var _ = require('../utility');
 
 function error() {
@@ -32,8 +31,6 @@ function log() {
     console.log.apply(console, args);
   }
 }
-
-/* eslint-enable no-console */
 
 module.exports = {
   error: error,

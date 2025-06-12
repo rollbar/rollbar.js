@@ -6,7 +6,7 @@
 import truncation from '../src/truncation.js';
 import Transport from '../src/react-native/transport.js';
 var t = new Transport(truncation);
-import utility from '../src/utility.js';
+import * as utility from '../src/utility.js';
 utility.setupJSON();
 
 describe('post', function () {

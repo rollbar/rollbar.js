@@ -1,6 +1,6 @@
-var _ = require('../utility');
-var scrub = require('../scrub');
-var errorParser = require('../errorParser');
+import * as _ from '../utility.js';
+import scrub from '../scrub.js';
+import errorParser from '../errorParser.js';
 
 function baseData(item, options, callback) {
   var environment =
@@ -155,10 +155,10 @@ function _matchFilename(filename, options) {
   return null;
 }
 
-module.exports = {
-  baseData: baseData,
-  handleItemWithError: handleItemWithError,
-  addBody: addBody,
-  scrubPayload: scrubPayload,
-  _matchFilename: _matchFilename, // to enable unit test
+export {
+  baseData,
+  handleItemWithError,
+  addBody,
+  scrubPayload,
+  _matchFilename, // to enable unit test
 };

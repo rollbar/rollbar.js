@@ -3,7 +3,7 @@
 /* globals it */
 
 import t from '../src/truncation.js';
-import utility from '../src/utility.js';
+import * as utility from '../src/utility.js';
 utility.setupJSON();
 
 describe('truncate', function () {

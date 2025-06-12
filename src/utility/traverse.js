@@ -1,4 +1,4 @@
-var _ = require('../utility');
+import * as _ from '../utility.js';
 
 function traverse(obj, func, seen) {
   var k, v, i;
@@ -50,4 +50,4 @@ function traverse(obj, func, seen) {
   return !same ? result : obj;
 }
 
-module.exports = traverse;
+export default traverse;
