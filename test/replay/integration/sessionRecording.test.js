@@ -15,10 +15,10 @@ import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
-import { mockRecordFn } from '../util';
+import mockRecordFn from '../util/mockRecordFn.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
-import { createPayloadWithReplayId } from '../../fixtures/replay';
+import { createPayloadWithReplayId } from '../../fixtures/replay/index.js';
 
 const options = {
   enabled: true,
@@ -48,11 +48,11 @@ const createMockTransport = () => {
       .stub()
       .callsFake((accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
-            callback(
-              null,
-              { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' }
-            );
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'true' },
+          );
         }, 10);
       }),
     postJsonPayload: sinon.stub(),
@@ -255,9 +255,7 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -297,9 +295,7 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -330,9 +326,7 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     const addItemPromise = new Promise((resolve, reject) => {
@@ -377,9 +371,7 @@ describe('Session Replay Transport Integration', function () {
           },
         },
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queueWithoutReplayMap.addItem(errorItem, function (err, resp) {

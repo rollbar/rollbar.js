@@ -16,7 +16,7 @@ import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
-import { mockRecordFn } from '../util';
+import mockRecordFn from '../util/mockRecordFn.js';
 import * as payloads from '../../fixtures/replay/payloads.fixtures.js';
 
 const options = {
@@ -57,7 +57,7 @@ describe('Session Replay E2E', function () {
             callback(
               null,
               { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' }
+              { 'Rollbar-Replay-Enabled': 'true' },
             );
           }, 10);
         }),
@@ -116,9 +116,7 @@ describe('Session Replay E2E', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
 
       queue.addItem(errorItem, function (err, resp) {
@@ -206,9 +204,7 @@ describe('Session Replay E2E', function () {
           },
         },
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {
