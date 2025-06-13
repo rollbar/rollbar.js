@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const defaults = require('./defaults');
+const defaults = require('./defaults.cjs');
 
 const defaultsPlugin = new webpack.DefinePlugin(defaults);
 
@@ -20,7 +20,7 @@ module.exports = function (config) {
       captureConsole: true,
     },
 
-    // Files are specified in the grunt-karma configuration in Gruntfile.js
+    // Files are specified in the grunt-karma configuration in Gruntfile.cjs
     //files: []
 
     frameworks: ['mocha', 'expect', 'chai', 'sinon', 'jquery-1.9.0'],

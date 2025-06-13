@@ -9,7 +9,7 @@ var path = require('path');
 var pkg = require('./package.json');
 var fs = require('fs');
 
-var webpackConfig = require('./webpack.config.js');
+var webpackConfig = require('./webpack.config.cjs');
 
 function findTests(context) {
   if (context !== 'browser') {
@@ -29,7 +29,7 @@ function findTests(context) {
 function buildGruntKarmaConfig(singleRun, tests, reporters) {
   var config = {
     options: {
-      configFile: './karma.conf.js',
+      configFile: './karma.conf.cjs',
       singleRun: singleRun,
       files: [
         // Files that the tests will load
@@ -172,11 +172,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', ['webpack', 'replace:snippets']);
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('test', [
-    'test-browser',
-  ]);
+  grunt.registerTask('test', ['test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
-
 
   grunt.registerTask('test-browser', function (target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
