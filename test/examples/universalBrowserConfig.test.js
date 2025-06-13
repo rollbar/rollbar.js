@@ -47,7 +47,7 @@ describe('Rollbar loaded by snippet with non-default options', function () {
 
       var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+      expect(body.access_token).to.eql(undefined);
       expect(body.data.uuid).to.eql(ret.uuid);
       expect(body.data.body.message.body).to.eql('test');
 
