@@ -1,4 +1,4 @@
-import packageJson from '../../package.json' with { type: 'json' };
+import packageJson from '../../package.json' assert { type: 'json' };
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';

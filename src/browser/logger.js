@@ -1,6 +1,6 @@
-require('console-polyfill');
-var detection = require('./detection').default;
-var _ = require('../utility');
+import 'console-polyfill';
+import detection from './detection.js';
+import * as _ from '../utility.js';
 
 function error() {
   var args = Array.prototype.slice.call(arguments, 0);
@@ -32,8 +32,8 @@ function log() {
   }
 }
 
-module.exports = {
-  error: error,
-  info: info,
-  log: log,
+export default {
+  error,
+  info,
+  log,
 };

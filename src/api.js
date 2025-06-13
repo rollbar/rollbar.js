@@ -1,5 +1,5 @@
-var _ = require('./utility');
-var helpers = require('./apiUtility');
+import * as _ from './utility.js';
+import * as helpers from './apiUtility.js';
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',
@@ -168,4 +168,4 @@ function _getOTLPTransport(options, url) {
   return helpers.getTransportFromOptions(options, OTLPDefaultOptions, url);
 }
 
-module.exports = Api;
+export default Api;

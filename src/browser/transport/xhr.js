@@ -1,7 +1,7 @@
 /*global XDomainRequest*/
 
-var _ = require('../../utility');
-var logger = require('../logger');
+import * as _ from '../../utility.js';
+import logger from '../logger.js';
 
 function makeXhrRequest(
   accessToken,
@@ -188,4 +188,4 @@ function _newRetriableError(message, code) {
   return err;
 }
 
-module.exports = makeXhrRequest;
+export default makeXhrRequest;

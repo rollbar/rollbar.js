@@ -3,7 +3,7 @@
 /* globals it */
 /* globals sinon */
 
-import u from '../src/apiUtility.js';
+import * as u from '../src/apiUtility.js';
 import * as utility from '../src/utility.js';
 utility.setupJSON();
 
