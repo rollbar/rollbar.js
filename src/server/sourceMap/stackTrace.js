@@ -1,6 +1,6 @@
-var SourceMapConsumer = require('source-map').SourceMapConsumer;
-var path = require('path');
-var fs = require('fs');
+import { SourceMapConsumer } from 'source-map';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * Uses Node source-map to map transpiled JS stack locations to original
@@ -132,7 +132,7 @@ function cacheSourceContent(sourceMap, originalSource, newSource) {
   );
 }
 
-exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
+export function mapSourcePosition(position, diagnostic) {
   var sourceMap = sourceMapCache[position.source];
   if (!sourceMap) {
     // Call the (overrideable) retrieveSourceMap function to get the source map.
@@ -193,6 +193,6 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
   return position;
 };
 
-exports.sourceContent = function sourceContent(source) {
+export function sourceContent(source) {
   return sourcesContentCache[source];
 };
