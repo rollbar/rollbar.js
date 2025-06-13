@@ -1,8 +1,8 @@
-var http = require('http');
-var https = require('https');
-var _ = require('../utility');
-var replace = require('../utility/replace');
-var urlHelpers = require('./telemetry/urlHelpers');
+import http from 'http';
+import https from 'https';
+import * as _ from '../utility.js';
+import replace from '../utility/replace.js';
+import * as urlHelpers from './telemetry/urlHelpers.js';
 
 var defaults = {
   network: true,
@@ -194,4 +194,4 @@ function restore(replacements, type) {
   }
 }
 
-module.exports = Instrumenter;
+export default Instrumenter;

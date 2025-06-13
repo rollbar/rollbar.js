@@ -1,11 +1,11 @@
 'use strict';
 
-var logger = require('./logger');
-var async = require('async');
-var fs = require('fs');
-var lru = require('lru-cache');
-var util = require('util');
-var stackTrace = require('./sourceMap/stackTrace');
+import logger from './logger.js';
+import async from 'async';
+import fs from 'fs';
+import lru from 'lru-cache';
+import util from 'util';
+import * as stackTrace from './sourceMap/stackTrace.js';
 
 var linesOfContext = 3;
 var tracePattern =
@@ -17,8 +17,7 @@ var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 var cache = new lru({ max: 100 });
 var pendingReads = {};
 
-exports.cache = cache;
-exports.pendingReads = pendingReads;
+export { cache, pendingReads };
 
 /*
  * Internal
@@ -296,10 +295,10 @@ function gatherContexts(frames, callback) {
  * Public API
  */
 
-exports.parseException = function (exc, options, item, callback) {
+export function parseException(exc, options, item, callback) {
   var multipleErrs = getMultipleErrors(exc.errors);
 
-  return exports.parseStack(exc.stack, options, item, function (err, stack) {
+  return parseStack(exc.stack, options, item, function (err, stack) {
     var message, clss, ret, firstErr, jadeMatch, jadeData;
 
     if (err) {
@@ -353,7 +352,7 @@ exports.parseException = function (exc, options, item, callback) {
   });
 };
 
-exports.parseStack = function (stack, options, item, callback) {
+export function parseStack(stack, options, item, callback) {
   var lines,
     _stack = stack;
 
