@@ -1,5 +1,3 @@
-'use strict';
-
 import logger from './logger.js';
 import async from 'async';
 import fs from 'fs';

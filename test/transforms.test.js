@@ -3,7 +3,7 @@
 /* globals it */
 
 import * as _ from '../src/utility.js';
-import t from '../src/transforms.js';
+import * as t from '../src/transforms.js';
 
 function itemFromArgs(args) {
   var item = _.createItem(args);

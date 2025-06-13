@@ -1,7 +1,7 @@
-var _ = require('../utility');
-var logger = require('./logger');
+import * as _ from '../utility.js';
+import logger from './logger.js';
 
-var Buffer = require('buffer/').Buffer;
+import { Buffer } from 'buffer/';
 
 function Transport(truncation) {
   this.rateLimitExpires = 0;
@@ -134,4 +134,4 @@ function _wrapPostCallback(callback) {
   };
 }
 
-module.exports = Transport;
+export default Transport;
