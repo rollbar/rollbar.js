@@ -1,4 +1,4 @@
-var rollbar = require('../rollbar');
+import rollbar from '../rollbar.js';
 
 var options = (typeof window !== 'undefined') && window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';
@@ -19,4 +19,4 @@ if (!shimRunning && options) {
   self._rollbarDidLoad = true;
 }
 
-module.exports = rollbar;
+export default rollbar;

@@ -97,7 +97,7 @@ function captureUnhandledRejections(window, handler, shim) {
   window.addEventListener('unhandledrejection', rejectionHandler);
 }
 
-module.exports = {
-  captureUncaughtExceptions: captureUncaughtExceptions,
-  captureUnhandledRejections: captureUnhandledRejections,
+export {
+  captureUncaughtExceptions,
+  captureUnhandledRejections,
 };

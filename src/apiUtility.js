@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 function buildPayload(data) {
   if (!_.isType(data.context, 'string')) {
@@ -99,9 +99,9 @@ function appendPathToPath(base, path) {
   return base + path;
 }
 
-module.exports = {
-  buildPayload: buildPayload,
-  getTransportFromOptions: getTransportFromOptions,
-  transportOptions: transportOptions,
-  appendPathToPath: appendPathToPath,
+export {
+  buildPayload,
+  getTransportFromOptions,
+  transportOptions,
+  appendPathToPath,
 };

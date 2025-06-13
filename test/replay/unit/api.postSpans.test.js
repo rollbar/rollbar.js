@@ -10,8 +10,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-
-const Api = require('../../../src/api');
+import Api from '../../../src/api.js';
 
 describe('Api', function () {
   let api;

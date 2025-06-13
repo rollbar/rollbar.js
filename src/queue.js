@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 /*
  * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
@@ -358,4 +358,4 @@ Queue.prototype._shouldSendReplay = function (response, headers) {
   return true;
 };
 
-module.exports = Queue;
+export default Queue;

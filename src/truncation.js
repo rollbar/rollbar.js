@@ -1,5 +1,5 @@
-var _ = require('./utility');
-var traverse = require('./utility/traverse');
+import * as _ from './utility.js';
+import traverse from './utility/traverse.js';
 
 function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];
@@ -110,12 +110,12 @@ function truncate(payload, jsonBackup, maxSize) {
   return result;
 }
 
-module.exports = {
-  truncate: truncate,
+export default {
+  truncate,
 
   /* for testing */
-  raw: raw,
-  truncateFrames: truncateFrames,
-  truncateStrings: truncateStrings,
-  maybeTruncateValue: maybeTruncateValue,
+  raw,
+  truncateFrames,
+  truncateStrings,
+  maybeTruncateValue,
 };

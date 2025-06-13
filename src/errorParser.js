@@ -1,4 +1,4 @@
-var ErrorStackParser = require('error-stack-parser');
+import ErrorStackParser from 'error-stack-parser';
 
 var UNKNOWN_FUNCTION = '?';
 var ERR_CLASS_REGEXP = new RegExp(
@@ -117,11 +117,11 @@ function _mostSpecificErrorName(error) {
   return name;
 }
 
-module.exports = {
-  guessFunctionName: guessFunctionName,
-  guessErrorClass: guessErrorClass,
-  gatherContext: gatherContext,
-  parse: parse,
-  Stack: Stack,
-  Frame: Frame,
+export default {
+  guessFunctionName,
+  guessErrorClass,
+  gatherContext,
+  parse,
+  Stack,
+  Frame,
 };

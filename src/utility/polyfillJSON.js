@@ -1,3 +1,3 @@
-var polyfillJSON = require('../../vendor/JSON-js/json3');
+import polyfillJSON from '../../vendor/JSON-js/json3.js';
 
-module.exports = polyfillJSON;
+export default polyfillJSON;
