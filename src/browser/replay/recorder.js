@@ -147,7 +147,7 @@ export default class Recorder {
         }
         return true; // swallow the error instead of throwing it to the window
       },
-      ...this.rrwebOptions,
+      ...this.#rrwebOptions,
     });
 
     return this;
