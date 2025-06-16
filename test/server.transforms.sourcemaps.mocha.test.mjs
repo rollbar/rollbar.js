@@ -47,7 +47,7 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   it('should map the stack with context when original source is present', async function () {
-    await throwInScriptFile('../examples/node-typescript/dist/index.js');
+    await throwInScriptFile('../examples/node-typescript/dist/index.cjs');
 
     expect(addItemStub.called).to.be.true;
 
@@ -74,8 +74,8 @@ describe('transforms.nodeSourceMaps', function () {
         .source_mapping_urls;
     const urls = Object.keys(sourceMappingURLs);
 
-    expect(urls[0]).to.include('index.js');
-    expect(sourceMappingURLs[urls[0]]).to.include('index.js.map');
+    expect(urls[0]).to.include('index.cjs');
+    expect(sourceMappingURLs[urls[0]]).to.include('index.cjs.map');
     expect(urls[1]).to.include('server.transforms.test-utils.mjs');
     expect(sourceMappingURLs[urls[1]]).to.include('not found');
 
@@ -88,7 +88,7 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   it('should map the stack with context using sourcesContent', async function () {
-    await throwInScriptFile('../examples/node-dist/index.js');
+    await throwInScriptFile('../examples/node-dist/index.cjs');
 
     expect(addItemStub.called).to.be.true;
 
@@ -116,7 +116,7 @@ describe('transforms.nodeSourceMaps', function () {
     const urls = Object.keys(sourceMappingURLs);
 
     expect(urls).to.have.lengthOf(1);
-    expect(urls[0]).to.include('index.js');
-    expect(sourceMappingURLs[urls[0]]).to.include('index.js.map');
+    expect(urls[0]).to.include('index.cjs');
+    expect(sourceMappingURLs[urls[0]]).to.include('index.cjs.map');
   });
 });

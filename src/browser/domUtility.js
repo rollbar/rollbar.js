@@ -129,12 +129,12 @@ function describeElement(elem) {
   return out;
 }
 
-module.exports = {
-  describeElement: describeElement,
-  descriptionToString: descriptionToString,
-  elementArrayToString: elementArrayToString,
-  treeToArray: treeToArray,
-  getElementFromEvent: getElementFromEvent,
-  isDescribedElement: isDescribedElement,
-  getElementType: getElementType,
+export {
+  describeElement,
+  descriptionToString,
+  elementArrayToString,
+  treeToArray,
+  getElementFromEvent,
+  isDescribedElement,
+  getElementType,
 };

@@ -10,4 +10,4 @@ module.exports = function error() {
     var error = new CustomError('foo');
     throw error;
 };
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=index.cjs.map

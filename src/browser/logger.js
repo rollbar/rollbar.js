@@ -1,7 +1,6 @@
-/* eslint-disable no-console */
-require('console-polyfill');
-var detection = require('./detection');
-var _ = require('../utility');
+import 'console-polyfill';
+import detection from './detection.js';
+import * as _ from '../utility.js';
 
 function error() {
   var args = Array.prototype.slice.call(arguments, 0);
@@ -33,10 +32,8 @@ function log() {
   }
 }
 
-/* eslint-enable no-console */
-
-module.exports = {
-  error: error,
-  info: info,
-  log: log,
+export default {
+  error,
+  info,
+  log,
 };

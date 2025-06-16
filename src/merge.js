@@ -1,5 +1,3 @@
-'use strict';
-
 var hasOwn = Object.prototype.hasOwnProperty;
 var toStr = Object.prototype.toString;
 
@@ -60,4 +58,4 @@ function merge() {
   return result;
 }
 
-module.exports = merge;
+export default merge;
