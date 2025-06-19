@@ -908,6 +908,23 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('1 {"a":42}');
   });
+
+  it('should handle arrays gracefully', function () {
+    var args = [1, [{ a: 42 }], [{ b: 43 }, null, 'foo', [1, 2]]];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('1 [{"a":42}] [{"b":43} null foo [1 2]]');
+  });
+
+  it('should trim large arrays to the list of 10 items', function () {
+    var args = [1, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]];
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql(
+      '1 [2 3 4 5 6 7 8 9 10 11 ...output trimmed to 10 items...]',
+    );
+  });
+
   it('should handle strings', function () {
     var args = [1, 'foo'];
     var result = _.formatArgsAsString(args);
@@ -921,14 +938,14 @@ describe('formatArgsAsString', function () {
     expect(result).to.eql('');
   });
   /*
-   * PhantomJS does not support Symbol yet
-  it('should handle symbols', function() {
-    var args = [1, Symbol('hello')];
-    var result = _.formatArgsAsString(args);
+     * PhantomJS does not support Symbol yet
+    it('should handle symbols', function() {
+      var args = [1, Symbol('hello')];
+      var result = _.formatArgsAsString(args);
 
-    expect(result).to.eql('1 symbol(\'hello\')');
-  });
-  */
+      expect(result).to.eql('1 symbol(\'hello\')');
+    });
+    */
 });
 
 describe('addItemAttributes', function () {
