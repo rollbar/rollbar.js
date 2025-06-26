@@ -45,14 +45,26 @@ describe('Recorder', function () {
       const recorder = new Recorder({}, recordFnStub);
 
       expect(recorder.isRecording).to.equal(false);
-      expect(recorder.options).to.deep.equal({ enabled: undefined, autoStart: undefined, maxSeconds: undefined, triggerOptions:undefined });
+      expect(recorder.options).to.deep.equal({
+        enabled: undefined,
+        autoStart: undefined,
+        maxSeconds: undefined,
+        triggerOptions: undefined,
+        debug: undefined,
+      });
     });
 
     it('should initialize removing disallowed options', function () {
       const options = { enabled: true, checkoutEveryNms: 1000 };
       const recorder = new Recorder(options, recordFnStub);
 
-      expect(recorder.options).to.deep.equal({ enabled: true, autoStart: undefined, maxSeconds: undefined, triggerOptions:undefined });
+      expect(recorder.options).to.deep.equal({
+        enabled: true,
+        autoStart: undefined,
+        maxSeconds: undefined,
+        triggerOptions: undefined,
+        debug: undefined,
+      });
     });
 
     it('should throw error if no record function is passed', function () {
@@ -379,7 +391,8 @@ describe('Recorder', function () {
         enabled: false,
         autoStart: undefined,
         maxSeconds: 20,
-        triggerOptions:undefined,
+        triggerOptions: undefined,
+        debug: undefined,
       });
     });
 
@@ -392,7 +405,8 @@ describe('Recorder', function () {
         enabled: true,
         autoStart: undefined,
         maxSeconds: 15,
-        triggerOptions:undefined,
+        triggerOptions: undefined,
+        debug: undefined,
       });
 
       expect(recorder.checkoutEveryNms()).to.equal(7500);
