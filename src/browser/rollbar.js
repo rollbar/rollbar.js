@@ -1,22 +1,22 @@
-const Rollbar = require('./core');
-const telemeter = require('../telemetry');
-const instrumenter = require('./telemetry');
-const polyfillJSON = require('../utility/polyfillJSON');
-const wrapGlobals = require('./wrapGlobals');
-const scrub = require('../scrub');
-const truncation = require('../truncation');
-const Tracing = require('../tracing/tracing');
-const Recorder = require('./replay/recorder');
+import Rollbar from './core.js';
+import Telemeter from '../telemetry.js';
+import Instrumenter from './telemetry.js';
+import polyfillJSON from '../utility/polyfillJSON.js';
+import wrapGlobals from './wrapGlobals.js';
+import scrub from '../scrub.js';
+import truncation from '../truncation.js';
+import Tracing from '../tracing/tracing.js';
+import Recorder from './replay/recorder.js';
 
 Rollbar.setComponents({
-  telemeter: telemeter,
-  instrumenter: instrumenter,
+  telemeter: Telemeter,
+  instrumenter: Instrumenter,
   polyfillJSON: polyfillJSON,
   wrapGlobals: wrapGlobals,
   scrub: scrub,
   truncation: truncation,
-  tracing: Tracing.default,
-  recorder: Recorder.default,
+  tracing: Tracing,
+  recorder: Recorder,
 });
 
-module.exports = Rollbar;
+export default Rollbar;

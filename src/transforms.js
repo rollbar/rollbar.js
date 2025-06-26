@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 function itemToPayload(item, options, callback) {
   var data = item.data;
@@ -155,13 +155,13 @@ function addDiagnosticKeys(item, options, callback) {
   callback(null, item);
 }
 
-module.exports = {
-  itemToPayload: itemToPayload,
-  addPayloadOptions: addPayloadOptions,
-  addTelemetryData: addTelemetryData,
-  addMessageWithError: addMessageWithError,
-  userTransform: userTransform,
-  addConfigToPayload: addConfigToPayload,
-  addConfiguredOptions: addConfiguredOptions,
-  addDiagnosticKeys: addDiagnosticKeys,
+export {
+  itemToPayload,
+  addPayloadOptions,
+  addTelemetryData,
+  addMessageWithError,
+  userTransform,
+  addConfigToPayload,
+  addConfiguredOptions,
+  addDiagnosticKeys,
 };

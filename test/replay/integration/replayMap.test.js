@@ -14,7 +14,7 @@ import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import Api from '../../../src/api.js';
-import { mockRecordFn } from '../util';
+import mockRecordFn from '../util/mockRecordFn.js';
 
 const options = {
   enabled: true,
@@ -40,7 +40,7 @@ describe('ReplayMap API Integration', function () {
             callback(
               null,
               { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' }
+              { 'Rollbar-Replay-Enabled': 'true' },
             );
           }, 10);
         }),

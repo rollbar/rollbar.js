@@ -1,5 +1,5 @@
-var logger = require('../logger');
-var _ = require('../../utility');
+import logger from '../logger.js';
+import * as _ from '../../utility.js';
 
 function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
   var controller;
@@ -47,4 +47,4 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     });
 }
 
-module.exports = makeFetchRequest;
+export default makeFetchRequest;
