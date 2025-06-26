@@ -7,12 +7,11 @@ export default {
   autoStart: true, // Start recording automatically when Rollbar initializes
   maxSeconds: 300, // Maximum recording duration in seconds
 
-  // trigger options
   triggerOptions: {
     // Trigger replay on specific items (occurrences)
     item: {
       levels: ['error', 'critical'], // Trigger on item level
-    }
+    },
   },
 
   debug: {

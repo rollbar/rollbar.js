@@ -48,6 +48,7 @@ export default class Recorder {
       autoStart,
       maxSeconds,
       triggerOptions,
+      debug,
 
       // disallowed rrweb options
       emit,
@@ -56,7 +57,7 @@ export default class Recorder {
       // rrweb options
       ...rrwebOptions
     } = newOptions;
-    this.#options = { enabled, autoStart, maxSeconds, triggerOptions };
+    this.#options = { enabled, autoStart, maxSeconds, triggerOptions, debug };
     this.#rrwebOptions = rrwebOptions;
 
     if (this.isRecording && newOptions.enabled === false) {
