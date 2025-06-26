@@ -2424,7 +2424,7 @@ var ReplayMap = /*#__PURE__*/function () {
 /***/ (function(module) {
 
 module.exports = {
-  version: '3.0.0-alpha.1',
+  version: '3.0.0-alpha.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
@@ -2854,11 +2854,12 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
   }).then(function (response) {
     if (timeoutId) clearTimeout(timeoutId);
     var respHeaders = response.headers;
-    var headers = {
+    var isItemRoute = url.endsWith('/api/1/item/');
+    var headers = isItemRoute ? {
       'Rollbar-Replay-Enabled': respHeaders.get('Rollbar-Replay-Enabled'),
       'Rollbar-Replay-RateLimit-Remaining': respHeaders.get('Rollbar-Replay-RateLimit-Remaining'),
       'Rollbar-Replay-RateLimit-Reset': respHeaders.get('Rollbar-Replay-RateLimit-Reset')
-    };
+    } : {};
     var json = response.json();
     callback(null, json, headers);
   })["catch"](function (error) {
@@ -6916,7 +6917,6 @@ function gen() {
   maxSeconds: 300,
   // Maximum recording duration in seconds
 
-  // trigger options
   triggerOptions: {
     // Trigger replay on specific items (occurrences)
     item: {
@@ -7017,11 +7017,12 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
             _onreadystatechange = undefined;
             var parseResponse = _.jsonParse(request.responseText);
             if (_isSuccess(request)) {
-              var headers = {
+              var isItemRoute = url.endsWith('/api/1/item/');
+              var headers = isItemRoute ? {
                 'Rollbar-Replay-Enabled': request.getResponseHeader('Rollbar-Replay-Enabled'),
                 'Rollbar-Replay-RateLimit-Remaining': request.getResponseHeader('Rollbar-Replay-RateLimit-Remaining'),
                 'Rollbar-Replay-RateLimit-Reset': request.getResponseHeader('Rollbar-Replay-RateLimit-Reset')
-              };
+              } : {};
               callback(parseResponse.error, parseResponse.value, headers);
               return;
             } else if (_isNormalFailure(request)) {
@@ -19340,7 +19341,7 @@ var hrtime = __webpack_require__(1);
 var logger = __webpack_require__(144);
 var logger_default = /*#__PURE__*/__webpack_require__.n(logger);
 ;// ./src/browser/replay/recorder.js
-var _excluded = ["enabled", "autoStart", "maxSeconds", "triggerOptions", "emit", "checkoutEveryNms"];
+var _excluded = ["enabled", "autoStart", "maxSeconds", "triggerOptions", "debug", "emit", "checkoutEveryNms"];
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -19413,6 +19414,7 @@ var Recorder = /*#__PURE__*/function () {
         autoStart = newOptions.autoStart,
         maxSeconds = newOptions.maxSeconds,
         triggerOptions = newOptions.triggerOptions,
+        debug = newOptions.debug,
         emit = newOptions.emit,
         checkoutEveryNms = newOptions.checkoutEveryNms,
         rrwebOptions = _objectWithoutProperties(newOptions, _excluded);
@@ -19420,7 +19422,8 @@ var Recorder = /*#__PURE__*/function () {
         enabled: enabled,
         autoStart: autoStart,
         maxSeconds: maxSeconds,
-        triggerOptions: triggerOptions
+        triggerOptions: triggerOptions,
+        debug: debug
       });
       _classPrivateFieldSet(_rrwebOptions, this, rrwebOptions);
       if (this.isRecording && newOptions.enabled === false) {
