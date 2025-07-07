@@ -40,6 +40,7 @@ export class Tracer {
       kind,
       parentSpanId,
       spanProcessor: this.spanProcessor,
+      startTime: options.startTime,
     });
     return span;
   }
