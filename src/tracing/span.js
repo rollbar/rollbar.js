@@ -48,7 +48,7 @@ export class Span {
   }
 
   setAttribute(key, value) {
-    if (value == null || this.ended) return this;
+    if (value == null || this.span.ended) return this;
     if (key.length === 0) return this;
 
     this.span.attributes[key] = value;
