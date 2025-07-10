@@ -82,6 +82,7 @@ var UMDConfigBase = {
     path: outputPath,
     library: 'rollbar',
     libraryTarget: 'umd',
+    libraryExport: 'default',
     globalObject: 'this',
   },
   target: ['web', 'es5'],
