@@ -11,15 +11,15 @@
     "examples",
     "release",
     "test",
-    "karma.conf.js",
+    "karma.conf.cjs",
     ".gitignore",
     ".gitmodules",
     ".travis.yml",
-    "Gruntfile.js",
+    "Gruntfile.cjs",
     "Makefile",
     "travis.yml",
     "package.json",
-    "webpack.config.js",
+    "webpack.config.cjs",
     "browserstack*"
   ]
 }

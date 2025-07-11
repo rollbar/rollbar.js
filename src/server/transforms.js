@@ -1,9 +1,9 @@
-var async = require('async');
-var parser = require('./parser');
-var requestIp = require('request-ip');
-var url = require('url');
-var _ = require('../utility');
-var scrub = require('../scrub');
+import async from 'async';
+import * as parser from './parser.js';
+import requestIp from 'request-ip';
+import url from 'url';
+import * as _ from '../utility.js';
+import scrub from '../scrub.js';
 
 function baseData(item, options, callback) {
   var environment =
@@ -323,13 +323,13 @@ function _buildRequestData(req) {
   return data;
 }
 
-module.exports = {
-  baseData: baseData,
-  handleItemWithError: handleItemWithError,
-  addBody: addBody,
-  addMessageData: addMessageData,
-  addErrorData: addErrorData,
-  addRequestData: addRequestData,
-  addLambdaData: addLambdaData,
-  scrubPayload: scrubPayload,
+export {
+  baseData,
+  handleItemWithError,
+  addBody,
+  addMessageData,
+  addErrorData,
+  addRequestData,
+  addLambdaData,
+  scrubPayload,
 };

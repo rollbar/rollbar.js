@@ -1,7 +1,7 @@
 var extend = require('util')._extend;
 var path = require('path');
 var webpack = require('webpack');
-var defaults = require('./defaults');
+var defaults = require('./defaults.cjs');
 var TerserPlugin = require('terser-webpack-plugin');
 
 var outputPath = path.resolve(__dirname, 'dist');
@@ -82,6 +82,7 @@ var UMDConfigBase = {
     path: outputPath,
     library: 'rollbar',
     libraryTarget: 'umd',
+    libraryExport: 'default',
     globalObject: 'this',
   },
   target: ['web', 'es5'],

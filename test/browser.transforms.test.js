@@ -4,7 +4,7 @@
 /* globals sinon */
 
 import Rollbar from '../src/browser/rollbar.js';
-import t from '../src/browser/transforms.js';
+import * as t from '../src/browser/transforms.js';
 
 function TestClientGen() {
   var TestClient = function () {

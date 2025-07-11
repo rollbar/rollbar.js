@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   version: '3.0.0-alpha.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
