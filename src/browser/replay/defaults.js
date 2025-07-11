@@ -44,6 +44,11 @@ export default {
     week: false,
   },
 
+  // Override default class names.
+  blockClass: 'rb-block',
+  maskTextClass: 'rb-mask',
+  ignoreClass: 'rb-ignore',
+
   // Remove unnecessary parts of the DOM
   // By default all removable elements are removed
   slimDOMOptions: {
