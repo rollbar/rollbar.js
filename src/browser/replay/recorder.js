@@ -116,6 +116,8 @@ export default class Recorder {
       );
     }
 
+    this._addEndEvent(recordingSpan, replayId);
+
     recordingSpan.end();
 
     return tracing.exporter.toPayload();
@@ -189,6 +191,23 @@ export default class Recorder {
           2,
         );
       })(event),
+    );
+  }
+
+  /**
+   * Helps the application correctly align playback by adding a noop event
+   * to the end of the recording.
+   **/
+  _addEndEvent(recordingSpan, replayId) {
+    recordingSpan.addEvent(
+
+      'rrweb-replay-events',
+      {
+        eventType: 5,
+        json: JSON.stringify({tag: "replay.end", payload: {}}),
+        'rollbar.replay.id': replayId,
+      },
+      hrtime.fromMillis(Date.now()),
     );
   }
 }

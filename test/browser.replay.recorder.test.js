@@ -150,7 +150,9 @@ describe('Recorder', function () {
       const result = recorder.dump(mockTracing, testReplayId);
 
       expect(mockTracing.startSpan.calledOnce).to.be.true;
-      expect(mockSpan.addEvent.calledTwice).to.be.true;
+
+      // Event count includes the custom end event
+      expect(mockSpan.addEvent.calledThrice).to.be.true;
       expect(mockSpan.setAttribute.calledOnce).to.be.true;
       expect(mockSpan.setAttribute.calledWith('rollbar.replay.id', testReplayId)).to.be.true;
 
@@ -163,6 +165,11 @@ describe('Recorder', function () {
       expect(secondCallData.eventType).to.equal('event2');
       expect(JSON.parse(secondCallData.json)).to.deep.equal({ b: 2 });
       expect(secondCallData['rollbar.replay.id']).to.equal(testReplayId);
+
+      const thirdCallData = mockSpan.addEvent.thirdCall.args[1];
+      expect(thirdCallData.eventType).to.equal(5);
+      expect(JSON.parse(thirdCallData.json)).to.deep.equal({tag: "replay.end", payload: {}});
+      expect(thirdCallData['rollbar.replay.id']).to.equal(testReplayId);
     });
 
     it('should handle checkout events correctly', function () {
@@ -228,7 +235,8 @@ describe('Recorder', function () {
       expect(mockSpan.span.startTime).to.be.deep.equal([3, 50000000]); // otel time
       expect(mockSpan.span.endTime).not.to.be.null;
 
-      expect(mockSpan.addEvent.callCount).to.equal(6);
+      // Event count includes the custom end event
+      expect(mockSpan.addEvent.callCount).to.equal(7);
 
       [
         {
@@ -306,7 +314,9 @@ describe('Recorder', function () {
 
       expect(result).to.deep.equal([{ id: 'span1' }]);
       expect(mockTracing.startSpan.calledOnce).to.be.true;
-      expect(mockSpan.addEvent.calledTwice).to.be.true;
+
+      // Event count includes the custom end event
+      expect(mockSpan.addEvent.calledThrice).to.be.true;
       expect(mockSpan.end.calledOnce).to.be.true;
       expect(mockTracing.exporter.toPayload.calledOnce).to.be.true;
     });
@@ -341,7 +351,8 @@ describe('Recorder', function () {
 
       recorder.dump(mockTracing, testReplayId);
 
-      expect(mockSpan.addEvent.callCount).to.equal(3);
+      // Event count includes the custom end event
+      expect(mockSpan.addEvent.callCount).to.equal(4);
 
       for (let i = 0; i < mockSpan.addEvent.callCount; i++) {
         const eventName = mockSpan.addEvent.getCall(i).args[0];
