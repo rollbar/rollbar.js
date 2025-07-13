@@ -1,6 +1,6 @@
-var _ = require('../utility');
-var makeFetchRequest = require('./transport/fetch');
-var makeXhrRequest = require('./transport/xhr');
+import * as _ from '../utility.js';
+import makeFetchRequest from './transport/fetch.js';
+import makeXhrRequest from './transport/xhr.js';
 
 /*
  * accessToken may be embedded in payload but that should not
@@ -183,4 +183,4 @@ function _proxyRequest(json, callback) {
   );
 }
 
-module.exports = Transport;
+export default Transport;

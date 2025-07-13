@@ -4,7 +4,7 @@
 /* globals sinon */
 
 import API from '../src/api.js';
-import utility from '../src/utility.js';
+import * as utility from '../src/utility.js';
 utility.setupJSON();
 
 function TestTransportGenerator() {
@@ -161,7 +161,7 @@ describe('postSpans', function () {
     const api = new API(options, transport, urllib);
 
     const data = { a: 1 };
-    await api.postSpans(data)
+    await api.postSpans(data);
 
     expect(transport.post.called).to.be.true;
 

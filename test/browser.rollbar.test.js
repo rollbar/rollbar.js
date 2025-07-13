@@ -117,7 +117,7 @@ describe('Rollbar()', function () {
       scrubFields: ['foobar'],
       recorder: {
         enabled: true,
-        },
+      },
       tracing: {
         endpoint: 'api.rollbar.com/api/1/tracing/',
       },
@@ -127,8 +127,13 @@ describe('Rollbar()', function () {
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
     expect(rollbar.options.recorder.enabled).to.eql(true);
-    expect(rollbar.options.recorder.triggerOptions.item.levels).to.eql(['error', 'critical']);
-    expect(rollbar.options.tracing.endpoint).to.eql('api.rollbar.com/api/1/tracing/');
+    expect(rollbar.options.recorder.triggerOptions.item.levels).to.eql([
+      'error',
+      'critical',
+    ]);
+    expect(rollbar.options.tracing.endpoint).to.eql(
+      'api.rollbar.com/api/1/tracing/',
+    );
     expect(rollbar.options.tracing.enabled).to.eql(false);
     done();
   });
@@ -903,7 +908,7 @@ describe('log', function () {
     });
 
     setTimeout(function () {
-      try{
+      try {
         server.respond();
 
         var body = JSON.parse(server.requests[0].requestBody);
@@ -926,7 +931,6 @@ describe('log', function () {
       }
     }, 1);
   });
-
 
   it('should send message when called with only null arguments', function (done) {
     var server = window.server;

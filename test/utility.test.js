@@ -3,8 +3,8 @@
 /* globals it */
 /* globals sinon */
 
-import _ from '../src/utility.js';
-import utility from '../src/utility.js';
+import * as _ from '../src/utility.js';
+import * as utility from '../src/utility.js';
 import polyfillJSON from '../vendor/JSON-js/json3.js';
 
 utility.setupJSON();

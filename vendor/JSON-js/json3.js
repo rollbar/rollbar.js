@@ -760,4 +760,4 @@ var setupCustomJSON = function(JSON) {
   }
 }
 
-module.exports = setupCustomJSON;
+export default setupCustomJSON;

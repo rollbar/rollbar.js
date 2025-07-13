@@ -1,5 +1,5 @@
-var _ = require('./utility');
-var traverse = require('./utility/traverse');
+import * as _ from './utility.js';
+import traverse from './utility/traverse.js';
 
 function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
@@ -89,4 +89,4 @@ function _getScrubQueryParamRegexs(scrubFields) {
   return ret;
 }
 
-module.exports = scrub;
+export default scrub;

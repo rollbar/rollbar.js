@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 /*
  * RateLimiter - an object that encapsulates the logic for counting items sent to Rollbar
@@ -181,4 +181,4 @@ function rateLimitPayload(
   return item;
 }
 
-module.exports = RateLimiter;
+export default RateLimiter;

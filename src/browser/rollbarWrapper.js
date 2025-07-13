@@ -40,4 +40,4 @@ RollbarWrap.prototype._swapAndProcessMessages = function (impl, messages) {
   return this;
 };
 
-module.exports = RollbarWrap;
+export default RollbarWrap;

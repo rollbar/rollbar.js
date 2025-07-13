@@ -1,7 +1,7 @@
 /* globals Map */
-var inspector = require('inspector');
-var async = require('async');
-var _ = require('../utility');
+import inspector from 'inspector';
+import async from 'async';
+import * as _ from '../utility.js';
 
 // It's helpful to have default limits, as the data expands quickly in real environments.
 // depth = 1 is  enough to capture the members of top level objects and arrays.
@@ -327,4 +327,4 @@ function getProperties(objectId, callback) {
   );
 }
 
-module.exports = Locals;
+export default Locals;

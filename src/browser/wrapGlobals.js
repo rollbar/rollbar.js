@@ -57,4 +57,4 @@ function _extendListenerPrototype(handler, prototype, shim) {
   }
 }
 
-module.exports = wrapGlobals;
+export default wrapGlobals;

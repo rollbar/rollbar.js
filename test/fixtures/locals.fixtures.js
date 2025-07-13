@@ -1,5 +1,3 @@
-'use strict';
-
 var localsFixtures = {
   maps: {
     // simple map includes only the local scope and a single stack frame.
@@ -540,4 +538,4 @@ var localsFixtures = {
   },
 };
 
-module.exports = localsFixtures;
+export default localsFixtures;

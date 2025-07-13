@@ -1,9 +1,9 @@
-var _ = require('../utility');
-var headers = require('../utility/headers');
-var replace = require('../utility/replace');
-var scrub = require('../scrub');
-var urlparser = require('./url');
-var domUtil = require('./domUtility');
+import * as _ from '../utility.js';
+import headers from '../utility/headers.js';
+import replace from '../utility/replace.js';
+import scrub from '../scrub.js';
+import * as urlparser from './url.js';
+import * as domUtil from './domUtility.js';
 
 var defaults = {
   network: true,
@@ -989,4 +989,4 @@ function _isUrlObject(input) {
   return typeof URL !== 'undefined' && input instanceof URL;
 }
 
-module.exports = Instrumenter;
+export default Instrumenter;

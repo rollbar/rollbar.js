@@ -10,9 +10,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-
-// We need to use require since the Queue module is CommonJS
-const Queue = require('../../../src/queue');
+import Queue from '../../../src/queue.js';
 
 class MockReplayMap {
   constructor() {
@@ -60,9 +58,7 @@ describe('Queue with ReplayMap', function () {
     it('should add replayId to the item when replayMap is available', function () {
       const item = {
         body: { message: 'test error' },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 
@@ -75,9 +71,7 @@ describe('Queue with ReplayMap', function () {
     it('should not add replayId when item has no body', function () {
       const item = {
         noBody: true,
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 
@@ -92,9 +86,7 @@ describe('Queue with ReplayMap', function () {
 
       const item = {
         body: { message: 'test error' },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 
@@ -171,9 +163,7 @@ describe('Queue with ReplayMap', function () {
 
       const item = {
         body: { message: 'test error' },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 
@@ -193,9 +183,7 @@ describe('Queue with ReplayMap', function () {
 
       const item = {
         body: { message: 'test error' },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 
@@ -211,9 +199,7 @@ describe('Queue with ReplayMap', function () {
 
       const item = {
         body: { message: 'test error' },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
       const callback = sinon.stub();
 

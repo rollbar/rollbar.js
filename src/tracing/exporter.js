@@ -1,4 +1,4 @@
-import hrtime from './hrtime';
+import hrtime from './hrtime.js';
 
 /**
  * SpanExporter is responsible for exporting ReadableSpan objects

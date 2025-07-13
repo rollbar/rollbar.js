@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 function checkLevel(item, settings) {
   var level = item.level;
@@ -204,10 +204,10 @@ function messagesFromItem(item) {
   return messages;
 }
 
-module.exports = {
-  checkLevel: checkLevel,
-  userCheckIgnore: userCheckIgnore,
-  urlIsNotBlockListed: urlIsNotBlockListed,
-  urlIsSafeListed: urlIsSafeListed,
-  messageIsIgnored: messageIsIgnored,
+export {
+  checkLevel,
+  userCheckIgnore,
+  urlIsNotBlockListed,
+  urlIsSafeListed,
+  messageIsIgnored,
 };

@@ -1,10 +1,10 @@
-var _ = require('../utility');
-var truncation = require('../truncation');
-var logger = require('./logger');
+import * as _ from '../utility.js';
+import truncation from '../truncation.js';
+import logger from './logger.js';
 
-var http = require('http');
-var https = require('https');
-var jsonBackup = require('json-stringify-safe');
+import http from 'http';
+import https from 'https';
+import jsonBackup from 'json-stringify-safe';
 
 var MAX_RATE_LIMIT_INTERVAL = 60;
 
@@ -208,4 +208,4 @@ function _currentTime() {
   return Math.floor(Date.now() / 1000);
 }
 
-module.exports = Transport;
+export default Transport;

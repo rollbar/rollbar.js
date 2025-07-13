@@ -1,6 +1,6 @@
-var _ = require('../utility');
-var errorParser = require('../errorParser');
-var logger = require('./logger');
+import * as _ from '../utility.js';
+import errorParser from '../errorParser.js';
+import logger from './logger.js';
 
 function handleDomException(item, options, callback) {
   if (item.err && errorParser.Stack(item.err).name === 'DOMException') {
@@ -344,14 +344,14 @@ function addScrubber(scrubFn) {
   };
 }
 
-module.exports = {
-  handleDomException: handleDomException,
-  handleItemWithError: handleItemWithError,
-  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
-  addBaseInfo: addBaseInfo,
-  addRequestInfo: addRequestInfo,
-  addClientInfo: addClientInfo,
-  addPluginInfo: addPluginInfo,
-  addBody: addBody,
-  addScrubber: addScrubber,
+export {
+  handleDomException,
+  handleItemWithError,
+  ensureItemHasSomethingToSay,
+  addBaseInfo,
+  addRequestInfo,
+  addClientInfo,
+  addPluginInfo,
+  addBody,
+  addScrubber,
 };

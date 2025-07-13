@@ -1,5 +1,5 @@
-var { URL } = require('url');
-var merge = require('../../merge');
+import { URL } from 'url';
+import merge from '../../merge.js';
 
 // This function replicates the relevant logic in node/lib/http.js as closely
 // as possible in order to produce the same result. Therefore, the code is
@@ -72,7 +72,7 @@ function constructUrl(options) {
   return url;
 }
 
-module.exports = {
+export {
   mergeOptions,
   constructUrl,
 };

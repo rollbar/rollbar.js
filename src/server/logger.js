@@ -1,6 +1,4 @@
-'use strict';
-
-var verbose = true;
+let verbose = true;
 
 var logger = {
   /* eslint-disable no-console */
@@ -20,4 +18,4 @@ var logger = {
   },
 };
 
-module.exports = logger;
+export default logger;

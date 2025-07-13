@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 /*
  * Notifier - the internal object responsible for delegating between the client exposed API, the
@@ -119,4 +119,4 @@ Notifier.prototype._applyTransforms = function (item, callback) {
   cb(null, item);
 };
 
-module.exports = Notifier;
+export default Notifier;
