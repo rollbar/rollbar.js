@@ -4009,7 +4009,7 @@ var ReplayMap = /*#__PURE__*/function () {
 
 ;// ./src/defaults.js
 /* harmony default export */ var src_defaults = ({
-  version: '3.0.0-alpha.3',
+  version: '3.0.0-alpha.2',
   endpoint: 'api.rollbar.com/api/1/item/',
   logLevel: 'debug',
   reportLevel: 'debug',
