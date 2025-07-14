@@ -107,6 +107,7 @@ declare namespace Rollbar {
     ) => void;
     overwriteScrubFields?: boolean;
     payload?: Payload;
+    recorder?: RecorderOptions;
     reportLevel?: Level;
     retryInterval?: number | null;
     rewriteFilenamePatterns?: string[];
@@ -119,6 +120,7 @@ declare namespace Rollbar {
     stackTraceLimit?: number;
     telemetryScrubber?: TelemetryScrubber;
     timeout?: number;
+    tracing?: TracingOptions;
     transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
     transmit?: boolean;
     uncaughtErrorLevel?: Level;
@@ -201,9 +203,13 @@ declare namespace Rollbar {
 
   class Telemeter {}
   class Instrumenter {}
+  class Tracing {}
+  class Recorder {}
 
   export type TelemeterType = typeof Telemeter;
   export type InstrumenterType = typeof Instrumenter;
+  export type TracingType = typeof Tracing;
+  export type RecorderType = typeof Recorder;
   export type TruncationType = object;
   export type ScrubType = (
     data: object,
@@ -224,6 +230,66 @@ declare namespace Rollbar {
     wrapGlobals?: WrapGlobalsType;
     scrub?: ScrubType;
     truncation?: TruncationType;
+    tracing?: TracingType;
+    recorder?: RecorderType;
+  }
+
+  export interface RecorderOptions {
+    enabled?: boolean;
+    autoStart?: boolean;
+    maxSeconds?: number;
+    triggerOptions?: {
+      item?: {
+        levels?: Level[];
+      };
+    };
+    debug?: {
+      logErrors?: boolean;
+      logEmits?: boolean;
+    };
+    inlineStylesheet?: boolean;
+    inlineImages?: boolean;
+    collectFonts?: boolean;
+    maskInputOptions?: {
+      password?: boolean;
+      email?: boolean;
+      tel?: boolean;
+      text?: boolean;
+      color?: boolean;
+      date?: boolean;
+      'datetime-local'?: boolean;
+      month?: boolean;
+      number?: boolean;
+      range?: boolean;
+      search?: boolean;
+      time?: boolean;
+      url?: boolean;
+      week?: boolean;
+    };
+    blockClass?: string;
+    maskTextClass?: string;
+    ignoreClass?: string;
+    slimDOMOptions?: {
+      script?: boolean;
+      comment?: boolean;
+      headFavicon?: boolean;
+      headWhitespace?: boolean;
+      headMetaDescKeywords?: boolean;
+      headMetaSocial?: boolean;
+      headMetaRobots?: boolean;
+      headMetaHttpEquiv?: boolean;
+      headMetaAuthorship?: boolean;
+      headMetaVerification?: boolean;
+    };
+    maskInputFn?: (text: string) => string;
+    maskTextFn?: (text: string) => string;
+    errorHandler?: (error: Error) => void;
+    plugins?: any[];
+  }
+
+  export interface TracingOptions {
+    enabled?: boolean;
+    endpoint?: string;
   }
 
   /**
