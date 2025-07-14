@@ -47,5 +47,11 @@ jobs:
           eslint_args: '--max-warnings 0'
           eslint_extensions: js
 
+      - name: Build
+        run: npm run build
+
+      - name: Validate ES5 compatibility
+        run: npm run validate:es5
+
       - name: Run tests
         run: npm run test-ci
