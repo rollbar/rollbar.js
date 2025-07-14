@@ -6,6 +6,10 @@ var TerserPlugin = require('terser-webpack-plugin');
 
 var outputPath = path.resolve(__dirname, 'dist');
 
+// Packages that need to be transpiled to ES5
+var needToTranspile = ['@rrweb'].join('|');
+var excludePattern = new RegExp('node_modules/(?!(' + needToTranspile + ')/)');
+
 var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new TerserPlugin({
   parallel: true,
@@ -14,19 +18,20 @@ var uglifyPlugin = new TerserPlugin({
 var snippetConfig = {
   name: 'snippet',
   entry: {
-    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js',
+    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js'\,
   },
   output: {
     path: outputPath,
     filename: '[name].js',
   },
+  target: ['web', 'es5'],
   plugins: [defaultsPlugin],
   module: {
     rules: [
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/, /vendor/],
+        exclude: [excludePattern, /vendor/],
       },
     ],
   },
@@ -41,13 +46,14 @@ var pluginConfig = {
     path: outputPath + '/plugins/',
     filename: '[name].min.js',
   },
+  target: ['web', 'es5'],
   plugins: [defaultsPlugin],
   module: {
     rules: [
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/, /vendor/],
+        exclude: [excludePattern, /vendor/],
       },
     ],
   },
@@ -68,7 +74,7 @@ var vanillaConfigBase = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/, /vendor/],
+        exclude: [excludePattern, /vendor/],
       },
     ],
   },
@@ -92,7 +98,7 @@ var UMDConfigBase = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/, /vendor/],
+        exclude: [excludePattern, /vendor/],
       },
     ],
   },

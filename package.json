@@ -38,6 +38,7 @@
     "chai": "^4.2.0",
     "chalk": "^1.1.1",
     "coverage-istanbul-loader": "^3.0.5",
+    "es-check": "^9.1.4",
     "eslint": "^9.24.0",
     "express": "^4.21.2",
     "glob": "^5.0.14",
@@ -92,7 +93,9 @@
     "test-replay-unit": "./node_modules/.bin/grunt test-replay-unit",
     "test-replay-integration": "./node_modules/.bin/grunt test-replay-integration",
     "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
-    "lint": "./node_modules/.bin/eslint ."
+    "lint": "./node_modules/.bin/eslint .",
+    "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
+    "build:validate": "npm run build && npm run validate:es5"
   },
   "cdn": {
     "host": "cdn.rollbar.com"
