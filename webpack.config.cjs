@@ -18,7 +18,7 @@ var uglifyPlugin = new TerserPlugin({
 var snippetConfig = {
   name: 'snippet',
   entry: {
-    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js'\,
+    'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js',
   },
   output: {
     path: outputPath,
