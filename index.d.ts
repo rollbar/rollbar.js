@@ -238,11 +238,10 @@ declare namespace Rollbar {
     enabled?: boolean;
     autoStart?: boolean;
     maxSeconds?: number;
-    triggerOptions?: {
-      item?: {
-        levels?: Level[];
-      };
-    };
+    triggers?: {
+      type: string;
+      level?: string[];
+    }[];
     debug?: {
       logErrors?: boolean;
       logEmits?: boolean;

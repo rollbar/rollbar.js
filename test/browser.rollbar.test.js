@@ -127,7 +127,7 @@ describe('Rollbar()', function () {
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
     expect(rollbar.options.recorder.enabled).to.eql(true);
-    expect(rollbar.options.recorder.triggerOptions.item.levels).to.eql([
+    expect(rollbar.options.recorder.triggers[0].level).to.eql([
       'error',
       'critical',
     ]);

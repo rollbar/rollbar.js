@@ -663,6 +663,19 @@ function getItemAttribute(itemData, key) {
   return undefined;
 }
 
+function getReplayTriggersForType(triggers, triggerType) {
+  if (!triggers) return [];
+
+  const filteredTriggers = [];
+  for (const t of triggers) {
+    if (t.type === triggerType) {
+      filteredTriggers.push(t);
+    }
+  }
+
+  return filteredTriggers;
+}
+
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
  *       undefined if not possible.
@@ -818,6 +831,7 @@ export {
   createTelemetryEvent,
   addItemAttributes,
   getItemAttribute,
+  getReplayTriggersForType,
   filterIp,
   formatArgsAsString,
   formatUrl,
