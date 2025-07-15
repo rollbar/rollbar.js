@@ -240,7 +240,7 @@ declare namespace Rollbar {
     maxSeconds?: number;
     triggers?: {
       type: string;
-      level?: string[];
+      level?: Level[];
     }[];
     debug?: {
       logErrors?: boolean;
