@@ -88,7 +88,7 @@
     "build": "./node_modules/.bin/grunt",
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
-    "test-server": "mocha 'test/server.*.mocha.test.mjs' --reporter spec",
+    "test-server": "mocha 'test/server.*.test.js' --reporter spec",
     "test-replay": "./node_modules/.bin/grunt test-replay",
     "test-replay-unit": "./node_modules/.bin/grunt test-replay-unit",
     "test-replay-integration": "./node_modules/.bin/grunt test-replay-integration",
