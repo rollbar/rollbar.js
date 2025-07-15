@@ -200,8 +200,9 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
 };
 
 Rollbar.prototype._replayIdIfTriggered = function (item) {
-  const levels = this.options.recorder?.triggerOptions?.item?.levels || [];
-  if (levels.includes(item.level)) {
+  const triggers = _.getReplayTriggersForType(this.options.recorder?.triggers, 'occurrence');
+  const enabledTrigger = this._getEnabledTrigger(triggers, item.level);
+  if (enabledTrigger) {
     return this.tracing?.idGen(8);
   }
 }
@@ -258,6 +259,15 @@ Rollbar.prototype._addTracingInfo = function (item) {
       }
     }
   }
+};
+
+Rollbar.prototype._getEnabledTrigger = function (triggers, level) {
+  for (const t of triggers) {
+    if (t.level?.includes(level)) {
+      return t;
+    }
+  }
+  return null;
 };
 
 function generateItemHash(item) {

@@ -49,7 +49,7 @@ describe('Recorder', function () {
         enabled: undefined,
         autoStart: undefined,
         maxSeconds: undefined,
-        triggerOptions: undefined,
+        triggers: undefined,
         debug: undefined,
       });
     });
@@ -62,7 +62,7 @@ describe('Recorder', function () {
         enabled: true,
         autoStart: undefined,
         maxSeconds: undefined,
-        triggerOptions: undefined,
+        triggers: undefined,
         debug: undefined,
       });
     });
@@ -402,7 +402,7 @@ describe('Recorder', function () {
         enabled: false,
         autoStart: undefined,
         maxSeconds: 20,
-        triggerOptions: undefined,
+        triggers: undefined,
         debug: undefined,
       });
     });
@@ -416,7 +416,7 @@ describe('Recorder', function () {
         enabled: true,
         autoStart: undefined,
         maxSeconds: 15,
-        triggerOptions: undefined,
+        triggers: undefined,
         debug: undefined,
       });
 
