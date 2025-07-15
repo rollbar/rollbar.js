@@ -82,6 +82,7 @@
     "sinon": "^8.1.1",
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
+    "tsd": "^0.32.0",
     "webpack": "^5.98.0"
   },
   "scripts": {
@@ -95,7 +96,8 @@
     "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
     "lint": "./node_modules/.bin/eslint .",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
-    "build:validate": "npm run build && npm run validate:es5"
+    "build:validate": "npm run build && npm run validate:es5",
+    "check:types": "tsd"
   },
   "cdn": {
     "host": "cdn.rollbar.com"

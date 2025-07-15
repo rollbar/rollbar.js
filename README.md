@@ -50,6 +50,8 @@ To set up a development environment, you'll need Node.js and npm.
 
 To run the tests, run `make test`.
 
+To check TypeScript definitions, run `npm run check:types`.
+
 ## Contributing
 
 1. [Fork it](https://github.com/rollbar/rollbar.js).
