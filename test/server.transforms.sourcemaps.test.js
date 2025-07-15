@@ -47,7 +47,7 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   it('should map the stack with context when original source is present', async function () {
-    await throwInScriptFile('../examples/node-typescript/dist/index.cjs');
+    await throwInScriptFile('./fixtures/sourcemaps/node-typescript/dist/index.cjs');
 
     expect(addItemStub.called).to.be.true;
 
@@ -88,7 +88,7 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   it('should map the stack with context using sourcesContent', async function () {
-    await throwInScriptFile('../examples/node-dist/index.cjs');
+    await throwInScriptFile('./fixtures/sourcemaps/node-dist/index.cjs');
 
     expect(addItemStub.called).to.be.true;
 
