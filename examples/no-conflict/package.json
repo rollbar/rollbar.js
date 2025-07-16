@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.14.1",
-    "rollbar": "file:../../"
+    "rollbar": "file:../.."
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
