@@ -109,14 +109,16 @@ describe('Session Replay E2E', function () {
       const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
       const errorItem = {
-        body: {
-          trace: {
-            exception: {
-              message: 'E2E test error',
+        data: {
+          body: {
+            trace: {
+              exception: {
+                message: 'E2E test error',
+              },
             },
           },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       };
 
       queue.addItem(errorItem, function (err, resp) {
@@ -197,14 +199,16 @@ describe('Session Replay E2E', function () {
     recorder.start();
 
     const errorItem = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Error that will fail to send',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Error that will fail to send',
+            },
           },
         },
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
-      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {

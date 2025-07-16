@@ -57,8 +57,10 @@ describe('Queue with ReplayMap', function () {
   describe('addItem', function () {
     it('should add replayId to the item when replayMap is available', function () {
       const item = {
-        body: { message: 'test error' },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          body: { message: 'test error' },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 
@@ -70,8 +72,10 @@ describe('Queue with ReplayMap', function () {
 
     it('should not add replayId when item has no body', function () {
       const item = {
-        noBody: true,
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          noBody: true,
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 
@@ -85,8 +89,10 @@ describe('Queue with ReplayMap', function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = {
-        body: { message: 'test error' },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          body: { message: 'test error' },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 
@@ -162,8 +168,10 @@ describe('Queue with ReplayMap', function () {
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
       const item = {
-        body: { message: 'test error' },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          body: { message: 'test error' },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 
@@ -182,8 +190,10 @@ describe('Queue with ReplayMap', function () {
       const handleStub = sinon.stub(queue, '_handleReplayResponse');
 
       const item = {
-        body: { message: 'test error' },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          body: { message: 'test error' },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 
@@ -198,8 +208,10 @@ describe('Queue with ReplayMap', function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = {
-        body: { message: 'test error' },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        data: {
+          body: { message: 'test error' },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
       };
       const callback = sinon.stub();
 

@@ -70,16 +70,18 @@ describe('Queue ReplayMap Integration', function () {
 
   it('should add replayId when processing an item', function (done) {
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {
@@ -91,16 +93,18 @@ describe('Queue ReplayMap Integration', function () {
 
   it('should call replayMap.send when API response is successful', function (done) {
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {
@@ -121,16 +125,18 @@ describe('Queue ReplayMap Integration', function () {
     );
 
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with API failure',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with API failure',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {
@@ -156,16 +162,18 @@ describe('Queue ReplayMap Integration', function () {
     );
 
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with replay disabled',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with replay disabled',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {
@@ -192,16 +200,18 @@ describe('Queue ReplayMap Integration', function () {
     );
 
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with replay over quota',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with replay over quota',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {
@@ -237,16 +247,18 @@ describe('Queue ReplayMap Integration', function () {
     queue.configure({ retryInterval: 50, maxRetries: 3 });
 
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with retry',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with retry',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function (err, resp) {
@@ -263,11 +275,13 @@ describe('Queue ReplayMap Integration', function () {
 
   it('should not add replayId to items without a body', function (done) {
     const item = {
-      level: 'error',
-      message: 'Test error without body',
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
+      data: {
+        level: 'error',
+        message: 'Test error without body',
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
+      },
     };
 
     queue.addItem(item, function () {
@@ -279,12 +293,14 @@ describe('Queue ReplayMap Integration', function () {
 
   it('should not add replayId to items without a replay_id attribute', function (done) {
     const item = {
-      level: 'error',
-      message: 'Test error without body',
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with retry',
+      data: {
+        level: 'error',
+        message: 'Test error without body',
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with retry',
+            },
           },
         },
       },
@@ -309,16 +325,18 @@ describe('Queue ReplayMap Integration', function () {
     const consoleWarnSpy = sinon.spy(console, 'warn');
 
     const item = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with null response',
+      data:{
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with null response',
+            },
           },
         },
+        attributes: [
+          { key: 'replay_id', value: '1234567812345678' },
+        ],
       },
-      attributes: [
-        { key: 'replay_id', value: '1234567812345678' },
-      ],
     };
 
     queue.addItem(item, function () {

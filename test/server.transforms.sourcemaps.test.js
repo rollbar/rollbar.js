@@ -53,7 +53,7 @@ describe('transforms.nodeSourceMaps', function () {
 
     const frame = addItemStub
       .getCall(0)
-      .args[0].body.trace_chain[0].frames.pop();
+      .args[0].data.body.trace_chain[0].frames.pop();
 
     expect(frame.filename).to.include('src/index.ts');
     expect(frame.lineno).to.equal(10);
@@ -70,7 +70,7 @@ describe('transforms.nodeSourceMaps', function () {
     expect(frame.context.post[1]).to.equal('}');
 
     const sourceMappingURLs =
-      addItemStub.getCall(0).args[0].notifier.diagnostic.node_source_maps
+      addItemStub.getCall(0).args[0].data.notifier.diagnostic.node_source_maps
         .source_mapping_urls;
     const urls = Object.keys(sourceMappingURLs);
 
@@ -94,7 +94,7 @@ describe('transforms.nodeSourceMaps', function () {
 
     const frame = addItemStub
       .getCall(0)
-      .args[0].body.trace_chain[0].frames.pop();
+      .args[0].data.body.trace_chain[0].frames.pop();
 
     expect(frame.filename).to.include('src/index.ts');
     expect(frame.lineno).to.equal(10);
@@ -111,7 +111,7 @@ describe('transforms.nodeSourceMaps', function () {
     expect(frame.context.post[1]).to.equal('}');
 
     const sourceMappingURLs =
-      addItemStub.getCall(0).args[0].notifier.diagnostic.node_source_maps
+      addItemStub.getCall(0).args[0].data.notifier.diagnostic.node_source_maps
         .source_mapping_urls;
     const urls = Object.keys(sourceMappingURLs);
 
