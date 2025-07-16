@@ -248,14 +248,16 @@ describe('Session Replay Transport Integration', function () {
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
     const errorItem = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error for session replay',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error for session replay',
+            },
           },
         },
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
-      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -288,14 +290,16 @@ describe('Session Replay Transport Integration', function () {
     const discardSpy = sinon.spy(replayMap, 'discard');
 
     const errorItem = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test error with API failure',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test error with API failure',
+            },
           },
         },
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
-      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queue.addItem(errorItem, function (err, resp) {
@@ -319,14 +323,16 @@ describe('Session Replay Transport Integration', function () {
     const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
 
     const errorItem = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test E2E flow',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test E2E flow',
+            },
           },
         },
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
-      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     const addItemPromise = new Promise((resolve, reject) => {
@@ -364,14 +370,16 @@ describe('Session Replay Transport Integration', function () {
     );
 
     const errorItem = {
-      body: {
-        trace: {
-          exception: {
-            message: 'Test without replayMap',
+      data: {
+        body: {
+          trace: {
+            exception: {
+              message: 'Test without replayMap',
+            },
           },
         },
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
-      attributes: [{ key: 'replay_id', value: '1234567812345678' }],
     };
 
     queueWithoutReplayMap.addItem(errorItem, function (err, resp) {

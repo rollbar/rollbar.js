@@ -1,15 +1,13 @@
 import * as _ from './utility.js';
 
 function itemToPayload(item, options, callback) {
-  var data = item.data;
-
   if (item._isUncaught) {
-    data._isUncaught = true;
+    item.data._isUncaught = true;
   }
   if (item._originalArgs) {
-    data._originalArgs = item._originalArgs;
+    item.data._originalArgs = item._originalArgs;
   }
-  callback(null, data);
+  callback(null, item);
 }
 
 function addPayloadOptions(item, options, callback) {

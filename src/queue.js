@@ -71,12 +71,13 @@ Queue.prototype.removePendingItem = function (item) {
 /*
  * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
  *
- * @param item - The payload to send to the backend
+ * @param item - Item instance with the payload to send to the backend
  * @param callback - function(error, repsonse) which will be called with the response from the API
  *  in the case of a success, otherwise response will be null and error will have a value. If both
  *  error and response are null then the item was stopped by a predicate which did not consider this
  *  to be an error condition, but nonetheless did not send the item to the API.
- *  @param originalError - The original error before any transformations that is to be logged if any
+ * @param originalError - The original error before any transformations that is to be logged if any
+ * @param originalItem - The original item before transforms, used in pendingItems queue
  */
 Queue.prototype.addItem = function (
   item,
@@ -89,32 +90,33 @@ Queue.prototype.addItem = function (
       return;
     };
   }
-  var predicateResult = this._applyPredicates(item);
+  const data = item.data
+  var predicateResult = this._applyPredicates(data);
   if (predicateResult.stop) {
     this.removePendingItem(originalItem);
     callback(predicateResult.err);
     return;
   }
-  this._maybeLog(item, originalError);
+  this._maybeLog(data, originalError);
   this.removePendingItem(originalItem);
   if (!this.options.transmit) {
     callback(new Error('Transmit disabled'));
     return;
   }
 
-  if (this.replayMap && item.body) {
-    const replayId = _.getItemAttribute(item, 'replay_id');
+  if (this.replayMap && data.body) {
+    const replayId = _.getItemAttribute(data, 'replay_id');
     if (replayId) {
-      item.replayId = this.replayMap.add(replayId, item.uuid);
+      item.replayId = this.replayMap.add(replayId, item.data.uuid);
     }
   }
 
-  this.pendingRequests.push(item);
+  this.pendingRequests.push(data);
   try {
     this._makeApiRequest(
-      item,
+      data,
       function (err, resp, headers) {
-        this._dequeuePendingRequest(item);
+        this._dequeuePendingRequest(data);
 
         if (!err && resp && item.replayId) {
           this._handleReplayResponse(item.replayId, resp, headers);
@@ -124,7 +126,7 @@ Queue.prototype.addItem = function (
       }.bind(this),
     );
   } catch (e) {
-    this._dequeuePendingRequest(item);
+    this._dequeuePendingRequest(data);
     callback(e);
   }
 };
