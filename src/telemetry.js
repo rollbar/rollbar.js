@@ -45,10 +45,7 @@ Telemeter.prototype.copyEvents = function () {
   }
 
   // Remove internal keys from output
-  events = events.map((e) => {
-    const { otelAttributes, ...event } = e;
-    return event;
-  });
+  events = events.map(({ otelAttributes, ...event }) => event);
 
   return events;
 };
