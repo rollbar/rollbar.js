@@ -284,7 +284,8 @@ Instrumenter.prototype.instrumentNetwork = function () {
                 xhr.__rollbar_xhr.start_time_ms = _.now();
               }
               if (xhr.readyState > 3) {
-                xhr.__rollbar_xhr.end_time_ms = _.now();
+                const end_time_ms = _.now();
+                xhr.__rollbar_xhr.end_time_ms = end_time_ms;
 
                 var headers = null;
                 xhr.__rollbar_xhr.response_content_type =
@@ -351,6 +352,11 @@ Instrumenter.prototype.instrumentNetwork = function () {
                   var code = xhr.status;
                   code = code === 1223 ? 204 : code;
                   xhr.__rollbar_xhr.status_code = code;
+                  self.addOtelNetworkResponse(
+                    xhr.__rollbar_event,
+                    end_time_ms,
+                    code
+                  );
                   xhr.__rollbar_event.level =
                     self.telemeter.levelFromStatus(code);
                   self.errorOnHttpStatus(xhr.__rollbar_xhr);
@@ -450,7 +456,7 @@ Instrumenter.prototype.instrumentNetwork = function () {
               metadata.request = args[0].body;
             }
           }
-          self.captureNetwork(metadata, 'fetch', undefined);
+          const telemetryEvent = self.captureNetwork(metadata, 'fetch', undefined);
           if (self.trackHttpErrors()) {
             metadata.stack = new Error().stack;
           }
@@ -458,8 +464,11 @@ Instrumenter.prototype.instrumentNetwork = function () {
           // Start our handler before returning the promise. This allows resp.clone()
           // to execute before other handlers touch the response.
           return orig.apply(this, args).then(function (resp) {
-            metadata.end_time_ms = _.now();
+            const end_time_ms = _.now();
+            metadata.end_time_ms = end_time_ms;
             metadata.status_code = resp.status;
+            self.addOtelNetworkResponse(telemetryEvent, end_time_ms, resp.status);
+
             metadata.response_content_type = resp.headers.get('Content-Type');
             var headers = null;
             if (self.autoInstrument.networkResponseHeaders) {
@@ -532,6 +541,14 @@ Instrumenter.prototype.isJsonContentType = function (contentType) {
     ? true
     : false;
 };
+
+
+Instrumenter.prototype.addOtelNetworkResponse = function (event, endTimeMs, statusCode) {
+  if (event.otelAttributes) {
+    event.otelAttributes['response.timeUnixNano'] = (endTimeMs * 1e6).toString();
+    event.otelAttributes.statusCode = statusCode;
+  }
+}
 
 Instrumenter.prototype.scrubJson = function (json) {
   return JSON.stringify(scrub(JSON.parse(json), this.options.scrubFields));
