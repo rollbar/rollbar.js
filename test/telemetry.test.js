@@ -70,6 +70,10 @@ describe('capture events', function () {
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
+    expect(event.otelAttributes).to.eql(
+      { message: 'foo', level: 'info' }
+    );
+
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.equal('rollbar-log-event');
@@ -88,12 +92,15 @@ describe('capture events', function () {
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
+    expect(event.otelAttributes).to.eql(
+      { message: 'foo', level: 'info', type: 'error', uuid: uuid }
+    );
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.eql('rollbar-occurrence-event');
     expect(otelEvent.time).to.eql([ 12, 345678000 ]);
     expect(otelEvent.attributes).to.eql(
-      { type: 'error', 'occurrence.type': 'error', message: 'foo', level: 'info', uuid: uuid, 'occurrence.uuid': uuid }
+      { type: 'error', message: 'foo', level: 'info', uuid: uuid }
     );
     done();
   });
@@ -108,12 +115,15 @@ describe('capture events', function () {
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
+    expect(event.otelAttributes).to.eql(
+      { message: 'foo', level: 'info', type: 'message', uuid: uuid }
+    );
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.eql('rollbar-occurrence-event');
     expect(otelEvent.time).to.eql([ 12, 345678000 ]);
     expect(otelEvent.attributes).to.eql(
-      { type: 'message', 'occurrence.type': 'message', message: 'foo', level: 'info', uuid: uuid, 'occurrence.uuid': uuid }
+      { type: 'message', message: 'foo', level: 'info', uuid: uuid }
     );
     done();
   });
@@ -158,6 +168,18 @@ describe('capture events', function () {
     expect(event.body.method).to.equal(metadata.method);
     expect(event.body.status_code).to.equal(metadata.status_code);
     expect(event.timestamp_ms).to.equal(timestamp);
+
+    expect(event.otelAttributes).to.eql(
+      {
+        type: subtype,
+        method: metadata.method,
+        statusCode: metadata.status_code,
+        url: metadata.url,
+        'request.headers': JSON.stringify(metadata.request_headers),
+        'response.headers': JSON.stringify(metadata.response.headers),
+        'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
+      }
+    );
 
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];

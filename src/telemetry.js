@@ -43,6 +43,13 @@ Telemeter.prototype.copyEvents = function () {
       this.options.filterTelemetry = null;
     }
   }
+
+  // Remove internal keys from output
+  events = events.map((e) => {
+    const { otelAttributes, ...event } = e;
+    return event;
+  });
+
   return events;
 };
 
@@ -51,7 +58,8 @@ Telemeter.prototype.capture = function (
   metadata,
   level,
   rollbarUUID,
-  timestamp,
+  timestamp = null,
+  otelAttributes = null,
 ) {
   var e = {
     level: getLevel(type, level),
@@ -62,6 +70,9 @@ Telemeter.prototype.capture = function (
   };
   if (rollbarUUID) {
     e.uuid = rollbarUUID;
+  }
+  if (otelAttributes) {
+    e.otelAttributes = otelAttributes;
   }
 
   try {
@@ -99,21 +110,27 @@ Telemeter.prototype.captureError = function (
   if (err.stack) {
     metadata.stack = err.stack;
   }
+  const otelAttributes = {
+    message,
+    level,
+    type: 'error',
+    uuid: rollbarUUID,
+  };
+
   this.telemetrySpan?.addEvent(
     'rollbar-occurrence-event',
-    {
-      message,
-      level,
-      type: 'error',
-      uuid: rollbarUUID,
-      'occurrence.type': 'error', // deprecated
-      'occurrence.uuid': rollbarUUID, // deprecated
-    },
-
+    otelAttributes,
     fromMillis(timestamp),
   );
 
-  return this.capture('error', metadata, level, rollbarUUID, timestamp);
+  return this.capture(
+    'error',
+    metadata,
+    level,
+    rollbarUUID,
+    timestamp,
+    otelAttributes,
+  );
 };
 
 Telemeter.prototype.captureLog = function (
@@ -122,29 +139,40 @@ Telemeter.prototype.captureLog = function (
   rollbarUUID,
   timestamp,
 ) {
+  let otelAttributes = null;
+
   // If the uuid is present, this is a message occurrence.
   if (rollbarUUID) {
+    otelAttributes =
+    {
+      message,
+      level,
+      type: 'message',
+      uuid: rollbarUUID,
+    },
+
     this.telemetrySpan?.addEvent(
       'rollbar-occurrence-event',
-      {
-        message,
-        level,
-        type: 'message',
-        uuid: rollbarUUID,
-        'occurrence.type': 'message', // deprecated
-        'occurrence.uuid': rollbarUUID, // deprecated
-      },
+      otelAttributes,
       fromMillis(timestamp),
     );
   } else {
+    otelAttributes = { message, level }
     this.telemetrySpan?.addEvent(
       'rollbar-log-event',
-      { message, level },
+      otelAttributes,
       fromMillis(timestamp),
     );
   }
 
-  return this.capture('log', { message }, level, rollbarUUID, timestamp);
+  return this.capture(
+    'log',
+    { message },
+    level,
+    rollbarUUID,
+    timestamp,
+    otelAttributes,
+  );
 };
 
 Telemeter.prototype.captureNetwork = function (
@@ -158,22 +186,21 @@ Telemeter.prototype.captureNetwork = function (
   if (requestData) {
     metadata.request = requestData;
   }
-  var level = this.levelFromStatus(metadata.status_code);
-
+  const level = this.levelFromStatus(metadata.status_code);
   const endTimeNano = (metadata.end_time_ms || 0) * 1e6;
+  const otelAttributes = {
+    type: metadata.subtype,
+    method: metadata.method,
+    url: metadata.url,
+    statusCode: metadata.status_code,
+    'request.headers': JSON.stringify(metadata.request_headers || {}),
+    'response.headers': JSON.stringify(metadata.response?.headers || {}),
+    'response.timeUnixNano': endTimeNano.toString(),
+  };
 
   this.telemetrySpan?.addEvent(
     'rollbar-network-event',
-    {
-      type: metadata.subtype,
-      method: metadata.method,
-      url: metadata.url,
-      statusCode: metadata.status_code,
-      'request.headers': JSON.stringify(metadata.request_headers || {}),
-      'response.headers': JSON.stringify(metadata.response?.headers || {}),
-      'response.timeUnixNano': endTimeNano.toString(),
-    },
-
+    otelAttributes,
     fromMillis(metadata.start_time_ms),
   );
 
@@ -183,6 +210,7 @@ Telemeter.prototype.captureNetwork = function (
     level,
     rollbarUUID,
     metadata.start_time_ms,
+    otelAttributes,
   );
 };
 
