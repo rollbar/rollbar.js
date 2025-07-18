@@ -17,6 +17,7 @@
   "license": "MIT",
   "main": "src/server/rollbar.js",
   "browser": "dist/rollbar.umd.min.js",
+  "module": "src/browser/rollbar.js",
   "types": "./index.d.ts",
   "dependencies": {
     "@rrweb/record": "^2.0.0-alpha.18",
