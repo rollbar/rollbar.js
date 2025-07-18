@@ -2,8 +2,6 @@
  * Default react native options
  */
 import {
-  version,
-  reportLevel,
   commonScrubFields,
   apiScrubFields,
   requestScrubFields,
@@ -11,8 +9,6 @@ import {
 } from '../defaults.js';
 
 export const notifierName = 'rollbar-react-native';
-export const notifierVersion = version;
-export const defaultReportLevel = reportLevel;
 
 export const scrubHeaders = commonScrubHeaders;
 
