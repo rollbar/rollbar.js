@@ -1,8 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const defaults = require('./defaults.cjs');
-
-const defaultsPlugin = new webpack.DefinePlugin(defaults);
 
 module.exports = function (config) {
   config.set({
@@ -60,7 +57,6 @@ module.exports = function (config) {
     forceJSONP: true,
 
     webpack: {
-      plugins: [defaultsPlugin],
       devtool: 'inline-source-map',
       performance: { hints: false },
       module: {

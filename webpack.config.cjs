@@ -1,7 +1,6 @@
 var extend = require('util')._extend;
 var path = require('path');
 var webpack = require('webpack');
-var defaults = require('./defaults.cjs');
 var TerserPlugin = require('terser-webpack-plugin');
 
 var outputPath = path.resolve(__dirname, 'dist');
@@ -10,7 +9,6 @@ var outputPath = path.resolve(__dirname, 'dist');
 var needToTranspile = ['@rrweb'].join('|');
 var excludePattern = new RegExp('node_modules/(?!(' + needToTranspile + ')/)');
 
-var defaultsPlugin = new webpack.DefinePlugin(defaults);
 var uglifyPlugin = new TerserPlugin({
   parallel: true,
 });
@@ -25,7 +23,7 @@ var snippetConfig = {
     filename: '[name].js',
   },
   target: ['web', 'es5'],
-  plugins: [defaultsPlugin],
+  plugins: [],
   module: {
     rules: [
       {
@@ -47,7 +45,7 @@ var pluginConfig = {
     filename: '[name].min.js',
   },
   target: ['web', 'es5'],
-  plugins: [defaultsPlugin],
+  plugins: [],
   module: {
     rules: [
       {
@@ -67,7 +65,7 @@ var vanillaConfigBase = {
     path: outputPath,
   },
   target: ['web', 'es5'],
-  plugins: [defaultsPlugin],
+  plugins: [],
   devtool: 'hidden-source-map',
   module: {
     rules: [
@@ -127,12 +125,10 @@ function optimizationConfig(minimizer) {
 }
 
 function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var basePlugins = [defaultsPlugin];
   var vanillaConfig = extend({}, vanillaConfigBase);
   vanillaConfig.name = filename;
 
-  var plugins = basePlugins.concat(extraPlugins);
-  vanillaConfig.plugins = plugins;
+  vanillaConfig.plugins = extraPlugins;
 
   vanillaConfig.optimization = optimizationConfig(minimizer);
 
@@ -142,11 +138,9 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 }
 
 function addUMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var basePlugins = [defaultsPlugin];
   var UMDConfig = extend({}, UMDConfigBase);
 
-  var plugins = basePlugins.concat(extraPlugins);
-  UMDConfig.plugins = plugins;
+  UMDConfig.plugins = extraPlugins;
 
   UMDConfig.optimization = optimizationConfig(minimizer);
 
@@ -161,11 +155,9 @@ function addNoConflictToConfig(
   extraPlugins,
   minimizer,
 ) {
-  var basePlugins = [defaultsPlugin];
   var noConflictConfig = extend({}, noConflictConfigBase);
 
-  var plugins = basePlugins.concat(extraPlugins);
-  noConflictConfig.plugins = plugins;
+  noConflictConfig.plugins = extraPlugins;
 
   noConflictConfig.optimization = optimizationConfig(minimizer);
 
@@ -178,11 +170,9 @@ function addNoConflictToConfig(
 }
 
 function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var basePlugins = [defaultsPlugin];
   var AMDConfig = extend({}, namedAMDConfigBase);
 
-  var plugins = basePlugins.concat(extraPlugins);
-  AMDConfig.plugins = plugins;
+  AMDConfig.plugins = extraPlugins;
 
   AMDConfig.optimization = optimizationConfig(minimizer);
 

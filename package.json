@@ -100,63 +100,6 @@
   "cdn": {
     "host": "cdn.rollbar.com"
   },
-  "defaults": {
-    "endpoint": "api.rollbar.com/api/1/item/",
-    "server": {
-      "scrubHeaders": [
-        "authorization",
-        "www-authorization",
-        "http_authorization",
-        "omniauth.auth",
-        "cookie",
-        "oauth-access-token",
-        "x-access-token",
-        "x_csrf_token",
-        "http_x_csrf_token",
-        "x-csrf-token"
-      ],
-      "scrubFields": [
-        "pw",
-        "pass",
-        "passwd",
-        "password",
-        "password_confirmation",
-        "passwordConfirmation",
-        "confirm_password",
-        "confirmPassword",
-        "secret",
-        "secret_token",
-        "secretToken",
-        "secret_key",
-        "secretKey",
-        "api_key",
-        "access_token",
-        "accessToken",
-        "authenticity_token",
-        "oauth_token",
-        "token",
-        "user_session_secret",
-        "request.session.csrf",
-        "request.session._csrf",
-        "request.params._csrf",
-        "request.cookie",
-        "request.cookies"
-      ]
-    },
-    "reactNative": {
-      "rewriteFilenamePatterns": [
-        "^.*/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/[^/]*.app/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/codepush_ios/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/codepush_android/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/CodePush/(.*)$"
-      ]
-    },
-    "logLevel": "debug",
-    "reportLevel": "debug",
-    "uncaughtErrorLevel": "error",
-    "maxItems": 0,
-    "itemsPerMin": 60
-  },
   "plugins": {
     "jquery": {
       "version": "0.0.8"
