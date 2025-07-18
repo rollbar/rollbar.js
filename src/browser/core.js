@@ -616,16 +616,16 @@ function _gWindow() {
   );
 }
 
-import defaults from '../defaults.js';
-import scrubFields from './defaults/scrubFields.js';
+import { version, logLevel, reportLevel, uncaughtErrorLevel, endpoint } from '../defaults.js';
+import browserDefaults from './defaults.js';
 
 var defaultOptions = {
-  version: defaults.version,
-  scrubFields: scrubFields.scrubFields,
-  logLevel: defaults.logLevel,
-  reportLevel: defaults.reportLevel,
-  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
-  endpoint: defaults.endpoint,
+  version: version,
+  scrubFields: browserDefaults.scrubFields,
+  logLevel: logLevel,
+  reportLevel: reportLevel,
+  uncaughtErrorLevel: uncaughtErrorLevel,
+  endpoint: endpoint,
   verbose: false,
   enabled: true,
   transmit: true,
