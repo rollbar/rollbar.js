@@ -1,5 +1,6 @@
 /* globals jQuery */
-/* globals __JQUERY_PLUGIN_VERSION__ */
+
+import { jqueryPluginVersion } from '../defaults.js';
 
 (function (jQuery, window, document) {
   var rb = window.Rollbar;
@@ -7,7 +8,7 @@
     return;
   }
 
-  var JQUERY_PLUGIN_VERSION = __JQUERY_PLUGIN_VERSION__;
+  var JQUERY_PLUGIN_VERSION = jqueryPluginVersion;
 
   rb.configure({
     payload: {

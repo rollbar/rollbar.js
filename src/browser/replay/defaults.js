@@ -1,5 +1,5 @@
 /**
- * Default options for the rrweb recorder
+ * Default session replay recording options
  * See https://github.com/rrweb-io/rrweb/blob/master/guide.md#options for details
  */
 export default {

@@ -1,8 +1,9 @@
-import packageJson from '../../package.json' with { type: 'json' };
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';
 import logger from './logger.js';
+import * as rnDefaults from './defaults.js';
+import { version, reportLevel } from '../defaults.js';
 
 import Transport from './transport.js';
 import * as urllib from '../browser/url.js';
@@ -330,14 +331,13 @@ Rollbar.defaultOptions = {
   framework: 'react-native',
   showReportedMessageTraces: false,
   notifier: {
-    name: 'rollbar-react-native',
-    version: packageJson.version,
+    name: rnDefaults.notifierName,
+    version: version,
   },
-  scrubHeaders: packageJson.defaults.server.scrubHeaders,
-  scrubFields: packageJson.defaults.server.scrubFields,
-  reportLevel: packageJson.defaults.reportLevel,
-  rewriteFilenamePatterns:
-    packageJson.defaults.reactNative.rewriteFilenamePatterns,
+  scrubHeaders: rnDefaults.scrubHeaders,
+  scrubFields: rnDefaults.scrubFields,
+  reportLevel: reportLevel,
+  rewriteFilenamePatterns: rnDefaults.rewriteFilenamePatterns,
   verbose: false,
   enabled: true,
   transmit: true,
