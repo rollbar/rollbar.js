@@ -49,7 +49,7 @@ export async function findUp({ fileName, dir = process.cwd() }) {
 export async function npm(args, { cwd = process.cwd(), id = '' }) {
   const child = spawn('npm', args, {
     cwd,
-    shell: true,
+    shell: false,
     stdio: ['inherit', 'pipe', 'pipe'],
   });
 
@@ -73,4 +73,42 @@ export async function npm(args, { cwd = process.cwd(), id = '' }) {
   }
 
   return std.out;
+}
+
+/**
+ * Transforms each element in a given array in parallel with a specified
+ * concurrency limit, preserving the original order.
+ *
+ * @param {Array} xs - Array of items to transform.
+ * @param {Function} f - Async transform for each item.
+ * @param {number} c - Maximum number of concurrent transforms.
+ * @returns {Promise<Array>} The transformed array.
+ * @example
+ * const results = await parallelMap(files, async (file) => {
+ *   return await processFile(file);
+ * }, 4);
+ */
+export async function parallelMap(xs, f, c) {
+  if (c <= 0) {
+    throw new Error('Concurrency limit must be greater than 0');
+  }
+
+  const ys = new Array(xs.length);
+  const jobs = new Set();
+
+  for (const [i, x] of xs.entries()) {
+    const p = Promise.resolve()
+      .then(() => f(x, i))
+      .then((y) => (ys[i] = y));
+
+    p.finally(() => jobs.delete(p));
+    jobs.add(p);
+
+    if (jobs.size >= c) {
+      await Promise.race(jobs);
+    }
+  }
+
+  await Promise.all(jobs);
+  return ys;
 }

@@ -55,3 +55,6 @@ jobs:
 
       - name: Run tests
         run: npm run test-ci
+
+      - name: Validate examples
+        run: npm run validate:examples
