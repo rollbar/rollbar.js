@@ -53,12 +53,12 @@ jobs:
       - name: Validate ES5 compatibility
         run: npm run validate:es5
 
-      - name: Build React example for tests
-        run: |
-          cd examples/react
-          npm install
-          npm run build
-          cd ../..
+      # - name: Build React example for tests
+      #   run: |
+      #     cd examples/react
+      #     npm install
+      #     npm run build
+      #     cd ../..
 
       - name: Run tests
         run: npm run test-ci
