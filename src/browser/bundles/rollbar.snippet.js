@@ -1,11 +1,11 @@
-/* global __DEFAULT_ROLLBARJS_URL__:false */
 /* global _rollbarConfig:true */
 
 import * as Shim from '../shim.js';
 import snippetCallback from '../snippet_callback.js';
+import { defaultRollbarJsUrl } from '../defaults.js';
 
 _rollbarConfig = _rollbarConfig || {};
-_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || __DEFAULT_ROLLBARJS_URL__;
+_rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
 _rollbarConfig.async = _rollbarConfig.async === undefined || _rollbarConfig.async;
 
 var shim = Shim.setupShim(window, _rollbarConfig);

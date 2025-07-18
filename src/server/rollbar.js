@@ -1,13 +1,12 @@
 import util from 'util';
 import os from 'os';
 
-import { createRequire } from 'module';
-const packageJson = createRequire(import.meta.url)('../../package.json');
-
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';
 import logger from './logger.js';
+import * as serverDefaults from './defaults.js';
+import { version, reportLevel } from '../defaults.js';
 
 import Transport from './transport.js';
 import urllib from 'url';
@@ -739,13 +738,13 @@ Rollbar.defaultOptions = {
   framework: 'node-js',
   showReportedMessageTraces: false,
   notifier: {
-    name: 'node_rollbar',
-    version: packageJson.version,
+    name: serverDefaults.notifierName,
+    version: version,
   },
-  scrubHeaders: packageJson.defaults.server.scrubHeaders,
-  scrubFields: packageJson.defaults.server.scrubFields,
+  scrubHeaders: serverDefaults.scrubHeaders,
+  scrubFields: serverDefaults.scrubFields,
   addRequestData: null,
-  reportLevel: packageJson.defaults.reportLevel,
+  reportLevel: reportLevel,
   verbose: false,
   enabled: true,
   transmit: true,
