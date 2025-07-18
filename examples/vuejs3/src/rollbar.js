@@ -20,7 +20,7 @@ export default {
     app.config.warningHandler = (error, vm, info) => {
       rollbar.warning(error, { info });
 
-      if (app.config.devtools) console.log('just a warning, but!', error);
+      if (app.config.devtools) console.log('Vue warning:', error);
     }
 
     app.provide('rollbar', rollbar);
