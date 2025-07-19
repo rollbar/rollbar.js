@@ -22,7 +22,7 @@ Each example includes its own README with specific setup instructions. Common pa
 
 ### Browser (Script Tag)
 ```html
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/v2.26.4/rollbar.min.js"></script>
+<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
 <script>
   var _rollbarConfig = {
     accessToken: "YOUR_ACCESS_TOKEN",
