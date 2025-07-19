@@ -9,8 +9,8 @@
 </p>
 
 ![Build Status](https://github.com/rollbar/rollbar.js/workflows/Rollbar.js%20CI/badge.svg?tag=latest)
-[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/context:javascript)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/alerts)
+[![npm version](https://img.shields.io/npm/v/rollbar.svg)](https://www.npmjs.com/package/rollbar)
+[![npm downloads](https://img.shields.io/npm/dm/rollbar.svg)](https://www.npmjs.com/package/rollbar)
 
 ---
 
@@ -27,9 +27,70 @@
 1. [Sign up for a Rollbar account](https://rollbar.com/signup).
 2. For client-side Javascript, follow the [Browser Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser) instructions. For Node.js, follow the [Server Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-server).
 
+## Installation
+
+Using npm:
+```bash
+npm install --save rollbar
+```
+
+Using yarn:
+```bash
+yarn add rollbar
+```
+
+Using CDN:
+```html
+<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
+```
+
+## Quick Start
+
+### Browser
+```javascript
+import Rollbar from 'rollbar';
+
+const rollbar = new Rollbar({
+  accessToken: 'YOUR_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  environment: 'production'
+});
+
+rollbar.info('Hello world!');
+```
+
+### Node.js
+```javascript
+const Rollbar = require('rollbar');
+
+const rollbar = new Rollbar({
+  accessToken: 'YOUR_ACCESS_TOKEN',
+  environment: 'production'
+});
+
+rollbar.info('Hello world!');
+```
+
+### Script Tag
+```html
+<script>
+var _rollbarConfig = {
+  accessToken: "YOUR_ACCESS_TOKEN",
+  captureUncaught: true,
+  captureUnhandledRejections: true
+};
+</script>
+<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
+```
+
 ## Usage and Reference
 
 For complete usage instructions and configuration reference, see our [Javascript SDK docs](https://docs.rollbar.com/docs/javascript).
+
+### Examples
+
+See the [examples directory](./examples/) for detailed integration examples with various frameworks and build tools including React, Angular, Vue.js, Next.js, and more.
 
 ## Release History & Changelog
 
@@ -45,10 +106,11 @@ For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rol
 
 To set up a development environment, you'll need Node.js and npm.
 
-2. `npm install -D`
-3. `make`
+1. Clone the repository: `git clone https://github.com/rollbar/rollbar.js.git`
+2. Install dependencies: `npm install`
+3. Build: `npm run build`
 
-To run the tests, run `make test`.
+To run the tests: `npm test`
 
 ## Contributing
 
