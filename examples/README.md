@@ -102,23 +102,35 @@ To test these examples with your local Rollbar.js build:
 
 ## Package Entry Points
 
-Rollbar.js provides different entry points for different environments:
+Rollbar.js uses conditional exports to provide the right module format for each environment:
 
-- **Main package**: `require('rollbar')` or `import Rollbar from 'rollbar'`
-  - Node.js: `src/server/rollbar.js`
-  - Browser (with bundler): `dist/rollbar.umd.min.js`
+### Automatic Resolution (Recommended)
 
-- **Direct imports - Source files** (ES modules):
-  - `rollbar/src/server/rollbar.js` - Server-side source
-  - `rollbar/src/browser/rollbar.js` - Browser-side source
-  - `rollbar/src/react-native/rollbar.js` - React Native source
+When you use `require('rollbar')` or `import Rollbar from 'rollbar'`, you automatically get:
 
-- **Direct imports - Distribution files** (pre-built bundles):
-  - `rollbar/dist/rollbar.umd.js` - Universal (CommonJS/AMD/global)
-  - `rollbar/dist/rollbar.umd.min.js` - Universal minified
-  - `rollbar/dist/rollbar.js` - Vanilla (script tag only)
-  - `rollbar/dist/rollbar.min.js` - Vanilla minified
-  - `rollbar/dist/rollbar.snippet.js` - Async snippet loader
-  - `rollbar/dist/rollbar.named-amd.js` - AMD/RequireJS
+- **Node.js**:
+  - `import` → ES module (`src/server/rollbar.js`)
+  - `require()` → CommonJS wrapper (`src/server/rollbar.cjs`)
+- **Browsers/Bundlers**:
+  - `import` → ES module (`src/browser/rollbar.js`)
+  - `require()` → UMD bundle (`dist/rollbar.umd.min.js`)
+- **TypeScript**: Type definitions from `index.d.ts`
 
-- **CDN**: `https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js`
+### Direct Imports - Source Files (ES modules)
+
+- `rollbar/src/server/rollbar.js` - Server-side source
+- `rollbar/src/browser/rollbar.js` - Browser-side source
+- `rollbar/src/react-native/rollbar.js` - React Native source
+
+### Direct Imports - Distribution Files (Pre-built bundles)
+
+- `rollbar/dist/rollbar.umd.js` - Universal (CommonJS/AMD/global)
+- `rollbar/dist/rollbar.umd.min.js` - Universal minified
+- `rollbar/dist/rollbar.js` - Vanilla (script tag only)
+- `rollbar/dist/rollbar.min.js` - Vanilla minified
+- `rollbar/dist/rollbar.snippet.js` - Async snippet loader
+- `rollbar/dist/rollbar.named-amd.js` - AMD/RequireJS
+
+### CDN
+
+- `https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js`
