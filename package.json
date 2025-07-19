@@ -15,10 +15,24 @@
     "javascript"
   ],
   "license": "MIT",
-  "main": "src/server/rollbar.js",
+  "main": "src/server/rollbar.cjs",
   "browser": "dist/rollbar.umd.min.js",
   "module": "src/browser/rollbar.js",
   "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "node": {
+        "import": "./src/server/rollbar.js",
+        "require": "./src/server/rollbar.cjs"
+      },
+      "browser": {
+        "import": "./src/browser/rollbar.js",
+        "require": "./dist/rollbar.umd.min.js"
+      },
+      "default": "./dist/rollbar.umd.min.js"
+    }
+  },
   "dependencies": {
     "@rrweb/record": "^2.0.0-alpha.18",
     "async": "~3.2.3",
