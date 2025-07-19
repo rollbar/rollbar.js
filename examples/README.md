@@ -22,7 +22,7 @@ Each example includes its own README with specific setup instructions. Common pa
 
 ### Browser (Script Tag)
 ```html
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/v2.26.4/rollbar.min.js"></script>
+<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
 <script>
   var _rollbarConfig = {
     accessToken: "YOUR_ACCESS_TOKEN",
@@ -107,6 +107,7 @@ Rollbar.js provides different entry points for different environments:
 - **Main package**: `require('rollbar')` or `import Rollbar from 'rollbar'`
   - Node.js: `src/server/rollbar.js`
   - Browser (with bundler): `dist/rollbar.umd.min.js`
+  - ES Modules: `src/browser/rollbar.js` (modern bundlers via "module" field)
 
 - **Direct imports - Source files** (ES modules):
   - `rollbar/src/server/rollbar.js` - Server-side source
