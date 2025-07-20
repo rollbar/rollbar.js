@@ -4,11 +4,15 @@
   "description": "Example usage of rollbar.js as a commonjs module.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify index.js > all.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "rollbar-browser": "file:../.."
+    "rollbar": "file:../.."
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0"
   }
 }

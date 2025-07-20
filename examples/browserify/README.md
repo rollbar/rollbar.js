@@ -3,8 +3,8 @@
 1. Require and initialize the Rollbar javascript module:
 
 ```js
-// npm install --save rollbar-browser
-var rollbar = require('rollbar-browser');
+// npm install --save rollbar
+var rollbar = require('rollbar');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
