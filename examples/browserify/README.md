@@ -3,8 +3,8 @@
 1. Require and initialize the Rollbar javascript module:
 
 ```js
-// npm install --save rollbar-browser
-var rollbar = require('rollbar-browser');
+// npm install --save rollbar
+var rollbar = require('rollbar');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
@@ -32,8 +32,9 @@ try {
 
 1. Edit index.js and add your Rollbar `POST_CLIENT_ITEM_ACCESS_TOKEN`
    - Sign up for a free account [here](https://rollbar.com/signup/)
-2. `browserify index.js > all.js`
-3. Open test.html in your browser and click the button
-4. Go to your project dashboard and see the error
+2. `npm install` (if you haven't already)
+3. `npm run build`
+4. Open test.html in your browser and click the button
+5. Go to your project dashboard and see the error
 
 ![Screenshot](https://raw.githubusercontent.com/rollbar/rollbar.js/master/examples/browserify/img/screenshot.png)
