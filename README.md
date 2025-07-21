@@ -82,20 +82,6 @@ If you run into any issues, please email us at [support@rollbar.com](mailto:supp
 
 For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rollbar.js/issues/new).
 
-## Developing
+## Developing and Contributing
 
-To set up a development environment, you'll need Node.js and npm.
-
-1. Clone the repository: `git clone https://github.com/rollbar/rollbar.js.git`
-2. Install dependencies: `npm install`
-3. Build: `npm run build`
-
-To run the tests: `npm test`
-
-## Contributing
-
-1. [Fork it](https://github.com/rollbar/rollbar.js).
-2. Create your feature branch (`git checkout -b my-new-feature`).
-3. Commit your changes (`git commit -am 'Added some feature'`).
-4. Push to the branch (`git push origin my-new-feature`).
-5. Create a new Pull Request.
+For development setup, guidelines, and instructions on submitting pull requests, please see our [Contributing Guide](CONTRIBUTING.md).

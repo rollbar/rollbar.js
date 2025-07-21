@@ -6,16 +6,16 @@ This directory contains examples demonstrating various ways to integrate Rollbar
 
 The following table shows all supported integration methods across different platforms:
 
-| Environment           | Script Tag                                                      | CommonJS                | ESM Import                | TypeScript     | AMD                           |
-| --------------------- | --------------------------------------------------------------- | ----------------------- | ------------------------- | -------------- | ----------------------------- |
-| **Browser**           | ✅ [script.html](./script.html)                                 | —                       | ✅ via bundler            | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
-| **Node.js**           | —                                                               | ✅ `require('rollbar')` | ✅ `import`               | ✅             | —                             |
-| **React Native**      | —                                                               | ✅                      | ✅                        | ✅             | —                             |
-| **React**             | ✅                                                              | ✅ [react/](./react/)   | ✅                        | ✅             | —                             |
-| **Angular**           | —                                                               | —                       | ✅ [angular/](./angular/) | ✅             | —                             |
-| **Vue.js**            | ✅                                                              | ✅                      | ✅ [vuejs3/](./vuejs3/)   | ✅             | —                             |
-| **Next.js**           | —                                                               | ✅ SSR/Client           | ✅ SSR/Client             | ✅             | —                             |
-| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/) | —                       | ✅                        | ✅             | —                             |
+| Environment           | Script Tag                                                      | CommonJS                | ESM Import                                                                                                                                   | TypeScript     | AMD                           |
+| --------------------- | --------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
+| **Browser**           | ✅ [script.html](./script.html)<br>✅ [snippet.html](./snippet.html) | —                       | ✅ via bundler                                                                                                                               | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
+| **Node.js**           | —                                                               | ✅ `require('rollbar')` | ✅ [`import`](https://github.com/rollbar/rollbar.js/blob/6bc51c1840a6fed64e40fa4e6481f5bc990f82d0/examples/README.md#es-modules--typescript) | ✅             | —                             |
+| **React Native**      | —                                                               | ✅                      | ✅                                                                                                                                           | ✅             | —                             |
+| **React**             | ✅                                                              | ✅ [react/](./react/)   | ✅                                                                                                                                           | ✅             | —                             |
+| **Angular**           | —                                                               | —                       | ✅ [angular/](./angular/)                                                                                                                    | ✅             | —                             |
+| **Vue.js**            | ✅                                                              | ✅                      | ✅ [vuejs3/](./vuejs3/)                                                                                                                      | ✅             | —                             |
+| **Next.js**           | —                                                               | ✅ SSR/Client           | ✅ SSR/Client                                                                                                                                | ✅             | —                             |
+| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/) | —                       | ✅                                                                                                                                           | ✅             | —                             |
 
 ## Quick Start
 
@@ -46,7 +46,7 @@ const rollbar = new Rollbar({
 import Rollbar from 'rollbar';
 
 const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
   environment: 'production',
 });
 ```
@@ -137,4 +137,3 @@ When you use `require('rollbar')` or `import Rollbar from 'rollbar'`, you automa
 - `rollbar/dist/rollbar.min.js` - Vanilla minified
 - `rollbar/dist/rollbar.snippet.js` - Async snippet loader
 - `rollbar/dist/rollbar.named-amd.js` - AMD/RequireJS
-
