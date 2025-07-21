@@ -1,36 +1,35 @@
 #!/usr/bin/env node
 
 import { readdir, readFile } from 'fs/promises';
-import { join } from 'path';
-import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, basename } from 'path';
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 
-const cwd = dirname(fileURLToPath(import.meta.url));
-const spawnOptions = { stdio: 'inherit', shell: true };
-
-const filterMap = async (xs, fn) =>
-  (await Promise.all(xs.map(fn))).filter(Boolean);
+// Not a true `filterMap`, since we break the single-iteration contract, but
+// we keep the concurrency.
+const filterMap = (xs, f) =>
+  Promise.all(xs.map(f)).then((ys) => ys.filter(Boolean));
 
 const dirsIn = async (path) =>
   await filterMap(
     await readdir(path, { withFileTypes: true }),
-    async (entry) => entry.isDirectory() && join(cwd, entry.name),
+    (entry) => entry.isDirectory() && join(path, entry.name),
   );
 
-const contentsOf = async (f) => await readFile(f, 'utf8').catch(() => null);
+const contentsOf = async (p) => await readFile(p, 'utf8').catch(() => null);
 
-const npm = async (args, dir, id) =>
-  new Promise((resolve, reject) =>
-    spawn('npm', args, { cwd: dir, ...spawnOptions }).on('close', (code) =>
-      code === 0
-        ? resolve()
-        : reject(new Error(`npm ${args.join(' ')} failed for ${id} (${code})`)),
-    ),
-  );
+async function npm(args, cwd, id) {
+  const child = spawn('npm', args, { cwd, stdio: 'inherit', shell: true });
+  const [code] = await once(child, 'close');
+  if (code !== 0) {
+    throw new Error(`npm ${args.join(' ')} failed in ${id}`);
+  }
+}
 
 async function main() {
   console.log('Validating examples using the local rollbar package...');
+  const cwd = dirname(fileURLToPath(import.meta.url));
   const pat = /"rollbar"\s*:\s*"file:\.\.\/\.\."/; // "rollbar": "file:../.."
   const examples = await filterMap(
     await dirsIn(cwd),
