@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Rollbar.js! We welcome contributi
 
 ### Prerequisites
 
-- Node.js version 18 or higher (required for ES module support and absolute imports)
+- Node.js version 18 or higher
 - npm
 
 ### Setup
