@@ -4,6 +4,13 @@ Thank you for your interest in contributing to Rollbar.js! We welcome contributi
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js version 18 or higher (required for ES module support and absolute imports)
+- npm
+
+### Setup
+
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
@@ -24,16 +31,19 @@ Thank you for your interest in contributing to Rollbar.js! We welcome contributi
 ### Running Tests
 
 Run all tests:
+
 ```bash
 npm test
 ```
 
 Run only browser tests:
+
 ```bash
 npm run test-browser
 ```
 
 Run only server tests:
+
 ```bash
 npm run test-server
 ```
@@ -48,6 +58,7 @@ npm run test-server
 ### Making Changes
 
 1. Create a feature branch from `master`:
+
    ```bash
    git checkout -b my-feature-name
    ```
@@ -57,6 +68,7 @@ npm run test-server
    - Code follows our style guidelines
    - New features include appropriate tests
    - Documentation is updated if needed
+   - Examples are updated if needed
 
 3. Commit your changes with a clear message:
    ```bash
@@ -66,6 +78,7 @@ npm run test-server
 ## Submitting a Pull Request
 
 1. Push your changes to your fork:
+
    ```bash
    git push origin my-feature-name
    ```
@@ -91,6 +104,7 @@ npm run test-server
 ## Questions?
 
 If you have questions, please:
+
 - Check existing issues and documentation
 - Open a GitHub issue for clarification
 - Email support@rollbar.com for urgent matters
