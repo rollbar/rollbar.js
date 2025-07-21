@@ -9,7 +9,7 @@ The following table shows all supported integration methods across different pla
 | Environment           | Script Tag                                                           | CommonJS                | ESM Import                             | TypeScript     | AMD                           |
 | --------------------- | -------------------------------------------------------------------- | ----------------------- | -------------------------------------- | -------------- | ----------------------------- |
 | **Browser**           | ✅ [script.html](./script.html)<br>✅ [snippet.html](./snippet.html) | —                       | ✅ via bundler                         | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
-| **Node.js**           | —                                                                    | ✅ `require('rollbar')` | ✅ [`import`](#es-modules--typescript) | ✅             | —                             |
+| **Node.js**           | —                                                                    | ✅ [`require`](#nodejs--commonjs) | ✅ [`import`](#es-modules--typescript) | ✅             | —                             |
 | **React Native**      | —                                                                    | ✅                      | ✅                                     | ✅             | —                             |
 | **React**             | ✅                                                                   | ✅ [react/](./react/)   | ✅                                     | ✅             | —                             |
 | **Angular**           | —                                                                    | —                       | ✅ [angular/](./angular/)              | ✅             | —                             |
