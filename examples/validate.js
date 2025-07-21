@@ -6,13 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 
-// Not a true `filterMap`, since we break the single-iteration contract, but
-// we keep the concurrency.
-const filterMap = (xs, f) =>
-  Promise.all(xs.map(f)).then((ys) => ys.filter(Boolean));
+const compactMap = (xs, f) =>
+  Promise.all(xs.map(f)).then((ys) => ys.filter((y) => y != null));
 
 const dirsIn = async (path) =>
-  await filterMap(
+  await compactMap(
     await readdir(path, { withFileTypes: true }),
     (entry) => entry.isDirectory() && join(path, entry.name),
   );
@@ -31,7 +29,7 @@ async function main() {
   console.log('Validating examples using the local rollbar package...');
   const cwd = dirname(fileURLToPath(import.meta.url));
   const pat = /"rollbar"\s*:\s*"file:\.\.\/\.\."/; // "rollbar": "file:../.."
-  const examples = await filterMap(
+  const examples = await compactMap(
     await dirsIn(cwd),
     async (dir) =>
       (await contentsOf(join(dir, 'package.json')))?.match(pat) && dir,
