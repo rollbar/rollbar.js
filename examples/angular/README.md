@@ -20,7 +20,7 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-Now, you can test the Rollbar integration by clicking the buttons "Throw an Error" and "Log a Warning". You 
+Now, you can test the Rollbar integration by clicking the buttons "Throw an Error" and "Log a Warning". You
 
 ## Development server - server-side
 
@@ -42,4 +42,4 @@ Now, you can test the Rollbar integration by navigating to the url `http://local
 
 ## Additional Resources
 
-Need help? Rollbar Support can be reached via email at support@rollbar.com 
+Need help? Rollbar Support can be reached via email at support@rollbar.com
