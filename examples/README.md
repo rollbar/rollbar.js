@@ -10,6 +10,7 @@ The following table shows all supported integration methods across different pla
 | --------------------- | --------------------------------------------------------------- | ----------------------- | ------------------------- | -------------- | ----------------------------- |
 | **Browser**           | ✅ [script.html](./script.html)                                 | —                       | ✅ via bundler            | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
 | **Node.js**           | —                                                               | ✅ `require('rollbar')` | ✅ `import`               | ✅             | —                             |
+| **React Native**      | —                                                               | ✅                      | ✅                        | ✅             | —                             |
 | **React**             | ✅                                                              | ✅ [react/](./react/)   | ✅                        | ✅             | —                             |
 | **Angular**           | —                                                               | —                       | ✅ [angular/](./angular/) | ✅             | —                             |
 | **Vue.js**            | ✅                                                              | ✅                      | ✅ [vuejs3/](./vuejs3/)   | ✅             | —                             |
@@ -18,28 +19,24 @@ The following table shows all supported integration methods across different pla
 
 ## Quick Start
 
-Each example includes its own README with specific setup instructions. Common patterns:
+First, [sign up for a Rollbar account](https://rollbar.com/signup) if you haven't already. Each example includes its own README with specific setup instructions.
+
+Common patterns:
 
 ### Browser (Script Tag)
 
-```html
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
-<script>
-  var _rollbarConfig = {
-    accessToken: 'YOUR_ACCESS_TOKEN',
-    captureUncaught: true,
-    captureUnhandledRejections: true,
-  };
-</script>
-```
+For the recommended snippet-based installation with automatic error capture and telemetry, see our [Browser JS – Quick Start documentation](https://docs.rollbar.com/docs/browser-js#quick-start).
 
 ### Node.js / CommonJS
 
 ```javascript
 const Rollbar = require('rollbar');
+
 const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production',
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  payload: { code_version: '1.0.0' },
 });
 ```
 
@@ -47,6 +44,7 @@ const rollbar = new Rollbar({
 
 ```javascript
 import Rollbar from 'rollbar';
+
 const rollbar = new Rollbar({
   accessToken: 'YOUR_ACCESS_TOKEN',
   environment: 'production',
@@ -140,6 +138,3 @@ When you use `require('rollbar')` or `import Rollbar from 'rollbar'`, you automa
 - `rollbar/dist/rollbar.snippet.js` - Async snippet loader
 - `rollbar/dist/rollbar.named-amd.js` - AMD/RequireJS
 
-### CDN
-
-- `https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js`

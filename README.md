@@ -22,11 +22,6 @@
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
 
-## Setup Instructions
-
-1. [Sign up for a Rollbar account](https://rollbar.com/signup).
-2. For client-side Javascript, follow the [Browser Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser) instructions. For Node.js, follow the [Server Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-server).
-
 ## Installation
 
 Using npm:
@@ -41,28 +36,15 @@ Using yarn:
 yarn add rollbar
 ```
 
-Using CDN:
-
-```html
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
-```
+For CDN/script tag installation, see [Quick Start → Browser](#browser)
 
 ## Quick Start
 
+First, [sign up for a Rollbar account](https://rollbar.com/signup) if you haven't already.
+
 ### Browser
 
-```javascript
-import Rollbar from 'rollbar';
-
-const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
-  captureUncaught: true,
-  captureUnhandledRejections: true,
-  environment: 'production',
-});
-
-rollbar.info('Hello world!');
-```
+For the recommended snippet-based installation with automatic error capture and telemetry, see our [Browser JS – Quick Start documentation](https://docs.rollbar.com/docs/browser-js#quick-start).
 
 ### Node.js
 
@@ -70,25 +52,17 @@ rollbar.info('Hello world!');
 const Rollbar = require('rollbar');
 
 const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production',
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  payload: { code_version: '1.0.0' },
 });
 
-rollbar.info('Hello world!');
+// log a generic message and send to rollbar
+rollbar.log('Hello world!');
 ```
 
-### Script Tag
-
-```html
-<script>
-  var _rollbarConfig = {
-    accessToken: 'YOUR_ACCESS_TOKEN',
-    captureUncaught: true,
-    captureUnhandledRejections: true,
-  };
-</script>
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
-```
+For Express integration, custom error handlers, and advanced configuration, see our [Node.js server configuration documentation](https://docs.rollbar.com/docs/nodejs#server-configuration).
 
 ## Usage and Reference
 
@@ -96,7 +70,7 @@ For complete usage instructions and configuration reference, see our [Javascript
 
 ### Examples
 
-See the [examples directory](./examples/) for detailed integration examples with various frameworks and build tools including React, Angular, Vue.js, Next.js, and more.
+See the [examples directory](./examples/) for detailed integration examples with various frameworks and build tools including **React**, **Angular**, **Vue.js**, **Next.js**, and more.
 
 ## Release History & Changelog
 
