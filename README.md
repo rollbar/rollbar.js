@@ -40,7 +40,7 @@ For CDN/script tag installation, see [Quick Start → Browser](#browser)
 
 ## Quick Start
 
-First, [sign up for a Rollbar account](https://rollbar.com/signup) if you haven't already.
+First, [**sign up for a Rollbar account**](https://rollbar.com/signup) if you haven't already.
 
 ### Browser
 
@@ -62,7 +62,7 @@ const rollbar = new Rollbar({
 rollbar.log('Hello world!');
 ```
 
-For Express integration, custom error handlers, and advanced configuration, see our [Node.js server configuration documentation](https://docs.rollbar.com/docs/nodejs#server-configuration).
+For **framework** integrations (**Express**, **Koa**, **Hapi**, and more), custom error handlers, and advanced configuration, see our [Node.js server configuration documentation](https://docs.rollbar.com/docs/nodejs#server-configuration).
 
 ## Usage and Reference
 
