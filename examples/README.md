@@ -6,63 +6,69 @@ This directory contains examples demonstrating various ways to integrate Rollbar
 
 The following table shows all supported integration methods across different platforms:
 
-| Environment | Script Tag | CommonJS | ESM Import | TypeScript | AMD |
-|-------------|------------|----------|------------|------------|-----|
-| **Browser** | ✅ [script.html](./script.html) | — | ✅ via bundler | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
-| **Node.js** | — | ✅ `require('rollbar')` | ✅ `import` | ✅ | — |
-| **React** | ✅ | ✅ [react/](./react/) | ✅ | ✅ | — |
-| **Angular** | — | — | ✅ [angular/](./angular/) | ✅ | — |
-| **Vue.js** | ✅ | ✅ | ✅ [vuejs3/](./vuejs3/) | ✅ | — |
-| **Next.js** | — | ✅ SSR/Client | ✅ SSR/Client | ✅ | — |
-| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/) | — | ✅ | ✅ | — |
+| Environment           | Script Tag                                                      | CommonJS                | ESM Import                | TypeScript     | AMD                           |
+| --------------------- | --------------------------------------------------------------- | ----------------------- | ------------------------- | -------------- | ----------------------------- |
+| **Browser**           | ✅ [script.html](./script.html)                                 | —                       | ✅ via bundler            | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
+| **Node.js**           | —                                                               | ✅ `require('rollbar')` | ✅ `import`               | ✅             | —                             |
+| **React**             | ✅                                                              | ✅ [react/](./react/)   | ✅                        | ✅             | —                             |
+| **Angular**           | —                                                               | —                       | ✅ [angular/](./angular/) | ✅             | —                             |
+| **Vue.js**            | ✅                                                              | ✅                      | ✅ [vuejs3/](./vuejs3/)   | ✅             | —                             |
+| **Next.js**           | —                                                               | ✅ SSR/Client           | ✅ SSR/Client             | ✅             | —                             |
+| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/) | —                       | ✅                        | ✅             | —                             |
 
 ## Quick Start
 
 Each example includes its own README with specific setup instructions. Common patterns:
 
 ### Browser (Script Tag)
+
 ```html
 <script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
 <script>
   var _rollbarConfig = {
-    accessToken: "YOUR_ACCESS_TOKEN",
+    accessToken: 'YOUR_ACCESS_TOKEN',
     captureUncaught: true,
-    captureUnhandledRejections: true
+    captureUnhandledRejections: true,
   };
 </script>
 ```
 
 ### Node.js / CommonJS
+
 ```javascript
 const Rollbar = require('rollbar');
 const rollbar = new Rollbar({
   accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production'
+  environment: 'production',
 });
 ```
 
 ### ES Modules / TypeScript
+
 ```javascript
 import Rollbar from 'rollbar';
 const rollbar = new Rollbar({
   accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production'
+  environment: 'production',
 });
 ```
 
 ## Available Examples
 
 ### Framework Examples
+
 - **[angular/](./angular/)** - Angular 18+ with TypeScript and error handlers
 - **[react/](./react/)** - React with error boundaries
 - **[vuejs3/](./vuejs3/)** - Vue.js 3 with Vite
 
 ### Build Tool Examples
+
 - **[browserify/](./browserify/)** - Browserify bundler integration
 - **[webpack/](./webpack/)** - Webpack bundler configuration
 - **[requirejs/](./requirejs/)** - AMD/RequireJS loader
 
 ### Environment Examples
+
 - **[universal-browser/](./universal-browser/)** - Isomorphic JavaScript (browser)
 - **[universal-node/](./universal-node/)** - Isomorphic JavaScript (Node.js)
 - **[browser_extension_v2/](./browser_extension_v2/)** - Chrome extension (Manifest V2)
@@ -70,6 +76,7 @@ const rollbar = new Rollbar({
 - **[no-conflict/](./no-conflict/)** - Using Rollbar with noConflict mode
 
 ### Basic Examples
+
 - **[snippet.html](./snippet.html)** - Async snippet integration
 - **[script.html](./script.html)** - Direct script tag
 - **[error.html](./error.html)** - Error handling examples
@@ -83,11 +90,13 @@ const rollbar = new Rollbar({
 To test these examples with your local Rollbar.js build:
 
 1. Build the library:
+
    ```bash
    npm run build
    ```
 
 2. For Node.js examples:
+
    ```bash
    cd examples/universal-node
    npm install

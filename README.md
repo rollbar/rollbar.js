@@ -30,16 +30,19 @@
 ## Installation
 
 Using npm:
+
 ```bash
 npm install --save rollbar
 ```
 
 Using yarn:
+
 ```bash
 yarn add rollbar
 ```
 
 Using CDN:
+
 ```html
 <script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
 ```
@@ -47,6 +50,7 @@ Using CDN:
 ## Quick Start
 
 ### Browser
+
 ```javascript
 import Rollbar from 'rollbar';
 
@@ -54,32 +58,34 @@ const rollbar = new Rollbar({
   accessToken: 'YOUR_ACCESS_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
-  environment: 'production'
+  environment: 'production',
 });
 
 rollbar.info('Hello world!');
 ```
 
 ### Node.js
+
 ```javascript
 const Rollbar = require('rollbar');
 
 const rollbar = new Rollbar({
   accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production'
+  environment: 'production',
 });
 
 rollbar.info('Hello world!');
 ```
 
 ### Script Tag
+
 ```html
 <script>
-var _rollbarConfig = {
-  accessToken: "YOUR_ACCESS_TOKEN",
-  captureUncaught: true,
-  captureUnhandledRejections: true
-};
+  var _rollbarConfig = {
+    accessToken: 'YOUR_ACCESS_TOKEN',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
+  };
 </script>
 <script src="https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js"></script>
 ```
