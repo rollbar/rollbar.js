@@ -6,16 +6,16 @@ This directory contains examples demonstrating various ways to integrate Rollbar
 
 The following table shows all supported integration methods across different platforms:
 
-| Environment           | Script Tag                                                           | CommonJS                | ESM Import                                                                                               | TypeScript     | AMD                           |
-| --------------------- | -------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------- |
-| **Browser**           | ✅ [script.html](./script.html)<br>✅ [snippet.html](./snippet.html) | —                       | ✅ via bundler                                                                                           | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
-| **Node.js**           | —                                                                    | ✅ `require('rollbar')` | ✅ [`import`](https://github.com/rollbar/rollbar.js/blob/main/examples/README.md#es-modules--typescript) | ✅             | —                             |
-| **React Native**      | —                                                                    | ✅                      | ✅                                                                                                       | ✅             | —                             |
-| **React**             | ✅                                                                   | ✅ [react/](./react/)   | ✅                                                                                                       | ✅             | —                             |
-| **Angular**           | —                                                                    | —                       | ✅ [angular/](./angular/)                                                                                | ✅             | —                             |
-| **Vue.js**            | ✅                                                                   | ✅                      | ✅ [vuejs3/](./vuejs3/)                                                                                  | ✅             | —                             |
-| **Next.js**           | —                                                                    | ✅ SSR/Client           | ✅ SSR/Client                                                                                            | ✅             | —                             |
-| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/)      | —                       | ✅                                                                                                       | ✅             | —                             |
+| Environment           | Script Tag                                                           | CommonJS                | ESM Import                             | TypeScript     | AMD                           |
+| --------------------- | -------------------------------------------------------------------- | ----------------------- | -------------------------------------- | -------------- | ----------------------------- |
+| **Browser**           | ✅ [script.html](./script.html)<br>✅ [snippet.html](./snippet.html) | —                       | ✅ via bundler                         | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
+| **Node.js**           | —                                                                    | ✅ `require('rollbar')` | ✅ [`import`](#es-modules--typescript) | ✅             | —                             |
+| **React Native**      | —                                                                    | ✅                      | ✅                                     | ✅             | —                             |
+| **React**             | ✅                                                                   | ✅ [react/](./react/)   | ✅                                     | ✅             | —                             |
+| **Angular**           | —                                                                    | —                       | ✅ [angular/](./angular/)              | ✅             | —                             |
+| **Vue.js**            | ✅                                                                   | ✅                      | ✅ [vuejs3/](./vuejs3/)                | ✅             | —                             |
+| **Next.js**           | —                                                                    | ✅ SSR/Client           | ✅ SSR/Client                          | ✅             | —                             |
+| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/)      | —                       | ✅                                     | ✅             | —                             |
 
 ## Quick Start
 
