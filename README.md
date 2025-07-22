@@ -9,8 +9,8 @@
 </p>
 
 ![Build Status](https://github.com/rollbar/rollbar.js/workflows/Rollbar.js%20CI/badge.svg?tag=latest)
-[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/context:javascript)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/rollbar/rollbar.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/rollbar/rollbar.js/alerts)
+[![npm version](https://img.shields.io/npm/v/rollbar.svg)](https://www.npmjs.com/package/rollbar)
+[![npm downloads](https://img.shields.io/npm/dm/rollbar.svg)](https://www.npmjs.com/package/rollbar)
 
 ---
 
@@ -22,14 +22,55 @@
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
 
-## Setup Instructions
+## Installation
 
-1. [Sign up for a Rollbar account](https://rollbar.com/signup).
-2. For client-side Javascript, follow the [Browser Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-browser) instructions. For Node.js, follow the [Server Quick Start](https://docs.rollbar.com/docs/javascript#section-quick-start-server).
+Using npm:
+
+```bash
+npm install --save rollbar
+```
+
+Using yarn:
+
+```bash
+yarn add rollbar
+```
+
+For CDN/script tag installation, see [Quick Start → Browser](#browser)
+
+## Quick Start
+
+First, [**sign up for a Rollbar account**](https://rollbar.com/signup) if you haven't already.
+
+### Browser
+
+For the recommended snippet-based installation with automatic error capture and telemetry, see our [Browser JS – Quick Start documentation](https://docs.rollbar.com/docs/browser-js#quick-start).
+
+### Node.js
+
+```javascript
+const Rollbar = require('rollbar');
+
+const rollbar = new Rollbar({
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  payload: { code_version: '1.0.0' },
+});
+
+// log a generic message and send to rollbar
+rollbar.log('Hello world!');
+```
+
+For **framework** integrations (**Express**, **Koa**, **Hapi**, and more), custom error handlers, and advanced configuration, see our [Node.js server configuration documentation](https://docs.rollbar.com/docs/nodejs#server-configuration).
 
 ## Usage and Reference
 
 For complete usage instructions and configuration reference, see our [Javascript SDK docs](https://docs.rollbar.com/docs/javascript).
+
+### Examples
+
+See the [examples directory](./examples/) for detailed integration examples with various frameworks and build tools including **React**, **Angular**, **Vue.js**, **Next.js**, and more.
 
 ## Release History & Changelog
 
@@ -41,19 +82,6 @@ If you run into any issues, please email us at [support@rollbar.com](mailto:supp
 
 For bug reports, please [open an issue on GitHub](https://github.com/rollbar/rollbar.js/issues/new).
 
-## Developing
+## Developing and Contributing
 
-To set up a development environment, you'll need Node.js and npm.
-
-2. `npm install -D`
-3. `make`
-
-To run the tests, run `make test`.
-
-## Contributing
-
-1. [Fork it](https://github.com/rollbar/rollbar.js).
-2. Create your feature branch (`git checkout -b my-new-feature`).
-3. Commit your changes (`git commit -am 'Added some feature'`).
-4. Push to the branch (`git push origin my-new-feature`).
-5. Create a new Pull Request.
+For development setup, guidelines, and instructions on submitting pull requests, please see our [Contributing Guide](CONTRIBUTING.md).

@@ -6,63 +6,67 @@ This directory contains examples demonstrating various ways to integrate Rollbar
 
 The following table shows all supported integration methods across different platforms:
 
-| Environment | Script Tag | CommonJS | ESM Import | TypeScript | AMD |
-|-------------|------------|----------|------------|------------|-----|
-| **Browser** | ✅ [script.html](./script.html) | — | ✅ via bundler | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
-| **Node.js** | — | ✅ `require('rollbar')` | ✅ `import` | ✅ | — |
-| **React** | ✅ | ✅ [react/](./react/) | ✅ | ✅ | — |
-| **Angular** | — | — | ✅ [angular/](./angular/) | ✅ | — |
-| **Vue.js** | ✅ | ✅ | ✅ [vuejs3/](./vuejs3/) | ✅ | — |
-| **Next.js** | — | ✅ SSR/Client | ✅ SSR/Client | ✅ | — |
-| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/) | — | ✅ | ✅ | — |
+| Environment           | Script Tag                                                           | CommonJS                | ESM Import                             | TypeScript     | AMD                           |
+| --------------------- | -------------------------------------------------------------------- | ----------------------- | -------------------------------------- | -------------- | ----------------------------- |
+| **Browser**           | ✅ [script.html](./script.html)<br>✅ [snippet.html](./snippet.html) | —                       | ✅ via bundler                         | ✅ via bundler | ✅ [requirejs/](./requirejs/) |
+| **Node.js**           | —                                                                    | ✅ [`require`](#nodejs--commonjs) | ✅ [`import`](#es-modules--typescript) | ✅             | —                             |
+| **React Native**      | —                                                                    | ✅                      | ✅                                     | ✅             | —                             |
+| **React**             | ✅                                                                   | ✅ [react/](./react/)   | ✅                                     | ✅             | —                             |
+| **Angular**           | —                                                                    | —                       | ✅ [angular/](./angular/)              | ✅             | —                             |
+| **Vue.js**            | ✅                                                                   | ✅                      | ✅ [vuejs3/](./vuejs3/)                | ✅             | —                             |
+| **Next.js**           | —                                                                    | ✅ SSR/Client           | ✅ SSR/Client                          | ✅             | —                             |
+| **Browser Extension** | ✅ [v2](./browser_extension_v2/), [v3](./browser_extension_v3/)      | —                       | ✅                                     | ✅             | —                             |
 
 ## Quick Start
 
-Each example includes its own README with specific setup instructions. Common patterns:
+First, [sign up for a Rollbar account](https://rollbar.com/signup) if you haven't already. Each example includes its own README with specific setup instructions.
+
+Common patterns:
 
 ### Browser (Script Tag)
-```html
-<script src="https://cdn.rollbar.com/rollbarjs/refs/tags/v2.26.4/rollbar.min.js"></script>
-<script>
-  var _rollbarConfig = {
-    accessToken: "YOUR_ACCESS_TOKEN",
-    captureUncaught: true,
-    captureUnhandledRejections: true
-  };
-</script>
-```
+
+For the recommended snippet-based installation with automatic error capture and telemetry, see our [Browser JS – Quick Start documentation](https://docs.rollbar.com/docs/browser-js#quick-start).
 
 ### Node.js / CommonJS
+
 ```javascript
 const Rollbar = require('rollbar');
+
 const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production'
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  payload: { code_version: '1.0.0' },
 });
 ```
 
 ### ES Modules / TypeScript
+
 ```javascript
 import Rollbar from 'rollbar';
+
 const rollbar = new Rollbar({
-  accessToken: 'YOUR_ACCESS_TOKEN',
-  environment: 'production'
+  accessToken: 'POST_SERVER_ITEM_ACCESS_TOKEN',
+  environment: 'production',
 });
 ```
 
 ## Available Examples
 
 ### Framework Examples
+
 - **[angular/](./angular/)** - Angular 18+ with TypeScript and error handlers
 - **[react/](./react/)** - React with error boundaries
 - **[vuejs3/](./vuejs3/)** - Vue.js 3 with Vite
 
 ### Build Tool Examples
+
 - **[browserify/](./browserify/)** - Browserify bundler integration
 - **[webpack/](./webpack/)** - Webpack bundler configuration
 - **[requirejs/](./requirejs/)** - AMD/RequireJS loader
 
 ### Environment Examples
+
 - **[universal-browser/](./universal-browser/)** - Isomorphic JavaScript (browser)
 - **[universal-node/](./universal-node/)** - Isomorphic JavaScript (Node.js)
 - **[browser_extension_v2/](./browser_extension_v2/)** - Chrome extension (Manifest V2)
@@ -70,12 +74,11 @@ const rollbar = new Rollbar({
 - **[no-conflict/](./no-conflict/)** - Using Rollbar with noConflict mode
 
 ### Basic Examples
+
 - **[snippet.html](./snippet.html)** - Async snippet integration
 - **[script.html](./script.html)** - Direct script tag
-- **[error.html](./error.html)** - Error handling examples
 - **[test.html](./test.html)** - Test page
 - **[itemsPerMinute.html](./itemsPerMinute.html)** - Rate limiting demo
-- **[csp-errors.html](./csp-errors.html)** - Content Security Policy testing
 - **[include_custom_object.html](./include_custom_object.html)** - Custom data example
 
 ## Testing Examples
@@ -83,11 +86,13 @@ const rollbar = new Rollbar({
 To test these examples with your local Rollbar.js build:
 
 1. Build the library:
+
    ```bash
    npm run build
    ```
 
 2. For Node.js examples:
+
    ```bash
    cd examples/universal-node
    npm install
@@ -130,7 +135,3 @@ When you use `require('rollbar')` or `import Rollbar from 'rollbar'`, you automa
 - `rollbar/dist/rollbar.min.js` - Vanilla minified
 - `rollbar/dist/rollbar.snippet.js` - Async snippet loader
 - `rollbar/dist/rollbar.named-amd.js` - AMD/RequireJS
-
-### CDN
-
-- `https://cdn.rollbar.com/rollbarjs/refs/tags/vVERSION/rollbar.min.js`

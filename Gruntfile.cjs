@@ -60,6 +60,13 @@ function buildGruntKarmaConfig(singleRun, tests, reporters) {
           served: true,
           watched: false,
         },
+        // Test fixture HTML files
+        {
+          pattern: 'test/fixtures/**/*.html',
+          included: true,
+          served: true,
+          watched: false,
+        },
       ],
     },
   };

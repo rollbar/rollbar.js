@@ -5,14 +5,9 @@ module.exports = function (config) {
     // The Travis environment has these specified.
     // To run BrowserStack tests locally, specify the environment variables:
     //  BROWSER_STACK_USERNAME, BROWSER_STACK_ACCESS_KEY
-    browserStack: {
-      username: null,
-      accessKey: null,
-    },
+    browserStack: { username: null, accessKey: null },
 
-    client: {
-      captureConsole: true,
-    },
+    client: { captureConsole: true },
 
     // Files are specified in the grunt-karma configuration in Gruntfile.cjs
     //files: []
@@ -33,6 +28,7 @@ module.exports = function (config) {
     proxies: {
       '/dist/': '/base/dist/',
       '/examples/': '/base/examples/',
+      '/test/': '/base/test/',
     },
 
     customHeaders: [
@@ -63,10 +59,7 @@ module.exports = function (config) {
             loader: 'babel-loader',
             exclude: [/node_modules/, /vendor/, /lib/, /dist/, /test/],
           },
-          {
-            test: /(mootootls|requirejs)\.js$/,
-            loader: 'script',
-          },
+          { test: /(mootootls|requirejs)\.js$/, loader: 'script' },
           {
             enforce: 'post',
             test: /\.js$/,
@@ -77,8 +70,6 @@ module.exports = function (config) {
       },
     },
 
-    webpackMiddleware: {
-      noInfo: true,
-    },
+    webpackMiddleware: { noInfo: true },
   });
 };
