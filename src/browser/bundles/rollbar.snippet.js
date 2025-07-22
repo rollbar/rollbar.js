@@ -2,7 +2,7 @@
 
 import * as Shim from '../shim.js';
 import snippetCallback from '../snippet_callback.js';
-import { defaultRollbarJsUrl } from '../defaults.js';
+import { defaultRollbarJsUrl } from './defaults.js';
 
 _rollbarConfig = _rollbarConfig || {};
 _rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || defaultRollbarJsUrl;
