@@ -1,7 +1,6 @@
 import Rollbar from './core.js';
 import Telemeter from '../telemetry.js';
 import Instrumenter from './telemetry.js';
-import polyfillJSON from '../utility/polyfillJSON.js';
 import wrapGlobals from './wrapGlobals.js';
 import scrub from '../scrub.js';
 import truncation from '../truncation.js';
@@ -11,7 +10,6 @@ import Recorder from './replay/recorder.js';
 Rollbar.setComponents({
   telemeter: Telemeter,
   instrumenter: Instrumenter,
-  polyfillJSON: polyfillJSON,
   wrapGlobals: wrapGlobals,
   scrub: scrub,
   truncation: truncation,

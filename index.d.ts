@@ -221,12 +221,10 @@ declare namespace Rollbar {
     handler?: any,
     shim?: any,
   ) => void;
-  export type PolyfillJSONType = (JSON: any) => any;
 
   export interface Components {
     telemeter?: TelemeterType;
     instrumenter?: InstrumenterType;
-    polyfillJSON?: PolyfillJSONType;
     wrapGlobals?: WrapGlobalsType;
     scrub?: ScrubType;
     truncation?: TruncationType;

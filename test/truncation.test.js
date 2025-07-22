@@ -3,8 +3,6 @@
 /* globals it */
 
 import t from '../src/truncation.js';
-import * as utility from '../src/utility.js';
-utility.setupJSON();
 
 describe('truncate', function () {
   it('should not truncate something small enough', function () {
@@ -162,13 +160,7 @@ describe('maybeTruncateValue', function () {
 function messagePayload(message) {
   return {
     access_token: 'abc',
-    data: {
-      body: {
-        message: {
-          body: message,
-        },
-      },
-    },
+    data: { body: { message: { body: message } } },
   };
 }
 
@@ -176,20 +168,14 @@ function tracePayload(frameCount, message) {
   message = typeof message !== 'undefined' ? message : 'EXCEPTION MESSAGE';
   var frames = [];
   for (var i = 0; i < frameCount; i++) {
-    frames.push({
-      filename: 'some/file/name',
-      lineno: i,
-    });
+    frames.push({ filename: 'some/file/name', lineno: i });
   }
   return {
     access_token: 'abc',
     data: {
       body: {
         trace: {
-          exception: {
-            description: 'ALL YOUR BASE',
-            message: message,
-          },
+          exception: { description: 'ALL YOUR BASE', message: message },
           frames: frames,
         },
       },
@@ -203,27 +189,14 @@ function traceChainPayload(traceCount, frameCount, message) {
   for (var c = 0; c < traceCount; c++) {
     var frames = [];
     for (var i = 0; i < frameCount; i++) {
-      frames.push({
-        filename: 'some/file/name::' + c,
-        lineno: i,
-      });
+      frames.push({ filename: 'some/file/name::' + c, lineno: i });
     }
     chain.push({
-      exception: {
-        description: 'ALL YOUR BASE :: ' + c,
-        message: message,
-      },
+      exception: { description: 'ALL YOUR BASE :: ' + c, message: message },
       frames: frames,
     });
   }
-  return {
-    access_token: 'abc',
-    data: {
-      body: {
-        trace_chain: chain,
-      },
-    },
-  };
+  return { access_token: 'abc', data: { body: { trace_chain: chain } } };
 }
 
 function repeat(s, n) {

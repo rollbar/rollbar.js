@@ -21,7 +21,6 @@ function Rollbar(options, client) {
   this.options._configuredOptions = options;
   const Telemeter = this.components.telemeter;
   const Instrumenter = this.components.instrumenter;
-  const polyfillJSON = this.components.polyfillJSON;
   this.wrapGlobals = this.components.wrapGlobals;
   this.scrub = this.components.scrub;
   const truncation = this.components.truncation;
@@ -80,7 +79,6 @@ function Rollbar(options, client) {
     );
     this.instrumenter.instrument();
   }
-  _.setupJSON(polyfillJSON);
 
   // Used with rollbar-react for rollbar-react-native compatibility.
   this.rollbar = this;
