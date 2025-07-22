@@ -77,10 +77,8 @@ const rollbar = new Rollbar({
 
 - **[snippet.html](./snippet.html)** - Async snippet integration
 - **[script.html](./script.html)** - Direct script tag
-- **[error.html](./error.html)** - Error handling examples
 - **[test.html](./test.html)** - Test page
 - **[itemsPerMinute.html](./itemsPerMinute.html)** - Rate limiting demo
-- **[csp-errors.html](./csp-errors.html)** - Content Security Policy testing
 - **[include_custom_object.html](./include_custom_object.html)** - Custom data example
 
 ## Testing Examples
