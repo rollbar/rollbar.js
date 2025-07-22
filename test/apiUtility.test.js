@@ -4,8 +4,6 @@
 /* globals sinon */
 
 import * as u from '../src/apiUtility.js';
-import * as utility from '../src/utility.js';
-utility.setupJSON();
 
 describe('buildPayload', function () {
   it('should package up the input into a payload', function () {
@@ -18,10 +16,7 @@ describe('buildPayload', function () {
   it('should stringify context', function () {
     var token = 'abc123';
     var context = { a: 1, b: 'other' };
-    var data = {
-      context: context,
-      other: 'stuff',
-    };
+    var data = { context: context, other: 'stuff' };
     var payload = u.buildPayload(data);
 
     expect(payload.data.context).to.not.eql(context);
@@ -33,10 +28,7 @@ describe('buildPayload', function () {
     for (var i = 0; i < 35; i++) {
       context[i] = i;
     }
-    var data = {
-      context: context,
-      other: 'stuff',
-    };
+    var data = { context: context, other: 'stuff' };
     var payload = u.buildPayload(data);
 
     expect(payload.data.context).to.not.eql(context);
@@ -48,17 +40,10 @@ describe('getTransportFromOptions', function () {
   it('should use defaults with not endpoint', function () {
     var options = {
       not: 'endpoint',
-      proxy: {
-        host: 'whatver.com',
-        port: 9090,
-      },
+      proxy: { host: 'whatver.com', port: 9090 },
       timeout: 3000,
     };
-    var defaults = {
-      hostname: 'api.com',
-      protocol: 'https:',
-      path: '/api/1',
-    };
+    var defaults = { hostname: 'api.com', protocol: 'https:', path: '/api/1' };
     var url = {
       parse: function () {
         expect(false).to.be.ok();
@@ -75,10 +60,7 @@ describe('getTransportFromOptions', function () {
   it('should parse the endpoint if given', function () {
     var options = {
       endpoint: 'http://whatever.com/api/42',
-      proxy: {
-        host: 'nope.com',
-        port: 9090,
-      },
+      proxy: { host: 'nope.com', port: 9090 },
     };
     var defaults = {
       hostname: 'api.com',
@@ -161,11 +143,7 @@ describe('getTransportFromOptions', function () {
 
 describe('transportOptions', function () {
   it('should use the given data if no proxy', function () {
-    var transport = {
-      hostname: 'a.com',
-      path: '/api/v1/item/',
-      port: 5000,
-    };
+    var transport = { hostname: 'a.com', path: '/api/v1/item/', port: 5000 };
     var method = 'GET';
 
     var o = u.transportOptions(transport, method);
@@ -181,10 +159,7 @@ describe('transportOptions', function () {
       hostname: 'a.com',
       path: '/api/v1/item/',
       port: 5000,
-      proxy: {
-        host: 'b.com',
-        port: 8080,
-      },
+      proxy: { host: 'b.com', port: 8080 },
       timeout: 3000,
     };
     var method = 'GET';

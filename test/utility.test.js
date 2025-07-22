@@ -4,110 +4,6 @@
 /* globals sinon */
 
 import * as _ from '../src/utility.js';
-import * as utility from '../src/utility.js';
-import polyfillJSON from '../vendor/JSON-js/json3.js';
-
-utility.setupJSON();
-
-describe('setupJSON', function () {
-  beforeEach(function () {
-    utility.RollbarJSON.stringify = null;
-    utility.RollbarJSON.parse = null;
-  });
-
-  afterEach(function () {
-    // Resets utility.RollbarJSON
-    utility.RollbarJSON.stringify = null;
-    utility.RollbarJSON.parse = null;
-    utility.setupJSON();
-  });
-
-  it('should use native interface when polyfill is provided', function () {
-    var native = { stringify: JSON.stringify, parse: JSON.parse };
-
-    utility.setupJSON(polyfillJSON);
-
-    expect(utility.RollbarJSON.stringify.toString()).to.equal(
-      native.stringify.toString(),
-    );
-    expect(utility.RollbarJSON.parse.toString()).to.equal(
-      native.parse.toString(),
-    );
-  });
-
-  it('should use native interface when polyfill is not provided', function () {
-    var native = { stringify: JSON.stringify, parse: JSON.parse };
-
-    utility.setupJSON();
-
-    expect(utility.RollbarJSON.stringify.toString()).to.equal(
-      native.stringify.toString(),
-    );
-    expect(utility.RollbarJSON.parse.toString()).to.equal(
-      native.parse.toString(),
-    );
-  });
-
-  it('should replace custom interface when polyfill is provided', function () {
-    var native = { stringify: JSON.stringify, parse: JSON.parse };
-    var custom = {
-      stringify: function (json) {
-        return json;
-      },
-      parse: function (json) {
-        return json;
-      },
-    };
-    var polyfill = {};
-    polyfillJSON(polyfill);
-
-    // Set to custom interface
-    JSON.stringify = custom.stringify;
-    JSON.parse = custom.parse;
-
-    utility.setupJSON(polyfillJSON);
-
-    expect(utility.RollbarJSON.stringify.toString()).to.equal(
-      polyfill.stringify.toString(),
-    );
-    expect(utility.RollbarJSON.parse.toString()).to.equal(
-      polyfill.parse.toString(),
-    );
-
-    // restore original interface
-    JSON.stringify = native.stringify;
-    JSON.parse = native.parse;
-  });
-
-  it('should keep custom interface when polyfill is not provided', function () {
-    var native = { stringify: JSON.stringify, parse: JSON.parse };
-    var custom = {
-      stringify: function (json) {
-        return json;
-      },
-      parse: function (json) {
-        return json;
-      },
-    };
-
-    // Set to custom interface
-    JSON.stringify = custom.stringify;
-    JSON.parse = custom.parse;
-
-    utility.setupJSON();
-
-    expect(utility.RollbarJSON.stringify.toString()).to.equal(
-      custom.stringify.toString(),
-    );
-    expect(utility.RollbarJSON.parse.toString()).to.equal(
-      custom.parse.toString(),
-    );
-
-    // restore original interface
-    JSON.stringify = native.stringify;
-    JSON.parse = native.parse;
-  });
-});
 
 describe('typeName', function () {
   it('should handle undefined', function (done) {
@@ -328,24 +224,12 @@ describe('merge', function () {
     var o1 = {
       a: 1,
       c: 100,
-      payload: {
-        person: {
-          id: 'xxx',
-          name: 'hello',
-        },
-        environment: 'foo',
-      },
+      payload: { person: { id: 'xxx', name: 'hello' }, environment: 'foo' },
     };
     var o2 = {
       a: 42,
       b: 2,
-      payload: {
-        person: {
-          id: 'yesyes',
-          email: 'cool',
-        },
-        other: 'bar',
-      },
+      payload: { person: { id: 'yesyes', email: 'cool' }, other: 'bar' },
     };
     var e = _.merge(o1, o2);
 
@@ -365,13 +249,7 @@ describe('merge', function () {
       c: {
         arr: [3, 4, 5],
         other: [99, 100, 101],
-        payload: {
-          foo: {
-            bar: 'baz',
-          },
-          hello: 'world',
-          keeper: 'yup',
-        },
+        payload: { foo: { bar: 'baz' }, hello: 'world', keeper: 'yup' },
       },
     };
     var o2 = {
@@ -379,12 +257,7 @@ describe('merge', function () {
       c: {
         arr: [1],
         other: { fuzz: 'buzz' },
-        payload: {
-          foo: 'hello',
-          hello: {
-            baz: 'bar',
-          },
-        },
+        payload: { foo: 'hello', hello: { baz: 'bar' } },
       },
     };
     var e = _.merge(o1, o2);
@@ -404,32 +277,15 @@ describe('merge', function () {
     var o1 = {
       a: 1,
       c: 100,
-      payload: {
-        person: {
-          id: 'xxx',
-          name: 'hello',
-        },
-        environment: 'foo',
-      },
+      payload: { person: { id: 'xxx', name: 'hello' }, environment: 'foo' },
     };
     var o2 = {
       a: 42,
       b: 2,
-      payload: {
-        person: {
-          id: 'yesyes',
-          email: 'cool',
-        },
-        other: 'bar',
-      },
+      payload: { person: { id: 'yesyes', email: 'cool' }, other: 'bar' },
     };
     var o3 = {
-      payload: {
-        fuzz: 'buzz',
-        person: {
-          name: 'nope',
-        },
-      },
+      payload: { fuzz: 'buzz', person: { name: 'nope' } },
       amihere: 'yes',
     };
     var e = _.merge(o1, o2, o3);
@@ -544,35 +400,21 @@ describe('LEVELS', function () {
 
 describe('formatUrl', function () {
   it('should handle a missing protocol', function () {
-    var u = {
-      hostname: 'a.b.com',
-      path: '/wooza/',
-      port: 42,
-    };
+    var u = { hostname: 'a.b.com', path: '/wooza/', port: 42 };
     expect(_.formatUrl(u)).to.eql('https://a.b.com:42/wooza/');
   });
   it('should use a forced protocol', function () {
-    var u = {
-      hostname: 'a.b.com',
-      path: '/wooza/',
-      port: 42,
-    };
+    var u = { hostname: 'a.b.com', path: '/wooza/', port: 42 };
     expect(_.formatUrl(u, 'file:')).to.eql('file://a.b.com:42/wooza/');
   });
   it('should pick a protocol based on port if others are missing', function () {
-    var u = {
-      hostname: 'a.b.com',
-      port: 80,
-      path: '/woo',
-    };
+    var u = { hostname: 'a.b.com', port: 80, path: '/woo' };
     expect(_.formatUrl(u)).to.eql('http://a.b.com:80/woo');
     u.protocol = 'https:';
     expect(_.formatUrl(u)).to.eql('https://a.b.com:80/woo');
   });
   it('should handle missing parts', function () {
-    var u = {
-      hostname: 'a.b.com',
-    };
+    var u = { hostname: 'a.b.com' };
     expect(_.formatUrl(u)).to.eql('https://a.b.com');
     expect(_.formatUrl(u, 'http:')).to.eql('http://a.b.com');
   });
@@ -614,46 +456,6 @@ describe('addParamsAndAccessTokenToPath', function () {
     var options = { path: '/api#moreStuff' };
     _.addParamsAndAccessTokenToPath(accessToken, options, { foo: 'boo' });
     expect(options.path).to.eql('/api?access_token=abc123&foo=boo#moreStuff');
-  });
-});
-
-describe('json3', function () {
-  let setupCustomJSON;
-
-  before(async function () {
-    const module = await import('../vendor/JSON-js/json3.js');
-    setupCustomJSON = module.default;
-  });
-
-  it('should replace stringify if not there', function () {
-    var j = {};
-    setupCustomJSON(j);
-    expect(j.stringify({ a: 1 })).to.eql('{"a":1}');
-  });
-  it('should replace parse if not there', function () {
-    var j = {};
-    setupCustomJSON(j);
-    expect(j.parse('{"a":1}').a).to.eql(1);
-  });
-  it('should not replace parse if there', function () {
-    var j = {
-      parse: function (s) {
-        return 42;
-      },
-    };
-    setupCustomJSON(j);
-    expect(j.parse('{"a":1}')).to.eql(42);
-    expect(j.stringify({ a: 1 })).to.eql('{"a":1}');
-  });
-  it('should not replace stringify if there', function () {
-    var j = {
-      stringify: function (s) {
-        return '42';
-      },
-    };
-    setupCustomJSON(j);
-    expect(j.stringify({ a: 1 })).to.eql('42');
-    expect(j.parse('{"a":1}').a).to.eql(1);
   });
 });
 
@@ -776,11 +578,7 @@ describe('set', function () {
 import scrub from '../src/scrub.js';
 describe('scrub', function () {
   it('should not redact fields that are okay', function () {
-    var data = {
-      a: 'somestring',
-      password: 'abc123',
-      tempWorker: 'cool',
-    };
+    var data = { a: 'somestring', password: 'abc123', tempWorker: 'cool' };
     var scrubFields = ['password', 'b', 'pw'];
 
     var result = scrub(data, scrubFields);
@@ -789,10 +587,7 @@ describe('scrub', function () {
     expect(result.tempWorker).to.eql('cool');
   });
   it('should redact fields that are in the field list', function () {
-    var data = {
-      a: 'somestring',
-      password: 'abc123',
-    };
+    var data = { a: 'somestring', password: 'abc123' };
     var scrubFields = ['password', 'b'];
 
     var result = scrub(data, scrubFields);
@@ -802,10 +597,7 @@ describe('scrub', function () {
   it('should handle nested objects', function () {
     var data = {
       a: {
-        b: {
-          badthing: 'secret',
-          other: 'stuff',
-        },
+        b: { badthing: 'secret', other: 'stuff' },
         c: 'bork',
         password: 'abc123',
       },
@@ -823,14 +615,8 @@ describe('scrub', function () {
     expect(data.secret).to.eql('blahblah');
   });
   it('should do something sane for recursive objects', function () {
-    var inner = {
-      a: 'what',
-      b: 'yes',
-    };
-    var data = {
-      thing: 'stuff',
-      password: 'abc123',
-    };
+    var inner = { a: 'what', b: 'yes' };
+    var data = { thing: 'stuff', password: 'abc123' };
     data.inner = inner;
     inner.outer = data;
     var scrubFields = ['password', 'a'];
@@ -844,14 +630,9 @@ describe('scrub', function () {
     expect(result.inner.b).to.eql('yes');
   });
   it('should scrub objects seen twice', function () {
-    var request = {
-      password: 'foo',
-    };
+    var request = { password: 'foo' };
 
-    var data = {
-      request,
-      response: { request },
-    };
+    var data = { request, response: { request } };
 
     var scrubFields = ['password'];
 
@@ -862,14 +643,7 @@ describe('scrub', function () {
   });
   it('should handle scrubPaths', function () {
     var data = {
-      a: {
-        b: {
-          foo: 'secret',
-          bar: 'stuff',
-        },
-        c: 'bork',
-        password: 'abc123',
-      },
+      a: { b: { foo: 'secret', bar: 'stuff' }, c: 'bork', password: 'abc123' },
       secret: 'blahblah',
     };
     var scrubPaths = [

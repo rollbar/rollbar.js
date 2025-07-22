@@ -6,8 +6,6 @@
 import truncation from '../src/truncation.js';
 import Transport from '../src/browser/transport.js';
 const t = new Transport(truncation);
-import * as utility from '../src/utility.js';
-utility.setupJSON();
 
 describe('post', function () {
   var accessToken = 'abc123';
@@ -17,10 +15,7 @@ describe('post', function () {
     path: '/api/1/item/',
     timeout: 2000,
   };
-  var payload = {
-    access_token: accessToken,
-    data: { a: 1 },
-  };
+  var payload = { access_token: accessToken, data: { a: 1 } };
   it('should handle a failure to make a request', function (done) {
     var requestFactory = function () {
       return null;

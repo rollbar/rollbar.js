@@ -4,8 +4,6 @@
 /* globals sinon */
 
 import API from '../src/api.js';
-import * as utility from '../src/utility.js';
-utility.setupJSON();
 
 function TestTransportGenerator() {
   var TestTransport = function (callbackError, callbackResponse) {
