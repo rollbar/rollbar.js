@@ -1,7 +1,7 @@
 /**
  * Default browser options
  */
-import { version, commonScrubFields } from '../defaults.js';
+import { commonScrubFields } from '../defaults.js';
 
 export const scrubFields = [
   ...commonScrubFields,
@@ -47,13 +47,5 @@ export const scrubFields = [
   'ccyear',
 ];
 
-// CDN configuration for the snippet
-export const cdnHost = 'cdn.rollbar.com';
-export const defaultRollbarJsUrl = `https://${cdnHost}/rollbarjs/refs/tags/v${version}/rollbar.min.js`;
-
-export const jqueryPluginVersion = '0.0.8';
-
 // For compatibility with existing code that expects default export with scrubFields property
-export default {
-  scrubFields,
-};
+export default { scrubFields };
