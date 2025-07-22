@@ -13,7 +13,6 @@ import * as transforms from './transforms.js';
 import * as sharedTransforms from '../transforms.js';
 import * as sharedPredicates from '../predicates.js';
 import truncation from '../truncation.js';
-import polyfillJSON from '../../vendor/JSON-js/json3.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -43,7 +42,6 @@ function Rollbar(options, client) {
     );
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-  _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;

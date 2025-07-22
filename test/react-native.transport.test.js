@@ -6,8 +6,6 @@
 import truncation from '../src/truncation.js';
 import Transport from '../src/react-native/transport.js';
 var t = new Transport(truncation);
-import * as utility from '../src/utility.js';
-utility.setupJSON();
 
 describe('post', function () {
   var accessToken = 'abc123';
@@ -16,10 +14,7 @@ describe('post', function () {
     protocol: 'https',
     path: '/api/1/item/',
   };
-  var payload = {
-    access_token: accessToken,
-    data: { a: 1 },
-  };
+  var payload = { access_token: accessToken, data: { a: 1 } };
   var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
   before(function (done) {

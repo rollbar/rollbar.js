@@ -1,35 +1,5 @@
 import merge from './merge.js';
 
-var RollbarJSON = {};
-function setupJSON(polyfillJSON) {
-  if (isFunction(RollbarJSON.stringify) && isFunction(RollbarJSON.parse)) {
-    return;
-  }
-
-  if (isDefined(JSON)) {
-    // If polyfill is provided, prefer it over existing non-native shims.
-    if (polyfillJSON) {
-      if (isNativeFunction(JSON.stringify)) {
-        RollbarJSON.stringify = JSON.stringify;
-      }
-      if (isNativeFunction(JSON.parse)) {
-        RollbarJSON.parse = JSON.parse;
-      }
-    } else {
-      // else accept any interface that is present.
-      if (isFunction(JSON.stringify)) {
-        RollbarJSON.stringify = JSON.stringify;
-      }
-      if (isFunction(JSON.parse)) {
-        RollbarJSON.parse = JSON.parse;
-      }
-    }
-  }
-  if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    polyfillJSON && polyfillJSON(RollbarJSON);
-  }
-}
-
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
  * given string.
@@ -327,7 +297,7 @@ function formatUrl(u, protocol) {
 function stringify(obj, backup) {
   var value, error;
   try {
-    value = RollbarJSON.stringify(obj);
+    value = JSON.stringify(obj);
   } catch (jsonError) {
     if (backup && isFunction(backup)) {
       try {
@@ -375,7 +345,7 @@ function maxByteSize(string) {
 function jsonParse(s) {
   var value, error;
   try {
-    value = RollbarJSON.parse(s);
+    value = JSON.parse(s);
   } catch (e) {
     error = e;
   }
@@ -853,10 +823,8 @@ export {
   merge,
   now,
   redact,
-  RollbarJSON,
   sanitizeUrl,
   set,
-  setupJSON,
   stringify,
   maxByteSize,
   typeName,
