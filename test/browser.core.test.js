@@ -9,7 +9,7 @@ import Rollbar from '../src/browser/core.js';
 describe('options.captureUncaught', function () {
   beforeEach(function (done) {
     // Load the HTML page, so errors can be generated.
-    document.write(window.__html__['examples/error.html']);
+    document.write(window.__html__['test/fixtures/html/error.html']);
 
     window.server = sinon.createFakeServer();
     done();

@@ -330,7 +330,7 @@ describe('configure', function () {
 describe('options.captureUncaught', function () {
   beforeEach(function (done) {
     // Load the HTML page, so errors can be generated.
-    document.write(window.__html__['examples/error.html']);
+    document.write(window.__html__['test/fixtures/html/error.html']);
 
     window.server = sinon.createFakeServer();
     done();
@@ -1312,7 +1312,7 @@ describe('options.autoInstrument', function () {
       var queueStub = sinon.stub(queue, '_makeApiRequest');
 
       // Load the HTML page, so errors can be generated.
-      document.write(window.__html__['examples/csp-errors.html']);
+      document.write(window.__html__['test/fixtures/html/csp-errors.html']);
 
       setTimeout(function () {
         try {
