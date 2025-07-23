@@ -18,12 +18,11 @@
         // as an example, let's include the current value of window.myvariable
         // as custom data in the payload.
 
-        // ensure payload.data.custom is set
-        payload.data = payload.data || {};
-        payload.data.custom = payload.data.custom || {};
+        // ensure payload.custom is set
+        payload.custom = payload.custom || {};
 
         // add our data
-        payload.data.custom.myvariable = window.myvariable;
+        payload.custom.myvariable = window.myvariable;
 
         // no need to return anything (return value is unused)
       };
