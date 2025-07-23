@@ -4,7 +4,7 @@
 
 ```js
 //
-// Download the latest rollbar.umd.nojson.min.js and place in current directory.
+// Download the latest rollbar.min.js and place in current directory.
 var rollbarConfig = {
   accessToken: '...',
   captureUncaught: true,
@@ -14,7 +14,7 @@ var rollbarConfig = {
 };
 
 // Require the Rollbar library
-require(['rollbar.umd.nojson.min.js'], function (Rollbar) {
+require(['rollbar.umd.min'], function (Rollbar) {
   var rollbar = Rollbar.init(rollbarConfig);
   rollbar.info('Hello world');
 });
