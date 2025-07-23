@@ -3,6 +3,6 @@
   "version": "0.0.1",
   "homepage": "https://github.com/rollbar/rollbar.js",
   "dependencies": {
-    "rollbar": "~1.7.0"
+    "rollbar": "^2.26.4"
   }
 }
