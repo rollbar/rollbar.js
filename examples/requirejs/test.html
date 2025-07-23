@@ -5,7 +5,7 @@
     <script>
       var _rollbarConfig = {
         accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
-        rollbarJsUrl: '../../dist/rollbar.umd.js',
+        rollbarJsUrl: '../../dist/rollbar.umd.min',
         captureUncaught: true,
         payload: {
           environment: 'development',
@@ -18,7 +18,7 @@
       // NOTE: you must use the name "rollbar" here.
       require.config({
         paths: {
-          rollbar: '../../dist/rollbar.umd',
+          rollbar: '../../dist/rollbar.umd.min',
         },
       });
 

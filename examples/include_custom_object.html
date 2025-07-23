@@ -19,6 +19,7 @@
         // as custom data in the payload.
 
         // ensure payload.data.custom is set
+        payload.data = payload.data || {};
         payload.data.custom = payload.data.custom || {};
 
         // add our data
