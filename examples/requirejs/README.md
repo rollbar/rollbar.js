@@ -14,7 +14,7 @@ var rollbarConfig = {
 };
 
 // Require the Rollbar library
-require(['rollbar.umd.min.js'], function (Rollbar) {
+require(['rollbar.umd.min'], function (Rollbar) {
   var rollbar = Rollbar.init(rollbarConfig);
   rollbar.info('Hello world');
 });
