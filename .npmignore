@@ -7,3 +7,10 @@ sauce_connect.log
 release
 examples
 coverage
+.aiden*
+.claude
+.cursor
+.github
+.vscode
+CLAUDE*.md
+codex.md
