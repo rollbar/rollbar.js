@@ -7,7 +7,6 @@
 var glob = require('glob');
 var path = require('path');
 var pkg = require('./package.json');
-var fs = require('fs');
 
 var webpackConfig = require('./webpack.config.cjs');
 
@@ -118,66 +117,15 @@ module.exports = function (grunt) {
 
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-webpack');
-  grunt.loadNpmTasks('grunt-text-replace');
-
-  var rollbarJsSnippet = fs.readFileSync('dist/rollbar.snippet.js');
-  var rollbarjQuerySnippet = fs.readFileSync('dist/plugins/jquery.min.js');
 
   grunt.initConfig({
     pkg: pkg,
     webpack: webpackConfig,
 
     karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
-
-    replace: {
-      snippets: {
-        src: [
-          '*.md',
-          'src/**/*.js',
-          'examples/*.+(html|js)',
-          'examples/*/*.+(html|js)',
-          'docs/**/*.md',
-        ],
-        overwrite: true,
-        replacements: [
-          // Main rollbar snippet
-          {
-            from: new RegExp(
-              '^(.*// Rollbar Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar Snippet)',
-              'm',
-            ),
-            to: function (match, index, fullText, captures) {
-              captures[1] = rollbarJsSnippet;
-              return captures.join('\n');
-            },
-          },
-          // jQuery rollbar plugin snippet
-          {
-            from: new RegExp(
-              '^(.*// Rollbar jQuery Snippet)[\n\r]+(.*[\n\r])*(.*// End Rollbar jQuery Snippet)',
-              'm',
-            ),
-            to: function (match, index, fullText, captures) {
-              captures[1] = rollbarjQuerySnippet;
-              return captures.join('\n');
-            },
-          },
-          // README CI link
-          {
-            from: new RegExp(
-              '(https://github\\.com/rollbar/rollbar\\.js/workflows/Rollbar\\.js%20CI/badge\\.svg\\?branch=v)([0-9a-zA-Z.-]+)',
-            ),
-            to: function (match, index, fullText, captures) {
-              captures[1] = pkg.version;
-              return captures.join('');
-            },
-          },
-        ],
-      },
-    },
   });
 
-  grunt.registerTask('build', ['webpack', 'replace:snippets']);
+  grunt.registerTask('build', ['webpack']);
   grunt.registerTask('default', ['build']);
   grunt.registerTask('test', ['test-browser']);
   grunt.registerTask('release', ['build', 'copyrelease']);
