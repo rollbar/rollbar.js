@@ -101,7 +101,7 @@
     "webpack": "^5.98.0"
   },
   "scripts": {
-    "build": "./node_modules/.bin/grunt",
+    "build": "./node_modules/.bin/grunt && npm run update:snippets",
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "mocha 'test/server.*.test.js' --reporter spec",
