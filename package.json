@@ -47,6 +47,7 @@
     "@babel/core": "^7.26.10",
     "@babel/eslint-parser": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
+    "@types/glob": "^8.1.0",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^9.2.1",
     "bluebird": "^3.3.5",
@@ -110,7 +111,8 @@
     "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
     "lint": "./node_modules/.bin/eslint .",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
-    "build:validate": "npm run build && npm run validate:es5"
+    "build:validate": "npm run build && npm run validate:es5",
+    "update:snippets": "node scripts/update-example-snippets.js"
   },
   "cdn": {
     "host": "cdn.rollbar.com"
