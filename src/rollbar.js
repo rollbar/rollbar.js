@@ -2,6 +2,7 @@ import RateLimiter from './rateLimiter.js';
 import Queue from './queue.js';
 import Notifier from './notifier.js';
 import * as _ from './utility.js';
+import ReplayPredicates from './browser/replay/replayPredicates.js';
 
 /*
  * Rollbar - the interface to Rollbar
@@ -200,10 +201,14 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
 };
 
 Rollbar.prototype._replayIdIfTriggered = function (item) {
-  const triggers = _.getReplayTriggersForType(this.options.recorder?.triggers, 'occurrence');
-  const enabledTrigger = this._getEnabledTrigger(triggers, item.level);
-  if (enabledTrigger) {
-    return this.tracing?.idGen(8);
+  const replayId = this.tracing?.idGen(8);
+  const enabled = new ReplayPredicates(
+    this.options.recorder?.triggers,
+    { item, replayId },
+  ).isEnabledForTriggerType('occurrence')
+
+  if (enabled) {
+    return replayId;
   }
 }
 
@@ -259,15 +264,6 @@ Rollbar.prototype._addTracingInfo = function (item) {
       }
     }
   }
-};
-
-Rollbar.prototype._getEnabledTrigger = function (triggers, level) {
-  for (const t of triggers) {
-    if (t.level?.includes(level)) {
-      return t;
-    }
-  }
-  return null;
 };
 
 function generateItemHash(item) {
