@@ -81,8 +81,8 @@ export default class ReplayPredicates {
     if (ratio == 1) {
       return true;
     }
-    const rv = this.context.replayId.slice(-7);
-    const th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(7, '0');
+    const rv = this.context.replayId.slice(-14);
+    const th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
 
     return rv >= th;
   }
