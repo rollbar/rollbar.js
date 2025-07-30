@@ -98,10 +98,13 @@
     "sinon": "^8.1.1",
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
-    "webpack": "^5.98.0"
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
   },
   "scripts": {
-    "build": "./node_modules/.bin/grunt && npm run update:snippets",
+    "build": "webpack --mode production && npm run update:snippets",
+    "build:dev": "webpack --mode development && npm run update:snippets",
+    "build:grunt": "./node_modules/.bin/grunt && npm run update:snippets",
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "mocha 'test/server.*.test.js' --reporter spec",
