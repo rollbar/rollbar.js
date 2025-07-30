@@ -120,7 +120,6 @@ module.exports = function (grunt) {
     karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
   });
   grunt.registerTask('test', ['test-browser']);
-  grunt.registerTask('release', ['copyrelease']);
 
   grunt.registerTask('test-browser', function (target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');
@@ -181,23 +180,6 @@ module.exports = function (grunt) {
 
     integrationTests.forEach(function (testName) {
       grunt.task.run('karma:' + testName);
-    });
-  });
-
-  grunt.registerTask('copyrelease', function createRelease() {
-    var version = pkg.version;
-    var builds = ['', '.umd'];
-
-    builds.forEach(function (buildName) {
-      var js = 'dist/rollbar' + buildName + '.js';
-      var minJs = 'dist/rollbar' + buildName + '.min.js';
-
-      var releaseJs = 'release/rollbar' + buildName + '-' + version + '.js';
-      var releaseMinJs =
-        'release/rollbar' + buildName + '-' + version + '.min.js';
-
-      grunt.file.copy(js, releaseJs);
-      grunt.file.copy(minJs, releaseMinJs);
     });
   });
 };
