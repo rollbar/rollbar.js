@@ -17,7 +17,7 @@ async function updateSnippets() {
   const snippetPath = path.join(root, 'dist/rollbar.snippet.js');
   const snippet = await readFile(snippetPath, 'utf8');
   const regex =
-    /^([ \t]*)(\/\/ Rollbar Snippet\n)(.*?)(\n[ \t]*\/\/ End Rollbar Snippet)$/m;
+    /^([ \t]*)(\/\/ Rollbar Snippet\n)(.*?)(\n[ \t]*\/\/ End Rollbar Snippet)$/ms;
 
   const files = glob.sync('examples/**/*.{html,js}', {
     cwd: root,
