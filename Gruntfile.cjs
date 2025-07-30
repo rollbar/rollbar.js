@@ -8,8 +8,6 @@ var glob = require('glob');
 var path = require('path');
 var pkg = require('./package.json');
 
-var webpackConfig = require('./webpack.config.cjs');
-
 function findTests(context) {
   if (context !== 'browser') {
     return {};
@@ -116,19 +114,13 @@ module.exports = function (grunt) {
   }
 
   grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-webpack');
 
   grunt.initConfig({
     pkg: pkg,
-    webpack: webpackConfig,
-
     karma: buildGruntKarmaConfig(singleRun, browserTests, reporters),
   });
-
-  grunt.registerTask('build', ['webpack']);
-  grunt.registerTask('default', ['build']);
   grunt.registerTask('test', ['test-browser']);
-  grunt.registerTask('release', ['build', 'copyrelease']);
+  grunt.registerTask('release', ['copyrelease']);
 
   grunt.registerTask('test-browser', function (target) {
     var karmaTask = 'karma' + (target ? ':' + target : '');

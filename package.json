@@ -69,8 +69,6 @@
     "grunt-contrib-watch": "^1.1.0",
     "grunt-karma": "^4.0.2",
     "grunt-parallel": "^0.5.1",
-    "grunt-text-replace": "^0.4.0",
-    "grunt-webpack": "^5.0.0",
     "jade": "~0.27.7",
     "jasmine-core": "^2.3.4",
     "jquery-mockjax": "^2.5.0",
