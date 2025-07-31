@@ -22,6 +22,7 @@ async function updateSnippets() {
   const files = glob.sync('examples/**/*.{html,js}', {
     cwd: root,
     absolute: true,
+    ignore: ['**/.git/**', '**/node_modules/**'],
   });
 
   for (const file of files) {
