@@ -1,7 +1,7 @@
 // Type definitions for rollbar
 // Project: Rollbar
 
-export = Rollbar;
+export default Rollbar;
 
 declare class Rollbar {
   constructor(options?: Rollbar.Configuration);
