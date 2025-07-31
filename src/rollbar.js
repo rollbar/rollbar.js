@@ -203,7 +203,7 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
 Rollbar.prototype._replayIdIfTriggered = function (item) {
   const replayId = this.tracing?.idGen(8);
   const enabled = new ReplayPredicates(
-    this.options.recorder?.triggers,
+    this.options.recorder,
     { item, replayId },
   ).isEnabledForTriggerType('occurrence')
 

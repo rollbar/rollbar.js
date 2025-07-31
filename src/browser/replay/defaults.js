@@ -7,6 +7,7 @@ export default {
   autoStart: true, // Start recording automatically when Rollbar initializes
   maxSeconds: 300, // Maximum recording duration in seconds
 
+  baseSamplingRatio: 1.0, // Used by triggers that don't specify a sampling ratio
   triggers: [
     {
       type: 'occurrence',
