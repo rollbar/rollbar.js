@@ -3,7 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 
 import Rollbar from 'rollbar';
-const instance: Rollbar = new Rollbar();
+const instance: Rollbar = new Rollbar(); // TODO(matux): finish example once import is working
 
 function App() {
   return (
