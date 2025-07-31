@@ -6,8 +6,15 @@
 export default class ReplayPredicates {
   maxAdjustedCount = 2 ** 56;
 
-  constructor(triggers, context) {
-    this.triggers = triggers || [];
+  /*
+   * Constructor for ReplayPredicates.
+   *
+   * @param {Object} config - Configuration object containing replay settings.
+   * @param {Object} context - Context object containing state used by predicates.
+   */
+  constructor(config, context) {
+    this.config = config || {};
+    this.triggers = config?.triggers || [];
     this.context = context || {};
 
     this.predicates = {
@@ -76,7 +83,7 @@ export default class ReplayPredicates {
    * @returns {boolean} - True if the trigger is sampled, false otherwise.
    */
   isSampled(trigger) {
-    const ratio = trigger.samplingRatio || 1;
+    const ratio = trigger.samplingRatio || this.config.baseSamplingRatio || 1;
 
     if (ratio == 1) {
       return true;
