@@ -51,7 +51,7 @@
     "react-refresh": "^0.11.0",
     "resolve": "^1.20.0",
     "resolve-url-loader": "^4.0.0",
-    "rollbar": "file:../..",
+    "rollbar": "file:../../.pack/rollbar.tgz",
     "sass-loader": "^12.3.0",
     "semver": "^7.3.5",
     "source-map-loader": "^3.0.0",
