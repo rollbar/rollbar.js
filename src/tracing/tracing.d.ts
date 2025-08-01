@@ -1,5 +1,5 @@
-import Rollbar from '../../index';
+import type { Rollbar } from '../../index.js';
 
-declare var Tracing: Rollbar.TracingType;
+declare const Tracing: Rollbar.TracingType;
 
-export = Tracing;
+export default Tracing;

@@ -1,5 +1,5 @@
-import Rollbar from '../index';
+import type { Rollbar } from '../index.js';
 
-declare var Truncation: Rollbar.TruncationType;
+declare const Truncation: Rollbar.TruncationType;
 
-export = Truncation;
+export default Truncation;

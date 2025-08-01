@@ -1,3 +1,3 @@
-import Rollbar from '../../index';
+import Rollbar from '../../index.js';
 
-export = Rollbar;
+export default Rollbar;

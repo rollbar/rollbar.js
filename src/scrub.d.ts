@@ -1,5 +1,5 @@
-import Rollbar from '../index';
+import type { Rollbar } from '../index.js';
 
-declare var scrub: Rollbar.ScrubType;
+declare const scrub: Rollbar.ScrubType;
 
-export = scrub;
+export default scrub;

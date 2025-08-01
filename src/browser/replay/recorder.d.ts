@@ -1,5 +1,5 @@
-import Rollbar from '../../../index';
+import type { Rollbar } from '../../../index.js';
 
-declare var Recorder: Rollbar.RecorderType;
+declare const Recorder: Rollbar.RecorderType;
 
-export = Recorder;
+export default Recorder;
