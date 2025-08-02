@@ -3,6 +3,7 @@ bower_components
 sauce_connect.log
 docs
 test
+scripts
 release
 examples
 coverage
