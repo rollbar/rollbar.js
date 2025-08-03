@@ -1831,10 +1831,17 @@ function _toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) 
  *
  */
 var ReplayPredicates = /*#__PURE__*/function () {
-  function ReplayPredicates(triggers, context) {
+  /*
+   * Constructor for ReplayPredicates.
+   *
+   * @param {Object} config - Configuration object containing replay settings.
+   * @param {Object} context - Context object containing state used by predicates.
+   */
+  function ReplayPredicates(config, context) {
     _classCallCheck(this, ReplayPredicates);
     _defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
-    this.triggers = triggers || [];
+    this.config = config || {};
+    this.triggers = (config === null || config === void 0 ? void 0 : config.triggers) || [];
     this.context = context || {};
     this.predicates = {
       occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)]
@@ -1915,7 +1922,7 @@ var ReplayPredicates = /*#__PURE__*/function () {
   }, {
     key: "isSampled",
     value: function isSampled(trigger) {
-      var ratio = trigger.samplingRatio || 1;
+      var ratio = trigger.samplingRatio || this.config.baseSamplingRatio || 1;
       if (ratio == 1) {
         return true;
       }
@@ -2111,9 +2118,9 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
   }]);
 };
 Rollbar.prototype._replayIdIfTriggered = function (item) {
-  var _this$tracing3, _this$options$recorde;
+  var _this$tracing3;
   var replayId = (_this$tracing3 = this.tracing) === null || _this$tracing3 === void 0 ? void 0 : _this$tracing3.idGen(8);
-  var enabled = new ReplayPredicates((_this$options$recorde = this.options.recorder) === null || _this$options$recorde === void 0 ? void 0 : _this$options$recorde.triggers, {
+  var enabled = new ReplayPredicates(this.options.recorder, {
     item: item,
     replayId: replayId
   }).isEnabledForTriggerType('occurrence');
@@ -3721,6 +3728,8 @@ function messagesFromItem(item) {
   maxSeconds: 300,
   // Maximum recording duration in seconds
 
+  baseSamplingRatio: 1.0,
+  // Used by triggers that don't specify a sampling ratio
   triggers: [{
     type: 'occurrence',
     level: ['error', 'critical']
