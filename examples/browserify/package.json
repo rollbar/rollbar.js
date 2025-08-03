@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "rollbar": "file:../.."
+    "rollbar": "file:../rollbar.tgz"
   },
   "devDependencies": {
     "browserify": "^17.0.0"
