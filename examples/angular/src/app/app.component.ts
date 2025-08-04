@@ -1,7 +1,7 @@
 // src/app/app.component.ts
 import { Component, inject } from '@angular/core';
 import { RollbarService } from './rollbar.errorhandler';
-import * as Rollbar from 'rollbar';
+import Rollbar from 'rollbar';
 
 @Component({
   selector: 'app-root',
