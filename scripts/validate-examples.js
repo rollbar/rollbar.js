@@ -68,7 +68,7 @@ async function validateExamples() {
     }
 
     const { dependencies } = JSON.parse(pkg);
-    if (dependencies?.rollbar?.includes('file:../rollbar.tgz')) {
+    if (dependencies?.rollbar === 'file:../rollbar.tgz') {
       exampleDirs.push(subdir);
     }
   }
@@ -91,9 +91,9 @@ validateExamples().catch((err) => {
   console.error(
     '\nUsage: validate-examples [--dry-run|-n] [--parallel|-p <n>]',
   );
-  console.error('  -parallel | -p <n>: run <n> jobs in parallel');
-  console.error('                  if no <n> is given, defaults to cpu cores');
-  console.error('  -dry-run | -n: do not run commands, just print');
+  console.error('  --parallel | -p <n>: run <n> jobs in parallel');
+  console.error('                   if no <n> is given, defaults to cpu cores');
+  console.error('  --dry-run | -n: do not run commands, just print');
   console.error('\nExamples:');
   console.error('  validate-examples --parallel 4');
   console.error('  validate-examples --dry-run');
