@@ -115,7 +115,7 @@
     "pack": "node scripts/pack.js",
     "validate": "npm run validate:es5 && npm run validate:examples",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
-    "validate:examples": "node scripts/validate-examples.js -p",
+    "validate:examples": "node --trace-deprecation scripts/validate-examples.js -p",
     "update:snippets:examples": "node scripts/update-snippets.js examples"
   }
 }
