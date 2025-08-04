@@ -101,9 +101,9 @@
   },
   "scripts": {
     "build": "webpack --mode production",
-    "postbuild": "npm run update:snippets",
+    "postbuild": "npm run validate:es5 && npm run update:snippets:examples",
     "build:dev": "webpack --mode development",
-    "postbuild:dev": "npm run update:snippets",
+    "postbuild:dev": "npm run postbuild",
     "test": "./node_modules/.bin/grunt test",
     "test-browser": "./node_modules/.bin/grunt test-browser",
     "test-server": "mocha 'test/server.*.test.js' --reporter spec",
@@ -113,6 +113,6 @@
     "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
     "lint": "./node_modules/.bin/eslint .",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
-    "update:snippets": "node scripts/update-example-snippets.js"
+    "update:snippets:examples": "node scripts/update-snippets.js examples"
   }
 }
