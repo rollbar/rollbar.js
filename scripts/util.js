@@ -66,7 +66,7 @@ export async function npm(args, { cwd = process.cwd(), id = '' }) {
     throw new Error(
       `npm ` +
         `${args.join(' ')} ` +
-        `${signal ? `terminated by ${signal}` : `exited with ${code}`} ` +
+        `${signal ? `terminated by ${signal}` : `exited with ${code}`}` +
         `${id ? ` (${id})` : ''}` +
         `${msg ? `:\n${msg}` : ''}`,
     );
