@@ -3,21 +3,19 @@
   "extends": "eslint:recommended",
   "parserOptions": {
     "ecmafeatures": {
-      "modules": true
-    }
+      "modules": true,
+    },
   },
   "env": {
     // I write for browser
     "browser": true,
     // in CommonJS
-    "node": true
+    "node": true,
   },
-  "plugins": [
-  ],
   "globals": { "Promise": true },
   "rules": {
     "strict": 0,
-    "camelcase": [2, {"properties": "never"}],
+    "camelcase": [2, { "properties": "never" }],
     "quotes": [2, "single", "avoid-escape"],
     "no-underscore-dangle": 0,
     "no-useless-escape": 0,

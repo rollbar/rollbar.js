@@ -23,7 +23,6 @@ var snippetConfig = {
     filename: '[name].js',
   },
   target: ['web', 'es5'],
-  plugins: [],
   module: {
     rules: [
       {
@@ -45,7 +44,6 @@ var pluginConfig = {
     filename: '[name].min.js',
   },
   target: ['web', 'es5'],
-  plugins: [],
   module: {
     rules: [
       {
@@ -65,7 +63,6 @@ var vanillaConfigBase = {
     path: outputPath,
   },
   target: ['web', 'es5'],
-  plugins: [],
   devtool: 'hidden-source-map',
   module: {
     rules: [
