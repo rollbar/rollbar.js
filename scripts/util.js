@@ -62,7 +62,9 @@ export async function npm(args, { cwd = process.cwd(), id = '' }) {
   const [code, signal] = await once(child, 'close');
 
   if (code !== 0 || signal) {
-    const msg = std.err.trim() || std.out.trim();
+    const stderr = std.err.trim();
+    const stdout = std.out.trim();
+    const msg = `\nSTDERR:\n${stderr}\nSTDOUT:\n${stdout}`;
     throw new Error(
       `npm ` +
         `${args.join(' ')} ` +
