@@ -1,28 +1,38 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-
+import React, { useState } from 'react';
 import Rollbar from 'rollbar';
-const instance: Rollbar = new Rollbar(); // TODO(matux): finish example once import is working
+import ErrorBoundary from './ErrorBoundary';
+import TestError from './TestError';
 
 function App() {
+  const [rollbar] = useState(() => new Rollbar({
+    accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
+  }));
+
+  const logInfo = () => {
+    // Example log event using the rollbar object.
+    rollbar.info('react test log');
+  };
+
+  const throwError = () => {
+    // Example error, which will be reported to rollbar.
+    throw new Error('react test error');
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <React.Fragment>
+      <h1>Rollbar Example for React</h1>
+      <button id="rollbar-info" onClick={logInfo}>
+        Log Info
+      </button>
+      <button id="throw-error" onClick={throwError}>
+        ThrowError
+      </button>
+      <ErrorBoundary rollbar={rollbar}>
+        <TestError />
+      </ErrorBoundary>
+    </React.Fragment>
   );
 }
 
