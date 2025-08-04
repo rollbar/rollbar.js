@@ -6,7 +6,7 @@
   },
   "private": true,
   "dependencies": {
-    "rollbar": "file:../.."
+    "rollbar": "file:../rollbar.tgz"
   },
   "devDependencies": {
     "webpack": "^4.29.6",

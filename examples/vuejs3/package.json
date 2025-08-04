@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "rollbar": "file:../..",
+    "rollbar": "file:../rollbar.tgz",
     "vue": "^3.3.4"
   },
   "devDependencies": {

@@ -21,7 +21,7 @@
     "babel-core": "^6.22.1",
     "react": "^0.14.3",
     "react-dom": "^0.14.3",
-    "rollbar": "file:../..",
+    "rollbar": "file:../rollbar.tgz",
     "webpack-node-externals": "^1.5.4"
   },
   "devDependencies": {

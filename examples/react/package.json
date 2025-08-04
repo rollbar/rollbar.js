@@ -20,6 +20,6 @@
     "babel-loader": "^7.1.5",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "rollbar": "file:../../.pack/rollbar.tgz"
+    "rollbar": "file:../rollbar.tgz"
   }
 }
