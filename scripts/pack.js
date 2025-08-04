@@ -18,9 +18,8 @@ async function pack() {
   const cwd = path.dirname(fileURLToPath(import.meta.url));
   const root = await findUp({ fileName: 'package.json', dir: cwd });
 
-  const tgz = await npm(['pack'], { cwd: root }).then((stdout) =>
-    stdout.trim().split('\n').pop(),
-  );
+  const stdout = await npm(['pack'], { cwd: root });
+  const tgz = stdout.trim().split('\n').pop();
   const src = path.join(root, tgz);
   const dest = path.join(root, 'examples', 'rollbar.tgz');
 
