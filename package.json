@@ -113,7 +113,9 @@
     "test-ci": "./node_modules/.bin/grunt test && npm run test-server",
     "lint": "./node_modules/.bin/eslint .",
     "pack": "node scripts/pack.js",
+    "validate": "npm run validate:es5 && npm run validate:examples",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
+    "validate:examples": "node scripts/validate-examples.js -p",
     "update:snippets:examples": "node scripts/update-snippets.js examples"
   }
 }
