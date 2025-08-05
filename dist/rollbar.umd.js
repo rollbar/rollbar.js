@@ -4106,7 +4106,7 @@ var ReplayMap = /*#__PURE__*/function () {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-alpha.4';
+var version = '3.0.0-alpha.5';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
