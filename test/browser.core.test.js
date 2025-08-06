@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
 
