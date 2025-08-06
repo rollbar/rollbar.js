@@ -43,7 +43,7 @@
       "default": "./src/telemetry.js"
     },
     "./src/browser/telemetry": {
-      "types": "./src/browser/telemetry.js",
+      "types": "./src/browser/telemetry.d.ts",
       "require": "./src/browser/telemetry.js",
       "default": "./src/browser/telemetry.js"
     },
