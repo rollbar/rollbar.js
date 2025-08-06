@@ -1,7 +1,4 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-
+import { expect } from 'chai';
 import * as _ from '../src/utility.js';
 import * as t from '../src/transforms.js';
 
