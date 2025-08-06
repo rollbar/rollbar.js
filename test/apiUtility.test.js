@@ -79,7 +79,7 @@ describe('getTransportFromOptions', function () {
     expect(t.hostname).to.not.eql(defaults.hostname);
     expect(t.hostname).to.eql('whatever.com');
     expect(t.protocol).to.eql('http:');
-    expect(t.search).to.not.be.ok();
+    expect(t.search).to.not.be.ok;
     expect(t.proxy).to.eql(options.proxy);
     expect(t.timeout).to.eql(undefined);
   });

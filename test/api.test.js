@@ -26,7 +26,7 @@ describe('Api()', function () {
     var transport = new (TestTransportGenerator())();
     var url = {
       parse: function (e) {
-        expect(false).to.be.ok();
+        expect(false).to.be.ok;
       },
     };
     var accessToken = 'abc123';
@@ -71,7 +71,7 @@ describe('postItem', function () {
     var transport = new (TestTransportGenerator())(null, response);
     var url = {
       parse: function (e) {
-        expect(false).to.be.ok();
+        expect(false).to.be.ok;
       },
     };
     var accessToken = 'abc123';
@@ -80,7 +80,7 @@ describe('postItem', function () {
 
     var data = { a: 1 };
     api.postItem(data, function (err, resp) {
-      expect(err).to.not.be.ok();
+      expect(err).to.not.be.ok;
       expect(resp).to.eql(response);
       expect(transport.postArgs.length).to.eql(1);
       expect(transport.postArgs[0][0]).to.eql(accessToken);
@@ -94,7 +94,7 @@ describe('postItem', function () {
     var transport = new (TestTransportGenerator())(null, response);
     var url = {
       parse: function (e) {
-        expect(false).to.be.ok();
+        expect(false).to.be.ok;
       },
     };
     var accessToken = 'abc123';
@@ -103,7 +103,7 @@ describe('postItem', function () {
 
     var data = { a: 1, context: { some: [1, 2, 'stuff'] } };
     api.postItem(data, function (err, resp) {
-      expect(err).to.not.be.ok();
+      expect(err).to.not.be.ok;
       expect(resp).to.eql(response);
       expect(transport.postArgs.length).to.eql(1);
       expect(transport.postArgs[0][0]).to.eql(accessToken);
@@ -142,7 +142,7 @@ describe('postSpans', function () {
     const response = 'yes';
     const url = {
       parse: function (e) {
-        expect(false).to.be.ok();
+        expect(false).to.be.ok;
       },
     };
     const accessToken = 'abc123';
