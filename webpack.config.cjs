@@ -6,7 +6,7 @@ var TerserPlugin = require('terser-webpack-plugin');
 var outputPath = path.resolve(__dirname, 'dist');
 
 // Packages that need to be transpiled to ES5
-var needToTranspile = ['@rrweb'].join('|');
+var needToTranspile = ['@rrweb', 'error-stack-parser-es'].join('|');
 var excludePattern = new RegExp('node_modules/(?!(' + needToTranspile + ')/)');
 
 var uglifyPlugin = new TerserPlugin({
@@ -47,7 +47,7 @@ var pluginConfig = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -67,7 +67,7 @@ var vanillaConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -91,7 +91,7 @@ var UMDConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
