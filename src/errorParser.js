@@ -1,4 +1,4 @@
-import ErrorStackParser from 'error-stack-parser';
+import { parse as parseErrorStack } from 'error-stack-parser-es';
 
 var UNKNOWN_FUNCTION = '?';
 var ERR_CLASS_REGEXP = new RegExp(
@@ -36,7 +36,7 @@ function Stack(exception, skip) {
     skip = skip || 0;
 
     try {
-      parserStack = ErrorStackParser.parse(exception);
+      parserStack = parseErrorStack(exception);
     } catch (e) {
       parserStack = [];
     }
