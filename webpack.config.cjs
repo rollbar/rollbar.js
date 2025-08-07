@@ -26,7 +26,7 @@ const snippetConfig = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -113,7 +113,7 @@ const serverCJSConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
