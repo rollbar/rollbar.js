@@ -6,8 +6,10 @@ const TerserPlugin = require('terser-webpack-plugin');
 const outputPath = path.resolve(__dirname, 'dist');
 
 // Packages that need to be transpiled to ES5
-var needToTranspile = ['@rrweb'].join('|');
-var excludePattern = new RegExp('node_modules/(?!(' + needToTranspile + ')/)');
+const needToTranspile = ['@rrweb', 'error-stack-parser-es'].join('|');
+const excludePattern = new RegExp(
+  'node_modules/(?!(' + needToTranspile + ')/)',
+);
 
 const uglifyPlugin = new TerserPlugin({
   parallel: true,
