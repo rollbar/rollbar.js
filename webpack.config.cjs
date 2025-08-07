@@ -47,7 +47,7 @@ var pluginConfig = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -67,7 +67,7 @@ var vanillaConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -91,7 +91,7 @@ var UMDConfigBase = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.m?js$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
