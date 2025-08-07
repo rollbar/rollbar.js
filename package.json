@@ -34,42 +34,42 @@
     },
     "./src/browser/core": {
       "types": "./src/browser/core.d.ts",
-      "require": "./src/browser/core.js",
+      "require": "./src/browser/core.cjs",
       "default": "./src/browser/core.js"
     },
     "./src/telemetry": {
       "types": "./src/telemetry.d.ts",
-      "require": "./src/telemetry.js",
+      "require": "./src/telemetry.cjs",
       "default": "./src/telemetry.js"
     },
     "./src/browser/telemetry": {
       "types": "./src/browser/telemetry.d.ts",
-      "require": "./src/browser/telemetry.js",
+      "require": "./src/browser/telemetry.cjs",
       "default": "./src/browser/telemetry.js"
     },
     "./src/browser/wrapGlobals": {
       "types": "./src/browser/wrapGlobals.d.ts",
-      "require": "./src/browser/wrapGlobals.js",
+      "require": "./src/browser/wrapGlobals.cjs",
       "default": "./src/browser/wrapGlobals.js"
     },
     "./src/scrub": {
       "types": "./src/scrub.d.ts",
-      "require": "./src/scrub.js",
+      "require": "./src/scrub.cjs",
       "default": "./src/scrub.js"
     },
     "./src/truncation": {
       "types": "./src/truncation.d.ts",
-      "require": "./src/truncation.js",
+      "require": "./src/truncation.cjs",
       "default": "./src/truncation.js"
     },
     "./src/tracing/tracing": {
       "types": "./src/tracing/tracing.d.ts",
-      "require": "./src/tracing/tracing.js",
+      "require": "./src/tracing/tracing.cjs",
       "default": "./src/tracing/tracing.js"
     },
     "./src/browser/replay/recorder": {
       "types": "./src/browser/replay/recorder.d.ts",
-      "require": "./src/browser/replay/recorder.js",
+      "require": "./src/browser/replay/recorder.cjs",
       "default": "./src/browser/replay/recorder.js"
     }
   },
