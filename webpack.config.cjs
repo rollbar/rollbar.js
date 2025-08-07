@@ -1,19 +1,21 @@
-var extend = require('util')._extend;
-var path = require('path');
-var webpack = require('webpack');
-var TerserPlugin = require('terser-webpack-plugin');
+const extend = require('util')._extend;
+const path = require('path');
+const nodeExternals = require('webpack-node-externals');
+const TerserPlugin = require('terser-webpack-plugin');
 
-var outputPath = path.resolve(__dirname, 'dist');
+const outputPath = path.resolve(__dirname, 'dist');
 
 // Packages that need to be transpiled to ES5
-var needToTranspile = ['@rrweb'].join('|');
-var excludePattern = new RegExp('node_modules/(?!(' + needToTranspile + ')/)');
+const needToTranspile = ['@rrweb'].join('|');
+const excludePattern = new RegExp(
+  'node_modules/(?!(' + needToTranspile + ')/)',
+);
 
-var uglifyPlugin = new TerserPlugin({
+const uglifyPlugin = new TerserPlugin({
   parallel: true,
 });
 
-var snippetConfig = {
+const snippetConfig = {
   name: 'snippet',
   entry: {
     'rollbar.snippet': './src/browser/bundles/rollbar.snippet.js',
@@ -34,7 +36,7 @@ var snippetConfig = {
   },
 };
 
-var pluginConfig = {
+const pluginConfig = {
   name: 'plugins',
   entry: {
     jquery: './src/browser/plugins/jquery.js',
@@ -55,7 +57,7 @@ var pluginConfig = {
   },
 };
 
-var vanillaConfigBase = {
+const vanillaConfigBase = {
   entry: {
     rollbar: './src/browser/bundles/rollbar.js',
   },
@@ -75,7 +77,7 @@ var vanillaConfigBase = {
   },
 };
 
-var UMDConfigBase = {
+const UMDConfigBase = {
   entry: {
     'rollbar.umd': ['./src/browser/bundles/rollbar.js'],
   },
@@ -99,12 +101,34 @@ var UMDConfigBase = {
   },
 };
 
-var noConflictConfigBase = extend({}, UMDConfigBase);
+const serverCJSConfigBase = {
+  entry: {
+    rollbar: './src/server/rollbar.js',
+  },
+  output: {
+    path: outputPath,
+    libraryTarget: 'commonjs2',
+    libraryExport: 'default',
+  },
+  target: 'node',
+  externals: [nodeExternals()],
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        exclude: [excludePattern, /vendor/],
+      },
+    ],
+  },
+};
+
+const noConflictConfigBase = extend({}, UMDConfigBase);
 noConflictConfigBase.entry = {
   'rollbar.noconflict.umd': ['./src/browser/bundles/rollbar.noconflict.js'],
 };
 
-var namedAMDConfigBase = extend({}, UMDConfigBase);
+const namedAMDConfigBase = extend({}, UMDConfigBase);
 namedAMDConfigBase.entry = {
   'rollbar.named-amd': namedAMDConfigBase.entry['rollbar.umd'],
 };
@@ -112,7 +136,7 @@ namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output);
 namedAMDConfigBase.output.library = 'rollbar';
 namedAMDConfigBase.output.libraryTarget = 'amd';
 
-var config = [snippetConfig, pluginConfig];
+const config = [snippetConfig, pluginConfig];
 
 function optimizationConfig(minimizer) {
   return {
@@ -122,7 +146,7 @@ function optimizationConfig(minimizer) {
 }
 
 function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var vanillaConfig = extend({}, vanillaConfigBase);
+  const vanillaConfig = extend({}, vanillaConfigBase);
   vanillaConfig.name = filename;
 
   vanillaConfig.plugins = extraPlugins;
@@ -135,7 +159,7 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 }
 
 function addUMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var UMDConfig = extend({}, UMDConfigBase);
+  const UMDConfig = extend({}, UMDConfigBase);
 
   UMDConfig.plugins = extraPlugins;
 
@@ -152,7 +176,7 @@ function addNoConflictToConfig(
   extraPlugins,
   minimizer,
 ) {
-  var noConflictConfig = extend({}, noConflictConfigBase);
+  const noConflictConfig = extend({}, noConflictConfigBase);
 
   noConflictConfig.plugins = extraPlugins;
 
@@ -167,7 +191,7 @@ function addNoConflictToConfig(
 }
 
 function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
-  var AMDConfig = extend({}, namedAMDConfigBase);
+  const AMDConfig = extend({}, namedAMDConfigBase);
 
   AMDConfig.plugins = extraPlugins;
 
@@ -178,11 +202,19 @@ function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
   webpackConfig.push(AMDConfig);
 }
 
+function addServerCJSConfigBase(webpackConfig, filename, minimizer) {
+  const serverConfig = extend({}, serverCJSConfigBase);
+  serverConfig.optimization = optimizationConfig(minimizer);
+  serverConfig.output = extend({ filename }, serverCJSConfigBase.output);
+  webpackConfig.push(serverConfig);
+}
+
 function generateBuildConfig(name, plugins, minimizer) {
   addVanillaToConfig(config, name, plugins, minimizer);
   addUMDToConfig(config, name, plugins, minimizer);
   addNamedAMDToConfig(config, name, plugins, minimizer);
   addNoConflictToConfig(config, name, plugins, minimizer);
+  addServerCJSConfigBase(config, name.replace('.js', '.cjs'), minimizer);
 }
 
 generateBuildConfig('[name].js', []);

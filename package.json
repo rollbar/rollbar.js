@@ -15,7 +15,7 @@
     "javascript"
   ],
   "license": "MIT",
-  "main": "src/server/rollbar.cjs",
+  "main": "dist/rollbar.cjs",
   "browser": "dist/rollbar.umd.min.js",
   "module": "src/browser/rollbar.js",
   "types": "./index.d.ts",
@@ -24,7 +24,7 @@
       "types": "./index.d.ts",
       "node": {
         "import": "./src/server/rollbar.js",
-        "require": "./src/server/rollbar.cjs"
+        "require": "./dist/rollbar.cjs"
       },
       "browser": {
         "import": "./src/browser/rollbar.js",
@@ -97,7 +97,8 @@
     "stackframe": "^0.2.2",
     "time-grunt": "^1.0.0",
     "webpack": "^5.98.0",
-    "webpack-cli": "^6.0.1"
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
     "build": "webpack --mode production",
