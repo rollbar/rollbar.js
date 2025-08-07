@@ -4,4 +4,4 @@
  * This file provides CommonJS compatibility for users who use require()
  */
 
-module.exports = require('./telemetry.js').default;
+module.exports = require('./telemetry.js').default || require('./telemetry.js');

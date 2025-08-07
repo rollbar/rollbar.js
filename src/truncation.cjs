@@ -4,4 +4,5 @@
  * This file provides CommonJS compatibility for users who use require()
  */
 
-module.exports = require('./truncation.js').default;
+module.exports =
+  require('./truncation.js').default || require('./truncation.js');

@@ -4,4 +4,5 @@
  * This file provides CommonJS compatibility for users who use require()
  */
 
-module.exports = require('./wrapGlobals.js').default;
+module.exports =
+  require('./wrapGlobals.js').default || require('./wrapGlobals.js');
