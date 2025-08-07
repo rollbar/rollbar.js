@@ -1,4 +1,4 @@
-# Bare bones webpack ptoject
+# Bare bones webpack project
 
 Check the rollbar location in package.json and change it to your own.
 `npm install`
