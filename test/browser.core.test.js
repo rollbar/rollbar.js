@@ -2,14 +2,15 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
+import { loadHtml } from './util/fixtures.js';
 
 describe('options.captureUncaught', function () {
-  beforeEach(function (done) {
+  beforeEach(async function () {
+    await loadHtml('error');
     // Load the HTML page, so errors can be generated.
-    document.write(window.__html__['test/fixtures/html/error.html']);
-
+    // document.write(window.__html__['test/fixtures/html/error.html']);
     window.server = sinon.createFakeServer();
-    done();
+    window.onerror = null;
   });
 
   afterEach(function () {
@@ -92,7 +93,7 @@ describe('options.captureUncaught', function () {
         var body = JSON.parse(server.requests[0].requestBody);
 
         expect(body.data.body.trace.exception.message).to.eql('test error');
-        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
+        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok;
 
         server.requests.length = 0;
 

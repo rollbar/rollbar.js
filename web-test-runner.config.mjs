@@ -22,13 +22,9 @@ export default {
       ui: 'bdd',
       timeout: 5000,
       reporter: 'spec',
+      allowUncaught: true,
     },
   },
-
-  staticDirs: [
-    { mount: '/dist', dir: 'dist' },
-    { mount: '/examples', dir: 'examples' },
-  ],
 
   concurrency: 4,
   concurrentBrowsers: 2,

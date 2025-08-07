@@ -101,7 +101,10 @@ function buildGruntKarmaConfig(singleRun, tests, reporters) {
 module.exports = function (grunt) {
   require('time-grunt')(grunt);
 
-  var browserTests = findTests('browser');
+  // var browserTests = findTests('browser');
+  var browserTests = {
+    browser: 'test/browser.core.test.js',
+  };
 
   var singleRun = grunt.option('singleRun');
   if (singleRun === undefined) {
