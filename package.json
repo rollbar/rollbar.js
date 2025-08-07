@@ -31,6 +31,46 @@
         "require": "./dist/rollbar.umd.min.js"
       },
       "default": "./dist/rollbar.umd.min.js"
+    },
+    "./src/browser/core": {
+      "types": "./src/browser/core.d.ts",
+      "require": "./src/browser/core.js",
+      "default": "./src/browser/core.js"
+    },
+    "./src/telemetry": {
+      "types": "./src/telemetry.d.ts",
+      "require": "./src/telemetry.js",
+      "default": "./src/telemetry.js"
+    },
+    "./src/browser/telemetry": {
+      "types": "./src/browser/telemetry.d.ts",
+      "require": "./src/browser/telemetry.js",
+      "default": "./src/browser/telemetry.js"
+    },
+    "./src/browser/wrapGlobals": {
+      "types": "./src/browser/wrapGlobals.d.ts",
+      "require": "./src/browser/wrapGlobals.js",
+      "default": "./src/browser/wrapGlobals.js"
+    },
+    "./src/scrub": {
+      "types": "./src/scrub.d.ts",
+      "require": "./src/scrub.js",
+      "default": "./src/scrub.js"
+    },
+    "./src/truncation": {
+      "types": "./src/truncation.d.ts",
+      "require": "./src/truncation.js",
+      "default": "./src/truncation.js"
+    },
+    "./src/tracing/tracing": {
+      "types": "./src/tracing/tracing.d.ts",
+      "require": "./src/tracing/tracing.js",
+      "default": "./src/tracing/tracing.js"
+    },
+    "./src/browser/replay/recorder": {
+      "types": "./src/browser/replay/recorder.d.ts",
+      "require": "./src/browser/replay/recorder.js",
+      "default": "./src/browser/replay/recorder.js"
     }
   },
   "dependencies": {
