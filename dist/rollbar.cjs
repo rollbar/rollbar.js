@@ -2090,7 +2090,7 @@ var logger = {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-alpha.5';
+var version = '3.0.0-alpha.6';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
