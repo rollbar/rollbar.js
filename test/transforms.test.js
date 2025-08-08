@@ -1,7 +1,4 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-
+import { expect } from 'chai';
 import * as _ from '../src/utility.js';
 import * as t from '../src/transforms.js';
 
@@ -193,7 +190,7 @@ describe('userTransform', function () {
     expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(fakeLogger)(payload, options, function (e, i) {
       expect(i.data.message).to.not.eql('HELLO');
-      expect(options.transform).to.not.be.ok();
+      expect(options.transform).to.not.be.ok;
       done(e);
     });
   });
