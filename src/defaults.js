@@ -1,7 +1,7 @@
 /**
  * Default options shared across platforms
  */
-export const version = '3.0.0-alpha.5';
+export const version = '3.0.0-alpha.6';
 export const endpoint = 'api.rollbar.com/api/1/item/';
 export const logLevel = 'debug';
 export const reportLevel = 'debug';
