@@ -168,7 +168,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
       telemeter._captureRollbarItem(item);
       item.telemetryEvents = telemeter.copyEvents() || [];
 
-      if (telemeter.telemetrySpan) {
+      if (telemeter.telemetrySpan && replayId) {
         telemeter.telemetrySpan.end({'rollbar.replay.id': replayId});
         telemeter.telemetrySpan = telemeter.tracing.startSpan('rollbar-telemetry', {});
       }
