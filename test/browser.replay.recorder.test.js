@@ -159,17 +159,14 @@ describe('Recorder', function () {
       const firstCallData = mockSpan.addEvent.firstCall.args[1];
       expect(firstCallData.eventType).to.equal('event1');
       expect(JSON.parse(firstCallData.json)).to.deep.equal({ a: 1 });
-      expect(firstCallData['rollbar.replay.id']).to.equal(testReplayId);
 
       const secondCallData = mockSpan.addEvent.secondCall.args[1];
       expect(secondCallData.eventType).to.equal('event2');
       expect(JSON.parse(secondCallData.json)).to.deep.equal({ b: 2 });
-      expect(secondCallData['rollbar.replay.id']).to.equal(testReplayId);
 
       const thirdCallData = mockSpan.addEvent.thirdCall.args[1];
       expect(thirdCallData.eventType).to.equal(5);
       expect(JSON.parse(thirdCallData.json)).to.deep.equal({tag: "replay.end", payload: {}});
-      expect(thirdCallData['rollbar.replay.id']).to.equal(testReplayId);
     });
 
     it('should handle checkout events correctly', function () {
@@ -244,7 +241,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.Meta,
             json: JSON.stringify({}),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [3, 50000000],
         },
@@ -253,7 +249,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.FullSnapshot,
             json: JSON.stringify({}),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [3, 100000000],
         },
@@ -262,7 +257,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.IncrementalSnapshot,
             json: JSON.stringify({ c: 3 }),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [4, 0],
         },
@@ -271,7 +265,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.Meta,
             json: JSON.stringify({}),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [4, 500000000],
         },
@@ -280,7 +273,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.FullSnapshot,
             json: JSON.stringify({}),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [5, 0],
         },
@@ -289,7 +281,6 @@ describe('Recorder', function () {
           attributes: {
             eventType: EventType.IncrementalSnapshot,
             json: JSON.stringify({ d: 4 }),
-            'rollbar.replay.id': testReplayId,
           },
           timestamp: [6, 0],
         },
@@ -361,7 +352,6 @@ describe('Recorder', function () {
           'rrweb-replay-events',
           `Event at index ${i} should have name "rrweb-replay-events"`
         );
-        expect(eventAttrs['rollbar.replay.id']).to.equal(testReplayId);
       }
     });
 
