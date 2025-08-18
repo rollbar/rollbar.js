@@ -3912,7 +3912,7 @@ var ReplayMap = /*#__PURE__*/function () {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-alpha.6';
+var version = '3.0.0-beta.1';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -21099,8 +21099,7 @@ var Recorder = /*#__PURE__*/function () {
           var event = _step.value;
           recordingSpan.addEvent('rrweb-replay-events', {
             eventType: event.type,
-            json: JSON.stringify(event.data),
-            'rollbar.replay.id': replayId
+            json: JSON.stringify(event.data)
           }, hrtime.fromMillis(event.timestamp));
         }
       } catch (err) {
@@ -21188,8 +21187,7 @@ var Recorder = /*#__PURE__*/function () {
         json: JSON.stringify({
           tag: "replay.end",
           payload: {}
-        }),
-        'rollbar.replay.id': replayId
+        })
       }, hrtime.fromMillis(Date.now()));
     }
   }]);
