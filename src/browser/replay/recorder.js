@@ -110,7 +110,6 @@ export default class Recorder {
         {
           eventType: event.type,
           json: JSON.stringify(event.data),
-          'rollbar.replay.id': replayId,
         },
         hrtime.fromMillis(event.timestamp),
       );
@@ -200,12 +199,10 @@ export default class Recorder {
    **/
   _addEndEvent(recordingSpan, replayId) {
     recordingSpan.addEvent(
-
       'rrweb-replay-events',
       {
         eventType: 5,
         json: JSON.stringify({tag: "replay.end", payload: {}}),
-        'rollbar.replay.id': replayId,
       },
       hrtime.fromMillis(Date.now()),
     );
