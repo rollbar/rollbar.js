@@ -618,6 +618,7 @@ import { version, logLevel, reportLevel, uncaughtErrorLevel, endpoint } from '..
 import browserDefaults from './defaults.js';
 
 var defaultOptions = {
+  environment: 'unknown',
   version: version,
   scrubFields: browserDefaults.scrubFields,
   logLevel: logLevel,
