@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 import * as d from '../src/browser/domUtility.js';
 
 function fullElement() {

@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 import * as p from '../src/browser/predicates.js';
 
 describe('checkIgnore', function () {

@@ -1,10 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals sinon */
-
 import { expect } from 'chai';
+import sinon from 'sinon';
 import { EventType } from '@rrweb/types';
 
 import Recorder from '../src/browser/replay/recorder.js';

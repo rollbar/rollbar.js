@@ -1,6 +1,3 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import { Span } from '../../src/tracing/span.js';

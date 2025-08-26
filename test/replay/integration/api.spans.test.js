@@ -2,10 +2,6 @@
  * API integration tests for span transport
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
 
 import { expect } from 'chai';
 import sinon from 'sinon';

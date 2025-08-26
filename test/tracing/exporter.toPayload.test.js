@@ -1,8 +1,3 @@
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { EventType } from '@rrweb/types';

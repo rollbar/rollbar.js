@@ -1,6 +1,3 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import { ContextManager, createContextKey } from '../../src/tracing/contextManager.js';

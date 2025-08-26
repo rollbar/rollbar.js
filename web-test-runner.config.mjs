@@ -10,15 +10,12 @@ export default {
     '!test/browser.core.test.js',
     '!test/browser.rollbar.test.js',
     '!test/browser.transforms.test.js',
-    '!test/browser.replay.recorder.test.js',
     // Exclude tests that hang or have issues
     '!test/queue.test.js',
     '!test/notifier.test.js',
     '!test/telemetry.test.js',
     '!test/truncation.test.js',
     // Exclude unmigrated test directories
-    '!test/replay/**/*.test.js',
-    '!test/tracing/**/*.test.js',
     '!test/examples/**/*.test.js',
   ],
 

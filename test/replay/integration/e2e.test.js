@@ -2,10 +2,6 @@
  * End-to-end integration test for the complete session replay feature
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
 
 import { expect } from 'chai';
 import sinon from 'sinon';
