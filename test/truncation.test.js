@@ -1,7 +1,4 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-
+import { expect } from 'chai';
 import t from '../src/truncation.js';
 
 describe('truncate', function () {

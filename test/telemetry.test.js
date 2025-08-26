@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import Telemeter from '../src/telemetry.js';
 import Tracing from '../src/tracing/tracing.js';
 

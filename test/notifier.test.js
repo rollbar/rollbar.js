@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import Notifier from '../src/notifier.js';
 
 var rollbarConfig = {
@@ -47,7 +44,7 @@ describe('configure', function () {
 
     notifier.configure({ other: 'baz' });
 
-    expect(notifier.options.someBool).to.be.ok();
+    expect(notifier.options.someBool).to.be.ok;
     expect(notifier.options.other).to.eql('baz');
 
     done();
@@ -61,11 +58,11 @@ describe('configure', function () {
     var initialItem = { a: 123, b: 'a string' };
     notifier
       .addTransform(function (i, o, cb) {
-        expect(o.someBool).to.not.be.ok();
+        expect(o.someBool).to.not.be.ok;
         cb(null, { a: 42, b: i.b });
       })
       .addTransform(function (i, o, cb) {
-        expect(o.someBool).to.not.be.ok();
+        expect(o.someBool).to.not.be.ok;
         cb(null, { a: i.a + 1, b: i.b });
       });
 
@@ -74,7 +71,7 @@ describe('configure', function () {
     var spy = sinon.spy();
     notifier.log(initialItem, spy);
 
-    expect(spy.called).to.not.be.ok();
+    expect(spy.called).to.not.be.ok;
     expect(queue.items.length).to.eql(1);
     expect(queue.items[0].item).to.not.eql(initialItem);
     expect(queue.items[0].item.a).to.eql(43);
@@ -140,7 +137,7 @@ describe('log', function () {
     var initialItem = { a: 123, b: 'a string' };
     var spy = sinon.spy();
     notifier.log(initialItem, spy);
-    expect(spy.called).to.not.be.ok();
+    expect(spy.called).to.not.be.ok;
     expect(queue.items.length).to.eql(1);
     expect(queue.items[0].item).to.eql(initialItem);
 
@@ -163,7 +160,7 @@ describe('log', function () {
     var spy = sinon.spy();
     notifier.log(initialItem, spy);
 
-    expect(spy.called).to.not.be.ok();
+    expect(spy.called).to.not.be.ok;
     expect(queue.items.length).to.eql(1);
     expect(queue.items[0].item).to.not.eql(initialItem);
     expect(queue.items[0].item.a).to.eql(43);
@@ -184,14 +181,14 @@ describe('log', function () {
         cb(error, null);
       })
       .addTransform(function (i, o, cb) {
-        expect(false).to.be.ok(); // assert this is not called
+        expect(false).to.be.ok; // assert this is not called
         cb(null, { a: 42, b: i.b });
       });
     var spy = sinon.spy();
     notifier.log(initialItem, spy);
 
-    expect(spy.called).to.be.ok();
-    expect(spy.calledWithExactly(error, null)).to.be.ok();
+    expect(spy.called).to.be.ok;
+    expect(spy.calledWithExactly(error, null)).to.be.ok;
     expect(queue.items.length).to.eql(0);
 
     done();
@@ -208,7 +205,7 @@ describe('log', function () {
         cb(new Error('fizz buzz'), null);
       })
       .addTransform(function (i, o, cb) {
-        expect(false).to.be.ok(); // assert this is not called
+        expect(false).to.be.ok; // assert this is not called
         cb(null, { a: 42, b: i.b });
       });
     notifier.log(initialItem);
@@ -226,17 +223,17 @@ describe('log', function () {
     var initialItem = { a: 123, b: 'a string' };
     notifier
       .addTransform(function (i, o, cb) {
-        expect(o.someBool).to.be.ok();
+        expect(o.someBool).to.be.ok;
         cb(null, { a: 42, b: i.b });
       })
       .addTransform(function (i, o, cb) {
-        expect(o.someBool).to.be.ok();
+        expect(o.someBool).to.be.ok;
         cb(null, { a: i.a + 1, b: i.b });
       });
     var spy = sinon.spy();
     notifier.log(initialItem, spy);
 
-    expect(spy.called).to.not.be.ok();
+    expect(spy.called).to.not.be.ok;
     expect(queue.items.length).to.eql(1);
     expect(queue.items[0].item).to.not.eql(initialItem);
     expect(queue.items[0].item.a).to.eql(43);
