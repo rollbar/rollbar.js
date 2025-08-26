@@ -92,7 +92,7 @@ describe('options.captureUncaught', function () {
         var body = JSON.parse(server.requests[0].requestBody);
 
         expect(body.data.body.trace.exception.message).to.eql('test error');
-        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
+        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok;
 
         server.requests.length = 0;
 

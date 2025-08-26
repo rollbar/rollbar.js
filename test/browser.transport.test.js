@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import truncation from '../src/truncation.js';
 import Transport from '../src/browser/transport.js';
 const t = new Transport(truncation);
@@ -21,7 +18,7 @@ describe('post', function () {
       return null;
     };
     var callback = function (err, resp) {
-      expect(err).to.be.ok();
+      expect(err).to.be.ok;
       done(resp);
     };
     t.post(accessToken, options, payload, callback, requestFactory);
@@ -29,8 +26,8 @@ describe('post', function () {
   it('should callback with the right value on success', function (done) {
     var requestFactory = requestGenerator('{"err": null, "result": true}', 200);
     var callback = function (err, resp) {
-      expect(resp).to.be.ok();
-      expect(resp.result).to.be.ok();
+      expect(resp).to.be.ok;
+      expect(resp.result).to.be.ok;
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(err);
     };
@@ -41,7 +38,7 @@ describe('post', function () {
       '{"err": "bad request", "result": null, "message": "fail whale"}';
     var requestFactory = requestGenerator(response, 403);
     var callback = function (err, resp) {
-      expect(resp).to.not.be.ok();
+      expect(resp).to.not.be.ok;
       expect(err.message).to.eql('403');
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
@@ -53,7 +50,7 @@ describe('post', function () {
       '{"err": "bad request", "result": null, "message": "500!!!"}';
     var requestFactory = requestGenerator(response, 500);
     var callback = function (err, resp) {
-      expect(resp).to.not.be.ok();
+      expect(resp).to.not.be.ok;
       expect(err.message).to.eql('500');
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
@@ -64,7 +61,7 @@ describe('post', function () {
     var response = '{"err": "bad request"}';
     var requestFactory = requestGenerator(response, 12005);
     var callback = function (err, resp) {
-      expect(resp).to.not.be.ok();
+      expect(resp).to.not.be.ok;
       expect(err.message).to.match(/connection failure/);
       expect(err.code).to.eql('ENOTFOUND');
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
@@ -76,7 +73,7 @@ describe('post', function () {
     var response = '{"err": "bad request"}';
     var requestFactory = requestGenerator(response, 500, true);
     var callback = function (err, resp) {
-      expect(resp).to.not.be.ok();
+      expect(resp).to.not.be.ok;
       expect(err.message).to.match(/Cannot find a method to transport/);
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
@@ -122,7 +119,7 @@ describe('post', function () {
 
     it('should use fetch when requested', function (done) {
       var callback = function (err, resp) {
-        expect(window.fetchStub.called).to.be.ok();
+        expect(window.fetchStub.called).to.be.ok;
         expect(server.requests.length).to.eql(0);
         done(err);
       };
@@ -134,7 +131,7 @@ describe('post', function () {
     });
     it('should use xhr when requested', function (done) {
       var callback = function (err, resp) {
-        expect(window.fetchStub.called).to.not.be.ok();
+        expect(window.fetchStub.called).to.not.be.ok;
         expect(server.requests.length).to.eql(1);
         done(err);
       };

@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import * as p from '../src/browser/predicates.js';
 
 describe('checkIgnore', function () {
@@ -15,7 +12,7 @@ describe('checkIgnore', function () {
       reportLevel: 'debug',
       plugins: { jquery: { ignoreAjaxErrors: true } },
     };
-    expect(p.checkIgnore(item, settings)).to.not.be.ok();
+    expect(p.checkIgnore(item, settings)).to.not.be.ok;
   });
   it('should return true if is ajax and ignoring ajax errors is off', function () {
     var item = {
@@ -26,7 +23,7 @@ describe('checkIgnore', function () {
       reportLevel: 'debug',
       plugins: { jquery: { ignoreAjaxErrors: false } },
     };
-    expect(p.checkIgnore(item, settings)).to.be.ok();
+    expect(p.checkIgnore(item, settings)).to.be.ok;
   });
   it('should return true if is not ajax and ignoring ajax errors is on', function () {
     var item = {
@@ -37,7 +34,7 @@ describe('checkIgnore', function () {
       reportLevel: 'debug',
       plugins: { jquery: { ignoreAjaxErrors: true } },
     };
-    expect(p.checkIgnore(item, settings)).to.be.ok();
+    expect(p.checkIgnore(item, settings)).to.be.ok;
   });
   it('should return true if no ajax extra key and ignoring ajax errors is on', function () {
     var item = {
@@ -48,6 +45,6 @@ describe('checkIgnore', function () {
       reportLevel: 'debug',
       plugins: { jquery: { ignoreAjaxErrors: true } },
     };
-    expect(p.checkIgnore(item, settings)).to.be.ok();
+    expect(p.checkIgnore(item, settings)).to.be.ok;
   });
 });
