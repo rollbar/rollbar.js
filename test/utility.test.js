@@ -57,16 +57,16 @@ describe('typeName', function () {
 
 describe('isType', function () {
   it('should handle all types', function (done) {
-    expect(_.isType(undefined, 'undefined')).to.be.ok;
-    expect(_.isType(undefined, 'null')).to.not.be.ok;
-    expect(_.isType(null, 'null')).to.be.ok;
-    expect(_.isType(null, 'object')).to.not.be.ok;
-    expect(_.isType({}, 'object')).to.be.ok;
-    expect(_.isType(function () {}, 'function')).to.be.ok;
-    expect(_.isType(42, 'number')).to.be.ok;
-    expect(_.isType('42', 'string')).to.be.ok;
-    expect(_.isType([], 'array')).to.be.ok;
-    expect(_.isType([102, []], 'array')).to.be.ok;
+    expect(_.isType(undefined, 'undefined')).to.be.true;
+    expect(_.isType(undefined, 'null')).to.be.false;
+    expect(_.isType(null, 'null')).to.be.true;
+    expect(_.isType(null, 'object')).to.be.false;
+    expect(_.isType({}, 'object')).to.be.true;
+    expect(_.isType(function () {}, 'function')).to.be.true;
+    expect(_.isType(42, 'number')).to.be.true;
+    expect(_.isType('42', 'string')).to.be.true;
+    expect(_.isType([], 'array')).to.be.true;
+    expect(_.isType([102, []], 'array')).to.be.true;
 
     done();
   });
