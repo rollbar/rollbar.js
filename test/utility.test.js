@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import * as _ from '../src/utility.js';
 
 describe('typeName', function () {
@@ -60,16 +57,16 @@ describe('typeName', function () {
 
 describe('isType', function () {
   it('should handle all types', function (done) {
-    expect(_.isType(undefined, 'undefined')).to.be.ok();
-    expect(_.isType(undefined, 'null')).to.not.be.ok();
-    expect(_.isType(null, 'null')).to.be.ok();
-    expect(_.isType(null, 'object')).to.not.be.ok();
-    expect(_.isType({}, 'object')).to.be.ok();
-    expect(_.isType(function () {}, 'function')).to.be.ok();
-    expect(_.isType(42, 'number')).to.be.ok();
-    expect(_.isType('42', 'string')).to.be.ok();
-    expect(_.isType([], 'array')).to.be.ok();
-    expect(_.isType([102, []], 'array')).to.be.ok();
+    expect(_.isType(undefined, 'undefined')).to.be.true;
+    expect(_.isType(undefined, 'null')).to.be.false;
+    expect(_.isType(null, 'null')).to.be.true;
+    expect(_.isType(null, 'object')).to.be.false;
+    expect(_.isType({}, 'object')).to.be.true;
+    expect(_.isType(function () {}, 'function')).to.be.true;
+    expect(_.isType(42, 'number')).to.be.true;
+    expect(_.isType('42', 'string')).to.be.true;
+    expect(_.isType([], 'array')).to.be.true;
+    expect(_.isType([102, []], 'array')).to.be.true;
 
     done();
   });
@@ -83,10 +80,10 @@ describe('isFunction', function () {
     var g = function (x) {
       return f(x);
     };
-    expect(_.isFunction({})).to.not.be.ok();
-    expect(_.isFunction(null)).to.not.be.ok();
-    expect(_.isFunction(f)).to.be.ok();
-    expect(_.isFunction(g)).to.be.ok();
+    expect(_.isFunction({})).to.not.be.ok;
+    expect(_.isFunction(null)).to.not.be.ok;
+    expect(_.isFunction(f)).to.be.ok;
+    expect(_.isFunction(g)).to.be.ok;
     done();
   });
 });
@@ -100,37 +97,37 @@ describe('isNativeFunction', function () {
     };
     var h = String.prototype.substr;
     var i = Array.prototype.indexOf;
-    expect(_.isNativeFunction({})).to.not.be.ok();
-    expect(_.isNativeFunction(null)).to.not.be.ok();
-    expect(_.isNativeFunction(f)).to.not.be.ok();
-    expect(_.isNativeFunction(g)).to.not.be.ok();
-    expect(_.isNativeFunction(h)).to.be.ok();
-    expect(_.isNativeFunction(i)).to.be.ok();
+    expect(_.isNativeFunction({})).to.not.be.ok;
+    expect(_.isNativeFunction(null)).to.not.be.ok;
+    expect(_.isNativeFunction(f)).to.not.be.ok;
+    expect(_.isNativeFunction(g)).to.not.be.ok;
+    expect(_.isNativeFunction(h)).to.be.ok;
+    expect(_.isNativeFunction(i)).to.be.ok;
     done();
   });
 });
 
 describe('isIterable', function () {
   it('should work for all types', function (done) {
-    expect(_.isIterable({})).to.be.ok();
-    expect(_.isIterable([])).to.be.ok();
-    expect(_.isIterable([{ a: 1 }])).to.be.ok();
-    expect(_.isIterable(null)).to.not.be.ok();
-    expect(_.isIterable(undefined)).to.not.be.ok();
-    expect(_.isIterable('object')).to.not.be.ok();
-    expect(_.isIterable(42)).to.not.be.ok();
+    expect(_.isIterable({})).to.be.ok;
+    expect(_.isIterable([])).to.be.ok;
+    expect(_.isIterable([{ a: 1 }])).to.be.ok;
+    expect(_.isIterable(null)).to.not.be.ok;
+    expect(_.isIterable(undefined)).to.not.be.ok;
+    expect(_.isIterable('object')).to.not.be.ok;
+    expect(_.isIterable(42)).to.not.be.ok;
     done();
   });
 });
 
 describe('isError', function () {
   it('should handle null', function (done) {
-    expect(_.isError(null)).to.not.be.ok();
+    expect(_.isError(null)).to.not.be.ok;
     done();
   });
   it('should handle errors', function (done) {
     var e = new Error('hello');
-    expect(_.isError(e)).to.be.ok();
+    expect(_.isError(e)).to.be.ok;
     done();
   });
   it('should handle subclasses of error', function (done) {
@@ -169,7 +166,7 @@ describe('isError', function () {
       });
     }
     var e = new TestCustomError('bork');
-    expect(_.isError(e)).to.be.ok();
+    expect(_.isError(e)).to.be.ok;
     done();
   });
 });
@@ -420,8 +417,8 @@ describe('formatUrl', function () {
   });
   it('should return null without a hostname', function () {
     var u = {};
-    expect(_.formatUrl(u)).to.not.be.ok();
-    expect(_.formatUrl(u, 'https:')).to.not.be.ok();
+    expect(_.formatUrl(u)).to.not.be.ok;
+    expect(_.formatUrl(u, 'https:')).to.not.be.ok;
   });
 });
 
@@ -466,11 +463,11 @@ describe('get', function () {
   });
   it('should be undefined for a missing value', function () {
     var o = { a: { b: { c: { d: 42 } } } };
-    expect(_.get(o, 'a.b.x.d')).to.not.be.ok();
+    expect(_.get(o, 'a.b.x.d')).to.not.be.ok;
   });
   it('should handle bad input', function () {
     var o = 'hello';
-    expect(_.get(o, 'oops.1.2.3')).to.not.be.ok();
+    expect(_.get(o, 'oops.1.2.3')).to.not.be.ok;
   });
   it('should actually work with arrays too', function () {
     var o = { a: [{ b: { c: [1, { d: 42 }, null] } }, 99] };
@@ -478,7 +475,7 @@ describe('get', function () {
   });
   it('should handle undefined input', function () {
     var u = undefined;
-    expect(_.get(u, 'a.b.c')).to.not.be.ok();
+    expect(_.get(u, 'a.b.c')).to.not.be.ok;
   });
 });
 
@@ -486,7 +483,7 @@ describe('filterIp', function () {
   it('no user_ip', function () {
     var requestData = { something: 'but no ip' };
     _.filterIp(requestData, false);
-    expect(requestData['user_ip']).to.not.be.ok();
+    expect(requestData['user_ip']).to.not.be.ok;
   });
   it('capture true', function () {
     var ip = '123.32.394.99';
@@ -499,21 +496,21 @@ describe('filterIp', function () {
     var requestData = { user_ip: ip };
     _.filterIp(requestData, 'anonymize');
     expect(requestData['user_ip']).to.not.eql(ip);
-    expect(requestData['user_ip']).to.be.ok();
+    expect(requestData['user_ip']).to.be.ok;
   });
   it('capture false', function () {
     var ip = '123.32.394.99';
     var requestData = { user_ip: ip };
     _.filterIp(requestData, false);
     expect(requestData['user_ip']).to.not.eql(ip);
-    expect(requestData['user_ip']).to.not.be.ok();
+    expect(requestData['user_ip']).to.not.be.ok;
   });
   it('ipv6 capture false', function () {
     var ip = '2607:f0d0:1002:51::4';
     var requestData = { user_ip: ip };
     _.filterIp(requestData, false);
     expect(requestData['user_ip']).to.not.eql(ip);
-    expect(requestData['user_ip']).to.not.be.ok();
+    expect(requestData['user_ip']).to.not.be.ok;
   });
   it('ipv6 anonymize', function () {
     var ips = [
@@ -526,7 +523,7 @@ describe('filterIp', function () {
       var requestData = { user_ip: ip };
       _.filterIp(requestData, 'anonymize');
       expect(requestData['user_ip']).to.not.eql(ip);
-      expect(requestData['user_ip']).to.be.ok();
+      expect(requestData['user_ip']).to.be.ok;
     }
   });
 });
@@ -626,7 +623,7 @@ describe('scrub', function () {
     expect(result.thing).to.eql('stuff');
     expect(result.password).to.eql(_.redact());
     expect(result.inner.a).to.eql(_.redact());
-    expect(result.inner.a).to.be.ok();
+    expect(result.inner.a).to.be.ok;
     expect(result.inner.b).to.eql('yes');
   });
   it('should scrub objects seen twice', function () {

@@ -2,11 +2,6 @@
  * Unit tests for the postSpans method in the API module
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
-/* globals sinon */
 
 import { expect } from 'chai';
 import sinon from 'sinon';

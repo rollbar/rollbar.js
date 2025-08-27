@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import Queue from '../src/queue.js';
 
 function TestRateLimiterGenerator() {
@@ -249,18 +246,18 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           cb(null, serverResponse);
         };
         queue.addPredicate(function (i, s) {
           return false;
         });
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done(err);
         });
       });
@@ -275,11 +272,11 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           cb(null, serverResponse);
         };
         var predicateError = 'bork bork';
@@ -288,7 +285,7 @@ describe('addItem', function () {
         });
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
           expect(err).to.eql(predicateError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -303,11 +300,11 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           cb(null, serverResponse);
         };
         var predicateError = 'bork bork';
@@ -323,7 +320,7 @@ describe('addItem', function () {
           });
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
           expect(err).to.eql(predicateError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -338,18 +335,18 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok();
+          expect(false).to.be.ok;
           cb(null, serverResponse);
         };
         queue.wait(function () {
           done();
         });
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-          expect(resp).to.be.ok();
+          expect(resp).to.be.ok;
         });
       });
       it('should work if wait is called with a non-function', function (done) {
@@ -370,7 +367,7 @@ describe('addItem', function () {
         };
         queue.wait({});
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-          expect(resp).to.be.ok();
+          expect(resp).to.be.ok;
           done(err);
         });
       });
@@ -431,7 +428,7 @@ describe('addItem', function () {
             return true;
           });
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           expect(err).to.eql(exception);
           done();
         });
@@ -454,7 +451,7 @@ describe('addItem', function () {
         };
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
           expect(err).to.eql(apiError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -476,7 +473,7 @@ describe('addItem', function () {
         };
         queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
           expect(err).to.eql(apiError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -508,7 +505,7 @@ describe('addItem', function () {
             }
           };
           queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-            expect(err).to.not.be.ok();
+            expect(err).to.not.be.ok;
             expect(resp).to.eql(serverResponse);
             expect(apiRequestCount).to.eql(2);
             done();
@@ -540,7 +537,7 @@ describe('addItem', function () {
             var numRequests = options.maxRetries + 1;
             expect(apiRequestCount).to.eql(numRequests);
             expect(err).to.eql({ ...apiError, retry: numRequests });
-            expect(resp).to.not.be.ok();
+            expect(resp).to.not.be.ok;
             done();
           });
         });
@@ -592,7 +589,7 @@ describe('addItem', function () {
           return true;
         });
       queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
-        expect(resp).to.not.be.ok();
+        expect(resp).to.not.be.ok;
         expect(err).to.eql(rateLimitError);
         done();
       });
@@ -625,7 +622,7 @@ describe('addItem', function () {
         });
       queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
         expect(resp).to.eql(serverResponse);
-        expect(err).to.not.be.ok();
+        expect(err).to.not.be.ok;
         done();
       });
     });

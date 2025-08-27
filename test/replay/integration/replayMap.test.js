@@ -2,10 +2,6 @@
  * Integration tests for ReplayMap with API
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
 
 import { expect } from 'chai';
 import sinon from 'sinon';
