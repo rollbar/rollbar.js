@@ -117,7 +117,7 @@ describe('addItem', function () {
           cb(null, serverResponse);
           done();
         };
-        queue.addItem({ data: { mykey: 'myvalue' }});
+        queue.addItem({ data: { mykey: 'myvalue' } });
       });
       it('should work with a garbage callback', function (done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
@@ -138,7 +138,7 @@ describe('addItem', function () {
           cb(null, serverResponse);
           done();
         };
-        queue.addItem({ data: { mykey: 'myvalue' }}, 'woops');
+        queue.addItem({ data: { mykey: 'myvalue' } }, 'woops');
       });
       it('should work with no predicates', function (done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
@@ -158,7 +158,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           done(err);
         });
@@ -181,7 +181,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem({data: item}, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.error[0][0]).to.eql('hello');
           done(err);
@@ -205,7 +205,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem({data: item}, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.log[0][0]).to.eql('hello');
           done(err);
@@ -229,7 +229,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem({data: item}, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.log.length).to.eql(0);
           done(err);
@@ -256,7 +256,7 @@ describe('addItem', function () {
         queue.addPredicate(function (i, s) {
           return false;
         });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.not.be.ok;
           done(err);
         });
@@ -283,7 +283,7 @@ describe('addItem', function () {
         queue.addPredicate(function (i, s) {
           return { err: predicateError };
         });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(predicateError);
           expect(resp).to.not.be.ok;
           done();
@@ -318,7 +318,7 @@ describe('addItem', function () {
           .addPredicate(function (i, s) {
             return true;
           });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(predicateError);
           expect(resp).to.not.be.ok;
           done();
@@ -344,6 +344,9 @@ describe('addItem', function () {
         queue.wait(function () {
           expect(callCount).to.be.lessThan(3);
 
+          // The wait callback is expected to be called exactly twice:
+          // once for the initial wait due to the queue being empty, and once
+          // after the item is transmitted.
           if (++callCount === 2) {
             done();
           }
@@ -401,7 +404,7 @@ describe('addItem', function () {
           .addPredicate(function () {
             return true;
           });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           done(err);
         });
@@ -432,7 +435,7 @@ describe('addItem', function () {
           .addPredicate(function () {
             return true;
           });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.not.be.ok;
           expect(err).to.eql(exception);
           done();
@@ -454,7 +457,7 @@ describe('addItem', function () {
         api.handler = function (i, cb) {
           cb(apiError);
         };
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(apiError);
           expect(resp).to.not.be.ok;
           done();
@@ -476,7 +479,7 @@ describe('addItem', function () {
         api.handler = function (i, cb) {
           cb(apiError);
         };
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(apiError);
           expect(resp).to.not.be.ok;
           done();
@@ -509,7 +512,7 @@ describe('addItem', function () {
               cb(null, serverResponse);
             }
           };
-          queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+          queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
             expect(err).to.not.be.ok;
             expect(resp).to.eql(serverResponse);
             expect(apiRequestCount).to.eql(2);
@@ -538,7 +541,7 @@ describe('addItem', function () {
             apiRequestCount++;
             cb({ ...apiError, retry: apiRequestCount });
           };
-          queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+          queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
             var numRequests = options.maxRetries + 1;
             expect(apiRequestCount).to.eql(numRequests);
             expect(err).to.eql({ ...apiError, retry: numRequests });
@@ -557,7 +560,7 @@ describe('addItem', function () {
         var queue = new Queue(rateLimiter, api, logger, options);
         var makeApiRequestStub = sinon.stub(queue, '_makeApiRequest');
 
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err) {
           expect(err.message).to.eql('Transmit disabled');
         });
 
@@ -593,7 +596,7 @@ describe('addItem', function () {
         .addPredicate(function () {
           return true;
         });
-      queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+      queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
         expect(resp).to.not.be.ok;
         expect(err).to.eql(rateLimitError);
         done();
@@ -625,7 +628,7 @@ describe('addItem', function () {
         .addPredicate(function () {
           return true;
         });
-      queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+      queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
         expect(resp).to.eql(serverResponse);
         expect(err).to.not.be.ok;
         done();
