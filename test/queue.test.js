@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import sinon from 'sinon';
 import Queue from '../src/queue.js';
 
@@ -246,11 +246,11 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           cb(null, serverResponse);
         };
         queue.addPredicate(function (i, s) {
@@ -272,11 +272,11 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           cb(null, serverResponse);
         };
         var predicateError = 'bork bork';
@@ -300,11 +300,11 @@ describe('addItem', function () {
         var serverResponse = { success: true };
 
         rateLimiter.handler = function (i) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           return { error: null, shouldSend: true, payload: null };
         };
         api.handler = function (i, cb) {
-          expect(false).to.be.ok;
+          assert.fail('This handler should not be called');
           cb(null, serverResponse);
         };
         var predicateError = 'bork bork';
@@ -331,21 +331,25 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
+        rateLimiter.handler = function () {
+          assert.fail('This handler should not be called');
+        };
 
-        rateLimiter.handler = function (i) {
-          expect(false).to.be.ok;
-          return { error: null, shouldSend: true, payload: null };
+        api.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        api.handler = function (i, cb) {
-          expect(false).to.be.ok;
-          cb(null, serverResponse);
-        };
+
+        let callCount = 0;
+
         queue.wait(function () {
-          done();
+          expect(callCount).to.be.lessThan(3);
+
+          if (++callCount === 2) {
+            done();
+          }
         });
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (_err, resp) {
           expect(resp).to.be.ok;
         });
       });
@@ -356,17 +360,18 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
         var serverResponse = { success: true };
 
-        rateLimiter.handler = function (i) {
+        rateLimiter.handler = function () {
           return { error: null, shouldSend: true, payload: null };
         };
-        api.handler = function (i, cb) {
+
+        api.handler = function (_, cb) {
           cb(null, serverResponse);
         };
         queue.wait({});
-        queue.addItem({ data: { mykey: 'myvalue' }}, function (err, resp) {
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.be.ok;
           done(err);
         });
@@ -556,7 +561,7 @@ describe('addItem', function () {
           expect(err.message).to.eql('Transmit disabled');
         });
 
-        expect(makeApiRequestStub.called).to.eql(0);
+        expect(makeApiRequestStub.called).to.be.false;
 
         queue._makeApiRequest.restore();
         done();
