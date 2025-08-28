@@ -118,7 +118,7 @@ describe('truncateStrings', function () {
 describe('maybeTruncateValue', function () {
   it('should handle falsey things', function () {
     expect(t.maybeTruncateValue(42, null)).to.equal(null);
-    expect(t.maybeTruncateValue(42, false)).to.eql(false);
+    expect(t.maybeTruncateValue(42, false)).to.be.false;
     expect(t.maybeTruncateValue(42, undefined)).to.equal(undefined);
   });
 
