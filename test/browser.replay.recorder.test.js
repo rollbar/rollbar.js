@@ -39,7 +39,7 @@ describe('Recorder', function () {
     it('should initialize with default properties', function () {
       const recorder = new Recorder({}, recordFnStub);
 
-      expect(recorder.isRecording).to.equal(false);
+      expect(recorder.isRecording).to.be.false;
       expect(recorder.options).to.deep.equal({
         enabled: undefined,
         autoStart: undefined,

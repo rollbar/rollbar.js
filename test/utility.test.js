@@ -174,13 +174,13 @@ describe('isError', function () {
 describe('isFiniteNumber', function () {
   [NaN, null, undefined, 'x'].forEach(function (value) {
     it(`should return false for ${value}`, function (done) {
-      expect(_.isFiniteNumber(value)).to.equal(false);
+      expect(_.isFiniteNumber(value)).to.be.false;
       done();
     });
   });
   [-100, 0, 100].forEach(function (value) {
     it(`should return true for ${value}`, function (done) {
-      expect(_.isFiniteNumber(value)).to.equal(true);
+      expect(_.isFiniteNumber(value)).to.be.true;
       done();
     });
   });

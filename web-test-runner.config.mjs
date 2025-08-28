@@ -10,11 +10,6 @@ export default {
     '!test/browser.core.test.js',
     '!test/browser.rollbar.test.js',
     '!test/browser.transforms.test.js',
-    // Exclude tests that hang or have issues
-    '!test/queue.test.js',
-    '!test/notifier.test.js',
-    '!test/telemetry.test.js',
-    '!test/truncation.test.js',
     // Exclude unmigrated test directories
     '!test/examples/**/*.test.js',
   ],
@@ -37,7 +32,7 @@ export default {
       ui: 'bdd',
       timeout: 5000,
       reporter: 'spec',
-      allowUncaught: true,
+      allowUncaught: false,
     },
   },
 
