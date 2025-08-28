@@ -37,7 +37,7 @@ export default {
       ui: 'bdd',
       timeout: 5000,
       reporter: 'spec',
-      allowUncaught: true,
+      allowUncaught: false,
     },
   },
 
