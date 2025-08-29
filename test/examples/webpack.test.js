@@ -1,27 +1,33 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import sinon from 'sinon';
+import { expect } from 'chai';
+
+import { setTimeout } from '../util/timers.js';
+import { loadHtml } from '../util/fixtures.js';
 
 describe('webpack app', function () {
+  let __originalOnError = null;
+
   this.timeout(4000);
 
-  before(function (done) {
+  before(async function () {
+    // Prevent WTR/Mocha from failing the test on uncaught errors.
+    __originalOnError = window.onerror;
+    window.onerror = () => false;
+
     // Load the HTML page.
-    document.write(window.__html__['examples/webpack/src/index.html']);
+    await loadHtml('examples/webpack/src/index.html');
 
-    // Set a timer before stubbing the XHR server, else it will interfere with
-    // scripts loaded from the HTML page.
-    setTimeout(function () {
-      // Stub the xhr interface.
-      window.server = sinon.createFakeServer();
+    // Give the snippet time to load and init.
+    await setTimeout(250);
 
-      done();
-    }, 3000);
+    // Stub the xhr interface.
+    window.server = sinon.createFakeServer();
   });
 
   after(function () {
     window.server.restore();
+    window.onerror = __originalOnError;
+    __originalOnError = null;
   });
 
   function stubResponse(server) {
@@ -33,16 +39,18 @@ describe('webpack app', function () {
   }
 
   it('should send a valid log event', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    var element = document.getElementById('rollbar-info');
+    const element = document.getElementById('rollbar-info');
+    expect(element).to.be.ok;
     element.click();
+
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.message.body).to.eql('webpack test log');
@@ -51,28 +59,30 @@ describe('webpack app', function () {
   });
 
   it('should report uncaught error', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    var element = document.getElementById('throw-error');
+    const element = document.getElementById('throw-error');
+    expect(element).to.be.ok;
     element.click();
+
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
 
     // This has become necessary because Travis switched their Chrome stable
     // version _down_ from 76 to 62, which handles this test case differently.
     // 2020-05-06: Travis Chrome 62 is now returning the original message.
-    var version = parseInt(
+    const version = parseInt(
       window.navigator.userAgent.match(
         new RegExp('^.*HeadlessChrome/([0-9]*).*$'),
       )[1],
     );
-    var message = version >= 62 ? 'webpack test error' : 'Script error.';
+    const message = version >= 62 ? 'webpack test error' : 'Script error.';
 
     expect(body.data.body.trace.exception.message).to.eql(message);
 
@@ -80,27 +90,32 @@ describe('webpack app', function () {
   });
 
   it('should store a payload and send stored payload', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
     // Invoke rollbar event to be stored, not sent.
-    document.getElementById('rollbar-info-with-extra').click();
+    const element = document.getElementById('rollbar-info-with-extra');
+    expect(element).to.be.ok;
+    element.click();
+
     server.respond();
 
     // Verify event is not sent to API
     expect(server.requests.length).to.eql(0);
 
     // Verify valid stored payload
-    var parsedJson = JSON.parse(window.jsonPayload);
+    const parsedJson = JSON.parse(window.jsonPayload);
     expect(parsedJson.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(parsedJson.data.body.message.body).to.eql('webpack test log');
 
     // Send stored payload
-    document.getElementById('send-json').click();
+    const sendJsonElement = document.getElementById('send-json');
+    expect(sendJsonElement).to.be.ok;
+    sendJsonElement.click();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.message.body).to.eql('webpack test log');

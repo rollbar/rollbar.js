@@ -10,8 +10,6 @@ export default {
     '!test/browser.core.test.js',
     '!test/browser.rollbar.test.js',
     '!test/browser.transforms.test.js',
-    // Exclude unmigrated test directories
-    '!test/examples/**/*.test.js',
   ],
 
   nodeResolve: {
