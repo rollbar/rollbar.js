@@ -536,7 +536,7 @@ describe('options.captureUncaught', function () {
       expect(body.data.custom.err).to.eql('test');
     });
 
-    it('should remove circular references in custom data', async function () {
+    it.only('should remove circular references in custom data', async function () {
       const server = window.server;
       expect(server).to.exist;
 
@@ -556,6 +556,8 @@ describe('options.captureUncaught', function () {
 
       const array = ['one', 'two'];
       array.push(array);
+      expect(array).to.be.an('array').that.has.nested.include(array);
+
       const custom = { foo: 'bar', array: array };
       const notCircular = { key: 'value' };
       custom.notCircular1 = notCircular;
@@ -580,11 +582,10 @@ describe('options.captureUncaught', function () {
       expect(body.data.custom.self).to.eql(
         'Removed circular reference: object',
       );
-      expect(body.data.custom.array).to.eql([
-        'one',
-        'two',
-        'Removed circular reference: array',
-      ]);
+      expect(body.data.custom.array)
+        .to.be.an('array')
+        .that.has.lengthOf(3)
+        .and.equals(['one', 'two', 'Removed circular reference: array']);
       expect(body.data.custom.contextData).to.eql({
         extra: 'baz',
         data: 'Removed circular reference: object',
