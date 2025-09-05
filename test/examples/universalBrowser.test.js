@@ -34,7 +34,7 @@ describe('Rollbar loaded by snippet', function () {
   it('should send a valid log event', async function () {
     const server = window.server;
     const rollbar = document.defaultView.Rollbar;
-    expect(server).to.be.ok;
+    expect(server).to.exist;
     expect(rollbar).to.be.ok;
 
     server.respondWith('POST', 'api/1/item', [

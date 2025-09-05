@@ -45,7 +45,7 @@ describe('webpack app', function () {
     server.requests.length = 0;
 
     const element = document.getElementById('rollbar-info');
-    expect(element).to.be.ok;
+    expect(element).to.exist;
     element.click();
 
     server.respond();
@@ -65,7 +65,7 @@ describe('webpack app', function () {
     server.requests.length = 0;
 
     const element = document.getElementById('throw-error');
-    expect(element).to.be.ok;
+    expect(element).to.exist;
     element.click();
 
     server.respond();
@@ -97,7 +97,7 @@ describe('webpack app', function () {
 
     // Invoke rollbar event to be stored, not sent.
     const element = document.getElementById('rollbar-info-with-extra');
-    expect(element).to.be.ok;
+    expect(element).to.exist;
     element.click();
 
     server.respond();
