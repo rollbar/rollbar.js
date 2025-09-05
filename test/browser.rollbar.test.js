@@ -1,7 +1,8 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
+import sinon from 'sinon';
+
+import { setTimeout } from './util/timers.js';
+import { loadHtml } from './util/fixtures.js';
 
 import Rollbar from '../src/browser/rollbar.js';
 
@@ -9,21 +10,15 @@ const DUMMY_TRACE_ID = 'some-trace-id';
 const DUMMY_SPAN_ID = 'some-span-id';
 
 const ValidOpenTracingTracerStub = {
-  scope: () => {
-    return {
-      active: () => {
-        return {
-          setTag: () => {},
-          context: () => {
-            return {
-              toTraceId: () => DUMMY_TRACE_ID,
-              toSpanId: () => DUMMY_SPAN_ID,
-            };
-          },
-        };
-      },
-    };
-  },
+  scope: () => ({
+    active: () => ({
+      setTag: () => {},
+      context: () => ({
+        toTraceId: () => DUMMY_TRACE_ID,
+        toSpanId: () => DUMMY_SPAN_ID,
+      }),
+    }),
+  }),
 };
 
 const InvalidOpenTracingTracerStub = {
@@ -71,7 +66,7 @@ describe('Rollbar()', function () {
     window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
-  it('should have all of the expected methods with a real client', function (done) {
+  it('should have all of the expected methods with a real client', function () {
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options));
 
@@ -82,11 +77,9 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
-
-    done();
   });
 
-  it('should have all of the expected methods', function (done) {
+  it('should have all of the expected methods', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -98,20 +91,17 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
-
-    done();
   });
 
-  it('should have some default options', function (done) {
+  it('should have some default options', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.scrubFields).to.contain('password');
-    done();
   });
 
-  it('should merge with the defaults options', function (done) {
+  it('should merge with the defaults options', function () {
     var client = new (TestClientGen())();
     var options = {
       scrubFields: ['foobar'],
@@ -135,10 +125,9 @@ describe('Rollbar()', function () {
       'api.rollbar.com/api/1/tracing/',
     );
     expect(rollbar.options.tracing.enabled).to.eql(false);
-    done();
   });
 
-  it('should overwrite default if specified', function (done) {
+  it('should overwrite default if specified', function () {
     var client = new (TestClientGen())();
     var options = {
       scrubFields: ['foobar'],
@@ -148,10 +137,9 @@ describe('Rollbar()', function () {
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.not.contain('password');
-    done();
   });
 
-  it('should replace deprecated options', function (done) {
+  it('should replace deprecated options', function () {
     var client = new (TestClientGen())();
     var options = {
       hostWhiteList: ['foo'],
@@ -163,21 +151,18 @@ describe('Rollbar()', function () {
     expect(rollbar.options.hostBlackList).to.eql(undefined);
     expect(rollbar.options.hostSafeList).to.contain('foo');
     expect(rollbar.options.hostBlockList).to.contain('bar');
-    done();
   });
 
-  it('should return a uuid when logging', function (done) {
+  it('should return a uuid when logging', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
 
     var result = rollbar.log('a messasge', 'another one');
-    expect(result.uuid).to.be.ok();
-
-    done();
+    expect(result.uuid).to.be.ok;
   });
 
-  it('should package up the inputs', function (done) {
+  it('should package up the inputs', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -185,12 +170,10 @@ describe('Rollbar()', function () {
     var result = rollbar.log('a message', 'another one');
     var loggedItem = client.logCalls[0].item;
     expect(loggedItem.message).to.eql('a message');
-    expect(loggedItem.custom).to.be.ok();
-
-    done();
+    expect(loggedItem.custom).to.be.ok;
   });
 
-  it('should call the client with the right method', function (done) {
+  it('should call the client with the right method', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -202,28 +185,22 @@ describe('Rollbar()', function () {
       expect(client.logCalls[i].func).to.eql(methods[i]);
       expect(client.logCalls[i].item.message).to.eql(msg);
     }
-
-    done();
   });
 
   // Legacy OpenTracing support
-  it('should have a tracer if valid tracer is provided', function (done) {
+  it('should have a tracer if valid tracer is provided', function () {
     var options = { tracer: ValidOpenTracingTracerStub };
     var rollbar = (window.rollbar = new Rollbar(options));
 
     expect(rollbar.client.tracer).to.eql(ValidOpenTracingTracerStub);
-
-    done();
   });
 
   // Legacy OpenTracing support
-  it('should not have a tracer if invalid tracer is provided', function (done) {
+  it('should not have a tracer if invalid tracer is provided', function () {
     var options = { tracer: InvalidOpenTracingTracerStub };
     var rollbar = (window.rollbar = new Rollbar(options));
 
     expect(rollbar.client.tracer).to.eql(null);
-
-    done();
   });
 });
 
@@ -232,7 +209,7 @@ describe('configure', function () {
     window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
-  it('should configure client', function (done) {
+  it('should configure client', function () {
     var client = new (TestClientGen())();
     var options = {
       payload: {
@@ -246,9 +223,8 @@ describe('configure', function () {
     rollbar.configure({ payload: { environment: 'borkbork' } });
     expect(rollbar.options.payload.environment).to.eql('borkbork');
     expect(client.options.payload.environment).to.eql('borkbork');
-    done();
   });
-  it('should accept a second parameter and use it as the payload value', function (done) {
+  it('should accept a second parameter and use it as the payload value', function () {
     var client = new (TestClientGen())();
     var options = {
       payload: {
@@ -263,9 +239,8 @@ describe('configure', function () {
     expect(rollbar.options.somekey).to.eql('borkbork');
     expect(rollbar.options.payload.b).to.eql(97);
     expect(client.payloadData.b).to.eql(97);
-    done();
   });
-  it('should accept a second parameter and override the payload with it', function (done) {
+  it('should accept a second parameter and override the payload with it', function () {
     var client = new (TestClientGen())();
     var options = {
       payload: {
@@ -280,9 +255,8 @@ describe('configure', function () {
     expect(rollbar.options.somekey).to.eql('borkbork');
     expect(rollbar.options.payload.b).to.eql(97);
     expect(client.payloadData.b).to.eql(97);
-    done();
   });
-  it('should replace deprecated options', function (done) {
+  it('should replace deprecated options', function () {
     var client = new (TestClientGen())();
     var options = {
       hostWhiteList: ['foo'],
@@ -298,9 +272,8 @@ describe('configure', function () {
     expect(rollbar.options.hostBlackList).to.eql(undefined);
     expect(rollbar.options.hostSafeList).to.contain('foo');
     expect(rollbar.options.hostBlockList).to.contain('bar');
-    done();
   });
-  it('should store configured options', function (done) {
+  it('should store configured options', function () {
     var client = new (TestClientGen())();
     var options = {
       captureUncaught: true,
@@ -323,17 +296,15 @@ describe('configure', function () {
       'borkbork',
     );
     expect(rollbar.options._configuredOptions.captureUncaught).to.eql(false);
-    done();
   });
 });
 
 describe('options.captureUncaught', function () {
-  beforeEach(function (done) {
+  beforeEach(async function () {
     // Load the HTML page, so errors can be generated.
-    document.write(window.__html__['test/fixtures/html/error.html']);
+    await loadHtml('test/fixtures/html/error.html');
 
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -349,7 +320,7 @@ describe('options.captureUncaught', function () {
     ]);
   }
 
-  it('should capture when enabled in constructor', function (done) {
+  it('should capture when enabled in constructor', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -363,29 +334,27 @@ describe('options.captureUncaught', function () {
     var element = document.getElementById('throw-error');
     element.click();
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('test error');
-      expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
-        'test error',
-      );
-      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-      });
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
+      'test error',
+    );
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
   });
 
-  it('should respond to enable/disable in configure', function (done) {
+  it('should respond to enable/disable in configure', async function () {
     var server = window.server;
     var element = document.getElementById('throw-error');
     stubResponse(server);
@@ -399,47 +368,45 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    setTimeout(function () {
-      server.respond();
-      expect(server.requests.length).to.eql(0); // Disabled, no event
-      server.requests.length = 0;
+    await setTimeout(1);
 
-      rollbar.configure({
-        captureUncaught: true,
-      });
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+    server.requests.length = 0;
 
-      element.click();
+    rollbar.configure({
+      captureUncaught: true,
+    });
 
-      setTimeout(function () {
-        server.respond();
+    element.click();
 
-        var body = JSON.parse(server.requests[0].requestBody);
+    await setTimeout(1);
 
-        expect(body.data.body.trace.exception.message).to.eql('test error');
-        expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok();
+    server.respond();
 
-        server.requests.length = 0;
+    var body = JSON.parse(server.requests[0].requestBody);
 
-        rollbar.configure({
-          captureUncaught: false,
-        });
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok;
 
-        element.click();
+    server.requests.length = 0;
 
-        setTimeout(function () {
-          server.respond();
-          expect(server.requests.length).to.eql(0); // Disabled, no event
+    rollbar.configure({
+      captureUncaught: false,
+    });
 
-          done();
-        }, 1);
-      }, 1);
-    }, 1);
+    element.click();
+
+    await setTimeout(1);
+
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
   });
 
   // Test case expects Chrome, which is the currently configured karma js/browser
   // engine at the time of this comment. However, karma's Chrome and ChromeHeadless
   // don't actually behave like real Chrome so we settle for stubbing some things.
-  it('should capture external error data when inspectAnonymousErrors is true', function (done) {
+  it('should capture external error data when inspectAnonymousErrors is true', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -463,26 +430,24 @@ describe('options.captureUncaught', function () {
       Error.prepareStackTrace(e);
     }
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('anon error');
-      expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-      });
+    expect(body.data.body.trace.exception.message).to.eql('anon error');
+    expect(body.data.notifier.diagnostic.is_anonymous).to.eql(true);
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
   });
 
-  it('should ignore duplicate errors by default', function (done) {
+  it('should ignore duplicate errors by default', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -500,28 +465,26 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      // transmit only once
-      expect(server.requests.length).to.eql(1);
+    server.respond();
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    // transmit only once
+    expect(server.requests.length).to.eql(1);
 
-      expect(body.data.body.trace.exception.message).to.eql('test error');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-      });
+    expect(body.data.body.trace.exception.message).to.eql('test error');
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
   });
 
-  it('should transmit duplicate errors when set in config', function (done) {
+  it('should transmit duplicate errors when set in config', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -540,27 +503,25 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      // transmit both errors
-      expect(server.requests.length).to.eql(2);
+    server.respond();
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    // transmit both errors
+    expect(server.requests.length).to.eql(2);
 
-      expect(body.data.body.trace.exception.message).to.eql('test error');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-      });
+    expect(body.data.body.trace.exception.message).to.eql('test error');
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
   });
-  it('should send DOMException as trace_chain', function (done) {
+  it('should send DOMException as trace_chain', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -574,27 +535,25 @@ describe('options.captureUncaught', function () {
     var element = document.getElementById('throw-dom-exception');
     element.click();
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace_chain[0].exception.message).to.eql(
-        'test DOMException',
-      );
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-      });
+    expect(body.data.body.trace_chain[0].exception.message).to.eql(
+      'test DOMException',
+    );
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
   });
 
-  it('should capture exta frames when stackTraceLimit is set', function (done) {
+  it('should capture exta frames when stackTraceLimit is set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -610,27 +569,25 @@ describe('options.captureUncaught', function () {
     var element = document.getElementById('throw-depp-stack-error');
     element.click();
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('deep stack error');
-      expect(body.data.body.trace.frames.length).to.be.above(20);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-        stackTraceLimit: oldLimit, // reset to default
-      });
+    expect(body.data.body.trace.exception.message).to.eql('deep stack error');
+    expect(body.data.body.trace.frames.length).to.be.above(20);
 
-      done();
-    }, 1);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      stackTraceLimit: oldLimit, // reset to default
+    });
   });
 
-  it('should add _wrappedSource when wrapGlobalEventHandlers is set', function (done) {
+  it('should add _wrappedSource when wrapGlobalEventHandlers is set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -645,33 +602,30 @@ describe('options.captureUncaught', function () {
     var element = document.getElementById('throw-event-handler-error');
     element.click();
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(100);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql(
-        'event handler error',
-      );
-      expect(body.data.body.trace.extra).to.have.property('_wrappedSource');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      // karma doesn't unload the browser between tests, so the onerror handler
-      // will remain installed. Unset captureUncaught so the onerror handler
-      // won't affect other tests.
-      rollbar.configure({
-        captureUncaught: false,
-        wrapGlobalEventHandlers: false,
-      });
+    expect(body.data.body.trace.exception.message).to.eql(
+      'event handler error',
+    );
+    expect(body.data.body.trace.extra).to.have.property('_wrappedSource');
 
-      done();
-    }, 100);
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      wrapGlobalEventHandlers: false,
+    });
   });
 });
 
 describe('options.captureUnhandledRejections', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -687,7 +641,7 @@ describe('options.captureUnhandledRejections', function () {
     ]);
   }
 
-  it('should capture when enabled in constructor', function (done) {
+  it('should capture when enabled in constructor', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -700,24 +654,22 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(500);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('test reject');
-      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      rollbar.configure({
-        captureUnhandledRejections: false,
-      });
-      window.removeEventListener('unhandledrejection', window._rollbarURH);
+    expect(body.data.body.trace.exception.message).to.eql('test reject');
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(true);
 
-      done();
-    }, 500);
+    rollbar.configure({
+      captureUnhandledRejections: false,
+    });
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
   });
 
-  it('should respond to enable in configure', function (done) {
+  it('should respond to enable in configure', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -734,25 +686,23 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(500);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('test reject');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      server.requests.length = 0;
+    expect(body.data.body.trace.exception.message).to.eql('test reject');
 
-      rollbar.configure({
-        captureUnhandledRejections: false,
-      });
-      window.removeEventListener('unhandledrejection', window._rollbarURH);
+    server.requests.length = 0;
 
-      done();
-    }, 500);
+    rollbar.configure({
+      captureUnhandledRejections: false,
+    });
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
   });
 
-  it('should respond to disable in configure', function (done) {
+  it('should respond to disable in configure', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -769,23 +719,20 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(500);
 
-      expect(server.requests.length).to.eql(0); // Disabled, no event
-      server.requests.length = 0;
+    server.respond();
 
-      window.removeEventListener('unhandledrejection', window._rollbarURH);
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+    server.requests.length = 0;
 
-      done();
-    }, 500);
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
   });
 });
 
 describe('log', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -801,7 +748,7 @@ describe('log', function () {
     ]);
   }
 
-  it('should send message when called with message and extra args', function (done) {
+  it('should send message when called with message and extra args', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -813,24 +760,22 @@ describe('log', function () {
 
     rollbar.log('test message', { foo: 'bar' });
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.message.body).to.eql('test message');
-      expect(body.data.body.message.extra).to.eql({ foo: 'bar' });
-      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
-      expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
-        'string',
-        'object',
-      ]);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.message.body).to.eql('test message');
+    expect(body.data.body.message.extra).to.eql({ foo: 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
+      'string',
+      'object',
+    ]);
   });
 
-  it('should send exception when called with error and extra args', function (done) {
+  it('should send exception when called with error and extra args', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -842,24 +787,22 @@ describe('log', function () {
 
     rollbar.log(new Error('test error'), { foo: 'bar' });
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('test error');
-      expect(body.data.body.trace.extra).to.eql({ foo: 'bar' });
-      expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
-      expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
-        'error',
-        'object',
-      ]);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.body.trace.extra).to.eql({ foo: 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
+      'error',
+      'object',
+    ]);
   });
 
-  it('should add custom data when called with error context', function (done) {
+  it('should add custom data when called with error context', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -875,20 +818,18 @@ describe('log', function () {
 
     rollbar.error(err, { foo: 'bar' });
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql('test error');
-      expect(body.data.custom.foo).to.eql('bar');
-      expect(body.data.custom.err).to.eql('test');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.custom.foo).to.eql('bar');
+    expect(body.data.custom.err).to.eql('test');
   });
 
-  it('should add tracing attributes when called in an active span', function (done) {
+  it('should add tracing attributes when called in an active span', async function () {
     const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -907,32 +848,26 @@ describe('log', function () {
       rollbar.error(err);
     });
 
-    setTimeout(function () {
-      try {
-        server.respond();
+    await setTimeout(1);
 
-        var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-        expect(body.data.body.trace.exception.message).to.eql('test error');
-        expect(body.data.attributes).to.be.an('array');
-        expect(body.data.attributes.length).to.eql(4);
-        expect(body.data.attributes[0].key).to.eql('replay_id');
-        expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{16}$/);
-        expect(body.data.attributes[1].key).to.eql('session_id');
-        expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{32}$/);
-        expect(body.data.attributes[2].key).to.eql('span_id');
-        expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{16}$/);
-        expect(body.data.attributes[3].key).to.eql('trace_id');
-        expect(body.data.attributes[3].value).to.match(/^[a-f0-9]{32}$/);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-        done();
-      } catch (e) {
-        done(e);
-      }
-    }, 1);
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.attributes).to.be.an('array');
+    expect(body.data.attributes.length).to.eql(4);
+    expect(body.data.attributes[0].key).to.eql('replay_id');
+    expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{16}$/);
+    expect(body.data.attributes[1].key).to.eql('session_id');
+    expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{32}$/);
+    expect(body.data.attributes[2].key).to.eql('span_id');
+    expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{16}$/);
+    expect(body.data.attributes[3].key).to.eql('trace_id');
+    expect(body.data.attributes[3].value).to.match(/^[a-f0-9]{32}$/);
   });
 
-  it('should send message when called with only null arguments', function (done) {
+  it('should send message when called with only null arguments', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -945,21 +880,19 @@ describe('log', function () {
 
     rollbar.log(null);
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.message.body).to.eql(
-        'Item sent with null or missing arguments.',
-      );
-      expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.message.body).to.eql(
+      'Item sent with null or missing arguments.',
+    );
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
   });
 
-  it('should skipFrames when set', function (done) {
+  it('should skipFrames when set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -975,22 +908,20 @@ describe('log', function () {
     rollbar.log(error);
     rollbar.log(error, { skipFrames: 1 });
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace
-        .frames;
-      var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace
-        .frames;
+    server.respond();
 
-      expect(frames1.length).to.eql(frames2.length + 1);
-      expect(frames1.slice(0, -1)).to.eql(frames2);
+    var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace
+      .frames;
+    var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace
+      .frames;
 
-      done();
-    }, 1);
+    expect(frames1.length).to.eql(frames2.length + 1);
+    expect(frames1.slice(0, -1)).to.eql(frames2);
   });
 
-  it('should call the item callback on error', function (done) {
+  it('should call the item callback on error', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1019,21 +950,18 @@ describe('log', function () {
 
     rollbar.log('test', callback);
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      expect(callbackCalled.message).to.eql('Test error');
+    server.respond();
 
-      done();
-    }, 1);
+    expect(callbackCalled.message).to.eql('Test error');
   });
 });
 
 // Test direct call to onerror, as used in verification of browser js install.
 describe('onerror', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -1049,7 +977,7 @@ describe('onerror', function () {
     ]);
   }
 
-  it('should send message when calling onerror directly', function (done) {
+  it('should send message when calling onerror directly', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1065,24 +993,21 @@ describe('onerror', function () {
       window.location.href,
     );
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.trace.exception.message).to.eql(
-        'testing window.onerror',
-      );
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.trace.exception.message).to.eql(
+      'testing window.onerror',
+    );
   });
 });
 
 describe('callback options', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -1098,7 +1023,7 @@ describe('callback options', function () {
     ]);
   }
 
-  it('should use checkIgnore when set', function (done) {
+  it('should use checkIgnore when set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1113,16 +1038,14 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to ignore
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      expect(server.requests.length).to.eql(0);
+    server.respond();
 
-      done();
-    }, 1);
+    expect(server.requests.length).to.eql(0);
   });
 
-  it('should receive valid arguments at checkIgnore', function (done) {
+  it('should receive valid arguments at checkIgnore', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1140,17 +1063,15 @@ describe('callback options', function () {
 
     rollbar.log(new Error('test'));
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      // Should be ignored if all checks pass.
-      expect(server.requests.length).to.eql(0);
+    server.respond();
 
-      done();
-    }, 1);
+    // Should be ignored if all checks pass.
+    expect(server.requests.length).to.eql(0);
   });
 
-  it('should receive uncaught at checkIgnore', function (done) {
+  it('should receive uncaught at checkIgnore', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1170,17 +1091,15 @@ describe('callback options', function () {
     var element = document.getElementById('throw-error');
     element.click();
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      // Should be ignored if checkIgnore receives isUncaught.
-      expect(server.requests.length).to.eql(0);
+    server.respond();
 
-      done();
-    }, 1);
+    // Should be ignored if checkIgnore receives isUncaught.
+    expect(server.requests.length).to.eql(0);
   });
 
-  it('should send when checkIgnore returns false', function (done) {
+  it('should send when checkIgnore returns false', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1195,20 +1114,18 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      expect(server.requests.length).to.eql(1);
-      var body = JSON.parse(server.requests[0].requestBody);
-      expect(
-        body.data.notifier.configured_options.checkIgnore.substr(0, 8),
-      ).to.eql('function');
+    server.respond();
 
-      done();
-    }, 1);
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(
+      body.data.notifier.configured_options.checkIgnore.substr(0, 8),
+    ).to.eql('function');
   });
 
-  it('should use onSendCallback when set', function (done) {
+  it('should use onSendCallback when set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1223,21 +1140,19 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      expect(server.requests.length).to.eql(1);
-      var body = JSON.parse(server.requests[0].requestBody);
-      expect(body.data.foo).to.eql('bar');
-      expect(
-        body.data.notifier.configured_options.onSendCallback.substr(0, 8),
-      ).to.eql('function');
+    server.respond();
 
-      done();
-    }, 1);
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('bar');
+    expect(
+      body.data.notifier.configured_options.onSendCallback.substr(0, 8),
+    ).to.eql('function');
   });
 
-  it('should use transform when set', function (done) {
+  it('should use transform when set', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1252,25 +1167,22 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      expect(server.requests.length).to.eql(1);
-      var body = JSON.parse(server.requests[0].requestBody);
-      expect(body.data.foo).to.eql('baz');
-      expect(
-        body.data.notifier.configured_options.transform.substr(0, 8),
-      ).to.eql('function');
+    server.respond();
 
-      done();
-    }, 1);
+    expect(server.requests.length).to.eql(1);
+    var body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('baz');
+    expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
+      'function',
+    );
   });
 });
 
 describe('options.autoInstrument', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     window.server = sinon.createFakeServer();
-    done();
   });
 
   afterEach(function () {
@@ -1287,7 +1199,7 @@ describe('options.autoInstrument', function () {
   }
 
   describe('options.autoInstrument.contentSecurityPolicy', function () {
-    beforeEach(function (done) {
+    beforeEach(function () {
       var options = {
         accessToken: 'POST_CLIENT_ITEM_TOKEN',
         autoInstrument: {
@@ -1297,7 +1209,6 @@ describe('options.autoInstrument', function () {
         },
       };
       window.rollbar = new Rollbar(options);
-      done();
     });
 
     afterEach(function () {
@@ -1307,48 +1218,40 @@ describe('options.autoInstrument', function () {
       });
     });
 
-    it('should report content security policy errors', function (done) {
+    it('should report content security policy errors', async function () {
       var queue = rollbar.client.notifier.queue;
       var queueStub = sinon.stub(queue, '_makeApiRequest');
 
       // Load the HTML page, so errors can be generated.
-      document.write(window.__html__['test/fixtures/html/csp-errors.html']);
+      await loadHtml('test/fixtures/html/csp-errors.html');
 
-      setTimeout(function () {
-        try {
-          var item = queueStub.getCall(0).args[0];
-          var message = item.body.message.body;
-          var telemetry = item.body.telemetry[0];
+      await setTimeout(100);
 
-          expect(message).to.match(/Security Policy Violation/);
-          expect(message).to.match(/blockedURI: https:\/\/example.com\/v3\//);
-          expect(message).to.match(/violatedDirective: script-src/);
-          expect(message).to.match(
-            /originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/,
-          );
+      var item = queueStub.getCall(0).args[0];
+      var message = item.body.message.body;
+      var telemetry = item.body.telemetry[0];
 
-          expect(telemetry.level).to.eql('error');
-          expect(telemetry.type).to.eql('log');
-          expect(telemetry.body.message).to.match(/Security Policy Violation/);
-          expect(telemetry.body.message).to.match(
-            /blockedURI: https:\/\/example.com\/v3\//,
-          );
-          expect(telemetry.body.message).to.match(
-            /violatedDirective: script-src/,
-          );
-          expect(telemetry.body.message).to.match(
-            /originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/,
-          );
+      expect(message).to.match(/Security Policy Violation/);
+      expect(message).to.match(/blockedURI: https:\/\/example.com\/v3\//);
+      expect(message).to.match(/violatedDirective: script-src/);
+      expect(message).to.match(
+        /originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/,
+      );
 
-          done();
-        } catch (e) {
-          done(e);
-        }
-      }, 100);
+      expect(telemetry.level).to.eql('error');
+      expect(telemetry.type).to.eql('log');
+      expect(telemetry.body.message).to.match(/Security Policy Violation/);
+      expect(telemetry.body.message).to.match(
+        /blockedURI: https:\/\/example.com\/v3\//,
+      );
+      expect(telemetry.body.message).to.match(/violatedDirective: script-src/);
+      expect(telemetry.body.message).to.match(
+        /originalPolicy: default-src 'self' 'unsafe-inline' 'unsafe-eval';/,
+      );
     });
   });
 
-  it('should add telemetry events when console.log is called', function (done) {
+  it('should add telemetry events when console.log is called', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1362,15 +1265,13 @@ describe('options.autoInstrument', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.data.body.telemetry[0].body.message).to.eql('console test');
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      done();
-    }, 1);
+    expect(body.data.body.telemetry[0].body.message).to.eql('console test');
   });
 
   function initRollbarForNetworkTelemetry() {
@@ -1388,7 +1289,7 @@ describe('options.autoInstrument', function () {
     return new Rollbar(options);
   }
 
-  it('should add telemetry events for POST xhr calls', function (done) {
+  it('should add telemetry events for POST xhr calls', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1406,38 +1307,36 @@ describe('options.autoInstrument', function () {
     xhr.open('POST', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Content-type', 'application/json');
     xhr.setRequestHeader('Secret', 'abcdef');
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          setTimeout(function () {
-            server.respond();
+          await setTimeout(1);
 
-            expect(server.requests.length).to.eql(2);
-            var body = JSON.parse(server.requests[1].requestBody);
+          server.respond();
 
-            // Verify request capture and scrubbing
-            expect(body.data.body.telemetry[0].body.request).to.eql(
-              '{"name":"bar","secret":"********"}',
-            );
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
 
-            // Verify request headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-              'Content-type': 'application/json',
-              Secret: '********',
-            });
+          // Verify request capture and scrubbing
+          expect(body.data.body.telemetry[0].body.request).to.eql(
+            '{"name":"bar","secret":"********"}',
+          );
 
-            // Verify response capture and scrubbing
-            expect(body.data.body.telemetry[0].body.response.body).to.eql(
-              '{"name":"foo","password":"********"}',
-            );
-            expect(
-              body.data.body.telemetry[0].body.response.headers['Password'],
-            ).to.eql('********');
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+            'Content-type': 'application/json',
+            Secret: '********',
+          });
 
-            done();
-          }, 1);
+          // Verify response capture and scrubbing
+          expect(body.data.body.telemetry[0].body.response.body).to.eql(
+            '{"name":"foo","password":"********"}',
+          );
+          expect(
+            body.data.body.telemetry[0].body.response.headers['Password'],
+          ).to.eql('********');
         } catch (e) {
           done(e);
         }
@@ -1447,7 +1346,7 @@ describe('options.autoInstrument', function () {
     server.respond();
   });
 
-  it('should add telemetry events for GET xhr calls', function (done) {
+  it('should add telemetry events for GET xhr calls', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1464,32 +1363,30 @@ describe('options.autoInstrument', function () {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Secret', 'abcdef');
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          setTimeout(function () {
-            server.respond();
+          await setTimeout(1);
 
-            expect(server.requests.length).to.eql(2);
-            var body = JSON.parse(server.requests[1].requestBody);
+          server.respond();
 
-            // Verify request headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-              Secret: '********',
-            });
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
 
-            // Verify response capture and scrubbing
-            expect(body.data.body.telemetry[0].body.response.body).to.eql(
-              '{"name":"foo","password":"********"}',
-            );
-            expect(
-              body.data.body.telemetry[0].body.response.headers['Password'],
-            ).to.eql('********');
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+            Secret: '********',
+          });
 
-            done();
-          }, 1);
+          // Verify response capture and scrubbing
+          expect(body.data.body.telemetry[0].body.response.body).to.eql(
+            '{"name":"foo","password":"********"}',
+          );
+          expect(
+            body.data.body.telemetry[0].body.response.headers['Password'],
+          ).to.eql('********');
         } catch (e) {
           done(e);
         }
@@ -1499,7 +1396,7 @@ describe('options.autoInstrument', function () {
     server.respond();
   });
 
-  it('should handle non-string Content-Type', function (done) {
+  it('should handle non-string Content-Type', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1519,33 +1416,31 @@ describe('options.autoInstrument', function () {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Secret', 'abcdef');
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
         try {
           rollbar.log('test'); // generate a payload to inspect
 
-          setTimeout(function () {
-            server.respond();
+          await setTimeout(1);
 
-            expect(server.requests.length).to.eql(2);
-            var body = JSON.parse(server.requests[1].requestBody);
+          server.respond();
 
-            // Verify request headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-              Secret: '********',
-            });
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
 
-            // Not scrubbed for unrecognized content type
-            expect(body.data.body.telemetry[0].body.response.body).to.eql(
-              '{"name":"foo","password":"123456"}',
-            );
+          // Verify request headers capture and case-insensitive scrubbing
+          expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+            Secret: '********',
+          });
 
-            expect(
-              body.data.body.telemetry[0].body.response.headers['Password'],
-            ).to.eql('********');
+          // Not scrubbed for unrecognized content type
+          expect(body.data.body.telemetry[0].body.response.body).to.eql(
+            '{"name":"foo","password":"123456"}',
+          );
 
-            done();
-          }, 1);
+          expect(
+            body.data.body.telemetry[0].body.response.headers['Password'],
+          ).to.eql('********');
         } catch (e) {
           done(e);
         }
@@ -1555,7 +1450,7 @@ describe('options.autoInstrument', function () {
     server.respond();
   });
 
-  it('should send errors for xhr http errors', function (done) {
+  it('should send errors for xhr http errors', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1580,40 +1475,34 @@ describe('options.autoInstrument', function () {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Content-type', 'application/json');
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
         try {
-          setTimeout(function () {
-            try {
-              server.respond();
+          await setTimeout(1);
 
-              expect(server.requests.length).to.eql(2);
-              var body = JSON.parse(server.requests[1].requestBody);
+          server.respond();
 
-              expect(body.data.body.trace.exception.message).to.eql(
-                'HTTP request failed with Status 404',
-              );
+          expect(server.requests.length).to.eql(2);
+          var body = JSON.parse(server.requests[1].requestBody);
 
-              // Just knowing a stack is present is enough for this test.
-              expect(body.data.body.trace.frames.length).to.be.above(1);
+          expect(body.data.body.trace.exception.message).to.eql(
+            'HTTP request failed with Status 404',
+          );
 
-              done();
-            } catch (e) {
-              done(e);
-            }
-          }, 1);
+          // Just knowing a stack is present is enough for this test.
+          expect(body.data.body.trace.frames.length).to.be.above(1);
         } catch (e) {
           done(e);
         }
       }
     };
     xhr.send(JSON.stringify({ name: 'bar', secret: 'xhr post' }));
-    setTimeout(function () {
-      server.respond();
-    }, 1);
+    await setTimeout(1);
+
+    server.respond();
   });
 
-  it('should add telemetry events for fetch calls', function (done) {
+  it('should add telemetry events for fetch calls', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1661,58 +1550,47 @@ describe('options.autoInstrument', function () {
         expect(response.bodyUsed).to.eql(false);
         return response.text();
       })
-      .then(function (text) {
+      .then(async function (text) {
         expect(text).to.eql(responseBody);
 
-        try {
-          rollbar.log('test'); // generate a payload to inspect
-        } catch (e) {
-          done(e);
-          return;
-        }
+        rollbar.log('test'); // generate a payload to inspect
 
-        setTimeout(function () {
-          try {
-            server.respond();
+        await setTimeout(1);
 
-            expect(window.fetchStub.called).to.be.ok();
-            expect(server.requests.length).to.eql(1);
-            var body = JSON.parse(server.requests[0].requestBody);
+        server.respond();
 
-            // Verify request capture and scrubbing
-            expect(body.data.body.telemetry[0].body.request).to.eql(
-              '{"name":"bar","secret":"********"}',
-            );
+        expect(window.fetchStub.called).to.be.ok;
+        expect(server.requests.length).to.eql(1);
+        var body = JSON.parse(server.requests[0].requestBody);
 
-            // Verify request headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-              'content-type': 'application/json',
-              secret: '********',
-            });
+        // Verify request capture and scrubbing
+        expect(body.data.body.telemetry[0].body.request).to.eql(
+          '{"name":"bar","secret":"********"}',
+        );
 
-            // Verify response capture and scrubbing
-            expect(body.data.body.telemetry[0].body.response.body).to.eql(
-              '{"name":"foo","password":"********"}',
-            );
+        // Verify request headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+          'content-type': 'application/json',
+          secret: '********',
+        });
 
-            // Verify response headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.response.headers).to.eql({
-              'content-type': 'application/json',
-              password: '********',
-            });
+        // Verify response capture and scrubbing
+        expect(body.data.body.telemetry[0].body.response.body).to.eql(
+          '{"name":"foo","password":"********"}',
+        );
 
-            rollbar.configure({ autoInstrument: false });
-            window.fetch.restore();
-            done();
-          } catch (e) {
-            done(e);
-            return;
-          }
-        }, 1);
+        // Verify response headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.response.headers).to.eql({
+          'content-type': 'application/json',
+          password: '********',
+        });
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
       });
   });
 
-  it('should report error for http 4xx fetch calls, when enabled', function (done) {
+  it('should report error for http 4xx fetch calls, when enabled', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1747,32 +1625,27 @@ describe('options.autoInstrument', function () {
       body: JSON.stringify({ foo: 'bar' }),
     };
     var fetchRequest = new Request('https://example.com/xhr-test');
-    window.fetch(fetchRequest, fetchInit).then(function (_response) {
-      setTimeout(function () {
-        try {
-          server.respond();
+    window.fetch(fetchRequest, fetchInit).then(async function (_response) {
+      await setTimeout(1);
 
-          expect(server.requests.length).to.eql(1);
-          var body = JSON.parse(server.requests[0].requestBody);
+      server.respond();
 
-          expect(body.data.body.trace.exception.message).to.eql(
-            'HTTP request failed with Status 404',
-          );
+      expect(server.requests.length).to.eql(1);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-          // Just knowing a stack is present is enough for this test.
-          expect(body.data.body.trace.frames.length).to.be.above(1);
+      expect(body.data.body.trace.exception.message).to.eql(
+        'HTTP request failed with Status 404',
+      );
 
-          rollbar.configure({ autoInstrument: false });
-          window.fetch.restore();
-          done();
-        } catch (e) {
-          done(e);
-        }
-      }, 1);
+      // Just knowing a stack is present is enough for this test.
+      expect(body.data.body.trace.frames.length).to.be.above(1);
+
+      rollbar.configure({ autoInstrument: false });
+      window.fetch.restore();
     });
   });
 
-  it('should add telemetry headers when fetch Headers object is undefined', function (done) {
+  it('should add telemetry headers when fetch Headers object is undefined', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1817,46 +1690,38 @@ describe('options.autoInstrument', function () {
       body: JSON.stringify({ name: 'bar', secret: 'xhr post' }),
     };
     var fetchRequest = new Request('https://example.com/xhr-test');
-    window.fetch(fetchRequest, fetchInit).then(function (response) {
-      try {
-        rollbar.log('test'); // generate a payload to inspect
-        setTimeout(function () {
-          try {
-            server.respond();
+    window.fetch(fetchRequest, fetchInit).then(async function (response) {
+      rollbar.log('test'); // generate a payload to inspect
 
-            expect(server.requests.length).to.eql(1);
-            var body = JSON.parse(server.requests[0].requestBody);
+      await setTimeout(1);
 
-            // Verify request headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-              'content-type': 'application/json',
-              secret: '********',
-            });
+      server.respond();
 
-            // Verify response headers capture and case-insensitive scrubbing
-            expect(body.data.body.telemetry[0].body.response.headers).to.eql({
-              'content-type': 'application/json',
-              password: '********',
-            });
+      expect(server.requests.length).to.eql(1);
+      var body = JSON.parse(server.requests[0].requestBody);
 
-            // Assert that the original stream reader hasn't been read.
-            expect(response.bodyUsed).to.eql(false);
+      // Verify request headers capture and case-insensitive scrubbing
+      expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+        'content-type': 'application/json',
+        secret: '********',
+      });
 
-            rollbar.configure({ autoInstrument: false });
-            window.fetch.restore();
-            window.Headers = originalHeaders;
-            done();
-          } catch (e) {
-            done(e);
-          }
-        });
-      } catch (e) {
-        done(e);
-      }
+      // Verify response headers capture and case-insensitive scrubbing
+      expect(body.data.body.telemetry[0].body.response.headers).to.eql({
+        'content-type': 'application/json',
+        password: '********',
+      });
+
+      // Assert that the original stream reader hasn't been read.
+      expect(response.bodyUsed).to.eql(false);
+
+      rollbar.configure({ autoInstrument: false });
+      window.fetch.restore();
+      window.Headers = originalHeaders;
     });
   });
 
-  it('should add a diagnostic message when wrapConsole fails', function (done) {
+  it('should add a diagnostic message when wrapConsole fails', async function () {
     var server = window.server;
     stubResponse(server);
     server.requests.length = 0;
@@ -1880,22 +1745,20 @@ describe('options.autoInstrument', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      window.console = oldConsole;
+    var body = JSON.parse(server.requests[0].requestBody);
 
-      expect(
-        rollbar.client.notifier.diagnostic.instrumentConsole,
-      ).to.have.property('error');
-      expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property(
-        'error',
-      );
+    window.console = oldConsole;
 
-      done();
-    }, 1);
+    expect(
+      rollbar.client.notifier.diagnostic.instrumentConsole,
+    ).to.have.property('error');
+    expect(body.data.notifier.diagnostic.instrumentConsole).to.have.property(
+      'error',
+    );
   });
 });
 
@@ -1904,7 +1767,7 @@ describe('captureEvent', function () {
     window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
-  it('should handle missing/default type and level', function (done) {
+  it('should handle missing/default type and level', function () {
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options));
 
@@ -1912,10 +1775,8 @@ describe('captureEvent', function () {
     expect(event.type).to.eql('manual');
     expect(event.level).to.eql('info');
     expect(event.body.foo).to.eql('bar');
-
-    done();
   });
-  it('should handle specified type and level', function (done) {
+  it('should handle specified type and level', function () {
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options));
 
@@ -1923,10 +1784,8 @@ describe('captureEvent', function () {
     expect(event.type).to.eql('log');
     expect(event.level).to.eql('debug');
     expect(event.body.foo).to.eql('bar');
-
-    done();
   });
-  it('should handle extra args', function (done) {
+  it('should handle extra args', function () {
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options));
 
@@ -1940,10 +1799,8 @@ describe('captureEvent', function () {
     expect(event.type).to.eql('manual');
     expect(event.level).to.eql('info');
     expect(event.body.foo).to.eql('bar');
-
-    done();
   });
-  it('should handle level that matches a type string', function (done) {
+  it('should handle level that matches a type string', function () {
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options));
 
@@ -1952,8 +1809,6 @@ describe('captureEvent', function () {
     expect(event.type).to.eql('log');
     expect(event.level).to.eql('error');
     expect(event.body.foo).to.eql('bar');
-
-    done();
   });
 });
 
@@ -1962,7 +1817,7 @@ describe('createItem', function () {
     window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
   });
 
-  it('should handle multiple strings', function (done) {
+  it('should handle multiple strings', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -1971,10 +1826,8 @@ describe('createItem', function () {
     var item = rollbar._createItem(args);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs['0']).to.eql('second');
-
-    done();
   });
-  it('should handle errors', function (done) {
+  it('should handle errors', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -1984,10 +1837,8 @@ describe('createItem', function () {
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs['0']).to.eql('second');
-
-    done();
   });
-  it('should handle a callback', function (done) {
+  it('should handle a callback', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2001,13 +1852,11 @@ describe('createItem', function () {
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs).to.eql(['second']);
-    expect(item.callback).to.be.ok();
+    expect(item.callback).to.be.ok;
     item.callback();
-    expect(myCallbackCalled).to.be.ok();
-
-    done();
+    expect(myCallbackCalled).to.be.ok;
   });
-  it('should handle arrays', function (done) {
+  it('should handle arrays', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2018,10 +1867,8 @@ describe('createItem', function () {
     expect(item.message).to.eql('first');
     expect(item.custom['0']).to.eql(1);
     expect(item.custom.extraArgs).to.eql(['second']);
-
-    done();
   });
-  it('should handle objects', function (done) {
+  it('should handle objects', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2033,10 +1880,8 @@ describe('createItem', function () {
     expect(item.custom.a).to.eql(1);
     expect(item.custom.b).to.eql(2);
     expect(item.custom.extraArgs).to.eql(['second']);
-
-    done();
   });
-  it('should handle custom arguments', function (done) {
+  it('should handle custom arguments', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2050,12 +1895,10 @@ describe('createItem', function () {
     expect(item.level).to.eql('info');
     expect(item.skipFrames).to.eql(1);
     expect(item.custom.foo).to.eql('bar');
-    expect(item.custom.level).to.not.be.ok();
-    expect(item.custom.skipFrames).to.not.be.ok();
-
-    done();
+    expect(item.custom.level).to.not.be.ok;
+    expect(item.custom.skipFrames).to.not.be.ok;
   });
-  it('should have a timestamp', function (done) {
+  it('should have a timestamp', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2064,26 +1907,22 @@ describe('createItem', function () {
     var item = rollbar._createItem(args);
     var now = new Date().getTime();
     expect(item.timestamp).to.be.within(now - 1000, now + 1000);
-
-    done();
   });
-  it('should have an uuid', function (done) {
+  it('should have an uuid', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
 
     var args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
-    expect(item.uuid).to.be.ok();
+    expect(item.uuid).to.be.ok;
 
     var parts = item.uuid.split('-');
     expect(parts.length).to.eql(5);
     // Type 4 UUID
     expect(parts[2][0]).to.eql('4');
-
-    done();
   });
-  it('should handle dates', function (done) {
+  it('should handle dates', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2092,10 +1931,8 @@ describe('createItem', function () {
     var args = [new Error('Whoa'), 'first', y2k, { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
     expect(item.custom.extraArgs).to.eql([y2k, 'second']);
-
-    done();
   });
-  it('should handle numbers', function (done) {
+  it('should handle numbers', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2103,10 +1940,8 @@ describe('createItem', function () {
     var args = [new Error('Whoa'), 'first', 42, { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
     expect(item.custom.extraArgs).to.eql([42, 'second']);
-
-    done();
   });
-  it('should handle domexceptions', function (done) {
+  it('should handle domexceptions', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = (window.rollbar = new Rollbar(options, client));
@@ -2120,15 +1955,13 @@ describe('createItem', function () {
       }
       var args = [e, 'first', 42, { a: 1, b: 2 }, 'second'];
       var item = rollbar._createItem(args);
-      expect(item.err).to.be.ok();
+      expect(item.err).to.be.ok;
     }
-
-    done();
   });
 });
 
 describe('singleton', function () {
-  it('should pass through the underlying client after init', function (done) {
+  it('should pass through the underlying client after init', function () {
     var client = new (TestClientGen())();
     var options = {};
     var rollbar = Rollbar.init(options, client);
@@ -2140,7 +1973,5 @@ describe('singleton', function () {
     var loggedItemSingleton = client.logCalls[1].item;
     expect(loggedItemDirect.message).to.eql('hello 1');
     expect(loggedItemSingleton.message).to.eql('hello 2');
-
-    done();
   });
 });
