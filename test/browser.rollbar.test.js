@@ -300,6 +300,19 @@ describe('configure', function () {
 });
 
 describe('options.captureUncaught', function () {
+  let __originalOnError = null;
+
+  before(function () {
+    // Prevent WTR/Mocha from failing the test on uncaught errors.
+    __originalOnError = window.onerror;
+    window.onerror = () => false;
+  });
+
+  after(function () {
+    window.onerror = __originalOnError;
+    __originalOnError = null;
+  });
+
   beforeEach(async function () {
     // Load the HTML page, so errors can be generated.
     await loadHtml('test/fixtures/html/error.html');
@@ -1851,7 +1864,9 @@ describe('createItem', function () {
     var item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
-    expect(item.custom.extraArgs).to.eql(['second']);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
     expect(item.callback).to.be.ok;
     item.callback();
     expect(myCallbackCalled).to.be.ok;
@@ -1866,7 +1881,9 @@ describe('createItem', function () {
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom['0']).to.eql(1);
-    expect(item.custom.extraArgs).to.eql(['second']);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
   });
   it('should handle objects', function () {
     var client = new (TestClientGen())();
@@ -1879,7 +1896,9 @@ describe('createItem', function () {
     expect(item.message).to.eql('first');
     expect(item.custom.a).to.eql(1);
     expect(item.custom.b).to.eql(2);
-    expect(item.custom.extraArgs).to.eql(['second']);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
   });
   it('should handle custom arguments', function () {
     var client = new (TestClientGen())();
@@ -1930,7 +1949,9 @@ describe('createItem', function () {
     var y2k = new Date(2000, 0, 1);
     var args = [new Error('Whoa'), 'first', y2k, { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
-    expect(item.custom.extraArgs).to.eql([y2k, 'second']);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: y2k, 1: 'second' });
   });
   it('should handle numbers', function () {
     var client = new (TestClientGen())();
@@ -1939,7 +1960,9 @@ describe('createItem', function () {
 
     var args = [new Error('Whoa'), 'first', 42, { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
-    expect(item.custom.extraArgs).to.eql([42, 'second']);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 42, 1: 'second' });
   });
   it('should handle domexceptions', function () {
     var client = new (TestClientGen())();
