@@ -8,9 +8,7 @@ export default {
     '!test/react-native.*.test.js',
   ],
 
-  nodeResolve: {
-    exportConditions: ['browser', 'development'],
-  },
+  nodeResolve: true,
 
   browsers: [
     playwrightLauncher({
