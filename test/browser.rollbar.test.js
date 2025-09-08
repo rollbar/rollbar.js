@@ -286,7 +286,7 @@ describe('configure', function () {
     expect(rollbar.options._configuredOptions.payload.environment).to.eql(
       'testtest',
     );
-    expect(rollbar.options._configuredOptions.captureUncaught).to.be.trure;
+    expect(rollbar.options._configuredOptions.captureUncaught).to.be.true;
 
     rollbar.configure({
       captureUncaught: false,
