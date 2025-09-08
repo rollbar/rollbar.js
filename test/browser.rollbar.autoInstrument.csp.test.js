@@ -32,7 +32,7 @@ describe('options.autoInstrument', function () {
       const queueStub = sinon.stub(queue, '_makeApiRequest');
 
       // Manually trigger a CSP violation event,
-      // since WTR doesn't set CSP headers, we can't use loadHtml to do it.
+      // since WTR+Mocha will capture the rejection from loadHtml.
       const cspEvent = new SecurityPolicyViolationEvent(
         'securitypolicyviolation',
         {
