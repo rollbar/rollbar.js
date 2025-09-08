@@ -73,8 +73,6 @@ describe('options.autoInstrument', function () {
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
-    console.log(JSON.stringify(body, null, 2));
-
     window.console = oldConsole;
 
     expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.exist;
