@@ -1,8 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
+import sinon from 'sinon';
 import Telemeter from '../src/telemetry.js';
 import Tracing from '../src/tracing/tracing.js';
 
@@ -217,7 +214,7 @@ describe('filterTelemetry', function () {
       { url: 'https://spammer.com', subtype: 'xhr' },
       'debug',
     );
-    expect(evt).to.be(false);
+    expect(evt).to.be.false;
 
     done();
   });
@@ -235,8 +232,8 @@ describe('filterTelemetry', function () {
       { url: 'https://spammer.com', statusCode: 404 },
       'debug',
     );
-    expect(evt).not.to.be(false);
-    expect(evt2).not.to.be(false);
+    expect(evt).not.to.be.false;
+    expect(evt2).not.to.be.false;
     var events = t.copyEvents();
     expect(events.length).to.equal(2);
 

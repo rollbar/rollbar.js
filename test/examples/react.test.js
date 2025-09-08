@@ -1,27 +1,28 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import sinon from 'sinon';
+import { expect } from 'chai';
+
+import { loadHtml } from '../util/fixtures.js';
 
 describe('react app', function () {
+  let __originalOnError = null;
+
   this.timeout(4000);
 
-  before(function (done) {
-    // Load the HTML page.
-    document.write(window.__html__['examples/react/dist/index.html']);
+  before(async function () {
+    // Prevent WTR/Mocha from failing the test on uncaught errors.
+    __originalOnError = window.onerror;
+    window.onerror = () => false;
 
-    // Set a timer before stubbing the XHR server, else it will interfere with
-    // scripts loaded from the HTML page.
-    setTimeout(function () {
-      // Stub the xhr interface.
-      window.server = sinon.createFakeServer();
+    await loadHtml('examples/react/dist/index.html');
 
-      done();
-    }, 3000);
+    // Stub the xhr interface.
+    window.server = sinon.createFakeServer();
   });
 
   after(function () {
     window.server.restore();
+    window.onerror = __originalOnError;
+    __originalOnError = null;
   });
 
   function stubResponse(server) {
@@ -33,16 +34,18 @@ describe('react app', function () {
   }
 
   it('should send a valid log event', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    var element = document.getElementById('rollbar-info');
+    const element = document.getElementById('rollbar-info');
+    expect(element).to.exist;
     element.click();
+
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.message.body).to.eql('react test log');
@@ -51,16 +54,18 @@ describe('react app', function () {
   });
 
   it('should report uncaught error', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    var element = document.getElementById('throw-error');
+    const element = document.getElementById('throw-error');
+    expect(element).to.exist;
     element.click();
+
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.trace.exception.message).to.eql('react test error');
@@ -69,18 +74,20 @@ describe('react app', function () {
   });
 
   it('should not report error inside error boundary', function (done) {
-    var server = window.server;
+    const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    var element = document.getElementById('child-error');
+    const element = document.getElementById('child-error');
+    expect(element).to.exist;
     element.click();
+
     server.respond();
 
     // Should only produce one API request.
     expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
 

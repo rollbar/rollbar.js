@@ -1,35 +1,41 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import sinon from 'sinon';
+import { expect } from 'chai';
+
+import { setTimeout } from '../util/timers.js';
+import { loadHtml } from '../util/fixtures.js';
 
 describe('Rollbar loaded by snippet', function () {
-  before(function (done) {
-    // Stub the xhr interface.
-    window.server = sinon.createFakeServer();
+  let __originalOnError = null;
+
+  before(async function () {
+    // Prevent WTR/Mocha from failing the test on uncaught errors.
+    __originalOnError = window.onerror;
+    window.onerror = () => false;
 
     // Load the HTML page.
-    document.write(window.__html__['examples/universal-browser/test.html']);
+    await loadHtml('examples/universal-browser/test.html');
 
-    // Karma headless chrome won't dispatch DOMContentLoaded,
-    // so we need to do it manually.
-    var event = document.createEvent('Event');
-    event.initEvent('DOMContentLoaded', true, true);
-    document.dispatchEvent(event);
+    // DOMContentLoaded is not dispatched automatically in WTR/Playwright
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
 
     // Give the snippet time to load and init.
-    setTimeout(function () {
-      done();
-    }, 1000);
+    await setTimeout(250);
+
+    // Stub the xhr interface.
+    window.server = sinon.createFakeServer();
   });
 
   after(function () {
     window.server.restore();
+    window.onerror = __originalOnError;
+    __originalOnError = null;
   });
 
-  it('should send a valid log event', function (done) {
-    var server = window.server;
-    var rollbar = document.defaultView.Rollbar;
+  it('should send a valid log event', async function () {
+    const server = window.server;
+    const rollbar = document.defaultView.Rollbar;
+    expect(server).to.exist;
+    expect(rollbar).to.be.ok;
 
     server.respondWith('POST', 'api/1/item', [
       200,
@@ -37,24 +43,20 @@ describe('Rollbar loaded by snippet', function () {
       '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
     ]);
 
-    var ret = rollbar.info('test');
+    const ret = rollbar.info('test');
 
-    setTimeout(function () {
-      server.respond();
+    await setTimeout(1);
 
-      var body = JSON.parse(server.requests[0].requestBody);
+    server.respond();
 
-      expect(body.access_token).to.eql(undefined);
-      expect(body.data.uuid).to.eql(ret.uuid);
-      expect(body.data.body.message.body).to.eql('test');
+    const body = JSON.parse(server.requests[0].requestBody);
 
-      // Assert load telemetry was added.
-      expect(body.data.body.telemetry[0].type).to.eql('navigation');
-      expect(body.data.body.telemetry[0].body.subtype).to.eql(
-        'DOMContentLoaded',
-      );
+    expect(body.access_token).to.be.undefined;
+    expect(body.data.uuid).to.eql(ret.uuid);
+    expect(body.data.body.message.body).to.eql('test');
 
-      done();
-    }, 1);
+    // Assert load telemetry was added.
+    expect(body.data.body.telemetry[0].type).to.eql('navigation');
+    expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
   });
 });

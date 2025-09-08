@@ -1,7 +1,4 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
 
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
@@ -42,7 +39,7 @@ describe('handleDomException', function () {
     var options = {};
     t.handleDomException(item, options, function (e, i) {
       expect(item.err).to.eql(item.err);
-      expect(item.err.nested).to.not.be.ok();
+      expect(item.err.nested).to.not.be.ok;
       done(e);
     });
   });
@@ -92,7 +89,7 @@ describe('handleItemWithError', function () {
     var options = {};
     t.handleItemWithError(item, options, function (e, i) {
       expect(i.message).to.eql('a message');
-      expect(i.stackInfo).to.be.ok();
+      expect(i.stackInfo).to.be.ok;
       done(e);
     });
   });
@@ -103,7 +100,7 @@ describe('handleItemWithError', function () {
     item.err = err;
     var options = {};
     t.handleItemWithError(item, options, function (e, i) {
-      expect(i.stackInfo).to.be.ok();
+      expect(i.stackInfo).to.be.ok;
       expect(i.message).to.eql('a message');
       done(e);
     });
@@ -142,7 +139,7 @@ describe('ensureItemHasSomethingToSay', function () {
     var item = itemFromArgs(args);
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function (e, i) {
-      expect(e).to.be.ok();
+      expect(e).to.be.ok;
       done(i);
     });
   });
@@ -152,7 +149,7 @@ describe('ensureItemHasSomethingToSay', function () {
     item.message = 'bork';
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function (e, i) {
-      expect(i).to.be.ok();
+      expect(i).to.be.ok;
       done(e);
     });
   });
@@ -163,7 +160,7 @@ describe('ensureItemHasSomethingToSay', function () {
     item.stackInfo = {};
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function (e, i) {
-      expect(i).to.be.ok();
+      expect(i).to.be.ok;
       done(e);
     });
   });
@@ -173,7 +170,7 @@ describe('ensureItemHasSomethingToSay', function () {
     item.custom = {};
     var options = {};
     t.ensureItemHasSomethingToSay(item, options, function (e, i) {
-      expect(i).to.be.ok();
+      expect(i).to.be.ok;
       done(e);
     });
   });
@@ -228,7 +225,7 @@ describe('addRequestInfo', function () {
     var item = itemFromArgs(args);
     var options = { captureIp: 'anonymize' };
     t.addRequestInfo(window)(item, options, function (e, i) {
-      expect(i.data.request).to.be.ok();
+      expect(i.data.request).to.be.ok;
       expect(i.data.request.user_ip).to.eql('$remote_ip_anonymize');
       done(e);
     });
@@ -240,7 +237,7 @@ describe('addRequestInfo', function () {
     var options = {};
     var w = null;
     t.addRequestInfo(w)(item, options, function (e, i) {
-      expect(i.data.request).to.not.be.ok();
+      expect(i.data.request).to.not.be.ok;
       done(e);
     });
   });
@@ -251,8 +248,8 @@ describe('addRequestInfo', function () {
     var options = { captureIp: true };
     var w = null;
     t.addRequestInfo(w)(item, options, function (e, i) {
-      expect(i.data.request.url).to.not.be.ok();
-      expect(i.data.request.query_string).to.not.be.ok();
+      expect(i.data.request.url).to.not.be.ok;
+      expect(i.data.request.query_string).to.not.be.ok;
       expect(i.data.request.user_ip).to.eql('$remote_ip');
       done(e);
     });
@@ -267,7 +264,7 @@ describe('addClientInfo', function () {
     var options = {};
     var w = null;
     t.addClientInfo(w)(item, options, function (e, i) {
-      expect(i.data.client).to.not.be.ok();
+      expect(i.data.client).to.not.be.ok;
       done(e);
     });
   });
@@ -276,8 +273,8 @@ describe('addClientInfo', function () {
     var item = itemFromArgs(args);
     var options = {};
     t.addClientInfo(window)(item, options, function (e, i) {
-      expect(i.data.client).to.be.ok();
-      expect(i.data.client.javascript).to.be.ok();
+      expect(i.data.client).to.be.ok;
+      expect(i.data.client.javascript).to.be.ok;
       done(e);
     });
   });
@@ -295,7 +292,7 @@ describe('addPluginInfo', function () {
           i.data.client &&
           i.data.client.javascript &&
           i.data.client.javascript.plugins,
-      ).to.not.be.ok();
+      ).to.not.be.ok;
       done(e);
     });
   });
@@ -307,7 +304,7 @@ describe('addPluginInfo', function () {
     w.navigator.plugins.push({ name: 'plugin 1', description: '1' });
     w.navigator.plugins.push({ name: 'plugin 2', description: '2' });
     t.addPluginInfo(w)(item, options, function (e, i) {
-      expect(i.data.client.javascript.plugins).to.be.ok();
+      expect(i.data.client.javascript.plugins).to.be.ok;
       expect(i.data.client.javascript.plugins.length).to.eql(2);
       expect(i.data.client.javascript.plugins[0].name).to.eql('plugin 1');
       done(e);
@@ -329,9 +326,9 @@ describe('addBody', function () {
       item.description = 'borked';
       var options = {};
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
         t.addBody(i, options, function (e, i) {
-          expect(i.data.body.trace).to.be.ok();
+          expect(i.data.body.trace).to.be.ok;
           done(e);
         });
       });
@@ -344,8 +341,8 @@ describe('addBody', function () {
       item.stackInfo = { name: 'bork' };
       var options = {};
       t.addBody(item, options, function (e, i) {
-        expect(i.data.body.trace).to.not.be.ok();
-        expect(i.data.body.message.body).to.be.ok();
+        expect(i.data.body.trace).to.not.be.ok;
+        expect(i.data.body.message.body).to.be.ok;
         done(e);
       });
     });
@@ -356,7 +353,7 @@ describe('addBody', function () {
       var item = itemFromArgs(args);
       var options = {};
       t.addBody(item, options, function (e, i) {
-        expect(i.data.body.message.body).to.be.ok();
+        expect(i.data.body.message.body).to.be.ok;
         done(e);
       });
     });
@@ -385,7 +382,7 @@ describe('addBody', function () {
       item.description = 'borked';
       var options = {};
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
         i.stackInfo.name = null; // force alternate path to determine error class.
         t.addBody(i, options, function (e, i) {
           expect(i.data.body.trace.exception.class).to.eql('(unknown)');
@@ -407,7 +404,7 @@ describe('addBody', function () {
         item.description = 'borked';
         var options = { guessErrorClass: true };
         t.handleItemWithError(item, options, function (e, i) {
-          expect(i.stackInfo).to.be.ok();
+          expect(i.stackInfo).to.be.ok;
           i.stackInfo.name = null; // force alternate path to determine error class.
           t.addBody(i, options, function (e, i) {
             expect(i.data.body.trace.exception.class).to.eql('GuessedError');
@@ -428,7 +425,7 @@ describe('addBody', function () {
         item.description = 'borked';
         var options = { guessErrorClass: true };
         t.handleItemWithError(item, options, function (e, i) {
-          expect(i.stackInfo).to.be.ok();
+          expect(i.stackInfo).to.be.ok;
           i.stackInfo.name = null; // force alternate path to determine error class.
           t.addBody(i, options, function (e, i) {
             expect(i.data.body.trace.exception.class).to.eql('(unknown)');
@@ -448,7 +445,7 @@ describe('addBody', function () {
       var item = itemFromArgs(args);
       var options = {};
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
       });
       t.addBody(item, options, function (e, i) {
         expect(i.data.body.trace_chain.length).to.eql(2);
@@ -471,7 +468,7 @@ describe('addBody', function () {
       var item = itemFromArgs(args);
       var options = { addErrorContext: true };
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
       });
       t.addBody(item, options, function (e, i) {
         expect(i.data.body.trace_chain.length).to.eql(2);
@@ -492,7 +489,7 @@ describe('addBody', function () {
       var item = itemFromArgs(args);
       var options = {};
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
       });
       t.addBody(item, options, function (e, i) {
         expect(i.data.body.trace_chain.length).to.eql(2);
@@ -514,7 +511,7 @@ describe('addBody', function () {
       var item = itemFromArgs(args);
       var options = { addErrorContext: true };
       t.handleItemWithError(item, options, function (e, i) {
-        expect(i.stackInfo).to.be.ok();
+        expect(i.stackInfo).to.be.ok;
       });
       t.addBody(item, options, function (e, i) {
         expect(i.data.body.trace_chain.length).to.eql(2);
@@ -562,7 +559,7 @@ describe('scrubPayload', function () {
     expect(result.data.custom.scooby).to.not.eql('doo');
     expect(payload.data.custom.okay).to.not.eql('fizz=buzz&fuzz=baz');
     expect(payload.data.custom.okay).to.match(/fizz=\*+&fuzz=baz/);
-    expect(payload.data.custom.user.id).to.not.be.ok();
+    expect(payload.data.custom.user.id).to.not.be.ok;
     expect(payload.data.custom.user).to.match(/\*+/);
     expect(result.data.message).to.eql('a message');
   });

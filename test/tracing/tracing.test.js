@@ -1,6 +1,3 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import {
@@ -70,7 +67,7 @@ describe('Tracing()', function () {
     );
     expect(span.span.instrumentationScope.name).to.equal('rollbar-browser-js');
     expect(span.span.instrumentationScope.version).to.equal('0.1.0');
-    expect(span.isRecording()).to.equal(true);
+    expect(span.isRecording()).to.be.true;
     expect(t.contextManager.active()).to.equal(ROOT_CONTEXT);
 
     const context = t.setSpan(t.contextManager.active(), span);
@@ -91,7 +88,7 @@ describe('Tracing()', function () {
 
     span.end();
 
-    expect(span.isRecording()).to.equal(false);
+    expect(span.isRecording()).to.be.false;
     expect(t.spanProcessor.pendingSpans.has(span.span.spanContext.spanId)).to.be
       .false;
     expect(spanExportQueue.length).to.equal(1);

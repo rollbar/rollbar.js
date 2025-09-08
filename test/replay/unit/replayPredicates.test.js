@@ -2,9 +2,6 @@
  * Unit tests for the ReplayPredicates module
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
 
 import { expect } from 'chai';
 import ReplayPredicates from '../../../src/browser/replay/replayPredicates.js';

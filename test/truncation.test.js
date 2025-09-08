@@ -1,14 +1,11 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-
+import { expect } from 'chai';
 import t from '../src/truncation.js';
 
 describe('truncate', function () {
   it('should not truncate something small enough', function () {
     var payload = messagePayload('hello world');
     var result = t.truncate(payload);
-    expect(result.value).to.be.ok();
+    expect(result.value).to.be.ok;
 
     var resultValue = JSON.parse(result.value);
     expect(resultValue).to.eql(payload);
@@ -17,11 +14,11 @@ describe('truncate', function () {
   it('should try all strategies if payload too big', function () {
     var payload = tracePayload(10, repeat('a', 500));
     var result = t.truncate(payload, undefined, 1);
-    expect(result.value).to.be.ok();
+    expect(result.value).to.be.ok;
 
     var resultValue = JSON.parse(result.value);
 
-    expect(resultValue.data.body.trace.exception.description).to.not.be.ok();
+    expect(resultValue.data.body.trace.exception.description).to.not.be.ok;
     expect(resultValue.data.body.trace.exception.message.length).to.be.below(
       256,
     );
@@ -31,7 +28,7 @@ describe('truncate', function () {
   it('should not truncate ascii payload close to max size', function () {
     var payload = tracePayload(10, repeat('i', 500));
     var result = t.truncate(payload, undefined, 1100); // payload will be 500 + 528
-    expect(result.value).to.be.ok();
+    expect(result.value).to.be.ok;
 
     var resultValue = JSON.parse(result.value);
     expect(resultValue).to.eql(payload);
@@ -40,7 +37,7 @@ describe('truncate', function () {
   it('should truncate non-ascii payload when oversize', function () {
     var payload = tracePayload(10, repeat('あ', 500)); // あ is 3 utf-8 bytes (U+3042)
     var result = t.truncate(payload, undefined, 1100); // payload will be 1500 + 528
-    expect(result.value).to.be.ok();
+    expect(result.value).to.be.ok;
 
     var resultValue = JSON.parse(result.value);
     expect(resultValue.data.body.trace.frames.length).to.be.below(3);
@@ -120,9 +117,9 @@ describe('truncateStrings', function () {
 
 describe('maybeTruncateValue', function () {
   it('should handle falsey things', function () {
-    expect(t.maybeTruncateValue(42, null)).to.be(null);
-    expect(t.maybeTruncateValue(42, false)).to.eql(false);
-    expect(t.maybeTruncateValue(42, undefined)).to.be(undefined);
+    expect(t.maybeTruncateValue(42, null)).to.equal(null);
+    expect(t.maybeTruncateValue(42, false)).to.be.false;
+    expect(t.maybeTruncateValue(42, undefined)).to.equal(undefined);
   });
 
   it('should handle strings shorter than the length', function () {

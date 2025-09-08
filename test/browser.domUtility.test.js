@@ -1,8 +1,4 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
-
+import { expect } from 'chai';
 import * as d from '../src/browser/domUtility.js';
 
 function fullElement() {
@@ -43,20 +39,20 @@ function genElement(tag, id, classes, type, name) {
 describe('isDescribedElement', function () {
   it('should match the type without subtypes', function () {
     var e = genElement('div', null, null, 'text');
-    expect(d.isDescribedElement(e, 'div')).to.be.ok();
-    expect(d.isDescribedElement(e, 'DIV')).to.be.ok();
-    expect(d.isDescribedElement(e, 'span')).to.not.be.ok();
+    expect(d.isDescribedElement(e, 'div')).to.be.ok;
+    expect(d.isDescribedElement(e, 'DIV')).to.be.ok;
+    expect(d.isDescribedElement(e, 'span')).to.not.be.ok;
   });
   it('should work with subtypes', function () {
     var e = genElement('div', null, null, 'text');
-    expect(d.isDescribedElement(e, 'div', ['input', 'text'])).to.be.ok();
-    expect(d.isDescribedElement(e, 'div', ['input', 'nottext'])).to.not.be.ok();
-    expect(d.isDescribedElement(e, 'div', [])).to.not.be.ok();
+    expect(d.isDescribedElement(e, 'div', ['input', 'text'])).to.be.ok;
+    expect(d.isDescribedElement(e, 'div', ['input', 'nottext'])).to.not.be.ok;
+    expect(d.isDescribedElement(e, 'div', [])).to.not.be.ok;
   });
   it('should work if element has no type', function () {
     var e = genElement('div');
-    expect(d.isDescribedElement(e, 'div', ['input', 'text'])).to.not.be.ok();
-    expect(d.isDescribedElement(e, 'div')).to.be.ok();
+    expect(d.isDescribedElement(e, 'div', ['input', 'text'])).to.not.be.ok;
+    expect(d.isDescribedElement(e, 'div')).to.be.ok;
   });
 });
 

@@ -2,11 +2,6 @@
  * Unit tests for the ReplayMap module
  */
 
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
-/* globals sinon */
 
 import { expect } from 'chai';
 import sinon from 'sinon';

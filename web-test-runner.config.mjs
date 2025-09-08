@@ -1,0 +1,33 @@
+import { playwrightLauncher } from '@web/test-runner-playwright';
+
+export default {
+  files: [
+    'test/**/*.test.js',
+    // Exclude server and React Native tests
+    '!test/server.*.test.js',
+    '!test/react-native.*.test.js',
+  ],
+
+  nodeResolve: true,
+
+  browsers: [
+    playwrightLauncher({
+      product: 'chromium',
+      launchOptions: {
+        headless: true,
+      },
+    }),
+  ],
+
+  testFramework: {
+    config: {
+      ui: 'bdd',
+      timeout: 5000,
+      reporter: 'spec',
+      allowUncaught: false,
+    },
+  },
+
+  concurrency: 4,
+  concurrentBrowsers: 2,
+};

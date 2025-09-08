@@ -16,3 +16,4 @@ vendor
 # 1. there being minified snippets all over the place and
 # 2. some tests fail cause they depend on some sources being exactly as they are
 examples
+!test/examples

@@ -1,7 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Rollbar from '../src/react-native/rollbar.js';
 var rollbarConfig = {
@@ -50,7 +48,7 @@ describe('sendJsonPayload', function () {
 
     rollbar.sendJsonPayload(json);
 
-    expect(window.fetchStub.called).to.be.ok();
+    expect(window.fetchStub.called).to.be.ok;
     expect(window.fetchStub.getCall(0).args[1].body).to.eql(json);
 
     done();
@@ -204,7 +202,7 @@ describe('Rollbar()', function () {
     var rollbar = new Rollbar(options, client);
 
     var result = rollbar.log('a messasge', 'another one');
-    expect(result.uuid).to.be.ok();
+    expect(result.uuid).to.be.ok;
 
     done();
   });
@@ -217,7 +215,7 @@ describe('Rollbar()', function () {
     var result = rollbar.log('a message', 'another one');
     var loggedItem = client.logCalls[0].item;
     expect(loggedItem.message).to.eql('a message');
-    expect(loggedItem.custom).to.be.ok();
+    expect(loggedItem.custom).to.be.ok;
 
     done();
   });
@@ -453,7 +451,7 @@ describe('callback options', function () {
     rollbar.log('test'); // generate a payload to inspect
 
     setTimeout(function () {
-      expect(window.fetchStub.called).to.be.ok();
+      expect(window.fetchStub.called).to.be.ok;
       var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
       expect(body.data.foo).to.eql('bar');
 
@@ -475,7 +473,7 @@ describe('callback options', function () {
     rollbar.log('test'); // generate a payload to inspect
 
     setTimeout(function () {
-      expect(window.fetchStub.called).to.be.ok();
+      expect(window.fetchStub.called).to.be.ok;
       var body = JSON.parse(window.fetchStub.getCall(0).args[1].body);
       expect(body.data.foo).to.eql('baz');
 
@@ -524,9 +522,9 @@ describe('createItem', function () {
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs).to.eql(['second']);
-    expect(item.callback).to.be.ok();
+    expect(item.callback).to.be.ok;
     item.callback();
-    expect(myCallbackCalled).to.be.ok();
+    expect(myCallbackCalled).to.be.ok;
 
     done();
   });
@@ -578,7 +576,7 @@ describe('createItem', function () {
 
     var args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
     var item = rollbar._createItem(args);
-    expect(item.uuid).to.be.ok();
+    expect(item.uuid).to.be.ok;
 
     var parts = item.uuid.split('-');
     expect(parts.length).to.eql(5);
@@ -624,7 +622,7 @@ describe('createItem', function () {
       }
       var args = [e, 'first', 42, { a: 1, b: 2 }, 'second'];
       var item = rollbar._createItem(args);
-      expect(item.err).to.be.ok();
+      expect(item.err).to.be.ok;
     }
 
     done();
