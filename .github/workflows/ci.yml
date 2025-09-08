@@ -53,7 +53,7 @@ jobs:
         run: npm run validate:es5
 
       - name: Run server tests
-        run: npm run test-server
+        run: npm run test:server
 
       - name: Install Playwright browsers
         run: npx playwright install chromium
