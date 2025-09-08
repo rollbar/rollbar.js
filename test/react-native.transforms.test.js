@@ -1,7 +1,5 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Rollbar from '../src/react-native/rollbar.js';
 import * as t from '../src/react-native/transforms.js';
