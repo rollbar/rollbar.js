@@ -990,31 +990,45 @@ describe('onerror', function () {
     ]);
   }
 
-  it('should send message when calling onerror directly', async function () {
-    var server = window.server;
-    stubResponse(server);
-    server.requests.length = 0;
+  describe('uncaught', function () {
+    let __originalOnError = null;
 
-    var options = {
-      accessToken: 'POST_CLIENT_ITEM_TOKEN',
-      captureUncaught: true,
-    };
-    window.rollbar = new Rollbar(options);
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
+    });
 
-    window.onerror(
-      'TestRollbarError: testing window.onerror',
-      window.location.href,
-    );
+    after(function () {
+      window.onerror = __originalOnError;
+    });
 
-    await setTimeout(1);
+    it('should send message when calling onerror directly', async function () {
+      var server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
 
-    server.respond();
+      var options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        captureUncaught: true,
+      };
+      window.rollbar = new Rollbar(options);
 
-    var body = JSON.parse(server.requests[0].requestBody);
+      window.onerror(
+        'TestRollbarError: testing window.onerror',
+        window.location.href,
+      );
 
-    expect(body.data.body.trace.exception.message).to.eql(
-      'testing window.onerror',
-    );
+      await setTimeout(1);
+
+      server.respond();
+
+      var body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.data.body.trace.exception.message).to.eql(
+        'testing window.onerror',
+      );
+    });
   });
 });
 
@@ -1084,32 +1098,46 @@ describe('callback options', function () {
     expect(server.requests.length).to.eql(0);
   });
 
-  it('should receive uncaught at checkIgnore', async function () {
-    var server = window.server;
-    stubResponse(server);
-    server.requests.length = 0;
+  describe('uncaught', function () {
+    let __originalOnError = null;
 
-    var options = {
-      accessToken: 'POST_CLIENT_ITEM_TOKEN',
-      captureUncaught: true,
-      checkIgnore: function (isUncaught, args, payload) {
-        if (isUncaught === true) {
-          return true;
-        }
-        return false;
-      },
-    };
-    window.rollbar = new Rollbar(options);
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
+    });
 
-    var element = document.getElementById('throw-error');
-    element.click();
+    after(function () {
+      window.onerror = __originalOnError;
+    });
 
-    await setTimeout(1);
+    it('should receive uncaught at checkIgnore', async function () {
+      var server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
 
-    server.respond();
+      var options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        captureUncaught: true,
+        checkIgnore: function (isUncaught, args, payload) {
+          if (isUncaught === true) {
+            return true;
+          }
+          return false;
+        },
+      };
+      window.rollbar = new Rollbar(options);
 
-    // Should be ignored if checkIgnore receives isUncaught.
-    expect(server.requests.length).to.eql(0);
+      var element = document.getElementById('throw-error');
+      element.click();
+
+      await setTimeout(1);
+
+      server.respond();
+
+      // Should be ignored if checkIgnore receives isUncaught.
+      expect(server.requests.length).to.eql(0);
+    });
   });
 
   it('should send when checkIgnore returns false', async function () {
@@ -1603,134 +1631,164 @@ describe('options.autoInstrument', function () {
       });
   });
 
-  it('should report error for http 4xx fetch calls, when enabled', async function () {
-    var server = window.server;
-    stubResponse(server);
-    server.requests.length = 0;
+  describe('uncaught', function () {
+    let __originalOnError = null;
 
-    window.fetchStub = sinon.stub(window, 'fetch');
-    window.fetch.returns(
-      Promise.resolve(
-        new Response(JSON.stringify({ foo: 'bar' }), {
-          status: 404,
-          statusText: 'Not Found',
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
-    );
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
+    });
 
-    var options = {
-      accessToken: 'POST_CLIENT_ITEM_TOKEN',
-      autoInstrument: {
-        log: false,
-        network: true,
-        networkErrorOnHttp4xx: true,
-      },
-    };
-    window.rollbar = new Rollbar(options);
+    after(function () {
+      window.onerror = __originalOnError;
+    });
 
-    var fetchHeaders = new Headers();
-    fetchHeaders.append('Content-Type', 'application/json');
+    it('should report error for http 4xx fetch calls, when enabled', async function () {
+      var server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
 
-    const fetchInit = {
-      method: 'POST',
-      headers: fetchHeaders,
-      body: JSON.stringify({ foo: 'bar' }),
-    };
-    var fetchRequest = new Request('https://example.com/xhr-test');
-    window.fetch(fetchRequest, fetchInit).then(async function (_response) {
-      await setTimeout(1);
-
-      server.respond();
-
-      expect(server.requests.length).to.eql(1);
-      var body = JSON.parse(server.requests[0].requestBody);
-
-      expect(body.data.body.trace.exception.message).to.eql(
-        'HTTP request failed with Status 404',
+      window.fetchStub = sinon.stub(window, 'fetch');
+      window.fetch.returns(
+        Promise.resolve(
+          new Response(JSON.stringify({ foo: 'bar' }), {
+            status: 404,
+            statusText: 'Not Found',
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
       );
 
-      // Just knowing a stack is present is enough for this test.
-      expect(body.data.body.trace.frames.length).to.be.above(1);
+      var options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        autoInstrument: {
+          log: false,
+          network: true,
+          networkErrorOnHttp4xx: true,
+        },
+      };
+      window.rollbar = new Rollbar(options);
 
-      rollbar.configure({ autoInstrument: false });
-      window.fetch.restore();
+      var fetchHeaders = new Headers();
+      fetchHeaders.append('Content-Type', 'application/json');
+
+      const fetchInit = {
+        method: 'POST',
+        headers: fetchHeaders,
+        body: JSON.stringify({ foo: 'bar' }),
+      };
+      var fetchRequest = new Request('https://example.com/xhr-test');
+      window.fetch(fetchRequest, fetchInit).then(async function (_response) {
+        await setTimeout(1);
+
+        server.respond();
+
+        expect(server.requests.length).to.eql(1);
+        var body = JSON.parse(server.requests[0].requestBody);
+
+        expect(body.data.body.trace.exception.message).to.eql(
+          'HTTP request failed with Status 404',
+        );
+
+        // Just knowing a stack is present is enough for this test.
+        expect(body.data.body.trace.frames.length).to.be.above(1);
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+      });
     });
   });
 
-  it('should add telemetry headers when fetch Headers object is undefined', async function () {
-    var server = window.server;
-    stubResponse(server);
-    server.requests.length = 0;
+  describe('uncaught', function () {
+    let __originalOnError = null;
 
-    window.fetchStub = sinon.stub(window, 'fetch');
-
-    var readableStream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(JSON.stringify({ name: 'foo', password: '123456' }));
-        controller.close();
-      },
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
     });
 
-    window.fetch.returns(
-      Promise.resolve(
-        new Response(readableStream, {
-          status: 200,
-          statusText: 'OK',
-          headers: { 'content-type': 'application/json', password: '123456' },
-        }),
-      ),
-    );
+    after(function () {
+      window.onerror = __originalOnError;
+    });
 
-    var options = {
-      accessToken: 'POST_CLIENT_ITEM_TOKEN',
-      autoInstrument: {
-        log: false,
-        network: true,
-        networkResponseHeaders: true,
-        networkRequestHeaders: true,
-      },
-    };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    it('should add telemetry headers when fetch Headers object is undefined', async function () {
+      var server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
 
-    // Remove Headers from window object
-    var originalHeaders = window.Headers;
-    delete window.Headers;
+      window.fetchStub = sinon.stub(window, 'fetch');
 
-    const fetchInit = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Secret: '123456' },
-      body: JSON.stringify({ name: 'bar', secret: 'xhr post' }),
-    };
-    var fetchRequest = new Request('https://example.com/xhr-test');
-    window.fetch(fetchRequest, fetchInit).then(async function (response) {
-      rollbar.log('test'); // generate a payload to inspect
-
-      await setTimeout(1);
-
-      server.respond();
-
-      expect(server.requests.length).to.eql(1);
-      var body = JSON.parse(server.requests[0].requestBody);
-
-      // Verify request headers capture and case-insensitive scrubbing
-      expect(body.data.body.telemetry[0].body.request_headers).to.eql({
-        'content-type': 'application/json',
-        secret: '********',
+      var readableStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            JSON.stringify({ name: 'foo', password: '123456' }),
+          );
+          controller.close();
+        },
       });
 
-      // Verify response headers capture and case-insensitive scrubbing
-      expect(body.data.body.telemetry[0].body.response.headers).to.eql({
-        'content-type': 'application/json',
-        password: '********',
+      window.fetch.returns(
+        Promise.resolve(
+          new Response(readableStream, {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'content-type': 'application/json', password: '123456' },
+          }),
+        ),
+      );
+
+      var options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        autoInstrument: {
+          log: false,
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      };
+      var rollbar = (window.rollbar = new Rollbar(options));
+
+      // Remove Headers from window object
+      var originalHeaders = window.Headers;
+      delete window.Headers;
+
+      const fetchInit = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Secret: '123456' },
+        body: JSON.stringify({ name: 'bar', secret: 'xhr post' }),
+      };
+      var fetchRequest = new Request('https://example.com/xhr-test');
+      window.fetch(fetchRequest, fetchInit).then(async function (response) {
+        rollbar.log('test'); // generate a payload to inspect
+
+        await setTimeout(1);
+
+        server.respond();
+
+        expect(server.requests.length).to.eql(1);
+        var body = JSON.parse(server.requests[0].requestBody);
+
+        // Verify request headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.request_headers).to.eql({
+          'content-type': 'application/json',
+          secret: '********',
+        });
+
+        // Verify response headers capture and case-insensitive scrubbing
+        expect(body.data.body.telemetry[0].body.response.headers).to.eql({
+          'content-type': 'application/json',
+          password: '********',
+        });
+
+        // Assert that the original stream reader hasn't been read.
+        expect(response.bodyUsed).to.eql(false);
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+        window.Headers = originalHeaders;
       });
-
-      // Assert that the original stream reader hasn't been read.
-      expect(response.bodyUsed).to.eql(false);
-
-      rollbar.configure({ autoInstrument: false });
-      window.fetch.restore();
-      window.Headers = originalHeaders;
     });
   });
 
