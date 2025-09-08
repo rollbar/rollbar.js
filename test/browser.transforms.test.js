@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
+
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
 

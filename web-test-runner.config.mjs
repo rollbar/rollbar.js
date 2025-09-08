@@ -7,9 +7,7 @@ export default {
     '!test/server.*.test.js',
     '!test/react-native.*.test.js',
     // Exclude tests blocked by error-stack-parser ESM issue
-    '!test/browser.core.test.js',
     '!test/browser.rollbar.test.js',
-    '!test/browser.transforms.test.js',
   ],
 
   nodeResolve: {
