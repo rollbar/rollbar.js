@@ -33,6 +33,9 @@ function Rollbar(options, client) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
+  if (Telemeter) {
+    this.telemeter = new Telemeter(this.options, this.tracing);
+  }
 
   if (Recorder && _.isBrowser()) {
     const recorderOptions = this.options.recorder;
@@ -41,6 +44,7 @@ function Rollbar(options, client) {
       recorder: this.recorder,
       api: api,
       tracing: this.tracing,
+      telemeter: this.telemeter,
     });
 
     if (recorderOptions.enabled && recorderOptions.autoStart) {
@@ -48,9 +52,6 @@ function Rollbar(options, client) {
     }
   }
 
-  if (Telemeter) {
-    this.telemeter = new Telemeter(this.options, this.tracing);
-  }
   this.client =
     client ||
     new Client(

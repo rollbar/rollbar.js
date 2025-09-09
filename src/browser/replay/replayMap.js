@@ -11,6 +11,7 @@ export default class ReplayMap {
   #recorder;
   #api;
   #tracing;
+  #telemeter;
 
   /**
    * Creates a new ReplayMap instance
@@ -20,7 +21,7 @@ export default class ReplayMap {
    * @param {Object} props.api - The API instance used to send replay payloads to the backend
    * @param {Object} props.tracing - The tracing instance used to create spans and manage context
    */
-  constructor({ recorder, api, tracing }) {
+  constructor({ recorder, api, tracing, telemeter }) {
     if (!recorder) {
       throw new TypeError("Expected 'recorder' to be provided");
     }
@@ -37,6 +38,7 @@ export default class ReplayMap {
     this.#recorder = recorder;
     this.#api = api;
     this.#tracing = tracing;
+    this.#telemeter = telemeter;
   }
 
   /**
@@ -51,6 +53,8 @@ export default class ReplayMap {
    */
   async _processReplay(replayId, occurrenceUuid) {
     try {
+      this.#telemeter?.exportTelemetrySpan({'rollbar.replay.id': replayId});
+
       const payload = this.#recorder.dump(
         this.#tracing,
         replayId,

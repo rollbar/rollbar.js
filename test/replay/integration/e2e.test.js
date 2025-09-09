@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
+import Telemeter from '../../../src/telemetry.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayMap from '../../../src/browser/replay/replayMap.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
@@ -37,6 +38,7 @@ const options = {
 
 describe('Session Replay E2E', function () {
   let tracing;
+  let telemeter;
   let recorder;
   let api;
   let transport;
@@ -73,6 +75,7 @@ describe('Session Replay E2E', function () {
       urlMock,
       truncationMock,
     );
+    telemeter = new Telemeter({}, tracing);
 
     recorder = new Recorder(options.recorder, mockRecordFn);
 
@@ -82,6 +85,7 @@ describe('Session Replay E2E', function () {
       recorder,
       api,
       tracing,
+      telemeter,
     });
 
     queue = new Queue(rateLimiter, api, logger, { transmit: true }, replayMap);
@@ -146,23 +150,34 @@ describe('Session Replay E2E', function () {
             payloads.standardPayload.resourceSpans[0].resource,
           );
 
-          const span = resourceSpan.scopeSpans[0].spans[0];
-          expect(span).to.have.property('name', 'rrweb-replay-recording');
-          expect(span).to.have.property('events');
-          expect(span.events).to.be.an('array');
-          expect(span).to.have.property('attributes').that.is.an('array');
-          expect(span.attributes).to.have.lengthOf(2);
+          const span_t = resourceSpan.scopeSpans[0].spans[0]; // telemetry span
+          const span_r = resourceSpan.scopeSpans[0].spans[1]; // recording span
 
-          expect(span.attributes).to.deep.include({
+          expect(span_r).to.have.property('name', 'rrweb-replay-recording');
+          expect(span_r).to.have.property('events');
+          expect(span_r.events).to.be.an('array');
+          expect(span_r).to.have.property('attributes').that.is.an('array');
+          expect(span_r.attributes).to.have.lengthOf(2);
+
+          expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',
             value: { stringValue: expectedReplayId },
           });
 
-          const sessionIdAttr = span.attributes.find(
+          const sessionIdAttr = span_r.attributes.find(
             (attr) => attr.key === 'session.id',
           );
           expect(sessionIdAttr).to.exist;
           expect(sessionIdAttr.value.stringValue).to.match(/^[0-9a-fA-F]{32}$/);
+
+          expect(span_t).to.have.property('name', 'rollbar-telemetry');
+          expect(span_t.attributes).to.deep.include({
+            key: 'rollbar.replay.id',
+            value: { stringValue: expectedReplayId },
+          });
+          expect(sessionIdAttr).to.deep.equal(
+            span_t.attributes.find((attr) => attr.key === 'session.id'),
+          );
 
           const transportArgs = transport.post.lastCall.args;
           expect(transportArgs[1].path).to.include('/api/1/session/');
