@@ -50,6 +50,14 @@ Telemeter.prototype.copyEvents = function () {
   return events;
 };
 
+
+Telemeter.prototype.exportTelemetrySpan = function (attributes = {}) {
+  if (this.telemetrySpan) {
+    this.telemetrySpan.end(attributes);
+    this.telemetrySpan = this.tracing.startSpan('rollbar-telemetry', {});
+  }
+};
+
 Telemeter.prototype.capture = function (
   type,
   metadata,
