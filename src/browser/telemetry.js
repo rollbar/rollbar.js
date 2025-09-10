@@ -852,7 +852,7 @@ class Instrumenter {
   }
 
   handleCspEvent(cspEvent) {
-    const message =
+    let message =
       'Security Policy Violation: ' +
       'blockedURI: ' +
       cspEvent.blockedURI +
