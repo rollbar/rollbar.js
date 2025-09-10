@@ -1,7 +1,6 @@
 /**
- * Integration tests for Queue and ReplayMap
+ * Integration tests for Queue and ReplayManager
  */
-
 
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -9,9 +8,9 @@ import sinon from 'sinon';
 import Queue from '../../../src/queue.js';
 import Api from '../../../src/api.js';
 
-describe('Queue ReplayMap Integration', function () {
+describe('Queue ReplayManager Integration', function () {
   let queue;
-  let replayMap;
+  let replayManager;
   let api;
   let transport;
 
@@ -24,7 +23,7 @@ describe('Queue ReplayMap Integration', function () {
             callback(
               null,
               { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' }
+              { 'Rollbar-Replay-Enabled': 'true' },
             );
           }, 10);
         }),
@@ -43,7 +42,7 @@ describe('Queue ReplayMap Integration', function () {
       truncationMock,
     );
 
-    replayMap = {
+    replayManager = {
       add: sinon.stub().returnsArg(0),
       send: sinon.stub().resolves(true),
       discard: sinon.stub().returns(true),
@@ -56,7 +55,7 @@ describe('Queue ReplayMap Integration', function () {
       api,
       console,
       { transmit: true },
-      replayMap,
+      replayManager,
     );
   });
 
@@ -74,20 +73,18 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       expect(item).to.have.property('replayId', '1234567812345678');
-      expect(replayMap.add.calledOnce).to.be.true;
+      expect(replayManager.add.calledOnce).to.be.true;
       done();
     });
   });
 
-  it('should call replayMap.send when API response is successful', function (done) {
+  it('should call replayManager.send when API response is successful', function (done) {
     const item = {
       data: {
         body: {
@@ -97,21 +94,19 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.send.calledWith('1234567812345678')).to.be.true;
+        expect(replayManager.send.calledWith('1234567812345678')).to.be.true;
         done();
       }, 50);
     });
   });
 
-  it('should call replayMap.discard when API response has error', function (done) {
+  it('should call replayManager.discard when API response has error', function (done) {
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
@@ -129,29 +124,27 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
-        expect(replayMap.send.called).to.be.false;
+        expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
+        expect(replayManager.send.called).to.be.false;
         done();
       }, 50);
     });
   });
 
-  it('should call replayMap.discard when replay is disabled', function (done) {
+  it('should call replayManager.discard when replay is disabled', function (done) {
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
           callback(
             null,
             { err: 0, result: { id: '12345' } },
-            { 'Rollbar-Replay-Enabled': 'false' }
+            { 'Rollbar-Replay-Enabled': 'false' },
           );
         }, 10);
       },
@@ -166,30 +159,30 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
-        expect(replayMap.send.called).to.be.false;
+        expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
+        expect(replayManager.send.called).to.be.false;
         done();
       }, 50);
     });
   });
 
-  it('should call replayMap.discard when over quota', function (done) {
+  it('should call replayManager.discard when over quota', function (done) {
     transport.post.callsFake(
       (accessToken, transportOptions, payload, callback) => {
         setTimeout(() => {
           callback(
             null,
             { err: 0, result: { id: '12345' } },
-            { 'Rollbar-Replay-Enabled': 'true',
-              'Rollbar-Replay-RateLimit-Remaining': '0'}
+            {
+              'Rollbar-Replay-Enabled': 'true',
+              'Rollbar-Replay-RateLimit-Remaining': '0',
+            },
           );
         }, 10);
       },
@@ -204,16 +197,14 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.discard.calledWith('1234567812345678')).to.be.true;
-        expect(replayMap.send.called).to.be.false;
+        expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
+        expect(replayManager.send.called).to.be.false;
         done();
       }, 50);
     });
@@ -233,7 +224,7 @@ describe('Queue ReplayMap Integration', function () {
             callback(
               null,
               { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' }
+              { 'Rollbar-Replay-Enabled': 'true' },
             );
           }, 10);
         }
@@ -251,9 +242,7 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
@@ -262,7 +251,7 @@ describe('Queue ReplayMap Integration', function () {
         expect(item).to.have.property('replayId', '1234567812345678');
 
         setTimeout(function () {
-          expect(replayMap.send.calledWith('1234567812345678')).to.be.true;
+          expect(replayManager.send.calledWith('1234567812345678')).to.be.true;
           done();
         }, 50);
       }
@@ -274,15 +263,13 @@ describe('Queue ReplayMap Integration', function () {
       data: {
         level: 'error',
         message: 'Test error without body',
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       expect(item).to.not.have.property('replayId');
-      expect(replayMap.add.called).to.be.false;
+      expect(replayManager.add.called).to.be.false;
       done();
     });
   });
@@ -304,7 +291,7 @@ describe('Queue ReplayMap Integration', function () {
 
     queue.addItem(item, function () {
       expect(item).to.not.have.property('replayId');
-      expect(replayMap.add.called).to.be.false;
+      expect(replayManager.add.called).to.be.false;
       done();
     });
   });
@@ -321,7 +308,7 @@ describe('Queue ReplayMap Integration', function () {
     const consoleWarnSpy = sinon.spy(console, 'warn');
 
     const item = {
-      data:{
+      data: {
         body: {
           trace: {
             exception: {
@@ -329,16 +316,15 @@ describe('Queue ReplayMap Integration', function () {
             },
           },
         },
-        attributes: [
-          { key: 'replay_id', value: '1234567812345678' },
-        ],
+        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
     };
 
     queue.addItem(item, function () {
       setTimeout(function () {
-        expect(replayMap.send.called).to.be.false;
-        expect(replayMap.discard.calledWith('1234567812345678')).to.be.false;
+        expect(replayManager.send.called).to.be.false;
+        expect(replayManager.discard.calledWith('1234567812345678')).to.be
+          .false;
         done();
       }, 50);
     });

@@ -2,11 +2,11 @@ import id from '../../tracing/id.js';
 import logger from '../logger.js';
 
 /**
- * ReplayMap - Manages the mapping between error occurrences and their associated
+ * ReplayManager - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
  * are dumped and when they are eventually sent to the backend.
  */
-export default class ReplayMap {
+export default class ReplayManager {
   #map;
   #recorder;
   #api;
@@ -14,7 +14,7 @@ export default class ReplayMap {
   #telemeter;
 
   /**
-   * Creates a new ReplayMap instance
+   * Creates a new ReplayManager instance
    *
    * @param {Object} props - Configuration props
    * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
@@ -53,7 +53,7 @@ export default class ReplayMap {
    */
   async _processReplay(replayId, occurrenceUuid) {
     try {
-      this.#telemeter?.exportTelemetrySpan({'rollbar.replay.id': replayId});
+      this.#telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
 
       const payload = this.#recorder.dump(
         this.#tracing,
@@ -103,12 +103,14 @@ export default class ReplayMap {
    */
   async send(replayId) {
     if (!replayId) {
-      logger.error('ReplayMap.send: No replayId provided');
+      logger.error('ReplayManager.send: No replayId provided');
       return false;
     }
 
     if (!this.#map.has(replayId)) {
-      logger.error(`ReplayMap.send: No replay found for replayId: ${replayId}`);
+      logger.error(
+        `ReplayManager.send: No replay found for replayId: ${replayId}`,
+      );
       return false;
     }
 
@@ -123,7 +125,7 @@ export default class ReplayMap {
 
     if (isEmpty) {
       logger.error(
-        `ReplayMap.send: No payload found for replayId: ${replayId}`,
+        `ReplayManager.send: No payload found for replayId: ${replayId}`,
       );
       return false;
     }
@@ -146,13 +148,13 @@ export default class ReplayMap {
    */
   discard(replayId) {
     if (!replayId) {
-      logger.error('ReplayMap.discard: No replayId provided');
+      logger.error('ReplayManager.discard: No replayId provided');
       return false;
     }
 
     if (!this.#map.has(replayId)) {
       logger.error(
-        `ReplayMap.discard: No replay found for replayId: ${replayId}`,
+        `ReplayManager.discard: No replay found for replayId: ${replayId}`,
       );
       return false;
     }

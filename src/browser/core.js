@@ -14,7 +14,7 @@ import * as sharedPredicates from '../predicates.js';
 import errorParser from '../errorParser.js';
 import recorderDefaults from './replay/defaults.js';
 import tracingDefaults from '../tracing/defaults.js';
-import ReplayMap from './replay/replayMap.js';
+import ReplayManager from './replay/replayManager.js';
 
 function Rollbar(options, client) {
   this.options = _.handleOptions(defaultOptions, options, null, logger);
@@ -40,7 +40,7 @@ function Rollbar(options, client) {
   if (Recorder && _.isBrowser()) {
     const recorderOptions = this.options.recorder;
     this.recorder = new Recorder(recorderOptions);
-    this.replayMap = new ReplayMap({
+    this.replayManager = new ReplayManager({
       recorder: this.recorder,
       api: api,
       tracing: this.tracing,
@@ -60,7 +60,7 @@ function Rollbar(options, client) {
       logger,
       this.telemeter,
       this.tracing,
-      this.replayMap,
+      this.replayManager,
       'browser',
     );
   var gWindow = _gWindow();
@@ -615,7 +615,13 @@ function _gWindow() {
   );
 }
 
-import { version, logLevel, reportLevel, uncaughtErrorLevel, endpoint } from '../defaults.js';
+import {
+  version,
+  logLevel,
+  reportLevel,
+  uncaughtErrorLevel,
+  endpoint,
+} from '../defaults.js';
 import browserDefaults from './defaults.js';
 
 var defaultOptions = {

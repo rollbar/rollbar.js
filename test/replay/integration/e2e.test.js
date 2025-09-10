@@ -2,14 +2,13 @@
  * End-to-end integration test for the complete session replay feature
  */
 
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
 import Telemeter from '../../../src/telemetry.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
-import ReplayMap from '../../../src/browser/replay/replayMap.js';
+import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
@@ -42,7 +41,7 @@ describe('Session Replay E2E', function () {
   let recorder;
   let api;
   let transport;
-  let replayMap;
+  let replayManager;
   let queue;
   let rateLimiter;
 
@@ -81,14 +80,20 @@ describe('Session Replay E2E', function () {
 
     rateLimiter = { shouldSend: () => ({ shouldSend: true }) };
 
-    replayMap = new ReplayMap({
+    replayManager = new ReplayManager({
       recorder,
       api,
       tracing,
       telemeter,
     });
 
-    queue = new Queue(rateLimiter, api, logger, { transmit: true }, replayMap);
+    queue = new Queue(
+      rateLimiter,
+      api,
+      logger,
+      { transmit: true },
+      replayManager,
+    );
   });
 
   afterEach(function () {
@@ -103,8 +108,8 @@ describe('Session Replay E2E', function () {
 
     setTimeout(() => {
       const recorderDumpSpy = sinon.spy(recorder, 'dump');
-      const replayMapAddSpy = sinon.spy(replayMap, 'add');
-      const replayMapSendSpy = sinon.spy(replayMap, 'send');
+      const replayManagerAddSpy = sinon.spy(replayManager, 'add');
+      const replayManagerSendSpy = sinon.spy(replayManager, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
       const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
@@ -126,14 +131,15 @@ describe('Session Replay E2E', function () {
         const expectedReplayId = errorItem.replayId;
         expect(expectedReplayId).to.match(/^[0-9a-fA-F]{16}$/);
 
-        expect(replayMapAddSpy.calledOnce).to.be.true;
+        expect(replayManagerAddSpy.calledOnce).to.be.true;
         expect(apiPostItemSpy.calledOnce).to.be.true;
 
         setTimeout(() => {
           expect(recorderDumpSpy.called).to.be.true;
           expect(recorderDumpSpy.calledWith(tracing, errorItem.replayId)).to.be
             .true;
-          expect(replayMapSendSpy.calledWith(errorItem.replayId)).to.be.true;
+          expect(replayManagerSendSpy.calledWith(errorItem.replayId)).to.be
+            .true;
           expect(apiPostSpansSpy.calledOnce).to.be.true;
 
           const payload = apiPostSpansSpy.firstCall.args[0];
@@ -203,8 +209,8 @@ describe('Session Replay E2E', function () {
       },
     );
 
-    const replayMapAddSpy = sinon.spy(replayMap, 'add');
-    const replayMapDiscardSpy = sinon.spy(replayMap, 'discard');
+    const replayManagerAddSpy = sinon.spy(replayManager, 'add');
+    const replayManagerDiscardSpy = sinon.spy(replayManager, 'discard');
     const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
     recorder.start();
@@ -224,13 +230,14 @@ describe('Session Replay E2E', function () {
 
     queue.addItem(errorItem, function (err, resp) {
       expect(errorItem).to.have.property('replayId');
-      expect(replayMapAddSpy.calledOnce).to.be.true;
+      expect(replayManagerAddSpy.calledOnce).to.be.true;
       expect(resp).to.have.property('err', 1);
 
       setTimeout(() => {
-        expect(replayMapDiscardSpy.calledWith(errorItem.replayId)).to.be.true;
+        expect(replayManagerDiscardSpy.calledWith(errorItem.replayId)).to.be
+          .true;
         expect(apiPostSpansSpy.called).to.be.false;
-        expect(replayMap.getSpans(errorItem.replayId)).to.be.null;
+        expect(replayManager.getSpans(errorItem.replayId)).to.be.null;
 
         done();
       }, 100);

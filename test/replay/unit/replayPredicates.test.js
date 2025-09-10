@@ -2,11 +2,10 @@
  * Unit tests for the ReplayPredicates module
  */
 
-
 import { expect } from 'chai';
 import ReplayPredicates from '../../../src/browser/replay/replayPredicates.js';
 
-describe('ReplayMap', function () {
+describe('ReplayManager', function () {
   let replayId;
   let recorderConfig;
 
@@ -22,7 +21,7 @@ describe('ReplayMap', function () {
               samplingRatio: 0.5,
             },
           ],
-        }
+        };
       });
 
       it('should return true on matching level', function () {
@@ -30,10 +29,10 @@ describe('ReplayMap', function () {
           level: 'error',
         };
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.true;
       });
 
@@ -42,10 +41,10 @@ describe('ReplayMap', function () {
           level: 'info',
         };
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.false;
       });
 
@@ -55,10 +54,10 @@ describe('ReplayMap', function () {
         };
         recorderConfig.triggers[0].level = undefined;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.true;
       });
 
@@ -72,10 +71,10 @@ describe('ReplayMap', function () {
           samplingRatio: 0.5,
         });
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.true;
       });
 
@@ -85,10 +84,10 @@ describe('ReplayMap', function () {
         };
         recorderConfig.triggers[0].samplingRatio = undefined;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.true;
       });
 
@@ -98,10 +97,10 @@ describe('ReplayMap', function () {
         };
         recorderConfig.triggers[0].samplingRatio = 0.1;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.false;
       });
 
@@ -112,10 +111,10 @@ describe('ReplayMap', function () {
         recorderConfig.baseSamplingRatio = 0.1;
         recorderConfig.triggers[0].samplingRatio = undefined;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.false;
       });
 
@@ -125,10 +124,10 @@ describe('ReplayMap', function () {
         };
         recorderConfig.baseSamplingRatio = 0.1;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.true;
       });
 
@@ -137,10 +136,10 @@ describe('ReplayMap', function () {
           level: 'error',
         };
 
-        const enabled = new ReplayPredicates(
-          null,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(null, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.false;
       });
 
@@ -150,13 +149,12 @@ describe('ReplayMap', function () {
         };
         recorderConfig.triggers = null;
 
-        const enabled = new ReplayPredicates(
-          recorderConfig,
-          { item, replayId },
-        ).isEnabledForTriggerType('occurrence')
+        const enabled = new ReplayPredicates(recorderConfig, {
+          item,
+          replayId,
+        }).isEnabledForTriggerType('occurrence');
         expect(enabled).to.be.false;
       });
-
     });
   });
 });

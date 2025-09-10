@@ -11,13 +11,27 @@ import ReplayPredicates from './browser/replay/replayPredicates.js';
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, tracing, replayMap, platform) {
+function Rollbar(
+  options,
+  api,
+  logger,
+  telemeter,
+  tracing,
+  replayManager,
+  platform,
+) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options, replayMap);
+  this.queue = new Queue(
+    Rollbar.rateLimiter,
+    api,
+    logger,
+    this.options,
+    replayManager,
+  );
 
   this.tracing = tracing;
 
@@ -182,30 +196,29 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
   const span = this.tracing?.getSpan();
 
   const attributes = [
-    {key: 'replay_id', value: replayId},
-    {key: 'session_id', value: this.tracing?.sessionId},
-    {key: 'span_id', value: span?.spanId},
-    {key: 'trace_id', value: span?.traceId},
+    { key: 'replay_id', value: replayId },
+    { key: 'session_id', value: this.tracing?.sessionId },
+    { key: 'span_id', value: span?.spanId },
+    { key: 'trace_id', value: span?.traceId },
   ];
   _.addItemAttributes(item.data, attributes);
 
-  span?.addEvent(
-    'rollbar.occurrence',
-    [{key: 'rollbar.occurrence.uuid', value: item.uuid}],
-  );
+  span?.addEvent('rollbar.occurrence', [
+    { key: 'rollbar.occurrence.uuid', value: item.uuid },
+  ]);
 };
 
 Rollbar.prototype._replayIdIfTriggered = function (item) {
   const replayId = this.tracing?.idGen(8);
-  const enabled = new ReplayPredicates(
-    this.options.recorder,
-    { item, replayId },
-  ).isEnabledForTriggerType('occurrence')
+  const enabled = new ReplayPredicates(this.options.recorder, {
+    item,
+    replayId,
+  }).isEnabledForTriggerType('occurrence');
 
   if (enabled) {
     return replayId;
   }
-}
+};
 
 Rollbar.prototype._defaultLogLevel = function () {
   return this.options.logLevel || 'debug';
