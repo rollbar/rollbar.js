@@ -12,14 +12,14 @@ import * as _ from './utility.js';
  *    api.postItem(payload, function(err, response))
  * @param logger - An object used to log verbose messages if desired
  * @param options - see Queue.prototype.configure
- * @param replayMap - Optional ReplayMap for coordinating session replay with error occurrences
+ * @param replayManager - Optional ReplayManager for coordinating session replay with error occurrences
  */
-function Queue(rateLimiter, api, logger, options, replayMap) {
+function Queue(rateLimiter, api, logger, options, replayManager) {
   this.rateLimiter = rateLimiter;
   this.api = api;
   this.logger = logger;
   this.options = options;
-  this.replayMap = replayMap;
+  this.replayManager = replayManager;
   this.predicates = [];
   this.pendingItems = [];
   this.pendingRequests = [];
@@ -90,7 +90,7 @@ Queue.prototype.addItem = function (
       return;
     };
   }
-  const data = item.data
+  const data = item.data;
   var predicateResult = this._applyPredicates(data);
   if (predicateResult.stop) {
     this.removePendingItem(originalItem);
@@ -104,10 +104,10 @@ Queue.prototype.addItem = function (
     return;
   }
 
-  if (this.replayMap && data.body) {
+  if (this.replayManager && data.body) {
     const replayId = _.getItemAttribute(data, 'replay_id');
     if (replayId) {
-      item.replayId = this.replayMap.add(replayId, data.uuid);
+      item.replayId = this.replayManager.add(replayId, data.uuid);
     }
   }
 
@@ -325,9 +325,13 @@ Queue.prototype._maybeCallWait = function () {
  *                             false if replay was discarded or an error occurred
  * @private
  */
-Queue.prototype._handleReplayResponse = async function (replayId, response, headers) {
-  if (!this.replayMap) {
-    console.warn('Queue._handleReplayResponse: ReplayMap not available');
+Queue.prototype._handleReplayResponse = async function (
+  replayId,
+  response,
+  headers,
+) {
+  if (!this.replayManager) {
+    console.warn('Queue._handleReplayResponse: ReplayManager not available');
     return false;
   }
 
@@ -338,9 +342,9 @@ Queue.prototype._handleReplayResponse = async function (replayId, response, head
 
   try {
     if (this._shouldSendReplay(response, headers)) {
-      return await this.replayMap.send(replayId);
+      return await this.replayManager.send(replayId);
     } else {
-      this.replayMap.discard(replayId);
+      this.replayManager.discard(replayId);
       return false;
     }
   } catch (error) {
@@ -350,10 +354,12 @@ Queue.prototype._handleReplayResponse = async function (replayId, response, head
 };
 
 Queue.prototype._shouldSendReplay = function (response, headers) {
-  if (response?.err !== 0 ||
-      !headers ||
-      headers['Rollbar-Replay-Enabled'] !== 'true' ||
-      headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
+  if (
+    response?.err !== 0 ||
+    !headers ||
+    headers['Rollbar-Replay-Enabled'] !== 'true' ||
+    headers['Rollbar-Replay-RateLimit-Remaining'] === '0'
+  ) {
     return false;
   }
 

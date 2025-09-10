@@ -2,14 +2,13 @@
  * Integration tests for the Recorder and Tracing interaction
  */
 
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
 import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
-import ReplayMap from '../../../src/browser/replay/replayMap.js';
+import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import recorderDefaults from '../../../src/browser/replay/defaults.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 import Api from '../../../src/api.js';
@@ -188,7 +187,7 @@ describe('Session Replay Transport Integration', function () {
   let recorder;
   let api;
   let transport;
-  let replayMap;
+  let replayManager;
   let queue;
 
   beforeEach(function () {
@@ -214,7 +213,7 @@ describe('Session Replay Transport Integration', function () {
       return createPayloadWithReplayId(replayId);
     });
 
-    replayMap = new ReplayMap({
+    replayManager = new ReplayManager({
       recorder,
       api,
       tracing,
@@ -225,7 +224,7 @@ describe('Session Replay Transport Integration', function () {
       api,
       console,
       { transmit: true, retryInterval: 500 },
-      replayMap,
+      replayManager,
     );
 
     recorder.start();
@@ -239,8 +238,8 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should add replayId to error item and send replay on success', function (done) {
-    const addSpy = sinon.spy(replayMap, 'add');
-    const sendSpy = sinon.spy(replayMap, 'send');
+    const addSpy = sinon.spy(replayManager, 'add');
+    const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
     const errorItem = {
@@ -281,9 +280,9 @@ describe('Session Replay Transport Integration', function () {
         }, 10);
       });
 
-    const addSpy = sinon.spy(replayMap, 'add');
-    const sendSpy = sinon.spy(replayMap, 'send');
-    const discardSpy = sinon.spy(replayMap, 'discard');
+    const addSpy = sinon.spy(replayManager, 'add');
+    const sendSpy = sinon.spy(replayManager, 'send');
+    const discardSpy = sinon.spy(replayManager, 'discard');
 
     const errorItem = {
       data: {
@@ -312,8 +311,8 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should handle full end-to-end flow from error to spans', async function () {
-    const addSpy = sinon.spy(replayMap, 'add');
-    const sendSpy = sinon.spy(replayMap, 'send');
+    const addSpy = sinon.spy(replayManager, 'add');
+    const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
     const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
@@ -357,8 +356,8 @@ describe('Session Replay Transport Integration', function () {
     );
   });
 
-  it('should not add replayId when replayMap is not provided', function (done) {
-    const queueWithoutReplayMap = new Queue(
+  it('should not add replayId when replayManager is not provided', function (done) {
+    const queueWithoutReplayManager = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },
       api,
       console,
@@ -370,7 +369,7 @@ describe('Session Replay Transport Integration', function () {
         body: {
           trace: {
             exception: {
-              message: 'Test without replayMap',
+              message: 'Test without replayManager',
             },
           },
         },
@@ -378,7 +377,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queueWithoutReplayMap.addItem(errorItem, function (err, resp) {
+    queueWithoutReplayManager.addItem(errorItem, function (err, resp) {
       expect(errorItem).to.not.have.property('replayId');
       done();
     });

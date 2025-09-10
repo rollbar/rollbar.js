@@ -1,13 +1,12 @@
 /**
- * Unit tests for Queue's integration with ReplayMap
+ * Unit tests for Queue's integration with ReplayManager
  */
-
 
 import { expect } from 'chai';
 import sinon from 'sinon';
 import Queue from '../../../src/queue.js';
 
-class MockReplayMap {
+class MockReplayManager {
   constructor() {
     this.add = sinon.stub().returnsArg(0);
     this.send = sinon.stub().resolves(true);
@@ -29,20 +28,26 @@ class MockRateLimiter {
   }
 }
 
-describe('Queue with ReplayMap', function () {
+describe('Queue with ReplayManager', function () {
   let queue;
-  let replayMap;
+  let replayManager;
   let api;
   let rateLimiter;
   let logger;
 
   beforeEach(function () {
-    replayMap = new MockReplayMap();
+    replayManager = new MockReplayManager();
     api = new MockApi();
     rateLimiter = new MockRateLimiter();
     logger = { error: sinon.stub(), log: sinon.stub() };
 
-    queue = new Queue(rateLimiter, api, logger, { transmit: true }, replayMap);
+    queue = new Queue(
+      rateLimiter,
+      api,
+      logger,
+      { transmit: true },
+      replayManager,
+    );
   });
 
   afterEach(function () {
@@ -50,7 +55,7 @@ describe('Queue with ReplayMap', function () {
   });
 
   describe('addItem', function () {
-    it('should add replayId to the item when replayMap is available', function () {
+    it('should add replayId to the item when replayManager is available', function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -61,7 +66,7 @@ describe('Queue with ReplayMap', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayMap.add.called).to.be.true;
+      expect(replayManager.add.called).to.be.true;
       expect(item.replayId).to.equal('1234567812345678');
     });
 
@@ -76,11 +81,11 @@ describe('Queue with ReplayMap', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayMap.add.called).to.be.false;
+      expect(replayManager.add.called).to.be.false;
       expect(item.replayId).to.be.undefined;
     });
 
-    it('should not add replayId when replayMap is not available', function () {
+    it('should not add replayId when replayManager is not available', function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = {
@@ -105,8 +110,8 @@ describe('Queue with ReplayMap', function () {
 
       await queue._handleReplayResponse(replayId, response, headers);
 
-      expect(replayMap.send.calledWith(replayId)).to.be.true;
-      expect(replayMap.discard.called).to.be.false;
+      expect(replayManager.send.calledWith(replayId)).to.be.true;
+      expect(replayManager.discard.called).to.be.false;
     });
 
     it('should discard the replay when response has an error', async function () {
@@ -116,11 +121,11 @@ describe('Queue with ReplayMap', function () {
 
       await queue._handleReplayResponse(replayId, response, headers);
 
-      expect(replayMap.send.called).to.be.false;
-      expect(replayMap.discard.calledWith(replayId)).to.be.true;
+      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.discard.calledWith(replayId)).to.be.true;
     });
 
-    it('should log a warning when replayMap is not available', async function () {
+    it('should log a warning when replayManager is not available', async function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const consoleSpy = sinon.spy(console, 'warn');
@@ -128,7 +133,7 @@ describe('Queue with ReplayMap', function () {
       await queue._handleReplayResponse('test-replay-id', { err: 0 });
 
       expect(consoleSpy.called).to.be.true;
-      expect(consoleSpy.args[0][0]).to.include('ReplayMap not available');
+      expect(consoleSpy.args[0][0]).to.include('ReplayManager not available');
     });
 
     it('should log a warning when replayId is missing', async function () {
@@ -145,7 +150,7 @@ describe('Queue with ReplayMap', function () {
       const response = { err: 0 };
       const headers = { 'Rollbar-Replay-Enabled': 'true' };
 
-      replayMap.send.rejects(new Error('Send error'));
+      replayManager.send.rejects(new Error('Send error'));
 
       const consoleSpy = sinon.spy(console, 'error');
 

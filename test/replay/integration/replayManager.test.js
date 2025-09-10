@@ -1,12 +1,11 @@
 /**
- * Integration tests for ReplayMap with API
+ * Integration tests for ReplayManager with API
  */
-
 
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import ReplayMap from '../../../src/browser/replay/replayMap.js';
+import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import Api from '../../../src/api.js';
@@ -20,12 +19,12 @@ const options = {
   },
 };
 
-describe('ReplayMap API Integration', function () {
+describe('ReplayManager API Integration', function () {
   let tracing;
   let recorder;
   let api;
   let transport;
-  let replayMap;
+  let replayManager;
 
   beforeEach(function () {
     transport = {
@@ -63,7 +62,7 @@ describe('ReplayMap API Integration', function () {
     recorder = new Recorder(options.recorder, mockRecordFn);
     sinon.stub(recorder, 'dump').returns(mockPayload);
 
-    replayMap = new ReplayMap({
+    replayManager = new ReplayManager({
       recorder,
       api,
       tracing,
@@ -81,7 +80,7 @@ describe('ReplayMap API Integration', function () {
 
   it('should add replay data to map', async function () {
     const uuid = 'test-uuid';
-    const replayId = replayMap.add(null, uuid);
+    const replayId = replayManager.add(null, uuid);
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
@@ -90,7 +89,7 @@ describe('ReplayMap API Integration', function () {
     expect(recorder.dump.calledOnce).to.be.true;
     expect(recorder.dump.calledWith(tracing, replayId, uuid)).to.be.true;
 
-    const payload = replayMap.getSpans(replayId);
+    const payload = replayManager.getSpans(replayId);
     expect(payload).to.not.be.null;
     expect(payload).to.be.an('array');
     expect(payload[0]).to.have.property('name', 'recording-span');
@@ -101,15 +100,15 @@ describe('ReplayMap API Integration', function () {
 
     const replayId = 'test-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockPayload);
+    replayManager.setSpans(replayId, mockPayload);
 
-    const result = await replayMap.send(replayId);
+    const result = await replayManager.send(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
     expect(postSpansSpy.calledWith(mockPayload)).to.be.true;
 
-    expect(replayMap.getSpans(replayId)).to.be.null;
+    expect(replayManager.getSpans(replayId)).to.be.null;
   });
 
   it('should handle API errors during send', async function () {
@@ -120,12 +119,12 @@ describe('ReplayMap API Integration', function () {
 
     const replayId = 'error-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockPayload);
+    replayManager.setSpans(replayId, mockPayload);
 
-    const result = await replayMap.send(replayId);
+    const result = await replayManager.send(replayId);
 
     expect(result).to.be.false;
-    expect(replayMap.getSpans(replayId)).to.be.null;
+    expect(replayManager.getSpans(replayId)).to.be.null;
   });
 
   it('should discard replay without sending', function () {
@@ -133,23 +132,23 @@ describe('ReplayMap API Integration', function () {
 
     const replayId = 'discard-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-    replayMap.setSpans(replayId, mockPayload);
+    replayManager.setSpans(replayId, mockPayload);
 
-    const result = replayMap.discard(replayId);
+    const result = replayManager.discard(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.called).to.be.false;
 
-    expect(replayMap.getSpans(replayId)).to.be.null;
+    expect(replayManager.getSpans(replayId)).to.be.null;
   });
 
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
 
-    sinon.stub(replayMap, '_processReplay').resolves();
+    sinon.stub(replayManager, '_processReplay').resolves();
 
     for (let i = 0; i < 100; i++) {
-      const replayId = replayMap.add();
+      const replayId = replayManager.add();
       expect(replayIds.has(replayId)).to.be.false;
       replayIds.add(replayId);
     }
