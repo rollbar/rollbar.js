@@ -249,6 +249,253 @@ class Telemeter {
     return this.capture('dom', metadata, 'info', rollbarUUID);
   }
 
+  captureInput({
+    type,
+    isSynthetic,
+    element,
+    value,
+    timestamp,
+  }) {
+    const name = 'rollbar-input-event';
+    const metadata = {
+      type: name,
+      subtype: type,
+      element,
+      value,
+    };
+    const otelAttributes = {
+      type,
+      isSynthetic,
+      element,
+      value,
+      endTimeUnixNano: fromMillis(timestamp),
+    };
+    const event = this.#getRepeatedEvent(name, otelAttributes);
+    if (event) {
+      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+    }
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'dom',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
+  }
+
+  captureClick({
+    type,
+    isSynthetic,
+    element,
+    timestamp,
+  }) {
+    const name = 'rollbar-click-event';
+    const metadata = {
+      type: name,
+      subtype: type,
+      element,
+    };
+    const otelAttributes = {
+      type,
+      isSynthetic,
+      element,
+      endTimeUnixNano: fromMillis(timestamp),
+    };
+    const event = this.#getRepeatedEvent(name, otelAttributes);
+    if (event) {
+      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+    }
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'dom',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
+  }
+
+  #getRepeatedEvent(name, attributes) {
+    const lastEvent = this.#lastEvent(this.queue);
+
+    if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
+      return lastEvent;
+    }
+  }
+
+  #updateRepeatedEvent(event, attributes, timestamp) {
+    const duration = Math.max(timestamp - event.timestamp_ms, 1);
+    event.body.value = attributes.value;
+    event.otelAttributes.value = attributes.value;
+    event.otelAttributes.height = attributes.height;
+    event.otelAttributes.width = attributes.width;
+    event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
+    event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
+    event.otelAttributes['durationUnixNano'] = fromMillis(duration);
+    event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
+    event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+  }
+
+  #lastEvent(list) {
+    return list.length > 0 ? list[list.length - 1] : null;
+  }
+
+  captureFocus({
+    type,
+    isSynthetic,
+    element,
+    timestamp,
+  }) {
+    const name = 'rollbar-focus-event';
+    const metadata = {
+      type: name,
+      subtype: type,
+      element,
+    };
+    const otelAttributes = {
+      type,
+      isSynthetic,
+      element,
+    };
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'dom',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
+  }
+
+  captureResize({
+    type,
+    isSynthetic,
+    width,
+    height,
+    textZoomRatio,
+    timestamp,
+  }) {
+    const name = 'rollbar-resize-event';
+    const metadata = {
+      type: name,
+      subtype: type,
+      width,
+      height,
+      textZoomRatio,
+    };
+    const otelAttributes = {
+      type,
+      isSynthetic,
+      width,
+      height,
+      textZoomRatio,
+    };
+
+    const event = this.#getRepeatedEvent(name, otelAttributes);
+    if (event) {
+      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+    }
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'dom',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
+  }
+
+  captureDragDrop({
+    type,
+    isSynthetic,
+    element,
+    dropEffect,
+    effectAllowed,
+    kinds,
+    mediaTypes,
+    timestamp,
+  }) {
+    const name = 'rollbar-dragdrop-event';
+    let metadata = {
+      type: name,
+      subtype: type,
+      isSynthetic,
+    };
+
+    let otelAttributes = {
+      type,
+      isSynthetic,
+    };
+
+    if (type === 'dragstart') {
+      metadata = { ...metadata, element, dropEffect, effectAllowed}
+      otelAttributes = { ...otelAttributes, element, dropEffect, effectAllowed}
+    }
+
+    if (type === 'drop') {
+      metadata = {
+        ...metadata,
+        element,
+        dropEffect,
+        effectAllowed,
+        kinds,
+        mediaTypes,
+      }
+      otelAttributes = {
+        ...otelAttributes,
+        element,
+        dropEffect,
+        effectAllowed,
+        kinds,
+        mediaTypes,
+      }
+    }
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'dom',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
+  }
+
   captureNavigation(
     from,
     to,
