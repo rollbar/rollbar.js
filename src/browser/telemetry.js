@@ -683,7 +683,7 @@ class Instrumenter {
 
   handleFocus(evt) {
     const type = evt.type;
-    const element = evt.target.window ? 'window' : domUtil.elementString(evt.target);
+    const element = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
 
     this.telemeter.captureFocus({
       type: type,
@@ -696,7 +696,7 @@ class Instrumenter {
   handleForm(evt) {
     // TODO: implement form event handling
     const type = evt.type;
-    const elementString = evt.target.window ? 'window' : domUtil.elementString(evt.target);
+    const elementString = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
     console.log('handleForm', type, elementString, evt);
   }
 
@@ -721,7 +721,6 @@ class Instrumenter {
       kinds = [];
       mediaTypes = [];
       const objs = [...evt.dataTransfer.files, ...evt.dataTransfer.items];
-      //const objs = Array.from(evt.dataTransfer.files) || Array.from(evt.dataTransfer.items);
       for (const o of objs) {
         if (o.kind && o.type) {
           kinds.push(o.kind);
