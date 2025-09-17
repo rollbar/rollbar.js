@@ -640,111 +640,147 @@ class Instrumenter {
   };
 
   instrumentDom() {
-    if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
-      return;
-    }
-    const clickHandler = this.handleClick.bind(this);
-    const blurHandler = this.handleBlur.bind(this);
-    this.addListener('dom', this._window, 'click', clickHandler, true);
+    const self = this;
+    this.addListener('dom', this._window, ['click', 'dblclick', 'contextmenu'], (e) => this.handleEvent('click', e));
     this.addListener(
       'dom',
       this._window,
-      'blur',
-      blurHandler,
-      true,
+      ['dragstart', 'dragend', 'dragenter', 'dragleave', 'drop'],
+      (e) => this.handleEvent('dragdrop', e)
     );
+    this.addListener('dom', this._window, ['blur', 'focus'], (e) => this.handleEvent('focus', e));
+    this.addListener('dom', this._window, ['submit', 'invalid'], (e) => this.handleEvent('form', e));
+    this.addListener('dom', this._window, ['input', 'change'], (e) => this.handleEvent('input', e));
+    this.addListener('dom', this._window, ['resize'], (e) => this.handleEvent('resize', e));
+  }
+
+  handleEvent(name, evt) {
+    try {
+      return {
+        click: this.handleClick,
+        dragdrop: this.handleDrag,
+        focus: this.handleFocus,
+        form: this.handleForm,
+        input: this.handleInput,
+        resize: this.handleResize,
+      }[name].call(this, evt);
+    } catch (exc) {
+      console.log(`${name} handler error`, evt, exc, exc.stack);
+    }
   }
 
   handleClick(evt) {
-    try {
-      const e = domUtil.getElementFromEvent(evt, this._document);
-      const hasTag = e && e.tagName;
-      const anchorOrButton =
-        domUtil.isDescribedElement(e, 'a') ||
-        domUtil.isDescribedElement(e, 'button');
-      if (
-        hasTag &&
-        (anchorOrButton ||
-          domUtil.isDescribedElement(e, 'input', ['button', 'submit']))
-      ) {
-        this.captureDomEvent('click', e);
-      } else if (domUtil.isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
-        this.captureDomEvent('input', e, e.value, e.checked);
-      }
-    } catch (exc) {
-      // TODO: Not sure what to do here
-    }
+    const tagName = evt.target?.tagName.toLowerCase();
+    if (['input', 'select', 'textarea'].includes(tagName)) return;
+
+    this.telemeter.captureClick({
+      type: evt.type,
+      isSynthetic: !evt.isTrusted,
+      element: domUtil.elementString(evt.target),
+      timestamp: _.now(),
+    })
   }
 
-  handleBlur(evt) {
-    try {
-      const e = domUtil.getElementFromEvent(evt, this._document);
-      if (e && e.tagName) {
-        if (domUtil.isDescribedElement(e, 'textarea')) {
-          this.captureDomEvent('input', e, e.value);
-        } else if (
-          domUtil.isDescribedElement(e, 'select') &&
-          e.options &&
-          e.options.length
-        ) {
-          this.handleSelectInputChanged(e);
-        } else if (
-          domUtil.isDescribedElement(e, 'input') &&
-          !domUtil.isDescribedElement(e, 'input', [
-            'button',
-            'submit',
-            'hidden',
-            'checkbox',
-            'radio',
-          ])
-        ) {
-          this.captureDomEvent('input', e, e.value);
-        }
-      }
-    } catch (exc) {
-      // TODO: Not sure what to do here
-    }
+  handleFocus(evt) {
+    const type = evt.type;
+    const element = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
+
+    this.telemeter.captureFocus({
+      type: type,
+      isSynthetic: !evt.isTrusted,
+      element,
+      timestamp: _.now(),
+    })
   }
 
-  handleSelectInputChanged(elem) {
-    if (elem.multiple) {
-      for (const o of elem.options) {
-        if (o.selected) {
-          this.captureDomEvent('input', elem, o.value);
-        }
-      }
-    } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
-      this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
-    }
+  handleForm(evt) {
+    // TODO: implement form event handling
+    const type = evt.type;
+    const elementString = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
+    console.log('handleForm', type, elementString, evt);
   }
 
-  captureDomEvent(
-    subtype,
-    element,
-    value,
-    isChecked,
-  ) {
-    if (value !== undefined) {
-      if (
-        this.scrubTelemetryInputs ||
-        domUtil.getElementType(element) === 'password'
-      ) {
-        value = '[scrubbed]';
-      } else {
-        const description = domUtil.describeElement(element);
-        if (this.telemetryScrubber) {
-          if (this.telemetryScrubber(description)) {
-            value = '[scrubbed]';
-          }
-        } else if (this.defaultValueScrubber(description)) {
-          value = '[scrubbed]';
+  handleResize(evt) {
+    const textZoomRatio = window.screen.width / window.innerWidth;
+
+    this.telemeter.captureResize({
+      type: evt.type,
+      isSynthetic: !evt.isTrusted,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      textZoomRatio: textZoomRatio,
+      timestamp: _.now(),
+    })
+  }
+
+  handleDrag(evt) {
+    const type = evt.type;
+    let kinds, mediaTypes, dropEffect, effectAllowed;
+
+    if (type === 'drop') {
+      kinds = [];
+      mediaTypes = [];
+      const objs = [...evt.dataTransfer.files, ...evt.dataTransfer.items];
+      for (const o of objs) {
+        if (o.kind && o.type) {
+          kinds.push(o.kind);
+          mediaTypes.push(o.type);
         }
       }
     }
-    const elementString = domUtil.elementArrayToString(
-      domUtil.treeToArray(element),
-    );
-    this.telemeter.captureDom(subtype, elementString, value, isChecked);
+    if (['drop', 'dragstart'].includes(type)) {
+      dropEffect = evt.dataTransfer?.dropEffect;
+      effectAllowed = evt.dataTransfer?.effectAllowed;
+    }
+
+    this.telemeter.captureDragDrop({
+      type,
+      isSynthetic: !evt.isTrusted,
+      element: domUtil.elementString(evt.target),
+      dropEffect: dropEffect,
+      effectAllowed: effectAllowed,
+      kinds: JSON.stringify(kinds),
+      mediaTypes: JSON.stringify(mediaTypes),
+      timestamp: _.now(),
+    });
+  }
+
+   /*
+  * Uses the `input` event for everything except radio and checkbox inputs.
+  * For those, it uses the `change` event.
+  */
+  handleInput(evt) {
+    const type = evt.type;
+    const tagName = evt.target?.tagName.toLowerCase();
+    let value = evt.target?.value;
+    let inputType = evt.target?.attributes?.type?.value || evt.target?.type;
+
+    switch (type) {
+      case 'input':
+        if (['radio', 'checkbox'].includes(inputType)) return;
+        if (['select', 'textarea'].includes(tagName)) {
+          inputType = tagName;
+        }
+        if (inputType === 'password') {
+          value = null;
+        }
+        break;
+
+      case 'change':
+        if (!['radio', 'checkbox'].includes(inputType)) return;
+        if (inputType === 'checkbox') {
+          value = evt.target?.checked;
+        }
+        break;
+    }
+
+    this.telemeter.captureInput({
+      type: inputType,
+      isSynthetic: !evt.isTrusted,
+      element: domUtil.elementString(evt.target),
+      value,
+      timestamp: _.now(),
+    })
   }
 
   deinstrumentNavigation() {
@@ -831,23 +867,12 @@ class Instrumenter {
   }
 
   instrumentConnectivity() {
+    const self = this;
     this.addListener(
       'connectivity',
       this._window,
-      'online',
-      function () {
-        this.telemeter.captureConnectivityChange('online');
-      }.bind(this),
-      true,
-    );
-    this.addListener(
-      'connectivity',
-      this._window,
-      'offline',
-      function () {
-        this.telemeter.captureConnectivityChange('offline');
-      }.bind(this),
-      true,
+      ['online', 'offline'],
+      (evt) => self.telemeter.captureConnectivityChange(evt),
     );
   }
 
@@ -902,24 +927,25 @@ class Instrumenter {
     this.addListener(
       'contentsecuritypolicy',
       this._document,
-      'securitypolicyviolation',
+      ['securitypolicyviolation'],
       cspHandler,
-      false,
     );
   }
 
   addListener(
     section,
     obj,
-    type,
+    types,
     handler,
-    capture,
   ) {
     if (obj.addEventListener) {
-      obj.addEventListener(type, handler, capture);
-      this.eventRemovers[section].push(function () {
-        obj.removeEventListener(type, handler, capture);
-      });
+      for (const t of types) {
+        const options = { capture: true, passive: true };
+        obj.addEventListener(t, handler, options, true);
+        this.eventRemovers[section].push(function () {
+          obj.removeEventListener(t, handler, options);
+        });
+      }
     }
   }
 

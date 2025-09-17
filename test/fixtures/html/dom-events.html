@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Elements for testing DOM event handling</title>
+  </head>
+  <body>
+    <div class="container" id"main-container">
+      <label>
+        Some text:
+        <input id="text-input"  type="text" placeholder="text input" />
+      </label>
+      <button class="myButton" id="button-1" >Button</button>
+      <p id="draggable" draggable="true">This element is draggable.</p>
+      <div id="dropzone">
+        Drop Zone
+      </div>
+      <select id="fruit-select" name="selectedFruit">
+        <option value="">--Please choose an option--</option>
+        <option value="apple">Apple</option>
+        <option value="banana">Banana</option>
+        <option value="orange">Orange</option>
+        <option value="grape">Grape</option>
+      </select>
+      <label>
+        <input id="remember-me-checkbox"
+          type="checkbox"
+        />
+        Remember me
+      </label>
+      <label>
+        Password:
+        <input  id="password-input" type="password" placeholder="password" />
+      </label>
+      <label>
+        Description:
+        <textarea id="textarea-1" placeholder="description" />
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          value="optionA"
+          name="myRadioGroup" // Important: Same name for all radio buttons in a group
+        />
+        Option A
+      </label>
+      <label>
+        <input
+          type="radio"
+          value="optionB"
+          name="myRadioGroup"
+        />
+        Option B
+      </label>
+      <label>
+        <input
+          type="radio"
+          value="optionC"
+          name="myRadioGroup"
+        />
+        Option C
+      </label>
+    </div>
+  </body>
+
+</html>

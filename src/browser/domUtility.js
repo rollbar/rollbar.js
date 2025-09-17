@@ -65,6 +65,10 @@ function elementArrayToString(a) {
   return out.join(separator);
 }
 
+function elementString(elem) {
+  return elementArrayToString(treeToArray(elem));
+};
+
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {
     return '';
@@ -133,6 +137,7 @@ export {
   describeElement,
   descriptionToString,
   elementArrayToString,
+  elementString,
   treeToArray,
   getElementFromEvent,
   isDescribedElement,
