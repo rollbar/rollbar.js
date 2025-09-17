@@ -68,6 +68,7 @@ describe('instrumentNetwork', function () {
 });
 
 describe('instrumentDom', function () {
+  const wait_ms = 1; //ensure events are sent before assertions
   let tracing, telemeter, instrumenter, rollbar, scrubFields;
   const wait = t => new Promise(resolve => setTimeout(resolve, t));
 
@@ -87,10 +88,116 @@ describe('instrumentDom', function () {
     instrumenter.instrument();
   });
 
+  it('should handle select type input events', async function () {
+    const elem = document.getElementById('fruit-select');
+
+    let domEvent = new InputEvent('input');
+    elem.value = 'orange';
+    elem.dispatchEvent(domEvent);
+
+    await wait(wait_ms);
+
+    expect(telemeter.queue.length).to.eql(1);
+    const event = telemeter.queue[0];
+    expect(event.type).to.eql('dom');
+    expect(event.body.type).to.eql('rollbar-input-event');
+    expect(event.body.subtype).to.eql('select');
+    expect(event.body.element).to.match(/select#fruit-select\[name=\"selectedFruit\"\]/);
+    expect(event.body.value).to.eql('orange');
+
+    expect(event.otelAttributes.type).to.eql('select');
+    expect(event.otelAttributes.isSynthetic).to.eql(true);
+    expect(event.otelAttributes.element).to.match(/select#fruit-select\[name=\"selectedFruit\"\]/);
+    expect(event.otelAttributes.value).to.eql('orange');
+    expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
+    expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
+  });
+
+  it('should handle checkbox type input events', async function () {
+    const elem = document.getElementById('remember-me-checkbox');
+
+    const pointerOptions = {
+      pointerId: 1,
+      bubbles: true,
+      cancelable: true,
+      pointerType: "touch",
+      isPrimary: true,
+    }
+    let domEvent = new PointerEvent('click', pointerOptions);
+    //elem.value = 'on';
+    elem.dispatchEvent(domEvent);
+
+    await wait(wait_ms);
+
+    expect(telemeter.queue.length).to.eql(1);
+    const event = telemeter.queue[0];
+    expect(event.type).to.eql('dom');
+    expect(event.body.type).to.eql('rollbar-input-event');
+    expect(event.body.subtype).to.eql('checkbox');
+    expect(event.body.element).to.match(/input#remember-me-checkbox\[type=\"checkbox\"\]/);
+    expect(event.body.value).to.eql(true);
+
+    expect(event.otelAttributes.type).to.eql('checkbox');
+    expect(event.otelAttributes.isSynthetic).to.eql(false);
+    expect(event.otelAttributes.element).to.match(/input#remember-me-checkbox\[type=\"checkbox\"\]/);
+    expect(event.otelAttributes.value).to.eql(true);
+    expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
+    expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
+  });
+
+  it('should handle textarea type input events', async function () {
+    const elem = document.getElementById('textarea-1');
+
+    let domEvent = new InputEvent('input');
+    elem.value = 'radar';
+    elem.dispatchEvent(domEvent);
+
+    await wait(wait_ms);
+
+    expect(telemeter.queue.length).to.eql(1);
+    const event = telemeter.queue[0];
+    expect(event.type).to.eql('dom');
+    expect(event.body.type).to.eql('rollbar-input-event');
+    expect(event.body.subtype).to.eql('textarea');
+    expect(event.body.element).to.match(/textarea#textarea-1/);
+    expect(event.body.value).to.eql('radar');
+
+    expect(event.otelAttributes.type).to.eql('textarea');
+    expect(event.otelAttributes.isSynthetic).to.eql(true);
+    expect(event.otelAttributes.element).to.match(/textarea#textarea-1/);
+    expect(event.otelAttributes.value).to.eql('radar');
+    expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
+    expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
+  });
+
+  it('should handle password type input events', async function () {
+    const elem = document.getElementById('password-input');
+
+    let domEvent = new InputEvent('input');
+    elem.value = 'radar';
+    elem.dispatchEvent(domEvent);
+
+    await wait(wait_ms);
+
+    expect(telemeter.queue.length).to.eql(1);
+    const event = telemeter.queue[0];
+    expect(event.type).to.eql('dom');
+    expect(event.body.type).to.eql('rollbar-input-event');
+    expect(event.body.subtype).to.eql('password');
+    expect(event.body.element).to.match(/password/);
+    expect(event.body.value).to.eql(null);
+
+    expect(event.otelAttributes.type).to.eql('password');
+    expect(event.otelAttributes.isSynthetic).to.eql(true);
+    expect(event.otelAttributes.element).to.match(/password/);
+    expect(event.otelAttributes.value).to.eql(null);
+    expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
+    expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
+  });
+
   it('should handle drag drop events', async function () {
-    const draggable = document.getElementById("draggable");
-    const dropzone = document.getElementById("dropzone");
-    console.log('elements', draggable, dropzone);
+    const draggable = document.getElementById('draggable');
+    const dropzone = document.getElementById('dropzone');
 
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', 'some data');
@@ -114,9 +221,8 @@ describe('instrumentDom', function () {
     dropEvent.preventDefault = () => {};
     dropzone.dispatchEvent(dropEvent);
 
-    await wait(1000);
+    await wait(wait_ms);
 
-    console.log('telemeter queue', telemeter.queue);
     expect(telemeter.queue.length).to.eql(2);
     const events = telemeter.queue;
 
@@ -144,7 +250,7 @@ describe('instrumentDom', function () {
   });
 
   it('should combine repeated click events', async function () {
-    const elem = document.getElementById("button-1");
+    const elem = document.getElementById('button-1');
 
     const pointerOptions = {
       pointerId: 1,
@@ -162,7 +268,7 @@ describe('instrumentDom', function () {
     domEvent = new PointerEvent('click', pointerOptions);
     elem.dispatchEvent(domEvent);
 
-    await wait(1000);
+    await wait(wait_ms);
 
     expect(telemeter.queue.length).to.eql(1);
     const event = telemeter.queue[0];
@@ -180,7 +286,7 @@ describe('instrumentDom', function () {
   });
 
   it('should combine repeated input events', async function () {
-    const elem = document.getElementById("text-input");
+    const elem = document.getElementById('text-input');
 
     let domEvent = new InputEvent('input');
     elem.value = 'a';
@@ -194,7 +300,7 @@ describe('instrumentDom', function () {
     elem.value = 'abc';
     elem.dispatchEvent(domEvent);
 
-    await wait(1000);
+    await wait(wait_ms);
 
     expect(telemeter.queue.length).to.eql(1);
     const event = telemeter.queue[0];

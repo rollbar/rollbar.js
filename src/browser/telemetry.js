@@ -694,6 +694,7 @@ class Instrumenter {
   }
 
   handleForm(evt) {
+    // TODO: implement form event handling
     const type = evt.type;
     const elementString = evt.target.window ? 'window' : domUtil.elementString(evt.target);
     console.log('handleForm', type, elementString, evt);
@@ -745,27 +746,32 @@ class Instrumenter {
     });
   }
 
+   /*
+  * Uses the `input` event for everything except radio and checkbox inputs.
+  * For those, it uses the `change` event.
+  */
   handleInput(evt) {
     const type = evt.type;
     const tagName = evt.target?.tagName.toLowerCase();
     let value = evt.target?.value;
-    let inputType;
+    let inputType = evt.target?.attributes?.type?.value || evt.target?.type;
 
-    switch (tagName) {
-      case 'select':
-      case 'textarea':
-        if (type === 'change') return;
-        inputType = tagName;
-        break;
+    switch (type) {
       case 'input':
-        inputType = evt.target?.attributes?.type?.value || evt.target?.type;
-        if (inputType === 'password') value = null;
-        if (['radio', 'checkbox'].includes(inputType)) {
-          if (type === 'input') return;
-          if (inputType === 'checkbox') value = evt.target?.checked;
-          break;
+        if (['radio', 'checkbox'].includes(inputType)) return;
+        if (['select', 'textarea'].includes(tagName)) {
+          inputType = tagName;
         }
-        if (type === 'change') return;
+        if (inputType === 'password') {
+          value = null;
+        }
+        break;
+
+      case 'change':
+        if (!['radio', 'checkbox'].includes(inputType)) return;
+        if (inputType === 'checkbox') {
+          value = evt.target?.checked;
+        }
         break;
     }
 
@@ -776,35 +782,6 @@ class Instrumenter {
       value,
       timestamp: _.now(),
     })
-  }
-
-  captureDomEvent(
-    subtype,
-    element,
-    value,
-    isChecked,
-  ) {
-    if (value !== undefined) {
-      if (
-        this.scrubTelemetryInputs ||
-        domUtil.getElementType(element) === 'password'
-      ) {
-        value = '[scrubbed]';
-      } else {
-        const description = domUtil.describeElement(element);
-        if (this.telemetryScrubber) {
-          if (this.telemetryScrubber(description)) {
-            value = '[scrubbed]';
-          }
-        } else if (this.defaultValueScrubber(description)) {
-          value = '[scrubbed]';
-        }
-      }
-    }
-    const elementString = domUtil.elementArrayToString(
-      domUtil.treeToArray(element),
-    );
-    this.telemeter.captureDom(subtype, elementString, value, isChecked);
   }
 
   deinstrumentNavigation() {
