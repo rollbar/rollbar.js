@@ -1,7 +1,7 @@
 import logger from '../logger.js';
 import * as _ from '../../utility.js';
 
-function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
+function makeFetchRequest({accessToken, url, method, payload, headers, callback, timeout}) {
   var controller;
   var timeoutId;
 
@@ -12,14 +12,17 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     }, timeout);
   }
 
+  headers = {
+    'Content-Type': 'application/json',
+    'X-Rollbar-Access-Token': accessToken,
+    signal: controller && controller.signal,
+    ...headers,
+  }
+
   fetch(url, {
-    method: method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Rollbar-Access-Token': accessToken,
-      signal: controller && controller.signal,
-    },
-    body: data,
+    method,
+    headers,
+    body: payload,
   })
     .then(function (response) {
       if (timeoutId) clearTimeout(timeoutId);

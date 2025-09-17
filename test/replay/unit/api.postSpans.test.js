@@ -16,7 +16,7 @@ describe('Api', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, options, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           callback(null, { result: 'ok' });
         }),
       postJsonPayload: sinon.stub(),
@@ -51,7 +51,7 @@ describe('Api', function () {
 
       expect(transport.post.called).to.be.true;
 
-      const options = transport.post.firstCall.args[1];
+      const options = transport.post.firstCall.args[0].options;
       expect(options.path).to.include('/session/');
       expect(options.method).to.equal('POST');
     });
@@ -62,7 +62,7 @@ describe('Api', function () {
 
       expect(transport.post.called).to.be.true;
 
-      const payload = transport.post.firstCall.args[2];
+      const payload = transport.post.firstCall.args[0].payload;
       expect(payload).to.have.property('resourceSpans');
       expect(payload).to.deep.equal(spans);
     });
@@ -79,7 +79,7 @@ describe('Api', function () {
       const spans = [{ id: 'span1' }];
       const expectedError = new Error('Transport error');
 
-      transport.post.callsFake((accessToken, options, payload, callback) => {
+      transport.post.callsFake(({accessToken, options, payload, callback}) => {
         callback(expectedError);
       });
 
@@ -96,7 +96,7 @@ describe('Api', function () {
       await api.postSpans(spans);
 
       expect(transport.post.called).to.be.true;
-      const accessToken = transport.post.firstCall.args[0];
+      const accessToken = transport.post.firstCall.args[0].accessToken;
       expect(accessToken).to.equal('test_token');
     });
 
@@ -111,7 +111,7 @@ describe('Api', function () {
 
       expect(transport.post.callCount).to.equal(2);
 
-      const optionsAfterConfig = transport.post.secondCall.args[1];
+      const optionsAfterConfig = transport.post.secondCall.args[0].options;
       expect(optionsAfterConfig.hostname).to.equal('api.rollbar.com');
     });
   });
@@ -119,7 +119,7 @@ describe('Api', function () {
   describe('_postPromise', function () {
     it('should resolve with response when transport succeeds', async function () {
       const expectedResponse = { success: true };
-      transport.post.callsFake((accessToken, options, payload, callback) => {
+      transport.post.callsFake(({accessToken, options, payload, callback}) => {
         callback(null, expectedResponse);
       });
 
@@ -129,7 +129,7 @@ describe('Api', function () {
 
     it('should reject with error when transport fails', async function () {
       const expectedError = new Error('Transport error');
-      transport.post.callsFake((accessToken, options, payload, callback) => {
+      transport.post.callsFake(({accessToken, options, payload, callback}) => {
         callback(expectedError);
       });
 

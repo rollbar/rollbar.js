@@ -65,13 +65,13 @@ Transport.prototype.get = function (
   req.end();
 };
 
-Transport.prototype.post = function (
+Transport.prototype.post = function ({
   accessToken,
   options,
   payload,
   callback,
   transportFactory,
-) {
+}) {
   var t;
   if (!callback || !_.isFunction(callback)) {
     callback = function () {};

@@ -21,7 +21,7 @@ describe('post', function () {
       expect(err).to.be.ok;
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory);
+    t.post({accessToken, options, payload, callback, requestFactory});
   });
   it('should callback with the right value on success', function (done) {
     var requestFactory = requestGenerator('{"err": null, "result": true}', 200);
@@ -31,7 +31,7 @@ describe('post', function () {
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(err);
     };
-    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
+    t.post({accessToken, options, payload, callback, requestFactory: requestFactory.getInstance});
   });
   it('should callback with the server error if 403', function (done) {
     var response =
@@ -43,7 +43,7 @@ describe('post', function () {
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
+    t.post({accessToken, options, payload, callback, requestFactory: requestFactory.getInstance});
   });
   it('should callback with the server error if 500', function (done) {
     var response =
@@ -55,7 +55,7 @@ describe('post', function () {
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
+    t.post({accessToken, options, payload, callback, requestFactory: requestFactory.getInstance});
   });
   it('should callback with a retriable error with a weird status', function (done) {
     var response = '{"err": "bad request"}';
@@ -67,7 +67,7 @@ describe('post', function () {
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
+    t.post({accessToken, options, payload, callback, requestFactory: requestFactory.getInstance});
   });
   it('should callback with some error if normal sending throws', function (done) {
     var response = '{"err": "bad request"}';
@@ -78,7 +78,7 @@ describe('post', function () {
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
       done(resp);
     };
-    t.post(accessToken, options, payload, callback, requestFactory.getInstance);
+    t.post({accessToken, options, payload, callback, requestFactory: requestFactory.getInstance});
   });
   describe('post', function () {
     beforeEach(function (done) {
@@ -127,7 +127,7 @@ describe('post', function () {
       stubXhrResponse();
       server.requests.length = 0;
       options.transport = 'fetch';
-      t.post(accessToken, options, payload, callback);
+      t.post({accessToken, options, payload, callback});
     });
     it('should use xhr when requested', function (done) {
       var callback = function (err, resp) {
@@ -139,7 +139,7 @@ describe('post', function () {
       stubXhrResponse();
       server.requests.length = 0;
       options.transport = 'xhr';
-      t.post(accessToken, options, payload, callback);
+      t.post({accessToken, options, payload, callback});
       setTimeout(function () {
         server.respond();
       }, 1);

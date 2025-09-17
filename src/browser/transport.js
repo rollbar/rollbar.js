@@ -38,25 +38,25 @@ Transport.prototype.get = function (
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    null,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
-Transport.prototype.post = function (
+Transport.prototype.post = function ({
   accessToken,
   options,
   payload,
+  headers,
   callback,
   requestFactory,
-) {
+}) {
   if (!callback || !_.isFunction(callback)) {
     callback = function () {};
   }
@@ -76,25 +76,26 @@ Transport.prototype.post = function (
     return callback(stringifyResult.error);
   }
 
-  var writeData = stringifyResult.value;
+  var payload = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    writeData,
+    payload,
+    headers,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
 Transport.prototype.postJsonPayload = function (
   accessToken,
   options,
-  jsonPayload,
+  payload,
   callback,
   requestFactory,
 ) {
@@ -104,16 +105,16 @@ Transport.prototype.postJsonPayload = function (
 
   var method = 'POST';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    jsonPayload,
+    payload,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
 // Wraps `_makeRequest` if zone.js is being used, ensuring that Rollbar
@@ -140,32 +141,16 @@ Transport.prototype._makeZoneRequest = function () {
   }
 };
 
-Transport.prototype._makeRequest = function (
-  accessToken,
-  url,
-  method,
-  data,
-  callback,
-  requestFactory,
-  timeout,
-  transport,
-) {
+Transport.prototype._makeRequest = function (params) {
+  const {payload, callback, transport} = params;
   if (typeof RollbarProxy !== 'undefined') {
-    return _proxyRequest(data, callback);
+    return _proxyRequest(payload, callback);
   }
 
   if (transport === 'fetch') {
-    makeFetchRequest(accessToken, url, method, data, callback, timeout);
+    makeFetchRequest(params);
   } else {
-    makeXhrRequest(
-      accessToken,
-      url,
-      method,
-      data,
-      callback,
-      requestFactory,
-      timeout,
-    );
+    makeXhrRequest(params);
   }
 };
 
@@ -176,7 +161,7 @@ function _proxyRequest(json, callback) {
     json,
     function (_msg) {
       /* do nothing */
-    }, // eslint-disable-line no-unused-vars
+    },
     function (err) {
       callback(new Error(err));
     },
