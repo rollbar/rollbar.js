@@ -58,12 +58,12 @@ function Api(options, transport, urllib, truncation) {
  * @returns {Promise} A promise that resolves with the response or rejects with an error
  * @private
  */
-Api.prototype._postPromise = function({ accessToken, transportOptions, payload }) {
+Api.prototype._postPromise = function({ accessToken, options, payload, headers }) {
   const self = this;
   return new Promise((resolve, reject) => {
-    self.transport.post(accessToken, transportOptions, payload, (err, resp) =>
+    self.transport.post({ accessToken, options, payload, headers, callback: (err, resp) =>
       err ? reject(err) : resolve(resp)
-    );
+    });
   });
 };
 
@@ -73,16 +73,16 @@ Api.prototype._postPromise = function({ accessToken, transportOptions, payload }
  * @param callback
  */
 Api.prototype.postItem = function (data, callback) {
-  var transportOptions = helpers.transportOptions(
+  const options = helpers.transportOptions(
     this.transportOptions,
     'POST',
   );
-  var payload = helpers.buildPayload(data);
-  var self = this;
+  const payload = helpers.buildPayload(data);
+  const self = this;
 
   // ensure the network request is scheduled after the current tick.
   setTimeout(function () {
-    self.transport.post(self.accessToken, transportOptions, payload, callback);
+    self.transport.post({accessToken: self.accessToken, options, payload, callback});
   }, 0);
 };
 
@@ -92,16 +92,17 @@ Api.prototype.postItem = function (data, callback) {
  * @param {Array} payload - The spans to send
  * @returns {Promise<Object>} A promise that resolves with the API response
  */
-Api.prototype.postSpans = async function (payload) {
-  const transportOptions = helpers.transportOptions(
+Api.prototype.postSpans = async function (payload, headers = {}) {
+  const options = helpers.transportOptions(
     this.OTLPTransportOptions,
     'POST',
   );
 
   return await this._postPromise({
     accessToken: this.accessToken,
-    transportOptions,
-    payload
+    options,
+    payload,
+    headers
   });
 };
 

@@ -41,7 +41,7 @@ const createMockTransport = () => {
   return {
     post: sinon
       .stub()
-      .callsFake((accessToken, transportOptions, payload, callback) => {
+      .callsFake(({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(
             null,
@@ -274,7 +274,7 @@ describe('Session Replay Transport Integration', function () {
   it('should discard replay when API returns an error', function (done) {
     transport.post = sinon
       .stub()
-      .callsFake((accessToken, transportOptions, payload, callback) => {
+      .callsFake(({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });
         }, 10);

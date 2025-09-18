@@ -49,7 +49,7 @@ describe('Session Replay E2E', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, transportOptions, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           setTimeout(() => {
             callback(
               null,
@@ -186,7 +186,7 @@ describe('Session Replay E2E', function () {
           );
 
           const transportArgs = transport.post.lastCall.args;
-          expect(transportArgs[1].path).to.include('/api/1/session/');
+          expect(transportArgs[0].options.path).to.include('/api/1/session/');
 
           done();
         }, 200);
@@ -196,8 +196,8 @@ describe('Session Replay E2E', function () {
 
   it('should integrate with real components in failure scenario', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
-        if (transportOptions.path.includes('/api/1/item/')) {
+      ({accessToken, options, payload, callback}) => {
+        if (options.path.includes('/api/1/item/')) {
           setTimeout(() => {
             callback(null, { err: 1, message: 'API Error' });
           }, 10);

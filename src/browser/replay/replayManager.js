@@ -131,7 +131,7 @@ export default class ReplayManager {
     }
 
     try {
-      await this.#api.postSpans(payload);
+      await this.#api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
       return true;
     } catch (error) {
       logger.error('Error sending replay:', error);
