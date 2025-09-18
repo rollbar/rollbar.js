@@ -3,11 +3,14 @@ import id from './id.js';
 const SESSION_KEY = 'RollbarSession';
 
 export class Session {
+  #attributes;
+
   constructor(tracing, options) {
     this.options = options;
     this.tracing = tracing;
     this.window = tracing.window;
     this.session = null;
+    this.#attributes = {};
   }
 
   init() {
@@ -51,5 +54,13 @@ export class Session {
     }
     return this;
   }
-}
 
+  get attributes() {
+    return this.#attributes;
+  }
+
+  setAttributes(attributes) {
+    this.#attributes = { ...this.#attributes, ...attributes };
+    return this;
+  }
+}

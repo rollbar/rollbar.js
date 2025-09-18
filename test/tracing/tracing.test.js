@@ -96,6 +96,24 @@ describe('Tracing()', function () {
     done();
   });
 
+  it('should get and set session attributes', function () {
+    const options = tracingOptions();
+    const t = new Tracing(window, options);
+    t.initSession();
+
+    t.session.setAttributes({codeVersion: 'abc123'});
+    t.session.setAttributes({
+      'user.id': '12345',
+      'user.email': 'aaa@bb.com',
+    });
+
+    expect(t.session.attributes).to.deep.equal({
+      codeVersion: 'abc123',
+      'user.id': '12345',
+      'user.email': 'aaa@bb.com',
+    });
+  });
+
   it('should generate ids', function (done) {
     const options = tracingOptions();
     const t = new Tracing(window, options);

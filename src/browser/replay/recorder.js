@@ -92,7 +92,10 @@ export default class Recorder {
 
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
 
-    recordingSpan.setAttribute('rollbar.replay.id', replayId);
+    recordingSpan.setAttributes({
+      ...(tracing.session?.attributes ?? {}),
+      'rollbar.replay.id': replayId
+    });
 
     if (occurrenceUuid) {
       recordingSpan.setAttribute('rollbar.occurrence.uuid', occurrenceUuid);
