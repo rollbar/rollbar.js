@@ -100,17 +100,17 @@ describe('transport', function () {
           '{"err": null, "result":"all good"}',
         );
 
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          null,
-          (err, resp) => {
+        t.post({
+          accessToken: baseData.accessToken,
+          options: baseData.options,
+          payload: null,
+          callback: (err, resp) => {
             expect(err).to.exist;
             expect(resp).to.not.exist;
             done();
           },
-          factory,
-        );
+          transportFactory: factory,
+        });
       });
 
       it('should have the right response data with a payload and no error', function (done) {
@@ -129,17 +129,15 @@ describe('transport', function () {
           },
         );
 
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          (err, resp) => {
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
             expect(err).to.not.exist;
             expect(resp.message).to.equal('all good');
             done();
           },
-          factory,
-        );
+        transportFactory: factory,
+        });
       });
 
       it('should error with a payload and an error in the response', function (done) {
@@ -158,18 +156,16 @@ describe('transport', function () {
           },
         );
 
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          (err, resp) => {
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
             expect(err).to.exist;
             expect(err.message).to.match(/things broke/);
             expect(resp).to.not.exist;
             done();
           },
-          factory,
-        );
+          transportFactory: factory,
+        });
       });
 
       it('should error with a payload and an error during sending', function (done) {
@@ -184,18 +180,16 @@ describe('transport', function () {
           );
         });
 
-        t.post(
-          baseData.accessToken,
-          baseData.options,
-          baseData.payload,
-          (err, resp) => {
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
             expect(err).to.exist;
             expect(err.message).to.match(/bork/);
             expect(resp).to.not.exist;
             done();
           },
-          factory,
-        );
+          transportFactory: factory,
+        });
       });
     });
 
@@ -223,19 +217,19 @@ describe('transport', function () {
 
         transport.handleResponse(response);
 
-        transport.post(
-          'token',
-          {},
-          'payload',
-          (err) => {
+        transport.post({
+          accessToken: 'token',
+          options: {},
+          payload: 'payload',
+          callback: (err) => {
             expect(err).to.not.exist;
             expect(Math.floor(Date.now() / 1000)).to.be.at.least(
               transport.rateLimitExpires,
             );
             done();
           },
-          factory,
-        );
+          transportFactory: factory,
+        });
       });
 
       it('should drop rate limited requests and set timeout', function (done) {
@@ -250,19 +244,19 @@ describe('transport', function () {
 
         transport.handleResponse(response);
 
-        transport.post(
-          'token',
-          {},
-          'payload',
-          (err) => {
+        transport.post({
+          accessToken: 'token',
+          options: {},
+          payload: 'payload',
+          callback: (err) => {
             expect(err.message).to.match(/Exceeded rate limit/);
             expect(Math.floor(Date.now() / 1000)).to.be.below(
               transport.rateLimitExpires,
             );
             done();
           },
-          factory,
-        );
+          transportFactory: factory,
+        });
       });
     });
   });

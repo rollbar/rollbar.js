@@ -3,15 +3,16 @@
 import * as _ from '../../utility.js';
 import logger from '../logger.js';
 
-function makeXhrRequest(
+function makeXhrRequest({
   accessToken,
   url,
   method,
-  data,
+  payload,
+  headers,
   callback,
   requestFactory,
   timeout,
-) {
+}) {
   var request;
   if (requestFactory) {
     request = requestFactory();
@@ -85,6 +86,9 @@ function makeXhrRequest(
       if (request.setRequestHeader) {
         request.setRequestHeader('Content-Type', 'application/json');
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
+        for (const [h, v] of Object.entries(headers ?? {})) {
+          request.setRequestHeader(h, v);
+        }
       }
 
       if (_.isFiniteNumber(timeout)) {
@@ -92,7 +96,7 @@ function makeXhrRequest(
       }
 
       request.onreadystatechange = onreadystatechange;
-      request.send(data);
+      request.send(payload);
     } catch (e1) {
       // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
       if (typeof XDomainRequest !== 'undefined') {
@@ -131,7 +135,7 @@ function makeXhrRequest(
           callback(parseResponse.error, parseResponse.value);
         };
         xdomainrequest.open(method, url, true);
-        xdomainrequest.send(data);
+        xdomainrequest.send(payload);
       } else {
         callback(new Error('Cannot find a method to transport a request'));
       }

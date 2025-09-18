@@ -18,7 +18,7 @@ describe('Queue ReplayManager Integration', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, transportOptions, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           setTimeout(() => {
             callback(
               null,
@@ -108,7 +108,7 @@ describe('Queue ReplayManager Integration', function () {
 
   it('should call replayManager.discard when API response has error', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });
         }, 10);
@@ -139,7 +139,7 @@ describe('Queue ReplayManager Integration', function () {
 
   it('should call replayManager.discard when replay is disabled', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(
             null,
@@ -174,7 +174,7 @@ describe('Queue ReplayManager Integration', function () {
 
   it('should call replayManager.discard when over quota', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(
             null,
@@ -213,7 +213,7 @@ describe('Queue ReplayManager Integration', function () {
   it('should handle retrying items with replayId', function (done) {
     let apiCallCount = 0;
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         apiCallCount++;
         if (apiCallCount === 1) {
           setTimeout(() => {
@@ -298,7 +298,7 @@ describe('Queue ReplayManager Integration', function () {
 
   it('should handle null response in _handleReplayResponse', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(null, null);
         }, 10);
