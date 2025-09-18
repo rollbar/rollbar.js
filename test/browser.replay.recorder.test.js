@@ -15,7 +15,7 @@ describe('Recorder', function () {
   beforeEach(function () {
     mockSpan = {
       addEvent: sinon.spy(),
-      setAttribute: sinon.spy(),
+      setAttributes: sinon.spy(),
       span: { startTime: null },
       end: sinon.spy(),
     };
@@ -148,8 +148,8 @@ describe('Recorder', function () {
 
       // Event count includes the custom end event
       expect(mockSpan.addEvent.calledThrice).to.be.true;
-      expect(mockSpan.setAttribute.calledOnce).to.be.true;
-      expect(mockSpan.setAttribute.calledWith('rollbar.replay.id', testReplayId)).to.be.true;
+      expect(mockSpan.setAttributes.calledOnce).to.be.true;
+      expect(mockSpan.setAttributes.calledWith({'rollbar.replay.id': testReplayId})).to.be.true;
 
       const firstCallData = mockSpan.addEvent.firstCall.args[1];
       expect(firstCallData.eventType).to.equal('event1');

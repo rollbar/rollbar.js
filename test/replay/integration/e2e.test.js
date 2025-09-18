@@ -126,6 +126,11 @@ describe('Session Replay E2E', function () {
         },
       };
 
+      tracing.session.setAttributes({
+        'user.id': '12345',
+        'user.email': 'aaa@bb.com',
+      });
+
       queue.addItem(errorItem, function (err, resp) {
         expect(errorItem).to.have.property('replayId');
         const expectedReplayId = errorItem.replayId;
@@ -163,11 +168,19 @@ describe('Session Replay E2E', function () {
           expect(span_r).to.have.property('events');
           expect(span_r.events).to.be.an('array');
           expect(span_r).to.have.property('attributes').that.is.an('array');
-          expect(span_r.attributes).to.have.lengthOf(2);
+          expect(span_r.attributes).to.have.lengthOf(4);
 
           expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',
             value: { stringValue: expectedReplayId },
+          });
+          expect(span_r.attributes).to.deep.include({
+            key: 'user.id',
+            value: { stringValue: '12345' },
+          });
+          expect(span_r.attributes).to.deep.include({
+            key: 'user.email',
+            value: { stringValue: 'aaa@bb.com' },
           });
 
           const sessionIdAttr = span_r.attributes.find(
