@@ -86,8 +86,8 @@ function makeXhrRequest({
       if (request.setRequestHeader) {
         request.setRequestHeader('Content-Type', 'application/json');
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
-        for (const h of Object.keys(headers || {})) {
-          request.setRequestHeader(h, headers[h]);
+        for (const [h, v] of Object.entries(headers ?? {})) {
+          request.setRequestHeader(h, v);
         }
       }
 
