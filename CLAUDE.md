@@ -25,14 +25,15 @@ src/
 
 ## Build & Test Commands
 
-- Build: `npm run build` (runs Grunt)
-- Lint: `npm run lint` (ESLint)
-- Test all: `npm run test` (runs both server and browser tests)
-- Test browser only: `npm run test-browser`
-- Test server only: `npm run test-server`
-- Test specific browser test: `grunt test-browser:specificTestName`
-  - Example: `grunt test-browser:transforms`
-- Single test: `./node_modules/.bin/karma start --single-run --files={path/to/test}`
+- **Build production**: `npm run build` (Webpack production build)
+- **Build development**: `npm run build:dev` (Webpack development build)
+- **Lint**: `npm run lint` (ESLint)
+- **Test all**: `npm run test` (runs both server and browser tests)
+- **Test browser**: `npm run test:wtr` (Web Test Runner)
+- **Test browser watch mode**: `npm run test:wtr:watch` (Web Test Runner with watch)
+- **Test server**: `npm run test:server` (Mocha)
+- **Validate**: `npm run validate` (validates ES5 compatibility and examples)
+- **Pack**: `npm run pack` (creates distribution packages)
 
 ## Modern Development Environment
 
@@ -194,7 +195,7 @@ The Session Replay feature utilizes our tracing infrastructure to:
 - **End-to-End Tests**: Full flow verification in `test/replay/integration/e2e.test.js`
 - **Mock Implementation**: `test/replay/util/mockRecordFn.js` provides a deterministic mock of rrweb
 - **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
-- **Test Tasks**: Custom Grunt tasks for testing replay code specifically
+- **Test Tasks**: Dedicated test configurations for replay code specifically
 
 ## File Creation Guidelines
 
