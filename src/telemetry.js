@@ -273,9 +273,9 @@ class Telemeter {
       value,
       endTimeUnixNano: fromMillis(timestamp),
     };
-    const event = this.#getRepeatedEvent(name, otelAttributes);
+    const event = this._getRepeatedEvent(name, otelAttributes);
     if (event) {
-      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+      return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
     this.telemetrySpan?.addEvent(
@@ -312,9 +312,9 @@ class Telemeter {
       element,
       endTimeUnixNano: fromMillis(timestamp),
     };
-    const event = this.#getRepeatedEvent(name, otelAttributes);
+    const event = this._getRepeatedEvent(name, otelAttributes);
     if (event) {
-      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+      return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
     this.telemetrySpan?.addEvent(
@@ -333,15 +333,15 @@ class Telemeter {
     );
   }
 
-  #getRepeatedEvent(name, attributes) {
-    const lastEvent = this.#lastEvent(this.queue);
+  _getRepeatedEvent(name, attributes) {
+    const lastEvent = this._lastEvent(this.queue);
 
     if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
       return lastEvent;
     }
   }
 
-  #updateRepeatedEvent(event, attributes, timestamp) {
+  _updateRepeatedEvent(event, attributes, timestamp) {
     const duration = Math.max(timestamp - event.timestamp_ms, 1);
     event.body.value = attributes.value;
     event.otelAttributes.value = attributes.value;
@@ -354,7 +354,7 @@ class Telemeter {
     event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
   }
 
-  #lastEvent(list) {
+  _lastEvent(list) {
     return list.length > 0 ? list[list.length - 1] : null;
   }
 
@@ -416,9 +416,9 @@ class Telemeter {
       textZoomRatio,
     };
 
-    const event = this.#getRepeatedEvent(name, otelAttributes);
+    const event = this._getRepeatedEvent(name, otelAttributes);
     if (event) {
-      return this.#updateRepeatedEvent(event, otelAttributes, timestamp);
+      return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
     this.telemetrySpan?.addEvent(

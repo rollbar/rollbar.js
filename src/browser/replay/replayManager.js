@@ -7,11 +7,11 @@ import logger from '../logger.js';
  * are dumped and when they are eventually sent to the backend.
  */
 export default class ReplayManager {
-  #map;
-  #recorder;
-  #api;
-  #tracing;
-  #telemeter;
+  _map;
+  _recorder;
+  _api;
+  _tracing;
+  _telemeter;
 
   /**
    * Creates a new ReplayManager instance
@@ -34,11 +34,11 @@ export default class ReplayManager {
       throw new TypeError("Expected 'tracing' to be provided");
     }
 
-    this.#map = new Map();
-    this.#recorder = recorder;
-    this.#api = api;
-    this.#tracing = tracing;
-    this.#telemeter = telemeter;
+    this._map = new Map();
+    this._recorder = recorder;
+    this._api = api;
+    this._tracing = tracing;
+    this._telemeter = telemeter;
   }
 
   /**
@@ -53,19 +53,19 @@ export default class ReplayManager {
    */
   async _processReplay(replayId, occurrenceUuid) {
     try {
-      this.#telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
+      this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
 
-      const payload = this.#recorder.dump(
-        this.#tracing,
+      const payload = this._recorder.dump(
+        this._tracing,
         replayId,
         occurrenceUuid,
       );
 
-      this.#map.set(replayId, payload);
+      this._map.set(replayId, payload);
     } catch (transformError) {
       logger.error('Error transforming spans:', transformError);
 
-      this.#map.set(replayId, null); // TODO(matux): Error span?
+      this._map.set(replayId, null); // TODO(matux): Error span?
     }
 
     return replayId;
@@ -107,15 +107,15 @@ export default class ReplayManager {
       return false;
     }
 
-    if (!this.#map.has(replayId)) {
+    if (!this._map.has(replayId)) {
       logger.error(
         `ReplayManager.send: No replay found for replayId: ${replayId}`,
       );
       return false;
     }
 
-    const payload = this.#map.get(replayId);
-    this.#map.delete(replayId);
+    const payload = this._map.get(replayId);
+    this._map.delete(replayId);
 
     // Check if payload is empty (could be raw spans array or OTLP payload)
     const isEmpty =
@@ -131,7 +131,7 @@ export default class ReplayManager {
     }
 
     try {
-      await this.#api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
+      await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
       return true;
     } catch (error) {
       logger.error('Error sending replay:', error);
@@ -152,14 +152,14 @@ export default class ReplayManager {
       return false;
     }
 
-    if (!this.#map.has(replayId)) {
+    if (!this._map.has(replayId)) {
       logger.error(
         `ReplayManager.discard: No replay found for replayId: ${replayId}`,
       );
       return false;
     }
 
-    this.#map.delete(replayId);
+    this._map.delete(replayId);
     return true;
   }
 
@@ -170,7 +170,7 @@ export default class ReplayManager {
    * @returns {Array|null} The spans array or null if not found
    */
   getSpans(replayId) {
-    return this.#map.get(replayId) ?? null;
+    return this._map.get(replayId) ?? null;
   }
 
   /**
@@ -180,7 +180,7 @@ export default class ReplayManager {
    * @param {Array} spans - The spans to set
    */
   setSpans(replayId, spans) {
-    this.#map.set(replayId, spans);
+    this._map.set(replayId, spans);
   }
 
   /**
@@ -189,13 +189,13 @@ export default class ReplayManager {
    * @returns {number} The number of replays currently stored
    */
   get size() {
-    return this.#map.size;
+    return this._map.size;
   }
 
   /**
    * Clears all stored replays without sending them
    */
   clear() {
-    this.#map.clear();
+    this._map.clear();
   }
 }

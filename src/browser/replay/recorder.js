@@ -5,11 +5,11 @@ import hrtime from '../../tracing/hrtime.js';
 import logger from '../logger.js';
 
 export default class Recorder {
-  #options;
-  #rrwebOptions;
-  #stopFn = null;
-  #recordFn;
-  #events = {
+  _options;
+  _rrwebOptions;
+  _stopFn = null;
+  _recordFn;
+  _events = {
     previous: [],
     current: [],
   };
@@ -26,15 +26,15 @@ export default class Recorder {
     }
 
     this.options = options;
-    this.#recordFn = recordFn;
+    this._recordFn = recordFn;
   }
 
   get isRecording() {
-    return this.#stopFn !== null;
+    return this._stopFn !== null;
   }
 
   get options() {
-    return this.#options;
+    return this._options;
   }
 
   set options(newOptions) {
@@ -57,8 +57,8 @@ export default class Recorder {
       // rrweb options
       ...rrwebOptions
     } = newOptions;
-    this.#options = { enabled, autoStart, maxSeconds, triggers, debug };
-    this.#rrwebOptions = rrwebOptions;
+    this._options = { enabled, autoStart, maxSeconds, triggers, debug };
+    this._rrwebOptions = rrwebOptions;
 
     if (this.isRecording && newOptions.enabled === false) {
       this.stop();
@@ -83,7 +83,7 @@ export default class Recorder {
    * @returns {Object|null} A formatted payload containing spans data in OTLP format, or null if no events exist
    */
   dump(tracing, replayId, occurrenceUuid) {
-    const events = this.#events.previous.concat(this.#events.current);
+    const events = this._events.previous.concat(this._events.current);
 
     if (events.length < 2) {
       logger.error('Replay recording cannot have less than 2 events');
@@ -132,18 +132,18 @@ export default class Recorder {
 
     this.clear();
 
-    this.#stopFn = this.#recordFn({
+    this._stopFn = this._recordFn({
       emit: (event, isCheckout) => {
         if (this.options.debug?.logEmits) {
           this._logEvent(event, isCheckout);
         }
 
         if (isCheckout && event.type === EventType.Meta) {
-          this.#events.previous = this.#events.current;
-          this.#events.current = [];
+          this._events.previous = this._events.current;
+          this._events.current = [];
         }
 
-        this.#events.current.push(event);
+        this._events.current.push(event);
       },
       checkoutEveryNms: this.checkoutEveryNms(),
       errorHandler: (error) => {
@@ -152,7 +152,7 @@ export default class Recorder {
         }
         return true; // swallow the error instead of throwing it to the window
       },
-      ...this.#rrwebOptions,
+      ...this._rrwebOptions,
     });
 
     return this;
@@ -163,14 +163,14 @@ export default class Recorder {
       return;
     }
 
-    this.#stopFn();
-    this.#stopFn = null;
+    this._stopFn();
+    this._stopFn = null;
 
     return this;
   }
 
   clear() {
-    this.#events = {
+    this._events = {
       previous: [],
       current: [],
     };
