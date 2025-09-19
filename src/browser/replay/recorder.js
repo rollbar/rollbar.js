@@ -68,7 +68,7 @@ export default class Recorder {
   checkoutEveryNms() {
     // Recording may be up to two checkout intervals, therefore the checkout
     // interval is set to half of the maxSeconds.
-    return ((this.options.maxSeconds || 10) * 1000) / 2;
+    return (this.options.maxSeconds || 10) * 1000 / 2;
   }
 
   /**
@@ -94,7 +94,7 @@ export default class Recorder {
 
     recordingSpan.setAttributes({
       ...(tracing.session?.attributes ?? {}),
-      'rollbar.replay.id': replayId,
+      'rollbar.replay.id': replayId
     });
 
     if (occurrenceUuid) {
@@ -205,7 +205,7 @@ export default class Recorder {
       'rrweb-replay-events',
       {
         eventType: 5,
-        json: JSON.stringify({ tag: 'replay.end', payload: {} }),
+        json: JSON.stringify({tag: "replay.end", payload: {}}),
       },
       hrtime.fromMillis(Date.now()),
     );
