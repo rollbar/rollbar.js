@@ -195,6 +195,33 @@ describe('instrumentDom', function () {
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
   });
 
+  it('should handle online/offline events', async function () {
+    const offlineEvent = new Event('offline');
+    const onlineEvent = new Event('online');
+
+    window.dispatchEvent(offlineEvent);
+    window.dispatchEvent(onlineEvent);
+
+    await wait(wait_ms);
+
+    expect(telemeter.queue.length).to.eql(2);
+    let event = telemeter.queue[0];
+    expect(event.type).to.eql('connectivity');
+    expect(event.body.type).to.eql('rollbar-connectivity-event');
+    expect(event.body.subtype).to.eql('offline');
+
+    expect(event.otelAttributes.type).to.eql('offline');
+    expect(event.otelAttributes.isSynthetic).to.eql(true);
+
+    event = telemeter.queue[1];
+    expect(event.type).to.eql('connectivity');
+    expect(event.body.type).to.eql('rollbar-connectivity-event');
+    expect(event.body.subtype).to.eql('online');
+
+    expect(event.otelAttributes.type).to.eql('online');
+    expect(event.otelAttributes.isSynthetic).to.eql(true);
+  });
+
   it('should handle drag drop events', async function () {
     const draggable = document.getElementById('draggable');
     const dropzone = document.getElementById('dropzone');

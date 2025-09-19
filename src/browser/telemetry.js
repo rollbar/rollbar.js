@@ -872,8 +872,18 @@ class Instrumenter {
       'connectivity',
       this._window,
       ['online', 'offline'],
-      (evt) => self.telemeter.captureConnectivityChange(evt),
+      (evt) => self.handleConnectivity(evt),
     );
+  }
+
+  handleConnectivity(evt) {
+    const type = evt.type;
+
+    this.telemeter.captureConnectivityChange({
+      type,
+      isSynthetic: !evt.isTrusted,
+      timestamp: _.now(),
+    })
   }
 
   handleCspEvent(cspEvent) {
