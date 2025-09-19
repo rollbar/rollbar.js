@@ -1003,358 +1003,404 @@ function queue_typeof(o) { "@babel/helpers - typeof"; return queue_typeof = "fun
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == queue_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(queue_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == queue_typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != queue_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != queue_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
-/*
+/**
  * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
  *   This object handles rate limiting via a passed in rate limiter, retries based on connection
  *   errors, and filtering of items based on a set of configurable predicates. The communication to
  *   the backend is performed via a given API object.
- *
- * @param rateLimiter - An object which conforms to the interface
- *    rateLimiter.shouldSend(item) -> bool
- * @param api - An object which conforms to the interface
- *    api.postItem(payload, function(err, response))
- * @param logger - An object used to log verbose messages if desired
- * @param options - see Queue.prototype.configure
- * @param replayMap - Optional ReplayMap for coordinating session replay with error occurrences
  */
-function Queue(rateLimiter, api, logger, options, replayMap) {
-  this.rateLimiter = rateLimiter;
-  this.api = api;
-  this.logger = logger;
-  this.options = options;
-  this.replayMap = replayMap;
-  this.predicates = [];
-  this.pendingItems = [];
-  this.pendingRequests = [];
-  this.retryQueue = [];
-  this.retryHandle = null;
-  this.waitCallback = null;
-  this.waitIntervalID = null;
-}
+var Queue = /*#__PURE__*/function () {
+  /**
+   * @param rateLimiter - An object which conforms to the interface
+   *    `rateLimiter.shouldSend(item) -> bool`
+   * @param api - An object which conforms to the interface
+   *    `api.postItem(payload, function(err, response))`
+   * @param logger - An object used to log verbose messages if desired
+   * @param options - see `Queue.prototype.configure`
+   * @param replayManager - Optional `ReplayManager` for coordinating session replay with error occurrences
+   */
+  function Queue(rateLimiter, api, logger, options, replayManager) {
+    _classCallCheck(this, Queue);
+    this.rateLimiter = rateLimiter;
+    this.api = api;
+    this.logger = logger;
+    this.options = options;
+    this.replayManager = replayManager;
+    this.predicates = [];
+    this.pendingItems = [];
+    this.pendingRequests = [];
+    this.retryQueue = [];
+    this.retryHandle = null;
+    this.waitCallback = null;
+    this.waitIntervalID = null;
+  }
 
-/*
- * configure - updates the options this queue uses
- *
- * @param options
- */
-Queue.prototype.configure = function (options) {
-  this.api && this.api.configure(options);
-  var oldOptions = this.options;
-  this.options = src_merge(oldOptions, options);
-  return this;
-};
-
-/*
- * addPredicate - adds a predicate to the end of the list of predicates for this queue
- *
- * @param predicate - function(item, options) -> (bool|{err: Error})
- *  Returning true means that this predicate passes and the item is okay to go on the queue
- *  Returning false means do not add the item to the queue, but it is not an error
- *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
- *  Returning {err: undefined} is equivalent to returning true but don't do that
- */
-Queue.prototype.addPredicate = function (predicate) {
-  if (isFunction(predicate)) {
-    this.predicates.push(predicate);
-  }
-  return this;
-};
-Queue.prototype.addPendingItem = function (item) {
-  this.pendingItems.push(item);
-};
-Queue.prototype.removePendingItem = function (item) {
-  var idx = this.pendingItems.indexOf(item);
-  if (idx !== -1) {
-    this.pendingItems.splice(idx, 1);
-  }
-};
-
-/*
- * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
- *
- * @param item - Item instance with the payload to send to the backend
- * @param callback - function(error, repsonse) which will be called with the response from the API
- *  in the case of a success, otherwise response will be null and error will have a value. If both
- *  error and response are null then the item was stopped by a predicate which did not consider this
- *  to be an error condition, but nonetheless did not send the item to the API.
- * @param originalError - The original error before any transformations that is to be logged if any
- * @param originalItem - The original item before transforms, used in pendingItems queue
- */
-Queue.prototype.addItem = function (item, callback, originalError, originalItem) {
-  if (!callback || !isFunction(callback)) {
-    callback = function callback() {
-      return;
-    };
-  }
-  var data = item.data;
-  var predicateResult = this._applyPredicates(data);
-  if (predicateResult.stop) {
-    this.removePendingItem(originalItem);
-    callback(predicateResult.err);
-    return;
-  }
-  this._maybeLog(data, originalError);
-  this.removePendingItem(originalItem);
-  if (!this.options.transmit) {
-    callback(new Error('Transmit disabled'));
-    return;
-  }
-  if (this.replayMap && data.body) {
-    var replayId = getItemAttribute(data, 'replay_id');
-    if (replayId) {
-      item.replayId = this.replayMap.add(replayId, data.uuid);
+  /**
+   * configure - updates the options this queue uses
+   *
+   * @param options
+   */
+  return _createClass(Queue, [{
+    key: "configure",
+    value: function configure(options) {
+      var _this$api;
+      (_this$api = this.api) === null || _this$api === void 0 || _this$api.configure(options);
+      var oldOptions = this.options;
+      this.options = src_merge(oldOptions, options);
+      return this;
     }
-  }
-  this.pendingRequests.push(data);
-  try {
-    this._makeApiRequest(data, function (err, resp, headers) {
-      this._dequeuePendingRequest(data);
-      if (!err && resp && item.replayId) {
-        this._handleReplayResponse(item.replayId, resp, headers);
+
+    /**
+     * addPredicate - adds a predicate to the end of the list of predicates for this queue
+     *
+     * @param predicate - function(item, options) -> (bool|{err: Error})
+     *  Returning true means that this predicate passes and the item is okay to go on the queue
+     *  Returning false means do not add the item to the queue, but it is not an error
+     *  Returning {err: Error} means do not add the item to the queue, and the given error explains why
+     *  Returning {err: undefined} is equivalent to returning true but don't do that
+     */
+  }, {
+    key: "addPredicate",
+    value: function addPredicate(predicate) {
+      if (isFunction(predicate)) {
+        this.predicates.push(predicate);
       }
-      callback(err, resp);
-    }.bind(this));
-  } catch (e) {
-    this._dequeuePendingRequest(data);
-    callback(e);
-  }
-};
+      return this;
+    }
+  }, {
+    key: "addPendingItem",
+    value: function addPendingItem(item) {
+      this.pendingItems.push(item);
+    }
+  }, {
+    key: "removePendingItem",
+    value: function removePendingItem(item) {
+      var idx = this.pendingItems.indexOf(item);
+      if (idx !== -1) {
+        this.pendingItems.splice(idx, 1);
+      }
+    }
 
-/*
- * wait - Stop any further errors from being added to the queue, and get called back when all items
- *   currently processing have finished sending to the backend.
- *
- * @param callback - function() called when all pending items have been sent
- */
-Queue.prototype.wait = function (callback) {
-  if (!isFunction(callback)) {
-    return;
-  }
-  this.waitCallback = callback;
-  if (this._maybeCallWait()) {
-    return;
-  }
-  if (this.waitIntervalID) {
-    this.waitIntervalID = clearInterval(this.waitIntervalID);
-  }
-  this.waitIntervalID = setInterval(function () {
-    this._maybeCallWait();
-  }.bind(this), 500);
-};
+    /**
+     * addItem - Send an item to the Rollbar API if all of the predicates are satisfied
+     *
+     * @param item - Item instance with the payload to send to the backend
+     * @param callback - function(error, repsonse) which will be called with the response from the API
+     *  in the case of a success, otherwise response will be null and error will have a value. If both
+     *  error and response are null then the item was stopped by a predicate which did not consider this
+     *  to be an error condition, but nonetheless did not send the item to the API.
+     * @param originalError - The original error before any transformations that is to be logged if any
+     * @param originalItem - The original item before transforms, used in pendingItems queue
+     */
+  }, {
+    key: "addItem",
+    value: function addItem(item, callback, originalError, originalItem) {
+      var _this = this;
+      if (!callback || !isFunction(callback)) {
+        callback = function callback() {
+          return;
+        };
+      }
+      var data = item.data;
+      var predicateResult = this._applyPredicates(data);
+      if (predicateResult.stop) {
+        this.removePendingItem(originalItem);
+        callback(predicateResult.err);
+        return;
+      }
+      this._maybeLog(data, originalError);
+      this.removePendingItem(originalItem);
+      if (!this.options.transmit) {
+        callback(new Error('Transmit disabled'));
+        return;
+      }
+      if (this.replayManager && data.body) {
+        var replayId = getItemAttribute(data, 'replay_id');
+        if (replayId) {
+          item.replayId = this.replayManager.add(replayId, data.uuid);
+        }
+      }
+      this.pendingRequests.push(data);
+      try {
+        this._makeApiRequest(data, function (err, resp, headers) {
+          _this._dequeuePendingRequest(data);
+          if (!err && resp && item.replayId) {
+            _this._handleReplayResponse(item.replayId, resp, headers);
+          }
+          callback(err, resp);
+        });
+      } catch (e) {
+        this._dequeuePendingRequest(data);
+        callback(e);
+      }
+    }
 
-/* _applyPredicates - Sequentially applies the predicates that have been added to the queue to the
- *   given item with the currently configured options.
- *
- * @param item - An item in the queue
- * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
- *   the error value should be passed up to a callbak if we are stopping.
- */
-Queue.prototype._applyPredicates = function (item) {
-  var p = null;
-  for (var i = 0, len = this.predicates.length; i < len; i++) {
-    p = this.predicates[i](item, this.options);
-    if (!p || p.err !== undefined) {
+    /**
+     * wait - Stop any further errors from being added to the queue, and get called back when all items
+     *   currently processing have finished sending to the backend.
+     *
+     * @param callback - function() called when all pending items have been sent
+     */
+  }, {
+    key: "wait",
+    value: function wait(callback) {
+      var _this2 = this;
+      if (!isFunction(callback)) {
+        return;
+      }
+      this.waitCallback = callback;
+      if (this._maybeCallWait()) {
+        return;
+      }
+      if (this.waitIntervalID) {
+        this.waitIntervalID = clearInterval(this.waitIntervalID);
+      }
+      this.waitIntervalID = setInterval(function () {
+        _this2._maybeCallWait();
+      }, 500);
+    }
+
+    /**
+     * Sequentially applies the predicates that have been added to the queue to the
+     * given item with the currently configured options.
+     *
+     * @param item - An item in the queue
+     * @returns {stop: bool, err: (Error|null)} - stop being true means do not add item to the queue,
+     *   the error value should be passed up to a callbak if we are stopping.
+     */
+  }, {
+    key: "_applyPredicates",
+    value: function _applyPredicates(item) {
+      var p = null;
+      for (var i = 0, len = this.predicates.length; i < len; i++) {
+        p = this.predicates[i](item, this.options);
+        if (!p || p.err !== undefined) {
+          return {
+            stop: true,
+            err: p.err
+          };
+        }
+      }
       return {
-        stop: true,
-        err: p.err
+        stop: false,
+        err: null
       };
     }
-  }
-  return {
-    stop: false,
-    err: null
-  };
-};
 
-/*
- * _makeApiRequest - Send an item to Rollbar, callback when done, if there is an error make an
- *   effort to retry if we are configured to do so.
- *
- * @param item - an item ready to send to the backend
- * @param callback - function(err, response)
- */
-Queue.prototype._makeApiRequest = function (item, callback) {
-  var rateLimitResponse = this.rateLimiter.shouldSend(item);
-  if (rateLimitResponse.shouldSend) {
-    this.api.postItem(item, function (err, resp, headers) {
-      if (err) {
-        this._maybeRetry(err, item, callback);
+    /**
+     * Send an item to Rollbar, callback when done, if there is an error make an
+     * effort to retry if we are configured to do so.
+     *
+     * @param item - an item ready to send to the backend
+     * @param callback - function(err, response)
+     */
+  }, {
+    key: "_makeApiRequest",
+    value: function _makeApiRequest(item, callback) {
+      var _this3 = this;
+      var rateLimitResponse = this.rateLimiter.shouldSend(item);
+      if (rateLimitResponse.shouldSend) {
+        this.api.postItem(item, function (err, resp, headers) {
+          if (err) {
+            _this3._maybeRetry(err, item, callback);
+          } else {
+            callback(err, resp, headers);
+          }
+        });
+      } else if (rateLimitResponse.error) {
+        callback(rateLimitResponse.error);
       } else {
-        callback(err, resp, headers);
-      }
-    }.bind(this));
-  } else if (rateLimitResponse.error) {
-    callback(rateLimitResponse.error);
-  } else {
-    this.api.postItem(rateLimitResponse.payload, callback);
-  }
-};
-
-// These are errors basically mean there is no internet connection
-var RETRIABLE_ERRORS = ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN'];
-
-/*
- * _maybeRetry - Given the error returned by the API, decide if we should retry or just callback
- *   with the error.
- *
- * @param err - an error returned by the API transport
- * @param item - the item that was trying to be sent when this error occured
- * @param callback - function(err, response)
- */
-Queue.prototype._maybeRetry = function (err, item, callback) {
-  var shouldRetry = false;
-  if (this.options.retryInterval) {
-    for (var i = 0, len = RETRIABLE_ERRORS.length; i < len; i++) {
-      if (err.code === RETRIABLE_ERRORS[i]) {
-        shouldRetry = true;
-        break;
+        this.api.postItem(rateLimitResponse.payload, callback);
       }
     }
-    if (shouldRetry && isFiniteNumber(this.options.maxRetries)) {
-      item.retries = item.retries ? item.retries + 1 : 1;
-      if (item.retries > this.options.maxRetries) {
-        shouldRetry = false;
-      }
-    }
-  }
-  if (shouldRetry) {
-    this._retryApiRequest(item, callback);
-  } else {
-    callback(err);
-  }
-};
 
-/*
- * _retryApiRequest - Add an item and a callback to a queue and possibly start a timer to process
- *   that queue based on the retryInterval in the options for this queue.
- *
- * @param item - an item that failed to send due to an error we deem retriable
- * @param callback - function(err, response)
- */
-Queue.prototype._retryApiRequest = function (item, callback) {
-  this.retryQueue.push({
-    item: item,
-    callback: callback
-  });
-  if (!this.retryHandle) {
-    this.retryHandle = setInterval(function () {
-      while (this.retryQueue.length) {
-        var retryObject = this.retryQueue.shift();
-        this._makeApiRequest(retryObject.item, retryObject.callback);
-      }
-    }.bind(this), this.options.retryInterval);
-  }
-};
-
-/*
- * _dequeuePendingRequest - Removes the item from the pending request queue, this queue is used to
- *   enable to functionality of providing a callback that clients can pass to `wait` to be notified
- *   when the pending request queue has been emptied. This must be called when the API finishes
- *   processing this item. If a `wait` callback is configured, it is called by this function.
- *
- * @param item - the item previously added to the pending request queue
- */
-Queue.prototype._dequeuePendingRequest = function (item) {
-  var idx = this.pendingRequests.indexOf(item);
-  if (idx !== -1) {
-    this.pendingRequests.splice(idx, 1);
-    this._maybeCallWait();
-  }
-};
-Queue.prototype._maybeLog = function (data, originalError) {
-  if (this.logger && this.options.verbose) {
-    var message = originalError;
-    message = message || get(data, 'body.trace.exception.message');
-    message = message || get(data, 'body.trace_chain.0.exception.message');
-    if (message) {
-      this.logger.error(message);
-      return;
-    }
-    message = get(data, 'body.message.body');
-    if (message) {
-      this.logger.log(message);
-    }
-  }
-};
-Queue.prototype._maybeCallWait = function () {
-  if (isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
-    if (this.waitIntervalID) {
-      this.waitIntervalID = clearInterval(this.waitIntervalID);
-    }
-    this.waitCallback();
-    return true;
-  }
-  return false;
-};
-
-/**
- * Handles the API response for an item with a replay ID.
- * Based on the success or failure status of the response,
- * it either sends or discards the associated session replay.
- *
- * @param {string} replayId - The ID of the replay to handle
- * @param {Object} response - The API response
- * @returns {Promise<boolean>} A promise that resolves to true if replay was sent successfully,
- *                             false if replay was discarded or an error occurred
- * @private
- */
-Queue.prototype._handleReplayResponse = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(replayId, response, headers) {
-    return _regeneratorRuntime().wrap(function _callee$(_context) {
-      while (1) switch (_context.prev = _context.next) {
-        case 0:
-          if (this.replayMap) {
-            _context.next = 3;
+    // These are errors basically mean there is no internet connection
+  }, {
+    key: "_maybeRetry",
+    value:
+    /**
+     * Given the error returned by the API, decide if we should retry or just callback
+     * with the error.
+     *
+     * @param err - an error returned by the API transport
+     * @param item - the item that was trying to be sent when this error occured
+     * @param callback - function(err, response)
+     */
+    function _maybeRetry(err, item, callback) {
+      var shouldRetry = false;
+      if (this.options.retryInterval) {
+        for (var i = 0, len = Queue.RETRIABLE_ERRORS.length; i < len; i++) {
+          if (err.code === Queue.RETRIABLE_ERRORS[i]) {
+            shouldRetry = true;
             break;
           }
-          console.warn('Queue._handleReplayResponse: ReplayMap not available');
-          return _context.abrupt("return", false);
-        case 3:
-          if (replayId) {
-            _context.next = 6;
-            break;
+        }
+        if (shouldRetry && isFiniteNumber(this.options.maxRetries)) {
+          item.retries = item.retries ? item.retries + 1 : 1;
+          if (item.retries > this.options.maxRetries) {
+            shouldRetry = false;
           }
-          console.warn('Queue._handleReplayResponse: No replayId provided');
-          return _context.abrupt("return", false);
-        case 6:
-          _context.prev = 6;
-          if (!this._shouldSendReplay(response, headers)) {
-            _context.next = 13;
-            break;
-          }
-          _context.next = 10;
-          return this.replayMap.send(replayId);
-        case 10:
-          return _context.abrupt("return", _context.sent);
-        case 13:
-          this.replayMap.discard(replayId);
-          return _context.abrupt("return", false);
-        case 15:
-          _context.next = 21;
-          break;
-        case 17:
-          _context.prev = 17;
-          _context.t0 = _context["catch"](6);
-          console.error('Error handling replay response:', _context.t0);
-          return _context.abrupt("return", false);
-        case 21:
-        case "end":
-          return _context.stop();
+        }
       }
-    }, _callee, this, [[6, 17]]);
-  }));
-  return function (_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
+      if (shouldRetry) {
+        this._retryApiRequest(item, callback);
+      } else {
+        callback(err);
+      }
+    }
+
+    /**
+     * Add an item and a callback to a queue and possibly start a timer to process
+     * that queue based on the retryInterval in the options for this queue.
+     *
+     * @param item - an item that failed to send due to an error we deem retriable
+     * @param callback - function(err, response)
+     */
+  }, {
+    key: "_retryApiRequest",
+    value: function _retryApiRequest(item, callback) {
+      var _this4 = this;
+      this.retryQueue.push({
+        item: item,
+        callback: callback
+      });
+      if (!this.retryHandle) {
+        this.retryHandle = setInterval(function () {
+          while (_this4.retryQueue.length) {
+            var retryObject = _this4.retryQueue.shift();
+            _this4._makeApiRequest(retryObject.item, retryObject.callback);
+          }
+        }, this.options.retryInterval);
+      }
+    }
+
+    /**
+     * Removes the item from the pending request queue, this queue is used to
+     * enable to functionality of providing a callback that clients can pass to `wait` to be notified
+     * when the pending request queue has been emptied. This must be called when the API finishes
+     * processing this item. If a `wait` callback is configured, it is called by this function.
+     *
+     * @param item - the item previously added to the pending request queue
+     */
+  }, {
+    key: "_dequeuePendingRequest",
+    value: function _dequeuePendingRequest(item) {
+      var idx = this.pendingRequests.indexOf(item);
+      if (idx !== -1) {
+        this.pendingRequests.splice(idx, 1);
+        this._maybeCallWait();
+      }
+    }
+  }, {
+    key: "_maybeLog",
+    value: function _maybeLog(data, originalError) {
+      if (this.logger && this.options.verbose) {
+        var message = originalError || get(data, 'body.trace.exception.message') || get(data, 'body.trace_chain.0.exception.message');
+        if (message) {
+          this.logger.error(message);
+          return;
+        }
+        message = get(data, 'body.message.body');
+        if (message) {
+          this.logger.log(message);
+        }
+      }
+    }
+  }, {
+    key: "_maybeCallWait",
+    value: function _maybeCallWait() {
+      if (isFunction(this.waitCallback) && this.pendingItems.length === 0 && this.pendingRequests.length === 0) {
+        if (this.waitIntervalID) {
+          this.waitIntervalID = clearInterval(this.waitIntervalID);
+        }
+        this.waitCallback();
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Handles the API response for an item with a replay ID.
+     * Based on the success or failure status of the response,
+     * it either sends or discards the associated session replay.
+     *
+     * @param {string} replayId - The ID of the replay to handle
+     * @param {Object} response - The API response
+     * @param {Object} headers - The response headers
+     * @returns {Promise<boolean>} A promise that resolves to true if replay was sent successfully,
+     *                             false if replay was discarded or an error occurred
+     */
+  }, {
+    key: "_handleReplayResponse",
+    value: (function () {
+      var _handleReplayResponse2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(replayId, response, headers) {
+        return _regeneratorRuntime().wrap(function _callee$(_context) {
+          while (1) switch (_context.prev = _context.next) {
+            case 0:
+              if (this.replayManager) {
+                _context.next = 3;
+                break;
+              }
+              console.warn('Queue._handleReplayResponse: ReplayManager not available');
+              return _context.abrupt("return", false);
+            case 3:
+              if (replayId) {
+                _context.next = 6;
+                break;
+              }
+              console.warn('Queue._handleReplayResponse: No replayId provided');
+              return _context.abrupt("return", false);
+            case 6:
+              _context.prev = 6;
+              if (!this._shouldSendReplay(response, headers)) {
+                _context.next = 13;
+                break;
+              }
+              _context.next = 10;
+              return this.replayManager.send(replayId);
+            case 10:
+              return _context.abrupt("return", _context.sent);
+            case 13:
+              this.replayManager.discard(replayId);
+              return _context.abrupt("return", false);
+            case 15:
+              _context.next = 21;
+              break;
+            case 17:
+              _context.prev = 17;
+              _context.t0 = _context["catch"](6);
+              console.error('Error handling replay response:', _context.t0);
+              return _context.abrupt("return", false);
+            case 21:
+            case "end":
+              return _context.stop();
+          }
+        }, _callee, this, [[6, 17]]);
+      }));
+      function _handleReplayResponse(_x, _x2, _x3) {
+        return _handleReplayResponse2.apply(this, arguments);
+      }
+      return _handleReplayResponse;
+    }())
+  }, {
+    key: "_shouldSendReplay",
+    value: function _shouldSendReplay(response, headers) {
+      if ((response === null || response === void 0 ? void 0 : response.err) !== 0 || !headers || headers['Rollbar-Replay-Enabled'] !== 'true' || headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
+        return false;
+      }
+      return true;
+    }
+  }]);
 }();
-Queue.prototype._shouldSendReplay = function (response, headers) {
-  if ((response === null || response === void 0 ? void 0 : response.err) !== 0 || !headers || headers['Rollbar-Replay-Enabled'] !== 'true' || headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
-    return false;
-  }
-  return true;
-};
+_defineProperty(Queue, "RETRIABLE_ERRORS", ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN']);
 /* harmony default export */ var queue = (Queue);
 ;// ./src/notifier.js
 
@@ -1473,12 +1519,12 @@ function replayPredicates_typeof(o) { "@babel/helpers - typeof"; return replayPr
 function replayPredicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = replayPredicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function replayPredicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return replayPredicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? replayPredicates_arrayLikeToArray(r, a) : void 0; } }
 function replayPredicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == replayPredicates_typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayPredicates_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function replayPredicates_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function replayPredicates_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayPredicates_toPropertyKey(o.key), o); } }
+function replayPredicates_createClass(e, r, t) { return r && replayPredicates_defineProperties(e.prototype, r), t && replayPredicates_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function replayPredicates_defineProperty(e, r, t) { return (r = replayPredicates_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function replayPredicates_toPropertyKey(t) { var i = replayPredicates_toPrimitive(t, "string"); return "symbol" == replayPredicates_typeof(i) ? i : i + ""; }
+function replayPredicates_toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayPredicates_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * ReplayPredicates - Determine if replay is enabled for a given trigger type.
  *
@@ -1491,8 +1537,8 @@ var ReplayPredicates = /*#__PURE__*/function () {
    * @param {Object} context - Context object containing state used by predicates.
    */
   function ReplayPredicates(config, context) {
-    _classCallCheck(this, ReplayPredicates);
-    _defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
+    replayPredicates_classCallCheck(this, ReplayPredicates);
+    replayPredicates_defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
     this.config = config || {};
     this.triggers = (config === null || config === void 0 ? void 0 : config.triggers) || [];
     this.context = context || {};
@@ -1509,7 +1555,7 @@ var ReplayPredicates = /*#__PURE__*/function () {
    * @param {string} triggerType - The type of the trigger to check.
    * @returns {boolean} - True if replay is enabled for the trigger type, false otherwise.
    */
-  return _createClass(ReplayPredicates, [{
+  return replayPredicates_createClass(ReplayPredicates, [{
     key: "isEnabledForTriggerType",
     value: function isEnabledForTriggerType(triggerType) {
       var predicates = this.predicates[triggerType];
@@ -1600,13 +1646,13 @@ var ReplayPredicates = /*#__PURE__*/function () {
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, tracing, replayMap, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, replayManager, platform) {
   this.options = src_merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replayMap);
+  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replayManager);
   this.tracing = tracing;
 
   // Legacy OpenTracing support
@@ -1733,12 +1779,6 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     if (telemeter) {
       telemeter._captureRollbarItem(item);
       item.telemetryEvents = telemeter.copyEvents() || [];
-      if (telemeter.telemetrySpan) {
-        telemeter.telemetrySpan.end({
-          'rollbar.replay.id': replayId
-        });
-        telemeter.telemetrySpan = telemeter.tracing.startSpan('rollbar-telemetry', {});
-      }
     }
     this.notifier.log(item, callback);
   } catch (e) {
@@ -2033,12 +2073,19 @@ function Api(options, transport, urllib, truncation) {
  */
 Api.prototype._postPromise = function (_ref) {
   var accessToken = _ref.accessToken,
-    transportOptions = _ref.transportOptions,
-    payload = _ref.payload;
+    options = _ref.options,
+    payload = _ref.payload,
+    headers = _ref.headers;
   var self = this;
   return new Promise(function (resolve, reject) {
-    self.transport.post(accessToken, transportOptions, payload, function (err, resp) {
-      return err ? reject(err) : resolve(resp);
+    self.transport.post({
+      accessToken: accessToken,
+      options: options,
+      payload: payload,
+      headers: headers,
+      callback: function callback(err, resp) {
+        return err ? reject(err) : resolve(resp);
+      }
     });
   });
 };
@@ -2049,13 +2096,18 @@ Api.prototype._postPromise = function (_ref) {
  * @param callback
  */
 Api.prototype.postItem = function (data, callback) {
-  var transportOptions = apiUtility_transportOptions(this.transportOptions, 'POST');
+  var options = apiUtility_transportOptions(this.transportOptions, 'POST');
   var payload = buildPayload(data);
   var self = this;
 
   // ensure the network request is scheduled after the current tick.
   setTimeout(function () {
-    self.transport.post(self.accessToken, transportOptions, payload, callback);
+    self.transport.post({
+      accessToken: self.accessToken,
+      options: options,
+      payload: payload,
+      callback: callback
+    });
   }, 0);
 };
 
@@ -2067,20 +2119,24 @@ Api.prototype.postItem = function (data, callback) {
  */
 Api.prototype.postSpans = /*#__PURE__*/function () {
   var _ref2 = api_asyncToGenerator(/*#__PURE__*/api_regeneratorRuntime().mark(function _callee(payload) {
-    var transportOptions;
+    var headers,
+      options,
+      _args = arguments;
     return api_regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
-          transportOptions = apiUtility_transportOptions(this.OTLPTransportOptions, 'POST');
-          _context.next = 3;
+          headers = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+          options = apiUtility_transportOptions(this.OTLPTransportOptions, 'POST');
+          _context.next = 4;
           return this._postPromise({
             accessToken: this.accessToken,
-            transportOptions: transportOptions,
-            payload: payload
+            options: options,
+            payload: payload,
+            headers: headers
           });
-        case 3:
-          return _context.abrupt("return", _context.sent);
         case 4:
+          return _context.abrupt("return", _context.sent);
+        case 5:
         case "end":
           return _context.stop();
       }
@@ -2292,9 +2348,22 @@ function captureUnhandledRejections(window, handler, shim) {
 }
 
 ;// ./src/browser/transport/fetch.js
+function fetch_typeof(o) { "@babel/helpers - typeof"; return fetch_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, fetch_typeof(o); }
+function fetch_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function fetch_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? fetch_ownKeys(Object(t), !0).forEach(function (r) { fetch_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : fetch_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function fetch_defineProperty(e, r, t) { return (r = fetch_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function fetch_toPropertyKey(t) { var i = fetch_toPrimitive(t, "string"); return "symbol" == fetch_typeof(i) ? i : i + ""; }
+function fetch_toPrimitive(t, r) { if ("object" != fetch_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != fetch_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
-function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
+function makeFetchRequest(_ref) {
+  var accessToken = _ref.accessToken,
+    url = _ref.url,
+    method = _ref.method,
+    payload = _ref.payload,
+    headers = _ref.headers,
+    callback = _ref.callback,
+    timeout = _ref.timeout;
   var controller;
   var timeoutId;
   if (isFiniteNumber(timeout)) {
@@ -2303,14 +2372,15 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
       controller.abort();
     }, timeout);
   }
+  headers = fetch_objectSpread({
+    'Content-Type': 'application/json',
+    'X-Rollbar-Access-Token': accessToken,
+    signal: controller && controller.signal
+  }, headers);
   fetch(url, {
     method: method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Rollbar-Access-Token': accessToken,
-      signal: controller && controller.signal
-    },
-    body: data
+    headers: headers,
+    body: payload
   }).then(function (response) {
     if (timeoutId) clearTimeout(timeoutId);
     var respHeaders = response.headers;
@@ -2329,11 +2399,25 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
 }
 /* harmony default export */ var transport_fetch = (makeFetchRequest);
 ;// ./src/browser/transport/xhr.js
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || xhr_unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function xhr_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return xhr_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? xhr_arrayLikeToArray(r, a) : void 0; } }
+function xhr_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 /*global XDomainRequest*/
 
 
 
-function makeXhrRequest(accessToken, url, method, data, callback, requestFactory, timeout) {
+function makeXhrRequest(_ref) {
+  var accessToken = _ref.accessToken,
+    url = _ref.url,
+    method = _ref.method,
+    payload = _ref.payload,
+    headers = _ref.headers,
+    callback = _ref.callback,
+    requestFactory = _ref.requestFactory,
+    timeout = _ref.timeout;
   var request;
   if (requestFactory) {
     request = requestFactory();
@@ -2353,12 +2437,12 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
             var parseResponse = jsonParse(request.responseText);
             if (_isSuccess(request)) {
               var isItemRoute = url.endsWith('/api/1/item/');
-              var headers = isItemRoute ? {
+              var _headers = isItemRoute ? {
                 'Rollbar-Replay-Enabled': request.getResponseHeader('Rollbar-Replay-Enabled'),
                 'Rollbar-Replay-RateLimit-Remaining': request.getResponseHeader('Rollbar-Replay-RateLimit-Remaining'),
                 'Rollbar-Replay-RateLimit-Reset': request.getResponseHeader('Rollbar-Replay-RateLimit-Reset')
               } : {};
-              callback(parseResponse.error, parseResponse.value, headers);
+              callback(parseResponse.error, parseResponse.value, _headers);
               return;
             } else if (_isNormalFailure(request)) {
               if (request.status === 403) {
@@ -2393,12 +2477,18 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
       if (request.setRequestHeader) {
         request.setRequestHeader('Content-Type', 'application/json');
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
+        for (var _i = 0, _Object$entries = Object.entries(headers !== null && headers !== void 0 ? headers : {}); _i < _Object$entries.length; _i++) {
+          var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+            h = _Object$entries$_i[0],
+            v = _Object$entries$_i[1];
+          request.setRequestHeader(h, v);
+        }
       }
       if (isFiniteNumber(timeout)) {
         request.timeout = timeout;
       }
       request.onreadystatechange = _onreadystatechange;
-      request.send(data);
+      request.send(payload);
     } catch (e1) {
       // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
       if (typeof XDomainRequest !== 'undefined') {
@@ -2429,7 +2519,7 @@ function makeXhrRequest(accessToken, url, method, data, callback, requestFactory
           callback(parseResponse.error, parseResponse.value);
         };
         xdomainrequest.open(method, url, true);
-        xdomainrequest.send(data);
+        xdomainrequest.send(payload);
       } else {
         callback(new Error('Cannot find a method to transport a request'));
       }
@@ -2510,37 +2600,73 @@ Transport.prototype.get = function (accessToken, options, params, callback, requ
   addParamsAndAccessTokenToPath(accessToken, options, params);
   var method = 'GET';
   var url = formatUrl(options);
-  this._makeZoneRequest(accessToken, url, method, null, callback, requestFactory, options.timeout, options.transport);
+  this._makeZoneRequest({
+    accessToken: accessToken,
+    url: url,
+    method: method,
+    callback: callback,
+    requestFactory: requestFactory,
+    timeout: options.timeout,
+    transport: options.transport
+  });
 };
-Transport.prototype.post = function (accessToken, options, payload, callback, requestFactory) {
+Transport.prototype.post = function (_ref) {
+  var _this = this;
+  var accessToken = _ref.accessToken,
+    options = _ref.options,
+    payload = _ref.payload,
+    headers = _ref.headers,
+    callback = _ref.callback,
+    requestFactory = _ref.requestFactory;
+  return function (payload) {
+    if (!callback || !isFunction(callback)) {
+      callback = function callback() {};
+    }
+    if (!payload) {
+      return callback(new Error('Cannot send empty request'));
+    }
+    var stringifyResult;
+    // Check payload.body to ensure only items are truncated.
+    if (_this.truncation && payload.body) {
+      stringifyResult = _this.truncation.truncate(payload);
+    } else {
+      stringifyResult = stringify(payload);
+    }
+    if (stringifyResult.error) {
+      return callback(stringifyResult.error);
+    }
+    var payload = stringifyResult.value;
+    var method = 'POST';
+    var url = formatUrl(options);
+    _this._makeZoneRequest({
+      accessToken: accessToken,
+      url: url,
+      method: method,
+      payload: payload,
+      headers: headers,
+      callback: callback,
+      requestFactory: requestFactory,
+      timeout: options.timeout,
+      transport: options.transport
+    });
+  }(payload);
+};
+Transport.prototype.postJsonPayload = function (accessToken, options, payload, callback, requestFactory) {
   if (!callback || !isFunction(callback)) {
     callback = function callback() {};
   }
-  if (!payload) {
-    return callback(new Error('Cannot send empty request'));
-  }
-  var stringifyResult;
-  // Check payload.body to ensure only items are truncated.
-  if (this.truncation && payload.body) {
-    stringifyResult = this.truncation.truncate(payload);
-  } else {
-    stringifyResult = stringify(payload);
-  }
-  if (stringifyResult.error) {
-    return callback(stringifyResult.error);
-  }
-  var writeData = stringifyResult.value;
   var method = 'POST';
   var url = formatUrl(options);
-  this._makeZoneRequest(accessToken, url, method, writeData, callback, requestFactory, options.timeout, options.transport);
-};
-Transport.prototype.postJsonPayload = function (accessToken, options, jsonPayload, callback, requestFactory) {
-  if (!callback || !isFunction(callback)) {
-    callback = function callback() {};
-  }
-  var method = 'POST';
-  var url = formatUrl(options);
-  this._makeZoneRequest(accessToken, url, method, jsonPayload, callback, requestFactory, options.timeout, options.transport);
+  this._makeZoneRequest({
+    accessToken: accessToken,
+    url: url,
+    method: method,
+    payload: payload,
+    callback: callback,
+    requestFactory: requestFactory,
+    timeout: options.timeout,
+    transport: options.transport
+  });
 };
 
 // Wraps `_makeRequest` if zone.js is being used, ensuring that Rollbar
@@ -2563,14 +2689,17 @@ Transport.prototype._makeZoneRequest = function () {
     this._makeRequest.apply(undefined, args);
   }
 };
-Transport.prototype._makeRequest = function (accessToken, url, method, data, callback, requestFactory, timeout, transport) {
+Transport.prototype._makeRequest = function (params) {
+  var payload = params.payload,
+    callback = params.callback,
+    transport = params.transport;
   if (typeof RollbarProxy !== 'undefined') {
-    return _proxyRequest(data, callback);
+    return _proxyRequest(payload, callback);
   }
   if (transport === 'fetch') {
-    transport_fetch(accessToken, url, method, data, callback, timeout);
+    transport_fetch(params);
   } else {
-    xhr(accessToken, url, method, data, callback, requestFactory, timeout);
+    xhr(params);
   }
 };
 
@@ -2579,9 +2708,7 @@ function _proxyRequest(json, callback) {
   var rollbarProxy = new RollbarProxy();
   rollbarProxy.sendJsonPayload(json, function (_msg) {
     /* do nothing */
-  },
-  // eslint-disable-line no-unused-vars
-  function (err) {
+  }, function (err) {
     callback(new Error(err));
   });
 }
@@ -3665,16 +3792,16 @@ function gen() {
 /* harmony default export */ var id = ({
   gen: gen
 });
-;// ./src/browser/replay/replayMap.js
-function replayMap_typeof(o) { "@babel/helpers - typeof"; return replayMap_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayMap_typeof(o); }
-function replayMap_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ replayMap_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == replayMap_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(replayMap_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function replayMap_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function replayMap_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { replayMap_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { replayMap_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-function replayMap_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function replayMap_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayMap_toPropertyKey(o.key), o); } }
-function replayMap_createClass(e, r, t) { return r && replayMap_defineProperties(e.prototype, r), t && replayMap_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function replayMap_toPropertyKey(t) { var i = replayMap_toPrimitive(t, "string"); return "symbol" == replayMap_typeof(i) ? i : i + ""; }
-function replayMap_toPrimitive(t, r) { if ("object" != replayMap_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayMap_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+;// ./src/browser/replay/replayManager.js
+function replayManager_typeof(o) { "@babel/helpers - typeof"; return replayManager_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayManager_typeof(o); }
+function replayManager_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ replayManager_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == replayManager_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(replayManager_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function replayManager_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function replayManager_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function replayManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function replayManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayManager_toPropertyKey(o.key), o); } }
+function replayManager_createClass(e, r, t) { return r && replayManager_defineProperties(e.prototype, r), t && replayManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function replayManager_toPropertyKey(t) { var i = replayManager_toPrimitive(t, "string"); return "symbol" == replayManager_typeof(i) ? i : i + ""; }
+function replayManager_toPrimitive(t, r) { if ("object" != replayManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
 function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
 function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
@@ -3684,7 +3811,7 @@ function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.h
 
 
 /**
- * ReplayMap - Manages the mapping between error occurrences and their associated
+ * ReplayManager - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
  * are dumped and when they are eventually sent to the backend.
  */
@@ -3692,24 +3819,27 @@ var _map = /*#__PURE__*/new WeakMap();
 var _recorder = /*#__PURE__*/new WeakMap();
 var _api = /*#__PURE__*/new WeakMap();
 var _tracing = /*#__PURE__*/new WeakMap();
-var ReplayMap = /*#__PURE__*/function () {
+var _telemeter = /*#__PURE__*/new WeakMap();
+var ReplayManager = /*#__PURE__*/function () {
   /**
-   * Creates a new ReplayMap instance
+   * Creates a new ReplayManager instance
    *
    * @param {Object} props - Configuration props
    * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
    * @param {Object} props.api - The API instance used to send replay payloads to the backend
    * @param {Object} props.tracing - The tracing instance used to create spans and manage context
    */
-  function ReplayMap(_ref) {
+  function ReplayManager(_ref) {
     var recorder = _ref.recorder,
       api = _ref.api,
-      tracing = _ref.tracing;
-    replayMap_classCallCheck(this, ReplayMap);
+      tracing = _ref.tracing,
+      telemeter = _ref.telemeter;
+    replayManager_classCallCheck(this, ReplayManager);
     _classPrivateFieldInitSpec(this, _map, void 0);
     _classPrivateFieldInitSpec(this, _recorder, void 0);
     _classPrivateFieldInitSpec(this, _api, void 0);
     _classPrivateFieldInitSpec(this, _tracing, void 0);
+    _classPrivateFieldInitSpec(this, _telemeter, void 0);
     if (!recorder) {
       throw new TypeError("Expected 'recorder' to be provided");
     }
@@ -3723,6 +3853,7 @@ var ReplayMap = /*#__PURE__*/function () {
     _classPrivateFieldSet(_recorder, this, recorder);
     _classPrivateFieldSet(_api, this, api);
     _classPrivateFieldSet(_tracing, this, tracing);
+    _classPrivateFieldSet(_telemeter, this, telemeter);
   }
 
   /**
@@ -3735,15 +3866,18 @@ var ReplayMap = /*#__PURE__*/function () {
    * @returns {Promise<string>} A promise resolving to the processed replayId
    * @private
    */
-  return replayMap_createClass(ReplayMap, [{
+  return replayManager_createClass(ReplayManager, [{
     key: "_processReplay",
     value: (function () {
-      var _processReplay2 = replayMap_asyncToGenerator(/*#__PURE__*/replayMap_regeneratorRuntime().mark(function _callee(replayId, occurrenceUuid) {
-        var payload;
-        return replayMap_regeneratorRuntime().wrap(function _callee$(_context) {
+      var _processReplay2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee(replayId, occurrenceUuid) {
+        var _classPrivateFieldGet2, payload;
+        return replayManager_regeneratorRuntime().wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
               try {
+                (_classPrivateFieldGet2 = _classPrivateFieldGet(_telemeter, this)) === null || _classPrivateFieldGet2 === void 0 || _classPrivateFieldGet2.exportTelemetrySpan({
+                  'rollbar.replay.id': replayId
+                });
                 payload = _classPrivateFieldGet(_recorder, this).dump(_classPrivateFieldGet(_tracing, this), replayId, occurrenceUuid);
                 _classPrivateFieldGet(_map, this).set(replayId, payload);
               } catch (transformError) {
@@ -3796,23 +3930,23 @@ var ReplayMap = /*#__PURE__*/function () {
   }, {
     key: "send",
     value: (function () {
-      var _send = replayMap_asyncToGenerator(/*#__PURE__*/replayMap_regeneratorRuntime().mark(function _callee2(replayId) {
+      var _send = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee2(replayId) {
         var payload, isEmpty;
-        return replayMap_regeneratorRuntime().wrap(function _callee2$(_context2) {
+        return replayManager_regeneratorRuntime().wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
               if (replayId) {
                 _context2.next = 3;
                 break;
               }
-              logger.error('ReplayMap.send: No replayId provided');
+              logger.error('ReplayManager.send: No replayId provided');
               return _context2.abrupt("return", false);
             case 3:
               if (_classPrivateFieldGet(_map, this).has(replayId)) {
                 _context2.next = 6;
                 break;
               }
-              logger.error("ReplayMap.send: No replay found for replayId: ".concat(replayId));
+              logger.error("ReplayManager.send: No replay found for replayId: ".concat(replayId));
               return _context2.abrupt("return", false);
             case 6:
               payload = _classPrivateFieldGet(_map, this).get(replayId);
@@ -3824,12 +3958,14 @@ var ReplayMap = /*#__PURE__*/function () {
                 _context2.next = 12;
                 break;
               }
-              logger.error("ReplayMap.send: No payload found for replayId: ".concat(replayId));
+              logger.error("ReplayManager.send: No payload found for replayId: ".concat(replayId));
               return _context2.abrupt("return", false);
             case 12:
               _context2.prev = 12;
               _context2.next = 15;
-              return _classPrivateFieldGet(_api, this).postSpans(payload);
+              return _classPrivateFieldGet(_api, this).postSpans(payload, {
+                'X-Rollbar-Replay-Id': replayId
+              });
             case 15:
               return _context2.abrupt("return", true);
             case 18:
@@ -3860,11 +3996,11 @@ var ReplayMap = /*#__PURE__*/function () {
     key: "discard",
     value: function discard(replayId) {
       if (!replayId) {
-        logger.error('ReplayMap.discard: No replayId provided');
+        logger.error('ReplayManager.discard: No replayId provided');
         return false;
       }
       if (!_classPrivateFieldGet(_map, this).has(replayId)) {
-        logger.error("ReplayMap.discard: No replay found for replayId: ".concat(replayId));
+        logger.error("ReplayManager.discard: No replay found for replayId: ".concat(replayId));
         return false;
       }
       _classPrivateFieldGet(_map, this).delete(replayId);
@@ -3880,8 +4016,8 @@ var ReplayMap = /*#__PURE__*/function () {
   }, {
     key: "getSpans",
     value: function getSpans(replayId) {
-      var _classPrivateFieldGet2;
-      return (_classPrivateFieldGet2 = _classPrivateFieldGet(_map, this).get(replayId)) !== null && _classPrivateFieldGet2 !== void 0 ? _classPrivateFieldGet2 : null;
+      var _classPrivateFieldGet3;
+      return (_classPrivateFieldGet3 = _classPrivateFieldGet(_map, this).get(replayId)) !== null && _classPrivateFieldGet3 !== void 0 ? _classPrivateFieldGet3 : null;
     }
 
     /**
@@ -3922,7 +4058,7 @@ var ReplayMap = /*#__PURE__*/function () {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.1';
+var version = '3.0.0-beta.2';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -3993,22 +4129,23 @@ function core_Rollbar(options, client) {
     this.tracing = new Tracing(_gWindow(), this.options);
     this.tracing.initSession();
   }
+  if (Telemeter) {
+    this.telemeter = new Telemeter(this.options, this.tracing);
+  }
   if (Recorder && isBrowser()) {
     var recorderOptions = this.options.recorder;
     this.recorder = new Recorder(recorderOptions);
-    this.replayMap = new ReplayMap({
+    this.replayManager = new ReplayManager({
       recorder: this.recorder,
       api: api,
-      tracing: this.tracing
+      tracing: this.tracing,
+      telemeter: this.telemeter
     });
     if (recorderOptions.enabled && recorderOptions.autoStart) {
       this.recorder.start();
     }
   }
-  if (Telemeter) {
-    this.telemeter = new Telemeter(this.options, this.tracing);
-  }
-  this.client = client || new rollbar(this.options, api, logger, this.telemeter, this.tracing, this.replayMap, 'browser');
+  this.client = client || new rollbar(this.options, api, logger, this.telemeter, this.tracing, this.replayManager, 'browser');
   var gWindow = _gWindow();
   var gDocument = typeof document != 'undefined' && document;
   this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
@@ -4463,6 +4600,7 @@ function _gWindow() {
 
 
 var core_defaultOptions = {
+  environment: 'unknown',
   version: version,
   scrubFields: browser_defaults.scrubFields,
   logLevel: logLevel,
@@ -4483,9 +4621,21 @@ var core_defaultOptions = {
 };
 /* harmony default export */ var core = (core_Rollbar);
 ;// ./src/telemetry.js
+function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
 var _excluded = ["otelAttributes"];
+function telemetry_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function telemetry_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? telemetry_ownKeys(Object(t), !0).forEach(function (r) { telemetry_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : telemetry_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function telemetry_defineProperty(e, r, t) { return (r = telemetry_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function telemetry_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function telemetry_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, telemetry_toPropertyKey(o.key), o); } }
+function telemetry_createClass(e, r, t) { return r && telemetry_defineProperties(e.prototype, r), t && telemetry_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function telemetry_toPropertyKey(t) { var i = telemetry_toPrimitive(t, "string"); return "symbol" == telemetry_typeof(i) ? i : i + ""; }
+function telemetry_toPrimitive(t, r) { if ("object" != telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _classPrivateMethodInitSpec(e, a) { telemetry_checkPrivateRedeclaration(e, a), a.add(e); }
+function telemetry_checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+function telemetry_assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 var MAX_EVENTS = 100;
 
@@ -4493,220 +4643,467 @@ var MAX_EVENTS = 100;
 function fromMillis(millis) {
   return [Math.trunc(millis / 1000), Math.round(millis % 1000 * 1e6)];
 }
-function Telemeter(options, tracing) {
-  var _this$tracing;
-  this.queue = [];
-  this.options = src_merge(options);
-  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
-  this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
-  this.tracing = tracing;
-  this.telemetrySpan = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {});
-}
-Telemeter.prototype.configure = function (options) {
-  var oldOptions = this.options;
-  this.options = src_merge(oldOptions, options);
-  var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
-  var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
-  var deleteCount = 0;
-  if (this.queue.length > newMaxEvents) {
-    deleteCount = this.queue.length - newMaxEvents;
+var _Telemeter_brand = /*#__PURE__*/new WeakSet();
+var Telemeter = /*#__PURE__*/function () {
+  function Telemeter(options, tracing) {
+    var _this$tracing;
+    telemetry_classCallCheck(this, Telemeter);
+    _classPrivateMethodInitSpec(this, _Telemeter_brand);
+    this.queue = [];
+    this.options = src_merge(options);
+    var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+    this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+    this.tracing = tracing;
+    this.telemetrySpan = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {});
   }
-  this.maxQueueSize = newMaxEvents;
-  this.queue.splice(0, deleteCount);
-};
-Telemeter.prototype.copyEvents = function () {
-  var events = Array.prototype.slice.call(this.queue, 0);
-  if (isFunction(this.options.filterTelemetry)) {
-    try {
-      var i = events.length;
-      while (i--) {
-        if (this.options.filterTelemetry(events[i])) {
-          events.splice(i, 1);
+  return telemetry_createClass(Telemeter, [{
+    key: "configure",
+    value: function configure(options) {
+      var oldOptions = this.options;
+      this.options = src_merge(oldOptions, options);
+      var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
+      var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
+      var deleteCount = 0;
+      if (this.queue.length > newMaxEvents) {
+        deleteCount = this.queue.length - newMaxEvents;
+      }
+      this.maxQueueSize = newMaxEvents;
+      this.queue.splice(0, deleteCount);
+    }
+  }, {
+    key: "copyEvents",
+    value: function copyEvents() {
+      var events = Array.prototype.slice.call(this.queue, 0);
+      if (isFunction(this.options.filterTelemetry)) {
+        try {
+          var i = events.length;
+          while (i--) {
+            if (this.options.filterTelemetry(events[i])) {
+              events.splice(i, 1);
+            }
+          }
+        } catch (e) {
+          this.options.filterTelemetry = null;
         }
       }
-    } catch (e) {
-      this.options.filterTelemetry = null;
+
+      // Filter until supported in legacy telemetry
+      events = events.filter(function (e) {
+        return e.type !== 'connectivity';
+      });
+
+      // Remove internal keys from output
+      events = events.map(function (_ref) {
+        var otelAttributes = _ref.otelAttributes,
+          event = _objectWithoutProperties(_ref, _excluded);
+        return event;
+      });
+      return events;
     }
-  }
-
-  // Remove internal keys from output
-  events = events.map(function (_ref) {
-    var otelAttributes = _ref.otelAttributes,
-      event = _objectWithoutProperties(_ref, _excluded);
-    return event;
-  });
-  return events;
-};
-Telemeter.prototype.capture = function (type, metadata, level, rollbarUUID) {
-  var timestamp = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
-  var otelAttributes = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
-  var e = {
-    level: getLevel(type, level),
-    type: type,
-    timestamp_ms: timestamp || utility_now(),
-    body: metadata,
-    source: 'client'
-  };
-  if (rollbarUUID) {
-    e.uuid = rollbarUUID;
-  }
-  if (otelAttributes) {
-    e.otelAttributes = otelAttributes;
-  }
-  try {
-    if (isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
-      return false;
+  }, {
+    key: "exportTelemetrySpan",
+    value: function exportTelemetrySpan() {
+      var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      if (this.telemetrySpan) {
+        this.telemetrySpan.end(attributes);
+        this.telemetrySpan = this.tracing.startSpan('rollbar-telemetry', {});
+      }
     }
-  } catch (exc) {
-    this.options.filterTelemetry = null;
-  }
-  this.push(e);
-  return e;
-};
-Telemeter.prototype.captureEvent = function (type, metadata, level, rollbarUUID) {
-  return this.capture(type, metadata, level, rollbarUUID);
-};
-Telemeter.prototype.captureError = function (err, level, rollbarUUID, timestamp) {
-  var _this$telemetrySpan;
-  var message = err.message || String(err);
-  var metadata = {
-    message: message
-  };
-  if (err.stack) {
-    metadata.stack = err.stack;
-  }
-  var otelAttributes = {
-    message: message,
-    level: level,
-    type: 'error',
-    uuid: rollbarUUID
-  };
-  (_this$telemetrySpan = this.telemetrySpan) === null || _this$telemetrySpan === void 0 || _this$telemetrySpan.addEvent('rollbar-occurrence-event', otelAttributes, fromMillis(timestamp));
-  return this.capture('error', metadata, level, rollbarUUID, timestamp, otelAttributes);
-};
-Telemeter.prototype.captureLog = function (message, level, rollbarUUID, timestamp) {
-  var otelAttributes = null;
+  }, {
+    key: "capture",
+    value: function capture(type, metadata, level, rollbarUUID) {
+      var timestamp = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+      var otelAttributes = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+      var e = {
+        level: getLevel(type, level),
+        type: type,
+        timestamp_ms: timestamp || utility_now(),
+        body: metadata,
+        source: 'client'
+      };
+      if (rollbarUUID) {
+        e.uuid = rollbarUUID;
+      }
+      if (otelAttributes) {
+        e.otelAttributes = otelAttributes;
+      }
+      try {
+        if (isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
+          return false;
+        }
+      } catch (exc) {
+        this.options.filterTelemetry = null;
+      }
+      this.push(e);
+      return e;
+    }
+  }, {
+    key: "captureEvent",
+    value: function captureEvent(type, metadata, level, rollbarUUID) {
+      return this.capture(type, metadata, level, rollbarUUID);
+    }
+  }, {
+    key: "captureError",
+    value: function captureError(err, level, rollbarUUID, timestamp) {
+      var _this$telemetrySpan;
+      var message = err.message || String(err);
+      var metadata = {
+        message: message
+      };
+      if (err.stack) {
+        metadata.stack = err.stack;
+      }
+      var otelAttributes = {
+        message: message,
+        level: level,
+        type: 'error',
+        uuid: rollbarUUID
+      };
+      (_this$telemetrySpan = this.telemetrySpan) === null || _this$telemetrySpan === void 0 || _this$telemetrySpan.addEvent('rollbar-occurrence-event', otelAttributes, fromMillis(timestamp));
+      return this.capture('error', metadata, level, rollbarUUID, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureLog",
+    value: function captureLog(message, level, rollbarUUID, timestamp) {
+      var otelAttributes = null;
 
-  // If the uuid is present, this is a message occurrence.
-  if (rollbarUUID) {
-    var _this$telemetrySpan2;
-    otelAttributes = {
-      message: message,
-      level: level,
-      type: 'message',
-      uuid: rollbarUUID
-    }, (_this$telemetrySpan2 = this.telemetrySpan) === null || _this$telemetrySpan2 === void 0 ? void 0 : _this$telemetrySpan2.addEvent('rollbar-occurrence-event', otelAttributes, fromMillis(timestamp));
-  } else {
-    var _this$telemetrySpan3;
-    otelAttributes = {
-      message: message,
-      level: level
-    };
-    (_this$telemetrySpan3 = this.telemetrySpan) === null || _this$telemetrySpan3 === void 0 || _this$telemetrySpan3.addEvent('rollbar-log-event', otelAttributes, fromMillis(timestamp));
-  }
-  return this.capture('log', {
-    message: message
-  }, level, rollbarUUID, timestamp, otelAttributes);
-};
-Telemeter.prototype.captureNetwork = function (metadata, subtype, rollbarUUID, requestData) {
-  var _metadata$response, _this$telemetrySpan4;
-  subtype = subtype || 'xhr';
-  metadata.subtype = metadata.subtype || subtype;
-  if (requestData) {
-    metadata.request = requestData;
-  }
-  var level = this.levelFromStatus(metadata.status_code);
-  var endTimeNano = (metadata.end_time_ms || 0) * 1e6;
-  var otelAttributes = {
-    type: metadata.subtype,
-    method: metadata.method,
-    url: metadata.url,
-    statusCode: metadata.status_code,
-    'request.headers': JSON.stringify(metadata.request_headers || {}),
-    'response.headers': JSON.stringify(((_metadata$response = metadata.response) === null || _metadata$response === void 0 ? void 0 : _metadata$response.headers) || {}),
-    'response.timeUnixNano': endTimeNano.toString()
-  };
-  (_this$telemetrySpan4 = this.telemetrySpan) === null || _this$telemetrySpan4 === void 0 || _this$telemetrySpan4.addEvent('rollbar-network-event', otelAttributes, fromMillis(metadata.start_time_ms));
-  return this.capture('network', metadata, level, rollbarUUID, metadata.start_time_ms, otelAttributes);
-};
-Telemeter.prototype.levelFromStatus = function (statusCode) {
-  if (statusCode >= 200 && statusCode < 400) {
-    return 'info';
-  }
-  if (statusCode === 0 || statusCode >= 400) {
-    return 'error';
-  }
-  return 'info';
-};
-Telemeter.prototype.captureDom = function (subtype, element, value, checked, rollbarUUID) {
-  var metadata = {
-    subtype: subtype,
-    element: element
-  };
-  if (value !== undefined) {
-    metadata.value = value;
-  }
-  if (checked !== undefined) {
-    metadata.checked = checked;
-  }
-  return this.capture('dom', metadata, 'info', rollbarUUID);
-};
-Telemeter.prototype.captureNavigation = function (from, to, rollbarUUID, timestamp) {
-  var _this$telemetrySpan5;
-  (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent('rollbar-navigation-event', {
-    'previous.url.full': from,
-    'url.full': to
-  }, fromMillis(timestamp));
-  return this.capture('navigation', {
-    from: from,
-    to: to
-  }, 'info', rollbarUUID, timestamp);
-};
-Telemeter.prototype.captureDomContentLoaded = function (ts) {
-  return this.capture('navigation', {
-    subtype: 'DOMContentLoaded'
-  }, 'info', undefined, ts && ts.getTime());
-  /**
-   * If we decide to make this a dom event instead, then use the line below:
-  return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
-  */
-};
-Telemeter.prototype.captureLoad = function (ts) {
-  return this.capture('navigation', {
-    subtype: 'load'
-  }, 'info', undefined, ts && ts.getTime());
-  /**
-   * If we decide to make this a dom event instead, then use the line below:
-  return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
-  */
-};
-Telemeter.prototype.captureConnectivityChange = function (type, rollbarUUID) {
-  return this.captureNetwork({
-    change: type
-  }, 'connectivity', rollbarUUID);
-};
+      // If the uuid is present, this is a message occurrence.
+      if (rollbarUUID) {
+        var _this$telemetrySpan2;
+        otelAttributes = {
+          message: message,
+          level: level,
+          type: 'message',
+          uuid: rollbarUUID
+        }, (_this$telemetrySpan2 = this.telemetrySpan) === null || _this$telemetrySpan2 === void 0 ? void 0 : _this$telemetrySpan2.addEvent('rollbar-occurrence-event', otelAttributes, fromMillis(timestamp));
+      } else {
+        var _this$telemetrySpan3;
+        otelAttributes = {
+          message: message,
+          level: level
+        };
+        (_this$telemetrySpan3 = this.telemetrySpan) === null || _this$telemetrySpan3 === void 0 || _this$telemetrySpan3.addEvent('rollbar-log-event', otelAttributes, fromMillis(timestamp));
+      }
+      return this.capture('log', {
+        message: message
+      }, level, rollbarUUID, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureNetwork",
+    value: function captureNetwork(metadata, subtype, rollbarUUID, requestData) {
+      var _metadata$response, _this$telemetrySpan4;
+      subtype = subtype || 'xhr';
+      metadata.subtype = metadata.subtype || subtype;
+      if (requestData) {
+        metadata.request = requestData;
+      }
+      var level = this.levelFromStatus(metadata.status_code);
+      var endTimeNano = (metadata.end_time_ms || 0) * 1e6;
+      var otelAttributes = {
+        type: metadata.subtype,
+        method: metadata.method,
+        url: metadata.url,
+        statusCode: metadata.status_code,
+        'request.headers': JSON.stringify(metadata.request_headers || {}),
+        'response.headers': JSON.stringify(((_metadata$response = metadata.response) === null || _metadata$response === void 0 ? void 0 : _metadata$response.headers) || {}),
+        'response.timeUnixNano': endTimeNano.toString()
+      };
+      (_this$telemetrySpan4 = this.telemetrySpan) === null || _this$telemetrySpan4 === void 0 || _this$telemetrySpan4.addEvent('rollbar-network-event', otelAttributes, fromMillis(metadata.start_time_ms));
+      return this.capture('network', metadata, level, rollbarUUID, metadata.start_time_ms, otelAttributes);
+    }
+  }, {
+    key: "levelFromStatus",
+    value: function levelFromStatus(statusCode) {
+      if (statusCode >= 200 && statusCode < 400) {
+        return 'info';
+      }
+      if (statusCode === 0 || statusCode >= 400) {
+        return 'error';
+      }
+      return 'info';
+    }
+  }, {
+    key: "captureDom",
+    value: function captureDom(subtype, element, value, checked, rollbarUUID) {
+      var metadata = {
+        subtype: subtype,
+        element: element
+      };
+      if (value !== undefined) {
+        metadata.value = value;
+      }
+      if (checked !== undefined) {
+        metadata.checked = checked;
+      }
+      return this.capture('dom', metadata, 'info', rollbarUUID);
+    }
+  }, {
+    key: "captureInput",
+    value: function captureInput(_ref2) {
+      var _this$telemetrySpan5;
+      var type = _ref2.type,
+        isSynthetic = _ref2.isSynthetic,
+        element = _ref2.element,
+        value = _ref2.value,
+        timestamp = _ref2.timestamp;
+      var name = 'rollbar-input-event';
+      var metadata = {
+        type: name,
+        subtype: type,
+        element: element,
+        value: value
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic,
+        element: element,
+        value: value,
+        endTimeUnixNano: fromMillis(timestamp)
+      };
+      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      if (event) {
+        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+      }
+      (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureClick",
+    value: function captureClick(_ref3) {
+      var _this$telemetrySpan6;
+      var type = _ref3.type,
+        isSynthetic = _ref3.isSynthetic,
+        element = _ref3.element,
+        timestamp = _ref3.timestamp;
+      var name = 'rollbar-click-event';
+      var metadata = {
+        type: name,
+        subtype: type,
+        element: element
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic,
+        element: element,
+        endTimeUnixNano: fromMillis(timestamp)
+      };
+      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      if (event) {
+        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+      }
+      (_this$telemetrySpan6 = this.telemetrySpan) === null || _this$telemetrySpan6 === void 0 || _this$telemetrySpan6.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureFocus",
+    value: function captureFocus(_ref4) {
+      var _this$telemetrySpan7;
+      var type = _ref4.type,
+        isSynthetic = _ref4.isSynthetic,
+        element = _ref4.element,
+        timestamp = _ref4.timestamp;
+      var name = 'rollbar-focus-event';
+      var metadata = {
+        type: name,
+        subtype: type,
+        element: element
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic,
+        element: element
+      };
+      (_this$telemetrySpan7 = this.telemetrySpan) === null || _this$telemetrySpan7 === void 0 || _this$telemetrySpan7.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureResize",
+    value: function captureResize(_ref5) {
+      var _this$telemetrySpan8;
+      var type = _ref5.type,
+        isSynthetic = _ref5.isSynthetic,
+        width = _ref5.width,
+        height = _ref5.height,
+        textZoomRatio = _ref5.textZoomRatio,
+        timestamp = _ref5.timestamp;
+      var name = 'rollbar-resize-event';
+      var metadata = {
+        type: name,
+        subtype: type,
+        width: width,
+        height: height,
+        textZoomRatio: textZoomRatio
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic,
+        width: width,
+        height: height,
+        textZoomRatio: textZoomRatio
+      };
+      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      if (event) {
+        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+      }
+      (_this$telemetrySpan8 = this.telemetrySpan) === null || _this$telemetrySpan8 === void 0 || _this$telemetrySpan8.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureDragDrop",
+    value: function captureDragDrop(_ref6) {
+      var _this$telemetrySpan9;
+      var type = _ref6.type,
+        isSynthetic = _ref6.isSynthetic,
+        element = _ref6.element,
+        dropEffect = _ref6.dropEffect,
+        effectAllowed = _ref6.effectAllowed,
+        kinds = _ref6.kinds,
+        mediaTypes = _ref6.mediaTypes,
+        timestamp = _ref6.timestamp;
+      var name = 'rollbar-dragdrop-event';
+      var metadata = {
+        type: name,
+        subtype: type,
+        isSynthetic: isSynthetic
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic
+      };
+      if (type === 'dragstart') {
+        metadata = telemetry_objectSpread(telemetry_objectSpread({}, metadata), {}, {
+          element: element,
+          dropEffect: dropEffect,
+          effectAllowed: effectAllowed
+        });
+        otelAttributes = telemetry_objectSpread(telemetry_objectSpread({}, otelAttributes), {}, {
+          element: element,
+          dropEffect: dropEffect,
+          effectAllowed: effectAllowed
+        });
+      }
+      if (type === 'drop') {
+        metadata = telemetry_objectSpread(telemetry_objectSpread({}, metadata), {}, {
+          element: element,
+          dropEffect: dropEffect,
+          effectAllowed: effectAllowed,
+          kinds: kinds,
+          mediaTypes: mediaTypes
+        });
+        otelAttributes = telemetry_objectSpread(telemetry_objectSpread({}, otelAttributes), {}, {
+          element: element,
+          dropEffect: dropEffect,
+          effectAllowed: effectAllowed,
+          kinds: kinds,
+          mediaTypes: mediaTypes
+        });
+      }
+      (_this$telemetrySpan9 = this.telemetrySpan) === null || _this$telemetrySpan9 === void 0 || _this$telemetrySpan9.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "captureNavigation",
+    value: function captureNavigation(from, to, rollbarUUID, timestamp) {
+      var _this$telemetrySpan10;
+      (_this$telemetrySpan10 = this.telemetrySpan) === null || _this$telemetrySpan10 === void 0 || _this$telemetrySpan10.addEvent('rollbar-navigation-event', {
+        'previous.url.full': from,
+        'url.full': to
+      }, fromMillis(timestamp));
+      return this.capture('navigation', {
+        from: from,
+        to: to
+      }, 'info', rollbarUUID, timestamp);
+    }
+  }, {
+    key: "captureDomContentLoaded",
+    value: function captureDomContentLoaded(ts) {
+      return this.capture('navigation', {
+        subtype: 'DOMContentLoaded'
+      }, 'info', undefined, ts && ts.getTime());
+      /**
+       * If we decide to make this a dom event instead, then use the line below:
+      return this.capture('dom', {subtype: 'DOMContentLoaded'}, 'info', undefined, ts && ts.getTime());
+      */
+    }
+  }, {
+    key: "captureLoad",
+    value: function captureLoad(ts) {
+      return this.capture('navigation', {
+        subtype: 'load'
+      }, 'info', undefined, ts && ts.getTime());
+      /**
+       * If we decide to make this a dom event instead, then use the line below:
+      return this.capture('dom', {subtype: 'load'}, 'info', undefined, ts && ts.getTime());
+      */
+    }
+  }, {
+    key: "captureConnectivityChange",
+    value: function captureConnectivityChange(_ref7) {
+      var _this$telemetrySpan11;
+      var type = _ref7.type,
+        isSynthetic = _ref7.isSynthetic,
+        timestamp = _ref7.timestamp;
+      var name = 'rollbar-connectivity-event';
+      var metadata = {
+        type: name,
+        subtype: type
+      };
+      var otelAttributes = {
+        type: type,
+        isSynthetic: isSynthetic
+      };
+      (_this$telemetrySpan11 = this.telemetrySpan) === null || _this$telemetrySpan11 === void 0 || _this$telemetrySpan11.addEvent(name, otelAttributes, fromMillis(timestamp));
+      return this.capture('connectivity', metadata, 'info', null, timestamp, otelAttributes);
+    }
 
-// Only intended to be used internally by the notifier
-Telemeter.prototype._captureRollbarItem = function (item) {
-  if (!this.options.includeItemsInTelemetry) {
-    return;
+    // Only intended to be used internally by the notifier
+  }, {
+    key: "_captureRollbarItem",
+    value: function _captureRollbarItem(item) {
+      if (!this.options.includeItemsInTelemetry) {
+        return;
+      }
+      if (item.err) {
+        return this.captureError(item.err, item.level, item.uuid, item.timestamp);
+      }
+      if (item.message) {
+        return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
+      }
+      if (item.custom) {
+        return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
+      }
+    }
+  }, {
+    key: "push",
+    value: function push(e) {
+      this.queue.push(e);
+      if (this.queue.length > this.maxQueueSize) {
+        this.queue.shift();
+      }
+    }
+  }]);
+}();
+function _getRepeatedEvent(name, attributes) {
+  var lastEvent = telemetry_assertClassBrand(_Telemeter_brand, this, _lastEvent).call(this, this.queue);
+  if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
+    return lastEvent;
   }
-  if (item.err) {
-    return this.captureError(item.err, item.level, item.uuid, item.timestamp);
-  }
-  if (item.message) {
-    return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
-  }
-  if (item.custom) {
-    return this.capture('log', item.custom, item.level, item.uuid, item.timestamp);
-  }
-};
-Telemeter.prototype.push = function (e) {
-  this.queue.push(e);
-  if (this.queue.length > this.maxQueueSize) {
-    this.queue.shift();
-  }
-};
+}
+function _updateRepeatedEvent(event, attributes, timestamp) {
+  var duration = Math.max(timestamp - event.timestamp_ms, 1);
+  event.body.value = attributes.value;
+  event.otelAttributes.value = attributes.value;
+  event.otelAttributes.height = attributes.height;
+  event.otelAttributes.width = attributes.width;
+  event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
+  event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
+  event.otelAttributes['durationUnixNano'] = fromMillis(duration);
+  event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
+  event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+}
+function _lastEvent(list) {
+  return list.length > 0 ? list[list.length - 1] : null;
+}
 function getLevel(type, level) {
   if (level) {
     return level;
@@ -5003,6 +5400,10 @@ function elementArrayToString(a) {
   }
   return out.join(separator);
 }
+function domUtility_elementString(elem) {
+  return elementArrayToString(treeToArray(elem));
+}
+;
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {
     return '';
@@ -5068,6 +5469,20 @@ function describeElement(elem) {
 }
 
 ;// ./src/browser/telemetry.js
+function browser_telemetry_typeof(o) { "@babel/helpers - typeof"; return browser_telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, browser_telemetry_typeof(o); }
+function telemetry_toConsumableArray(r) { return telemetry_arrayWithoutHoles(r) || telemetry_iterableToArray(r) || telemetry_unsupportedIterableToArray(r) || telemetry_nonIterableSpread(); }
+function telemetry_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function telemetry_iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function telemetry_arrayWithoutHoles(r) { if (Array.isArray(r)) return telemetry_arrayLikeToArray(r); }
+function browser_telemetry_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function browser_telemetry_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, browser_telemetry_toPropertyKey(o.key), o); } }
+function browser_telemetry_createClass(e, r, t) { return r && browser_telemetry_defineProperties(e.prototype, r), t && browser_telemetry_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function browser_telemetry_defineProperty(e, r, t) { return (r = browser_telemetry_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function browser_telemetry_toPropertyKey(t) { var i = browser_telemetry_toPrimitive(t, "string"); return "symbol" == browser_telemetry_typeof(i) ? i : i + ""; }
+function browser_telemetry_toPrimitive(t, r) { if ("object" != browser_telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != browser_telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function telemetry_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = telemetry_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function telemetry_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return telemetry_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? telemetry_arrayLikeToArray(r, a) : void 0; } }
+function telemetry_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 
 
 
@@ -5102,695 +5517,869 @@ function nameFromDescription(description) {
     return null;
   }
   var attrs = description.attributes;
-  for (var a = 0; a < attrs.length; ++a) {
-    if (attrs[a].key === 'name') {
-      return attrs[a].value;
+  var _iterator = telemetry_createForOfIteratorHelper(attrs),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var a = _step.value;
+      if (a.key === 'name') {
+        return a.value;
+      }
     }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
   }
   return null;
 }
 function defaultValueScrubber(scrubFields) {
   var patterns = [];
-  for (var i = 0; i < scrubFields.length; ++i) {
-    patterns.push(new RegExp(scrubFields[i], 'i'));
+  var _iterator2 = telemetry_createForOfIteratorHelper(scrubFields),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var field = _step2.value;
+      patterns.push(new RegExp(field, 'i'));
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
   }
   return function (description) {
     var name = nameFromDescription(description);
     if (!name) {
       return false;
     }
-    for (var i = 0; i < patterns.length; ++i) {
-      if (patterns[i].test(name)) {
+    for (var _i = 0, _patterns = patterns; _i < _patterns.length; _i++) {
+      var p = _patterns[_i];
+      if (p.test(name)) {
         return true;
       }
     }
     return false;
   };
 }
-function Instrumenter(options, telemeter, rollbar, _window, _document) {
-  this.options = options;
-  var autoInstrument = options.autoInstrument;
-  if (options.enabled === false || autoInstrument === false) {
-    this.autoInstrument = {};
-  } else {
-    if (!isType(autoInstrument, 'object')) {
-      autoInstrument = telemetry_defaults;
+var Instrumenter = /*#__PURE__*/function () {
+  function Instrumenter(options, telemeter, rollbar, _window, _document) {
+    browser_telemetry_classCallCheck(this, Instrumenter);
+    browser_telemetry_defineProperty(this, "deinstrumentConnectivity", function () {
+      this.removeListeners('connectivity');
+    });
+    this.options = options;
+    var autoInstrument = options.autoInstrument;
+    if (options.enabled === false || autoInstrument === false) {
+      this.autoInstrument = {};
+    } else {
+      if (!isType(autoInstrument, 'object')) {
+        autoInstrument = telemetry_defaults;
+      }
+      this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
     }
-    this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
-  }
-  this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-  this.telemetryScrubber = options.telemetryScrubber;
-  this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
-  this.telemeter = telemeter;
-  this.rollbar = rollbar;
-  this.diagnostic = rollbar.client.notifier.diagnostic;
-  this._window = _window || {};
-  this._document = _document || {};
-  this.replacements = {
-    network: [],
-    log: [],
-    navigation: [],
-    connectivity: []
-  };
-  this.eventRemovers = {
-    dom: [],
-    connectivity: [],
-    contentsecuritypolicy: []
-  };
-  this._location = this._window.location;
-  this._lastHref = this._location && this._location.href;
-}
-Instrumenter.prototype.configure = function (options) {
-  this.options = src_merge(this.options, options);
-  var autoInstrument = options.autoInstrument;
-  var oldSettings = src_merge(this.autoInstrument);
-  if (options.enabled === false || autoInstrument === false) {
-    this.autoInstrument = {};
-  } else {
-    if (!isType(autoInstrument, 'object')) {
-      autoInstrument = telemetry_defaults;
-    }
-    this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
-  }
-  this.instrument(oldSettings);
-  if (options.scrubTelemetryInputs !== undefined) {
     this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-  }
-  if (options.telemetryScrubber !== undefined) {
     this.telemetryScrubber = options.telemetryScrubber;
+    this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
+    this.telemeter = telemeter;
+    this.rollbar = rollbar;
+    this.diagnostic = rollbar.client.notifier.diagnostic;
+    this._window = _window || {};
+    this._document = _document || {};
+    this.replacements = {
+      network: [],
+      log: [],
+      navigation: [],
+      connectivity: []
+    };
+    this.eventRemovers = {
+      dom: [],
+      connectivity: [],
+      contentsecuritypolicy: []
+    };
+    this._location = this._window.location;
+    this._lastHref = this._location && this._location.href;
   }
-};
-
-// eslint-disable-next-line complexity
-Instrumenter.prototype.instrument = function (oldSettings) {
-  if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
-    this.instrumentNetwork();
-  } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
-    this.deinstrumentNetwork();
-  }
-  if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
-    this.instrumentConsole();
-  } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
-    this.deinstrumentConsole();
-  }
-  if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
-    this.instrumentDom();
-  } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
-    this.deinstrumentDom();
-  }
-  if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
-    this.instrumentNavigation();
-  } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
-    this.deinstrumentNavigation();
-  }
-  if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
-    this.instrumentConnectivity();
-  } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
-    this.deinstrumentConnectivity();
-  }
-  if (this.autoInstrument.contentSecurityPolicy && !(oldSettings && oldSettings.contentSecurityPolicy)) {
-    this.instrumentContentSecurityPolicy();
-  } else if (!this.autoInstrument.contentSecurityPolicy && oldSettings && oldSettings.contentSecurityPolicy) {
-    this.deinstrumentContentSecurityPolicy();
-  }
-};
-Instrumenter.prototype.deinstrumentNetwork = function () {
-  restore(this.replacements, 'network');
-};
-Instrumenter.prototype.instrumentNetwork = function () {
-  var self = this;
-  function wrapProp(prop, xhr) {
-    if (prop in xhr && isFunction(xhr[prop])) {
-      utility_replace(xhr, prop, function (orig) {
-        return self.rollbar.wrap(orig);
-      });
+  return browser_telemetry_createClass(Instrumenter, [{
+    key: "configure",
+    value: function configure(options) {
+      this.options = src_merge(this.options, options);
+      var autoInstrument = options.autoInstrument;
+      var oldSettings = src_merge(this.autoInstrument);
+      if (options.enabled === false || autoInstrument === false) {
+        this.autoInstrument = {};
+      } else {
+        if (!isType(autoInstrument, 'object')) {
+          autoInstrument = telemetry_defaults;
+        }
+        this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
+      }
+      this.instrument(oldSettings);
+      if (options.scrubTelemetryInputs !== undefined) {
+        this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
+      }
+      if (options.telemetryScrubber !== undefined) {
+        this.telemetryScrubber = options.telemetryScrubber;
+      }
     }
-  }
-  if ('XMLHttpRequest' in this._window) {
-    var xhrp = this._window.XMLHttpRequest.prototype;
-    utility_replace(xhrp, 'open', function (orig) {
-      return function (method, url) {
-        var isUrlObject = _isUrlObject(url);
-        if (isType(url, 'string') || isUrlObject) {
-          url = isUrlObject ? url.toString() : url;
-          if (this.__rollbar_xhr) {
-            this.__rollbar_xhr.method = method;
-            this.__rollbar_xhr.url = url;
-            this.__rollbar_xhr.status_code = null;
-            this.__rollbar_xhr.start_time_ms = utility_now();
-            this.__rollbar_xhr.end_time_ms = null;
-          } else {
-            this.__rollbar_xhr = {
+
+    // eslint-disable-next-line complexity
+  }, {
+    key: "instrument",
+    value: function instrument(oldSettings) {
+      if (this.autoInstrument.network && !(oldSettings && oldSettings.network)) {
+        this.instrumentNetwork();
+      } else if (!this.autoInstrument.network && oldSettings && oldSettings.network) {
+        this.deinstrumentNetwork();
+      }
+      if (this.autoInstrument.log && !(oldSettings && oldSettings.log)) {
+        this.instrumentConsole();
+      } else if (!this.autoInstrument.log && oldSettings && oldSettings.log) {
+        this.deinstrumentConsole();
+      }
+      if (this.autoInstrument.dom && !(oldSettings && oldSettings.dom)) {
+        this.instrumentDom();
+      } else if (!this.autoInstrument.dom && oldSettings && oldSettings.dom) {
+        this.deinstrumentDom();
+      }
+      if (this.autoInstrument.navigation && !(oldSettings && oldSettings.navigation)) {
+        this.instrumentNavigation();
+      } else if (!this.autoInstrument.navigation && oldSettings && oldSettings.navigation) {
+        this.deinstrumentNavigation();
+      }
+      if (this.autoInstrument.connectivity && !(oldSettings && oldSettings.connectivity)) {
+        this.instrumentConnectivity();
+      } else if (!this.autoInstrument.connectivity && oldSettings && oldSettings.connectivity) {
+        this.deinstrumentConnectivity();
+      }
+      if (this.autoInstrument.contentSecurityPolicy && !(oldSettings && oldSettings.contentSecurityPolicy)) {
+        this.instrumentContentSecurityPolicy();
+      } else if (!this.autoInstrument.contentSecurityPolicy && oldSettings && oldSettings.contentSecurityPolicy) {
+        this.deinstrumentContentSecurityPolicy();
+      }
+    }
+  }, {
+    key: "deinstrumentNetwork",
+    value: function deinstrumentNetwork() {
+      restore(this.replacements, 'network');
+    }
+  }, {
+    key: "instrumentNetwork",
+    value: function instrumentNetwork() {
+      var self = this;
+      function wrapProp(prop, xhr) {
+        if (prop in xhr && isFunction(xhr[prop])) {
+          utility_replace(xhr, prop, function (orig) {
+            return self.rollbar.wrap(orig);
+          });
+        }
+      }
+      if ('XMLHttpRequest' in this._window) {
+        var xhrp = this._window.XMLHttpRequest.prototype;
+        utility_replace(xhrp, 'open', function (orig) {
+          return function (method, url) {
+            var isUrlObject = _isUrlObject(url);
+            if (isType(url, 'string') || isUrlObject) {
+              url = isUrlObject ? url.toString() : url;
+              if (this.__rollbar_xhr) {
+                this.__rollbar_xhr.method = method;
+                this.__rollbar_xhr.url = url;
+                this.__rollbar_xhr.status_code = null;
+                this.__rollbar_xhr.start_time_ms = utility_now();
+                this.__rollbar_xhr.end_time_ms = null;
+              } else {
+                this.__rollbar_xhr = {
+                  method: method,
+                  url: url,
+                  status_code: null,
+                  start_time_ms: utility_now(),
+                  end_time_ms: null
+                };
+              }
+            }
+            return orig.apply(this, arguments);
+          };
+        }, this.replacements, 'network');
+        utility_replace(xhrp, 'setRequestHeader', function (orig) {
+          return function (header, value) {
+            // If xhr.open is async, __rollbar_xhr may not be initialized yet.
+            if (!this.__rollbar_xhr) {
+              this.__rollbar_xhr = {};
+            }
+            if (isType(header, 'string') && isType(value, 'string')) {
+              if (self.autoInstrument.networkRequestHeaders) {
+                if (!this.__rollbar_xhr.request_headers) {
+                  this.__rollbar_xhr.request_headers = {};
+                }
+                this.__rollbar_xhr.request_headers[header] = value;
+              }
+              // We want the content type even if request header telemetry is off.
+              if (header.toLowerCase() === 'content-type') {
+                this.__rollbar_xhr.request_content_type = value;
+              }
+            }
+            return orig.apply(this, arguments);
+          };
+        }, this.replacements, 'network');
+        utility_replace(xhrp, 'send', function (orig) {
+          return function (data) {
+            var xhr = this;
+            function onreadystatechangeHandler() {
+              if (xhr.__rollbar_xhr) {
+                if (xhr.__rollbar_xhr.status_code === null) {
+                  xhr.__rollbar_xhr.status_code = 0;
+                  if (self.autoInstrument.networkRequestBody) {
+                    xhr.__rollbar_xhr.request = data;
+                  }
+                  xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
+                }
+                if (xhr.readyState < 2) {
+                  xhr.__rollbar_xhr.start_time_ms = utility_now();
+                }
+                if (xhr.readyState > 3) {
+                  var end_time_ms = utility_now();
+                  xhr.__rollbar_xhr.end_time_ms = end_time_ms;
+                  var _headers = null;
+                  xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
+                  if (self.autoInstrument.networkResponseHeaders) {
+                    var headersConfig = self.autoInstrument.networkResponseHeaders;
+                    _headers = {};
+                    try {
+                      var header;
+                      if (headersConfig === true) {
+                        var allHeaders = xhr.getAllResponseHeaders();
+                        if (allHeaders) {
+                          var arr = allHeaders.trim().split(/[\r\n]+/);
+                          var parts, value;
+                          var _iterator3 = telemetry_createForOfIteratorHelper(arr),
+                            _step3;
+                          try {
+                            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+                              var h = _step3.value;
+                              parts = h.split(': ');
+                              header = parts.shift();
+                              value = parts.join(': ');
+                              _headers[header] = value;
+                            }
+                          } catch (err) {
+                            _iterator3.e(err);
+                          } finally {
+                            _iterator3.f();
+                          }
+                        }
+                      } else {
+                        var _iterator4 = telemetry_createForOfIteratorHelper(headersConfig),
+                          _step4;
+                        try {
+                          for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+                            var _h = _step4.value;
+                            _headers[_h] = xhr.getResponseHeader(_h);
+                          }
+                        } catch (err) {
+                          _iterator4.e(err);
+                        } finally {
+                          _iterator4.f();
+                        }
+                      }
+                    } catch (e) {
+                      /* we ignore the errors here that could come from different
+                       * browser issues with the xhr methods */
+                    }
+                  }
+                  var body = null;
+                  if (self.autoInstrument.networkResponseBody) {
+                    try {
+                      body = xhr.responseText;
+                    } catch (e) {
+                      /* ignore errors from reading responseText */
+                    }
+                  }
+                  var response = null;
+                  if (body || _headers) {
+                    response = {};
+                    if (body) {
+                      if (self.isJsonContentType(xhr.__rollbar_xhr.response_content_type)) {
+                        response.body = self.scrubJson(body);
+                      } else {
+                        response.body = body;
+                      }
+                    }
+                    if (_headers) {
+                      response.headers = _headers;
+                    }
+                  }
+                  if (response) {
+                    xhr.__rollbar_xhr.response = response;
+                  }
+                  try {
+                    var code = xhr.status;
+                    code = code === 1223 ? 204 : code;
+                    xhr.__rollbar_xhr.status_code = code;
+                    self.addOtelNetworkResponse(xhr.__rollbar_event, end_time_ms, code);
+                    xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
+                    self.errorOnHttpStatus(xhr.__rollbar_xhr);
+                  } catch (e) {
+                    /* ignore possible exception from xhr.status */
+                  }
+                }
+              }
+            }
+            wrapProp('onload', xhr);
+            wrapProp('onerror', xhr);
+            wrapProp('onprogress', xhr);
+            if ('onreadystatechange' in xhr && isFunction(xhr.onreadystatechange)) {
+              utility_replace(xhr, 'onreadystatechange', function (orig) {
+                return self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
+              });
+            } else {
+              xhr.onreadystatechange = onreadystatechangeHandler;
+            }
+            if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
+              xhr.__rollbar_xhr.stack = new Error().stack;
+            }
+            return orig.apply(this, arguments);
+          };
+        }, this.replacements, 'network');
+      }
+      if ('fetch' in this._window) {
+        utility_replace(this._window, 'fetch', function (orig) {
+          return function (fn, t) {
+            var args = Array.prototype.slice.call(arguments);
+            var input = args[0];
+            var method = 'GET';
+            var url;
+            var isUrlObject = _isUrlObject(input);
+            if (isType(input, 'string') || isUrlObject) {
+              url = isUrlObject ? input.toString() : input;
+            } else if (input) {
+              url = input.url;
+              if (input.method) {
+                method = input.method;
+              }
+            }
+            if (args[1] && args[1].method) {
+              method = args[1].method;
+            }
+            var metadata = {
               method: method,
               url: url,
               status_code: null,
               start_time_ms: utility_now(),
               end_time_ms: null
             };
-          }
-        }
-        return orig.apply(this, arguments);
-      };
-    }, this.replacements, 'network');
-    utility_replace(xhrp, 'setRequestHeader', function (orig) {
-      return function (header, value) {
-        // If xhr.open is async, __rollbar_xhr may not be initialized yet.
-        if (!this.__rollbar_xhr) {
-          this.__rollbar_xhr = {};
-        }
-        if (isType(header, 'string') && isType(value, 'string')) {
-          if (self.autoInstrument.networkRequestHeaders) {
-            if (!this.__rollbar_xhr.request_headers) {
-              this.__rollbar_xhr.request_headers = {};
-            }
-            this.__rollbar_xhr.request_headers[header] = value;
-          }
-          // We want the content type even if request header telemetry is off.
-          if (header.toLowerCase() === 'content-type') {
-            this.__rollbar_xhr.request_content_type = value;
-          }
-        }
-        return orig.apply(this, arguments);
-      };
-    }, this.replacements, 'network');
-    utility_replace(xhrp, 'send', function (orig) {
-      /* eslint-disable no-unused-vars */
-      return function (data) {
-        /* eslint-enable no-unused-vars */
-        var xhr = this;
-        function onreadystatechangeHandler() {
-          if (xhr.__rollbar_xhr) {
-            if (xhr.__rollbar_xhr.status_code === null) {
-              xhr.__rollbar_xhr.status_code = 0;
-              if (self.autoInstrument.networkRequestBody) {
-                xhr.__rollbar_xhr.request = data;
+            if (args[1] && args[1].headers) {
+              // Argument may be a Headers object, or plain object. Ensure here that
+              // we are working with a Headers object with case-insensitive keys.
+              var reqHeaders = utility_headers(args[1].headers);
+              metadata.request_content_type = reqHeaders.get('Content-Type');
+              if (self.autoInstrument.networkRequestHeaders) {
+                metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders);
               }
-              xhr.__rollbar_event = self.captureNetwork(xhr.__rollbar_xhr, 'xhr', undefined);
             }
-            if (xhr.readyState < 2) {
-              xhr.__rollbar_xhr.start_time_ms = utility_now();
+            if (self.autoInstrument.networkRequestBody) {
+              if (args[1] && args[1].body) {
+                metadata.request = args[1].body;
+              } else if (args[0] && !isType(args[0], 'string') && args[0].body) {
+                metadata.request = args[0].body;
+              }
             }
-            if (xhr.readyState > 3) {
+            var telemetryEvent = self.captureNetwork(metadata, 'fetch', undefined);
+            if (self.trackHttpErrors()) {
+              metadata.stack = new Error().stack;
+            }
+
+            // Start our handler before returning the promise. This allows resp.clone()
+            // to execute before other handlers touch the response.
+            return orig.apply(this, args).then(function (resp) {
               var end_time_ms = utility_now();
-              xhr.__rollbar_xhr.end_time_ms = end_time_ms;
+              metadata.end_time_ms = end_time_ms;
+              metadata.status_code = resp.status;
+              self.addOtelNetworkResponse(telemetryEvent, end_time_ms, resp.status);
+              metadata.response_content_type = resp.headers.get('Content-Type');
               var headers = null;
-              xhr.__rollbar_xhr.response_content_type = xhr.getResponseHeader('Content-Type');
               if (self.autoInstrument.networkResponseHeaders) {
-                var headersConfig = self.autoInstrument.networkResponseHeaders;
-                headers = {};
-                try {
-                  var header, i;
-                  if (headersConfig === true) {
-                    var allHeaders = xhr.getAllResponseHeaders();
-                    if (allHeaders) {
-                      var arr = allHeaders.trim().split(/[\r\n]+/);
-                      var parts, value;
-                      for (i = 0; i < arr.length; i++) {
-                        parts = arr[i].split(': ');
-                        header = parts.shift();
-                        value = parts.join(': ');
-                        headers[header] = value;
-                      }
-                    }
-                  } else {
-                    for (i = 0; i < headersConfig.length; i++) {
-                      header = headersConfig[i];
-                      headers[header] = xhr.getResponseHeader(header);
-                    }
-                  }
-                } catch (e) {
-                  /* we ignore the errors here that could come from different
-                   * browser issues with the xhr methods */
-                }
+                headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
               }
               var body = null;
               if (self.autoInstrument.networkResponseBody) {
-                try {
-                  body = xhr.responseText;
-                } catch (e) {
-                  /* ignore errors from reading responseText */
+                if (typeof resp.text === 'function') {
+                  // Response.text() is not implemented on some platforms
+                  // The response must be cloned to prevent reading (and locking) the original stream.
+                  // This must be done before other handlers touch the response.
+                  body = resp.clone().text(); //returns a Promise
                 }
               }
-              var response = null;
-              if (body || headers) {
-                response = {};
+              if (headers || body) {
+                metadata.response = {};
                 if (body) {
-                  if (self.isJsonContentType(xhr.__rollbar_xhr.response_content_type)) {
-                    response.body = self.scrubJson(body);
+                  // Test to ensure body is a Promise, which it should always be.
+                  if (typeof body.then === 'function') {
+                    body.then(function (text) {
+                      if (text && self.isJsonContentType(metadata.response_content_type)) {
+                        metadata.response.body = self.scrubJson(text);
+                      } else {
+                        metadata.response.body = text;
+                      }
+                    });
                   } else {
-                    response.body = body;
+                    metadata.response.body = body;
                   }
                 }
                 if (headers) {
-                  response.headers = headers;
+                  metadata.response.headers = headers;
                 }
               }
-              if (response) {
-                xhr.__rollbar_xhr.response = response;
-              }
-              try {
-                var code = xhr.status;
-                code = code === 1223 ? 204 : code;
-                xhr.__rollbar_xhr.status_code = code;
-                self.addOtelNetworkResponse(xhr.__rollbar_event, end_time_ms, code);
-                xhr.__rollbar_event.level = self.telemeter.levelFromStatus(code);
-                self.errorOnHttpStatus(xhr.__rollbar_xhr);
-              } catch (e) {
-                /* ignore possible exception from xhr.status */
-              }
+              self.errorOnHttpStatus(metadata);
+              return resp;
+            });
+          };
+        }, this.replacements, 'network');
+      }
+    }
+  }, {
+    key: "captureNetwork",
+    value: function captureNetwork(metadata, subtype, rollbarUUID) {
+      if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
+        metadata.request = this.scrubJson(metadata.request);
+      }
+      return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
+    }
+  }, {
+    key: "isJsonContentType",
+    value: function isJsonContentType(contentType) {
+      return contentType && isType(contentType, 'string') && contentType.toLowerCase().includes('json') ? true : false;
+    }
+  }, {
+    key: "addOtelNetworkResponse",
+    value: function addOtelNetworkResponse(event, endTimeMs, statusCode) {
+      if (event.otelAttributes) {
+        event.otelAttributes['response.timeUnixNano'] = (endTimeMs * 1e6).toString();
+        event.otelAttributes.statusCode = statusCode;
+      }
+    }
+  }, {
+    key: "scrubJson",
+    value: function scrubJson(json) {
+      return JSON.stringify(src_scrub(JSON.parse(json), this.options.scrubFields));
+    }
+  }, {
+    key: "fetchHeaders",
+    value: function fetchHeaders(inHeaders, headersConfig) {
+      var outHeaders = {};
+      try {
+        if (headersConfig === true) {
+          if (typeof inHeaders.entries === 'function') {
+            // Headers.entries() is not implemented in IE
+            var allHeaders = inHeaders.entries();
+            var currentHeader = allHeaders.next();
+            while (!currentHeader.done) {
+              outHeaders[currentHeader.value[0]] = currentHeader.value[1];
+              currentHeader = allHeaders.next();
             }
           }
-        }
-        wrapProp('onload', xhr);
-        wrapProp('onerror', xhr);
-        wrapProp('onprogress', xhr);
-        if ('onreadystatechange' in xhr && isFunction(xhr.onreadystatechange)) {
-          utility_replace(xhr, 'onreadystatechange', function (orig) {
-            return self.rollbar.wrap(orig, undefined, onreadystatechangeHandler);
-          });
         } else {
-          xhr.onreadystatechange = onreadystatechangeHandler;
-        }
-        if (xhr.__rollbar_xhr && self.trackHttpErrors()) {
-          xhr.__rollbar_xhr.stack = new Error().stack;
-        }
-        return orig.apply(this, arguments);
-      };
-    }, this.replacements, 'network');
-  }
-  if ('fetch' in this._window) {
-    utility_replace(this._window, 'fetch', function (orig) {
-      /* eslint-disable no-unused-vars */
-      return function (fn, t) {
-        /* eslint-enable no-unused-vars */
-        var args = new Array(arguments.length);
-        for (var i = 0, len = args.length; i < len; i++) {
-          args[i] = arguments[i];
-        }
-        var input = args[0];
-        var method = 'GET';
-        var url;
-        var isUrlObject = _isUrlObject(input);
-        if (isType(input, 'string') || isUrlObject) {
-          url = isUrlObject ? input.toString() : input;
-        } else if (input) {
-          url = input.url;
-          if (input.method) {
-            method = input.method;
-          }
-        }
-        if (args[1] && args[1].method) {
-          method = args[1].method;
-        }
-        var metadata = {
-          method: method,
-          url: url,
-          status_code: null,
-          start_time_ms: utility_now(),
-          end_time_ms: null
-        };
-        if (args[1] && args[1].headers) {
-          // Argument may be a Headers object, or plain object. Ensure here that
-          // we are working with a Headers object with case-insensitive keys.
-          var reqHeaders = utility_headers(args[1].headers);
-          metadata.request_content_type = reqHeaders.get('Content-Type');
-          if (self.autoInstrument.networkRequestHeaders) {
-            metadata.request_headers = self.fetchHeaders(reqHeaders, self.autoInstrument.networkRequestHeaders);
-          }
-        }
-        if (self.autoInstrument.networkRequestBody) {
-          if (args[1] && args[1].body) {
-            metadata.request = args[1].body;
-          } else if (args[0] && !isType(args[0], 'string') && args[0].body) {
-            metadata.request = args[0].body;
-          }
-        }
-        var telemetryEvent = self.captureNetwork(metadata, 'fetch', undefined);
-        if (self.trackHttpErrors()) {
-          metadata.stack = new Error().stack;
-        }
-
-        // Start our handler before returning the promise. This allows resp.clone()
-        // to execute before other handlers touch the response.
-        return orig.apply(this, args).then(function (resp) {
-          var end_time_ms = utility_now();
-          metadata.end_time_ms = end_time_ms;
-          metadata.status_code = resp.status;
-          self.addOtelNetworkResponse(telemetryEvent, end_time_ms, resp.status);
-          metadata.response_content_type = resp.headers.get('Content-Type');
-          var headers = null;
-          if (self.autoInstrument.networkResponseHeaders) {
-            headers = self.fetchHeaders(resp.headers, self.autoInstrument.networkResponseHeaders);
-          }
-          var body = null;
-          if (self.autoInstrument.networkResponseBody) {
-            if (typeof resp.text === 'function') {
-              // Response.text() is not implemented on some platforms
-              // The response must be cloned to prevent reading (and locking) the original stream.
-              // This must be done before other handlers touch the response.
-              body = resp.clone().text(); //returns a Promise
+          var _iterator5 = telemetry_createForOfIteratorHelper(headersConfig),
+            _step5;
+          try {
+            for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+              var h = _step5.value;
+              outHeaders[h] = inHeaders.get(h);
             }
+          } catch (err) {
+            _iterator5.e(err);
+          } finally {
+            _iterator5.f();
           }
-          if (headers || body) {
-            metadata.response = {};
-            if (body) {
-              // Test to ensure body is a Promise, which it should always be.
-              if (typeof body.then === 'function') {
-                body.then(function (text) {
-                  if (text && self.isJsonContentType(metadata.response_content_type)) {
-                    metadata.response.body = self.scrubJson(text);
-                  } else {
-                    metadata.response.body = text;
-                  }
-                });
-              } else {
-                metadata.response.body = body;
-              }
-            }
-            if (headers) {
-              metadata.response.headers = headers;
-            }
-          }
-          self.errorOnHttpStatus(metadata);
-          return resp;
+        }
+      } catch (e) {
+        /* ignore probable IE errors */
+      }
+      return outHeaders;
+    }
+  }, {
+    key: "trackHttpErrors",
+    value: function trackHttpErrors() {
+      return this.autoInstrument.networkErrorOnHttp5xx || this.autoInstrument.networkErrorOnHttp4xx || this.autoInstrument.networkErrorOnHttp0;
+    }
+  }, {
+    key: "errorOnHttpStatus",
+    value: function errorOnHttpStatus(metadata) {
+      var status = metadata.status_code;
+      if (status >= 500 && this.autoInstrument.networkErrorOnHttp5xx || status >= 400 && this.autoInstrument.networkErrorOnHttp4xx || status === 0 && this.autoInstrument.networkErrorOnHttp0) {
+        var error = new Error('HTTP request failed with Status ' + status);
+        error.stack = metadata.stack;
+        this.rollbar.error(error, {
+          skipFrames: 1
         });
-      };
-    }, this.replacements, 'network');
-  }
-};
-Instrumenter.prototype.captureNetwork = function (metadata, subtype, rollbarUUID) {
-  if (metadata.request && this.isJsonContentType(metadata.request_content_type)) {
-    metadata.request = this.scrubJson(metadata.request);
-  }
-  return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
-};
-Instrumenter.prototype.isJsonContentType = function (contentType) {
-  return contentType && isType(contentType, 'string') && contentType.toLowerCase().includes('json') ? true : false;
-};
-Instrumenter.prototype.addOtelNetworkResponse = function (event, endTimeMs, statusCode) {
-  if (event.otelAttributes) {
-    event.otelAttributes['response.timeUnixNano'] = (endTimeMs * 1e6).toString();
-    event.otelAttributes.statusCode = statusCode;
-  }
-};
-Instrumenter.prototype.scrubJson = function (json) {
-  return JSON.stringify(src_scrub(JSON.parse(json), this.options.scrubFields));
-};
-Instrumenter.prototype.fetchHeaders = function (inHeaders, headersConfig) {
-  var outHeaders = {};
-  try {
-    var i;
-    if (headersConfig === true) {
-      if (typeof inHeaders.entries === 'function') {
-        // Headers.entries() is not implemented in IE
-        var allHeaders = inHeaders.entries();
-        var currentHeader = allHeaders.next();
-        while (!currentHeader.done) {
-          outHeaders[currentHeader.value[0]] = currentHeader.value[1];
-          currentHeader = allHeaders.next();
-        }
-      }
-    } else {
-      for (i = 0; i < headersConfig.length; i++) {
-        var header = headersConfig[i];
-        outHeaders[header] = inHeaders.get(header);
       }
     }
-  } catch (e) {
-    /* ignore probable IE errors */
-  }
-  return outHeaders;
-};
-Instrumenter.prototype.trackHttpErrors = function () {
-  return this.autoInstrument.networkErrorOnHttp5xx || this.autoInstrument.networkErrorOnHttp4xx || this.autoInstrument.networkErrorOnHttp0;
-};
-Instrumenter.prototype.errorOnHttpStatus = function (metadata) {
-  var status = metadata.status_code;
-  if (status >= 500 && this.autoInstrument.networkErrorOnHttp5xx || status >= 400 && this.autoInstrument.networkErrorOnHttp4xx || status === 0 && this.autoInstrument.networkErrorOnHttp0) {
-    var error = new Error('HTTP request failed with Status ' + status);
-    error.stack = metadata.stack;
-    this.rollbar.error(error, {
-      skipFrames: 1
-    });
-  }
-};
-Instrumenter.prototype.deinstrumentConsole = function () {
-  if (!('console' in this._window && this._window.console.log)) {
-    return;
-  }
-  var b;
-  while (this.replacements['log'].length) {
-    b = this.replacements['log'].shift();
-    this._window.console[b[0]] = b[1];
-  }
-};
-Instrumenter.prototype.instrumentConsole = function () {
-  if (!('console' in this._window && this._window.console.log)) {
-    return;
-  }
-  var self = this;
-  var c = this._window.console;
-  function wrapConsole(method) {
-    'use strict';
+  }, {
+    key: "deinstrumentConsole",
+    value: function deinstrumentConsole() {
+      var b;
+      while (this.replacements['log'].length) {
+        b = this.replacements['log'].shift();
+        this._window.console[b[0]] = b[1];
+      }
+    }
+  }, {
+    key: "instrumentConsole",
+    value: function instrumentConsole() {
+      var _this$_window;
+      if (!((_this$_window = this._window) !== null && _this$_window !== void 0 && (_this$_window = _this$_window.console) !== null && _this$_window !== void 0 && _this$_window.log)) {
+        return;
+      }
+      var self = this;
+      var c = this._window.console;
+      function wrapConsole(method) {
+        'use strict';
 
-    // See https://github.com/rollbar/rollbar.js/pull/778
-    var orig = c[method];
-    var origConsole = c;
-    var level = method === 'warn' ? 'warning' : method;
-    c[method] = function () {
-      var args = Array.prototype.slice.call(arguments);
-      var message = formatArgsAsString(args);
-      self.telemeter.captureLog(message, level, null, utility_now());
-      if (orig) {
-        Function.prototype.apply.call(orig, origConsole, args);
+        // See https://github.com/rollbar/rollbar.js/pull/778
+        var orig = c[method];
+        var origConsole = c;
+        var level = method === 'warn' ? 'warning' : method;
+        c[method] = function () {
+          var args = Array.prototype.slice.call(arguments);
+          var message = formatArgsAsString(args);
+          self.telemeter.captureLog(message, level, null, utility_now());
+          if (orig) {
+            Function.prototype.apply.call(orig, origConsole, args);
+          }
+        };
+        self.replacements['log'].push([method, orig]);
       }
-    };
-    self.replacements['log'].push([method, orig]);
-  }
-  var methods = ['debug', 'info', 'warn', 'error', 'log'];
-  try {
-    for (var i = 0, len = methods.length; i < len; i++) {
-      wrapConsole(methods[i]);
-    }
-  } catch (e) {
-    this.diagnostic.instrumentConsole = {
-      error: e.message
-    };
-  }
-};
-Instrumenter.prototype.deinstrumentDom = function () {
-  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
-    return;
-  }
-  this.removeListeners('dom');
-};
-Instrumenter.prototype.instrumentDom = function () {
-  if (!('addEventListener' in this._window || 'attachEvent' in this._window)) {
-    return;
-  }
-  var clickHandler = this.handleClick.bind(this);
-  var blurHandler = this.handleBlur.bind(this);
-  this.addListener('dom', this._window, 'click', 'onclick', clickHandler, true);
-  this.addListener('dom', this._window, 'blur', 'onfocusout', blurHandler, true);
-};
-Instrumenter.prototype.handleClick = function (evt) {
-  try {
-    var e = getElementFromEvent(evt, this._document);
-    var hasTag = e && e.tagName;
-    var anchorOrButton = isDescribedElement(e, 'a') || isDescribedElement(e, 'button');
-    if (hasTag && (anchorOrButton || isDescribedElement(e, 'input', ['button', 'submit']))) {
-      this.captureDomEvent('click', e);
-    } else if (isDescribedElement(e, 'input', ['checkbox', 'radio'])) {
-      this.captureDomEvent('input', e, e.value, e.checked);
-    }
-  } catch (exc) {
-    // TODO: Not sure what to do here
-  }
-};
-Instrumenter.prototype.handleBlur = function (evt) {
-  try {
-    var e = getElementFromEvent(evt, this._document);
-    if (e && e.tagName) {
-      if (isDescribedElement(e, 'textarea')) {
-        this.captureDomEvent('input', e, e.value);
-      } else if (isDescribedElement(e, 'select') && e.options && e.options.length) {
-        this.handleSelectInputChanged(e);
-      } else if (isDescribedElement(e, 'input') && !isDescribedElement(e, 'input', ['button', 'submit', 'hidden', 'checkbox', 'radio'])) {
-        this.captureDomEvent('input', e, e.value);
-      }
-    }
-  } catch (exc) {
-    // TODO: Not sure what to do here
-  }
-};
-Instrumenter.prototype.handleSelectInputChanged = function (elem) {
-  if (elem.multiple) {
-    for (var i = 0; i < elem.options.length; i++) {
-      if (elem.options[i].selected) {
-        this.captureDomEvent('input', elem, elem.options[i].value);
-      }
-    }
-  } else if (elem.selectedIndex >= 0 && elem.options[elem.selectedIndex]) {
-    this.captureDomEvent('input', elem, elem.options[elem.selectedIndex].value);
-  }
-};
-Instrumenter.prototype.captureDomEvent = function (subtype, element, value, isChecked) {
-  if (value !== undefined) {
-    if (this.scrubTelemetryInputs || getElementType(element) === 'password') {
-      value = '[scrubbed]';
-    } else {
-      var description = describeElement(element);
-      if (this.telemetryScrubber) {
-        if (this.telemetryScrubber(description)) {
-          value = '[scrubbed]';
+      var methods = ['debug', 'info', 'warn', 'error', 'log'];
+      try {
+        for (var _i2 = 0, _methods = methods; _i2 < _methods.length; _i2++) {
+          var m = _methods[_i2];
+          wrapConsole(m);
         }
-      } else if (this.defaultValueScrubber(description)) {
-        value = '[scrubbed]';
+      } catch (e) {
+        this.diagnostic.instrumentConsole = {
+          error: e.message
+        };
       }
     }
-  }
-  var elementString = elementArrayToString(treeToArray(element));
-  this.telemeter.captureDom(subtype, elementString, value, isChecked);
-};
-Instrumenter.prototype.deinstrumentNavigation = function () {
-  var chrome = this._window.chrome;
-  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
-  // See https://github.com/angular/angular.js/pull/13945/files
-  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
-  if (!hasPushState) {
-    return;
-  }
-  restore(this.replacements, 'navigation');
-};
-Instrumenter.prototype.instrumentNavigation = function () {
-  var chrome = this._window.chrome;
-  var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
-  // See https://github.com/angular/angular.js/pull/13945/files
-  var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
-  if (!hasPushState) {
-    return;
-  }
-  var self = this;
-  utility_replace(this._window, 'onpopstate', function (orig) {
-    return function () {
-      var current = self._location.href;
-      self.handleUrlChange(self._lastHref, current);
-      if (orig) {
-        orig.apply(this, arguments);
+  }, {
+    key: "deinstrumentDom",
+    value: function deinstrumentDom() {
+      this.removeListeners('dom');
+    }
+  }, {
+    key: "instrumentDom",
+    value: function instrumentDom() {
+      var _this = this;
+      var self = this;
+      this.addListener('dom', this._window, ['click', 'dblclick', 'contextmenu'], function (e) {
+        return _this.handleEvent('click', e);
+      });
+      this.addListener('dom', this._window, ['dragstart', 'dragend', 'dragenter', 'dragleave', 'drop'], function (e) {
+        return _this.handleEvent('dragdrop', e);
+      });
+      this.addListener('dom', this._window, ['blur', 'focus'], function (e) {
+        return _this.handleEvent('focus', e);
+      });
+      this.addListener('dom', this._window, ['submit', 'invalid'], function (e) {
+        return _this.handleEvent('form', e);
+      });
+      this.addListener('dom', this._window, ['input', 'change'], function (e) {
+        return _this.handleEvent('input', e);
+      });
+      this.addListener('dom', this._window, ['resize'], function (e) {
+        return _this.handleEvent('resize', e);
+      });
+    }
+  }, {
+    key: "handleEvent",
+    value: function handleEvent(name, evt) {
+      try {
+        return {
+          click: this.handleClick,
+          dragdrop: this.handleDrag,
+          focus: this.handleFocus,
+          form: this.handleForm,
+          input: this.handleInput,
+          resize: this.handleResize
+        }[name].call(this, evt);
+      } catch (exc) {
+        console.log("".concat(name, " handler error"), evt, exc, exc.stack);
       }
-    };
-  }, this.replacements, 'navigation');
-  utility_replace(this._window.history, 'pushState', function (orig) {
-    return function () {
-      var url = arguments.length > 2 ? arguments[2] : undefined;
-      if (url) {
-        self.handleUrlChange(self._lastHref, url + '');
+    }
+  }, {
+    key: "handleClick",
+    value: function handleClick(evt) {
+      var _evt$target;
+      var tagName = (_evt$target = evt.target) === null || _evt$target === void 0 ? void 0 : _evt$target.tagName.toLowerCase();
+      if (['input', 'select', 'textarea'].includes(tagName)) return;
+      this.telemeter.captureClick({
+        type: evt.type,
+        isSynthetic: !evt.isTrusted,
+        element: domUtility_elementString(evt.target),
+        timestamp: utility_now()
+      });
+    }
+  }, {
+    key: "handleFocus",
+    value: function handleFocus(evt) {
+      var _evt$target2;
+      var type = evt.type;
+      var element = (_evt$target2 = evt.target) !== null && _evt$target2 !== void 0 && _evt$target2.window ? 'window' : domUtility_elementString(evt.target);
+      this.telemeter.captureFocus({
+        type: type,
+        isSynthetic: !evt.isTrusted,
+        element: element,
+        timestamp: utility_now()
+      });
+    }
+  }, {
+    key: "handleForm",
+    value: function handleForm(evt) {
+      var _evt$target3;
+      // TODO: implement form event handling
+      var type = evt.type;
+      var elementString = (_evt$target3 = evt.target) !== null && _evt$target3 !== void 0 && _evt$target3.window ? 'window' : domUtility_elementString(evt.target);
+      console.log('handleForm', type, elementString, evt);
+    }
+  }, {
+    key: "handleResize",
+    value: function handleResize(evt) {
+      var textZoomRatio = window.screen.width / window.innerWidth;
+      this.telemeter.captureResize({
+        type: evt.type,
+        isSynthetic: !evt.isTrusted,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        textZoomRatio: textZoomRatio,
+        timestamp: utility_now()
+      });
+    }
+  }, {
+    key: "handleDrag",
+    value: function handleDrag(evt) {
+      var type = evt.type;
+      var kinds, mediaTypes, dropEffect, effectAllowed;
+      if (type === 'drop') {
+        kinds = [];
+        mediaTypes = [];
+        var objs = [].concat(telemetry_toConsumableArray(evt.dataTransfer.files), telemetry_toConsumableArray(evt.dataTransfer.items));
+        var _iterator6 = telemetry_createForOfIteratorHelper(objs),
+          _step6;
+        try {
+          for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+            var o = _step6.value;
+            if (o.kind && o.type) {
+              kinds.push(o.kind);
+              mediaTypes.push(o.type);
+            }
+          }
+        } catch (err) {
+          _iterator6.e(err);
+        } finally {
+          _iterator6.f();
+        }
       }
-      return orig.apply(this, arguments);
-    };
-  }, this.replacements, 'navigation');
-};
-Instrumenter.prototype.handleUrlChange = function (from, to) {
-  var parsedHref = parse(this._location.href);
-  var parsedTo = parse(to);
-  var parsedFrom = parse(from);
-  this._lastHref = to;
-  if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
-    to = parsedTo.path + (parsedTo.hash || '');
-  }
-  if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
-    from = parsedFrom.path + (parsedFrom.hash || '');
-  }
-  this.telemeter.captureNavigation(from, to, null, utility_now());
-};
-Instrumenter.prototype.deinstrumentConnectivity = function () {
-  if (!('addEventListener' in this._window || 'body' in this._document)) {
-    return;
-  }
-  if (this._window.addEventListener) {
-    this.removeListeners('connectivity');
-  } else {
-    restore(this.replacements, 'connectivity');
-  }
-};
-Instrumenter.prototype.instrumentConnectivity = function () {
-  if (!('addEventListener' in this._window || 'body' in this._document)) {
-    return;
-  }
-  if (this._window.addEventListener) {
-    this.addListener('connectivity', this._window, 'online', undefined, function () {
-      this.telemeter.captureConnectivityChange('online');
-    }.bind(this), true);
-    this.addListener('connectivity', this._window, 'offline', undefined, function () {
-      this.telemeter.captureConnectivityChange('offline');
-    }.bind(this), true);
-  } else {
-    var self = this;
-    utility_replace(this._document.body, 'ononline', function (orig) {
-      return function () {
-        self.telemeter.captureConnectivityChange('online');
-        if (orig) {
-          orig.apply(this, arguments);
+      if (['drop', 'dragstart'].includes(type)) {
+        var _evt$dataTransfer, _evt$dataTransfer2;
+        dropEffect = (_evt$dataTransfer = evt.dataTransfer) === null || _evt$dataTransfer === void 0 ? void 0 : _evt$dataTransfer.dropEffect;
+        effectAllowed = (_evt$dataTransfer2 = evt.dataTransfer) === null || _evt$dataTransfer2 === void 0 ? void 0 : _evt$dataTransfer2.effectAllowed;
+      }
+      this.telemeter.captureDragDrop({
+        type: type,
+        isSynthetic: !evt.isTrusted,
+        element: domUtility_elementString(evt.target),
+        dropEffect: dropEffect,
+        effectAllowed: effectAllowed,
+        kinds: JSON.stringify(kinds),
+        mediaTypes: JSON.stringify(mediaTypes),
+        timestamp: utility_now()
+      });
+    }
+
+    /*
+    * Uses the `input` event for everything except radio and checkbox inputs.
+    * For those, it uses the `change` event.
+    */
+  }, {
+    key: "handleInput",
+    value: function handleInput(evt) {
+      var _evt$target4, _evt$target5, _evt$target6, _evt$target7;
+      var type = evt.type;
+      var tagName = (_evt$target4 = evt.target) === null || _evt$target4 === void 0 ? void 0 : _evt$target4.tagName.toLowerCase();
+      var value = (_evt$target5 = evt.target) === null || _evt$target5 === void 0 ? void 0 : _evt$target5.value;
+      var inputType = ((_evt$target6 = evt.target) === null || _evt$target6 === void 0 || (_evt$target6 = _evt$target6.attributes) === null || _evt$target6 === void 0 || (_evt$target6 = _evt$target6.type) === null || _evt$target6 === void 0 ? void 0 : _evt$target6.value) || ((_evt$target7 = evt.target) === null || _evt$target7 === void 0 ? void 0 : _evt$target7.type);
+      switch (type) {
+        case 'input':
+          if (['radio', 'checkbox'].includes(inputType)) return;
+          if (['select', 'textarea'].includes(tagName)) {
+            inputType = tagName;
+          }
+          if (inputType === 'password') {
+            value = null;
+          }
+          break;
+        case 'change':
+          if (!['radio', 'checkbox'].includes(inputType)) return;
+          if (inputType === 'checkbox') {
+            var _evt$target8;
+            value = (_evt$target8 = evt.target) === null || _evt$target8 === void 0 ? void 0 : _evt$target8.checked;
+          }
+          break;
+      }
+      this.telemeter.captureInput({
+        type: inputType,
+        isSynthetic: !evt.isTrusted,
+        element: domUtility_elementString(evt.target),
+        value: value,
+        timestamp: utility_now()
+      });
+    }
+  }, {
+    key: "deinstrumentNavigation",
+    value: function deinstrumentNavigation() {
+      var chrome = this._window.chrome;
+      var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+      // See https://github.com/angular/angular.js/pull/13945/files
+      var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+      if (!hasPushState) {
+        return;
+      }
+      restore(this.replacements, 'navigation');
+    }
+  }, {
+    key: "instrumentNavigation",
+    value: function instrumentNavigation() {
+      var chrome = this._window.chrome;
+      var chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
+      // See https://github.com/angular/angular.js/pull/13945/files
+      var hasPushState = !chromePackagedApp && this._window.history && this._window.history.pushState;
+      if (!hasPushState) {
+        return;
+      }
+      var self = this;
+      utility_replace(this._window, 'onpopstate', function (orig) {
+        return function () {
+          var current = self._location.href;
+          self.handleUrlChange(self._lastHref, current);
+          if (orig) {
+            orig.apply(this, arguments);
+          }
+        };
+      }, this.replacements, 'navigation');
+      utility_replace(this._window.history, 'pushState', function (orig) {
+        return function () {
+          var url = arguments.length > 2 ? arguments[2] : undefined;
+          if (url) {
+            self.handleUrlChange(self._lastHref, url + '');
+          }
+          return orig.apply(this, arguments);
+        };
+      }, this.replacements, 'navigation');
+    }
+  }, {
+    key: "handleUrlChange",
+    value: function handleUrlChange(from, to) {
+      var parsedHref = parse(this._location.href);
+      var parsedTo = parse(to);
+      var parsedFrom = parse(from);
+      this._lastHref = to;
+      if (parsedHref.protocol === parsedTo.protocol && parsedHref.host === parsedTo.host) {
+        to = parsedTo.path + (parsedTo.hash || '');
+      }
+      if (parsedHref.protocol === parsedFrom.protocol && parsedHref.host === parsedFrom.host) {
+        from = parsedFrom.path + (parsedFrom.hash || '');
+      }
+      this.telemeter.captureNavigation(from, to, null, utility_now());
+    }
+  }, {
+    key: "instrumentConnectivity",
+    value: function instrumentConnectivity() {
+      var self = this;
+      this.addListener('connectivity', this._window, ['online', 'offline'], function (evt) {
+        return self.handleConnectivity(evt);
+      });
+    }
+  }, {
+    key: "handleConnectivity",
+    value: function handleConnectivity(evt) {
+      var type = evt.type;
+      this.telemeter.captureConnectivityChange({
+        type: type,
+        isSynthetic: !evt.isTrusted,
+        timestamp: utility_now()
+      });
+    }
+  }, {
+    key: "handleCspEvent",
+    value: function handleCspEvent(cspEvent) {
+      var message = 'Security Policy Violation: ' + 'blockedURI: ' + cspEvent.blockedURI + ', ' + 'violatedDirective: ' + cspEvent.violatedDirective + ', ' + 'effectiveDirective: ' + cspEvent.effectiveDirective + ', ';
+      if (cspEvent.sourceFile) {
+        message += 'location: ' + cspEvent.sourceFile + ', ' + 'line: ' + cspEvent.lineNumber + ', ' + 'col: ' + cspEvent.columnNumber + ', ';
+      }
+      message += 'originalPolicy: ' + cspEvent.originalPolicy;
+      this.telemeter.captureLog(message, 'error', null, utility_now());
+      this.handleCspError(message);
+    }
+  }, {
+    key: "handleCspError",
+    value: function handleCspError(message) {
+      if (this.autoInstrument.errorOnContentSecurityPolicy) {
+        this.rollbar.error(message);
+      }
+    }
+  }, {
+    key: "deinstrumentContentSecurityPolicy",
+    value: function deinstrumentContentSecurityPolicy() {
+      this.removeListeners('contentsecuritypolicy');
+    }
+  }, {
+    key: "instrumentContentSecurityPolicy",
+    value: function instrumentContentSecurityPolicy() {
+      if (!('addEventListener' in this._document)) {
+        return;
+      }
+      var cspHandler = this.handleCspEvent.bind(this);
+      this.addListener('contentsecuritypolicy', this._document, ['securitypolicyviolation'], cspHandler);
+    }
+  }, {
+    key: "addListener",
+    value: function addListener(section, obj, types, handler) {
+      var _this2 = this;
+      if (obj.addEventListener) {
+        var _iterator7 = telemetry_createForOfIteratorHelper(types),
+          _step7;
+        try {
+          var _loop = function _loop() {
+            var t = _step7.value;
+            var options = {
+              capture: true,
+              passive: true
+            };
+            obj.addEventListener(t, handler, options, true);
+            _this2.eventRemovers[section].push(function () {
+              obj.removeEventListener(t, handler, options);
+            });
+          };
+          for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+            _loop();
+          }
+        } catch (err) {
+          _iterator7.e(err);
+        } finally {
+          _iterator7.f();
         }
-      };
-    }, this.replacements, 'connectivity');
-    utility_replace(this._document.body, 'onoffline', function (orig) {
-      return function () {
-        self.telemeter.captureConnectivityChange('offline');
-        if (orig) {
-          orig.apply(this, arguments);
-        }
-      };
-    }, this.replacements, 'connectivity');
-  }
-};
-Instrumenter.prototype.handleCspEvent = function (cspEvent) {
-  var message = 'Security Policy Violation: ' + 'blockedURI: ' + cspEvent.blockedURI + ', ' + 'violatedDirective: ' + cspEvent.violatedDirective + ', ' + 'effectiveDirective: ' + cspEvent.effectiveDirective + ', ';
-  if (cspEvent.sourceFile) {
-    message += 'location: ' + cspEvent.sourceFile + ', ' + 'line: ' + cspEvent.lineNumber + ', ' + 'col: ' + cspEvent.columnNumber + ', ';
-  }
-  message += 'originalPolicy: ' + cspEvent.originalPolicy;
-  this.telemeter.captureLog(message, 'error', null, utility_now());
-  this.handleCspError(message);
-};
-Instrumenter.prototype.handleCspError = function (message) {
-  if (this.autoInstrument.errorOnContentSecurityPolicy) {
-    this.rollbar.error(message);
-  }
-};
-Instrumenter.prototype.deinstrumentContentSecurityPolicy = function () {
-  if (!('addEventListener' in this._document)) {
-    return;
-  }
-  this.removeListeners('contentsecuritypolicy');
-};
-Instrumenter.prototype.instrumentContentSecurityPolicy = function () {
-  if (!('addEventListener' in this._document)) {
-    return;
-  }
-  var cspHandler = this.handleCspEvent.bind(this);
-  this.addListener('contentsecuritypolicy', this._document, 'securitypolicyviolation', null, cspHandler, false);
-};
-Instrumenter.prototype.addListener = function (section, obj, type, altType, handler, capture) {
-  if (obj.addEventListener) {
-    obj.addEventListener(type, handler, capture);
-    this.eventRemovers[section].push(function () {
-      obj.removeEventListener(type, handler, capture);
-    });
-  } else if (altType) {
-    obj.attachEvent(altType, handler);
-    this.eventRemovers[section].push(function () {
-      obj.detachEvent(altType, handler);
-    });
-  }
-};
-Instrumenter.prototype.removeListeners = function (section) {
-  var r;
-  while (this.eventRemovers[section].length) {
-    r = this.eventRemovers[section].shift();
-    r();
-  }
-};
+      }
+    }
+  }, {
+    key: "removeListeners",
+    value: function removeListeners(section) {
+      var r;
+      while (this.eventRemovers[section].length) {
+        r = this.eventRemovers[section].shift();
+        r();
+      }
+    }
+  }]);
+}();
+;
 function _isUrlObject(input) {
   return typeof URL !== 'undefined' && input instanceof URL;
 }
@@ -6021,20 +6610,31 @@ function createContextKey(key) {
 }
 ;// ./src/tracing/session.js
 function session_typeof(o) { "@babel/helpers - typeof"; return session_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, session_typeof(o); }
+function session_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function session_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? session_ownKeys(Object(t), !0).forEach(function (r) { session_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : session_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function session_defineProperty(e, r, t) { return (r = session_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function session_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function session_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, session_toPropertyKey(o.key), o); } }
 function session_createClass(e, r, t) { return r && session_defineProperties(e.prototype, r), t && session_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function session_toPropertyKey(t) { var i = session_toPrimitive(t, "string"); return "symbol" == session_typeof(i) ? i : i + ""; }
 function session_toPrimitive(t, r) { if ("object" != session_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != session_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function session_classPrivateFieldInitSpec(e, t, a) { session_checkPrivateRedeclaration(e, t), t.set(e, a); }
+function session_checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+function session_classPrivateFieldGet(s, a) { return s.get(session_assertClassBrand(s, a)); }
+function session_classPrivateFieldSet(s, a, r) { return s.set(session_assertClassBrand(s, a), r), r; }
+function session_assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 var SESSION_KEY = 'RollbarSession';
+var _attributes = /*#__PURE__*/new WeakMap();
 var Session = /*#__PURE__*/function () {
   function Session(tracing, options) {
     session_classCallCheck(this, Session);
+    session_classPrivateFieldInitSpec(this, _attributes, void 0);
     this.options = options;
     this.tracing = tracing;
     this.window = tracing.window;
     this.session = null;
+    session_classPrivateFieldSet(_attributes, this, {});
   }
   return session_createClass(Session, [{
     key: "init",
@@ -6076,6 +6676,17 @@ var Session = /*#__PURE__*/function () {
       } catch (_unused2) {
         return null;
       }
+      return this;
+    }
+  }, {
+    key: "attributes",
+    get: function get() {
+      return session_classPrivateFieldGet(_attributes, this);
+    }
+  }, {
+    key: "setAttributes",
+    value: function setAttributes(attributes) {
+      session_classPrivateFieldSet(_attributes, this, session_objectSpread(session_objectSpread({}, session_classPrivateFieldGet(_attributes, this)), attributes));
       return this;
     }
   }]);
@@ -6183,10 +6794,10 @@ function isHrTime(value) {
 });
 ;// ./src/tracing/exporter.js
 function exporter_typeof(o) { "@babel/helpers - typeof"; return exporter_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, exporter_typeof(o); }
-function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || exporter_unsupportedIterableToArray(r, e) || _nonIterableRest(); }
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function exporter_slicedToArray(r, e) { return exporter_arrayWithHoles(r) || exporter_iterableToArrayLimit(r, e) || exporter_unsupportedIterableToArray(r, e) || exporter_nonIterableRest(); }
+function exporter_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function exporter_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function exporter_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function exporter_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = exporter_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function exporter_toConsumableArray(r) { return exporter_arrayWithoutHoles(r) || exporter_iterableToArray(r) || exporter_unsupportedIterableToArray(r) || exporter_nonIterableSpread(); }
 function exporter_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -6219,7 +6830,6 @@ var SpanExporter = /*#__PURE__*/function () {
      * @param {Function} _resultCallback - Optional callback (not used)
      */
     function _export(spans, _resultCallback) {
-      console.log(spans); // console exporter, TODO: make optional
       spanExportQueue.push.apply(spanExportQueue, exporter_toConsumableArray(spans));
     }
 
@@ -6292,7 +6902,7 @@ var SpanExporter = /*#__PURE__*/function () {
       var _this2 = this;
       var transformAttributes = function transformAttributes(attributes) {
         return Object.entries(attributes || {}).map(function (_ref) {
-          var _ref2 = _slicedToArray(_ref, 2),
+          var _ref2 = exporter_slicedToArray(_ref, 2),
             key = _ref2[0],
             value = _ref2[1];
           return {
@@ -6337,7 +6947,7 @@ var SpanExporter = /*#__PURE__*/function () {
       var _this3 = this;
       var attributes = resource.attributes || {};
       var keyValues = Object.entries(attributes).map(function (_ref3) {
-        var _ref4 = _slicedToArray(_ref3, 2),
+        var _ref4 = exporter_slicedToArray(_ref3, 2),
           key = _ref4[0],
           value = _ref4[1];
         return {
@@ -6420,7 +7030,7 @@ var SpanExporter = /*#__PURE__*/function () {
         return {
           kvlistValue: {
             values: Object.entries(value).map(function (_ref5) {
-              var _ref6 = _slicedToArray(_ref5, 2),
+              var _ref6 = exporter_slicedToArray(_ref5, 2),
                 k = _ref6[0],
                 v = _ref6[1];
               return {
@@ -20979,12 +21589,12 @@ var types_NodeType = /* @__PURE__ */function (NodeType2) {
 ;// ./src/browser/replay/recorder.js
 var recorder_excluded = ["enabled", "autoStart", "maxSeconds", "triggers", "debug", "emit", "checkoutEveryNms"];
 function recorder_typeof(o) { "@babel/helpers - typeof"; return recorder_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, recorder_typeof(o); }
-function recorder_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function recorder_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? recorder_ownKeys(Object(t), !0).forEach(function (r) { recorder_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : recorder_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function recorder_defineProperty(e, r, t) { return (r = recorder_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function recorder_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = recorder_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function recorder_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return recorder_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? recorder_arrayLikeToArray(r, a) : void 0; } }
 function recorder_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function recorder_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function recorder_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? recorder_ownKeys(Object(t), !0).forEach(function (r) { recorder_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : recorder_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function recorder_defineProperty(e, r, t) { return (r = recorder_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function recorder_objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = recorder_objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function recorder_objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function recorder_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
@@ -21088,13 +21698,16 @@ var Recorder = /*#__PURE__*/function () {
   }, {
     key: "dump",
     value: function dump(tracing, replayId, occurrenceUuid) {
+      var _tracing$session$attr, _tracing$session;
       var events = recorder_classPrivateFieldGet(_events, this).previous.concat(recorder_classPrivateFieldGet(_events, this).current);
       if (events.length < 2) {
         logger.error('Replay recording cannot have less than 2 events');
         return null;
       }
       var recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
-      recordingSpan.setAttribute('rollbar.replay.id', replayId);
+      recordingSpan.setAttributes(recorder_objectSpread(recorder_objectSpread({}, (_tracing$session$attr = (_tracing$session = tracing.session) === null || _tracing$session === void 0 ? void 0 : _tracing$session.attributes) !== null && _tracing$session$attr !== void 0 ? _tracing$session$attr : {}), {}, {
+        'rollbar.replay.id': replayId
+      }));
       if (occurrenceUuid) {
         recordingSpan.setAttribute('rollbar.occurrence.uuid', occurrenceUuid);
       }
