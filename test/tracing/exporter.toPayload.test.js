@@ -397,12 +397,14 @@ describe('SpanExporter.toPayload()', function () {
 describe.only('SpanExporter with log level', function () {
   let hrtimeStub;
   let idStub;
+  let consoleLogSpy;
 
   beforeEach(function () {
     spanExportQueue.length = 0;
     hrtimeStub = sinon.stub(hrtime, 'now').returns([1, 2]);
     sinon.stub(hrtime, 'toNanos').returns(1000000000);
     idStub = sinon.stub(id, 'gen').returns('1234567890abcdef');
+    consoleLogSpy = sinon.spy(console, 'log');
   });
   afterEach(function () {
     spanExportQueue.length = 0;
@@ -434,9 +436,7 @@ describe.only('SpanExporter with log level', function () {
     };
 
     exporter.export([mockSpan]);
-    const payload = exporter.toPayload();
-
-    expect(payload).to.have.property('resourceSpans').that.is.an('array');
+    expect(consoleLogSpy.callCount).to.equal(0);
   });
   it('should not log', function () {
     let exporter = new SpanExporter({
@@ -463,8 +463,6 @@ describe.only('SpanExporter with log level', function () {
     };
 
     exporter.export([mockSpan]);
-    const payload = exporter.toPayload();
-
-    expect(payload).to.have.property('resourceSpans').that.is.an('array');
+    expect(consoleLogSpy.callCount).to.equal(1);
   });
 });
