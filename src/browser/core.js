@@ -17,7 +17,7 @@ import tracingDefaults from '../tracing/defaults.js';
 import ReplayManager from './replay/replayManager.js';
 
 function Rollbar(options, client) {
-  this.options = _.handleOptions(defaultOptions, options, null, logger);
+  this.options = _.handleOptions(defaultOptions, options, null, logger); //options provided here
   this.options._configuredOptions = options;
   const Telemeter = this.components.telemeter;
   const Instrumenter = this.components.instrumenter;
@@ -39,7 +39,7 @@ function Rollbar(options, client) {
 
   if (Recorder && _.isBrowser()) {
     const recorderOptions = this.options.recorder;
-    this.recorder = new Recorder(recorderOptions);
+    this.recorder = new Recorder(recorderOptions); //options shown down to class here
     this.replayManager = new ReplayManager({
       recorder: this.recorder,
       api: api,

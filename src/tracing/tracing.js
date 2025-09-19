@@ -52,7 +52,7 @@ export default class Tracing {
 
   createTracer() {
     this.contextManager = new ContextManager();
-    this.exporter = new SpanExporter();
+    this.exporter = new SpanExporter(this.options);
     this.spanProcessor = new SpanProcessor(this.exporter);
     this.tracer = new Tracer(this, this.spanProcessor);
   }

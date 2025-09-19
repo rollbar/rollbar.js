@@ -6,13 +6,24 @@ import hrtime from './hrtime.js';
  */
 export class SpanExporter {
   /**
+   * Creates a new SpanExporter instance for exporting spans
+   *
+   * @param {Object} options - Configuration options for the exporter
+   */
+  constructor(options) {
+    this.options = options;
+  }
+
+  /**
    * Export spans to the span export queue
    *
    * @param {Array} spans - Array of ReadableSpan objects to export
    * @param {Function} _resultCallback - Optional callback (not used)
    */
   export(spans, _resultCallback) {
-    console.log(spans); // console exporter, TODO: make optional
+    if (this.options.debug?.logEmits) {
+      console.log(spans);
+    }
     spanExportQueue.push(...spans);
   }
 
