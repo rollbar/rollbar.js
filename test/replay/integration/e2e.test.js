@@ -49,7 +49,7 @@ describe('Session Replay E2E', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, transportOptions, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           setTimeout(() => {
             callback(
               null,
@@ -126,6 +126,11 @@ describe('Session Replay E2E', function () {
         },
       };
 
+      tracing.session.setAttributes({
+        'user.id': '12345',
+        'user.email': 'aaa@bb.com',
+      });
+
       queue.addItem(errorItem, function (err, resp) {
         expect(errorItem).to.have.property('replayId');
         const expectedReplayId = errorItem.replayId;
@@ -163,11 +168,19 @@ describe('Session Replay E2E', function () {
           expect(span_r).to.have.property('events');
           expect(span_r.events).to.be.an('array');
           expect(span_r).to.have.property('attributes').that.is.an('array');
-          expect(span_r.attributes).to.have.lengthOf(2);
+          expect(span_r.attributes).to.have.lengthOf(4);
 
           expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',
             value: { stringValue: expectedReplayId },
+          });
+          expect(span_r.attributes).to.deep.include({
+            key: 'user.id',
+            value: { stringValue: '12345' },
+          });
+          expect(span_r.attributes).to.deep.include({
+            key: 'user.email',
+            value: { stringValue: 'aaa@bb.com' },
           });
 
           const sessionIdAttr = span_r.attributes.find(
@@ -186,7 +199,7 @@ describe('Session Replay E2E', function () {
           );
 
           const transportArgs = transport.post.lastCall.args;
-          expect(transportArgs[1].path).to.include('/api/1/session/');
+          expect(transportArgs[0].options.path).to.include('/api/1/session/');
 
           done();
         }, 200);
@@ -196,8 +209,8 @@ describe('Session Replay E2E', function () {
 
   it('should integrate with real components in failure scenario', function (done) {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
-        if (transportOptions.path.includes('/api/1/item/')) {
+      ({accessToken, options, payload, callback}) => {
+        if (options.path.includes('/api/1/item/')) {
           setTimeout(() => {
             callback(null, { err: 1, message: 'API Error' });
           }, 10);

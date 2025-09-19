@@ -30,7 +30,7 @@ describe('ReplayManager API Integration', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, transportOptions, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           setTimeout(() => {
             callback(
               null,
@@ -100,13 +100,16 @@ describe('ReplayManager API Integration', function () {
 
     const replayId = 'test-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+    const expectedHeaders = {
+      'X-Rollbar-Replay-Id': replayId,
+    };
     replayManager.setSpans(replayId, mockPayload);
 
     const result = await replayManager.send(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
-    expect(postSpansSpy.calledWith(mockPayload)).to.be.true;
+    expect(postSpansSpy.calledWith(mockPayload, expectedHeaders)).to.be.true;
 
     expect(replayManager.getSpans(replayId)).to.be.null;
   });

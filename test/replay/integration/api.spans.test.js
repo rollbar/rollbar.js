@@ -23,7 +23,7 @@ describe('API Span Transport', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, transportOptions, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           setTimeout(() => {
             callback(null, { err: 0, result: { id: '12345' } });
           }, 10);
@@ -50,8 +50,8 @@ describe('API Span Transport', function () {
 
     expect(transport.post.calledOnce).to.be.true;
 
-    const transportOptions = transport.post.firstCall.args[1];
-    expect(transportOptions.path).to.include('/api/1/session/');
+    const options = transport.post.firstCall.args[0].options;
+    expect(options.path).to.include('/api/1/session/');
   });
 
   it('should format spans payload correctly', async function () {
@@ -60,7 +60,7 @@ describe('API Span Transport', function () {
 
     await api.postSpans(spans);
 
-    const payload = transport.post.firstCall.args[2];
+    const payload = transport.post.firstCall.args[0].payload;
 
     expect(payload).to.have.property('resourceSpans');
     expect(payload).to.deep.equal(spans);
@@ -69,7 +69,7 @@ describe('API Span Transport', function () {
   it('should handle transport errors', async function () {
     const testError = new Error('Transport failure');
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(testError);
         }, 10);
@@ -88,7 +88,7 @@ describe('API Span Transport', function () {
 
   it('should handle API response errors', async function () {
     transport.post.callsFake(
-      (accessToken, transportOptions, payload, callback) => {
+      ({accessToken, options, payload, callback}) => {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });
         }, 10);

@@ -12,7 +12,7 @@ function TestTransportGenerator() {
   TestTransport.prototype.post = function () {
     var args = arguments;
     this.postArgs.push(args);
-    var callback = args[args.length - 1];
+    var callback = args[0].callback;
     if (typeof callback === 'function') {
       callback(this.callbackError, this.callbackResponse);
     }
@@ -83,9 +83,10 @@ describe('postItem', function () {
       expect(err).to.not.be.ok;
       expect(resp).to.eql(response);
       expect(transport.postArgs.length).to.eql(1);
-      expect(transport.postArgs[0][0]).to.eql(accessToken);
-      expect(transport.postArgs[0][1].path).to.match(/\/item\//);
-      expect(transport.postArgs[0][2].data.a).to.eql(1);
+      const params = transport.postArgs[0][0];
+      expect(params.accessToken).to.eql(accessToken);
+      expect(params.options.path).to.match(/\/item\//);
+      expect(params.payload.data.a).to.eql(1);
       done();
     });
   });
@@ -106,11 +107,12 @@ describe('postItem', function () {
       expect(err).to.not.be.ok;
       expect(resp).to.eql(response);
       expect(transport.postArgs.length).to.eql(1);
-      expect(transport.postArgs[0][0]).to.eql(accessToken);
-      expect(transport.postArgs[0][1].path).to.match(/\/item\//);
-      expect(transport.postArgs[0][1].method).to.eql('POST');
-      expect(transport.postArgs[0][2].data.a).to.eql(1);
-      expect(transport.postArgs[0][2].data.context).to.eql(
+      const params = transport.postArgs[0][0];
+      expect(params.accessToken).to.eql(accessToken);
+      expect(params.options.path).to.match(/\/item\//);
+      expect(params.options.method).to.eql('POST');
+      expect(params.payload.data.a).to.eql(1);
+      expect(params.payload.data.context).to.eql(
         '{"some":[1,2,"stuff"]}',
       );
       done();
@@ -126,7 +128,7 @@ describe('postSpans', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake((accessToken, options, payload, callback) => {
+        .callsFake(({accessToken, options, payload, callback}) => {
           callback(null, { result: 'ok' });
         }),
       postJsonPayload: sinon.stub(),
@@ -161,10 +163,12 @@ describe('postSpans', function () {
     expect(transport.post.called).to.be.true;
 
     expect(transport.post.callCount).to.eql(1);
-    expect(transport.post.firstCall.args.length).to.eql(4);
-    expect(transport.post.firstCall.args[0]).to.eql(accessToken);
-    expect(transport.post.firstCall.args[1].path).to.match(/\/session\//);
-    expect(transport.post.firstCall.args[1].method).to.eql('POST');
-    expect(transport.post.firstCall.args[2].a).to.eql(1);
+    expect(transport.post.firstCall.args.length).to.eql(1);
+    const params = transport.post.firstCall.args[0];
+    console.log('post params', params);
+    expect(params.accessToken).to.eql(accessToken);
+    expect(params.options.path).to.match(/\/session\//);
+    expect(params.options.method).to.eql('POST');
+    expect(params.payload.a).to.eql(1);
   });
 });
