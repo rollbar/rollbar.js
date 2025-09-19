@@ -14,7 +14,7 @@ describe('SpanExporter.toPayload()', function () {
 
   beforeEach(function () {
     spanExportQueue.length = 0;
-    exporter = new SpanExporter();
+    exporter = new SpanExporter({});
 
     hrtimeStub = sinon.stub(hrtime, 'now').returns([1, 2]);
     sinon.stub(hrtime, 'toNanos').returns(1000000000);
@@ -394,7 +394,7 @@ describe('SpanExporter.toPayload()', function () {
   });
 });
 
-describe.only('SpanExporter with log level', function () {
+describe('SpanExporter with log level', function () {
   let hrtimeStub;
   let idStub;
   let consoleLogSpy;
