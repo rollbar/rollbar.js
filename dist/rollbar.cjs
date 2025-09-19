@@ -2146,7 +2146,7 @@ var logger = {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.2';
+var version = '3.0.0-beta.3';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -2510,8 +2510,8 @@ function _currentTime() {
 ;// external "url"
 const external_url_namespaceObject = require("url");
 ;// ./src/telemetry.js
-function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
 var _excluded = ["otelAttributes"];
+function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
 function telemetry_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function telemetry_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? telemetry_ownKeys(Object(t), !0).forEach(function (r) { telemetry_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : telemetry_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function telemetry_defineProperty(e, r, t) { return (r = telemetry_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -2522,9 +2522,6 @@ function telemetry_defineProperties(e, r) { for (var t = 0; t < r.length; t++) {
 function telemetry_createClass(e, r, t) { return r && telemetry_defineProperties(e.prototype, r), t && telemetry_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function telemetry_toPropertyKey(t) { var i = telemetry_toPrimitive(t, "string"); return "symbol" == telemetry_typeof(i) ? i : i + ""; }
 function telemetry_toPrimitive(t, r) { if ("object" != telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
-function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 var MAX_EVENTS = 100;
 
@@ -2532,12 +2529,10 @@ var MAX_EVENTS = 100;
 function fromMillis(millis) {
   return [Math.trunc(millis / 1000), Math.round(millis % 1000 * 1e6)];
 }
-var _Telemeter_brand = /*#__PURE__*/new WeakSet();
 var Telemeter = /*#__PURE__*/function () {
   function Telemeter(options, tracing) {
     var _this$tracing;
     telemetry_classCallCheck(this, Telemeter);
-    _classPrivateMethodInitSpec(this, _Telemeter_brand);
     this.queue = [];
     this.options = src_merge(options);
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
@@ -2749,9 +2744,9 @@ var Telemeter = /*#__PURE__*/function () {
         value: value,
         endTimeUnixNano: fromMillis(timestamp)
       };
-      var event = _assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return _assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
@@ -2776,12 +2771,39 @@ var Telemeter = /*#__PURE__*/function () {
         element: element,
         endTimeUnixNano: fromMillis(timestamp)
       };
-      var event = _assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return _assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan6 = this.telemetrySpan) === null || _this$telemetrySpan6 === void 0 || _this$telemetrySpan6.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "_getRepeatedEvent",
+    value: function _getRepeatedEvent(name, attributes) {
+      var lastEvent = this._lastEvent(this.queue);
+      if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
+        return lastEvent;
+      }
+    }
+  }, {
+    key: "_updateRepeatedEvent",
+    value: function _updateRepeatedEvent(event, attributes, timestamp) {
+      var duration = Math.max(timestamp - event.timestamp_ms, 1);
+      event.body.value = attributes.value;
+      event.otelAttributes.value = attributes.value;
+      event.otelAttributes.height = attributes.height;
+      event.otelAttributes.width = attributes.width;
+      event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
+      event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
+      event.otelAttributes['durationUnixNano'] = fromMillis(duration);
+      event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
+      event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+    }
+  }, {
+    key: "_lastEvent",
+    value: function _lastEvent(list) {
+      return list.length > 0 ? list[list.length - 1] : null;
     }
   }, {
     key: "captureFocus",
@@ -2830,9 +2852,9 @@ var Telemeter = /*#__PURE__*/function () {
         height: height,
         textZoomRatio: textZoomRatio
       };
-      var event = _assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return _assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan8 = this.telemetrySpan) === null || _this$telemetrySpan8 === void 0 || _this$telemetrySpan8.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
@@ -2972,27 +2994,6 @@ var Telemeter = /*#__PURE__*/function () {
     }
   }]);
 }();
-function _getRepeatedEvent(name, attributes) {
-  var lastEvent = _assertClassBrand(_Telemeter_brand, this, _lastEvent).call(this, this.queue);
-  if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
-    return lastEvent;
-  }
-}
-function _updateRepeatedEvent(event, attributes, timestamp) {
-  var duration = Math.max(timestamp - event.timestamp_ms, 1);
-  event.body.value = attributes.value;
-  event.otelAttributes.value = attributes.value;
-  event.otelAttributes.height = attributes.height;
-  event.otelAttributes.width = attributes.width;
-  event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
-  event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
-  event.otelAttributes['durationUnixNano'] = fromMillis(duration);
-  event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
-  event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
-}
-function _lastEvent(list) {
-  return list.length > 0 ? list[list.length - 1] : null;
-}
 function getLevel(type, level) {
   if (level) {
     return level;

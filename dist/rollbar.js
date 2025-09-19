@@ -3786,13 +3786,9 @@ function replayManager_asyncToGenerator(n) { return function () { var t = this, 
 function replayManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function replayManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayManager_toPropertyKey(o.key), o); } }
 function replayManager_createClass(e, r, t) { return r && replayManager_defineProperties(e.prototype, r), t && replayManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function replayManager_defineProperty(e, r, t) { return (r = replayManager_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function replayManager_toPropertyKey(t) { var i = replayManager_toPrimitive(t, "string"); return "symbol" == replayManager_typeof(i) ? i : i + ""; }
 function replayManager_toPrimitive(t, r) { if ("object" != replayManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
-function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
-function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
-function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 
 
@@ -3801,11 +3797,6 @@ function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.h
  * session recordings. This class handles the coordination between when recordings
  * are dumped and when they are eventually sent to the backend.
  */
-var _map = /*#__PURE__*/new WeakMap();
-var _recorder = /*#__PURE__*/new WeakMap();
-var _api = /*#__PURE__*/new WeakMap();
-var _tracing = /*#__PURE__*/new WeakMap();
-var _telemeter = /*#__PURE__*/new WeakMap();
 var ReplayManager = /*#__PURE__*/function () {
   /**
    * Creates a new ReplayManager instance
@@ -3821,11 +3812,11 @@ var ReplayManager = /*#__PURE__*/function () {
       tracing = _ref.tracing,
       telemeter = _ref.telemeter;
     replayManager_classCallCheck(this, ReplayManager);
-    _classPrivateFieldInitSpec(this, _map, void 0);
-    _classPrivateFieldInitSpec(this, _recorder, void 0);
-    _classPrivateFieldInitSpec(this, _api, void 0);
-    _classPrivateFieldInitSpec(this, _tracing, void 0);
-    _classPrivateFieldInitSpec(this, _telemeter, void 0);
+    replayManager_defineProperty(this, "_map", void 0);
+    replayManager_defineProperty(this, "_recorder", void 0);
+    replayManager_defineProperty(this, "_api", void 0);
+    replayManager_defineProperty(this, "_tracing", void 0);
+    replayManager_defineProperty(this, "_telemeter", void 0);
     if (!recorder) {
       throw new TypeError("Expected 'recorder' to be provided");
     }
@@ -3835,11 +3826,11 @@ var ReplayManager = /*#__PURE__*/function () {
     if (!tracing) {
       throw new TypeError("Expected 'tracing' to be provided");
     }
-    _classPrivateFieldSet(_map, this, new Map());
-    _classPrivateFieldSet(_recorder, this, recorder);
-    _classPrivateFieldSet(_api, this, api);
-    _classPrivateFieldSet(_tracing, this, tracing);
-    _classPrivateFieldSet(_telemeter, this, telemeter);
+    this._map = new Map();
+    this._recorder = recorder;
+    this._api = api;
+    this._tracing = tracing;
+    this._telemeter = telemeter;
   }
 
   /**
@@ -3856,19 +3847,19 @@ var ReplayManager = /*#__PURE__*/function () {
     key: "_processReplay",
     value: (function () {
       var _processReplay2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee(replayId, occurrenceUuid) {
-        var _classPrivateFieldGet2, payload;
+        var _this$_telemeter, payload;
         return replayManager_regeneratorRuntime().wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
               try {
-                (_classPrivateFieldGet2 = _classPrivateFieldGet(_telemeter, this)) === null || _classPrivateFieldGet2 === void 0 || _classPrivateFieldGet2.exportTelemetrySpan({
+                (_this$_telemeter = this._telemeter) === null || _this$_telemeter === void 0 || _this$_telemeter.exportTelemetrySpan({
                   'rollbar.replay.id': replayId
                 });
-                payload = _classPrivateFieldGet(_recorder, this).dump(_classPrivateFieldGet(_tracing, this), replayId, occurrenceUuid);
-                _classPrivateFieldGet(_map, this).set(replayId, payload);
+                payload = this._recorder.dump(this._tracing, replayId, occurrenceUuid);
+                this._map.set(replayId, payload);
               } catch (transformError) {
                 logger.error('Error transforming spans:', transformError);
-                _classPrivateFieldGet(_map, this).set(replayId, null); // TODO(matux): Error span?
+                this._map.set(replayId, null); // TODO(matux): Error span?
               }
               return _context.abrupt("return", replayId);
             case 2:
@@ -3928,15 +3919,15 @@ var ReplayManager = /*#__PURE__*/function () {
               logger.error('ReplayManager.send: No replayId provided');
               return _context2.abrupt("return", false);
             case 3:
-              if (_classPrivateFieldGet(_map, this).has(replayId)) {
+              if (this._map.has(replayId)) {
                 _context2.next = 6;
                 break;
               }
               logger.error("ReplayManager.send: No replay found for replayId: ".concat(replayId));
               return _context2.abrupt("return", false);
             case 6:
-              payload = _classPrivateFieldGet(_map, this).get(replayId);
-              _classPrivateFieldGet(_map, this).delete(replayId);
+              payload = this._map.get(replayId);
+              this._map.delete(replayId);
 
               // Check if payload is empty (could be raw spans array or OTLP payload)
               isEmpty = !payload || Array.isArray(payload) && payload.length === 0 || payload.resourceSpans && payload.resourceSpans.length === 0;
@@ -3949,7 +3940,7 @@ var ReplayManager = /*#__PURE__*/function () {
             case 12:
               _context2.prev = 12;
               _context2.next = 15;
-              return _classPrivateFieldGet(_api, this).postSpans(payload, {
+              return this._api.postSpans(payload, {
                 'X-Rollbar-Replay-Id': replayId
               });
             case 15:
@@ -3985,11 +3976,11 @@ var ReplayManager = /*#__PURE__*/function () {
         logger.error('ReplayManager.discard: No replayId provided');
         return false;
       }
-      if (!_classPrivateFieldGet(_map, this).has(replayId)) {
+      if (!this._map.has(replayId)) {
         logger.error("ReplayManager.discard: No replay found for replayId: ".concat(replayId));
         return false;
       }
-      _classPrivateFieldGet(_map, this).delete(replayId);
+      this._map.delete(replayId);
       return true;
     }
 
@@ -4002,8 +3993,8 @@ var ReplayManager = /*#__PURE__*/function () {
   }, {
     key: "getSpans",
     value: function getSpans(replayId) {
-      var _classPrivateFieldGet3;
-      return (_classPrivateFieldGet3 = _classPrivateFieldGet(_map, this).get(replayId)) !== null && _classPrivateFieldGet3 !== void 0 ? _classPrivateFieldGet3 : null;
+      var _this$_map$get;
+      return (_this$_map$get = this._map.get(replayId)) !== null && _this$_map$get !== void 0 ? _this$_map$get : null;
     }
 
     /**
@@ -4015,7 +4006,7 @@ var ReplayManager = /*#__PURE__*/function () {
   }, {
     key: "setSpans",
     value: function setSpans(replayId, spans) {
-      _classPrivateFieldGet(_map, this).set(replayId, spans);
+      this._map.set(replayId, spans);
     }
 
     /**
@@ -4026,7 +4017,7 @@ var ReplayManager = /*#__PURE__*/function () {
   }, {
     key: "size",
     get: function get() {
-      return _classPrivateFieldGet(_map, this).size;
+      return this._map.size;
     }
 
     /**
@@ -4035,7 +4026,7 @@ var ReplayManager = /*#__PURE__*/function () {
   }, {
     key: "clear",
     value: function clear() {
-      _classPrivateFieldGet(_map, this).clear();
+      this._map.clear();
     }
   }]);
 }();
@@ -4044,7 +4035,7 @@ var ReplayManager = /*#__PURE__*/function () {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.2';
+var version = '3.0.0-beta.3';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -4607,8 +4598,8 @@ var core_defaultOptions = {
 };
 /* harmony default export */ var core = (core_Rollbar);
 ;// ./src/telemetry.js
-function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
 var _excluded = ["otelAttributes"];
+function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
 function telemetry_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function telemetry_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? telemetry_ownKeys(Object(t), !0).forEach(function (r) { telemetry_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : telemetry_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function telemetry_defineProperty(e, r, t) { return (r = telemetry_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -4619,9 +4610,6 @@ function telemetry_defineProperties(e, r) { for (var t = 0; t < r.length; t++) {
 function telemetry_createClass(e, r, t) { return r && telemetry_defineProperties(e.prototype, r), t && telemetry_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function telemetry_toPropertyKey(t) { var i = telemetry_toPrimitive(t, "string"); return "symbol" == telemetry_typeof(i) ? i : i + ""; }
 function telemetry_toPrimitive(t, r) { if ("object" != telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _classPrivateMethodInitSpec(e, a) { telemetry_checkPrivateRedeclaration(e, a), a.add(e); }
-function telemetry_checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-function telemetry_assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 var MAX_EVENTS = 100;
 
@@ -4629,12 +4617,10 @@ var MAX_EVENTS = 100;
 function fromMillis(millis) {
   return [Math.trunc(millis / 1000), Math.round(millis % 1000 * 1e6)];
 }
-var _Telemeter_brand = /*#__PURE__*/new WeakSet();
 var Telemeter = /*#__PURE__*/function () {
   function Telemeter(options, tracing) {
     var _this$tracing;
     telemetry_classCallCheck(this, Telemeter);
-    _classPrivateMethodInitSpec(this, _Telemeter_brand);
     this.queue = [];
     this.options = src_merge(options);
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
@@ -4846,9 +4832,9 @@ var Telemeter = /*#__PURE__*/function () {
         value: value,
         endTimeUnixNano: fromMillis(timestamp)
       };
-      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
@@ -4873,12 +4859,39 @@ var Telemeter = /*#__PURE__*/function () {
         element: element,
         endTimeUnixNano: fromMillis(timestamp)
       };
-      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan6 = this.telemetrySpan) === null || _this$telemetrySpan6 === void 0 || _this$telemetrySpan6.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
+    }
+  }, {
+    key: "_getRepeatedEvent",
+    value: function _getRepeatedEvent(name, attributes) {
+      var lastEvent = this._lastEvent(this.queue);
+      if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
+        return lastEvent;
+      }
+    }
+  }, {
+    key: "_updateRepeatedEvent",
+    value: function _updateRepeatedEvent(event, attributes, timestamp) {
+      var duration = Math.max(timestamp - event.timestamp_ms, 1);
+      event.body.value = attributes.value;
+      event.otelAttributes.value = attributes.value;
+      event.otelAttributes.height = attributes.height;
+      event.otelAttributes.width = attributes.width;
+      event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
+      event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
+      event.otelAttributes['durationUnixNano'] = fromMillis(duration);
+      event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
+      event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+    }
+  }, {
+    key: "_lastEvent",
+    value: function _lastEvent(list) {
+      return list.length > 0 ? list[list.length - 1] : null;
     }
   }, {
     key: "captureFocus",
@@ -4927,9 +4940,9 @@ var Telemeter = /*#__PURE__*/function () {
         height: height,
         textZoomRatio: textZoomRatio
       };
-      var event = telemetry_assertClassBrand(_Telemeter_brand, this, _getRepeatedEvent).call(this, name, otelAttributes);
+      var event = this._getRepeatedEvent(name, otelAttributes);
       if (event) {
-        return telemetry_assertClassBrand(_Telemeter_brand, this, _updateRepeatedEvent).call(this, event, otelAttributes, timestamp);
+        return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
       (_this$telemetrySpan8 = this.telemetrySpan) === null || _this$telemetrySpan8 === void 0 || _this$telemetrySpan8.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
@@ -5069,27 +5082,6 @@ var Telemeter = /*#__PURE__*/function () {
     }
   }]);
 }();
-function _getRepeatedEvent(name, attributes) {
-  var lastEvent = telemetry_assertClassBrand(_Telemeter_brand, this, _lastEvent).call(this, this.queue);
-  if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
-    return lastEvent;
-  }
-}
-function _updateRepeatedEvent(event, attributes, timestamp) {
-  var duration = Math.max(timestamp - event.timestamp_ms, 1);
-  event.body.value = attributes.value;
-  event.otelAttributes.value = attributes.value;
-  event.otelAttributes.height = attributes.height;
-  event.otelAttributes.width = attributes.width;
-  event.otelAttributes.textZoomRatio = attributes.textZoomRatio;
-  event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
-  event.otelAttributes['durationUnixNano'] = fromMillis(duration);
-  event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
-  event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
-}
-function _lastEvent(list) {
-  return list.length > 0 ? list[list.length - 1] : null;
-}
 function getLevel(type, level) {
   if (level) {
     return level;
@@ -6598,29 +6590,23 @@ function createContextKey(key) {
 function session_typeof(o) { "@babel/helpers - typeof"; return session_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, session_typeof(o); }
 function session_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function session_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? session_ownKeys(Object(t), !0).forEach(function (r) { session_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : session_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function session_defineProperty(e, r, t) { return (r = session_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function session_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function session_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, session_toPropertyKey(o.key), o); } }
 function session_createClass(e, r, t) { return r && session_defineProperties(e.prototype, r), t && session_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function session_defineProperty(e, r, t) { return (r = session_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function session_toPropertyKey(t) { var i = session_toPrimitive(t, "string"); return "symbol" == session_typeof(i) ? i : i + ""; }
 function session_toPrimitive(t, r) { if ("object" != session_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != session_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function session_classPrivateFieldInitSpec(e, t, a) { session_checkPrivateRedeclaration(e, t), t.set(e, a); }
-function session_checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-function session_classPrivateFieldGet(s, a) { return s.get(session_assertClassBrand(s, a)); }
-function session_classPrivateFieldSet(s, a, r) { return s.set(session_assertClassBrand(s, a), r), r; }
-function session_assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 var SESSION_KEY = 'RollbarSession';
-var _attributes = /*#__PURE__*/new WeakMap();
 var Session = /*#__PURE__*/function () {
   function Session(tracing, options) {
     session_classCallCheck(this, Session);
-    session_classPrivateFieldInitSpec(this, _attributes, void 0);
+    session_defineProperty(this, "_attributes", void 0);
     this.options = options;
     this.tracing = tracing;
     this.window = tracing.window;
     this.session = null;
-    session_classPrivateFieldSet(_attributes, this, {});
+    this._attributes = {};
   }
   return session_createClass(Session, [{
     key: "init",
@@ -6667,12 +6653,12 @@ var Session = /*#__PURE__*/function () {
   }, {
     key: "attributes",
     get: function get() {
-      return session_classPrivateFieldGet(_attributes, this);
+      return this._attributes;
     }
   }, {
     key: "setAttributes",
     value: function setAttributes(attributes) {
-      session_classPrivateFieldSet(_attributes, this, session_objectSpread(session_objectSpread({}, session_classPrivateFieldGet(_attributes, this)), attributes));
+      this._attributes = session_objectSpread(session_objectSpread({}, this._attributes), attributes);
       return this;
     }
   }]);
@@ -21580,28 +21566,18 @@ function recorder_unsupportedIterableToArray(r, a) { if (r) { if ("string" == ty
 function recorder_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function recorder_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function recorder_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? recorder_ownKeys(Object(t), !0).forEach(function (r) { recorder_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : recorder_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function recorder_defineProperty(e, r, t) { return (r = recorder_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function recorder_objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = recorder_objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function recorder_objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function recorder_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function recorder_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, recorder_toPropertyKey(o.key), o); } }
 function recorder_createClass(e, r, t) { return r && recorder_defineProperties(e.prototype, r), t && recorder_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function recorder_defineProperty(e, r, t) { return (r = recorder_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function recorder_toPropertyKey(t) { var i = recorder_toPrimitive(t, "string"); return "symbol" == recorder_typeof(i) ? i : i + ""; }
 function recorder_toPrimitive(t, r) { if ("object" != recorder_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != recorder_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function recorder_classPrivateFieldInitSpec(e, t, a) { recorder_checkPrivateRedeclaration(e, t), t.set(e, a); }
-function recorder_checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-function recorder_classPrivateFieldGet(s, a) { return s.get(recorder_assertClassBrand(s, a)); }
-function recorder_classPrivateFieldSet(s, a, r) { return s.set(recorder_assertClassBrand(s, a), r), r; }
-function recorder_assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 
 
 
 
-var _options = /*#__PURE__*/new WeakMap();
-var _rrwebOptions = /*#__PURE__*/new WeakMap();
-var _stopFn = /*#__PURE__*/new WeakMap();
-var _recordFn = /*#__PURE__*/new WeakMap();
-var _events = /*#__PURE__*/new WeakMap();
 var Recorder = /*#__PURE__*/function () {
   /**
    * Creates a new Recorder instance for capturing DOM events
@@ -21612,11 +21588,11 @@ var Recorder = /*#__PURE__*/function () {
   function Recorder(options) {
     var recordFn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : record;
     recorder_classCallCheck(this, Recorder);
-    recorder_classPrivateFieldInitSpec(this, _options, void 0);
-    recorder_classPrivateFieldInitSpec(this, _rrwebOptions, void 0);
-    recorder_classPrivateFieldInitSpec(this, _stopFn, null);
-    recorder_classPrivateFieldInitSpec(this, _recordFn, void 0);
-    recorder_classPrivateFieldInitSpec(this, _events, {
+    recorder_defineProperty(this, "_options", void 0);
+    recorder_defineProperty(this, "_rrwebOptions", void 0);
+    recorder_defineProperty(this, "_stopFn", null);
+    recorder_defineProperty(this, "_recordFn", void 0);
+    recorder_defineProperty(this, "_events", {
       previous: [],
       current: []
     });
@@ -21624,17 +21600,17 @@ var Recorder = /*#__PURE__*/function () {
       throw new TypeError("Expected 'recordFn' to be provided");
     }
     this.options = options;
-    recorder_classPrivateFieldSet(_recordFn, this, recordFn);
+    this._recordFn = recordFn;
   }
   return recorder_createClass(Recorder, [{
     key: "isRecording",
     get: function get() {
-      return recorder_classPrivateFieldGet(_stopFn, this) !== null;
+      return this._stopFn !== null;
     }
   }, {
     key: "options",
     get: function get() {
-      return recorder_classPrivateFieldGet(_options, this);
+      return this._options;
     },
     set: function set(newOptions) {
       this.configure(newOptions);
@@ -21650,14 +21626,14 @@ var Recorder = /*#__PURE__*/function () {
         emit = newOptions.emit,
         checkoutEveryNms = newOptions.checkoutEveryNms,
         rrwebOptions = recorder_objectWithoutProperties(newOptions, recorder_excluded);
-      recorder_classPrivateFieldSet(_options, this, {
+      this._options = {
         enabled: enabled,
         autoStart: autoStart,
         maxSeconds: maxSeconds,
         triggers: triggers,
         debug: debug
-      });
-      recorder_classPrivateFieldSet(_rrwebOptions, this, rrwebOptions);
+      };
+      this._rrwebOptions = rrwebOptions;
       if (this.isRecording && newOptions.enabled === false) {
         this.stop();
       }
@@ -21685,7 +21661,7 @@ var Recorder = /*#__PURE__*/function () {
     key: "dump",
     value: function dump(tracing, replayId, occurrenceUuid) {
       var _tracing$session$attr, _tracing$session;
-      var events = recorder_classPrivateFieldGet(_events, this).previous.concat(recorder_classPrivateFieldGet(_events, this).current);
+      var events = this._events.previous.concat(this._events.current);
       if (events.length < 2) {
         logger.error('Replay recording cannot have less than 2 events');
         return null;
@@ -21728,17 +21704,17 @@ var Recorder = /*#__PURE__*/function () {
         return;
       }
       this.clear();
-      recorder_classPrivateFieldSet(_stopFn, this, recorder_classPrivateFieldGet(_recordFn, this).call(this, recorder_objectSpread({
+      this._stopFn = this._recordFn(recorder_objectSpread({
         emit: function emit(event, isCheckout) {
           var _this$options$debug;
           if ((_this$options$debug = _this.options.debug) !== null && _this$options$debug !== void 0 && _this$options$debug.logEmits) {
             _this._logEvent(event, isCheckout);
           }
           if (isCheckout && event.type === types_EventType.Meta) {
-            recorder_classPrivateFieldGet(_events, _this).previous = recorder_classPrivateFieldGet(_events, _this).current;
-            recorder_classPrivateFieldGet(_events, _this).current = [];
+            _this._events.previous = _this._events.current;
+            _this._events.current = [];
           }
-          recorder_classPrivateFieldGet(_events, _this).current.push(event);
+          _this._events.current.push(event);
         },
         checkoutEveryNms: this.checkoutEveryNms(),
         errorHandler: function errorHandler(error) {
@@ -21748,7 +21724,7 @@ var Recorder = /*#__PURE__*/function () {
           }
           return true; // swallow the error instead of throwing it to the window
         }
-      }, recorder_classPrivateFieldGet(_rrwebOptions, this))));
+      }, this._rrwebOptions));
       return this;
     }
   }, {
@@ -21757,17 +21733,17 @@ var Recorder = /*#__PURE__*/function () {
       if (!this.isRecording) {
         return;
       }
-      recorder_classPrivateFieldGet(_stopFn, this).call(this);
-      recorder_classPrivateFieldSet(_stopFn, this, null);
+      this._stopFn();
+      this._stopFn = null;
       return this;
     }
   }, {
     key: "clear",
     value: function clear() {
-      recorder_classPrivateFieldSet(_events, this, {
+      this._events = {
         previous: [],
         current: []
-      });
+      };
     }
   }, {
     key: "_logEvent",
