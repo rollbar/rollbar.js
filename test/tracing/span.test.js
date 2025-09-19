@@ -7,7 +7,7 @@ import { ROOT_CONTEXT } from '../../src/tracing/context.js';
 import hrtime from '../../src/tracing/hrtime.js';
 
 const spanOptions = function (options = {}) {
-  const exporter = new SpanExporter();
+  const exporter = new SpanExporter({});
   const spanProcessor = new SpanProcessor(exporter);
 
   return {

@@ -10,11 +10,11 @@ test:
 	@echo ""
 
 test-browser:
-	@npm run test-browser
+	@npm run test:wtr
 	@echo ""
 
 test-server:
-	@npm run test-server
+	@npm run test:server
 	@echo ""
 
 test-ci:

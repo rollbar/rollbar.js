@@ -34,11 +34,11 @@ const spanOptions = function (options = {}) {
     parentSpanId: 'c44638e654c52eff',
     ...options,
   };
-}
+};
 
 describe('SpanProcessor()', function () {
   it('should process pending spans', function (done) {
-    const exporter = new SpanExporter();
+    const exporter = new SpanExporter({});
     const spanProcessor = new SpanProcessor(exporter);
 
     expect(spanProcessor.pendingSpans.size).to.equal(0);
