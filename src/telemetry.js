@@ -45,6 +45,9 @@ class Telemeter {
       }
     }
 
+    // Filter until supported in legacy telemetry
+    events = events.filter(e => e.type !== 'connectivity');
+
     // Remove internal keys from output
     events = events.map(({ otelAttributes, ...event }) => event);
 
@@ -545,8 +548,31 @@ class Telemeter {
     */
   }
 
-  captureConnectivityChange(type, rollbarUUID) {
-    return this.captureNetwork({ change: type }, 'connectivity', rollbarUUID);
+  captureConnectivityChange({type, isSynthetic, timestamp}) {
+    const name = 'rollbar-connectivity-event';
+    const metadata = {
+      type: name,
+      subtype: type,
+    };
+    const otelAttributes = {
+      type,
+      isSynthetic,
+    };
+
+    this.telemetrySpan?.addEvent(
+      name,
+      otelAttributes,
+      fromMillis(timestamp),
+    );
+
+    return this.capture(
+      'connectivity',
+      metadata,
+      'info',
+      null,
+      timestamp,
+      otelAttributes,
+    );
   }
 
   // Only intended to be used internally by the notifier
