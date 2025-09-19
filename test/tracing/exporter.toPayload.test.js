@@ -393,3 +393,78 @@ describe('SpanExporter.toPayload()', function () {
     );
   });
 });
+
+describe.only('SpanExporter with log level', function () {
+  let hrtimeStub;
+  let idStub;
+
+  beforeEach(function () {
+    spanExportQueue.length = 0;
+    hrtimeStub = sinon.stub(hrtime, 'now').returns([1, 2]);
+    sinon.stub(hrtime, 'toNanos').returns(1000000000);
+    idStub = sinon.stub(id, 'gen').returns('1234567890abcdef');
+  });
+  afterEach(function () {
+    spanExportQueue.length = 0;
+    sinon.restore();
+  });
+
+  it('should log', function () {
+    let exporter = new SpanExporter({
+      debug: { logEmits: false },
+    });
+
+    const mockSpan = {
+      name: 'test-span',
+      spanContext: {
+        traceId: 'abcdef1234567890abcdef1234567890',
+        spanId: '1234567890abcdef',
+      },
+      startTime: hrtime.now(),
+      endTime: hrtime.now(),
+      attributes: {
+        'test.attribute': 'test-value',
+      },
+      events: [],
+      resource: {
+        attributes: {
+          'service.name': 'test-service',
+        },
+      },
+    };
+
+    exporter.export([mockSpan]);
+    const payload = exporter.toPayload();
+
+    expect(payload).to.have.property('resourceSpans').that.is.an('array');
+  });
+  it('should not log', function () {
+    let exporter = new SpanExporter({
+      debug: { logEmits: true },
+    });
+
+    const mockSpan = {
+      name: 'test-span',
+      spanContext: {
+        traceId: 'abcdef1234567890abcdef1234567890',
+        spanId: '1234567890abcdef',
+      },
+      startTime: hrtime.now(),
+      endTime: hrtime.now(),
+      attributes: {
+        'test.attribute': 'test-value',
+      },
+      events: [],
+      resource: {
+        attributes: {
+          'service.name': 'test-service',
+        },
+      },
+    };
+
+    exporter.export([mockSpan]);
+    const payload = exporter.toPayload();
+
+    expect(payload).to.have.property('resourceSpans').that.is.an('array');
+  });
+});
