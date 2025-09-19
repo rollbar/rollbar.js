@@ -411,7 +411,7 @@ describe('SpanExporter with log level', function () {
     sinon.restore();
   });
 
-  it('should log', function () {
+  it('should not log', function () {
     let exporter = new SpanExporter({
       debug: { logEmits: false },
     });
@@ -438,7 +438,7 @@ describe('SpanExporter with log level', function () {
     exporter.export([mockSpan]);
     expect(consoleLogSpy.callCount).to.equal(0);
   });
-  it('should not log', function () {
+  it('should log', function () {
     let exporter = new SpanExporter({
       debug: { logEmits: true },
     });
