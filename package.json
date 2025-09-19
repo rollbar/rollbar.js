@@ -112,7 +112,7 @@
     "postbuild:dev": "npm run postbuild",
     "test": "npm run test:wtr && npm run test:server",
     "test:server": "mocha 'test/server.*.test.js' --reporter spec",
-    "test:wtr": "web-test-runner test/tracing/exporter.toPayload.test.js",
+    "test:wtr": "web-test-runner",
     "test:wtr:watch": "web-test-runner --watch",
     "lint": "./node_modules/.bin/eslint .",
     "pack": "node scripts/pack.js",
