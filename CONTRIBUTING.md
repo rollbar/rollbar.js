@@ -39,13 +39,15 @@ npm test
 Run only browser tests:
 
 ```bash
-npm run test-browser
+npm run test:wtr
 ```
+
+You may need to run `npx playwright install` first for these to run on your machine.
 
 Run only server tests:
 
 ```bash
-npm run test-server
+npm run test:server
 ```
 
 ### Code Style
@@ -64,6 +66,7 @@ npm run test-server
    ```
 
 2. Make your changes and ensure:
+
    - All tests pass
    - Code follows our style guidelines
    - New features include appropriate tests
@@ -86,6 +89,7 @@ npm run test-server
 2. Open a pull request on GitHub against the `master` branch
 
 3. In your pull request description:
+
    - Clearly describe what changes you've made
    - Reference any related issues
    - Include testing steps if applicable
