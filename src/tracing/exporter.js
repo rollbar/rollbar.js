@@ -12,7 +12,6 @@ export class SpanExporter {
    * @param {Function} _resultCallback - Optional callback (not used)
    */
   export(spans, _resultCallback) {
-    console.log(spans); // console exporter, TODO: make optional
     spanExportQueue.push(...spans);
   }
 
