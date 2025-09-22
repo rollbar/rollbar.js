@@ -76,7 +76,6 @@
   "dependencies": {
     "@rrweb/record": "^2.0.0-alpha.18",
     "async": "~3.2.3",
-    "console-polyfill": "0.3.0",
     "error-stack-parser-es": "^1.0.5",
     "json-stringify-safe": "~5.0.0",
     "lru-cache": "~2.2.1",
