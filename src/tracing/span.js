@@ -2,6 +2,7 @@ import hrtime from './hrtime.js';
 
 export class Span {
   constructor(options) {
+    this.usePerformance = options.usePerformance;
     this.initReadableSpan(options);
 
     this.spanProcessor = options.spanProcessor;
@@ -19,7 +20,7 @@ export class Span {
       kind: options.kind,
       spanContext: options.spanContext,
       parentSpanId: options.parentSpanId,
-      startTime: options.startTime || hrtime.now(),
+      startTime: options.startTime || hrtime.now(options.usePerformance),
       endTime: [0, 0],
       status: { code: 0, message: '' },
       attributes: { 'session.id': options.session.id },
@@ -81,7 +82,7 @@ export class Span {
 
   end(attributes, time) {
     if (attributes) this.setAttributes(attributes);
-    this.span.endTime = time || hrtime.now();
+    this.span.endTime = time || hrtime.now(this.usePerformance);
     this.span.ended = true;
     this.spanProcessor.onEnd(this);
   }
