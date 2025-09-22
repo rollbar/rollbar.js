@@ -17,6 +17,7 @@ import tracingDefaults from '../tracing/defaults.js';
 import ReplayManager from './replay/replayManager.js';
 
 function Rollbar(options, client) {
+  logger.init({ logLevel: options.logLevel || 'error' });
   this.options = _.handleOptions(defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   const Telemeter = this.components.telemeter;
@@ -121,6 +122,9 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    logger.init({ logLevel: options.logLevel || 'error' });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
