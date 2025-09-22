@@ -50,12 +50,15 @@ function add(a, b) {
 /**
  * Get the current high-resolution time as an OpenTelemetry hrtime tuple.
  *
- * Uses the Performance API (timeOrigin + now()).
+ * @param {boolean} usePerformance=false - If true, uses the Performance API (timeOrigin + now()).
  *
  * @returns {[number, number]} The current hrtime tuple [s, ns].
  */
-function now() {
-  return add(fromMillis(performance.timeOrigin), fromMillis(performance.now()));
+function now(usePerformance = false) {
+  if (usePerformance) {
+    return add(fromMillis(performance.timeOrigin), fromMillis(performance.now()));
+  }
+  return fromMillis(Date.now());
 }
 
 /**
