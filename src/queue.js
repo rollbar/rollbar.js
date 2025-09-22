@@ -102,7 +102,10 @@ class Queue {
     }
 
     if (this.replayManager && data.body) {
-      const replayId = _.getItemAttribute(data, 'replay_id');
+      const replayId = data?.attributes?.find(
+        (a) => a.key === 'replay_id',
+      )?.value;
+
       if (replayId) {
         item.replayId = this.replayManager.add(replayId, data.uuid);
       }

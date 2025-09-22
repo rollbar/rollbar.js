@@ -716,20 +716,3 @@ describe('addItemAttributes', function () {
     expect(item.data.attributes[0].value).to.equal('12345');
   });
 });
-
-describe('getItemAttribute', function () {
-  it('should skip undefined values', function () {
-    const item = {
-      data: {
-        attributes: [
-          { key: 'replay_id', value: '12345' },
-          { key: 'session_id', value: '67890' },
-        ],
-      },
-    };
-    let value = _.getItemAttribute(item.data, 'replay_id');
-    expect(value).to.equal('12345');
-    value = _.getItemAttribute(item.data, 'session_id');
-    expect(value).to.equal('67890');
-  });
-});

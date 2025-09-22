@@ -623,16 +623,6 @@ function addItemAttributes(itemData, attributes) {
   }
 }
 
-function getItemAttribute(itemData, key) {
-  const attributes = itemData.attributes || [];
-  for (let i = 0; i < attributes.length; ++i) {
-    if (attributes[i].key === key) {
-      return attributes[i].value;
-    }
-  }
-  return undefined;
-}
-
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
  *       undefined if not possible.
@@ -787,7 +777,6 @@ export {
   addErrorContext,
   createTelemetryEvent,
   addItemAttributes,
-  getItemAttribute,
   filterIp,
   formatArgsAsString,
   formatUrl,
@@ -814,5 +803,5 @@ export {
   stringify,
   maxByteSize,
   typeName,
-  uuid4
+  uuid4,
 };
