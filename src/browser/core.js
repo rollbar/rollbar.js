@@ -1,7 +1,7 @@
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 import * as globals from './globalSetup.js';
 
 import Transport from './transport.js';
@@ -123,7 +123,7 @@ Rollbar.global = function (options) {
 
 Rollbar.prototype.configure = function (options, payloadData) {
   if (options.logLevel) {
-    logger.init({ logLevel: options.logLevel || 'error' });
+    logger.init({ logLevel: options.logLevel });
   }
   var oldOptions = this.options;
   var payload = {};

@@ -1,6 +1,6 @@
 import * as _ from '../utility.js';
 import errorParser from '../errorParser.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 
 function handleDomException(item, options, callback) {
   if (item.err && errorParser.Stack(item.err).name === 'DOMException') {

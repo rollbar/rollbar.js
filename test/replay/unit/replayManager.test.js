@@ -4,7 +4,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import logger from '../../../src/browser/logger.js';
+import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import id from '../../../src/tracing/id.js';
 

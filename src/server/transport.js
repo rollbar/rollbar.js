@@ -1,6 +1,6 @@
 import * as _ from '../utility.js';
 import truncation from '../truncation.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 
 import http from 'http';
 import https from 'https';

@@ -1,5 +1,5 @@
 import id from '../../tracing/id.js';
-import logger from '../logger.js';
+import logger from '../../logger.js';
 
 /**
  * ReplayManager - Manages the mapping between error occurrences and their associated

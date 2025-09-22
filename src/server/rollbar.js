@@ -4,7 +4,7 @@ import os from 'os';
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 import * as serverDefaults from './defaults.js';
 import { version, reportLevel } from '../defaults.js';
 
@@ -29,12 +29,12 @@ function Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
+  logger.init({ logLevel: options.logLevel || 'error' });
   this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
-  logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
@@ -113,6 +113,9 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    logger.init({ logLevel: options.logLevel });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
@@ -126,7 +129,6 @@ Rollbar.prototype.configure = function (options, payloadData) {
   );
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
-  logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
   this.setupUnhandledCapture();
 

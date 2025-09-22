@@ -1,7 +1,7 @@
 import Client from '../rollbar.js';
 import * as _ from '../utility.js';
 import API from '../api.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 import * as rnDefaults from './defaults.js';
 import { version, reportLevel } from '../defaults.js';
 
@@ -20,6 +20,7 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
+  logger.init({ logLevel: options.logLevel || 'error' });
   this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // This makes no sense in a long running app
@@ -74,6 +75,9 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    logger.init({ logLevel: options.logLevel });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {

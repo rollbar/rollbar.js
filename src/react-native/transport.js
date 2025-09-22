@@ -1,5 +1,5 @@
 import * as _ from '../utility.js';
-import logger from './logger.js';
+import logger from '../logger.js';
 
 import { Buffer } from 'buffer/';
 
