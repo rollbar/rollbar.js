@@ -41,6 +41,7 @@ export class Tracer {
       parentSpanId,
       spanProcessor: this.spanProcessor,
       startTime: options.startTime,
+      usePerformance: options.usePerformance,
     });
     return span;
   }

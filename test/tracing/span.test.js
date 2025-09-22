@@ -1,3 +1,4 @@
+import sinon from 'sinon';
 import { expect } from 'chai';
 
 import { Span } from '../../src/tracing/span.js';
@@ -176,5 +177,41 @@ describe('Span()', function () {
     expect(span.export()).to.deep.equal(span.span);
 
     done();
+  });
+
+  it('should use Date.now() by default', function () {
+    const nowStub = sinon.stub(Date, 'now').returns(1758315561543);
+
+    const span = new Span(spanOptions());
+    expect(span.isRecording()).to.be.true;
+
+    span.end();
+    expect(span.isRecording()).to.be.false;
+    expect(span.export()).to.deep.equal(span.span);
+
+    expect(span.span.startTime).to.deep.equal([1758315561, 543000000]);
+    expect(span.span.endTime).to.deep.equal([1758315561, 543000000]);
+
+    nowStub.restore();
+  });
+
+  it('should use the performance api when set', function () {
+    const timeOriginStub = sinon.stub(
+      performance, 'timeOrigin'
+    ).get(() => 1758315561543);
+    const nowStub = sinon.stub(performance, 'now').returns(1100.123);
+
+    const span = new Span(spanOptions({ usePerformance: true }));
+    expect(span.isRecording()).to.be.true;
+
+    span.end();
+    expect(span.isRecording()).to.be.false;
+    expect(span.export()).to.deep.equal(span.span);
+
+    expect(span.span.startTime).to.deep.equal([1758315562, 643123000]);
+    expect(span.span.endTime).to.deep.equal([1758315562, 643123000]);
+
+    timeOriginStub.restore();
+    nowStub.restore();
   });
 });
