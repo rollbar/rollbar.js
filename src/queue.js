@@ -101,7 +101,7 @@ class Queue {
       return;
     }
 
-    if (this.replayManager) {
+    if (this.replayManager && data.body) {
       const replayId = data?.attributes?.find(
         (a) => a.key === 'replay_id',
       )?.value;
