@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import {
   ContextManager,
@@ -112,6 +113,18 @@ describe('Tracing()', function () {
       'user.id': '12345',
       'user.email': 'aaa@bb.com',
     });
+  });
+
+  it('should not init session when sessionStorage is not detected', function () {
+    const stub = sinon.stub(window, 'sessionStorage').value(undefined);
+    const options = tracingOptions();
+    const t = new Tracing(window, options);
+
+    // calling initSession should be a no-op
+    t.initSession();
+
+    expect(t.session).to.be.undefined;
+    stub.restore();
   });
 
   it('should generate ids', function (done) {
