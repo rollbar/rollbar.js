@@ -168,7 +168,7 @@ describe('Session Replay E2E', function () {
           expect(span_r).to.have.property('events');
           expect(span_r.events).to.be.an('array');
           expect(span_r).to.have.property('attributes').that.is.an('array');
-          expect(span_r.attributes).to.have.lengthOf(4);
+          expect(span_r.attributes).to.have.lengthOf(9);
 
           expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',
@@ -182,6 +182,22 @@ describe('Session Replay E2E', function () {
             key: 'user.email',
             value: { stringValue: 'aaa@bb.com' },
           });
+          expect(span_r.attributes).to.deep.include({
+            key: 'browser.mobile',
+            value: { boolValue: false },
+          });
+
+          const languageAttr = span_r.attributes.find(
+            (attr) => attr.key === 'browser.language',
+          );
+          expect(languageAttr).to.exist;
+          expect(languageAttr.value.stringValue).to.match(/en-US/);
+
+          const userAgentAttr = span_r.attributes.find(
+            (attr) => attr.key === 'user_agent.original',
+          );
+          expect(userAgentAttr).to.exist;
+          expect(userAgentAttr.value.stringValue).to.match(/HeadlessChrome/);
 
           const sessionIdAttr = span_r.attributes.find(
             (attr) => attr.key === 'session.id',

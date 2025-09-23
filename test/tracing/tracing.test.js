@@ -108,7 +108,7 @@ describe('Tracing()', function () {
       'user.email': 'aaa@bb.com',
     });
 
-    expect(t.session.attributes).to.deep.equal({
+    expect(t.session.attributes).to.deep.include({
       codeVersion: 'abc123',
       'user.id': '12345',
       'user.email': 'aaa@bb.com',

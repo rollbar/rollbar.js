@@ -13,11 +13,15 @@ export class Session {
     this._attributes = {};
   }
 
-  init() {
+  init(attrs = {}) {
     if (this.session) {
       return this;
     }
-    return this.getSession() || this.createSession();
+    this.getSession() || this.createSession();
+
+    this.initSessionAttributes(attrs);
+
+    return this;
   }
 
   getSession() {
@@ -61,6 +65,28 @@ export class Session {
 
   setAttributes(attributes) {
     this._attributes = { ...this._attributes, ...attributes };
+    return this;
+  }
+
+  setUser(user) {
+    this.setAttributes({
+      'user.id': user?.id,
+      'user.email': user?.email,
+      'user.name': user?.name || user?.username,
+    });
+    return this;
+  }
+
+  initSessionAttributes(attrs) {
+    this.setAttributes({
+      'session.id': this.session.id,
+      'browser.brands': navigator.userAgentData?.brands,
+      'browser.language': navigator.language,
+      'browser.mobile': navigator.userAgentData?.mobile,
+      'browser.platform': navigator.userAgentData?.platform,
+      'user_agent.original': navigator.userAgent,
+      ...attrs,
+    });
     return this;
   }
 }
