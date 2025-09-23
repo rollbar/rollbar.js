@@ -12,7 +12,9 @@ export default class Tracing {
     this.options = options;
     this.window = gWindow;
 
-    this.session = new Session(this, options);
+    if (this.window.sessionStorage) {
+      this.session = new Session(this, options);
+    }
     this.createTracer();
   }
 

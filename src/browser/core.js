@@ -87,6 +87,8 @@ class Rollbar {
       this.instrumenter.instrument();
     }
 
+    this.setSessionAttributesFromOptions(options);
+
     // Used with rollbar-react for rollbar-react-native compatibility.
     this.rollbar = this;
   }
@@ -112,6 +114,7 @@ class Rollbar {
     if (options.logLevel) {
       logger.init({ logLevel: options.logLevel });
     }
+    this.setSessionAttributesFromOptions(options);
     var oldOptions = this.options;
     var payload = {};
     if (payloadData) {
@@ -433,6 +436,32 @@ class Rollbar {
     var event = _.createTelemetryEvent(arguments);
     return this.client.captureEvent(event.type, event.metadata, event.level);
   };
+
+  setSessionUser(user) {
+    if (!this.tracing?.session) return;
+
+    this.tracing.session.setUser(user);
+  }
+
+  setSessionAttributes(attrs) {
+    if (!this.tracing?.session) return;
+
+    attrs = { ...attrs };
+
+    this.tracing.session.setAttributes(attrs);
+  }
+
+  setSessionAttributesFromOptions(options) {
+    if (options.person) {
+      this.setSessionUser(options.person);
+    }
+    const code_version = options.client?.javascript?.code_version || options.codeVersion || options.code_version;
+    this.setSessionAttributes({
+      code_version,
+      'notifier.name': 'rollbar-browser-js',
+      'notifier.version': options.version,
+    });
+  }
 
   // The following two methods are used internally and are not meant for public use
   captureDomContentLoaded(e, ts) {

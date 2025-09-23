@@ -6,6 +6,60 @@ import { loadHtml } from './util/fixtures.js';
 
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
+import Tracing from '../src/tracing/tracing.js';
+
+describe('options', function () {
+  beforeEach(function () {
+    Rollbar.setComponents({
+      tracing: Tracing,
+    });
+  });
+
+  afterEach(function () {
+    Rollbar.setComponents({});
+  });
+
+  it('should set session attributes from constructor', function () {
+    const rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: false,
+      person: {
+        id: '12345',
+        name: 'Test User',
+        email: 'user@test.com',
+      },
+      codeVersion: 'abc123',
+    });
+    const session = rollbar.tracing.session;
+    expect(session).to.exist;
+    expect(session.attributes['user.id']).to.equal('12345');
+    expect(session.attributes['user.name']).to.equal('Test User');
+    expect(session.attributes['user.email']).to.equal('user@test.com');
+    expect(session.attributes['code_version']).to.equal('abc123');
+  });
+
+  it('should set session attributes from configure', function () {
+    const rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: false,
+
+    });
+    rollbar.configure({
+      person: {
+        id: '12345',
+        name: 'Test User',
+        email: 'user@test.com',
+      },
+      codeVersion: 'abc123',
+    });
+    const session = rollbar.tracing.session;
+    expect(session).to.exist;
+    expect(session.attributes['user.id']).to.equal('12345');
+    expect(session.attributes['user.name']).to.equal('Test User');
+    expect(session.attributes['user.email']).to.equal('user@test.com');
+    expect(session.attributes['code_version']).to.equal('abc123');
+  });
+});
 
 describe('options.captureUncaught', function () {
   let __originalOnError = null;

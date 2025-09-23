@@ -166,6 +166,14 @@ describe('Span()', function () {
     done();
   });
 
+  it('should create a readable span without a session present', function (done) {
+    const span = new Span(spanOptions({ session: undefined }));
+
+    expectReadableSpan(span, {attributes: { 'session.id': undefined }});
+
+    done();
+  });
+
   it('should keep valid state', function (done) {
     const span = new Span(spanOptions());
     expect(span.isRecording()).to.be.true;
