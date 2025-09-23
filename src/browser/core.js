@@ -449,6 +449,16 @@ class Rollbar {
     return this.client.captureLoad(ts);
   };
 
+  loadFull() {
+    logger.info(
+      'Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.',
+    );
+  };
+
+  _createItem(args) {
+    return _.createItem(args, logger, this);
+  };
+
   // Static version of instance methods support the legacy pattern of a
   // global `Rollbar` instance, where after calling `Rollbar.init()`,
   // `Rollbar` can be used as if it were an instance.
@@ -515,15 +525,7 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
 
-Rollbar.prototype.loadFull = function () {
-  logger.info(
-    'Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.',
-  );
-};
 
-Rollbar.prototype._createItem = function (args) {
-  return _.createItem(args, logger, this);
-};
 
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
