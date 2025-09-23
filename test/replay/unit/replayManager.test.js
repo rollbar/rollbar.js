@@ -4,6 +4,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import id from '../../../src/tracing/id.js';
 
@@ -36,6 +37,7 @@ describe('ReplayManager', function () {
   let mockTracing;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'error' });
     sinon.stub(id, 'gen').returns('1234567890abcdef');
 
     mockRecorder = new MockRecorder();

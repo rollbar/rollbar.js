@@ -2,7 +2,7 @@ import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
 
 import hrtime from '../../tracing/hrtime.js';
-import logger from '../logger.js';
+import logger from '../../logger.js';
 
 export default class Recorder {
   _options;

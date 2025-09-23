@@ -1,4 +1,4 @@
-import logger from '../logger.js';
+import logger from '../../logger.js';
 import * as _ from '../../utility.js';
 
 function makeFetchRequest({accessToken, url, method, payload, headers, callback, timeout}) {

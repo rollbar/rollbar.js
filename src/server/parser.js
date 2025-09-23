@@ -1,4 +1,4 @@
-import logger from './logger.js';
+import logger from '../logger.js';
 import async from 'async';
 import fs from 'fs';
 import lru from 'lru-cache';
