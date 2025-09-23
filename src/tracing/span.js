@@ -23,7 +23,7 @@ export class Span {
       startTime: options.startTime || hrtime.now(options.usePerformance),
       endTime: [0, 0],
       status: { code: 0, message: '' },
-      attributes: { 'session.id': options.session.id },
+      attributes: { 'session.id': options.session?.id },
       links: [],
       events: [],
       duration: 0,
