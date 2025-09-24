@@ -118,6 +118,29 @@ describe('Tracing()', function () {
     done();
   });
 
+  it('should create spans with span option overrides', function () {
+    const options = tracingOptions();
+    const t = new Tracing(window, options);
+    t.initSession();
+
+    expect(t.sessionId).to.match(/^[a-f0-9]{32}$/);
+
+    const span = t.startSpan(
+    'test.span',
+    { resource: { attributes: { 'rollbar.environment': 'new-env' }}},
+    );
+
+    expect(span.span.name).to.equal('test.span');
+    expect(span.span.spanContext.traceId).to.match(/^[a-f0-9]{32}$/);
+    expect(span.span.spanContext.spanId).to.match(/^[a-f0-9]{16}$/);
+    expect(span.span.resource.attributes['service.name']).to.equal(
+      'unknown_service',
+    );
+    expect(span.span.resource.attributes['rollbar.environment']).to.equal(
+      'new-env',
+    );
+  });
+
   it('should get and set session attributes', function () {
     const options = tracingOptions();
     const t = new Tracing(window, options);
