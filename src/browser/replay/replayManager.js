@@ -81,6 +81,7 @@ export default class ReplayManager {
   add(replayId, occurrenceUuid) {
     replayId = replayId || id.gen(8);
 
+    // Start processing the replay in the background
     this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
     return replayId;
