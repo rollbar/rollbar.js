@@ -444,7 +444,6 @@ describe('Queue with ReplayManager', function () {
     });
 
     it('should NOT leak replay when retrying after connection error', async function () {
-      // Create a new queue with retry configuration
       queue = new Queue(
         rateLimiter,
         api,
@@ -457,10 +456,8 @@ describe('Queue with ReplayManager', function () {
       api.postItem.callsFake((data, callback) => {
         callCount++;
         if (callCount === 1) {
-          // First call fails with retriable error
           callback({ code: 'ECONNRESET' });
         } else {
-          // Second call fails with non-retriable error
           callback(new Error('Permanent failure'));
         }
       });

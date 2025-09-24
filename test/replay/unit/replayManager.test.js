@@ -124,14 +124,12 @@ describe('ReplayManager', function () {
         }),
       ).to.be.true;
 
-      // Verify recording export happened before telemetry export
       expect(
         mockRecorder.exportRecordingSpan.calledBefore(
           mockTelemeter.exportTelemetrySpan,
         ),
       ).to.be.true;
 
-      // Verify toPayload was called after both exports
       expect(mockTracing.exporter.toPayload.called).to.be.true;
 
       expect(replayManager.size).to.equal(1);
@@ -152,7 +150,6 @@ describe('ReplayManager', function () {
 
       expect(result).to.be.null;
 
-      // Recording export is attempted but throws
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
@@ -161,23 +158,17 @@ describe('ReplayManager', function () {
         }),
       ).to.be.true;
 
-      // Telemetry should NOT be exported since recording threw
       expect(mockTelemeter.exportTelemetrySpan.called).to.be.false;
-
-      // toPayload should not be called since exportRecordingSpan threw
       expect(mockTracing.exporter.toPayload.called).to.be.false;
 
-      // Nothing should be stored in the map
       expect(replayManager.size).to.equal(0);
       expect(replayManager.getSpans(replayId)).to.be.null;
 
-      // Error should be logged
       expect(loggerSpy.called).to.be.true;
       expect(loggerSpy.args[0][0]).to.include('Error exporting recording span');
     });
 
     it('should work when telemeter is not provided', function () {
-      // Create ReplayManager without telemeter
       replayManager = new ReplayManager({
         recorder: mockRecorder,
         api: mockApi,
@@ -200,7 +191,6 @@ describe('ReplayManager', function () {
         }),
       ).to.be.true;
 
-      // Verify toPayload was called
       expect(mockTracing.exporter.toPayload.called).to.be.true;
 
       expect(replayManager.size).to.equal(1);
@@ -342,7 +332,6 @@ describe('ReplayManager', function () {
       expect(error).to.equal(apiError);
       expect(mockApi.postSpans.called).to.be.true;
 
-      // Payload should be removed even on error
       expect(replayManager.size).to.equal(0);
     });
   });
