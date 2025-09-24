@@ -29,9 +29,15 @@ export class Tracer {
 
     const kind = 0;
     const spanContext = { traceId, spanId, traceFlags, traceState };
+    const resource = {
+      attributes: {
+        ...(this.tracing.resource?.attributes || {}),
+        ...(options.resource?.attributes || {}),
+      },
+    };
 
     const span = new Span({
-      resource: this.tracing.resource,
+      resource: resource,
       scope: this.tracing.scope,
       session: this.tracing.session.session,
       context,
