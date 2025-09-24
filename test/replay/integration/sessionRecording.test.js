@@ -359,7 +359,7 @@ describe('Session Replay Transport Integration', function () {
     expect(postSpansSpy.calledOnce).to.be.true;
 
     expect(recorder.exportRecordingSpan.called).to.be.true;
-    // Should have been called with attributes containing the replayId
+
     const exportArgs = recorder.exportRecordingSpan.firstCall.args;
     expect(exportArgs[1]).to.have.property(
       'rollbar.replay.id',

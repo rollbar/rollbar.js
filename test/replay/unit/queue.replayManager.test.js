@@ -322,7 +322,6 @@ describe('Queue with ReplayManager', function () {
       };
 
       api.postItem.callsFake((data, callback) => {
-        // Server error response
         callback(null, { err: 1, message: 'Internal server error' }, {});
       });
 
