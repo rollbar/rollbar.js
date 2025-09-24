@@ -18,6 +18,11 @@ export default class Tracing {
     this.createTracer();
   }
 
+  configure(options) {
+    // Options merge happens before configure is called, so we can just replace.
+    this.options = options;
+  }
+
   initSession() {
     if (this.session) {
       this.session.init();

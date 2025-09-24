@@ -51,6 +51,27 @@ describe('Tracing()', function () {
     done();
   });
 
+  it('should configure', function () {
+    const options = tracingOptions();
+    const t = new Tracing(window, options);
+    t.initSession();
+
+    expect(t.options.resource).to.deep.equal(options.resource);
+    expect(t.options.version).to.equal(options.version);
+
+    t.configure({
+      resource: {
+        'service.name': 'changed_service',
+      },
+      version: '0.2.0',
+    });
+
+    expect(t.options.resource).to.deep.equal({
+      'service.name': 'changed_service',
+    });
+    expect(t.options.version).to.equal('0.2.0');
+  });
+
   it('should create and export spans', function (done) {
     const options = tracingOptions();
     const t = new Tracing(window, options);
