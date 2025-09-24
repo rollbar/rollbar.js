@@ -42,33 +42,31 @@ export default class ReplayManager {
   }
 
   /**
-   * Processes a replay by converting recorder events into a transport-ready payload.
+   * Exports recording and telemetry spans, then stores the tracing payload in the map.
    *
-   * Calls recorder.dump() to capture events as spans, formats them into a proper payload,
-   * and stores the result in the map using replayId as the key.
+   * Exports both telemetry and recording spans, then generates the complete payload
+   * using the tracing exporter and stores it in the map using replayId as the key.
+   * This is an async operation that runs in the background.
    *
    * @param {string} replayId - The unique ID for this replay
-   * @returns {Promise<string>} A promise resolving to the processed replayId
+   * @param {string} occurrenceUuid - The UUID of the associated error occurrence
    * @private
    */
-  async _processReplay(replayId, occurrenceUuid) {
+  async _exportSpansAndAddTracingPayload(replayId, occurrenceUuid) {
     try {
-      this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
-
-      const payload = this._recorder.dump(
-        this._tracing,
-        replayId,
-        occurrenceUuid,
-      );
-
-      this._map.set(replayId, payload);
-    } catch (transformError) {
-      logger.error('Error transforming spans:', transformError);
-
-      this._map.set(replayId, null); // TODO(matux): Error span?
+      this._recorder.exportRecordingSpan(this._tracing, {
+        'rollbar.replay.id': replayId,
+        'rollbar.occurrence.uuid': occurrenceUuid,
+      });
+    } catch (error) {
+      logger.error('Error exporting recording span:', error);
+      return;
     }
 
-    return replayId;
+    this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
+
+    const payload = this._tracing.exporter.toPayload();
+    this._map.set(replayId, payload);
   }
 
   /**
@@ -83,9 +81,8 @@ export default class ReplayManager {
   add(replayId, occurrenceUuid) {
     replayId = replayId || id.gen(8);
 
-    this._processReplay(replayId, occurrenceUuid).catch((error) => {
-      logger.error('Failed to process replay:', error);
-    });
+    // Start processing the replay in the background
+    this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
     return replayId;
   }
@@ -103,15 +100,11 @@ export default class ReplayManager {
    */
   async send(replayId) {
     if (!replayId) {
-      logger.error('ReplayManager.send: No replayId provided');
-      return false;
+      throw Error('ReplayManager.send: No replayId provided');
     }
 
     if (!this._map.has(replayId)) {
-      logger.error(
-        `ReplayManager.send: No replay found for replayId: ${replayId}`,
-      );
-      return false;
+      throw Error(`ReplayManager.send: No replay found for id: ${replayId}`);
     }
 
     const payload = this._map.get(replayId);
@@ -124,19 +117,10 @@ export default class ReplayManager {
       (payload.resourceSpans && payload.resourceSpans.length === 0);
 
     if (isEmpty) {
-      logger.error(
-        `ReplayManager.send: No payload found for replayId: ${replayId}`,
-      );
-      return false;
+      throw Error(`ReplayManager.send: No payload found for id: ${replayId}`);
     }
 
-    try {
-      await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
-      return true;
-    } catch (error) {
-      logger.error('Error sending replay:', error);
-      return false;
-    }
+    await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
   }
 
   /**

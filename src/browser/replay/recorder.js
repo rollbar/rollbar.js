@@ -68,38 +68,35 @@ export default class Recorder {
   checkoutEveryNms() {
     // Recording may be up to two checkout intervals, therefore the checkout
     // interval is set to half of the maxSeconds.
-    return (this.options.maxSeconds || 10) * 1000 / 2;
+    return ((this.options.maxSeconds || 10) * 1000) / 2;
   }
 
   /**
-   * Converts recorded events into a formatted payload ready for transport.
+   * Exports the recording span with all recorded events.
    *
    * This method takes the recorder's stored events, creates a new span with the
    * provided tracing context, attaches all events with their timestamps as span
-   * events, and then returns a payload ready for transport to the server.
+   * events, and exports the span to the tracing exporter. This is a side-effect
+   * function that doesn't return anything - the span is exported internally.
    *
    * @param {Object} tracing - The tracing system instance to create spans
-   * @param {string} replayId - Unique identifier to associate with this replay recording
-   * @returns {Object|null} A formatted payload containing spans data in OTLP format, or null if no events exist
+   * @param {Object} attributes - Attributes to add to the span
+   *  (e.g., rollbar.replay.id, rollbar.occurrence.uuid)
    */
-  dump(tracing, replayId, occurrenceUuid) {
-    const events = this._events.previous.concat(this._events.current);
+  exportRecordingSpan(tracing, attributes = {}) {
+    const events = this._collectEvents();
 
-    if (events.length < 2) {
-      logger.error('Replay recording cannot have less than 2 events');
-      return null;
+    if (events.length < 3) {
+      // TODO(matux): improve how we consider a recording valid
+      throw new Error('Replay recording cannot have less than 3 events');
     }
 
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
 
     recordingSpan.setAttributes({
       ...(tracing.session?.attributes ?? {}),
-      'rollbar.replay.id': replayId
+      ...attributes,
     });
-
-    if (occurrenceUuid) {
-      recordingSpan.setAttribute('rollbar.occurrence.uuid', occurrenceUuid);
-    }
 
     const earliestEvent = events.reduce((earliestEvent, event) =>
       event.timestamp < earliestEvent.timestamp ? event : earliestEvent,
@@ -118,11 +115,7 @@ export default class Recorder {
       );
     }
 
-    this._addEndEvent(recordingSpan, replayId);
-
     recordingSpan.end();
-
-    return tracing.exporter.toPayload();
   }
 
   start() {
@@ -176,6 +169,20 @@ export default class Recorder {
     };
   }
 
+  _collectEvents() {
+    const events = this._events.previous.concat(this._events.current);
+
+    // Helps the application correctly align playback by adding a noop event
+    // to the end of the recording.
+    events.push({
+      timestamp: Date.now(),
+      type: EventType.Custom,
+      data: { tag: 'replay.end', payload: {} },
+    });
+
+    return events;
+  }
+
   _logEvent(event, isCheckout) {
     logger.log(
       `Recorder: ${isCheckout ? 'checkout' : ''} event\n`,
@@ -193,21 +200,6 @@ export default class Recorder {
           2,
         );
       })(event),
-    );
-  }
-
-  /**
-   * Helps the application correctly align playback by adding a noop event
-   * to the end of the recording.
-   **/
-  _addEndEvent(recordingSpan, replayId) {
-    recordingSpan.addEvent(
-      'rrweb-replay-events',
-      {
-        eventType: 5,
-        json: JSON.stringify({tag: "replay.end", payload: {}}),
-      },
-      hrtime.fromMillis(Date.now()),
     );
   }
 }

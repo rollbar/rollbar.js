@@ -49,7 +49,7 @@ describe('Session Replay E2E', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake(({accessToken, options, payload, callback}) => {
+        .callsFake(({ accessToken, options, payload, callback }) => {
           setTimeout(() => {
             callback(
               null,
@@ -107,7 +107,7 @@ describe('Session Replay E2E', function () {
     recorder.start();
 
     setTimeout(() => {
-      const recorderDumpSpy = sinon.spy(recorder, 'dump');
+      const recorderExportSpy = sinon.spy(recorder, 'exportRecordingSpan');
       const replayManagerAddSpy = sinon.spy(replayManager, 'add');
       const replayManagerSendSpy = sinon.spy(replayManager, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
@@ -131,7 +131,7 @@ describe('Session Replay E2E', function () {
         'user.email': 'aaa@bb.com',
       });
 
-      queue.addItem(errorItem, function (err, resp) {
+      queue.addItem(errorItem, (err, resp) => {
         expect(errorItem).to.have.property('replayId');
         const expectedReplayId = errorItem.replayId;
         expect(expectedReplayId).to.match(/^[0-9a-fA-F]{16}$/);
@@ -140,9 +140,14 @@ describe('Session Replay E2E', function () {
         expect(apiPostItemSpy.calledOnce).to.be.true;
 
         setTimeout(() => {
-          expect(recorderDumpSpy.called).to.be.true;
-          expect(recorderDumpSpy.calledWith(tracing, errorItem.replayId)).to.be
-            .true;
+          expect(recorderExportSpy.called).to.be.true;
+          // Check that the attributes include the replayId
+          const exportArgs = recorderExportSpy.firstCall.args;
+          expect(exportArgs[0]).to.equal(tracing);
+          expect(exportArgs[1]).to.have.property(
+            'rollbar.replay.id',
+            errorItem.replayId,
+          );
           expect(replayManagerSendSpy.calledWith(errorItem.replayId)).to.be
             .true;
           expect(apiPostSpansSpy.calledOnce).to.be.true;
@@ -161,8 +166,8 @@ describe('Session Replay E2E', function () {
             payloads.standardPayload.resourceSpans[0].resource,
           );
 
-          const span_t = resourceSpan.scopeSpans[0].spans[0]; // telemetry span
-          const span_r = resourceSpan.scopeSpans[0].spans[1]; // recording span
+          const span_r = resourceSpan.scopeSpans[0].spans[0]; // recording span (exported first)
+          const span_t = resourceSpan.scopeSpans[0].spans[1]; // telemetry span (exported second)
 
           expect(span_r).to.have.property('name', 'rrweb-replay-recording');
           expect(span_r).to.have.property('events');
@@ -224,19 +229,17 @@ describe('Session Replay E2E', function () {
   });
 
   it('should integrate with real components in failure scenario', function (done) {
-    transport.post.callsFake(
-      ({accessToken, options, payload, callback}) => {
-        if (options.path.includes('/api/1/item/')) {
-          setTimeout(() => {
-            callback(null, { err: 1, message: 'API Error' });
-          }, 10);
-        } else {
-          setTimeout(() => {
-            callback(null, { err: 0, result: { id: '12345' } });
-          }, 10);
-        }
-      },
-    );
+    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+      if (options.path.includes('/api/1/item/')) {
+        setTimeout(() => {
+          callback(null, { err: 1, message: 'API Error' });
+        }, 10);
+      } else {
+        setTimeout(() => {
+          callback(null, { err: 0, result: { id: '12345' } });
+        }, 10);
+      }
+    });
 
     const replayManagerAddSpy = sinon.spy(replayManager, 'add');
     const replayManagerDiscardSpy = sinon.spy(replayManager, 'discard');
@@ -257,7 +260,7 @@ describe('Session Replay E2E', function () {
       },
     };
 
-    queue.addItem(errorItem, function (err, resp) {
+    queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
       expect(replayManagerAddSpy.calledOnce).to.be.true;
       expect(resp).to.have.property('err', 1);
