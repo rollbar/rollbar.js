@@ -41,7 +41,7 @@ const createMockTransport = () => {
   return {
     post: sinon
       .stub()
-      .callsFake(({accessToken, options, payload, callback}) => {
+      .callsFake(({ accessToken, options, payload, callback }) => {
         setTimeout(() => {
           callback(
             null,
@@ -85,7 +85,11 @@ describe('Session Replay Integration', function () {
     const dumpRecording = () => {
       const replayId = 'test-replay-id';
       const uuid = 'test-uuid';
-      const payload = recorder.dump(tracing, replayId, uuid);
+      recorder.exportRecordingSpan(tracing, {
+        'rollbar.replay.id': replayId,
+        'rollbar.occurrence.uuid': uuid,
+      });
+      const payload = tracing.exporter.toPayload();
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
@@ -130,7 +134,10 @@ describe('Session Replay Integration', function () {
 
     const dumpRecording = () => {
       const replayId = 'test-replay-id';
-      const payload = recorder.dump(tracing, replayId);
+      recorder.exportRecordingSpan(tracing, {
+        'rollbar.replay.id': replayId,
+      });
+      const payload = tracing.exporter.toPayload();
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
@@ -162,7 +169,10 @@ describe('Session Replay Integration', function () {
 
     const dumpRecording = () => {
       const replayId = 'test-replay-id';
-      const payload = recorder.dump(tracing, replayId);
+      recorder.exportRecordingSpan(tracing, {
+        'rollbar.replay.id': replayId,
+      });
+      const payload = tracing.exporter.toPayload();
 
       expect(payload).to.not.be.null;
       expect(payload).to.be.an('object');
@@ -209,8 +219,9 @@ describe('Session Replay Transport Integration', function () {
 
     recorder = new Recorder(options.recorder, mockRecordFn);
 
-    sinon.stub(recorder, 'dump').callsFake((tracing, replayId) => {
-      return createPayloadWithReplayId(replayId);
+    sinon.stub(recorder, 'exportRecordingSpan');
+    sinon.stub(tracing.exporter, 'toPayload').callsFake(() => {
+      return createPayloadWithReplayId('test-replay-id');
     });
 
     replayManager = new ReplayManager({
@@ -255,7 +266,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queue.addItem(errorItem, function (err, resp) {
+    queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
       expect(addSpy.calledOnce).to.be.true;
 
@@ -274,7 +285,7 @@ describe('Session Replay Transport Integration', function () {
   it('should discard replay when API returns an error', function (done) {
     transport.post = sinon
       .stub()
-      .callsFake(({accessToken, options, payload, callback}) => {
+      .callsFake(({ accessToken, options, payload, callback }) => {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });
         }, 10);
@@ -297,7 +308,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queue.addItem(errorItem, function (err, resp) {
+    queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
       expect(addSpy.calledOnce).to.be.true;
 
@@ -315,7 +326,7 @@ describe('Session Replay Transport Integration', function () {
     const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    const handleReplayResponseSpy = sinon.spy(queue, '_handleReplayResponse');
+    const sendOrDiscardReplaySpy = sinon.spy(queue, '_sendOrDiscardReplay');
 
     const errorItem = {
       data: {
@@ -341,14 +352,19 @@ describe('Session Replay Transport Integration', function () {
     expect(errorItem).to.have.property('replayId');
     expect(addSpy.calledOnce).to.be.true;
 
-    const responsePromise = handleReplayResponseSpy.returnValues[0];
+    const responsePromise = sendOrDiscardReplaySpy.returnValues[0];
     await responsePromise;
     expect(sendSpy.calledOnce).to.be.true;
     expect(sendSpy.calledWith(errorItem.replayId)).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
 
-    expect(recorder.dump.called).to.be.true;
-    expect(recorder.dump.calledWith(tracing, errorItem.replayId)).to.be.true;
+    expect(recorder.exportRecordingSpan.called).to.be.true;
+    // Should have been called with attributes containing the replayId
+    const exportArgs = recorder.exportRecordingSpan.firstCall.args;
+    expect(exportArgs[1]).to.have.property(
+      'rollbar.replay.id',
+      errorItem.replayId,
+    );
     const callArgs = postSpansSpy.firstCall.args;
     expect(callArgs[0]).to.be.an('object');
     expect(callArgs[0].resourceSpans[0].scopeSpans[0].spans[0].name).to.equal(
@@ -377,7 +393,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queueWithoutReplayManager.addItem(errorItem, function (err, resp) {
+    queueWithoutReplayManager.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.not.have.property('replayId');
       done();
     });

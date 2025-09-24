@@ -42,31 +42,31 @@ export default class ReplayManager {
   }
 
   /**
-   * Processes a replay by converting recorder events into a transport-ready payload.
+   * Processes a replay by exporting spans and generating a transport-ready payload.
    *
-   * Calls recorder.dump() to capture events as spans, formats them into a proper payload,
-   * and stores the result in the map using replayId as the key.
+   * Exports both telemetry and recording spans, then generates the complete payload
+   * using the tracing exporter and stores it in the map using replayId as the key.
    *
    * @param {string} replayId - The unique ID for this replay
-   * @returns {Promise<string>} A promise resolving to the processed replayId
+   * @param {string} occurrenceUuid - The UUID of the associated error occurrence
+   * @returns {string|null} The replayId if successful, or null if an error occurred
    * @private
    */
-  async _processReplay(replayId, occurrenceUuid) {
+  _processReplay(replayId, occurrenceUuid) {
     try {
-      this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
-
-      const payload = this._recorder.dump(
-        this._tracing,
-        replayId,
-        occurrenceUuid,
-      );
-
-      this._map.set(replayId, payload);
-    } catch (transformError) {
-      logger.error('Error transforming spans:', transformError);
-
-      this._map.set(replayId, null); // TODO(matux): Error span?
+      this._recorder.exportRecordingSpan(this._tracing, {
+        'rollbar.replay.id': replayId,
+        'rollbar.occurrence.uuid': occurrenceUuid,
+      });
+    } catch (error) {
+      logger.error('Error exporting recording span:', error);
+      return null;
     }
+
+    this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
+
+    const payload = this._tracing.exporter.toPayload();
+    this._map.set(replayId, payload);
 
     return replayId;
   }
@@ -74,20 +74,16 @@ export default class ReplayManager {
   /**
    * Adds a replay to the map and returns a uniquely generated replay ID.
    *
-   * This method immediately returns the replayId and asynchronously processes
-   * the replay data in the background. The processing involves converting
-   * recorder events into a payload format and storing it in the map.
+   * The processing involves converting recorder events into a payload format
+   * and storing it in the map.
    *
-   * @returns {string} A unique identifier for this replay
+   * @returns {string|null} A unique identifier for this replay, or null if an
+   *  error occurred
    */
   add(replayId, occurrenceUuid) {
     replayId = replayId || id.gen(8);
 
-    this._processReplay(replayId, occurrenceUuid).catch((error) => {
-      logger.error('Failed to process replay:', error);
-    });
-
-    return replayId;
+    return this._processReplay(replayId, occurrenceUuid);
   }
 
   /**
@@ -103,15 +99,11 @@ export default class ReplayManager {
    */
   async send(replayId) {
     if (!replayId) {
-      logger.error('ReplayManager.send: No replayId provided');
-      return false;
+      throw Error('ReplayManager.send: No replayId provided');
     }
 
     if (!this._map.has(replayId)) {
-      logger.error(
-        `ReplayManager.send: No replay found for replayId: ${replayId}`,
-      );
-      return false;
+      throw Error(`ReplayManager.send: No replay found for id: ${replayId}`);
     }
 
     const payload = this._map.get(replayId);
@@ -124,19 +116,10 @@ export default class ReplayManager {
       (payload.resourceSpans && payload.resourceSpans.length === 0);
 
     if (isEmpty) {
-      logger.error(
-        `ReplayManager.send: No payload found for replayId: ${replayId}`,
-      );
-      return false;
+      throw Error(`ReplayManager.send: No payload found for id: ${replayId}`);
     }
 
-    try {
-      await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
-      return true;
-    } catch (error) {
-      logger.error('Error sending replay:', error);
-      return false;
-    }
+    await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
   }
 
   /**

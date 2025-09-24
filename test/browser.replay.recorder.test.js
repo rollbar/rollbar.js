@@ -72,10 +72,7 @@ describe('Recorder', function () {
 
   describe('recording management', function () {
     it('should start recording correctly', function () {
-      const recorder = new Recorder(
-        { enabled: true },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: true }, recordFnStub);
       recorder.start();
 
       expect(recorder.isRecording).to.be.true;
@@ -88,10 +85,7 @@ describe('Recorder', function () {
     });
 
     it('should not start if already recording', function () {
-      const recorder = new Recorder(
-        { enabled: true },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: true }, recordFnStub);
       recorder.start();
       recorder.start();
 
@@ -99,10 +93,7 @@ describe('Recorder', function () {
     });
 
     it('should not start if disabled', function () {
-      const recorder = new Recorder(
-        { enabled: false },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: false }, recordFnStub);
       recorder.start();
 
       expect(recorder.isRecording).to.be.false;
@@ -110,10 +101,7 @@ describe('Recorder', function () {
     });
 
     it('should stop recording correctly', function () {
-      const recorder = new Recorder(
-        { enabled: true },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: true }, recordFnStub);
       recorder.start();
       recorder.stop();
 
@@ -142,14 +130,21 @@ describe('Recorder', function () {
       emitCallback(event1, false);
       emitCallback(event2, false);
 
-      const result = recorder.dump(mockTracing, testReplayId);
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
 
       expect(mockTracing.startSpan.calledOnce).to.be.true;
 
       // Event count includes the custom end event
       expect(mockSpan.addEvent.calledThrice).to.be.true;
       expect(mockSpan.setAttributes.calledOnce).to.be.true;
-      expect(mockSpan.setAttributes.calledWith({'rollbar.replay.id': testReplayId})).to.be.true;
+      // Should have set attributes including the replay ID
+      const setAttributesCall = mockSpan.setAttributes.firstCall.args[0];
+      expect(setAttributesCall).to.have.property(
+        'rollbar.replay.id',
+        testReplayId,
+      );
 
       const firstCallData = mockSpan.addEvent.firstCall.args[1];
       expect(firstCallData.eventType).to.equal('event1');
@@ -161,7 +156,10 @@ describe('Recorder', function () {
 
       const thirdCallData = mockSpan.addEvent.thirdCall.args[1];
       expect(thirdCallData.eventType).to.equal(5);
-      expect(JSON.parse(thirdCallData.json)).to.deep.equal({tag: "replay.end", payload: {}});
+      expect(JSON.parse(thirdCallData.json)).to.deep.equal({
+        tag: 'replay.end',
+        payload: {},
+      });
     });
 
     it('should handle checkout events correctly', function () {
@@ -221,7 +219,9 @@ describe('Recorder', function () {
         false,
       );
 
-      recorder.dump(mockTracing, testReplayId);
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
 
       // 2nd checkout (meta + fs) + event3 + 3rd checkout (meta + fs) + event4
       expect(mockSpan.span.startTime).to.be.deep.equal([3, 50000000]); // otel time
@@ -296,7 +296,10 @@ describe('Recorder', function () {
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
       emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
 
-      const result = recorder.dump(mockTracing, testReplayId);
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
+      const result = mockTracing.exporter.toPayload();
 
       expect(result).to.deep.equal([{ id: 'span1' }]);
       expect(mockTracing.startSpan.calledOnce).to.be.true;
@@ -307,6 +310,32 @@ describe('Recorder', function () {
       expect(mockTracing.exporter.toPayload.calledOnce).to.be.true;
     });
 
+    it('should add an end event when exportRecordingSpan is called', function () {
+      const recorder = new Recorder({}, recordFnStub);
+      recorder.start();
+
+      emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
+      emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
+
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
+
+      expect(mockSpan.addEvent.calledThrice).to.be.true;
+
+      const lastEventCall = mockSpan.addEvent.lastCall;
+      expect(lastEventCall.args[0]).to.equal('rrweb-replay-events');
+
+      const endEventAttributes = lastEventCall.args[1];
+      expect(endEventAttributes.eventType).to.equal(5);
+
+      const endEventData = JSON.parse(endEventAttributes.json);
+      expect(endEventData).to.deep.equal({
+        tag: 'replay.end',
+        payload: {},
+      });
+    });
+
     it('should create a span with the correct span name', function () {
       const recorder = new Recorder({}, recordFnStub);
       recorder.start();
@@ -314,7 +343,9 @@ describe('Recorder', function () {
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
       emitCallback({ timestamp: 2000, type: 'event2', data: { b: 2 } }, false);
 
-      recorder.dump(mockTracing, testReplayId);
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
 
       expect(mockTracing.startSpan.calledOnce).to.be.true;
       const spanName = mockTracing.startSpan.firstCall.args[0];
@@ -335,7 +366,9 @@ describe('Recorder', function () {
       );
       emitCallback({ timestamp: 3000, type: 'input', data: { c: 3 } }, false);
 
-      recorder.dump(mockTracing, testReplayId);
+      recorder.exportRecordingSpan(mockTracing, {
+        'rollbar.replay.id': testReplayId,
+      });
 
       // Event count includes the custom end event
       expect(mockSpan.addEvent.callCount).to.equal(4);
@@ -345,7 +378,7 @@ describe('Recorder', function () {
         const eventAttrs = mockSpan.addEvent.getCall(i).args[1];
         expect(eventName).to.equal(
           'rrweb-replay-events',
-          `Event at index ${i} should have name "rrweb-replay-events"`
+          `Event at index ${i} should have name "rrweb-replay-events"`,
         );
       }
     });
@@ -353,9 +386,12 @@ describe('Recorder', function () {
     it('should handle no events', function () {
       const recorder = new Recorder({}, recordFnStub);
 
-      const result = recorder.dump(mockTracing, testReplayId);
+      expect(() => {
+        recorder.exportRecordingSpan(mockTracing, {
+          'rollbar.replay.id': testReplayId,
+        });
+      }).to.throw('Replay recording cannot have less than 3 events');
 
-      expect(result).to.be.null;
       expect(mockTracing.startSpan.called).to.be.false;
       expect(mockTracing.exporter.toPayload.called).to.be.false;
     });
@@ -366,9 +402,12 @@ describe('Recorder', function () {
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
 
-      const result = recorder.dump(mockTracing, testReplayId);
+      expect(() => {
+        recorder.exportRecordingSpan(mockTracing, {
+          'rollbar.replay.id': testReplayId,
+        });
+      }).to.throw('Replay recording cannot have less than 3 events');
 
-      expect(result).to.be.null;
       expect(mockTracing.startSpan.called).to.be.false;
       expect(mockTracing.exporter.toPayload.called).to.be.false;
     });
@@ -376,10 +415,7 @@ describe('Recorder', function () {
 
   describe('configure', function () {
     it('should update options', function () {
-      const recorder = new Recorder(
-        { enabled: true },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: true }, recordFnStub);
 
       recorder.configure({ enabled: false, maxSeconds: 20 });
 
@@ -409,10 +445,7 @@ describe('Recorder', function () {
     });
 
     it('should stop recording if enabled set to false', function () {
-      const recorder = new Recorder(
-        { enabled: true },
-        recordFnStub,
-      );
+      const recorder = new Recorder({ enabled: true }, recordFnStub);
       recorder.start();
 
       expect(recorder.isRecording).to.be.true;

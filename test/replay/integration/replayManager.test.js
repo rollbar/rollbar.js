@@ -30,7 +30,7 @@ describe('ReplayManager API Integration', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake(({accessToken, options, payload, callback}) => {
+        .callsFake(({ accessToken, options, payload, callback }) => {
           setTimeout(() => {
             callback(
               null,
@@ -60,7 +60,8 @@ describe('ReplayManager API Integration', function () {
     );
 
     recorder = new Recorder(options.recorder, mockRecordFn);
-    sinon.stub(recorder, 'dump').returns(mockPayload);
+    sinon.stub(recorder, 'exportRecordingSpan');
+    sinon.stub(tracing.exporter, 'toPayload').returns(mockPayload);
 
     replayManager = new ReplayManager({
       recorder,
@@ -78,16 +79,20 @@ describe('ReplayManager API Integration', function () {
     sinon.restore();
   });
 
-  it('should add replay data to map', async function () {
+  it('should add replay data to map', function () {
     const uuid = 'test-uuid';
     const replayId = replayManager.add(null, uuid);
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
-    await new Promise((r) => setTimeout(r, 1000));
-
-    expect(recorder.dump.calledOnce).to.be.true;
-    expect(recorder.dump.calledWith(tracing, replayId, uuid)).to.be.true;
+    expect(recorder.exportRecordingSpan.calledOnce).to.be.true;
+    expect(
+      recorder.exportRecordingSpan.calledWith(tracing, {
+        'rollbar.replay.id': replayId,
+        'rollbar.occurrence.uuid': uuid,
+      }),
+    ).to.be.true;
+    expect(tracing.exporter.toPayload.calledOnce).to.be.true;
 
     const payload = replayManager.getSpans(replayId);
     expect(payload).to.not.be.null;
@@ -105,28 +110,30 @@ describe('ReplayManager API Integration', function () {
     };
     replayManager.setSpans(replayId, mockPayload);
 
-    const result = await replayManager.send(replayId);
+    await replayManager.send(replayId);
 
-    expect(result).to.be.true;
     expect(postSpansSpy.calledOnce).to.be.true;
     expect(postSpansSpy.calledWith(mockPayload, expectedHeaders)).to.be.true;
 
     expect(replayManager.getSpans(replayId)).to.be.null;
   });
 
-  it('should handle API errors during send', async function () {
+  it('should throw API errors during send', async function () {
     const apiError = new Error('API failure');
     sinon.stub(api, 'postSpans').rejects(apiError);
-
-    const consoleSpy = sinon.spy(console, 'error');
 
     const replayId = 'error-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
     replayManager.setSpans(replayId, mockPayload);
 
-    const result = await replayManager.send(replayId);
+    let error;
+    try {
+      await replayManager.send(replayId);
+    } catch (e) {
+      error = e;
+    }
 
-    expect(result).to.be.false;
+    expect(error).to.equal(apiError);
     expect(replayManager.getSpans(replayId)).to.be.null;
   });
 
@@ -148,7 +155,7 @@ describe('ReplayManager API Integration', function () {
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
 
-    sinon.stub(replayManager, '_processReplay').resolves();
+    sinon.stub(replayManager, '_processReplay').returnsArg(0);
 
     for (let i = 0; i < 100; i++) {
       const replayId = replayManager.add();
