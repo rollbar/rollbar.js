@@ -42,17 +42,17 @@ export default class ReplayManager {
   }
 
   /**
-   * Processes a replay by exporting spans and generating a transport-ready payload.
+   * Exports recording and telemetry spans, then stores the tracing payload in the map.
    *
    * Exports both telemetry and recording spans, then generates the complete payload
    * using the tracing exporter and stores it in the map using replayId as the key.
+   * This is an async operation that runs in the background.
    *
    * @param {string} replayId - The unique ID for this replay
    * @param {string} occurrenceUuid - The UUID of the associated error occurrence
-   * @returns {string|null} The replayId if successful, or null if an error occurred
    * @private
    */
-  _processReplay(replayId, occurrenceUuid) {
+  async _exportSpansAndAddTracingPayload(replayId, occurrenceUuid) {
     try {
       this._recorder.exportRecordingSpan(this._tracing, {
         'rollbar.replay.id': replayId,
@@ -60,30 +60,30 @@ export default class ReplayManager {
       });
     } catch (error) {
       logger.error('Error exporting recording span:', error);
-      return null;
+      return;
     }
 
     this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
 
     const payload = this._tracing.exporter.toPayload();
     this._map.set(replayId, payload);
-
-    return replayId;
   }
 
   /**
    * Adds a replay to the map and returns a uniquely generated replay ID.
    *
-   * The processing involves converting recorder events into a payload format
-   * and storing it in the map.
+   * This method immediately returns the replayId and asynchronously processes
+   * the replay data in the background. The processing involves converting
+   * recorder events into a payload format and storing it in the map.
    *
-   * @returns {string|null} A unique identifier for this replay, or null if an
-   *  error occurred
+   * @returns {string} A unique identifier for this replay
    */
   add(replayId, occurrenceUuid) {
     replayId = replayId || id.gen(8);
 
-    return this._processReplay(replayId, occurrenceUuid);
+    this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
+
+    return replayId;
   }
 
   /**

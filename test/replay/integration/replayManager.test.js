@@ -155,7 +155,7 @@ describe('ReplayManager API Integration', function () {
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
 
-    sinon.stub(replayManager, '_processReplay').returnsArg(0);
+    sinon.stub(replayManager, '_exportSpansAndAddTracingPayload').resolves();
 
     for (let i = 0; i < 100; i++) {
       const replayId = replayManager.add();

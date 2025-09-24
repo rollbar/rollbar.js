@@ -98,16 +98,14 @@ describe('ReplayManager', function () {
     });
   });
 
-  describe('_processReplay', function () {
-    it('should export recording span and add payload to the map', function () {
+  describe('_exportSpansAndAddTracingPayload', function () {
+    it('should export recording span and add payload to the map', async function () {
       const replayId = '1234567890abcdef';
       const occurrenceUuid = 'test-uuid';
 
       const expectedPayload = [{ id: 'span1' }, { id: 'span2' }];
 
-      const result = replayManager._processReplay(replayId, occurrenceUuid);
-
-      expect(result).to.equal(replayId);
+      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
       expect(mockTelemeter.exportTelemetrySpan.calledOnce).to.be.true;
       expect(
@@ -138,7 +136,7 @@ describe('ReplayManager', function () {
       expect(retrievedPayload).to.deep.equal(expectedPayload);
     });
 
-    it('should not store anything when exportRecordingSpan throws', function () {
+    it('should not store anything when exportRecordingSpan throws', async function () {
       mockRecorder.exportRecordingSpan.throws(
         new Error('Replay recording cannot have less than 3 events'),
       );
@@ -146,9 +144,7 @@ describe('ReplayManager', function () {
       const loggerSpy = sinon.spy(logger, 'error');
       const replayId = '1234567890abcdef';
       const occurrenceUuid = 'test-uuid';
-      const result = replayManager._processReplay(replayId, occurrenceUuid);
-
-      expect(result).to.be.null;
+      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
@@ -168,7 +164,7 @@ describe('ReplayManager', function () {
       expect(loggerSpy.args[0][0]).to.include('Error exporting recording span');
     });
 
-    it('should work when telemeter is not provided', function () {
+    it('should work when telemeter is not provided', async function () {
       replayManager = new ReplayManager({
         recorder: mockRecorder,
         api: mockApi,
@@ -180,9 +176,7 @@ describe('ReplayManager', function () {
       const occurrenceUuid = 'test-uuid';
 
       const expectedPayload = [{ id: 'span1' }, { id: 'span2' }];
-      const result = replayManager._processReplay(replayId, occurrenceUuid);
-
-      expect(result).to.equal(replayId);
+      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
@@ -204,8 +198,8 @@ describe('ReplayManager', function () {
       const replayId = '1122334455667788';
       const uuid = '12345678-1234-5678-1234-1234567890ab';
       const processStub = sinon
-        .stub(replayManager, '_processReplay')
-        .returns(replayId);
+        .stub(replayManager, '_exportSpansAndAddTracingPayload')
+        .resolves();
 
       const resp = replayManager.add(replayId, uuid);
 
@@ -214,26 +208,17 @@ describe('ReplayManager', function () {
       expect(processStub.calledWith(replayId, uuid)).to.be.true;
     });
 
-    it('should generate a replayId and process synchronously', function () {
+    it('should generate a replayId and return immediately', function () {
       const uuid = '12345678-1234-5678-1234-1234567890ab';
       const processStub = sinon
-        .stub(replayManager, '_processReplay')
-        .returns('1234567890abcdef');
+        .stub(replayManager, '_exportSpansAndAddTracingPayload')
+        .resolves();
 
       const replayId = replayManager.add(null, uuid);
 
       expect(replayId).to.equal('1234567890abcdef');
       expect(id.gen.calledWith(8)).to.be.true;
       expect(processStub.calledWith('1234567890abcdef', uuid)).to.be.true;
-    });
-
-    it('should return null when _processReplay returns null', function () {
-      const uuid = '12345678-1234-5678-1234-1234567890ab';
-      sinon.stub(replayManager, '_processReplay').returns(null);
-
-      const result = replayManager.add(null, uuid);
-
-      expect(result).to.be.null;
     });
   });
 
