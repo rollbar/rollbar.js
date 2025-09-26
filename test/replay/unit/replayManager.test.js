@@ -11,6 +11,7 @@ import id from '../../../src/tracing/id.js';
 class MockRecorder {
   constructor() {
     this.exportRecordingSpan = sinon.stub();
+    this.isReady = true;
   }
 }
 
@@ -219,6 +220,20 @@ describe('ReplayManager', function () {
       expect(replayId).to.equal('1234567890abcdef');
       expect(id.gen.calledWith(8)).to.be.true;
       expect(processStub.calledWith('1234567890abcdef', uuid)).to.be.true;
+    });
+
+    it('should return without replayId when recorder is not ready', function () {
+      const uuid = '12345678-1234-5678-1234-1234567890ab';
+      const processStub = sinon
+        .stub(replayManager, '_exportSpansAndAddTracingPayload')
+        .resolves();
+        mockRecorder.isReady = false;
+
+      const replayId = replayManager.add(null, uuid);
+
+      expect(replayId).to.be.null;
+      expect(id.gen.called).to.be.false;
+      expect(processStub.called).to.be.false;
     });
   });
 

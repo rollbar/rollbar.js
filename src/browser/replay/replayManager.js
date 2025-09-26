@@ -79,6 +79,10 @@ export default class ReplayManager {
    * @returns {string} A unique identifier for this replay
    */
   add(replayId, occurrenceUuid) {
+    if (!this._recorder.isReady) {
+      logger.warn('ReplayManager.add: Recorder is not ready, cannot export replay');
+      return null;
+    }
     replayId = replayId || id.gen(8);
 
     // Start processing the replay in the background
