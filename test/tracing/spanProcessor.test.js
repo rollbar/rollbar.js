@@ -67,4 +67,57 @@ describe('SpanProcessor()', function () {
 
     done();
   });
+
+  it('should transform spans', function (done) {
+    const tracingOptions = {
+      transformSpan: ({span}) => {
+        span.attributes['test-group'] = 'blue';
+        span.resource.attributes['rollbar.environment'] = 'prod-3';
+      },
+    };
+    const exporter = new SpanExporter();
+    const spanProcessor = new SpanProcessor(exporter, tracingOptions);
+
+    expect(spanProcessor.pendingSpans.size).to.equal(0);
+
+    const overrides = {
+      spanProcessor: spanProcessor,
+    };
+    const span = new Span(spanOptions(overrides));
+
+    expect(spanProcessor.pendingSpans.size).to.equal(1);
+
+    span.end();
+
+    expect(span.span.attributes['test-group']).to.equal('blue');
+    expect(span.span.resource.attributes['rollbar.environment']).to.equal('prod-3');
+    expect(spanProcessor.pendingSpans.size).to.equal(0);
+
+    done();
+  });
+
+  it('should catch exception in transformSpan', function (done) {
+    const tracingOptions = {
+      transformSpan: ({span}) => {
+        throw new Error('test error');
+      },
+    };
+    const exporter = new SpanExporter();
+    const spanProcessor = new SpanProcessor(exporter, tracingOptions);
+
+    expect(spanProcessor.pendingSpans.size).to.equal(0);
+
+    const overrides = {
+      spanProcessor: spanProcessor,
+    };
+    const span = new Span(spanOptions(overrides));
+
+    expect(spanProcessor.pendingSpans.size).to.equal(1);
+
+    span.end();
+
+    expect(spanProcessor.pendingSpans.size).to.equal(0);
+
+    done();
+  });
 });
