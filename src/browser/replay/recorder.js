@@ -27,10 +27,15 @@ export default class Recorder {
 
     this.options = options;
     this._recordFn = recordFn;
+    this._isReady = false;
   }
 
   get isRecording() {
     return this._stopFn !== null;
+  }
+
+  get isReady() {
+    return this._isReady;
   }
 
   get options() {
@@ -127,6 +132,9 @@ export default class Recorder {
 
     this._stopFn = this._recordFn({
       emit: (event, isCheckout) => {
+        if (!this._ready && event.type === EventType.FullSnapshot) {
+          this._isReady = true;
+        }
         if (this.options.debug?.logEmits) {
           this._logEvent(event, isCheckout);
         }
@@ -158,6 +166,7 @@ export default class Recorder {
 
     this._stopFn();
     this._stopFn = null;
+    this._isReady = false;
 
     return this;
   }
@@ -167,6 +176,7 @@ export default class Recorder {
       previous: [],
       current: [],
     };
+    this._isReady = false;
   }
 
   _collectEvents() {

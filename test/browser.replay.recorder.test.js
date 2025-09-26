@@ -40,6 +40,7 @@ describe('Recorder', function () {
       const recorder = new Recorder({}, recordFnStub);
 
       expect(recorder.isRecording).to.be.false;
+      expect(recorder.isReady).to.be.false;
       expect(recorder.options).to.deep.equal({
         enabled: undefined,
         autoStart: undefined,
@@ -160,6 +161,21 @@ describe('Recorder', function () {
         tag: 'replay.end',
         payload: {},
       });
+    });
+
+    it('should be ready after first full snapshot', function () {
+      const recorder = new Recorder({}, recordFnStub);
+      recorder.start();
+
+      // First checkout
+      emitCallback({ timestamp: 0, type: EventType.Meta, data: {} }, false);
+      expect(recorder.isReady).to.be.false;
+
+      emitCallback(
+        { timestamp: 10, type: EventType.FullSnapshot, data: {} },
+        false,
+      );
+      expect(recorder.isReady).to.be.true;
     });
 
     it('should handle checkout events correctly', function () {
