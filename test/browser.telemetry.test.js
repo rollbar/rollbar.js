@@ -76,7 +76,7 @@ describe('instrumentDom', function () {
     await loadHtml('test/fixtures/html/dom-events.html');
     scrubFields = ['foo', 'bar'];
     rollbar = new Rollbar({})
-    tracing = new Tracing(window, {})
+    tracing = new Tracing(window, null, {})
     tracing.initSession();
     telemeter = new Telemeter({}, tracing);
     instrumenter = new Instrumenter(

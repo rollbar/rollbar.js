@@ -5,6 +5,11 @@ import hrtime from './hrtime.js';
  * and transforming them into the OTLP-compatible format.
  */
 export class SpanExporter {
+  constructor(api, options = {}) {
+    this.api = api;
+    this.options = options;
+  }
+
   /**
    * Export spans to the span export queue
    *
@@ -64,6 +69,17 @@ export class SpanExporter {
         },
       ],
     };
+  }
+
+  /**
+   * Sends the given payload to the Rollbar API.
+   *
+   * @param {String} payload - Serialized OTLP format payload
+   * @param {Object} headers - Optional request headers
+   * @returns {Promise} Promise that resolves when the request completes
+   */
+  post(payload, headers = {}) {
+    return this.api.postSpans(payload, headers);
   }
 
   /**

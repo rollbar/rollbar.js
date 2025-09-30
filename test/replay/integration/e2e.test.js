@@ -66,7 +66,7 @@ describe('Session Replay E2E', function () {
     };
     const logger = { error: sinon.spy(), log: sinon.spy() };
 
-    tracing = new Tracing(window, options);
+    tracing = new Tracing(window, null, options);
     tracing.initSession();
     api = new Api(
       { accessToken: 'test-token-12345' },

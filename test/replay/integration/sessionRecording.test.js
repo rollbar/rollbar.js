@@ -64,7 +64,7 @@ describe('Session Replay Integration', function () {
   let recorder;
 
   beforeEach(function () {
-    tracing = new Tracing(window, options);
+    tracing = new Tracing(window, null, options);
     tracing.initSession();
   });
 
@@ -207,7 +207,7 @@ describe('Session Replay Transport Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(window, options);
+    tracing = new Tracing(window, null, options);
     tracing.initSession();
 
     api = new Api(

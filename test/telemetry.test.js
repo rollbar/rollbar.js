@@ -49,6 +49,7 @@ describe('capture events', function () {
   beforeEach(function () {
     const tracing = new Tracing(
       window,
+      null,
       {
         resource: {
           'service.name': 'Test',
