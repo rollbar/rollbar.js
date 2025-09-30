@@ -36,7 +36,7 @@ class Rollbar {
     const transport = new Transport(truncation);
     const api = new API(this.options, transport, urllib, truncation);
     if (Tracing) {
-      this.tracing = new Tracing(_gWindow(), this.options);
+      this.tracing = new Tracing(_gWindow(), api, this.options);
       this.tracing.initSession();
     }
     if (Telemeter) {

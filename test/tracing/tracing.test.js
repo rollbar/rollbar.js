@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import Api from '../../src/api.js';
 import {
   ContextManager,
   createContextKey,
@@ -28,7 +29,7 @@ const tracingOptions = function (options = {}) {
 describe('Tracing()', function () {
   it('should initialize', function (done) {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
     t.initSession();
 
     expect(t).to.have.property('initSession').and.to.be.a('function');
@@ -53,7 +54,7 @@ describe('Tracing()', function () {
 
   it('should configure', function () {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
     t.initSession();
 
     expect(t.options.resource).to.deep.equal(options.resource);
@@ -74,7 +75,7 @@ describe('Tracing()', function () {
 
   it('should create and export spans', function (done) {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
     t.initSession();
 
     expect(t.sessionId).to.match(/^[a-f0-9]{32}$/);
@@ -120,7 +121,7 @@ describe('Tracing()', function () {
 
   it('should create spans with span option overrides', function () {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
     t.initSession();
 
     expect(t.sessionId).to.match(/^[a-f0-9]{32}$/);
@@ -143,7 +144,7 @@ describe('Tracing()', function () {
 
   it('should get and set session attributes', function () {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
     t.initSession();
 
     t.session.setAttributes({codeVersion: 'abc123'});
@@ -162,7 +163,7 @@ describe('Tracing()', function () {
   it('should not init session when sessionStorage is not detected', function () {
     const stub = sinon.stub(window, 'sessionStorage').value(undefined);
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
 
     // calling initSession should be a no-op
     t.initSession();
@@ -173,12 +174,70 @@ describe('Tracing()', function () {
 
   it('should generate ids', function (done) {
     const options = tracingOptions();
-    const t = new Tracing(window, options);
+    const t = new Tracing(window, null, options);
 
     const replayId = t.idGen(8);
 
     expect(replayId).to.match(/^[a-f0-9]{16}$/);
 
     done();
+  });
+
+  describe('post', function () {
+    let api;
+    let transport;
+    let tracing;
+
+    beforeEach(function () {
+      transport = {
+        post: sinon
+          .stub()
+          .callsFake(({ accessToken, options, payload, callback }) => {
+            setTimeout(() => {
+              callback(
+                null,
+                { err: 0, result: { id: '12345' } },
+              );
+            }, 1);
+          }),
+        postJsonPayload: sinon.stub(),
+      };
+      const urlMock = { parse: sinon.stub().returns({}) };
+      const truncationMock = {
+        truncate: sinon.stub().returns({ error: null, value: '{}' }),
+      };
+
+      api = new Api(
+        { accessToken: 'test-token-12345' },
+        transport,
+        urlMock,
+        truncationMock,
+      );
+      tracing = new Tracing(window, api, {});
+      tracing.initSession();
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('should post a trace payload', function (done) {
+      const span = tracing.startSpan('test.span');
+      span.end();
+      tracing.exporter.post(
+        tracing.exporter.toPayload(),
+        { 'X-Rollbar-Session-Id': tracing.sessionId }
+      );
+
+      setTimeout(() => {
+        expect(transport.post.callCount).to.equal(1);
+        const call = transport.post.getCall(0);
+        const { payload, headers } = call.args[0];
+        expect(payload).to.have.property('resourceSpans');
+        expect(headers).to.have.property('X-Rollbar-Session-Id', tracing.sessionId);
+
+        done();
+      }, 10);
+    });
   });
 });

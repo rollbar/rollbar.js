@@ -47,7 +47,7 @@ describe('ReplayManager API Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(window, options);
+    tracing = new Tracing(window, null, options);
     tracing.initSession();
 
     const mockPayload = [{ id: 'span1', name: 'recording-span' }];

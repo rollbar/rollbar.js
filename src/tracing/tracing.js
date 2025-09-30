@@ -8,7 +8,8 @@ import id from './id.js';
 const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 
 export default class Tracing {
-  constructor(gWindow, options) {
+  constructor(gWindow, api, options) {
+    this.api = api;
     this.options = options;
     this.window = gWindow;
 
@@ -59,7 +60,7 @@ export default class Tracing {
 
   createTracer() {
     this.contextManager = new ContextManager();
-    this.exporter = new SpanExporter();
+    this.exporter = new SpanExporter(this.api, this.options);
     this.spanProcessor = new SpanProcessor(this.exporter, this.options.tracing);
     this.tracer = new Tracer(this, this.spanProcessor);
   }
