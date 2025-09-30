@@ -165,4 +165,68 @@ describe('ReplayManager API Integration', function () {
 
     expect(replayIds.size).to.equal(100);
   });
+
+  describe('sendOrDiscardReplay integration', function () {
+    it('should send replay when API response is successful', async function () {
+      const replayId = 'integration-test-replay';
+      const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+      replayManager.setSpans(replayId, mockPayload);
+
+      const postSpansSpy = sinon.spy(api, 'postSpans');
+
+      await replayManager.sendOrDiscardReplay(
+        replayId,
+        null,
+        { err: 0 },
+        {
+          'Rollbar-Replay-Enabled': 'true',
+          'Rollbar-Replay-RateLimit-Remaining': '10',
+        },
+      );
+
+      expect(postSpansSpy.calledOnce).to.be.true;
+      expect(
+        postSpansSpy.calledWith(mockPayload, {
+          'X-Rollbar-Replay-Id': replayId,
+        }),
+      ).to.be.true;
+      expect(replayManager.getSpans(replayId)).to.be.null;
+    });
+
+    it('should discard replay when API returns error', async function () {
+      const replayId = 'integration-test-discard';
+      const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+      replayManager.setSpans(replayId, mockPayload);
+
+      const postSpansSpy = sinon.spy(api, 'postSpans');
+
+      await replayManager.sendOrDiscardReplay(
+        replayId,
+        null,
+        { err: 1, message: 'API Error' },
+        { 'Rollbar-Replay-Enabled': 'true' },
+      );
+
+      expect(postSpansSpy.called).to.be.false;
+      expect(replayManager.getSpans(replayId)).to.be.null;
+    });
+
+    it('should discard replay when Rollbar-Replay-Enabled is false', async function () {
+      const replayId = 'integration-test-disabled';
+      const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
+      replayManager.setSpans(replayId, mockPayload);
+
+      const postSpansSpy = sinon.spy(api, 'postSpans');
+
+      await replayManager.sendOrDiscardReplay(
+        replayId,
+        null,
+        { err: 0 },
+        { 'Rollbar-Replay-Enabled': 'false' },
+      );
+
+      expect(postSpansSpy.called).to.be.false;
+      expect(replayManager.getSpans(replayId)).to.be.null;
+    });
+  });
 });

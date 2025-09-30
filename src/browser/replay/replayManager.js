@@ -235,12 +235,45 @@ export default class ReplayManager {
       );
       return null;
     }
+
     replayId = replayId || id.gen(8);
 
     // Start processing the replay in the background
     this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
     return replayId;
+  }
+
+  /**
+   * Sends or discards a replay based on whether it can be sent.
+   *
+   * The criteria for sending a replay are:
+   * - No error occurred during the API request
+   * - The response indicates success (err === 0)
+   * - Replay is enabled on the server
+   * - Rate limit quota is not exhausted
+   *
+   * Called by Queue after determining replay eligibility from API response.
+   *
+   * @param {string} replayId - The ID of the replay to send or discard
+   */
+  async sendOrDiscardReplay(replayId, err, resp, headers) {
+    const canSendReplay =
+      !err &&
+      resp?.err === 0 &&
+      headers?.['Rollbar-Replay-Enabled'] === 'true' &&
+      headers?.['Rollbar-Replay-RateLimit-Remaining'] !== '0';
+
+    if (canSendReplay) {
+      try {
+        await this.send(replayId);
+      } catch (error) {
+        logger.error('Failed to send replay:', error);
+        this.discard(replayId);
+      }
+    } else {
+      this.discard(replayId);
+    }
   }
 
   /**

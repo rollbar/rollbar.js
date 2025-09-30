@@ -115,7 +115,12 @@ class Queue {
         this._dequeuePendingRequest(data);
 
         if (item.replayId) {
-          this._sendOrDiscardReplay(item.replayId, err, resp, headers);
+          this.replayManager.sendOrDiscardReplay(
+            item.replayId,
+            err,
+            resp,
+            headers,
+          );
         }
 
         callback(err, resp);
@@ -305,57 +310,6 @@ class Queue {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Determines if a replay can be sent based on the API response.
-   *
-   * Returns true only when all conditions are met:
-   * - No error occurred during the API request
-   * - The response indicates success (err === 0)
-   * - Replay is enabled on the server
-   * - Rate limit quota is not exhausted
-   *
-   * @param {Error|null} err - Error from the API request, if any
-   * @param {Object} response - The API response object
-   * @param {Object} headers - Response headers from the API
-   * @returns {boolean} True if the replay can be sent, false otherwise
-   */
-  _canSendReplay(err, response, headers) {
-    return (
-      !err &&
-      response?.err === 0 &&
-      headers?.['Rollbar-Replay-Enabled'] === 'true' &&
-      headers?.['Rollbar-Replay-RateLimit-Remaining'] !== '0'
-    );
-  }
-
-  /**
-   * Sends or discards a replay based on the API response.
-   *
-   * Sends the replay if the response indicates success and replay is enabled.
-   *
-   * Discards the replay if there's an error, replay is disabled, or rate limit
-   * is exceeded.
-   *
-   * @param {string} replayId - The ID of the replay to send or discard
-   * @param {Object} err - The error object from the API request, if any
-   * @param {Object} response - The API response
-   * @param {Object} headers - The response headers
-   */
-  async _sendOrDiscardReplay(replayId, err, response, headers) {
-    const canSendReplay = this._canSendReplay(err, response, headers);
-
-    if (canSendReplay) {
-      try {
-        await this.replayManager.send(replayId);
-      } catch (error) {
-        console.error('Failed to send replay:', error);
-        this.replayManager.discard(replayId);
-      }
-    } else {
-      this.replayManager.discard(replayId);
-    }
   }
 }
 

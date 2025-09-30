@@ -326,7 +326,7 @@ describe('Session Replay Transport Integration', function () {
     const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    const sendOrDiscardReplaySpy = sinon.spy(queue, '_sendOrDiscardReplay');
+    const sendOrDiscardReplaySpy = sinon.spy(replayManager, 'sendOrDiscardReplay');
 
     const errorItem = {
       data: {
