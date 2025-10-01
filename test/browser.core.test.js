@@ -35,7 +35,7 @@ describe('options', function () {
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
     expect(session.attributes['user.email']).to.equal('user@test.com');
-    expect(session.attributes['code_version']).to.equal('abc123');
+    expect(session.attributes['rollbar.codeVersion']).to.equal('abc123');
   });
 
   it('should set session attributes from configure', function () {
@@ -57,7 +57,7 @@ describe('options', function () {
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
     expect(session.attributes['user.email']).to.equal('user@test.com');
-    expect(session.attributes['code_version']).to.equal('abc123');
+    expect(session.attributes['rollbar.codeVersion']).to.equal('abc123');
   });
 });
 
