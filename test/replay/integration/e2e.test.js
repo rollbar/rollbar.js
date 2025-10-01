@@ -141,7 +141,7 @@ describe('Session Replay E2E', function () {
 
         setTimeout(() => {
           expect(recorderExportSpy.called).to.be.true;
-          // Check that the attributes include the replayId
+
           const exportArgs = recorderExportSpy.firstCall.args;
           expect(exportArgs[0]).to.equal(tracing);
           expect(exportArgs[1]).to.have.property(
@@ -223,6 +223,79 @@ describe('Session Replay E2E', function () {
           expect(transportArgs[0].options.path).to.include('/api/1/session/');
 
           done();
+        }, 200);
+      });
+    }, 50);
+  });
+
+  it('should handle trailing and leading replay flow', function (done) {
+    this.timeout(10000);
+
+    recorder.configure({ ...recorder.options, postDuration: 0.1 });
+    recorder.start();
+
+    setTimeout(() => {
+      const recorderExportSpy = sinon.spy(recorder, 'exportRecordingSpan');
+      const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
+      const replayManagerSendSpy = sinon.spy(replayManager, 'send');
+      const apiPostItemSpy = sinon.spy(api, 'postItem');
+      const apiPostSpansSpy = sinon.spy(api, 'postSpans');
+
+      const errorItem = {
+        data: {
+          body: {
+            trace: {
+              exception: {
+                message: 'E2E test error with leading',
+              },
+            },
+          },
+          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
+        },
+      };
+
+      queue.addItem(errorItem, (err, resp) => {
+        expect(err).to.be.null;
+        expect(resp).to.have.property('err', 0);
+        expect(errorItem).to.have.property('replayId');
+        const expectedReplayId = errorItem.replayId;
+
+        expect(replayManagerCaptureSpy.calledOnce).to.be.true;
+        expect(apiPostItemSpy.calledOnce).to.be.true;
+
+        setTimeout(() => {
+          expect(recorderExportSpy.called).to.be.true;
+          expect(replayManagerSendSpy.calledWith(errorItem.replayId)).to.be
+            .true;
+
+          const trailingExportCall = recorderExportSpy.firstCall;
+          expect(trailingExportCall.args[2]).to.be.undefined;
+
+          setTimeout(() => {
+            expect(apiPostSpansSpy.callCount).to.equal(2);
+
+            const trailingApiCall = apiPostSpansSpy.firstCall;
+            const leadingApiCall = apiPostSpansSpy.secondCall;
+
+            expect(trailingApiCall.args[1]).to.deep.equal({
+              'X-Rollbar-Replay-Id': expectedReplayId,
+            });
+            expect(leadingApiCall.args[1]).to.deep.equal({
+              'X-Rollbar-Replay-Id': expectedReplayId,
+            });
+
+            expect(recorderExportSpy.callCount).to.be.greaterThan(1);
+            const leadingExportCall = recorderExportSpy.lastCall;
+            const leadingCursor = leadingExportCall.args[2];
+
+            expect(leadingCursor).to.be.an('object');
+            expect(leadingCursor).to.have.property('slot');
+            expect(leadingCursor).to.have.property('offset');
+            expect(leadingCursor.slot).to.be.oneOf([0, 1]);
+            expect(leadingCursor.offset).to.be.a('number');
+
+            done();
+          }, 200);
         }, 200);
       });
     }, 50);

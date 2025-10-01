@@ -45,6 +45,7 @@ describe('Recorder', function () {
         enabled: undefined,
         autoStart: undefined,
         maxSeconds: undefined,
+        postDuration: undefined,
         triggers: undefined,
         debug: undefined,
       });
@@ -58,6 +59,7 @@ describe('Recorder', function () {
         enabled: true,
         autoStart: undefined,
         maxSeconds: undefined,
+        postDuration: undefined,
         triggers: undefined,
         debug: undefined,
       });
@@ -411,22 +413,6 @@ describe('Recorder', function () {
       expect(mockTracing.startSpan.called).to.be.false;
       expect(mockTracing.exporter.toPayload.called).to.be.false;
     });
-
-    it.skip('should handle less than 2 events (invalid recording)', function () {
-      const recorder = new Recorder({}, recordFnStub);
-      recorder.start();
-
-      emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
-
-      expect(() => {
-        recorder.exportRecordingSpan(mockTracing, {
-          'rollbar.replay.id': testReplayId,
-        });
-      }).to.throw('Replay recording cannot have less than 3 events');
-
-      expect(mockTracing.startSpan.called).to.be.false;
-      expect(mockTracing.exporter.toPayload.called).to.be.false;
-    });
   });
 
   describe('configure', function () {
@@ -439,6 +425,7 @@ describe('Recorder', function () {
         enabled: false,
         autoStart: undefined,
         maxSeconds: 20,
+        postDuration: undefined,
         triggers: undefined,
         debug: undefined,
       });
@@ -453,6 +440,7 @@ describe('Recorder', function () {
         enabled: true,
         autoStart: undefined,
         maxSeconds: 15,
+        postDuration: undefined,
         triggers: undefined,
         debug: undefined,
       });
