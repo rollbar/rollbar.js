@@ -81,7 +81,7 @@ describe('ReplayManager API Integration', function () {
 
   it('should add replay data to map', function () {
     const uuid = 'test-uuid';
-    const replayId = replayManager.add(null, uuid);
+    const replayId = replayManager.capture(null, uuid);
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
@@ -158,7 +158,7 @@ describe('ReplayManager API Integration', function () {
     sinon.stub(replayManager, '_exportSpansAndAddTracingPayload').resolves();
 
     for (let i = 0; i < 100; i++) {
-      const replayId = replayManager.add();
+      const replayId = replayManager.capture();
       expect(replayIds.has(replayId)).to.be.false;
       replayIds.add(replayId);
     }

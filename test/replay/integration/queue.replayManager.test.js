@@ -43,7 +43,7 @@ describe('Queue ReplayManager Integration', function () {
     );
 
     replayManager = {
-      add: sinon.stub().returnsArg(0),
+      capture: sinon.stub().returnsArg(0),
       send: sinon.stub().resolves(true),
       discard: sinon.stub().returns(true),
       getSpans: sinon.stub().returns([{ id: 'test-span' }]),
@@ -80,7 +80,7 @@ describe('Queue ReplayManager Integration', function () {
 
     queue.addItem(item, () => {
       expect(item).to.have.property('replayId', '1234567812345678');
-      expect(replayManager.add.calledOnce).to.be.true;
+      expect(replayManager.capture.calledOnce).to.be.true;
       done();
     });
   });
@@ -262,7 +262,7 @@ describe('Queue ReplayManager Integration', function () {
 
     queue.addItem(item, () => {
       expect(item).to.not.have.property('replayId');
-      expect(replayManager.add.called).to.be.false;
+      expect(replayManager.capture.called).to.be.false;
       done();
     });
   });
@@ -284,7 +284,7 @@ describe('Queue ReplayManager Integration', function () {
 
     queue.addItem(item, () => {
       expect(item).to.not.have.property('replayId');
-      expect(replayManager.add.called).to.be.false;
+      expect(replayManager.capture.called).to.be.false;
       done();
     });
   });
@@ -317,7 +317,7 @@ describe('Queue ReplayManager Integration', function () {
         expect(err).to.be.instanceof(Error);
         setTimeout(() => {
           // Verify replay was added but then discarded
-          expect(replayManager.add.calledOnce).to.be.true;
+          expect(replayManager.capture.calledOnce).to.be.true;
           expect(replayManager.discard.calledWith('1234567812345678')).to.be
             .true;
           expect(replayManager.send.called).to.be.false;

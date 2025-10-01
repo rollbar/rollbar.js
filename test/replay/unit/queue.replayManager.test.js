@@ -8,7 +8,7 @@ import Queue from '../../../src/queue.js';
 
 class MockReplayManager {
   constructor() {
-    this.add = sinon.stub().returnsArg(0);
+    this.capture = sinon.stub().returnsArg(0);
     this.send = sinon.stub().resolves(true);
     this.discard = sinon.stub().returns(true);
   }
@@ -66,7 +66,7 @@ describe('Queue with ReplayManager', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayManager.add.called).to.be.true;
+      expect(replayManager.capture.called).to.be.true;
       expect(item.replayId).to.equal('1234567812345678');
     });
 
@@ -81,7 +81,7 @@ describe('Queue with ReplayManager', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayManager.add.called).to.be.false;
+      expect(replayManager.capture.called).to.be.false;
       expect(item.replayId).to.be.undefined;
     });
 
