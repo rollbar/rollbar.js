@@ -5,12 +5,14 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import Queue from '../../../src/queue.js';
+import logger from '../../../src/logger.js';
 
 class MockReplayManager {
   constructor() {
     this.capture = sinon.stub().returnsArg(0);
     this.send = sinon.stub().resolves(true);
     this.discard = sinon.stub().returns(true);
+    this.sendOrDiscardReplay = sinon.stub().resolves();
   }
 }
 
@@ -102,149 +104,9 @@ describe('Queue with ReplayManager', function () {
     });
   });
 
-  describe('_canSendReplay', function () {
-    it('should return true when all conditions are met', function () {
-      const err = null;
-      const response = { err: 0 };
-      const headers = {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '10',
-      };
 
-      const result = queue._canSendReplay(err, response, headers);
-      expect(result).to.be.true;
-    });
-
-    it('should return false when there is an error', function () {
-      const err = new Error('API error');
-      const response = { err: 0 };
-      const headers = { 'Rollbar-Replay-Enabled': 'true' };
-
-      const result = queue._canSendReplay(err, response, headers);
-      expect(result).to.be.false;
-    });
-
-    it('should return false when response has an error code', function () {
-      const err = null;
-      const response = { err: 1 };
-      const headers = { 'Rollbar-Replay-Enabled': 'true' };
-
-      const result = queue._canSendReplay(err, response, headers);
-      expect(result).to.be.false;
-    });
-
-    it('should return false when replay is disabled', function () {
-      const err = null;
-      const response = { err: 0 };
-      const headers = { 'Rollbar-Replay-Enabled': 'false' };
-
-      const result = queue._canSendReplay(err, response, headers);
-      expect(result).to.be.false;
-    });
-
-    it('should return false when rate limit is zero', function () {
-      const err = null;
-      const response = { err: 0 };
-      const headers = {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '0',
-      };
-
-      const result = queue._canSendReplay(err, response, headers);
-      expect(result).to.be.false;
-    });
-  });
-
-  describe('_sendOrDiscardReplay', function () {
-    it('should send the replay when response is successful', async function () {
-      const replayId = 'test-replay-id';
-      const err = null;
-      const response = { err: 0 };
-      const headers = {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '10',
-      };
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(replayManager.send.calledWith(replayId)).to.be.true;
-      expect(replayManager.discard.called).to.be.false;
-    });
-
-    it('should discard the replay when response has an error', async function () {
-      const replayId = 'test-replay-id';
-      const err = new Error('API error');
-      const response = null;
-      const headers = null;
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(replayManager.send.called).to.be.false;
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-    });
-
-    it('should discard the replay when response error code is non-zero', async function () {
-      const replayId = 'test-replay-id';
-      const err = null;
-      const response = { err: 1 };
-      const headers = { 'Rollbar-Replay-Enabled': 'true' };
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(replayManager.send.called).to.be.false;
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-    });
-
-    it('should discard the replay when replay is disabled', async function () {
-      const replayId = 'test-replay-id';
-      const err = null;
-      const response = { err: 0 };
-      const headers = { 'Rollbar-Replay-Enabled': 'false' };
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(replayManager.send.called).to.be.false;
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-    });
-
-    it('should discard the replay when rate limit is exhausted', async function () {
-      const replayId = 'test-replay-id';
-      const err = null;
-      const response = { err: 0 };
-      const headers = {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '0',
-      };
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(replayManager.send.called).to.be.false;
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-    });
-
-    it('should discard the replay when send throws an error', async function () {
-      const replayId = 'test-replay-id';
-      const err = null;
-      const response = { err: 0 };
-      const headers = {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '10',
-      };
-
-      replayManager.send.rejects(new Error('Send failed'));
-
-      const consoleSpy = sinon.spy(console, 'error');
-
-      await queue._sendOrDiscardReplay(replayId, err, response, headers);
-
-      expect(consoleSpy.calledOnce).to.be.true;
-      expect(consoleSpy.args[0][0]).to.equal('Failed to send replay:');
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-    });
-  });
-
-  describe('Replay cleanup on failures', function () {
-    it('should discard replay when API returns an error', async function () {
+  describe('API callback handling with sendOrDiscardReplay', function () {
+    it('should call sendOrDiscardReplay with error when API returns an error', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -253,8 +115,9 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const apiError = new Error('Network error');
       api.postItem.callsFake((data, callback) => {
-        callback(new Error('Network error'), null, null);
+        callback(apiError, null, null);
       });
 
       const callback = sinon.stub();
@@ -263,11 +126,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(apiError);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.undefined;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.undefined;
     });
 
-    it('should discard replay when makeApiRequest throws an exception', function () {
+    it('should call discard when makeApiRequest throws an exception', function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -284,11 +150,12 @@ describe('Queue with ReplayManager', function () {
       const callback = sinon.stub();
       queue.addItem(item, callback);
 
+      // When makeApiRequest throws, Queue directly calls discard
       expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.false;
     });
 
-    it('should discard replay when rate limiter returns an error', function () {
+    it('should call sendOrDiscardReplay when rate limiter returns an error', function (done) {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -297,22 +164,28 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const rateLimitError = new Error('Rate limit exceeded');
       rateLimiter.shouldSend.returns({
         shouldSend: false,
-        error: new Error('Rate limit exceeded'),
+        error: rateLimitError,
       });
 
       const callback = sinon.stub();
       queue.addItem(item, callback);
 
-      // Wait a tick for callback
+      // Rate limiter errors now also call sendOrDiscardReplay to clean up replay
       setTimeout(() => {
-        expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-        expect(replayManager.send.called).to.be.false;
+        expect(callback.calledWith(rateLimitError)).to.be.true;
+        expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(rateLimitError);
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.undefined;
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.undefined;
+        done();
       }, 0);
     });
 
-    it('should discard replay when response indicates server error', async function () {
+    it('should call sendOrDiscardReplay with response indicating server error', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -321,8 +194,10 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const response = { err: 1, message: 'Internal server error' };
+      const headers = {};
       api.postItem.callsFake((data, callback) => {
-        callback(null, { err: 1, message: 'Internal server error' }, {});
+        callback(null, response, headers);
       });
 
       const callback = sinon.stub();
@@ -331,11 +206,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
     });
 
-    it('should discard replay when replay is disabled in headers', async function () {
+    it('should call sendOrDiscardReplay when replay is disabled in headers', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -344,8 +222,10 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const response = { err: 0 };
+      const headers = { 'Rollbar-Replay-Enabled': 'false' };
       api.postItem.callsFake((data, callback) => {
-        callback(null, { err: 0 }, { 'Rollbar-Replay-Enabled': 'false' });
+        callback(null, response, headers);
       });
 
       const callback = sinon.stub();
@@ -354,11 +234,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
     });
 
-    it('should discard replay when rate limit is exhausted', async function () {
+    it('should call sendOrDiscardReplay when rate limit is exhausted', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -367,15 +250,13 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const response = { err: 0 };
+      const headers = {
+        'Rollbar-Replay-Enabled': 'true',
+        'Rollbar-Replay-RateLimit-Remaining': '0',
+      };
       api.postItem.callsFake((data, callback) => {
-        callback(
-          null,
-          { err: 0 },
-          {
-            'Rollbar-Replay-Enabled': 'true',
-            'Rollbar-Replay-RateLimit-Remaining': '0',
-          },
-        );
+        callback(null, response, headers);
       });
 
       const callback = sinon.stub();
@@ -384,11 +265,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
     });
 
-    it('should discard replay when replayManager.send throws', async function () {
+    it('should call sendOrDiscardReplay with successful response and headers', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -397,18 +281,14 @@ describe('Queue with ReplayManager', function () {
         },
       };
 
+      const response = { err: 0 };
+      const headers = {
+        'Rollbar-Replay-Enabled': 'true',
+        'Rollbar-Replay-RateLimit-Remaining': '10',
+      };
       api.postItem.callsFake((data, callback) => {
-        callback(
-          null,
-          { err: 0 },
-          {
-            'Rollbar-Replay-Enabled': 'true',
-            'Rollbar-Replay-RateLimit-Remaining': '10',
-          },
-        );
+        callback(null, response, headers);
       });
-
-      replayManager.send.rejects(new Error('Failed to send spans'));
 
       const callback = sinon.stub();
       queue.addItem(item, callback);
@@ -416,11 +296,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.send.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
     });
 
-    it('should discard replay when response is null', async function () {
+    it('should call sendOrDiscardReplay when response is null', async function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -439,11 +322,14 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.send.called).to.be.false;
+      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.null;
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.null;
     });
 
-    it('should NOT leak replay when retrying after connection error', async function () {
+    it('should only call sendOrDiscardReplay once when retrying after connection error', async function () {
       queue = new Queue(
         rateLimiter,
         api,
@@ -453,12 +339,13 @@ describe('Queue with ReplayManager', function () {
       );
 
       let callCount = 0;
+      const finalError = new Error('Permanent failure');
       api.postItem.callsFake((data, callback) => {
         callCount++;
         if (callCount === 1) {
           callback({ code: 'ECONNRESET' });
         } else {
-          callback(new Error('Permanent failure'));
+          callback(finalError);
         }
       });
 
@@ -476,16 +363,16 @@ describe('Queue with ReplayManager', function () {
       // Wait for retry to complete
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Replay should be discarded exactly once after final failure
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
-      expect(replayManager.discard.callCount).to.equal(1);
-      expect(replayManager.send.called).to.be.false;
+      // Should only be called once with the final error
+      expect(replayManager.sendOrDiscardReplay.callCount).to.equal(1);
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(finalError);
     });
   });
 
   describe('API callback handling', function () {
-    it('should call _sendOrDiscardReplay with replayId and response on success', async function () {
-      const handleStub = sinon.stub(queue, '_sendOrDiscardReplay').resolves();
+    it('should call sendOrDiscardReplay with replayId and response on success', async function () {
+      const handleStub = replayManager.sendOrDiscardReplay;
 
       const item = {
         data: {
@@ -506,12 +393,12 @@ describe('Queue with ReplayManager', function () {
       expect(handleStub.firstCall.args[2]).to.deep.equal({ err: 0 }); // resp
     });
 
-    it('should call _sendOrDiscardReplay even when there is an API error', async function () {
+    it('should call sendOrDiscardReplay even when there is an API error', async function () {
       api.postItem.callsFake((item, callback) => {
         callback(new Error('API error'));
       });
 
-      const handleStub = sinon.stub(queue, '_sendOrDiscardReplay').resolves();
+      const handleStub = replayManager.sendOrDiscardReplay;
 
       const item = {
         data: {
@@ -532,8 +419,8 @@ describe('Queue with ReplayManager', function () {
       expect(handleStub.firstCall.args[2]).to.be.undefined; // resp
     });
 
-    it('should not call _sendOrDiscardReplay when item has no replayId', async function () {
-      const handleStub = sinon.stub(queue, '_sendOrDiscardReplay').resolves();
+    it('should not call sendOrDiscardReplay when item has no replayId', async function () {
+      const handleStub = replayManager.sendOrDiscardReplay;
 
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
