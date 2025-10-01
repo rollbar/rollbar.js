@@ -458,9 +458,9 @@ class Rollbar {
     }
     const code_version = options.client?.javascript?.code_version || options.codeVersion || options.code_version;
     this.setSessionAttributes({
-      code_version,
-      'notifier.name': 'rollbar-browser-js',
-      'notifier.version': options.version,
+      'rollbar.codeVersion': code_version,
+      'rollbar.notifier.name': 'rollbar-browser-js',
+      'rollbar.notifier.version': options.version,
     });
   }
 
