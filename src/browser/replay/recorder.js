@@ -77,7 +77,7 @@ export default class Recorder {
   }
 
   /**
-   * Exports the recording span with all recorded events.
+   * Exports the recording span with all recorded events or events after a specific point.
    *
    * This method takes the recorder's stored events, creates a new span with the
    * provided tracing context, attaches all events with their timestamps as span
@@ -86,14 +86,14 @@ export default class Recorder {
    *
    * @param {Object} tracing - The tracing system instance to create spans
    * @param {Object} attributes - Attributes to add to the span
-   *  (e.g., rollbar.replay.id, rollbar.occurrence.uuid)
+   *  (e.g., rollbar.replay.id, rollbar.occurrence.uuid, rollbar.replay.type)
+   * @param {number} [afterCount=0] - If provided, only export events after this count (for leading replay)
    */
-  exportRecordingSpan(tracing, attributes = {}) {
-    const events = this._collectEvents();
+  exportRecordingSpan(tracing, attributes = {}, afterCount = 0) {
+    const events = this._collectEvents(afterCount);
 
-    if (events.length < 3) {
-      // TODO(matux): improve how we consider a recording valid
-      throw new Error('Replay recording cannot have less than 3 events');
+    if (events.length === 0) {
+      throw new Error('Replay recording has no events');
     }
 
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
@@ -179,18 +179,32 @@ export default class Recorder {
     this._isReady = false;
   }
 
-  _collectEvents() {
-    const events = this._events.previous.concat(this._events.current);
+  _collectEvents(afterCount = 0) {
+    const allEvents = this._events.previous.concat(this._events.current);
 
-    // Helps the application correctly align playback by adding a noop event
-    // to the end of the recording.
-    events.push({
-      timestamp: Date.now(),
-      type: EventType.Custom,
-      data: { tag: 'replay.end', payload: {} },
-    });
+    const events = afterCount > 0 ? allEvents.slice(afterCount) : allEvents;
+
+    if (events.length > 0) {
+      // Helps the application correctly align playback by adding a noop event
+      // to the end of the recording.
+      events.push({
+        timestamp: Date.now(),
+        type: EventType.Custom,
+        data: { tag: 'replay.end', payload: {} },
+      });
+    }
 
     return events;
+  }
+
+  /**
+   * Gets the current count of events in the buffers.
+   * This represents a marker for where trailing events end.
+   *
+   * @returns {number} The total number of events currently stored
+   */
+  getCurrentEventCount() {
+    return this._events.previous.length + this._events.current.length;
   }
 
   _logEvent(event, isCheckout) {

@@ -106,7 +106,10 @@ describe('ReplayManager', function () {
 
       const expectedPayload = [{ id: 'span1' }, { id: 'span2' }];
 
-      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
+      await replayManager._exportSpansAndAddTracingPayload(
+        replayId,
+        occurrenceUuid,
+      );
 
       expect(mockTelemeter.exportTelemetrySpan.calledOnce).to.be.true;
       expect(
@@ -145,7 +148,10 @@ describe('ReplayManager', function () {
       const loggerSpy = sinon.spy(logger, 'error');
       const replayId = '1234567890abcdef';
       const occurrenceUuid = 'test-uuid';
-      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
+      await replayManager._exportSpansAndAddTracingPayload(
+        replayId,
+        occurrenceUuid,
+      );
 
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
@@ -177,7 +183,10 @@ describe('ReplayManager', function () {
       const occurrenceUuid = 'test-uuid';
 
       const expectedPayload = [{ id: 'span1' }, { id: 'span2' }];
-      await replayManager._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
+      await replayManager._exportSpansAndAddTracingPayload(
+        replayId,
+        occurrenceUuid,
+      );
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
