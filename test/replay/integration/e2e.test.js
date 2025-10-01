@@ -108,7 +108,7 @@ describe('Session Replay E2E', function () {
 
     setTimeout(() => {
       const recorderExportSpy = sinon.spy(recorder, 'exportRecordingSpan');
-      const replayManagerAddSpy = sinon.spy(replayManager, 'add');
+      const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
       const replayManagerSendSpy = sinon.spy(replayManager, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
       const apiPostSpansSpy = sinon.spy(api, 'postSpans');
@@ -136,7 +136,7 @@ describe('Session Replay E2E', function () {
         const expectedReplayId = errorItem.replayId;
         expect(expectedReplayId).to.match(/^[0-9a-fA-F]{16}$/);
 
-        expect(replayManagerAddSpy.calledOnce).to.be.true;
+        expect(replayManagerCaptureSpy.calledOnce).to.be.true;
         expect(apiPostItemSpy.calledOnce).to.be.true;
 
         setTimeout(() => {
@@ -241,7 +241,7 @@ describe('Session Replay E2E', function () {
       }
     });
 
-    const replayManagerAddSpy = sinon.spy(replayManager, 'add');
+    const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
     const replayManagerDiscardSpy = sinon.spy(replayManager, 'discard');
     const apiPostSpansSpy = sinon.spy(api, 'postSpans');
 
@@ -262,7 +262,7 @@ describe('Session Replay E2E', function () {
 
     queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
-      expect(replayManagerAddSpy.calledOnce).to.be.true;
+      expect(replayManagerCaptureSpy.calledOnce).to.be.true;
       expect(resp).to.have.property('err', 1);
 
       setTimeout(() => {

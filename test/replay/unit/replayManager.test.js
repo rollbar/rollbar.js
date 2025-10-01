@@ -211,7 +211,7 @@ describe('ReplayManager', function () {
         .stub(replayManager, '_exportSpansAndAddTracingPayload')
         .resolves();
 
-      const resp = replayManager.add(replayId, uuid);
+      const resp = replayManager.capture(replayId, uuid);
 
       expect(resp).to.equal(replayId);
       expect(id.gen.calledWith(8)).to.be.false;
@@ -224,7 +224,7 @@ describe('ReplayManager', function () {
         .stub(replayManager, '_exportSpansAndAddTracingPayload')
         .resolves();
 
-      const replayId = replayManager.add(null, uuid);
+      const replayId = replayManager.capture(null, uuid);
 
       expect(replayId).to.equal('1234567890abcdef');
       expect(id.gen.calledWith(8)).to.be.true;
@@ -236,9 +236,9 @@ describe('ReplayManager', function () {
       const processStub = sinon
         .stub(replayManager, '_exportSpansAndAddTracingPayload')
         .resolves();
-        mockRecorder.isReady = false;
+      mockRecorder.isReady = false;
 
-      const replayId = replayManager.add(null, uuid);
+      const replayId = replayManager.capture(null, uuid);
 
       expect(replayId).to.be.null;
       expect(id.gen.called).to.be.false;
