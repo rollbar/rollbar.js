@@ -231,7 +231,7 @@ export default class ReplayManager {
   capture(replayId, occurrenceUuid) {
     if (!this._recorder.isReady) {
       logger.warn(
-        'ReplayManager.add: Recorder is not ready, cannot export replay',
+        'ReplayManager.capture: Recorder is not ready, cannot export replay',
       );
       return null;
     }
