@@ -220,7 +220,7 @@ export default class ReplayManager {
   }
 
   /**
-   * Adds a replay to the map and returns a uniquely generated replay ID.
+   * Captures a replay and returns a uniquely generated replay ID.
    *
    * This method immediately returns the replayId and asynchronously processes
    * the replay data in the background. The processing involves converting
@@ -228,10 +228,10 @@ export default class ReplayManager {
    *
    * @returns {string} A unique identifier for this replay
    */
-  add(replayId, occurrenceUuid) {
+  capture(replayId, occurrenceUuid) {
     if (!this._recorder.isReady) {
       logger.warn(
-        'ReplayManager.add: Recorder is not ready, cannot export replay',
+        'ReplayManager.capture: Recorder is not ready, cannot export replay',
       );
       return null;
     }

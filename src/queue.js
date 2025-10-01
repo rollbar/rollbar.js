@@ -105,7 +105,7 @@ class Queue {
       const rid = data.attributes?.find((a) => a.key === 'replay_id')?.value;
 
       if (rid) {
-        item.replayId = this.replayManager.add(rid, data.uuid);
+        item.replayId = this.replayManager.capture(rid, data.uuid);
       }
     }
 

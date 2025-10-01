@@ -249,7 +249,7 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should add replayId to error item and send replay on success', function (done) {
-    const addSpy = sinon.spy(replayManager, 'add');
+    const captureSpy = sinon.spy(replayManager, 'capture');
     const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
@@ -268,7 +268,7 @@ describe('Session Replay Transport Integration', function () {
 
     queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
-      expect(addSpy.calledOnce).to.be.true;
+      expect(captureSpy.calledOnce).to.be.true;
 
       expect(err).to.be.null;
       expect(resp).to.have.property('err', 0);
@@ -291,7 +291,7 @@ describe('Session Replay Transport Integration', function () {
         }, 10);
       });
 
-    const addSpy = sinon.spy(replayManager, 'add');
+    const captureSpy = sinon.spy(replayManager, 'capture');
     const sendSpy = sinon.spy(replayManager, 'send');
     const discardSpy = sinon.spy(replayManager, 'discard');
 
@@ -310,7 +310,7 @@ describe('Session Replay Transport Integration', function () {
 
     queue.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.have.property('replayId');
-      expect(addSpy.calledOnce).to.be.true;
+      expect(captureSpy.calledOnce).to.be.true;
 
       setTimeout(function () {
         expect(discardSpy.calledWith(errorItem.replayId)).to.be.true;
@@ -322,7 +322,7 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should handle full end-to-end flow from error to spans', async function () {
-    const addSpy = sinon.spy(replayManager, 'add');
+    const captureSpy = sinon.spy(replayManager, 'capture');
     const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
@@ -350,7 +350,7 @@ describe('Session Replay Transport Integration', function () {
 
     await addItemPromise;
     expect(errorItem).to.have.property('replayId');
-    expect(addSpy.calledOnce).to.be.true;
+    expect(captureSpy.calledOnce).to.be.true;
 
     const responsePromise = sendOrDiscardReplaySpy.returnValues[0];
     await responsePromise;
