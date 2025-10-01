@@ -102,12 +102,16 @@ export default class ReplayManager {
     this._trailingStatus.set(replayId, TrailingStatus.PENDING);
 
     const timerId = setTimeout(async () => {
-      await this._exportLeadingSpansAndAddPayload(
-        replayId,
-        occurrenceUuid,
-        trailingEndCount,
-      );
-      this._sendOrDiscardLeadingReplay(replayId);
+      try {
+        await this._exportLeadingSpansAndAddPayload(
+          replayId,
+          occurrenceUuid,
+          trailingEndCount,
+        );
+        this._sendOrDiscardLeadingReplay(replayId);
+      } catch (error) {
+        logger.error('Error during leading replay processing:', error);
+      }
     }, seconds * 1000);
 
     this._pendingLeading.set(replayId, {
