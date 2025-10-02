@@ -3,6 +3,7 @@ import { EventType } from '@rrweb/types';
 
 import hrtime from '../../tracing/hrtime.js';
 import logger from '../../logger.js';
+import defaults from './defaults.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 
@@ -97,7 +98,11 @@ export default class Recorder {
    * @returns {number} Checkout interval in milliseconds
    */
   checkoutEveryNms() {
-    return ((this.options.maxSeconds ?? 10) * 1000) / 2;
+    const maxSeconds =
+      this.options.maxSeconds > 0
+        ? this.options.maxSeconds
+        : defaults.maxSeconds;
+    return (maxSeconds * 1000) / 2;
   }
 
   /**
