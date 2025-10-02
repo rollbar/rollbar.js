@@ -429,6 +429,80 @@ describe('ReplayManager', function () {
     });
   });
 
+  describe('_canSendReplay', function () {
+    it('returns true when all conditions are met', function () {
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 0 },
+        {
+          'Rollbar-Replay-Enabled': 'true',
+          'Rollbar-Replay-RateLimit-Remaining': '10',
+        },
+      );
+      expect(result).to.be.true;
+    });
+
+    it('returns false when err is truthy', function () {
+      const result = ReplayManager._canSendReplay(
+        new Error('API error'),
+        { err: 0 },
+        { 'Rollbar-Replay-Enabled': 'true' },
+      );
+      expect(result).to.be.false;
+    });
+
+    it('returns false when resp.err is non-zero', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 1 }, {
+        'Rollbar-Replay-Enabled': 'true',
+      });
+      expect(result).to.be.false;
+    });
+
+    it('returns false when resp is null', function () {
+      const result = ReplayManager._canSendReplay(null, null, {
+        'Rollbar-Replay-Enabled': 'true',
+      });
+      expect(result).to.be.false;
+    });
+
+    it('returns false when Rollbar-Replay-Enabled is not "true"', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
+        'Rollbar-Replay-Enabled': 'false',
+        'Rollbar-Replay-RateLimit-Remaining': '10',
+      });
+      expect(result).to.be.false;
+    });
+
+    it('returns false when Rollbar-Replay-RateLimit-Remaining is "0"', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
+        'Rollbar-Replay-Enabled': 'true',
+        'Rollbar-Replay-RateLimit-Remaining': '0',
+      });
+      expect(result).to.be.false;
+    });
+
+    it('returns false when headers are null', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 0 }, null);
+      expect(result).to.be.false;
+    });
+
+    it('handles case-insensitive headers', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
+        'rollbar-replay-enabled': 'true',
+        'ROLLBAR-REPLAY-RATELIMIT-REMAINING': '10',
+      });
+      expect(result).to.be.true;
+    });
+
+    it('handles whitespace in header values', function () {
+      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
+        'Rollbar-Replay-Enabled': ' true ',
+        'Rollbar-Replay-RateLimit-Remaining': ' 10 ',
+      });
+      expect(result).to.be.true;
+    });
+  });
+
   describe('sendOrDiscardReplay', function () {
     beforeEach(function () {
       replayManager.setSpans('test-replay', [{ id: 'span1' }]);
