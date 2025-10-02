@@ -105,7 +105,13 @@ export default class Recorder {
    *
    * Used to capture a stable cursor that survives a single checkout.
    *
-   * @returns {BufferCursor} Buffer index and event offset (offset is -1 if buffer is empty)
+   * @remarks
+   *
+   * While offset can be `-1` if the buffer is empty, this cannot occur when
+   * `_isReady` is `true`. The emit callback always pushes the triggering event
+   * after any buffer reset, ensuring the active buffer has at least one event.
+   *
+   * @returns {BufferCursor} Buffer index and event offset.
    */
   bufferCursor() {
     return {
