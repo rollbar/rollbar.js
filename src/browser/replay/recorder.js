@@ -111,7 +111,7 @@ export default class Recorder {
    * `_isReady` is `true`. The emit callback always pushes the triggering event
    * after any buffer reset, ensuring the active buffer has at least one event.
    *
-   * @returns {BufferCursor} Buffer index and event offset.
+   * @returns {BufferCursor} Buffer slot and event exclusive offset.
    */
   bufferCursor() {
     return {
@@ -181,7 +181,8 @@ export default class Recorder {
         }
 
         if (isCheckout && event.type === EventType.Meta) {
-          this._buffers[(this._currentSlot = this._previousSlot)] = [];
+          this._currentSlot = this._previousSlot;
+          this._buffers[this._currentSlot] = [];
         }
 
         this._buffers[this._currentSlot].push(event);
@@ -218,7 +219,8 @@ export default class Recorder {
   }
 
   /**
-   * Collects all events from both buffers.
+   * Collects all events (previous ⊕ current) and returns a new array with a
+   * trailing `replay.end` marker.
    *
    * @returns {Array} All events with replay.end marker
    * @private
@@ -236,24 +238,26 @@ export default class Recorder {
   }
 
   /**
-   * Collects events after a cursor position.
+   * Collects events strictly after `cursor` (exclusive) and returns a new
+   * array with `replay.end`.
    *
    * @param {BufferCursor} cursor - Cursor position to collect from
    * @returns {Array} Events after cursor with replay.end marker
    * @private
    */
   _collectEventsFromCursor(cursor) {
+    const currentSlot = this._currentSlot;
     const capturedBuffer = this._buffers[cursor.slot] ?? [];
+    const currentBuffer = this._buffers[currentSlot];
     const head = capturedBuffer.slice(Math.max(0, cursor.offset + 1));
-    const tail =
-      cursor.slot === this._currentSlot ? [] : this._buffers[this._currentSlot];
+    const tail = cursor.slot === currentSlot ? [] : currentBuffer;
 
     const events = head.concat(tail);
 
-    if (cursor.slot !== this._currentSlot && head.length === 0) {
-      logger.warn(
-        'Leading replay: captured buffer cleared by multiple checkouts',
-      );
+    if (this.options.debug?.logErrors) {
+      if (cursor.slot !== currentSlot && head.length === 0) {
+        logger.warn('Captured lead buffer cleared by multiple checkouts');
+      }
     }
 
     if (events.length > 0) {
