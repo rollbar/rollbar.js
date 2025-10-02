@@ -97,7 +97,7 @@ export default class Recorder {
    * @returns {number} Checkout interval in milliseconds
    */
   checkoutEveryNms() {
-    return ((this.options.maxSeconds || 10) * 1000) / 2;
+    return ((this.options.maxSeconds ?? 10) * 1000) / 2;
   }
 
   /**
