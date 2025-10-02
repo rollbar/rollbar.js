@@ -1,6 +1,9 @@
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 
+/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
+
 /**
  * Enum for tracking the status of trailing replay sends.
  * Used to coordinate between trailing and leading replay captures.
@@ -18,6 +21,7 @@ const TrailingStatus = Object.freeze({
  */
 export default class ReplayManager {
   _map;
+  /** @type {Recorder} */
   _recorder;
   _api;
   _tracing;
@@ -29,7 +33,7 @@ export default class ReplayManager {
    * Creates a new ReplayManager instance
    *
    * @param {Object} props - Configuration props
-   * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
+   * @param {Recorder} props.recorder - The recorder instance that dumps replay data into spans
    * @param {Object} props.api - The API instance used to send replay payloads to the backend
    * @param {Object} props.tracing - The tracing instance used to create spans and manage context
    */
@@ -83,7 +87,7 @@ export default class ReplayManager {
     this._map.set(replayId, payload);
 
     const leadingSeconds = this._recorder.options?.postDuration || 0;
-    if (leadingSeconds > 0 && this._recorder.isRecording) {
+    if (leadingSeconds > 0) {
       this._scheduleLeadingCapture(replayId, occurrenceUuid, leadingSeconds);
     }
   }
@@ -97,7 +101,7 @@ export default class ReplayManager {
    * @private
    */
   _scheduleLeadingCapture(replayId, occurrenceUuid, seconds) {
-    const trailingEndCount = this._recorder.getCurrentEventCount();
+    const bufferCursor = this._recorder.bufferCursor();
 
     this._trailingStatus.set(replayId, TrailingStatus.PENDING);
 
@@ -106,7 +110,7 @@ export default class ReplayManager {
         await this._exportLeadingSpansAndAddPayload(
           replayId,
           occurrenceUuid,
-          trailingEndCount,
+          bufferCursor,
         );
         this._sendOrDiscardLeadingReplay(replayId);
       } catch (error) {
@@ -117,7 +121,7 @@ export default class ReplayManager {
     this._pendingLeading.set(replayId, {
       timerId,
       occurrenceUuid,
-      trailingEndCount,
+      bufferCursor,
       leadingReady: false,
     });
   }
@@ -128,13 +132,13 @@ export default class ReplayManager {
    *
    * @param {string} replayId - The replay ID
    * @param {string} occurrenceUuid - The occurrence UUID
-   * @param {number} trailingEndCount - Event count marking end of trailing events
+   * @param {BufferCursor} bufferCursor - Buffer cursor position
    * @private
    */
   async _exportLeadingSpansAndAddPayload(
     replayId,
     occurrenceUuid,
-    trailingEndCount,
+    bufferCursor,
   ) {
     const pendingContext = this._pendingLeading.get(replayId);
 
@@ -150,7 +154,7 @@ export default class ReplayManager {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
         },
-        trailingEndCount,
+        bufferCursor,
       );
     } catch (error) {
       logger.error('Error exporting leading recording span:', error);
