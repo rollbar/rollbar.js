@@ -234,16 +234,13 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    expect(recorder._collectEventsFromCursor.callCount).to.be.greaterThan(0);
+    expect(recorder._collectEventsFromCursor.callCount).to.equal(1);
+    expect(recorder._collectEventsFromCursor.firstCall.args[0]).to.deep.equal(
+      cursor,
+    );
 
-    const collectCall = recorder._collectEventsFromCursor
-      .getCalls()
-      .find((call) => call.args[0] && call.args[0].slot === cursor.slot);
-
-    expect(collectCall).to.exist;
-    expect(collectCall.args[0]).to.deep.equal(cursor);
-
-    const returnedEvents = collectCall.returnValue;
+    const returnedEvents =
+      recorder._collectEventsFromCursor.firstCall.returnValue;
     expect(returnedEvents).to.have.lengthOf(10);
 
     expect(api.postSpans.callCount).to.equal(2);
