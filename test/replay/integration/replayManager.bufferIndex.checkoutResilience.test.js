@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import mockRecordFn from '../util/mockRecordFn.js';
+import logger from '../../../src/logger.js';
 
 describe('ReplayManager – Buffer Index Checkout Resilience', function () {
   let replayManager, recorder, api, tracing, telemeter, clock;
@@ -63,21 +64,22 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    const calls = recorder.exportRecordingSpan.getCalls();
-    expect(calls).to.have.lengthOf(2);
+    sinon.assert.calledTwice(recorder.exportRecordingSpan);
 
-    const trailingCursor = calls[0].args[2];
+    const trailingCursor = recorder.exportRecordingSpan.firstCall.args[2];
     expect(trailingCursor).to.be.undefined;
 
-    const leadingCursor = calls[1].args[2];
+    const leadingCursor = recorder.exportRecordingSpan.secondCall.args[2];
     expect(leadingCursor).to.be.an('object');
     expect(leadingCursor).to.have.property('slot', 0);
     expect(leadingCursor).to.have.property('offset', 5);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
@@ -108,21 +110,22 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    const calls = recorder.exportRecordingSpan.getCalls();
-    expect(calls).to.have.lengthOf(2);
+    sinon.assert.calledTwice(recorder.exportRecordingSpan);
 
-    const trailingCursor = calls[0].args[2];
+    const trailingCursor = recorder.exportRecordingSpan.firstCall.args[2];
     expect(trailingCursor).to.be.undefined;
 
-    const leadingCursor = calls[1].args[2];
+    const leadingCursor = recorder.exportRecordingSpan.secondCall.args[2];
     expect(leadingCursor).to.be.an('object');
     expect(leadingCursor).to.have.property('slot', 0);
     expect(leadingCursor).to.have.property('offset', 5);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
@@ -157,19 +160,20 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    const calls = recorder.exportRecordingSpan.getCalls();
-    expect(calls).to.have.lengthOf(2);
+    sinon.assert.calledTwice(recorder.exportRecordingSpan);
 
-    const trailingCursor = calls[0].args[2];
+    const trailingCursor = recorder.exportRecordingSpan.firstCall.args[2];
     expect(trailingCursor).to.be.undefined;
 
-    const leadingCursor = calls[1].args[2];
+    const leadingCursor = recorder.exportRecordingSpan.secondCall.args[2];
     expect(leadingCursor).to.deep.equal(cursor);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
@@ -199,10 +203,12 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.size).to.equal(0);
   });
 
@@ -234,19 +240,19 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    expect(recorder._collectEventsFromCursor.callCount).to.equal(1);
-    expect(recorder._collectEventsFromCursor.firstCall.args[0]).to.deep.equal(
-      cursor,
-    );
+    sinon.assert.calledOnce(recorder._collectEventsFromCursor);
+    sinon.assert.calledWith(recorder._collectEventsFromCursor, cursor);
 
     const returnedEvents =
       recorder._collectEventsFromCursor.firstCall.returnValue;
     expect(returnedEvents).to.have.lengthOf(10);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.size).to.equal(0);
 
     recorder._collectEventsFromCursor.restore();
@@ -262,12 +268,23 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     recorder._isReady = true;
     recorder._stopFn = () => {};
 
+    sinon.spy(logger, 'error');
+
     const replayId = replayManager.capture('test-replay-id', 'test-uuid');
     await clock.tickAsync(100);
 
+    sinon.assert.calledOnce(logger.error);
+    sinon.assert.calledWithMatch(
+      logger.error,
+      sinon.match.string,
+      sinon.match.has('message', 'Replay recording has no events'),
+    );
+
     expect(replayManager._map.has(replayId)).to.be.false;
     expect(replayManager._pendingLeading.has(replayId)).to.be.false;
-    expect(api.postSpans.callCount).to.equal(0);
+    sinon.assert.notCalled(api.postSpans);
+
+    logger.error.restore();
   });
 
   it('leading post error is handled and state is cleaned', async function () {
@@ -296,13 +313,17 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.firstCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.firstCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId },
+    );
     expect(replayManager._pendingLeading.has(replayId)).to.be.false;
   });
 
@@ -331,7 +352,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     replayManager.discard(replayId1);
     await clock.tickAsync(10000);
 
-    expect(api.postSpans.callCount).to.equal(0);
+    sinon.assert.notCalled(api.postSpans);
 
     const replayId2 = 'test-replay-id-2';
     replayManager.capture(replayId2, 'test-uuid-2');
@@ -340,10 +361,12 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId2);
     await clock.tickAsync(5000);
 
-    expect(api.postSpans.callCount).to.equal(2);
-    expect(api.postSpans.secondCall.args[1]).to.deep.equal({
-      'X-Rollbar-Replay-Id': replayId2,
-    });
+    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledWith(
+      api.postSpans.secondCall,
+      sinon.match.has('resourceSpans'),
+      { 'X-Rollbar-Replay-Id': replayId2 },
+    );
     expect(replayManager._pendingLeading.has(replayId2)).to.be.false;
     expect(replayManager._trailingStatus.has(replayId2)).to.be.false;
   });
