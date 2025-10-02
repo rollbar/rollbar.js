@@ -249,6 +249,31 @@ export default class ReplayManager {
   }
 
   /**
+   * Determines if a replay can be sent based on API response and headers.
+   *
+   * @param {Error|null} err - Any error that occurred during the API request
+   * @param {Object|null} resp - The API response object
+   * @param {Object|null} hs - The response headers
+   * @returns {boolean} true if the replay can be sent, false otherwise.
+   * @private
+   */
+  static _canSendReplay(err, resp, hs) {
+    if (!hs) return false;
+
+    const hasNoErrors = !err && resp?.err === 0;
+
+    const headers = Object.fromEntries(
+      Object.entries(hs).map(([k, v]) => [k.toLowerCase(), String(v).trim()]),
+    );
+
+    const headersAreValid =
+      headers['rollbar-replay-enabled'] === 'true' &&
+      headers['rollbar-replay-ratelimit-remaining'] !== '0';
+
+    return hasNoErrors && headersAreValid;
+  }
+
+  /**
    * Sends or discards a replay based on whether it can be sent.
    *
    * The criteria for sending a replay are:
@@ -260,13 +285,13 @@ export default class ReplayManager {
    * Called by Queue after determining replay eligibility from API response.
    *
    * @param {string} replayId - The ID of the replay to send or discard
+   * @param {Error|null} err - Any error that occurred during the API request
+   * @param {Object|null} resp - The API response object
+   * @param {Object|null} headers - The response headers
+   * @returns {Promise<void>} A promise that resolves when the operation is complete
    */
   async sendOrDiscardReplay(replayId, err, resp, headers) {
-    const canSendReplay =
-      !err &&
-      resp?.err === 0 &&
-      headers?.['Rollbar-Replay-Enabled'] === 'true' &&
-      headers?.['Rollbar-Replay-RateLimit-Remaining'] !== '0';
+    const canSendReplay = ReplayManager._canSendReplay(err, resp, headers);
 
     if (canSendReplay) {
       try {
