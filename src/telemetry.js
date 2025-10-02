@@ -351,7 +351,7 @@ class Telemeter {
     event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
     event.otelAttributes['durationUnixNano'] = fromMillis(duration);
     event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
-    event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+    event.otelAttributes.rate = event.otelAttributes.count / (duration / 1000);
   }
 
   _lastEvent(list) {

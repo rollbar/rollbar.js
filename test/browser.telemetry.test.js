@@ -310,6 +310,7 @@ describe('instrumentDom', function () {
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
     expect(event.otelAttributes.count).to.eql(3);
+    expect(event.otelAttributes.rate).to.be.a('number');
   });
 
   it('should combine repeated input events', async function () {
@@ -344,6 +345,7 @@ describe('instrumentDom', function () {
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
     expect(event.otelAttributes.count).to.eql(3);
+    expect(event.otelAttributes.rate).to.be.a('number');
   });
 });
 
