@@ -86,9 +86,9 @@ export default class ReplayManager {
     const payload = this._tracing.exporter.toPayload();
     this._map.set(replayId, payload);
 
-    const postDuration = this._recorder.options?.postDuration || 0;
-    if (postDuration > 0) {
-      this._scheduleLeadingCapture(replayId, occurrenceUuid, postDuration);
+    const leadingSeconds = this._recorder.options?.postDuration || 0;
+    if (leadingSeconds > 0) {
+      this._scheduleLeadingCapture(replayId, occurrenceUuid, leadingSeconds);
     }
   }
 
