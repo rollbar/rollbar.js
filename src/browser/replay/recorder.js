@@ -237,13 +237,10 @@ export default class Recorder {
    * @private
    */
   _collectEventsFromCursor(cursor) {
-    const capturedBuffer = this._buffers[cursor.slot] || [];
+    const capturedBuffer = this._buffers[cursor.slot] ?? [];
     const head = capturedBuffer.slice(Math.max(0, cursor.offset + 1));
-
     const tail =
-      cursor.slot === this._currentSlot
-        ? []
-        : this._buffers[this._currentSlot] || [];
+      cursor.slot === this._currentSlot ? [] : this._buffers[this._currentSlot];
 
     const events = head.concat(tail);
 
