@@ -1,6 +1,19 @@
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 
+/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
+
+/**
+ * Enum for tracking the status of trailing replay sends.
+ * Used to coordinate between trailing and leading replay captures.
+ */
+const TrailingStatus = Object.freeze({
+  PENDING: 'pending', // Trailing not yet sent
+  SENT: 'sent', // Trailing successfully sent
+  FAILED: 'failed', // Trailing failed to send
+});
+
 /**
  * ReplayManager - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
@@ -8,16 +21,19 @@ import logger from '../../logger.js';
  */
 export default class ReplayManager {
   _map;
+  /** @type {Recorder} */
   _recorder;
   _api;
   _tracing;
   _telemeter;
+  _pendingLeading;
+  _trailingStatus;
 
   /**
    * Creates a new ReplayManager instance
    *
    * @param {Object} props - Configuration props
-   * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
+   * @param {Recorder} props.recorder - The recorder instance that dumps replay data into spans
    * @param {Object} props.api - The API instance used to send replay payloads to the backend
    * @param {Object} props.tracing - The tracing instance used to create spans and manage context
    */
@@ -39,6 +55,8 @@ export default class ReplayManager {
     this._api = api;
     this._tracing = tracing;
     this._telemeter = telemeter;
+    this._pendingLeading = new Map();
+    this._trailingStatus = new Map();
   }
 
   /**
@@ -67,10 +85,146 @@ export default class ReplayManager {
 
     const payload = this._tracing.exporter.toPayload();
     this._map.set(replayId, payload);
+
+    const leadingSeconds = this._recorder.options?.postDuration || 0;
+    if (leadingSeconds > 0) {
+      this._scheduleLeadingCapture(replayId, occurrenceUuid, leadingSeconds);
+    }
   }
 
   /**
-   * Adds a replay to the map and returns a uniquely generated replay ID.
+   * Schedules the capture of leading replay events after a delay.
+   *
+   * @param {string} replayId - The replay ID
+   * @param {string} occurrenceUuid - The occurrence UUID
+   * @param {number} seconds - Number of seconds to wait before capturing
+   * @private
+   */
+  _scheduleLeadingCapture(replayId, occurrenceUuid, seconds) {
+    const bufferCursor = this._recorder.bufferCursor();
+
+    this._trailingStatus.set(replayId, TrailingStatus.PENDING);
+
+    const timerId = setTimeout(async () => {
+      try {
+        await this._exportLeadingSpansAndAddPayload(
+          replayId,
+          occurrenceUuid,
+          bufferCursor,
+        );
+        this._sendOrDiscardLeadingReplay(replayId);
+      } catch (error) {
+        logger.error('Error during leading replay processing:', error);
+      }
+    }, seconds * 1000);
+
+    this._pendingLeading.set(replayId, {
+      timerId,
+      occurrenceUuid,
+      bufferCursor,
+      leadingReady: false,
+    });
+  }
+
+  /**
+   * Exports leading replay spans and adds the payload to pending context.
+   * Similar to _exportSpansAndAddTracingPayload but for leading events.
+   *
+   * @param {string} replayId - The replay ID
+   * @param {string} occurrenceUuid - The occurrence UUID
+   * @param {BufferCursor} bufferCursor - Buffer cursor position
+   * @private
+   */
+  async _exportLeadingSpansAndAddPayload(
+    replayId,
+    occurrenceUuid,
+    bufferCursor,
+  ) {
+    const pendingContext = this._pendingLeading.get(replayId);
+
+    if (!pendingContext) {
+      // Already cleaned up, possibly due to discard
+      return;
+    }
+
+    try {
+      this._recorder.exportRecordingSpan(
+        this._tracing,
+        {
+          'rollbar.replay.id': replayId,
+          'rollbar.occurrence.uuid': occurrenceUuid,
+        },
+        bufferCursor,
+      );
+    } catch (error) {
+      logger.error('Error exporting leading recording span:', error);
+      this._discardLeadingCapture(replayId);
+      return;
+    }
+
+    this._telemeter?.exportTelemetrySpan({
+      'rollbar.replay.id': replayId,
+    });
+
+    const leadingPayload = this._tracing.exporter.toPayload();
+    pendingContext.leadingReady = true;
+    pendingContext.leadingPayload = leadingPayload;
+    this._pendingLeading.set(replayId, pendingContext);
+  }
+
+  /**
+   * Sends or discards leading replay based on trailing replay status.
+   *
+   * @param {string} replayId - The replay ID
+   * @private
+   */
+  async _sendOrDiscardLeadingReplay(replayId) {
+    const trailingStatus = this._trailingStatus.get(replayId);
+    const pendingContext = this._pendingLeading.get(replayId);
+
+    if (!pendingContext?.leadingReady || !pendingContext?.leadingPayload) {
+      return;
+    }
+
+    switch (trailingStatus) {
+      case TrailingStatus.SENT:
+        try {
+          await this._api.postSpans(pendingContext.leadingPayload, {
+            'X-Rollbar-Replay-Id': replayId,
+          });
+        } catch (error) {
+          logger.error('Failed to send leading replay:', error);
+        }
+        this._discardLeadingCapture(replayId);
+        break;
+
+      case TrailingStatus.FAILED:
+        this._discardLeadingCapture(replayId);
+        break;
+
+      case TrailingStatus.PENDING:
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Discards all state related to leading capture for a replay.
+   *
+   * @param {string} replayId - The replay ID to discard
+   * @private
+   */
+  _discardLeadingCapture(replayId) {
+    const pendingContext = this._pendingLeading.get(replayId);
+    if (pendingContext?.timerId) {
+      clearTimeout(pendingContext.timerId);
+    }
+    this._pendingLeading.delete(replayId);
+    this._trailingStatus.delete(replayId);
+  }
+
+  /**
+   * Captures a replay and returns a uniquely generated replay ID.
    *
    * This method immediately returns the replayId and asynchronously processes
    * the replay data in the background. The processing involves converting
@@ -78,17 +232,52 @@ export default class ReplayManager {
    *
    * @returns {string} A unique identifier for this replay
    */
-  add(replayId, occurrenceUuid) {
+  capture(replayId, occurrenceUuid) {
     if (!this._recorder.isReady) {
-      logger.warn('ReplayManager.add: Recorder is not ready, cannot export replay');
+      logger.warn(
+        'ReplayManager.capture: Recorder is not ready, cannot export replay',
+      );
       return null;
     }
+
     replayId = replayId || id.gen(8);
 
     // Start processing the replay in the background
     this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
 
     return replayId;
+  }
+
+  /**
+   * Sends or discards a replay based on whether it can be sent.
+   *
+   * The criteria for sending a replay are:
+   * - No error occurred during the API request
+   * - The response indicates success (err === 0)
+   * - Replay is enabled on the server
+   * - Rate limit quota is not exhausted
+   *
+   * Called by Queue after determining replay eligibility from API response.
+   *
+   * @param {string} replayId - The ID of the replay to send or discard
+   */
+  async sendOrDiscardReplay(replayId, err, resp, headers) {
+    const canSendReplay =
+      !err &&
+      resp?.err === 0 &&
+      headers?.['Rollbar-Replay-Enabled'] === 'true' &&
+      headers?.['Rollbar-Replay-RateLimit-Remaining'] !== '0';
+
+    if (canSendReplay) {
+      try {
+        await this.send(replayId);
+      } catch (error) {
+        logger.error('Failed to send replay:', error);
+        this.discard(replayId);
+      }
+    } else {
+      this.discard(replayId);
+    }
   }
 
   /**
@@ -125,6 +314,9 @@ export default class ReplayManager {
     }
 
     await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
+
+    this._trailingStatus.set(replayId, TrailingStatus.SENT);
+    await this._sendOrDiscardLeadingReplay(replayId);
   }
 
   /**
@@ -139,6 +331,10 @@ export default class ReplayManager {
       logger.error('ReplayManager.discard: No replayId provided');
       return false;
     }
+
+    this._trailingStatus.set(replayId, TrailingStatus.FAILED);
+
+    this._discardLeadingCapture(replayId);
 
     if (!this._map.has(replayId)) {
       logger.error(

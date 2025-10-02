@@ -4,15 +4,24 @@ import { EventType } from '@rrweb/types';
 import hrtime from '../../tracing/hrtime.js';
 import logger from '../../logger.js';
 
+/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+
 export default class Recorder {
   _options;
   _rrwebOptions;
+
+  _isReady = false;
   _stopFn = null;
   _recordFn;
-  _events = {
-    previous: [],
-    current: [],
-  };
+
+  /** A two-slot ring buffer for storing events. */
+  _buffers = [[], []];
+  /** Active slot index (0|1). Stores new events until next checkout. */
+  _currentSlot = 0;
+  /** Index of the finalized inactive slot (0|1). Frozen until next checkout. */
+  get _previousSlot() {
+    return this._currentSlot ^ 1;
+  }
 
   /**
    * Creates a new Recorder instance for capturing DOM events
@@ -27,7 +36,6 @@ export default class Recorder {
 
     this.options = options;
     this._recordFn = recordFn;
-    this._isReady = false;
   }
 
   get isRecording() {
@@ -52,6 +60,7 @@ export default class Recorder {
       enabled,
       autoStart,
       maxSeconds,
+      postDuration,
       triggers,
       debug,
 
@@ -62,7 +71,16 @@ export default class Recorder {
       // rrweb options
       ...rrwebOptions
     } = newOptions;
-    this._options = { enabled, autoStart, maxSeconds, triggers, debug };
+
+    this._options = {
+      enabled,
+      autoStart,
+      maxSeconds,
+      postDuration,
+      triggers,
+      debug,
+    };
+
     this._rrwebOptions = rrwebOptions;
 
     if (this.isRecording && newOptions.enabled === false) {
@@ -70,30 +88,52 @@ export default class Recorder {
     }
   }
 
+  /**
+   * Calculates the checkout interval in milliseconds.
+   *
+   * Recording may span up to two checkout intervals, so the interval is set
+   * to half of maxSeconds to ensure coverage.
+   *
+   * @returns {number} Checkout interval in milliseconds
+   */
   checkoutEveryNms() {
-    // Recording may be up to two checkout intervals, therefore the checkout
-    // interval is set to half of the maxSeconds.
     return ((this.options.maxSeconds || 10) * 1000) / 2;
   }
 
   /**
-   * Exports the recording span with all recorded events.
+   * Returns a point-in-time cursor for the active buffer.
    *
-   * This method takes the recorder's stored events, creates a new span with the
-   * provided tracing context, attaches all events with their timestamps as span
-   * events, and exports the span to the tracing exporter. This is a side-effect
-   * function that doesn't return anything - the span is exported internally.
+   * Used to capture a stable cursor that survives a single checkout.
+   *
+   * @remarks
+   *
+   * While offset can be `-1` if the buffer is empty, this cannot occur when
+   * `_isReady` is `true`. The emit callback always pushes the triggering event
+   * after any buffer reset, ensuring the active buffer has at least one event.
+   *
+   * @returns {BufferCursor} Buffer index and event offset.
+   */
+  bufferCursor() {
+    return {
+      slot: this._currentSlot,
+      offset: this._buffers[this._currentSlot].length - 1,
+    };
+  }
+
+  /**
+   * Exports the recording span with all recorded events or events after a cursor.
    *
    * @param {Object} tracing - The tracing system instance to create spans
-   * @param {Object} attributes - Attributes to add to the span
-   *  (e.g., rollbar.replay.id, rollbar.occurrence.uuid)
+   * @param {Object} attributes - Span attributes (rollbar.replay.id, etc.)
+   * @param {BufferCursor} [cursor] - Cursor position to start from (exclusive), or all if not provided
    */
-  exportRecordingSpan(tracing, attributes = {}) {
-    const events = this._collectEvents();
+  exportRecordingSpan(tracing, attributes = {}, cursor) {
+    const events = cursor
+      ? this._collectEventsFromCursor(cursor)
+      : this._collectAll();
 
-    if (events.length < 3) {
-      // TODO(matux): improve how we consider a recording valid
-      throw new Error('Replay recording cannot have less than 3 events');
+    if (events.length === 0) {
+      throw new Error('Replay recording has no events');
     }
 
     const recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
@@ -135,16 +175,16 @@ export default class Recorder {
         if (!this._isReady && event.type === EventType.FullSnapshot) {
           this._isReady = true;
         }
+
         if (this.options.debug?.logEmits) {
-          this._logEvent(event, isCheckout);
+          Recorder._logEvent(event, isCheckout);
         }
 
         if (isCheckout && event.type === EventType.Meta) {
-          this._events.previous = this._events.current;
-          this._events.current = [];
+          this._buffers[(this._currentSlot = this._previousSlot)] = [];
         }
 
-        this._events.current.push(event);
+        this._buffers[this._currentSlot].push(event);
       },
       checkoutEveryNms: this.checkoutEveryNms(),
       errorHandler: (error) => {
@@ -172,28 +212,82 @@ export default class Recorder {
   }
 
   clear() {
-    this._events = {
-      previous: [],
-      current: [],
-    };
+    this._buffers = [[], []];
+    this._currentSlot = 0;
     this._isReady = false;
   }
 
-  _collectEvents() {
-    const events = this._events.previous.concat(this._events.current);
+  /**
+   * Collects all events from both buffers.
+   *
+   * @returns {Array} All events with replay.end marker
+   * @private
+   */
+  _collectAll() {
+    const previousEvents = this._buffers[this._previousSlot];
+    const currentEvents = this._buffers[this._currentSlot];
+    const allEvents = previousEvents.concat(currentEvents);
 
-    // Helps the application correctly align playback by adding a noop event
-    // to the end of the recording.
-    events.push({
-      timestamp: Date.now(),
-      type: EventType.Custom,
-      data: { tag: 'replay.end', payload: {} },
-    });
+    if (allEvents.length > 0) {
+      allEvents.push(Recorder._replayEndEvent());
+    }
+
+    return allEvents;
+  }
+
+  /**
+   * Collects events after a cursor position.
+   *
+   * @param {BufferCursor} cursor - Cursor position to collect from
+   * @returns {Array} Events after cursor with replay.end marker
+   * @private
+   */
+  _collectEventsFromCursor(cursor) {
+    const capturedBuffer = this._buffers[cursor.slot] ?? [];
+    const head = capturedBuffer.slice(Math.max(0, cursor.offset + 1));
+    const tail =
+      cursor.slot === this._currentSlot ? [] : this._buffers[this._currentSlot];
+
+    const events = head.concat(tail);
+
+    if (cursor.slot !== this._currentSlot && head.length === 0) {
+      logger.warn(
+        'Leading replay: captured buffer cleared by multiple checkouts',
+      );
+    }
+
+    if (events.length > 0) {
+      events.push(Recorder._replayEndEvent());
+    }
 
     return events;
   }
 
-  _logEvent(event, isCheckout) {
+  /**
+   * Creates a replay.end noop marker event.
+   *
+   * Helps the application correctly align playback when added at the end of
+   * the recording.
+   *
+   * @returns {Object} replay.end event
+   * @private
+   */
+  static _replayEndEvent() {
+    return {
+      type: EventType.Custom,
+      timestamp: Date.now(),
+      data: { tag: 'replay.end', payload: {} },
+    };
+  }
+
+  /**
+   * Logs an event for debugging purposes.
+   *
+   * @param {Object} event - The event to log
+   * @param {boolean} isCheckout - Whether this is a checkout event
+   * @private
+   */
+  static _logEvent(event, isCheckout) {
     logger.log(
       `Recorder: ${isCheckout ? 'checkout' : ''} event\n`,
       ((e) => {
