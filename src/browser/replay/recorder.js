@@ -105,7 +105,7 @@ export default class Recorder {
    *
    * Used to capture a stable cursor that survives a single checkout.
    *
-   * @returns {BufferCursor} Buffer index and event offset
+   * @returns {BufferCursor} Buffer index and event offset (offset is -1 if buffer is empty)
    */
   bufferCursor() {
     return {
