@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 import { EventType } from '@rrweb/types';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
@@ -137,6 +138,21 @@ describe('Recorder buffer-index event collection', function () {
       expect(events).to.have.lengthOf(2);
       expect(events[0].timestamp).to.equal(3000);
       expect(events[1].data.tag).to.equal('replay.end');
+    });
+  });
+
+  describe('_replayEndEvent', function () {
+    it('returns replay.end marker event with current timestamp', function () {
+      const clock = sinon.useFakeTimers(1234567890);
+      const event = Recorder._replayEndEvent();
+
+      expect(event).to.deep.equal({
+        type: EventType.Custom,
+        timestamp: 1234567890,
+        data: { tag: 'replay.end', payload: {} },
+      });
+
+      clock.restore();
     });
   });
 
