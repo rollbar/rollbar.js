@@ -3,7 +3,7 @@
  * See https://github.com/rrweb-io/rrweb/blob/master/guide.md#options for details
  */
 export default {
-  enabled: false, // Whether recording is enabled
+  enabled: true, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
   maxSeconds: 300, // Maximum recording duration in seconds
   postDuration: 5, // Duration of events to include after a post is triggered, in seconds
