@@ -8,7 +8,12 @@ export default {
   maxSeconds: 300, // Maximum recording duration in seconds
   postDuration: 5, // Duration of events to include after a post is triggered, in seconds
 
-  baseSamplingRatio: 1.0, // Used by triggers that don't specify a sampling ratio
+  // defaults used by triggers that don't specify them
+  triggerDefaults: {
+    samplingRatio: 1.0,
+    preDuration: 300,
+    postDuration: 5,
+  },
   triggers: [
     {
       type: 'occurrence',

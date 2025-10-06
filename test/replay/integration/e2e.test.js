@@ -29,6 +29,9 @@ const options = {
     enabled: true,
     autoStart: true,
     emitEveryNms: 50,
+    triggers: [{
+        type: 'occurrence',
+    }],
   },
   payload: {
     environment: 'testenv',
@@ -122,8 +125,8 @@ describe('Session Replay E2E', function () {
               },
             },
           },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
 
       tracing.session.setAttributes({
@@ -173,7 +176,7 @@ describe('Session Replay E2E', function () {
           expect(span_r).to.have.property('events');
           expect(span_r.events).to.be.an('array');
           expect(span_r).to.have.property('attributes').that.is.an('array');
-          expect(span_r.attributes).to.have.lengthOf(9);
+          expect(span_r.attributes).to.have.lengthOf(12);
 
           expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',
@@ -250,8 +253,8 @@ describe('Session Replay E2E', function () {
               },
             },
           },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
 
       queue.addItem(errorItem, (err, resp) => {
@@ -329,8 +332,8 @@ describe('Session Replay E2E', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(errorItem, (err, resp) => {

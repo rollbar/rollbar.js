@@ -11,20 +11,21 @@ import {
 } from '../util/recorder.js';
 
 describe('ReplayManager buffer-index integration', function () {
-  let replayManager, recorder, api, tracing, telemeter, clock;
+  let options, replayManager, recorder, api, tracing, telemeter, clock;
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
 
     const mockRecordFn = () => () => {};
-    recorder = new Recorder(
-      {
-        enabled: true,
-        maxSeconds: 10,
-        postDuration: 5,
-      },
-      mockRecordFn,
-    );
+    options = {
+      enabled: true,
+      maxSeconds: 10,
+      postDuration: 5,
+      triggers: [{
+          type: 'occurrence',
+      }],
+    };
+    recorder = new Recorder(options, mockRecordFn);
 
     recorder._isReady = true;
     recorder._stopFn = () => {};
@@ -81,8 +82,9 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     sinon.assert.notCalled(replayManager._sendOrDiscardLeadingReplay);
@@ -110,8 +112,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     sinon.assert.calledOnce(recorder.exportRecordingSpan);
@@ -120,6 +124,9 @@ describe('ReplayManager buffer-index integration', function () {
       {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': occurrenceUuid,
+        'rollbar.replay.trigger.type': trigger.type,
+        'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+        'rollbar.replay.trigger': JSON.stringify(trigger),
       },
     ]);
 
@@ -159,8 +166,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     const capturedCursor =
@@ -205,8 +214,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     replayManager.discard(replayId);
@@ -226,8 +237,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({
@@ -260,8 +273,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({
@@ -291,8 +306,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid);
+    replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     expect(replayManager._map.has(replayId)).to.be.false;
@@ -309,8 +326,10 @@ describe('ReplayManager buffer-index integration', function () {
 
     const replayId1 = 'test-replay-id-1';
     const occurrenceUuid1 = 'test-uuid-1';
+    const trigger = options.triggers[0];
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId1, occurrenceUuid1);
+    replayManager.capture(replayId1, occurrenceUuid1, triggerContext);
     await clock.tickAsync(100);
 
     expect(replayManager._pendingLeading.has(replayId1)).to.be.true;
@@ -330,7 +349,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 6000, type: EventType.Meta, data: {} },
     ]);
 
-    replayManager.capture(replayId2, occurrenceUuid2);
+    replayManager.capture(replayId2, occurrenceUuid2, triggerContext);
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({

@@ -2,7 +2,6 @@ import RateLimiter from './rateLimiter.js';
 import Queue from './queue.js';
 import Notifier from './notifier.js';
 import * as _ from './utility.js';
-import ReplayPredicates from './browser/replay/replayPredicates.js';
 
 /*
  * Rollbar - the interface to Rollbar
@@ -171,8 +170,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   try {
     item.level = item.level || defaultLevel;
 
-    const replayId = this._replayIdIfTriggered(item);
-    this._addTracingAttributes(item, replayId);
+    this._addTracingAttributes(item);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
@@ -192,11 +190,10 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
 };
 
-Rollbar.prototype._addTracingAttributes = function (item, replayId) {
+Rollbar.prototype._addTracingAttributes = function (item) {
   const span = this.tracing?.getSpan();
 
   const attributes = [
-    { key: 'replay_id', value: replayId },
     { key: 'session_id', value: this.tracing?.sessionId },
     { key: 'span_id', value: span?.spanId },
     { key: 'trace_id', value: span?.traceId },
@@ -206,18 +203,6 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
   span?.addEvent('rollbar.occurrence', [
     { key: 'rollbar.occurrence.uuid', value: item.uuid },
   ]);
-};
-
-Rollbar.prototype._replayIdIfTriggered = function (item) {
-  const replayId = this.tracing?.idGen(8);
-  const enabled = new ReplayPredicates(this.options.recorder, {
-    item,
-    replayId,
-  }).isEnabledForTriggerType('occurrence');
-
-  if (enabled) {
-    return replayId;
-  }
 };
 
 Rollbar.prototype._defaultLogLevel = function () {

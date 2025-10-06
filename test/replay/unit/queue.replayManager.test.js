@@ -8,8 +8,8 @@ import Queue from '../../../src/queue.js';
 import logger from '../../../src/logger.js';
 
 class MockReplayManager {
-  constructor() {
-    this.capture = sinon.stub().returnsArg(0);
+  constructor(replayId) {
+    this.capture = sinon.stub().callsFake(() => replayId);
     this.send = sinon.stub().resolves(true);
     this.discard = sinon.stub().returns(true);
     this.sendOrDiscardReplay = sinon.stub().resolves();
@@ -36,9 +36,11 @@ describe('Queue with ReplayManager', function () {
   let api;
   let rateLimiter;
   let logger;
+  let replayId;
 
   beforeEach(function () {
-    replayManager = new MockReplayManager();
+    replayId = '1234567812345678';
+    replayManager = new MockReplayManager(replayId);
     api = new MockApi();
     rateLimiter = new MockRateLimiter();
     logger = { error: sinon.stub(), log: sinon.stub() };
@@ -61,23 +63,23 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
       queue.addItem(item, callback);
 
       expect(replayManager.capture.called).to.be.true;
-      expect(item.replayId).to.equal('1234567812345678');
+      expect(item.replayId).to.equal(replayId);
     });
 
     it('should not add replayId when item has no body', function () {
       const item = {
         data: {
           noBody: true,
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
@@ -93,8 +95,8 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
@@ -110,9 +112,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const apiError = new Error('Network error');
@@ -124,7 +126,7 @@ describe('Queue with ReplayManager', function () {
       queue.addItem(item, callback);
 
       // Wait for async operations
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 1));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
@@ -137,9 +139,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       // Make _makeApiRequest throw synchronously
@@ -151,7 +153,7 @@ describe('Queue with ReplayManager', function () {
       queue.addItem(item, callback);
 
       // When makeApiRequest throws, Queue directly calls discard
-      expect(replayManager.discard.calledWith('1234567812345678')).to.be.true;
+      expect(replayManager.discard.calledWith(replayId)).to.be.true;
       expect(replayManager.sendOrDiscardReplay.called).to.be.false;
     });
 
@@ -159,9 +161,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const rateLimitError = new Error('Rate limit exceeded');
@@ -177,7 +179,7 @@ describe('Queue with ReplayManager', function () {
       setTimeout(() => {
         expect(callback.calledWith(rateLimitError)).to.be.true;
         expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(rateLimitError);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.undefined;
         expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.undefined;
@@ -189,9 +191,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const response = { err: 1, message: 'Internal server error' };
@@ -207,7 +209,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
@@ -217,9 +219,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const response = { err: 0 };
@@ -235,7 +237,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
@@ -245,9 +247,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const response = { err: 0 };
@@ -266,7 +268,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
@@ -276,9 +278,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const response = { err: 0 };
@@ -297,7 +299,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(response);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(headers);
@@ -307,9 +309,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       api.postItem.callsFake((data, callback) => {
@@ -323,7 +325,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.null;
       expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.null;
@@ -352,9 +354,9 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
           uuid: 'test-uuid',
         },
+        level: 'error',
       };
 
       const callback = sinon.stub();
@@ -365,7 +367,7 @@ describe('Queue with ReplayManager', function () {
 
       // Should only be called once with the final error
       expect(replayManager.sendOrDiscardReplay.callCount).to.equal(1);
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
       expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(finalError);
     });
   });
@@ -377,8 +379,8 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
@@ -388,7 +390,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(handleStub.called).to.be.true;
-      expect(handleStub.firstCall.args[0]).to.equal('1234567812345678');
+      expect(handleStub.firstCall.args[0]).to.equal(replayId);
       expect(handleStub.firstCall.args[1]).to.be.null; // err
       expect(handleStub.firstCall.args[2]).to.deep.equal({ err: 0 }); // resp
     });
@@ -403,8 +405,8 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
@@ -414,7 +416,7 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(handleStub.called).to.be.true;
-      expect(handleStub.firstCall.args[0]).to.equal('1234567812345678');
+      expect(handleStub.firstCall.args[0]).to.equal(replayId);
       expect(handleStub.firstCall.args[1]).to.be.instanceof(Error);
       expect(handleStub.firstCall.args[2]).to.be.undefined; // resp
     });
@@ -427,8 +429,8 @@ describe('Queue with ReplayManager', function () {
       const item = {
         data: {
           body: { message: 'test error' },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
       const callback = sinon.stub();
 
