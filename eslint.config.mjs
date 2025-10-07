@@ -14,20 +14,20 @@ export default defineConfig([
     },
     rules: {
       'comma-dangle': 'off',
-      'strict': 0,
+      strict: 0,
       'no-underscore-dangle': 0,
       'no-useless-escape': 0,
-      'complexity': [2, { 'max': 35 }],
-      'no-use-before-define': [0, { 'functions': false }],
+      complexity: [2, { max: 35 }],
+      'no-use-before-define': [0, { functions: false }],
       'no-prototype-builtins': 0,
 
       // Off until issues are fixed
-      'camelcase': 'off', //[2, {'properties': 'never'}],
+      camelcase: 'off', //[2, {'properties': 'never'}],
       'no-unused-vars': 'off', //[2, { 'argsIgnorePattern': '^_' }],
-      'quotes': 'off', //[2, 'single', 'avoid-escape'],
-    }
+      quotes: 'off', //[2, 'single', 'avoid-escape'],
+    },
   },
   {
     ignores: ['dist', 'examples', 'node_modules', 'vendor'],
-  }
+  },
 ]);

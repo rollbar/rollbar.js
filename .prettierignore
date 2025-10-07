@@ -17,3 +17,7 @@ vendor
 # 2. some tests fail cause they depend on some sources being exactly as they are
 examples
 !test/examples
+
+# Test fixtures include compiled/generated files with sourcemaps
+# Formatting them breaks the sourcemaps
+test/fixtures
