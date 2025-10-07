@@ -16,6 +16,9 @@ const options = {
   recorder: {
     enabled: true,
     emitEveryNms: 100,
+    triggers: [{
+        type: 'occurrence',
+    }],
   },
 };
 
@@ -81,7 +84,11 @@ describe('ReplayManager API Integration', function () {
 
   it('should add replay data to map', function () {
     const uuid = 'test-uuid';
-    const replayId = replayManager.capture(null, uuid);
+    const triggerContext = { type: 'occurrence', level: 'error' };
+    const trigger = options.recorder.triggers[0];
+
+    const replayId = replayManager.capture(null, uuid, triggerContext);
+
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
 
@@ -90,6 +97,9 @@ describe('ReplayManager API Integration', function () {
       recorder.exportRecordingSpan.calledWith(tracing, {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': uuid,
+        'rollbar.replay.trigger.type': trigger.type,
+        'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+        'rollbar.replay.trigger': JSON.stringify(trigger),
       }),
     ).to.be.true;
     expect(tracing.exporter.toPayload.calledOnce).to.be.true;
@@ -154,11 +164,12 @@ describe('ReplayManager API Integration', function () {
 
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
+    const triggerContext = { type: 'occurrence', level: 'error' };
 
     sinon.stub(replayManager, '_exportSpansAndAddTracingPayload').resolves();
 
     for (let i = 0; i < 100; i++) {
-      const replayId = replayManager.capture();
+      const replayId = replayManager.capture(null, null, triggerContext);
       expect(replayIds.has(replayId)).to.be.false;
       replayIds.add(replayId);
     }

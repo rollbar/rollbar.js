@@ -100,6 +100,18 @@ describe('ReplayManager', function () {
   });
 
   describe('_exportSpansAndAddTracingPayload', function () {
+    let trigger, triggerContext;
+
+    beforeEach(function () {
+      trigger = {
+        type: 'occurrence',
+        level: ['critical', 'error'],
+      };
+      triggerContext = {
+        level: 'error',
+      };
+    });
+
     it('should export recording span and add payload to the map', async function () {
       const replayId = '1234567890abcdef';
       const occurrenceUuid = 'test-uuid';
@@ -109,6 +121,8 @@ describe('ReplayManager', function () {
       await replayManager._exportSpansAndAddTracingPayload(
         replayId,
         occurrenceUuid,
+        trigger,
+        triggerContext,
       );
 
       expect(mockTelemeter.exportTelemetrySpan.calledOnce).to.be.true;
@@ -123,6 +137,9 @@ describe('ReplayManager', function () {
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.trigger.type': trigger.type,
+          'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+          'rollbar.replay.trigger': JSON.stringify(trigger),
         }),
       ).to.be.true;
 
@@ -151,6 +168,8 @@ describe('ReplayManager', function () {
       await replayManager._exportSpansAndAddTracingPayload(
         replayId,
         occurrenceUuid,
+        trigger,
+        triggerContext,
       );
 
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
@@ -158,6 +177,9 @@ describe('ReplayManager', function () {
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.trigger.type': trigger.type,
+          'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+          'rollbar.replay.trigger': JSON.stringify(trigger),
         }),
       ).to.be.true;
 
@@ -186,12 +208,17 @@ describe('ReplayManager', function () {
       await replayManager._exportSpansAndAddTracingPayload(
         replayId,
         occurrenceUuid,
+        trigger,
+        triggerContext,
       );
       expect(mockRecorder.exportRecordingSpan.called).to.be.true;
       expect(
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.trigger.type': trigger.type,
+          'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+          'rollbar.replay.trigger': JSON.stringify(trigger),
         }),
       ).to.be.true;
 
@@ -207,28 +234,40 @@ describe('ReplayManager', function () {
     it('should use provided replayId and process synchronously', function () {
       const replayId = '1122334455667788';
       const uuid = '12345678-1234-5678-1234-1234567890ab';
+      const trigger = { type: 'occurrence' };
+      const triggerContext = { level: 'error' };
       const processStub = sinon
         .stub(replayManager, '_exportSpansAndAddTracingPayload')
         .resolves();
+      const predicatesStub = sinon
+        .stub(replayManager._predicates, 'shouldCaptureForTriggerContext')
+        .returns(trigger);
 
-      const resp = replayManager.capture(replayId, uuid);
+      const resp = replayManager.capture(replayId, uuid, triggerContext);
 
       expect(resp).to.equal(replayId);
       expect(id.gen.calledWith(8)).to.be.false;
       expect(processStub.calledWith(replayId, uuid)).to.be.true;
+      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be.true;
     });
 
     it('should generate a replayId and return immediately', function () {
       const uuid = '12345678-1234-5678-1234-1234567890ab';
+      const trigger = { type: 'occurrence' };
+      const triggerContext = { level: 'error' };
       const processStub = sinon
         .stub(replayManager, '_exportSpansAndAddTracingPayload')
         .resolves();
+      const predicatesStub = sinon
+        .stub(replayManager._predicates, 'shouldCaptureForTriggerContext')
+        .returns(trigger);
 
-      const replayId = replayManager.capture(null, uuid);
+      const replayId = replayManager.capture(null, uuid, triggerContext);
 
       expect(replayId).to.equal('1234567890abcdef');
       expect(id.gen.calledWith(8)).to.be.true;
       expect(processStub.calledWith('1234567890abcdef', uuid)).to.be.true;
+      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be.true;
     });
 
     it('should return without replayId when recorder is not ready', function () {

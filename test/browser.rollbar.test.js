@@ -870,14 +870,12 @@ describe('log', function () {
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.attributes).to.be.an('array');
     expect(body.data.attributes.length).to.eql(4);
-    expect(body.data.attributes[0].key).to.eql('replay_id');
-    expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{16}$/);
-    expect(body.data.attributes[1].key).to.eql('session_id');
-    expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{32}$/);
-    expect(body.data.attributes[2].key).to.eql('span_id');
-    expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{16}$/);
-    expect(body.data.attributes[3].key).to.eql('trace_id');
-    expect(body.data.attributes[3].value).to.match(/^[a-f0-9]{32}$/);
+    expect(body.data.attributes[0].key).to.eql('session_id');
+    expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{32}$/);
+    expect(body.data.attributes[1].key).to.eql('span_id');
+    expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{16}$/);
+    expect(body.data.attributes[2].key).to.eql('trace_id');
+    expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{32}$/);
   });
 
   it('should send message when called with only null arguments', async function () {

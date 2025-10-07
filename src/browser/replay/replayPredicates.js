@@ -10,43 +10,54 @@ export default class ReplayPredicates {
    * Constructor for ReplayPredicates.
    *
    * @param {Object} config - Configuration object containing replay settings.
-   * @param {Object} context - Context object containing state used by predicates.
    */
-  constructor(config, context) {
+  constructor(config) {
     this.config = config || {};
-    this.triggers = config?.triggers || [];
-    this.context = context || {};
+    this.triggers = this._triggersWithDefaults(config);
 
     this.predicates = {
       occurrence: [
         this.isLevelMatching.bind(this),
         this.isSampled.bind(this),
       ],
+      navigation: [
+        this.isPathMatching.bind(this),
+        this.isSampled.bind(this),
+      ],
+      direct: [
+        this.isTagMatching.bind(this),
+        this.isSampled.bind(this),
+      ],
     };
   }
 
+  _triggersWithDefaults(config) {
+    const triggers = config?.triggers || [];
+    return triggers.map(t => ({ ...config.triggerDefaults, ...t }));
+  }
+
   /**
-   * isEnabledForTriggerType - Checks if replay is enabled for a given trigger type.
+   * shouldCaptureForTriggerContext - Checks if replay is enabled for a given trigger type.
    * Applies all predicates for that trigger type and returns true if all predicates pass
    * for any matching trigger.
    *
-   * @param {string} triggerType - The type of the trigger to check.
-   * @returns {boolean} - True if replay is enabled for the trigger type, false otherwise.
+   * @param {Object} context - Context object containing state used by predicates.
+   * @return {Object} - The first matching trigger if enabled, otherwise null.
    */
-  isEnabledForTriggerType(triggerType) {
-    const predicates = this.predicates[triggerType];
+  shouldCaptureForTriggerContext(context) {
+    const predicates = this.predicates[context.type];
 
     for (const t of this.triggers) {
-      if (t.type === triggerType && this.isEnabledForTrigger(t, predicates)) {
-        return true;
+      if (t.type === context.type && this.isEnabledForTrigger(t, predicates, context)) {
+        return t;
       }
     }
 
-    return false;
+    return null;
   }
 
-  isEnabledForTrigger(trigger, predicates) {
-    if (predicates.find(p => !p(trigger))) {
+  isEnabledForTrigger(trigger, predicates, context) {
+    if (predicates.find(p => !p(trigger, context))) {
       return false;
     }
 
@@ -59,10 +70,42 @@ export default class ReplayPredicates {
    * @param {Object} trigger - The trigger object containing the level.
    * @return {boolean} - True if the trigger's level matches the context item's level, false otherwise.
    */
-  isLevelMatching(trigger) {
-    if (!trigger.level || trigger.level?.includes(this.context?.item?.level)) {
+  isLevelMatching(trigger, context) {
+    if (!trigger.level || trigger.level.includes(context.level)) {
       return true;
     }
+    return false;
+  }
+
+  /**
+   * isPathMatching - Checks if the trigger's pathMatch regex matches the context item's path.
+   * If no pathMatch is specified in the trigger, it defaults to matching all paths.
+   * @param {Object} trigger - The trigger object containing the pathMatch regex.
+   * @return {boolean} - True if the trigger's pathMatch matches the context item's path, false otherwise.
+   */
+  isPathMatching(trigger, context) {
+    if (!trigger.pathMatch) return true;
+
+    if (context.path?.match(new RegExp(trigger.pathMatch))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * isTagMatching - Checks if the trigger's tags match any of the context item's tags.
+   * If no tags are specified in the trigger, it defaults to matching all tags.
+   * @param {Object} trigger - The trigger object containing the tags.
+   * @return {boolean} - True if the trigger's tags match any of the context item's tags, false otherwise.
+   */
+  isTagMatching(trigger, context) {
+    if (!trigger.tags) return true;
+
+    if (context.tags?.some(t => trigger.tags.includes(t))) {
+      return true;
+    }
+
     return false;
   }
 
@@ -82,13 +125,13 @@ export default class ReplayPredicates {
    * @param {Object} trigger - The trigger object containing the sampling ratio.
    * @returns {boolean} - True if the trigger is sampled, false otherwise.
    */
-  isSampled(trigger) {
-    const ratio = trigger.samplingRatio || this.config.baseSamplingRatio || 1;
+  isSampled(trigger, context) {
+    const ratio = trigger.samplingRatio ?? 1;
 
     if (ratio == 1) {
       return true;
     }
-    const rv = this.context.replayId.slice(-14);
+    const rv = context.replayId.slice(-14);
     const th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
 
     return rv >= th;

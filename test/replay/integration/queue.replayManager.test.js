@@ -13,6 +13,7 @@ describe('Queue ReplayManager Integration', function () {
   let replayManager;
   let api;
   let transport;
+  let replayId;
 
   beforeEach(function () {
     transport = {
@@ -42,8 +43,9 @@ describe('Queue ReplayManager Integration', function () {
       truncationMock,
     );
 
+    replayId = '1234567812345678';
     replayManager = {
-      capture: sinon.stub().returnsArg(0),
+      capture: sinon.stub().callsFake(() => replayId),
       send: sinon.stub().resolves(true),
       discard: sinon.stub().returns(true),
       sendOrDiscardReplay: sinon.stub().resolves(),
@@ -75,12 +77,12 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
-      expect(item).to.have.property('replayId', '1234567812345678');
+      expect(item).to.have.property('replayId', item.replayId);
       expect(replayManager.capture.calledOnce).to.be.true;
       done();
     });
@@ -96,14 +98,14 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
       setTimeout(() => {
         expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null; // no error
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal({ err: 0, result: { id: '12345' } });
         expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal({ 'Rollbar-Replay-Enabled': 'true' });
@@ -128,14 +130,14 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
       setTimeout(() => {
         expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal({ err: 1, message: 'API Error' });
         done();
@@ -163,14 +165,14 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
       setTimeout(() => {
         expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.have.property('err', 0);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal({ 'Rollbar-Replay-Enabled': 'false' });
@@ -202,14 +204,14 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
       setTimeout(() => {
         expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.have.property('err', 0);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal({
@@ -251,8 +253,8 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, (err, resp) => {
@@ -287,24 +289,25 @@ describe('Queue ReplayManager Integration', function () {
     });
   });
 
-  it('should not add replayId to items without a replay_id attribute', function (done) {
+  it('should not add replayId to items if not returned from capture', function (done) {
     const item = {
       data: {
         level: 'error',
-        message: 'Test error without body',
         body: {
           trace: {
             exception: {
-              message: 'Test error with retry',
+              message: 'Test error',
             },
           },
         },
       },
+      level: 'error',
     };
+    replayId = null;
 
     queue.addItem(item, () => {
-      expect(item).to.not.have.property('replayId');
-      expect(replayManager.capture.called).to.be.false;
+      expect(item.replayId).to.be.null;
+      expect(replayManager.capture.called).to.be.true;
       done();
     });
   });
@@ -329,8 +332,8 @@ describe('Queue ReplayManager Integration', function () {
               },
             },
           },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+      level: 'error',
       };
 
       expect(replayManager.size).to.equal(0);
@@ -340,7 +343,7 @@ describe('Queue ReplayManager Integration', function () {
           // Verify replay was added and sendOrDiscardReplay was called
           expect(replayManager.capture.calledOnce).to.be.true;
           expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
           expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(transportError);
           // Ensure no memory leak - replay should be removed from map
           expect(replayManager.size).to.equal(0);
@@ -368,14 +371,14 @@ describe('Queue ReplayManager Integration', function () {
               },
             },
           },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
 
       queue.addItem(item, () => {
         setTimeout(() => {
           expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
           expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
           expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal({ err: 0, result: { id: '12345' } });
           expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.null;
@@ -409,14 +412,14 @@ describe('Queue ReplayManager Integration', function () {
               },
             },
           },
-          attributes: [{ key: 'replay_id', value: '1234567812345678' }],
         },
+        level: 'error',
       };
 
       queue.addItem(item, () => {
         setTimeout(() => {
           expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+          expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
           expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal({
             'Rollbar-Replay-Enabled': 'true',
             'Rollbar-Replay-RateLimit-Remaining': '0',
@@ -446,8 +449,8 @@ describe('Queue ReplayManager Integration', function () {
                 },
               },
             },
-            attributes: [{ key: 'replay_id', value: `replay_${i}` }],
           },
+          level: 'error',
         });
       }
 
@@ -485,14 +488,14 @@ describe('Queue ReplayManager Integration', function () {
             },
           },
         },
-        attributes: [{ key: 'replay_id', value: '1234567812345678' }],
       },
+      level: 'error',
     };
 
     queue.addItem(item, () => {
       setTimeout(() => {
         expect(replayManager.sendOrDiscardReplay.calledOnce).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal('1234567812345678');
+        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(item.replayId);
         expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
         expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.null;
         done();

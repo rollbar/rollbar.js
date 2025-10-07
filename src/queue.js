@@ -102,10 +102,19 @@ class Queue {
     }
 
     if (this.replayManager && data.body) {
-      const rid = data.attributes?.find((a) => a.key === 'replay_id')?.value;
+      item.replayId = this.replayManager.capture(
+        null,
+        data.uuid,
+        {
+          type: 'occurrence',
+          level: item.level,
+        }
+      );
 
-      if (rid) {
-        item.replayId = this.replayManager.capture(rid, data.uuid);
+      if (item.replayId) {
+        _.addItemAttributes(item.data, [
+          { key: 'replay_id', value: item.replayId },
+        ]);
       }
     }
 

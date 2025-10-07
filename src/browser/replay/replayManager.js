@@ -1,5 +1,6 @@
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
+import ReplayPredicates from './replayPredicates.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 /** @typedef {import('./recorder.js').Recorder} Recorder */
@@ -57,6 +58,7 @@ export default class ReplayManager {
     this._telemeter = telemeter;
     this._pendingLeading = new Map();
     this._trailingStatus = new Map();
+    this._predicates = new ReplayPredicates(recorder.options);
   }
 
   /**
@@ -70,18 +72,23 @@ export default class ReplayManager {
    * @param {string} occurrenceUuid - The UUID of the associated error occurrence
    * @private
    */
-  async _exportSpansAndAddTracingPayload(replayId, occurrenceUuid) {
+  async _exportSpansAndAddTracingPayload(replayId, occurrenceUuid, trigger, triggerContext) {
     try {
       this._recorder.exportRecordingSpan(this._tracing, {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': occurrenceUuid,
+        'rollbar.replay.trigger.type': trigger.type,
+        'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+        'rollbar.replay.trigger': JSON.stringify(trigger),
       });
     } catch (error) {
       logger.error('Error exporting recording span:', error);
       return;
     }
 
-    this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
+    this._telemeter?.exportTelemetrySpan({
+      'rollbar.replay.id': replayId,
+    });
 
     const payload = this._tracing.exporter.toPayload();
     this._map.set(replayId, payload);
@@ -232,7 +239,7 @@ export default class ReplayManager {
    *
    * @returns {string} A unique identifier for this replay
    */
-  capture(replayId, occurrenceUuid) {
+  capture(replayId, occurrenceUuid, triggerContext) {
     if (!this._recorder.isReady) {
       logger.warn(
         'ReplayManager.capture: Recorder is not ready, cannot export replay',
@@ -242,8 +249,13 @@ export default class ReplayManager {
 
     replayId = replayId || id.gen(8);
 
+    const trigger = this._predicates.shouldCaptureForTriggerContext({ ...triggerContext, replayId });
+    if (!trigger) {
+      return null;
+    }
+
     // Start processing the replay in the background
-    this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid);
+    this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid, trigger, triggerContext);
 
     return replayId;
   }

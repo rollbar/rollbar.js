@@ -12,58 +12,77 @@ describe('ReplayManager', function () {
   describe('isEnabledForTriggerType', function () {
     describe('occurrence', function () {
       beforeEach(function () {
-        replayId = 'aaaabbbbccccdddd';
+        replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
         recorderConfig = {
+          triggerDefaults: {
+            preDuration: 300,
+            postDuration: 5,
+            samplingRatio: 1.0,
+          },
           triggers: [
             {
               type: 'occurrence',
               level: ['error', 'critical'],
               samplingRatio: 0.5,
             },
+            {
+              type: 'direct',
+              tags: ['replay', 'session'],
+            }
           ],
         };
       });
 
       it('should return true on matching level', function () {
-        const item = {
+        const context = {
+          type: 'occurrence',
           level: 'error',
+          replayId,
         };
 
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
-          replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.true;
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'occurrence',
+          level: ['error', 'critical'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 0.5,
+        });
       });
 
-      it('should return false on not matching level', function () {
-        const item = {
+      it('should return null on not matching level', function () {
+        const context = {
+          type: 'occurrence',
           level: 'info',
+          replayId,
         };
 
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
-          replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.false;
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
       });
 
       it('should return true on no level specified', function () {
-        const item = {
+        const context = {
+          type: 'occurrence',
           level: 'info',
-        };
-        recorderConfig.triggers[0].level = undefined;
-
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
           replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.true;
+        };
+        delete recorderConfig.triggers[0].level;
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'occurrence',
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 0.5,
+        });
       });
 
       it('should return true on matching second trigger', function () {
-        const item = {
+        const context = {
+          type: 'occurrence',
           level: 'info',
+          replayId,
         };
         recorderConfig.triggers.push({
           type: 'occurrence',
@@ -71,89 +90,213 @@ describe('ReplayManager', function () {
           samplingRatio: 0.5,
         });
 
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
-          replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.true;
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'occurrence',
+          level: ['info'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 0.5,
+        });
       });
 
       it('should return true on no samplingRatio specified', function () {
-        const item = {
+        const context = {
+          type: 'occurrence',
           level: 'error',
-        };
-        recorderConfig.triggers[0].samplingRatio = undefined;
-
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
           replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.true;
+        };
+        delete recorderConfig.triggers[0].samplingRatio;
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'occurrence',
+          level: ['error', 'critical'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
       });
 
-      it('should return false when not sampled', function () {
-        const item = {
+      it('should return null when not sampled', function () {
+        const context = {
+          type: 'occurrence',
           level: 'error',
+          replayId,
         };
         recorderConfig.triggers[0].samplingRatio = 0.1;
 
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
-          replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.false;
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
       });
 
-      it('should return false with baseSamplingRatio specified and not sampled', function () {
-        const item = {
+      it('should return null with baseSamplingRatio specified and not sampled', function () {
+        const context = {
+          type: 'occurrence',
           level: 'error',
-        };
-        recorderConfig.baseSamplingRatio = 0.1;
-        recorderConfig.triggers[0].samplingRatio = undefined;
-
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
           replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.false;
+        };
+        // Note: sampling is generated from replayId, which for the test value
+        // will always return not sampled here with ratio of 0.1.
+        recorderConfig.triggerDefaults.samplingRatio = 0.1;
+        delete recorderConfig.triggers[0].samplingRatio;
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
       });
 
       it('should return true with trigger overriding baseSamplingRatio', function () {
-        const item = {
+        const context = {
+          type: 'occurrence',
           level: 'error',
-        };
-        recorderConfig.baseSamplingRatio = 0.1;
-
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
           replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.true;
+        };
+        recorderConfig.triggerDefaults.samplingRatio = 0.1;
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'occurrence',
+          level: ['error', 'critical'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 0.5,
+        });
       });
 
-      it('should return false with no triggers', function () {
-        const item = {
+      it('should return null with no triggers', function () {
+        const context = {
+          type: 'occurrence',
           level: 'error',
+          replayId,
         };
 
-        const enabled = new ReplayPredicates(null, {
-          item,
-          replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.false;
+        const resp = new ReplayPredicates(null).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
       });
 
-      it('should return false with no config', function () {
-        const item = {
+      it('should return null with no config', function () {
+        const context = {
+          type: 'occurrence',
           level: 'error',
+          replayId,
         };
         recorderConfig.triggers = null;
 
-        const enabled = new ReplayPredicates(recorderConfig, {
-          item,
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
+      });
+    });
+
+    describe('direct', function () {
+      beforeEach(function () {
+        replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
+        recorderConfig = {
+          triggerDefaults: {
+            preDuration: 300,
+            postDuration: 5,
+            samplingRatio: 1.0,
+          },
+          triggers: [
+            {
+              type: 'occurrence',
+              level: ['error', 'critical'],
+              samplingRatio: 0.5,
+            },
+            {
+              type: 'direct',
+              tags: ['neon', 'argon'],
+            }
+          ],
+        };
+      });
+
+      it('should return matching trigger on matching tag', function () {
+        const context = {
+          type: 'direct',
+          tags: ['argon', 'xenon'],
           replayId,
-        }).isEnabledForTriggerType('occurrence');
-        expect(enabled).to.be.false;
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'direct',
+          tags: ['neon', 'argon'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
+      });
+
+      it('should return null on no matching tag', function () {
+        const context = {
+          type: 'direct',
+          tags: ['helium', 'xenon'],
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
+      });
+
+      it('should return null on no tag present', function () {
+        const context = {
+          type: 'direct',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
+      });
+    });
+
+    describe('direct', function () {
+      beforeEach(function () {
+        replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
+        recorderConfig = {
+          triggerDefaults: {
+            preDuration: 300,
+            postDuration: 5,
+            samplingRatio: 1.0,
+          },
+          triggers: [
+            {
+              type: 'navigation',
+              pathMatch: 'foo',
+            },
+            {
+              type: 'direct',
+              tags: ['neon', 'argon'],
+            }
+          ],
+        };
+      });
+
+      it('should return matching trigger on matching path', function () {
+        const context = {
+          type: 'navigation',
+          path: '/foo/bar',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'navigation',
+          pathMatch: 'foo',
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
+      });
+
+      it('should return null on no matching path', function () {
+        const context = {
+          type: 'navigation',
+          path: '/bar',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
       });
     });
   });
