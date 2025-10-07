@@ -6,6 +6,10 @@ on:
     tags: [v*]
   pull_request:
 
+permissions:
+  checks: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -42,6 +46,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prettier: true
+          prettier_extensions: js,cjs,mjs,md,json,yml,yaml
           eslint: true
           eslint_args: '--max-warnings 0'
           eslint_extensions: js
