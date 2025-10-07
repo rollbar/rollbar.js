@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
 
 import Recorder from '../src/browser/replay/recorder.js';
@@ -65,17 +66,16 @@ describe('Recorder', function () {
       });
     });
 
-    it('should throw error if no record function is passed', function () {
-      expect(() => new Recorder({}, null)).to.throw(
-        TypeError,
-        "Expected 'recordFn' to be provided",
-      );
+    it('should use the default recorder if no record function is passed', function () {
+      const recorder = new Recorder({});
+
+      expect(recorder._recordFn).to.equal(rrwebRecordFn);
     });
   });
 
   describe('recording management', function () {
     it('should start recording correctly', function () {
-      const recorder = new Recorder({ enabled: true }, recordFnStub);
+      const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
       recorder.start();
 
       expect(recorder.isRecording).to.be.true;
@@ -88,7 +88,7 @@ describe('Recorder', function () {
     });
 
     it('should not start if already recording', function () {
-      const recorder = new Recorder({ enabled: true }, recordFnStub);
+      const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
       recorder.start();
       recorder.start();
 
@@ -96,7 +96,7 @@ describe('Recorder', function () {
     });
 
     it('should not start if disabled', function () {
-      const recorder = new Recorder({ enabled: false }, recordFnStub);
+      const recorder = new Recorder({ enabled: false, recordFn: recordFnStub });
       recorder.start();
 
       expect(recorder.isRecording).to.be.false;
@@ -104,7 +104,7 @@ describe('Recorder', function () {
     });
 
     it('should stop recording correctly', function () {
-      const recorder = new Recorder({ enabled: true }, recordFnStub);
+      const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
       recorder.start();
       recorder.stop();
 
@@ -124,7 +124,7 @@ describe('Recorder', function () {
 
   describe('event handling', function () {
     it('should handle events correctly', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       const event1 = { timestamp: 1000, type: 'event1', data: { a: 1 } };
@@ -166,7 +166,7 @@ describe('Recorder', function () {
     });
 
     it('should be ready after first full snapshot', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       // First checkout
@@ -181,7 +181,7 @@ describe('Recorder', function () {
     });
 
     it('should handle checkout events correctly', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       // First checkout
@@ -308,7 +308,7 @@ describe('Recorder', function () {
 
   describe('dump functionality', function () {
     it('should create a span with events and return formatted payload', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
@@ -355,7 +355,7 @@ describe('Recorder', function () {
     });
 
     it('should create a span with the correct span name', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
@@ -371,7 +371,7 @@ describe('Recorder', function () {
     });
 
     it('should add events with the correct event name and replayId', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       emitCallback(
@@ -402,7 +402,7 @@ describe('Recorder', function () {
     });
 
     it('should handle no events', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
 
       expect(() => {
         recorder.exportRecordingSpan(mockTracing, {
@@ -417,7 +417,7 @@ describe('Recorder', function () {
 
   describe('configure', function () {
     it('should update options', function () {
-      const recorder = new Recorder({ enabled: true }, recordFnStub);
+      const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
 
       recorder.configure({ enabled: false, maxSeconds: 20 });
 
@@ -449,7 +449,7 @@ describe('Recorder', function () {
     });
 
     it('should stop recording if enabled set to false', function () {
-      const recorder = new Recorder({ enabled: true }, recordFnStub);
+      const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
       recorder.start();
 
       expect(recorder.isRecording).to.be.true;

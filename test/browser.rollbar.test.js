@@ -105,7 +105,7 @@ describe('Rollbar()', function () {
     var client = new (TestClientGen())();
     var options = {
       scrubFields: ['foobar'],
-      recorder: {
+      replay: {
         enabled: true,
       },
       tracing: {
@@ -116,8 +116,8 @@ describe('Rollbar()', function () {
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
-    expect(rollbar.options.recorder.enabled).to.be.true;
-    expect(rollbar.options.recorder.triggers[0].level).to.eql([
+    expect(rollbar.options.replay.enabled).to.be.true;
+    expect(rollbar.options.replay.triggers[0].level).to.eql([
       'error',
       'critical',
     ]);
@@ -869,7 +869,7 @@ describe('log', function () {
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.attributes).to.be.an('array');
-    expect(body.data.attributes.length).to.eql(4);
+    expect(body.data.attributes.length).to.eql(3);
     expect(body.data.attributes[0].key).to.eql('session_id');
     expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{32}$/);
     expect(body.data.attributes[1].key).to.eql('span_id');
