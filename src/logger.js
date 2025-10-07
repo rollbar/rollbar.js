@@ -20,7 +20,6 @@ const logger = {
 
       args.unshift('Rollbar:');
 
-      /* eslint-disable no-console */
       console[level].apply(console, args);
     };
   },
