@@ -7,9 +7,8 @@ import sinon from 'sinon';
 
 import Tracing from '../../../src/tracing/tracing.js';
 import Telemeter from '../../../src/telemetry.js';
-import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
-import recorderDefaults from '../../../src/browser/replay/defaults.js';
+import replayDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
 import mockRecordFn from '../util/mockRecordFn.js';
@@ -24,14 +23,15 @@ const options = {
     name: 'rollbar.js',
     version: '0.1.0',
   },
-  recorder: {
-    ...recorderDefaults,
+  replay: {
+    ...replayDefaults,
     enabled: true,
     autoStart: true,
     emitEveryNms: 50,
     triggers: [{
         type: 'occurrence',
     }],
+    recordFn: mockRecordFn,
   },
   payload: {
     environment: 'testenv',
@@ -69,26 +69,24 @@ describe('Session Replay E2E', function () {
     };
     const logger = { error: sinon.spy(), log: sinon.spy() };
 
-    tracing = new Tracing(window, null, options);
-    tracing.initSession();
     api = new Api(
       { accessToken: 'test-token-12345' },
       transport,
       urlMock,
       truncationMock,
     );
+    tracing = new Tracing(window, api, options);
+    tracing.initSession();
     telemeter = new Telemeter({}, tracing);
-
-    recorder = new Recorder(options.recorder, mockRecordFn);
 
     rateLimiter = { shouldSend: () => ({ shouldSend: true }) };
 
     replayManager = new ReplayManager({
-      recorder,
-      api,
       tracing,
       telemeter,
+      options: options.replay,
     });
+    recorder = replayManager.recorder;
 
     queue = new Queue(
       rateLimiter,
@@ -114,7 +112,7 @@ describe('Session Replay E2E', function () {
       const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
       const replayManagerSendSpy = sinon.spy(replayManager, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
-      const apiPostSpansSpy = sinon.spy(api, 'postSpans');
+      const apiPostSpansSpy = sinon.spy(tracing.exporter, 'post');
 
       const errorItem = {
         data: {
@@ -242,7 +240,7 @@ describe('Session Replay E2E', function () {
       const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
       const replayManagerSendSpy = sinon.spy(replayManager, 'send');
       const apiPostItemSpy = sinon.spy(api, 'postItem');
-      const apiPostSpansSpy = sinon.spy(api, 'postSpans');
+      const apiPostSpansSpy = sinon.spy(tracing.exporter, 'post');
 
       const errorItem = {
         data: {
@@ -319,7 +317,7 @@ describe('Session Replay E2E', function () {
 
     const replayManagerCaptureSpy = sinon.spy(replayManager, 'capture');
     const replayManagerDiscardSpy = sinon.spy(replayManager, 'discard');
-    const apiPostSpansSpy = sinon.spy(api, 'postSpans');
+    const apiPostSpansSpy = sinon.spy(tracing.exporter, 'post');
 
     recorder.start();
 

@@ -4,6 +4,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { record as rrwebRecordFn } from '@rrweb/record';
 
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
@@ -13,12 +14,13 @@ import mockRecordFn from '../util/mockRecordFn.js';
 
 const options = {
   enabled: true,
-  recorder: {
+  replay: {
     enabled: true,
     emitEveryNms: 100,
     triggers: [{
         type: 'occurrence',
     }],
+    recordFn: mockRecordFn,
   },
 };
 
@@ -50,11 +52,6 @@ describe('ReplayManager API Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(window, null, options);
-    tracing.initSession();
-
-    const mockPayload = [{ id: 'span1', name: 'recording-span' }];
-
     api = new Api(
       { accessToken: 'test-token' },
       transport,
@@ -62,15 +59,18 @@ describe('ReplayManager API Integration', function () {
       truncationMock,
     );
 
-    recorder = new Recorder(options.recorder, mockRecordFn);
-    sinon.stub(recorder, 'exportRecordingSpan');
-    sinon.stub(tracing.exporter, 'toPayload').returns(mockPayload);
+    tracing = new Tracing(window, api, options);
+    tracing.initSession();
+
+    const mockPayload = [{ id: 'span1', name: 'recording-span' }];
 
     replayManager = new ReplayManager({
-      recorder,
-      api,
       tracing,
+      options: options.replay,
     });
+    recorder = replayManager.recorder;
+    sinon.stub(recorder, 'exportRecordingSpan');
+    sinon.stub(tracing.exporter, 'toPayload').returns(mockPayload);
 
     recorder.start();
   });
@@ -84,8 +84,8 @@ describe('ReplayManager API Integration', function () {
 
   it('should add replay data to map', function () {
     const uuid = 'test-uuid';
+    const trigger = options.replay.triggers[0];
     const triggerContext = { type: 'occurrence', level: 'error' };
-    const trigger = options.recorder.triggers[0];
 
     const replayId = replayManager.capture(null, uuid, triggerContext);
 
@@ -111,7 +111,7 @@ describe('ReplayManager API Integration', function () {
   });
 
   it('should successfully send replay to API', async function () {
-    const postSpansSpy = sinon.spy(api, 'postSpans');
+    const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
     const replayId = 'test-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
@@ -130,7 +130,7 @@ describe('ReplayManager API Integration', function () {
 
   it('should throw API errors during send', async function () {
     const apiError = new Error('API failure');
-    sinon.stub(api, 'postSpans').rejects(apiError);
+    sinon.stub(tracing.exporter, 'post').rejects(apiError);
 
     const replayId = 'error-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
@@ -148,7 +148,7 @@ describe('ReplayManager API Integration', function () {
   });
 
   it('should discard replay without sending', function () {
-    const postSpansSpy = sinon.spy(api, 'postSpans');
+    const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
     const replayId = 'discard-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
@@ -183,7 +183,7 @@ describe('ReplayManager API Integration', function () {
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
       replayManager.setSpans(replayId, mockPayload);
 
-      const postSpansSpy = sinon.spy(api, 'postSpans');
+      const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
       await replayManager.sendOrDiscardReplay(
         replayId,
@@ -209,7 +209,7 @@ describe('ReplayManager API Integration', function () {
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
       replayManager.setSpans(replayId, mockPayload);
 
-      const postSpansSpy = sinon.spy(api, 'postSpans');
+      const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
       await replayManager.sendOrDiscardReplay(
         replayId,
@@ -227,7 +227,7 @@ describe('ReplayManager API Integration', function () {
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
       replayManager.setSpans(replayId, mockPayload);
 
-      const postSpansSpy = sinon.spy(api, 'postSpans');
+      const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
       await replayManager.sendOrDiscardReplay(
         replayId,

@@ -27,15 +27,12 @@ export default class Recorder {
    * Creates a new Recorder instance for capturing DOM events
    *
    * @param {Object} options - Configuration options for the recorder
-   * @param {Function} [recordFn=rrwebRecordFn] - The recording function to use
    */
-  constructor(options, recordFn = rrwebRecordFn) {
-    if (!recordFn) {
-      throw new TypeError("Expected 'recordFn' to be provided");
-    }
-
+  constructor(options) {
     this.options = options;
-    this._recordFn = recordFn;
+
+    // Tests inject a custom rrweb record function or mock.
+    this._recordFn = options.recordFn ||rrwebRecordFn;
   }
 
   get isRecording() {

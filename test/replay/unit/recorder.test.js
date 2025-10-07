@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { record as rrwebRecordFn } from '@rrweb/record';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
 
@@ -29,11 +30,10 @@ describe('Recorder', function () {
       expect(recorder.isRecording).to.be.false;
     });
 
-    it('throws when recordFn is not provided', function () {
-      expect(() => new Recorder({}, null)).to.throw(
-        TypeError,
-        "Expected 'recordFn' to be provided",
-      );
+    it('uses default when recordFn is not provided', function () {
+      const recorder = new Recorder({})
+
+      expect(recorder._recordFn).to.equal(rrwebRecordFn);
     });
 
     it('initializes buffers and slots correctly', function () {

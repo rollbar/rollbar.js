@@ -1,5 +1,6 @@
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
+import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
@@ -24,7 +25,6 @@ export default class ReplayManager {
   _map;
   /** @type {Recorder} */
   _recorder;
-  _api;
   _tracing;
   _telemeter;
   _pendingLeading;
@@ -33,32 +33,22 @@ export default class ReplayManager {
   /**
    * Creates a new ReplayManager instance
    *
-   * @param {Object} props - Configuration props
-   * @param {Recorder} props.recorder - The recorder instance that dumps replay data into spans
-   * @param {Object} props.api - The API instance used to send replay payloads to the backend
-   * @param {Object} props.tracing - The tracing instance used to create spans and manage context
+   * @param {Object} [props.tracing] - The tracing instance used to create spans and manage context
+   * @param {Object} [props.telemeter] - Optional telemeter instance for capturing telemetry events
+   * @param {Object} [props.options] - Configuration options
    */
-  constructor({ recorder, api, tracing, telemeter }) {
-    if (!recorder) {
-      throw new TypeError("Expected 'recorder' to be provided");
-    }
-
-    if (!api) {
-      throw new TypeError("Expected 'api' to be provided");
-    }
-
+  constructor({ tracing, telemeter, options }) {
     if (!tracing) {
       throw new TypeError("Expected 'tracing' to be provided");
     }
 
     this._map = new Map();
-    this._recorder = recorder;
-    this._api = api;
+    this._recorder = new Recorder(options);
     this._tracing = tracing;
     this._telemeter = telemeter;
     this._pendingLeading = new Map();
     this._trailingStatus = new Map();
-    this._predicates = new ReplayPredicates(recorder.options);
+    this._predicates = new ReplayPredicates(options);
   }
 
   /**
@@ -196,7 +186,7 @@ export default class ReplayManager {
     switch (trailingStatus) {
       case TrailingStatus.SENT:
         try {
-          await this._api.postSpans(pendingContext.leadingPayload, {
+          await this._tracing.exporter.post(pendingContext.leadingPayload, {
             'X-Rollbar-Replay-Id': replayId,
           });
         } catch (error) {
@@ -350,7 +340,7 @@ export default class ReplayManager {
       throw Error(`ReplayManager.send: No payload found for id: ${replayId}`);
     }
 
-    await this._api.postSpans(payload, { 'X-Rollbar-Replay-Id': replayId });
+    await this._tracing.exporter.post(payload, { 'X-Rollbar-Replay-Id': replayId });
 
     this._trailingStatus.set(replayId, TrailingStatus.SENT);
     await this._sendOrDiscardLeadingReplay(replayId);
@@ -411,6 +401,15 @@ export default class ReplayManager {
    */
   get size() {
     return this._map.size;
+  }
+
+  /**
+   * Returns the Recorder instance used by this manager
+   *
+   * @returns {Recorder} The Recorder instance
+   */
+  get recorder() {
+    return this._recorder;
   }
 
   /**

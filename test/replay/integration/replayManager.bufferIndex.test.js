@@ -24,11 +24,8 @@ describe('ReplayManager buffer-index integration', function () {
       triggers: [{
           type: 'occurrence',
       }],
+      recordFn: mockRecordFn,
     };
-    recorder = new Recorder(options, mockRecordFn);
-
-    recorder._isReady = true;
-    recorder._stopFn = () => {};
 
     tracing = {
       startSpan: sinon.stub().returns({
@@ -41,6 +38,9 @@ describe('ReplayManager buffer-index integration', function () {
         toPayload: sinon
           .stub()
           .returns({ resourceSpans: [{ spanData: 'test' }] }),
+        post: sinon
+          .stub()
+          .resolves(),
       },
       session: {
         attributes: {},
@@ -56,11 +56,14 @@ describe('ReplayManager buffer-index integration', function () {
     };
 
     replayManager = new ReplayManager({
-      recorder,
-      api,
       tracing,
       telemeter,
+      options,
     });
+    recorder = replayManager.recorder;
+
+    recorder._isReady = true;
+    recorder._stopFn = () => {};
 
     sinon.spy(recorder, 'exportRecordingSpan');
   });
@@ -149,8 +152,8 @@ describe('ReplayManager buffer-index integration', function () {
       { slot: 0, offset: 0 },
     ]);
 
-    sinon.assert.calledTwice(api.postSpans);
-    expect(api.postSpans.secondCall.args).to.deep.equal([
+    sinon.assert.calledTwice(tracing.exporter.post);
+    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
@@ -196,8 +199,8 @@ describe('ReplayManager buffer-index integration', function () {
       capturedCursor,
     ]);
 
-    sinon.assert.calledTwice(api.postSpans);
-    expect(api.postSpans.secondCall.args).to.deep.equal([
+    sinon.assert.calledTwice(tracing.exporter.post);
+    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
@@ -223,7 +226,7 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.discard(replayId);
     await clock.tickAsync(5000);
 
-    sinon.assert.notCalled(api.postSpans);
+    sinon.assert.notCalled(tracing.exporter.post);
     expect(replayManager._pendingLeading.has(replayId)).to.be.false;
   });
 
@@ -253,11 +256,11 @@ describe('ReplayManager buffer-index integration', function () {
 
     const pendingContext = replayManager._pendingLeading.get(replayId);
     expect(pendingContext.leadingReady).to.be.true;
-    sinon.assert.notCalled(api.postSpans);
+    sinon.assert.notCalled(tracing.exporter.post);
 
     await replayManager.send(replayId);
 
-    sinon.assert.calledTwice(api.postSpans);
+    sinon.assert.calledTwice(tracing.exporter.post);
   });
 
   it('cleans up on leading post error', async function () {
@@ -268,8 +271,8 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 2000, type: EventType.Meta, data: {} },
     ]);
 
-    api.postSpans.onFirstCall().resolves();
-    api.postSpans.onSecondCall().rejects(new Error('Network error'));
+    tracing.exporter.post.onFirstCall().resolves();
+    tracing.exporter.post.onSecondCall().rejects(new Error('Network error'));
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
@@ -288,12 +291,12 @@ describe('ReplayManager buffer-index integration', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(api.postSpans);
-    expect(api.postSpans.firstCall.args).to.deep.equal([
+    sinon.assert.calledTwice(tracing.exporter.post);
+    expect(tracing.exporter.post.firstCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(api.postSpans.secondCall.args).to.deep.equal([
+    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
@@ -337,7 +340,7 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.discard(replayId1);
     await clock.tickAsync(10000);
 
-    sinon.assert.notCalled(api.postSpans);
+    sinon.assert.notCalled(tracing.exporter.post);
 
     const replayId2 = 'test-replay-id-2';
     const occurrenceUuid2 = 'test-uuid-2';
@@ -361,8 +364,8 @@ describe('ReplayManager buffer-index integration', function () {
     await replayManager.send(replayId2);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(api.postSpans);
-    expect(api.postSpans.secondCall.args).to.deep.equal([
+    sinon.assert.calledTwice(tracing.exporter.post);
+    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
     ]);

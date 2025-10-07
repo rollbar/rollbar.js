@@ -9,7 +9,7 @@ import Tracing from '../../../src/tracing/tracing.js';
 import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
-import recorderDefaults from '../../../src/browser/replay/defaults.js';
+import replayDefaults from '../../../src/browser/replay/defaults.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 import Api from '../../../src/api.js';
 import Queue from '../../../src/queue.js';
@@ -29,8 +29,8 @@ const options = {
     name: 'rollbar.js',
     version: '0.1.0',
   },
-  recorder: {
-    ...recorderDefaults,
+  replay: {
+    ...replayDefaults,
     enabled: true,
     autoStart: false,
     emitEveryNms: 100, // non-rrweb, used by mockRecordFn
@@ -76,7 +76,7 @@ describe('Session Replay Integration', function () {
   });
 
   it('dumping recording should export tracing', function (done) {
-    recorder = new Recorder(options.recorder, mockRecordFn);
+    recorder = new Recorder(options.replay, mockRecordFn);
     recorder.start();
 
     const tracingContext = tracing.contextManager.active();
@@ -207,8 +207,6 @@ describe('Session Replay Transport Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-    tracing = new Tracing(window, null, options);
-    tracing.initSession();
 
     api = new Api(
       { accessToken: 'test-token' },
@@ -216,19 +214,19 @@ describe('Session Replay Transport Integration', function () {
       urlMock,
       truncationMock,
     );
+    tracing = new Tracing(window, api, options);
+    tracing.initSession();
 
-    recorder = new Recorder(options.recorder, mockRecordFn);
-
-    sinon.stub(recorder, 'exportRecordingSpan');
     sinon.stub(tracing.exporter, 'toPayload').callsFake(() => {
       return createPayloadWithReplayId('test-replay-id');
     });
 
     replayManager = new ReplayManager({
-      recorder,
-      api,
       tracing,
+      options: options.replay,
     });
+    recorder = replayManager.recorder;
+    sinon.stub(recorder, 'exportRecordingSpan');
 
     queue = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },

@@ -12,9 +12,8 @@ import * as sharedTransforms from '../transforms.js';
 import * as predicates from './predicates.js';
 import * as sharedPredicates from '../predicates.js';
 import errorParser from '../errorParser.js';
-import recorderDefaults from './replay/defaults.js';
+import replayDefaults from './replay/defaults.js';
 import tracingDefaults from '../tracing/defaults.js';
-import ReplayManager from './replay/replayManager.js';
 
 // Used to support global `Rollbar` instance.
 let _instance = null;
@@ -31,7 +30,7 @@ class Rollbar {
     this.scrub = this.components.scrub;
     const truncation = this.components.truncation;
     const Tracing = this.components.tracing;
-    const Recorder = this.components.recorder;
+    const ReplayManager = this.components.replayManager;
 
     const transport = new Transport(truncation);
     const api = new API(this.options, transport, urllib, truncation);
@@ -43,18 +42,16 @@ class Rollbar {
       this.telemeter = new Telemeter(this.options, this.tracing);
     }
 
-    if (Recorder && _.isBrowser()) {
-      const recorderOptions = this.options.recorder;
-      this.recorder = new Recorder(recorderOptions);
+    if (ReplayManager && _.isBrowser()) {
+      const replayOptions = this.options.replay;
       this.replayManager = new ReplayManager({
-        recorder: this.recorder,
-        api: api,
         tracing: this.tracing,
         telemeter: this.telemeter,
+        options: replayOptions,
       });
 
-      if (recorderOptions.enabled && recorderOptions.autoStart) {
-        this.recorder.start();
+      if (replayOptions.enabled && replayOptions.autoStart) {
+        this.replayManager.recorder.start();
       }
     }
 
@@ -129,7 +126,7 @@ class Rollbar {
     );
 
     this.tracing?.configure(this.options);
-    this.recorder?.configure(this.options);
+    this.replayManager?.recorder?.configure(this.options);
     this.client.configure(this.options, payloadData);
     this.instrumenter?.configure(this.options);
     this.setupUnhandledCapture();
@@ -582,7 +579,7 @@ import {
 } from '../defaults.js';
 import browserDefaults from './defaults.js';
 
-var defaultOptions = {
+const defaultOptions = {
   environment: 'unknown',
   version: version,
   scrubFields: browserDefaults.scrubFields,
@@ -599,7 +596,7 @@ var defaultOptions = {
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
-  recorder: recorderDefaults,
+  replay: replayDefaults,
   tracing: tracingDefaults,
 };
 

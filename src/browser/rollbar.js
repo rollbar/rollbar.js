@@ -5,7 +5,7 @@ import wrapGlobals from './wrapGlobals.js';
 import scrub from '../scrub.js';
 import truncation from '../truncation.js';
 import Tracing from '../tracing/tracing.js';
-import Recorder from './replay/recorder.js';
+import ReplayManager from './replay/replayManager.js';
 
 Rollbar.setComponents({
   telemeter: Telemeter,
@@ -14,7 +14,7 @@ Rollbar.setComponents({
   scrub: scrub,
   truncation: truncation,
   tracing: Tracing,
-  recorder: Recorder,
+  replayManager: ReplayManager,
 });
 
 export default Rollbar;

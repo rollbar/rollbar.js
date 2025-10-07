@@ -26,6 +26,7 @@ class MockTracing {
   constructor(returnPayload = [{ id: 'span1' }, { id: 'span2' }]) {
     this.exporter = {
       toPayload: sinon.stub().returns(returnPayload),
+      post: sinon.stub().resolves({ success: true }),
     };
   }
 }
@@ -38,6 +39,7 @@ class MockTelemeter {
 
 describe('ReplayManager', function () {
   let replayManager;
+  let recorder;
   let mockRecorder;
   let mockApi;
   let mockTracing;
@@ -53,11 +55,11 @@ describe('ReplayManager', function () {
     mockTelemeter = new MockTelemeter();
 
     replayManager = new ReplayManager({
-      recorder: mockRecorder,
-      api: mockApi,
       tracing: mockTracing,
       telemeter: mockTelemeter,
+      options: {},
     });
+    replayManager._recorder = mockRecorder;
   });
 
   afterEach(function () {
@@ -65,35 +67,21 @@ describe('ReplayManager', function () {
   });
 
   describe('constructor', function () {
-    it('should throw when required dependencies are missing', function () {
-      expect(() => new ReplayManager({})).to.throw(TypeError);
-      expect(() => new ReplayManager({ recorder: mockRecorder })).to.throw(
-        TypeError,
-      );
+    it('should succeed with required dependencies', function () {
       expect(
         () =>
           new ReplayManager({
-            recorder: mockRecorder,
-            api: mockApi,
-          }),
-      ).to.throw(TypeError);
-
-      expect(
-        () =>
-          new ReplayManager({
-            recorder: mockRecorder,
-            api: mockApi,
             tracing: mockTracing,
+            options: {},
           }),
       ).to.not.throw();
 
       expect(
         () =>
           new ReplayManager({
-            recorder: mockRecorder,
-            api: mockApi,
             tracing: mockTracing,
             telemeter: mockTelemeter,
+            options: {},
           }),
       ).to.not.throw();
     });
@@ -195,11 +183,11 @@ describe('ReplayManager', function () {
 
     it('should work when telemeter is not provided', async function () {
       replayManager = new ReplayManager({
-        recorder: mockRecorder,
-        api: mockApi,
         tracing: mockTracing,
         telemeter: null,
+        options: {},
       });
+      replayManager._recorder = mockRecorder;
 
       const replayId = '1234567890abcdef';
       const occurrenceUuid = 'test-uuid';
@@ -293,9 +281,9 @@ describe('ReplayManager', function () {
 
       await replayManager.send('testReplayId');
 
-      expect(mockApi.postSpans.called).to.be.true;
-      expect(mockApi.postSpans.firstCall.args[0]).to.deep.equal(mockPayload);
-      expect(mockApi.postSpans.firstCall.args[1]).to.deep.equal({
+      expect(mockTracing.exporter.post.called).to.be.true;
+      expect(mockTracing.exporter.post.firstCall.args[0]).to.deep.equal(mockPayload);
+      expect(mockTracing.exporter.post.firstCall.args[1]).to.deep.equal({
         'X-Rollbar-Replay-Id': 'testReplayId',
       });
 
@@ -314,7 +302,7 @@ describe('ReplayManager', function () {
       expect(error.message).to.equal(
         'ReplayManager.send: No replayId provided',
       );
-      expect(mockApi.postSpans.called).to.be.false;
+      expect(mockTracing.exporter.post.called).to.be.false;
     });
 
     it('should throw when replayId does not exist', async function () {
@@ -327,7 +315,7 @@ describe('ReplayManager', function () {
 
       expect(error).to.be.instanceof(Error);
       expect(error.message).to.include('No replay found for id: nonexistent');
-      expect(mockApi.postSpans.called).to.be.false;
+      expect(mockTracing.exporter.post.called).to.be.false;
     });
 
     it('should throw when payload is an empty array', async function () {
@@ -344,7 +332,7 @@ describe('ReplayManager', function () {
       expect(error.message).to.include(
         'No payload found for id: emptyReplayId',
       );
-      expect(mockApi.postSpans.called).to.be.false;
+      expect(mockTracing.exporter.post.called).to.be.false;
     });
 
     it('should throw when payload is an empty OTLP object', async function () {
@@ -361,14 +349,14 @@ describe('ReplayManager', function () {
       expect(error.message).to.include(
         'No payload found for id: emptyOTLPReplayId',
       );
-      expect(mockApi.postSpans.called).to.be.false;
+      expect(mockTracing.exporter.post.called).to.be.false;
     });
 
     it('should propagate API errors', async function () {
       replayManager.setSpans('errorReplayId', [{ id: 'span1' }]);
 
       const apiError = new Error('API error');
-      mockApi.postSpans.rejects(apiError);
+      mockTracing.exporter.post.rejects(apiError);
 
       let error;
       try {
@@ -378,7 +366,7 @@ describe('ReplayManager', function () {
       }
 
       expect(error).to.equal(apiError);
-      expect(mockApi.postSpans.called).to.be.true;
+      expect(mockTracing.exporter.post.called).to.be.true;
 
       expect(replayManager.size).to.equal(0);
     });
@@ -392,7 +380,7 @@ describe('ReplayManager', function () {
       const result = replayManager.discard('discardReplayId');
 
       expect(result).to.be.true;
-      expect(mockApi.postSpans.called).to.be.false;
+      expect(mockTracing.exporter.post.called).to.be.false;
       expect(replayManager.size).to.equal(0);
     });
 
