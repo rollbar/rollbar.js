@@ -57,7 +57,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
 
     const triggerContext = { type: 'occurrence' };
     const trigger = options.recorder.triggers[0];
-    const replayId = replayManager.capture('test-replay-id', 'test-uuid', trigger, triggerContext);
+    const replayId = replayManager.capture('test-replay-id', 'test-uuid', triggerContext);
     await clock.tickAsync(100);
 
     const cursor = replayManager._pendingLeading.get(replayId).bufferCursor;
