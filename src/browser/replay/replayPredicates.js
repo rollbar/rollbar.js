@@ -1,4 +1,3 @@
-
 /**
  * ReplayPredicates - Determine if replay is enabled for a given trigger type.
  *
@@ -16,24 +15,15 @@ export default class ReplayPredicates {
     this.triggers = this._triggersWithDefaults(config);
 
     this.predicates = {
-      occurrence: [
-        this.isLevelMatching.bind(this),
-        this.isSampled.bind(this),
-      ],
-      navigation: [
-        this.isPathMatching.bind(this),
-        this.isSampled.bind(this),
-      ],
-      direct: [
-        this.isTagMatching.bind(this),
-        this.isSampled.bind(this),
-      ],
+      occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)],
+      navigation: [this.isPathMatching.bind(this), this.isSampled.bind(this)],
+      direct: [this.isTagMatching.bind(this), this.isSampled.bind(this)],
     };
   }
 
   _triggersWithDefaults(config) {
     const triggers = config?.triggers || [];
-    return triggers.map(t => ({ ...config.triggerDefaults, ...t }));
+    return triggers.map((t) => ({ ...config.triggerDefaults, ...t }));
   }
 
   /**
@@ -48,7 +38,10 @@ export default class ReplayPredicates {
     const predicates = this.predicates[context.type];
 
     for (const t of this.triggers) {
-      if (t.type === context.type && this.isEnabledForTrigger(t, predicates, context)) {
+      if (
+        t.type === context.type &&
+        this.isEnabledForTrigger(t, predicates, context)
+      ) {
         return t;
       }
     }
@@ -57,7 +50,7 @@ export default class ReplayPredicates {
   }
 
   isEnabledForTrigger(trigger, predicates, context) {
-    if (predicates.find(p => !p(trigger, context))) {
+    if (predicates.find((p) => !p(trigger, context))) {
       return false;
     }
 
@@ -102,7 +95,7 @@ export default class ReplayPredicates {
   isTagMatching(trigger, context) {
     if (!trigger.tags) return true;
 
-    if (context.tags?.some(t => trigger.tags.includes(t))) {
+    if (context.tags?.some((t) => trigger.tags.includes(t))) {
       return true;
     }
 
@@ -132,7 +125,9 @@ export default class ReplayPredicates {
       return true;
     }
     const rv = context.replayId.slice(-14);
-    const th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
+    const th = (this.maxAdjustedCount * (1 - ratio))
+      .toString(16)
+      .padStart(14, '0');
 
     return rv >= th;
   }

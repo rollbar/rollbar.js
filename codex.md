@@ -105,12 +105,10 @@ When working with this codebase, be aware of these patterns:
 ## Testing Philosophy
 
 - **Analyze Test Failures Objectively**: When tests fail, evaluate both possibilities objectively:
-
   - The test could be correctly identifying an actual code issue
   - The test itself might contain errors or invalid expectations
 
 - **Diagnostic Process**:
-
   1. Examine what the test is expecting vs. what the code actually does
   2. Consider the intended behavior and design of the system
   3. If the test is correct and identifying a legitimate bug, fix the code

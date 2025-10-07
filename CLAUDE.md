@@ -74,7 +74,6 @@ As of version 3.0.0, the SDK has been updated to use modern JavaScript features 
 - **Function Documentation (JSDoc/TSDoc)**: Always include comprehensive documentation for functions, classes, and methods using JSDoc/TSDoc format (`/** ... */`). These serve as API documentation, appear in IDE tooltips, and help developers understand purpose, parameters, and return values.
 
 - **Inline Code Comments**: Avoid redundant comments that merely restate what the code is doing. Only add comments to explain:
-
   - Why the code works a certain way (decisions and reasoning)
   - Non-obvious behavior or edge cases
   - Complex algorithms or business logic
@@ -131,12 +130,10 @@ When working with this codebase, be aware of these patterns:
 ## Testing Philosophy
 
 - **Analyze Test Failures Objectively**: When tests fail, evaluate both possibilities objectively:
-
   - The test could be correctly identifying an actual code issue
   - The test itself might contain errors or invalid expectations
 
 - **Diagnostic Process**:
-
   1. Examine what the test is expecting vs. what the code actually does
   2. Consider the intended behavior and design of the system
   3. If the test is correct and identifying a legitimate bug, fix the code

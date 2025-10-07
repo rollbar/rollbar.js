@@ -207,7 +207,6 @@ describe('Session Replay Transport Integration', function () {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
 
-
     api = new Api(
       { accessToken: 'test-token' },
       transport,
@@ -324,7 +323,10 @@ describe('Session Replay Transport Integration', function () {
     const sendSpy = sinon.spy(replayManager, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    const sendOrDiscardReplaySpy = sinon.spy(replayManager, 'sendOrDiscardReplay');
+    const sendOrDiscardReplaySpy = sinon.spy(
+      replayManager,
+      'sendOrDiscardReplay',
+    );
 
     const errorItem = {
       data: {

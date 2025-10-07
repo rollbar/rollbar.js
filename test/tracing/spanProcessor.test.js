@@ -34,7 +34,7 @@ const spanOptions = function (options = {}) {
     parentSpanId: 'c44638e654c52eff',
     ...options,
   };
-}
+};
 
 describe('SpanProcessor()', function () {
   it('should process pending spans', function (done) {
@@ -70,7 +70,7 @@ describe('SpanProcessor()', function () {
 
   it('should transform spans', function (done) {
     const tracingOptions = {
-      transformSpan: ({span}) => {
+      transformSpan: ({ span }) => {
         span.attributes['test-group'] = 'blue';
         span.resource.attributes['rollbar.environment'] = 'prod-3';
       },
@@ -90,7 +90,9 @@ describe('SpanProcessor()', function () {
     span.end();
 
     expect(span.span.attributes['test-group']).to.equal('blue');
-    expect(span.span.resource.attributes['rollbar.environment']).to.equal('prod-3');
+    expect(span.span.resource.attributes['rollbar.environment']).to.equal(
+      'prod-3',
+    );
     expect(spanProcessor.pendingSpans.size).to.equal(0);
 
     done();
@@ -98,7 +100,7 @@ describe('SpanProcessor()', function () {
 
   it('should catch exception in transformSpan', function (done) {
     const tracingOptions = {
-      transformSpan: ({span}) => {
+      transformSpan: ({ span }) => {
         throw new Error('test error');
       },
     };

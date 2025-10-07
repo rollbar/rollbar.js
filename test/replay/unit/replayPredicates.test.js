@@ -28,7 +28,7 @@ describe('ReplayManager', function () {
             {
               type: 'direct',
               tags: ['replay', 'session'],
-            }
+            },
           ],
         };
       });
@@ -40,7 +40,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
           level: ['error', 'critical'],
@@ -57,7 +59,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
 
@@ -69,7 +73,9 @@ describe('ReplayManager', function () {
         };
         delete recorderConfig.triggers[0].level;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
           preDuration: 300,
@@ -90,7 +96,9 @@ describe('ReplayManager', function () {
           samplingRatio: 0.5,
         });
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
           level: ['info'],
@@ -108,7 +116,9 @@ describe('ReplayManager', function () {
         };
         delete recorderConfig.triggers[0].samplingRatio;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
           level: ['error', 'critical'],
@@ -126,7 +136,9 @@ describe('ReplayManager', function () {
         };
         recorderConfig.triggers[0].samplingRatio = 0.1;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
 
@@ -141,7 +153,9 @@ describe('ReplayManager', function () {
         recorderConfig.triggerDefaults.samplingRatio = 0.1;
         delete recorderConfig.triggers[0].samplingRatio;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
 
@@ -153,7 +167,9 @@ describe('ReplayManager', function () {
         };
         recorderConfig.triggerDefaults.samplingRatio = 0.1;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
           level: ['error', 'critical'],
@@ -170,7 +186,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(null).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(null).shouldCaptureForTriggerContext(
+          context,
+        );
         expect(resp).to.be.null;
       });
 
@@ -182,7 +200,9 @@ describe('ReplayManager', function () {
         };
         recorderConfig.triggers = null;
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
     });
@@ -205,7 +225,7 @@ describe('ReplayManager', function () {
             {
               type: 'direct',
               tags: ['neon', 'argon'],
-            }
+            },
           ],
         };
       });
@@ -217,7 +237,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'direct',
           tags: ['neon', 'argon'],
@@ -234,7 +256,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
 
@@ -244,7 +268,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
     });
@@ -266,7 +292,7 @@ describe('ReplayManager', function () {
             {
               type: 'direct',
               tags: ['neon', 'argon'],
-            }
+            },
           ],
         };
       });
@@ -278,7 +304,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'navigation',
           pathMatch: 'foo',
@@ -295,7 +323,9 @@ describe('ReplayManager', function () {
           replayId,
         };
 
-        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        const resp = new ReplayPredicates(
+          recorderConfig,
+        ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
     });

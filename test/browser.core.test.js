@@ -42,7 +42,6 @@ describe('options', function () {
     const rollbar = new Rollbar({
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: false,
-
     });
     rollbar.configure({
       person: {

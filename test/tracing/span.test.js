@@ -169,7 +169,7 @@ describe('Span()', function () {
   it('should create a readable span without a session present', function (done) {
     const span = new Span(spanOptions({ session: undefined }));
 
-    expectReadableSpan(span, {attributes: { 'session.id': undefined }});
+    expectReadableSpan(span, { attributes: { 'session.id': undefined } });
 
     done();
   });
@@ -204,9 +204,9 @@ describe('Span()', function () {
   });
 
   it('should use the performance api when set', function () {
-    const timeOriginStub = sinon.stub(
-      performance, 'timeOrigin'
-    ).get(() => 1758315561543);
+    const timeOriginStub = sinon
+      .stub(performance, 'timeOrigin')
+      .get(() => 1758315561543);
     const nowStub = sinon.stub(performance, 'now').returns(1100.123);
 
     const span = new Span(spanOptions({ usePerformance: true }));

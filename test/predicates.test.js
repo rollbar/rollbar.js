@@ -263,9 +263,8 @@ describe('urlIsNotBlockListed', function () {
       hostBlockList: ['example.com', 'other.com'],
     };
     expect(p.urlIsNotBlockListed(logger)(item, settings)).to.not.be.ok;
-    expect(
-      p.urlIsNotBlockListed(logger)(traceChainItem, settings),
-    ).to.not.be.ok;
+    expect(p.urlIsNotBlockListed(logger)(traceChainItem, settings)).to.not.be
+      .ok;
   });
   it('should return true if the filename is not a string', function () {
     var item = {

@@ -136,7 +136,7 @@ describe('transport', function () {
             expect(resp.message).to.equal('all good');
             done();
           },
-        transportFactory: factory,
+          transportFactory: factory,
         });
       });
 

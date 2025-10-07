@@ -112,9 +112,7 @@ describe('postItem', function () {
       expect(params.options.path).to.match(/\/item\//);
       expect(params.options.method).to.eql('POST');
       expect(params.payload.data.a).to.eql(1);
-      expect(params.payload.data.context).to.eql(
-        '{"some":[1,2,"stuff"]}',
-      );
+      expect(params.payload.data.context).to.eql('{"some":[1,2,"stuff"]}');
       done();
     });
   });
@@ -128,7 +126,7 @@ describe('postSpans', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake(({accessToken, options, payload, callback}) => {
+        .callsFake(({ accessToken, options, payload, callback }) => {
           callback(null, { result: 'ok' });
         }),
       postJsonPayload: sinon.stub(),

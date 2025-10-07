@@ -28,7 +28,7 @@ class Telemeter {
     }
     this.maxQueueSize = newMaxEvents;
     this.queue.splice(0, deleteCount);
-  };
+  }
 
   copyEvents() {
     var events = Array.prototype.slice.call(this.queue, 0);
@@ -46,7 +46,7 @@ class Telemeter {
     }
 
     // Filter until supported in legacy telemetry
-    events = events.filter(e => e.type !== 'connectivity');
+    events = events.filter((e) => e.type !== 'connectivity');
 
     // Remove internal keys from output
     events = events.map(({ otelAttributes, ...event }) => event);
@@ -98,21 +98,11 @@ class Telemeter {
     return e;
   }
 
-  captureEvent(
-    type,
-    metadata,
-    level,
-    rollbarUUID,
-  ) {
+  captureEvent(type, metadata, level, rollbarUUID) {
     return this.capture(type, metadata, level, rollbarUUID);
   }
 
-  captureError(
-    err,
-    level,
-    rollbarUUID,
-    timestamp,
-  ) {
+  captureError(err, level, rollbarUUID, timestamp) {
     const message = err.message || String(err);
     var metadata = { message };
     if (err.stack) {
@@ -139,33 +129,26 @@ class Telemeter {
       timestamp,
       otelAttributes,
     );
-  };
+  }
 
-  captureLog(
-    message,
-    level,
-    rollbarUUID,
-    timestamp,
-  ) {
+  captureLog(message, level, rollbarUUID, timestamp) {
     let otelAttributes = null;
 
     // If the uuid is present, this is a message occurrence.
     if (rollbarUUID) {
-      otelAttributes =
-      {
+      ((otelAttributes = {
         message,
         level,
         type: 'message',
         uuid: rollbarUUID,
-      },
-
-      this.telemetrySpan?.addEvent(
-        'rollbar-occurrence-event',
-        otelAttributes,
-        fromMillis(timestamp),
-      );
+      }),
+        this.telemetrySpan?.addEvent(
+          'rollbar-occurrence-event',
+          otelAttributes,
+          fromMillis(timestamp),
+        ));
     } else {
-      otelAttributes = { message, level }
+      otelAttributes = { message, level };
       this.telemetrySpan?.addEvent(
         'rollbar-log-event',
         otelAttributes,
@@ -183,12 +166,7 @@ class Telemeter {
     );
   }
 
-  captureNetwork(
-    metadata,
-    subtype,
-    rollbarUUID,
-    requestData,
-  ) {
+  captureNetwork(metadata, subtype, rollbarUUID, requestData) {
     subtype = subtype || 'xhr';
     metadata.subtype = metadata.subtype || subtype;
     if (requestData) {
@@ -232,13 +210,7 @@ class Telemeter {
     return 'info';
   }
 
-  captureDom(
-    subtype,
-    element,
-    value,
-    checked,
-    rollbarUUID,
-  ) {
+  captureDom(subtype, element, value, checked, rollbarUUID) {
     var metadata = {
       subtype: subtype,
       element: element,
@@ -252,13 +224,7 @@ class Telemeter {
     return this.capture('dom', metadata, 'info', rollbarUUID);
   }
 
-  captureInput({
-    type,
-    isSynthetic,
-    element,
-    value,
-    timestamp,
-  }) {
+  captureInput({ type, isSynthetic, element, value, timestamp }) {
     const name = 'rollbar-input-event';
     const metadata = {
       type: name,
@@ -278,11 +244,7 @@ class Telemeter {
       return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'dom',
@@ -294,12 +256,7 @@ class Telemeter {
     );
   }
 
-  captureClick({
-    type,
-    isSynthetic,
-    element,
-    timestamp,
-  }) {
+  captureClick({ type, isSynthetic, element, timestamp }) {
     const name = 'rollbar-click-event';
     const metadata = {
       type: name,
@@ -317,11 +274,7 @@ class Telemeter {
       return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'dom',
@@ -336,7 +289,11 @@ class Telemeter {
   _getRepeatedEvent(name, attributes) {
     const lastEvent = this._lastEvent(this.queue);
 
-    if (lastEvent && lastEvent.body.type === name && lastEvent.otelAttributes.target === attributes.target) {
+    if (
+      lastEvent &&
+      lastEvent.body.type === name &&
+      lastEvent.otelAttributes.target === attributes.target
+    ) {
       return lastEvent;
     }
   }
@@ -358,12 +315,7 @@ class Telemeter {
     return list.length > 0 ? list[list.length - 1] : null;
   }
 
-  captureFocus({
-    type,
-    isSynthetic,
-    element,
-    timestamp,
-  }) {
+  captureFocus({ type, isSynthetic, element, timestamp }) {
     const name = 'rollbar-focus-event';
     const metadata = {
       type: name,
@@ -376,11 +328,7 @@ class Telemeter {
       element,
     };
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'dom',
@@ -421,11 +369,7 @@ class Telemeter {
       return this._updateRepeatedEvent(event, otelAttributes, timestamp);
     }
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'dom',
@@ -460,8 +404,13 @@ class Telemeter {
     };
 
     if (type === 'dragstart') {
-      metadata = { ...metadata, element, dropEffect, effectAllowed}
-      otelAttributes = { ...otelAttributes, element, dropEffect, effectAllowed}
+      metadata = { ...metadata, element, dropEffect, effectAllowed };
+      otelAttributes = {
+        ...otelAttributes,
+        element,
+        dropEffect,
+        effectAllowed,
+      };
     }
 
     if (type === 'drop') {
@@ -472,7 +421,7 @@ class Telemeter {
         effectAllowed,
         kinds,
         mediaTypes,
-      }
+      };
       otelAttributes = {
         ...otelAttributes,
         element,
@@ -480,14 +429,10 @@ class Telemeter {
         effectAllowed,
         kinds,
         mediaTypes,
-      }
+      };
     }
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'dom',
@@ -499,12 +444,7 @@ class Telemeter {
     );
   }
 
-  captureNavigation(
-    from,
-    to,
-    rollbarUUID,
-    timestamp,
-  ) {
+  captureNavigation(from, to, rollbarUUID, timestamp) {
     this.telemetrySpan?.addEvent(
       'rollbar-navigation-event',
       { 'previous.url.full': from, 'url.full': to },
@@ -548,7 +488,7 @@ class Telemeter {
     */
   }
 
-  captureConnectivityChange({type, isSynthetic, timestamp}) {
+  captureConnectivityChange({ type, isSynthetic, timestamp }) {
     const name = 'rollbar-connectivity-event';
     const metadata = {
       type: name,
@@ -559,11 +499,7 @@ class Telemeter {
       isSynthetic,
     };
 
-    this.telemetrySpan?.addEvent(
-      name,
-      otelAttributes,
-      fromMillis(timestamp),
-    );
+    this.telemetrySpan?.addEvent(name, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'connectivity',
@@ -584,7 +520,12 @@ class Telemeter {
       return this.captureError(item.err, item.level, item.uuid, item.timestamp);
     }
     if (item.message) {
-      return this.captureLog(item.message, item.level, item.uuid, item.timestamp);
+      return this.captureLog(
+        item.message,
+        item.level,
+        item.uuid,
+        item.timestamp,
+      );
     }
     if (item.custom) {
       return this.capture(

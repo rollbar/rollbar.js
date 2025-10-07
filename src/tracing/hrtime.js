@@ -56,7 +56,10 @@ function add(a, b) {
  */
 function now(usePerformance = false) {
   if (usePerformance) {
-    return add(fromMillis(performance.timeOrigin), fromMillis(performance.now()));
+    return add(
+      fromMillis(performance.timeOrigin),
+      fromMillis(performance.now()),
+    );
   }
   return fromMillis(Date.now());
 }

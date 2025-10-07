@@ -67,7 +67,7 @@ function elementArrayToString(a) {
 
 function elementString(elem) {
   return elementArrayToString(treeToArray(elem));
-};
+}
 
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {

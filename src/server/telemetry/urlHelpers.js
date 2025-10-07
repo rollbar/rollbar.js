@@ -72,7 +72,4 @@ function constructUrl(options) {
   return url;
 }
 
-export {
-  mergeOptions,
-  constructUrl,
-};
+export { mergeOptions, constructUrl };

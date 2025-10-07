@@ -62,7 +62,12 @@ export default class ReplayManager {
    * @param {string} occurrenceUuid - The UUID of the associated error occurrence
    * @private
    */
-  async _exportSpansAndAddTracingPayload(replayId, occurrenceUuid, trigger, triggerContext) {
+  async _exportSpansAndAddTracingPayload(
+    replayId,
+    occurrenceUuid,
+    trigger,
+    triggerContext,
+  ) {
     try {
       this._recorder.exportRecordingSpan(this._tracing, {
         'rollbar.replay.id': replayId,
@@ -239,13 +244,21 @@ export default class ReplayManager {
 
     replayId = replayId || id.gen(8);
 
-    const trigger = this._predicates.shouldCaptureForTriggerContext({ ...triggerContext, replayId });
+    const trigger = this._predicates.shouldCaptureForTriggerContext({
+      ...triggerContext,
+      replayId,
+    });
     if (!trigger) {
       return null;
     }
 
     // Start processing the replay in the background
-    this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid, trigger, triggerContext);
+    this._exportSpansAndAddTracingPayload(
+      replayId,
+      occurrenceUuid,
+      trigger,
+      triggerContext,
+    );
 
     return replayId;
   }
@@ -340,7 +353,9 @@ export default class ReplayManager {
       throw Error(`ReplayManager.send: No payload found for id: ${replayId}`);
     }
 
-    await this._tracing.exporter.post(payload, { 'X-Rollbar-Replay-Id': replayId });
+    await this._tracing.exporter.post(payload, {
+      'X-Rollbar-Replay-Id': replayId,
+    });
 
     this._trailingStatus.set(replayId, TrailingStatus.SENT);
     await this._sendOrDiscardLeadingReplay(replayId);

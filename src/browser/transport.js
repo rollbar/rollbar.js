@@ -142,7 +142,7 @@ Transport.prototype._makeZoneRequest = function () {
 };
 
 Transport.prototype._makeRequest = function (params) {
-  const {payload, callback, transport} = params;
+  const { payload, callback, transport } = params;
   if (typeof RollbarProxy !== 'undefined') {
     return _proxyRequest(payload, callback);
   }

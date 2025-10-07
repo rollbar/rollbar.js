@@ -2,7 +2,6 @@
  * API integration tests for span transport
  */
 
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -23,7 +22,7 @@ describe('API Span Transport', function () {
     transport = {
       post: sinon
         .stub()
-        .callsFake(({accessToken, options, payload, callback}) => {
+        .callsFake(({ accessToken, options, payload, callback }) => {
           setTimeout(() => {
             callback(null, { err: 0, result: { id: '12345' } });
           }, 10);
@@ -68,13 +67,11 @@ describe('API Span Transport', function () {
 
   it('should handle transport errors', async function () {
     const testError = new Error('Transport failure');
-    transport.post.callsFake(
-      ({accessToken, options, payload, callback}) => {
-        setTimeout(() => {
-          callback(testError);
-        }, 10);
-      },
-    );
+    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+      setTimeout(() => {
+        callback(testError);
+      }, 10);
+    });
 
     const spans = [{ id: 'error-span', name: 'error-recording' }];
 
@@ -87,13 +84,11 @@ describe('API Span Transport', function () {
   });
 
   it('should handle API response errors', async function () {
-    transport.post.callsFake(
-      ({accessToken, options, payload, callback}) => {
-        setTimeout(() => {
-          callback(null, { err: 1, message: 'API Error' });
-        }, 10);
-      },
-    );
+    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+      setTimeout(() => {
+        callback(null, { err: 1, message: 'API Error' });
+      }, 10);
+    });
 
     const spans = [{ id: 'error-span', name: 'error-recording' }];
 

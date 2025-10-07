@@ -1,7 +1,15 @@
 import logger from '../../logger.js';
 import * as _ from '../../utility.js';
 
-function makeFetchRequest({accessToken, url, method, payload, headers, callback, timeout}) {
+function makeFetchRequest({
+  accessToken,
+  url,
+  method,
+  payload,
+  headers,
+  callback,
+  timeout,
+}) {
   var controller;
   var timeoutId;
 
@@ -17,7 +25,7 @@ function makeFetchRequest({accessToken, url, method, payload, headers, callback,
     'X-Rollbar-Access-Token': accessToken,
     signal: controller && controller.signal,
     ...headers,
-  }
+  };
 
   fetch(url, {
     method,

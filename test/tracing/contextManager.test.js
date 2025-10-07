@@ -1,6 +1,9 @@
 import { expect } from 'chai';
 
-import { ContextManager, createContextKey } from '../../src/tracing/contextManager.js';
+import {
+  ContextManager,
+  createContextKey,
+} from '../../src/tracing/contextManager.js';
 import { ROOT_CONTEXT } from '../../src/tracing/context.js';
 
 describe('ContextManager()', function () {
@@ -10,7 +13,7 @@ describe('ContextManager()', function () {
 
     expect(contextManager.active()).to.equal(ROOT_CONTEXT);
 
-    let context = contextManager.active().setValue(SPAN_KEY, 'a')
+    let context = contextManager.active().setValue(SPAN_KEY, 'a');
     let prevContext = contextManager.enterContext(context);
 
     expect(prevContext).to.equal(ROOT_CONTEXT);

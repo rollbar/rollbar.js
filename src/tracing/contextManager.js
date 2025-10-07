@@ -34,4 +34,3 @@ export function createContextKey(key) {
   // Use Symbol for OpenTelemetry compatibility.
   return Symbol.for(key);
 }
-

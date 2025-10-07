@@ -26,4 +26,4 @@ export default function (options) {
       window._rollbarInitialized = true;
     }
   };
-};
+}

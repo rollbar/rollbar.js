@@ -96,16 +96,16 @@ class Rollbar {
     }
     _instance = new Rollbar(options, client);
     return _instance;
-  };
+  }
 
   static setComponents(components) {
     Rollbar.prototype.components = components;
-  };
+  }
 
   global(options) {
     this.client.global(options);
     return this;
-  };
+  }
 
   configure(options, payloadData) {
     if (options.logLevel) {
@@ -131,74 +131,77 @@ class Rollbar {
     this.instrumenter?.configure(this.options);
     this.setupUnhandledCapture();
     return this;
-  };
+  }
 
   lastError() {
     return this.client.lastError;
-  };
+  }
 
   log() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.log(item);
     return { uuid: uuid };
-  };
+  }
 
   debug() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.debug(item);
     return { uuid: uuid };
-  };
+  }
 
   info() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.info(item);
     return { uuid: uuid };
-  };
+  }
 
-  warn(){
+  warn() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.warn(item);
     return { uuid: uuid };
-  };
+  }
 
   warning() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.warning(item);
     return { uuid: uuid };
-  };
+  }
 
   error() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.error(item);
     return { uuid: uuid };
-  };
+  }
 
   critical() {
     var item = this._createItem(arguments);
     var uuid = item.uuid;
     this.client.critical(item);
     return { uuid: uuid };
-  };
+  }
 
   buildJsonPayload(item) {
     return this.client.buildJsonPayload(item);
-  };
+  }
 
   sendJsonPayload(jsonPayload) {
     return this.client.sendJsonPayload(jsonPayload);
-  };
+  }
 
   setupUnhandledCapture() {
     var gWindow = _gWindow();
 
     if (!this.unhandledExceptionsInitialized) {
-      if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+      if (
+        this.options.captureUncaught ||
+        this.options.handleUncaughtExceptions
+      ) {
         globals.captureUncaughtExceptions(gWindow, this);
         if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
           this.wrapGlobals(gWindow, this);
@@ -215,17 +218,13 @@ class Rollbar {
         this.unhandledRejectionsInitialized = true;
       }
     }
-  };
+  }
 
-  handleUncaughtException(
-    message,
-    url,
-    lineno,
-    colno,
-    error,
-    context,
-  ) {
-    if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
+  handleUncaughtException(message, url, lineno, colno, error, context) {
+    if (
+      !this.options.captureUncaught &&
+      !this.options.handleUncaughtExceptions
+    ) {
       return;
     }
 
@@ -266,7 +265,7 @@ class Rollbar {
     item.level = this.options.uncaughtErrorLevel;
     item._isUncaught = true;
     this.client.log(item);
-  };
+  }
 
   /**
    * Chrome only. Other browsers will ignore.
@@ -324,7 +323,7 @@ class Rollbar {
       this.options.inspectAnonymousErrors = false;
       this.error('anonymous error handler failed', e);
     }
-  };
+  }
 
   handleUnhandledRejection(reason, promise) {
     if (
@@ -346,7 +345,8 @@ class Rollbar {
       }
     }
     var context =
-      (reason && reason._rollbarContext) || (promise && promise._rollbarContext);
+      (reason && reason._rollbarContext) ||
+      (promise && promise._rollbarContext);
 
     var item;
     if (_.isError(reason)) {
@@ -369,7 +369,7 @@ class Rollbar {
     item._originalArgs = item._originalArgs || [];
     item._originalArgs.push(promise);
     this.client.log(item);
-  };
+  }
 
   wrap(f, context, _before) {
     try {
@@ -428,12 +428,12 @@ class Rollbar {
       // Return the original function if the wrap fails.
       return f;
     }
-  };
+  }
 
   captureEvent() {
     var event = _.createTelemetryEvent(arguments);
     return this.client.captureEvent(event.type, event.metadata, event.level);
-  };
+  }
 
   setSessionUser(user) {
     if (!this.tracing?.session) return;
@@ -453,7 +453,10 @@ class Rollbar {
     if (options.person) {
       this.setSessionUser(options.person);
     }
-    const code_version = options.client?.javascript?.code_version || options.codeVersion || options.code_version;
+    const code_version =
+      options.client?.javascript?.code_version ||
+      options.codeVersion ||
+      options.code_version;
     this.setSessionAttributes({
       'rollbar.codeVersion': code_version,
       'rollbar.notifier.name': 'rollbar-browser-js',
@@ -467,24 +470,24 @@ class Rollbar {
       ts = new Date();
     }
     return this.client.captureDomContentLoaded(ts);
-  };
+  }
 
   captureLoad(e, ts) {
     if (!ts) {
       ts = new Date();
     }
     return this.client.captureLoad(ts);
-  };
+  }
 
   loadFull() {
     logger.info(
       'Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.',
     );
-  };
+  }
 
   _createItem(args) {
     return _.createItem(args, logger, this);
-  };
+  }
 
   // Static version of instance methods support the legacy pattern of a
   // global `Rollbar` instance, where after calling `Rollbar.init()`,
@@ -498,7 +501,7 @@ class Rollbar {
       if (maybeCallback) {
         maybeCallback(new Error(message));
       }
-      return
+      return;
     }
     return _instance[method].apply(_instance, args);
   }
@@ -513,11 +516,13 @@ class Rollbar {
   static warning = (...args) => Rollbar.callInstance('warning', args);
   static error = (...args) => Rollbar.callInstance('error', args);
   static critical = (...args) => Rollbar.callInstance('critical', args);
-  static buildJsonPayload = (...args) => Rollbar.callInstance('buildJsonPayload', args);
-  static sendJsonPayload = (...args) => Rollbar.callInstance('sendJsonPayload', args);
+  static buildJsonPayload = (...args) =>
+    Rollbar.callInstance('buildJsonPayload', args);
+  static sendJsonPayload = (...args) =>
+    Rollbar.callInstance('sendJsonPayload', args);
   static wrap = (...args) => Rollbar.callInstance('wrap', args);
   static captureEvent = (...args) => Rollbar.callInstance('captureEvent', args);
-};
+}
 
 /* Internal */
 
@@ -551,8 +556,6 @@ function addPredicatesToQueue(queue) {
     .addPredicate(sharedPredicates.urlIsSafeListed(logger))
     .addPredicate(sharedPredicates.messageIsIgnored(logger));
 }
-
-
 
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {

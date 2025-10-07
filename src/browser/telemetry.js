@@ -353,7 +353,7 @@ class Instrumenter {
                     self.addOtelNetworkResponse(
                       xhr.__rollbar_event,
                       end_time_ms,
-                      code
+                      code,
                     );
                     xhr.__rollbar_event.level =
                       self.telemeter.levelFromStatus(code);
@@ -449,7 +449,11 @@ class Instrumenter {
                 metadata.request = args[0].body;
               }
             }
-            const telemetryEvent = self.captureNetwork(metadata, 'fetch', undefined);
+            const telemetryEvent = self.captureNetwork(
+              metadata,
+              'fetch',
+              undefined,
+            );
             if (self.trackHttpErrors()) {
               metadata.stack = new Error().stack;
             }
@@ -460,7 +464,11 @@ class Instrumenter {
               const end_time_ms = _.now();
               metadata.end_time_ms = end_time_ms;
               metadata.status_code = resp.status;
-              self.addOtelNetworkResponse(telemetryEvent, end_time_ms, resp.status);
+              self.addOtelNetworkResponse(
+                telemetryEvent,
+                end_time_ms,
+                resp.status,
+              );
 
               metadata.response_content_type = resp.headers.get('Content-Type');
               let headers = null;
@@ -513,11 +521,7 @@ class Instrumenter {
     }
   }
 
-  captureNetwork(
-    metadata,
-    subtype,
-    rollbarUUID,
-  ) {
+  captureNetwork(metadata, subtype, rollbarUUID) {
     if (
       metadata.request &&
       this.isJsonContentType(metadata.request_content_type)
@@ -535,10 +539,11 @@ class Instrumenter {
       : false;
   }
 
-
   addOtelNetworkResponse(event, endTimeMs, statusCode) {
     if (event.otelAttributes) {
-      event.otelAttributes['response.timeUnixNano'] = (endTimeMs * 1e6).toString();
+      event.otelAttributes['response.timeUnixNano'] = (
+        endTimeMs * 1e6
+      ).toString();
       event.otelAttributes.statusCode = statusCode;
     }
   }
@@ -637,21 +642,34 @@ class Instrumenter {
 
   deinstrumentDom() {
     this.removeListeners('dom');
-  };
+  }
 
   instrumentDom() {
     const self = this;
-    this.addListener('dom', this._window, ['click', 'dblclick', 'contextmenu'], (e) => this.handleEvent('click', e));
+    this.addListener(
+      'dom',
+      this._window,
+      ['click', 'dblclick', 'contextmenu'],
+      (e) => this.handleEvent('click', e),
+    );
     this.addListener(
       'dom',
       this._window,
       ['dragstart', 'dragend', 'dragenter', 'dragleave', 'drop'],
-      (e) => this.handleEvent('dragdrop', e)
+      (e) => this.handleEvent('dragdrop', e),
     );
-    this.addListener('dom', this._window, ['blur', 'focus'], (e) => this.handleEvent('focus', e));
-    this.addListener('dom', this._window, ['submit', 'invalid'], (e) => this.handleEvent('form', e));
-    this.addListener('dom', this._window, ['input', 'change'], (e) => this.handleEvent('input', e));
-    this.addListener('dom', this._window, ['resize'], (e) => this.handleEvent('resize', e));
+    this.addListener('dom', this._window, ['blur', 'focus'], (e) =>
+      this.handleEvent('focus', e),
+    );
+    this.addListener('dom', this._window, ['submit', 'invalid'], (e) =>
+      this.handleEvent('form', e),
+    );
+    this.addListener('dom', this._window, ['input', 'change'], (e) =>
+      this.handleEvent('input', e),
+    );
+    this.addListener('dom', this._window, ['resize'], (e) =>
+      this.handleEvent('resize', e),
+    );
   }
 
   handleEvent(name, evt) {
@@ -678,25 +696,29 @@ class Instrumenter {
       isSynthetic: !evt.isTrusted,
       element: domUtil.elementString(evt.target),
       timestamp: _.now(),
-    })
+    });
   }
 
   handleFocus(evt) {
     const type = evt.type;
-    const element = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
+    const element = evt.target?.window
+      ? 'window'
+      : domUtil.elementString(evt.target);
 
     this.telemeter.captureFocus({
       type: type,
       isSynthetic: !evt.isTrusted,
       element,
       timestamp: _.now(),
-    })
+    });
   }
 
   handleForm(evt) {
     // TODO: implement form event handling
     const type = evt.type;
-    const elementString = evt.target?.window ? 'window' : domUtil.elementString(evt.target);
+    const elementString = evt.target?.window
+      ? 'window'
+      : domUtil.elementString(evt.target);
     console.log('handleForm', type, elementString, evt);
   }
 
@@ -710,7 +732,7 @@ class Instrumenter {
       height: window.innerHeight,
       textZoomRatio: textZoomRatio,
       timestamp: _.now(),
-    })
+    });
   }
 
   handleDrag(evt) {
@@ -745,10 +767,10 @@ class Instrumenter {
     });
   }
 
-   /*
-  * Uses the `input` event for everything except radio and checkbox inputs.
-  * For those, it uses the `change` event.
-  */
+  /*
+   * Uses the `input` event for everything except radio and checkbox inputs.
+   * For those, it uses the `change` event.
+   */
   handleInput(evt) {
     const type = evt.type;
     const tagName = evt.target?.tagName.toLowerCase();
@@ -780,7 +802,7 @@ class Instrumenter {
       element: domUtil.elementString(evt.target),
       value,
       timestamp: _.now(),
-    })
+    });
   }
 
   deinstrumentNavigation() {
@@ -823,7 +845,7 @@ class Instrumenter {
       },
       this.replacements,
       'navigation',
-    )
+    );
 
     replace(
       this._window.history,
@@ -860,11 +882,11 @@ class Instrumenter {
       from = parsedFrom.path + (parsedFrom.hash || '');
     }
     this.telemeter.captureNavigation(from, to, null, _.now());
-  };
+  }
 
   deinstrumentConnectivity = function () {
     this.removeListeners('connectivity');
-  }
+  };
 
   instrumentConnectivity() {
     const self = this;
@@ -883,7 +905,7 @@ class Instrumenter {
       type,
       isSynthetic: !evt.isTrusted,
       timestamp: _.now(),
-    })
+    });
   }
 
   handleCspEvent(cspEvent) {
@@ -942,12 +964,7 @@ class Instrumenter {
     );
   }
 
-  addListener(
-    section,
-    obj,
-    types,
-    handler,
-  ) {
+  addListener(section, obj, types, handler) {
     if (obj.addEventListener) {
       for (const t of types) {
         const options = { capture: true, passive: true };
@@ -966,7 +983,7 @@ class Instrumenter {
       r();
     }
   }
-};
+}
 
 function _isUrlObject(input) {
   return typeof URL !== 'undefined' && input instanceof URL;

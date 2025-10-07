@@ -32,7 +32,7 @@ export default class Recorder {
     this.options = options;
 
     // Tests inject a custom rrweb record function or mock.
-    this._recordFn = options.recordFn ||rrwebRecordFn;
+    this._recordFn = options.recordFn || rrwebRecordFn;
   }
 
   get isRecording() {

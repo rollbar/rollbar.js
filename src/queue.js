@@ -102,14 +102,10 @@ class Queue {
     }
 
     if (this.replayManager && data.body) {
-      item.replayId = this.replayManager.capture(
-        null,
-        data.uuid,
-        {
-          type: 'occurrence',
-          level: item.level,
-        }
-      );
+      item.replayId = this.replayManager.capture(null, data.uuid, {
+        type: 'occurrence',
+        level: item.level,
+      });
 
       if (item.replayId) {
         _.addItemAttributes(item.data, [

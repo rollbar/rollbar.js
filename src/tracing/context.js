@@ -7,7 +7,7 @@ export class Context {
     return this._currentContext.get(key);
   }
 
-  setValue (key, value) {
+  setValue(key, value) {
     const context = new Context(this._currentContext);
     context._currentContext.set(key, value);
     return context;
@@ -21,4 +21,3 @@ export class Context {
 }
 
 export const ROOT_CONTEXT = new Context();
-
