@@ -130,6 +130,7 @@ describe('ReplayManager buffer-index integration', function () {
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
+        'rollbar.replay.url.full': 'http://localhost:8000/?********',
       },
     ]);
 

@@ -1,3 +1,4 @@
+import * as _ from '../../utility.js';
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 import Recorder from './recorder.js';
@@ -75,6 +76,7 @@ export default class ReplayManager {
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
+        'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
       });
     } catch (error) {
       logger.error('Error exporting recording span:', error);

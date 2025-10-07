@@ -172,6 +172,21 @@ var LEVELS = {
   critical: 4,
 };
 
+function sanitizeHref(url) {
+  try {
+    const urlObject = new URL(url);
+    if (urlObject.password) {
+      urlObject.password = redact();
+    }
+    if (urlObject.search) {
+      urlObject.search = redact();
+    }
+    return urlObject.toString();
+  } catch (_) {
+    return url; // Return original URL if parsing fails
+  }
+}
+
 function sanitizeUrl(url) {
   var baseUrlParts = parseUri(url);
   if (!baseUrlParts) {
@@ -798,6 +813,7 @@ export {
   merge,
   now,
   redact,
+  sanitizeHref,
   sanitizeUrl,
   set,
   stringify,
