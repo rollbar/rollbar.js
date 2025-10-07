@@ -237,6 +237,16 @@ describe('ReplayManager', function () {
         const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
+
+      it('should return null on no tag present', function () {
+        const context = {
+          type: 'direct',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(recorderConfig).shouldCaptureForTriggerContext(context);
+        expect(resp).to.be.null;
+      });
     });
 
     describe('direct', function () {

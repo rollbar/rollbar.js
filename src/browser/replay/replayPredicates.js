@@ -100,9 +100,12 @@ export default class ReplayPredicates {
    * @return {boolean} - True if the trigger's tags match any of the context item's tags, false otherwise.
    */
   isTagMatching(trigger, context) {
-    if (!trigger.tags || context.tags?.some(t => trigger.tags.includes(t))) {
+    if (!trigger.tags) return true;
+
+    if (context.tags?.some(t => trigger.tags.includes(t))) {
       return true;
     }
+
     return false;
   }
 
