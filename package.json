@@ -114,6 +114,8 @@
     "test:wtr": "web-test-runner",
     "test:wtr:watch": "web-test-runner --watch",
     "lint": "./node_modules/.bin/eslint .",
+    "format": "prettier --write \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
     "pack": "node scripts/pack.js",
     "validate": "npm run validate:es5 && npm run validate:examples",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
