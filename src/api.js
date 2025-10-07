@@ -58,11 +58,20 @@ function Api(options, transport, urllib, truncation) {
  * @returns {Promise} A promise that resolves with the response or rejects with an error
  * @private
  */
-Api.prototype._postPromise = function({ accessToken, options, payload, headers }) {
+Api.prototype._postPromise = function ({
+  accessToken,
+  options,
+  payload,
+  headers,
+}) {
   const self = this;
   return new Promise((resolve, reject) => {
-    self.transport.post({ accessToken, options, payload, headers, callback: (err, resp) =>
-      err ? reject(err) : resolve(resp)
+    self.transport.post({
+      accessToken,
+      options,
+      payload,
+      headers,
+      callback: (err, resp) => (err ? reject(err) : resolve(resp)),
     });
   });
 };
@@ -73,16 +82,18 @@ Api.prototype._postPromise = function({ accessToken, options, payload, headers }
  * @param callback
  */
 Api.prototype.postItem = function (data, callback) {
-  const options = helpers.transportOptions(
-    this.transportOptions,
-    'POST',
-  );
+  const options = helpers.transportOptions(this.transportOptions, 'POST');
   const payload = helpers.buildPayload(data);
   const self = this;
 
   // ensure the network request is scheduled after the current tick.
   setTimeout(function () {
-    self.transport.post({accessToken: self.accessToken, options, payload, callback});
+    self.transport.post({
+      accessToken: self.accessToken,
+      options,
+      payload,
+      callback,
+    });
   }, 0);
 };
 
@@ -93,16 +104,13 @@ Api.prototype.postItem = function (data, callback) {
  * @returns {Promise<Object>} A promise that resolves with the API response
  */
 Api.prototype.postSpans = async function (payload, headers = {}) {
-  const options = helpers.transportOptions(
-    this.OTLPTransportOptions,
-    'POST',
-  );
+  const options = helpers.transportOptions(this.OTLPTransportOptions, 'POST');
 
   return await this._postPromise({
     accessToken: this.accessToken,
     options,
     payload,
-    headers
+    headers,
   });
 };
 
@@ -165,7 +173,7 @@ function _getTransport(options, url) {
 }
 
 function _getOTLPTransport(options, url) {
-  options = {...options, endpoint: options.tracing?.endpoint};
+  options = { ...options, endpoint: options.tracing?.endpoint };
   return helpers.getTransportFromOptions(options, OTLPDefaultOptions, url);
 }
 

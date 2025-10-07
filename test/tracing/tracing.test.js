@@ -126,10 +126,9 @@ describe('Tracing()', function () {
 
     expect(t.sessionId).to.match(/^[a-f0-9]{32}$/);
 
-    const span = t.startSpan(
-    'test.span',
-    { resource: { attributes: { 'rollbar.environment': 'new-env' }}},
-    );
+    const span = t.startSpan('test.span', {
+      resource: { attributes: { 'rollbar.environment': 'new-env' } },
+    });
 
     expect(span.span.name).to.equal('test.span');
     expect(span.span.spanContext.traceId).to.match(/^[a-f0-9]{32}$/);
@@ -147,7 +146,7 @@ describe('Tracing()', function () {
     const t = new Tracing(window, null, options);
     t.initSession();
 
-    t.session.setAttributes({codeVersion: 'abc123'});
+    t.session.setAttributes({ codeVersion: 'abc123' });
     t.session.setAttributes({
       'user.id': '12345',
       'user.email': 'aaa@bb.com',
@@ -194,10 +193,7 @@ describe('Tracing()', function () {
           .stub()
           .callsFake(({ accessToken, options, payload, callback }) => {
             setTimeout(() => {
-              callback(
-                null,
-                { err: 0, result: { id: '12345' } },
-              );
+              callback(null, { err: 0, result: { id: '12345' } });
             }, 1);
           }),
         postJsonPayload: sinon.stub(),
@@ -224,17 +220,19 @@ describe('Tracing()', function () {
     it('should post a trace payload', function (done) {
       const span = tracing.startSpan('test.span');
       span.end();
-      tracing.exporter.post(
-        tracing.exporter.toPayload(),
-        { 'X-Rollbar-Session-Id': tracing.sessionId }
-      );
+      tracing.exporter.post(tracing.exporter.toPayload(), {
+        'X-Rollbar-Session-Id': tracing.sessionId,
+      });
 
       setTimeout(() => {
         expect(transport.post.callCount).to.equal(1);
         const call = transport.post.getCall(0);
         const { payload, headers } = call.args[0];
         expect(payload).to.have.property('resourceSpans');
-        expect(headers).to.have.property('X-Rollbar-Session-Id', tracing.sessionId);
+        expect(headers).to.have.property(
+          'X-Rollbar-Session-Id',
+          tracing.sessionId,
+        );
 
         done();
       }, 10);

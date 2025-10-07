@@ -31,7 +31,7 @@ describe('Recorder', function () {
     });
 
     it('uses default when recordFn is not provided', function () {
-      const recorder = new Recorder({})
+      const recorder = new Recorder({});
 
       expect(recorder._recordFn).to.equal(rrwebRecordFn);
     });

@@ -70,20 +70,20 @@ describe('instrumentNetwork', function () {
 describe('instrumentDom', function () {
   const wait_ms = 1; //ensure events are sent before assertions
   let tracing, telemeter, instrumenter, rollbar, scrubFields;
-  const wait = t => new Promise(resolve => setTimeout(resolve, t));
+  const wait = (t) => new Promise((resolve) => setTimeout(resolve, t));
 
   beforeEach(async function () {
     await loadHtml('test/fixtures/html/dom-events.html');
     scrubFields = ['foo', 'bar'];
-    rollbar = new Rollbar({})
-    tracing = new Tracing(window, null, {})
+    rollbar = new Rollbar({});
+    tracing = new Tracing(window, null, {});
     tracing.initSession();
     telemeter = new Telemeter({}, tracing);
     instrumenter = new Instrumenter(
-      {scrubFields, autoInstrument: {log: false}},
+      { scrubFields, autoInstrument: { log: false } },
       telemeter,
       rollbar,
-      window
+      window,
     );
     instrumenter.instrument();
   });
@@ -102,12 +102,16 @@ describe('instrumentDom', function () {
     expect(event.type).to.eql('dom');
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('select');
-    expect(event.body.element).to.match(/select#fruit-select\[name=\"selectedFruit\"\]/);
+    expect(event.body.element).to.match(
+      /select#fruit-select\[name=\"selectedFruit\"\]/,
+    );
     expect(event.body.value).to.eql('orange');
 
     expect(event.otelAttributes.type).to.eql('select');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
-    expect(event.otelAttributes.element).to.match(/select#fruit-select\[name=\"selectedFruit\"\]/);
+    expect(event.otelAttributes.element).to.match(
+      /select#fruit-select\[name=\"selectedFruit\"\]/,
+    );
     expect(event.otelAttributes.value).to.eql('orange');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
@@ -120,9 +124,9 @@ describe('instrumentDom', function () {
       pointerId: 1,
       bubbles: true,
       cancelable: true,
-      pointerType: "touch",
+      pointerType: 'touch',
       isPrimary: true,
-    }
+    };
     let domEvent = new PointerEvent('click', pointerOptions);
     //elem.value = 'on';
     elem.dispatchEvent(domEvent);
@@ -134,12 +138,16 @@ describe('instrumentDom', function () {
     expect(event.type).to.eql('dom');
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('checkbox');
-    expect(event.body.element).to.match(/input#remember-me-checkbox\[type=\"checkbox\"\]/);
+    expect(event.body.element).to.match(
+      /input#remember-me-checkbox\[type=\"checkbox\"\]/,
+    );
     expect(event.body.value).to.eql(true);
 
     expect(event.otelAttributes.type).to.eql('checkbox');
     expect(event.otelAttributes.isSynthetic).to.eql(false);
-    expect(event.otelAttributes.element).to.match(/input#remember-me-checkbox\[type=\"checkbox\"\]/);
+    expect(event.otelAttributes.element).to.match(
+      /input#remember-me-checkbox\[type=\"checkbox\"\]/,
+    );
     expect(event.otelAttributes.value).to.eql(true);
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
@@ -229,13 +237,15 @@ describe('instrumentDom', function () {
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', 'some data');
 
-    const dragEvent = new DragEvent('dragstart', { dataTransfer: dataTransfer });
+    const dragEvent = new DragEvent('dragstart', {
+      dataTransfer: dataTransfer,
+    });
     draggable.dispatchEvent(dragEvent);
 
     const dragOverEvent = new DragEvent('dragover', {
       dataTransfer: dataTransfer,
       bubbles: true,
-      cancelable: true
+      cancelable: true,
     });
     dragOverEvent.preventDefault = () => {};
     dropzone.dispatchEvent(dragOverEvent);
@@ -243,7 +253,7 @@ describe('instrumentDom', function () {
     const dropEvent = new DragEvent('drop', {
       dataTransfer: dataTransfer,
       bubbles: true,
-      cancelable: true
+      cancelable: true,
     });
     dropEvent.preventDefault = () => {};
     dropzone.dispatchEvent(dropEvent);
@@ -283,9 +293,9 @@ describe('instrumentDom', function () {
       pointerId: 1,
       bubbles: true,
       cancelable: true,
-      pointerType: "touch",
+      pointerType: 'touch',
       isPrimary: true,
-    }
+    };
     let domEvent = new PointerEvent('click', pointerOptions);
     elem.dispatchEvent(domEvent);
 
@@ -340,7 +350,9 @@ describe('instrumentDom', function () {
 
     expect(event.otelAttributes.type).to.eql('text');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
-    expect(event.otelAttributes.element).to.match(/input#text-input\[type=\"text\"\]/);
+    expect(event.otelAttributes.element).to.match(
+      /input#text-input\[type=\"text\"\]/,
+    );
     expect(event.otelAttributes.value).to.eql('abc');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');

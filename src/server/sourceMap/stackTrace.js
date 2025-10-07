@@ -191,8 +191,8 @@ export function mapSourcePosition(position, diagnostic) {
   }
 
   return position;
-};
+}
 
 export function sourceContent(source) {
   return sourcesContentCache[source];
-};
+}

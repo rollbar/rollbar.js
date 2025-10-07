@@ -17,9 +17,11 @@ const options = {
   replay: {
     enabled: true,
     emitEveryNms: 100,
-    triggers: [{
+    triggers: [
+      {
         type: 'occurrence',
-    }],
+      },
+    ],
     recordFn: mockRecordFn,
   },
 };

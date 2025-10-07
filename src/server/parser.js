@@ -348,7 +348,7 @@ export function parseException(exc, options, item, callback) {
       return callback(null, ret);
     }
   });
-};
+}
 
 export function parseStack(stack, options, item, callback) {
   var lines,
@@ -391,4 +391,4 @@ export function parseStack(stack, options, item, callback) {
       );
     },
   );
-};
+}

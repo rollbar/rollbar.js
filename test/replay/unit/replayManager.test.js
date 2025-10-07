@@ -236,7 +236,8 @@ describe('ReplayManager', function () {
       expect(resp).to.equal(replayId);
       expect(id.gen.calledWith(8)).to.be.false;
       expect(processStub.calledWith(replayId, uuid)).to.be.true;
-      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be.true;
+      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be
+        .true;
     });
 
     it('should generate a replayId and return immediately', function () {
@@ -255,7 +256,8 @@ describe('ReplayManager', function () {
       expect(replayId).to.equal('1234567890abcdef');
       expect(id.gen.calledWith(8)).to.be.true;
       expect(processStub.calledWith('1234567890abcdef', uuid)).to.be.true;
-      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be.true;
+      expect(predicatesStub.calledWith({ ...triggerContext, replayId })).to.be
+        .true;
     });
 
     it('should return without replayId when recorder is not ready', function () {
@@ -282,7 +284,9 @@ describe('ReplayManager', function () {
       await replayManager.send('testReplayId');
 
       expect(mockTracing.exporter.post.called).to.be.true;
-      expect(mockTracing.exporter.post.firstCall.args[0]).to.deep.equal(mockPayload);
+      expect(mockTracing.exporter.post.firstCall.args[0]).to.deep.equal(
+        mockPayload,
+      );
       expect(mockTracing.exporter.post.firstCall.args[1]).to.deep.equal({
         'X-Rollbar-Replay-Id': 'testReplayId',
       });
@@ -479,9 +483,13 @@ describe('ReplayManager', function () {
     });
 
     it('returns false when resp.err is non-zero', function () {
-      const result = ReplayManager._canSendReplay(null, { err: 1 }, {
-        'Rollbar-Replay-Enabled': 'true',
-      });
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 1 },
+        {
+          'Rollbar-Replay-Enabled': 'true',
+        },
+      );
       expect(result).to.be.false;
     });
 
@@ -493,18 +501,26 @@ describe('ReplayManager', function () {
     });
 
     it('returns false when Rollbar-Replay-Enabled is not "true"', function () {
-      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
-        'Rollbar-Replay-Enabled': 'false',
-        'Rollbar-Replay-RateLimit-Remaining': '10',
-      });
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 0 },
+        {
+          'Rollbar-Replay-Enabled': 'false',
+          'Rollbar-Replay-RateLimit-Remaining': '10',
+        },
+      );
       expect(result).to.be.false;
     });
 
     it('returns false when Rollbar-Replay-RateLimit-Remaining is "0"', function () {
-      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
-        'Rollbar-Replay-Enabled': 'true',
-        'Rollbar-Replay-RateLimit-Remaining': '0',
-      });
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 0 },
+        {
+          'Rollbar-Replay-Enabled': 'true',
+          'Rollbar-Replay-RateLimit-Remaining': '0',
+        },
+      );
       expect(result).to.be.false;
     });
 
@@ -514,18 +530,26 @@ describe('ReplayManager', function () {
     });
 
     it('handles case-insensitive headers', function () {
-      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
-        'rollbar-replay-enabled': 'true',
-        'ROLLBAR-REPLAY-RATELIMIT-REMAINING': '10',
-      });
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 0 },
+        {
+          'rollbar-replay-enabled': 'true',
+          'ROLLBAR-REPLAY-RATELIMIT-REMAINING': '10',
+        },
+      );
       expect(result).to.be.true;
     });
 
     it('handles whitespace in header values', function () {
-      const result = ReplayManager._canSendReplay(null, { err: 0 }, {
-        'Rollbar-Replay-Enabled': ' true ',
-        'Rollbar-Replay-RateLimit-Remaining': ' 10 ',
-      });
+      const result = ReplayManager._canSendReplay(
+        null,
+        { err: 0 },
+        {
+          'Rollbar-Replay-Enabled': ' true ',
+          'Rollbar-Replay-RateLimit-Remaining': ' 10 ',
+        },
+      );
       expect(result).to.be.true;
     });
   });

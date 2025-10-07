@@ -15,15 +15,15 @@ const logger = {
   debug: (...args) => log('debug', args),
   log: (...args) => log('info', args),
   init: ({ logLevel }) => {
-    log = function(level, args) {
+    log = function (level, args) {
       if (levels[level] < levels[logLevel]) return;
 
       args.unshift('Rollbar:');
 
       /* eslint-disable no-console */
       console[level].apply(console, args);
-    }
-  }
+    };
+  },
 };
 
 export default logger;

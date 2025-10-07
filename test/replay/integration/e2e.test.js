@@ -28,9 +28,11 @@ const options = {
     enabled: true,
     autoStart: true,
     emitEveryNms: 50,
-    triggers: [{
+    triggers: [
+      {
         type: 'occurrence',
-    }],
+      },
+    ],
     recordFn: mockRecordFn,
   },
   payload: {

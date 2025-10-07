@@ -21,9 +21,11 @@ describe('ReplayManager buffer-index integration', function () {
       enabled: true,
       maxSeconds: 10,
       postDuration: 5,
-      triggers: [{
+      triggers: [
+        {
           type: 'occurrence',
-      }],
+        },
+      ],
       recordFn: mockRecordFn,
     };
 
@@ -38,9 +40,7 @@ describe('ReplayManager buffer-index integration', function () {
         toPayload: sinon
           .stub()
           .returns({ resourceSpans: [{ spanData: 'test' }] }),
-        post: sinon
-          .stub()
-          .resolves(),
+        post: sinon.stub().resolves(),
       },
       session: {
         attributes: {},

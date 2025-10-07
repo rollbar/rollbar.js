@@ -47,17 +47,13 @@ describe('captureEvent', function () {
 
 describe('capture events', function () {
   beforeEach(function () {
-    const tracing = new Tracing(
-      window,
-      null,
-      {
-        resource: {
-          'service.name': 'Test',
-        },
-      }
-    );
+    const tracing = new Tracing(window, null, {
+      resource: {
+        'service.name': 'Test',
+      },
+    });
     tracing.initSession();
-    this.t = new Telemeter({includeItemsInTelemetry: true}, tracing);
+    this.t = new Telemeter({ includeItemsInTelemetry: true }, tracing);
   });
 
   it('should return a valid log event', function (done) {
@@ -68,14 +64,12 @@ describe('capture events', function () {
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
-    expect(event.otelAttributes).to.eql(
-      { message: 'foo', level: 'info' }
-    );
+    expect(event.otelAttributes).to.eql({ message: 'foo', level: 'info' });
 
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.equal('rollbar-log-event');
-    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
+    expect(otelEvent.time).to.eql([12, 345678000]);
     expect(otelEvent.attributes).to.eql({ message: 'foo', level: 'info' });
     done();
   });
@@ -90,39 +84,56 @@ describe('capture events', function () {
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
-    expect(event.otelAttributes).to.eql(
-      { message: 'foo', level: 'info', type: 'error', uuid: uuid }
-    );
+    expect(event.otelAttributes).to.eql({
+      message: 'foo',
+      level: 'info',
+      type: 'error',
+      uuid: uuid,
+    });
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.eql('rollbar-occurrence-event');
-    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
-    expect(otelEvent.attributes).to.eql(
-      { type: 'error', message: 'foo', level: 'info', uuid: uuid }
-    );
+    expect(otelEvent.time).to.eql([12, 345678000]);
+    expect(otelEvent.attributes).to.eql({
+      type: 'error',
+      message: 'foo',
+      level: 'info',
+      uuid: uuid,
+    });
     done();
   });
 
   it('should return a valid message event', function (done) {
     const timestamp = 12345.678;
     const uuid = '12345-67890';
-    const item = { message: 'foo', level: 'info', uuid: uuid, timestamp: timestamp };
+    const item = {
+      message: 'foo',
+      level: 'info',
+      uuid: uuid,
+      timestamp: timestamp,
+    };
     const event = this.t._captureRollbarItem(item);
     expect(event.type).to.eql('log');
     expect(event.level).to.equal('info');
     expect(event.body.message).to.equal('foo');
     expect(event.timestamp_ms).to.equal(timestamp);
 
-    expect(event.otelAttributes).to.eql(
-      { message: 'foo', level: 'info', type: 'message', uuid: uuid }
-    );
+    expect(event.otelAttributes).to.eql({
+      message: 'foo',
+      level: 'info',
+      type: 'message',
+      uuid: uuid,
+    });
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.eql('rollbar-occurrence-event');
-    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
-    expect(otelEvent.attributes).to.eql(
-      { type: 'message', message: 'foo', level: 'info', uuid: uuid }
-    );
+    expect(otelEvent.time).to.eql([12, 345678000]);
+    expect(otelEvent.attributes).to.eql({
+      type: 'message',
+      message: 'foo',
+      level: 'info',
+      uuid: uuid,
+    });
     done();
   });
 
@@ -140,8 +151,11 @@ describe('capture events', function () {
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.equal('rollbar-navigation-event');
-    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
-    expect(otelEvent.attributes).to.eql({ 'previous.url.full': 'foo', 'url.full': 'bar' });
+    expect(otelEvent.time).to.eql([12, 345678000]);
+    expect(otelEvent.attributes).to.eql({
+      'previous.url.full': 'foo',
+      'url.full': 'bar',
+    });
     done();
   });
 
@@ -167,33 +181,29 @@ describe('capture events', function () {
     expect(event.body.status_code).to.equal(metadata.status_code);
     expect(event.timestamp_ms).to.equal(timestamp);
 
-    expect(event.otelAttributes).to.eql(
-      {
-        type: subtype,
-        method: metadata.method,
-        statusCode: metadata.status_code,
-        url: metadata.url,
-        'request.headers': JSON.stringify(metadata.request_headers),
-        'response.headers': JSON.stringify(metadata.response.headers),
-        'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
-      }
-    );
+    expect(event.otelAttributes).to.eql({
+      type: subtype,
+      method: metadata.method,
+      statusCode: metadata.status_code,
+      url: metadata.url,
+      'request.headers': JSON.stringify(metadata.request_headers),
+      'response.headers': JSON.stringify(metadata.response.headers),
+      'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
+    });
 
     expect(this.t.telemetrySpan).to.be.an('object');
     const otelEvent = this.t.telemetrySpan.span.events[0];
     expect(otelEvent.name).to.eql('rollbar-network-event');
-    expect(otelEvent.time).to.eql([ 12, 345678000 ]);
-    expect(otelEvent.attributes).to.eql(
-      {
-        type: subtype,
-        method: metadata.method,
-        statusCode: metadata.status_code,
-        url: metadata.url,
-        'request.headers': JSON.stringify(metadata.request_headers),
-        'response.headers': JSON.stringify(metadata.response.headers),
-        'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
-      }
-    );
+    expect(otelEvent.time).to.eql([12, 345678000]);
+    expect(otelEvent.attributes).to.eql({
+      type: subtype,
+      method: metadata.method,
+      statusCode: metadata.status_code,
+      url: metadata.url,
+      'request.headers': JSON.stringify(metadata.request_headers),
+      'response.headers': JSON.stringify(metadata.response.headers),
+      'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
+    });
     done();
   });
 });

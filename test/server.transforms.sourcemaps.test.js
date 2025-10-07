@@ -47,7 +47,9 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   it('should map the stack with context when original source is present', async function () {
-    await throwInScriptFile('./fixtures/sourcemaps/node-typescript/dist/index.cjs');
+    await throwInScriptFile(
+      './fixtures/sourcemaps/node-typescript/dist/index.cjs',
+    );
 
     expect(addItemStub.called).to.be.true;
 
