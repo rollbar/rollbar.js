@@ -166,14 +166,12 @@ function _createXMLHTTPObject() {
   var i;
   var numFactories = factories.length;
   for (i = 0; i < numFactories; i++) {
-    /* eslint-disable no-empty */
     try {
       xmlhttp = factories[i]();
       break;
     } catch (e) {
       // pass
     }
-    /* eslint-enable no-empty */
   }
   return xmlhttp;
 }
