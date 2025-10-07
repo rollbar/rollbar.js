@@ -102,6 +102,7 @@ describe('ReplayManager API Integration', function () {
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
+        'rollbar.replay.url.full': 'http://localhost:8000/?********',
       }),
     ).to.be.true;
     expect(tracing.exporter.toPayload.calledOnce).to.be.true;
