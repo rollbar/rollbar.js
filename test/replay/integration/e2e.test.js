@@ -176,7 +176,7 @@ describe('Session Replay E2E', function () {
           expect(span_r).to.have.property('events');
           expect(span_r.events).to.be.an('array');
           expect(span_r).to.have.property('attributes').that.is.an('array');
-          expect(span_r.attributes).to.have.lengthOf(13);
+          expect(span_r.attributes).to.have.lengthOf(14);
 
           expect(span_r.attributes).to.deep.include({
             key: 'rollbar.replay.id',

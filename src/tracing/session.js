@@ -84,6 +84,7 @@ export class Session {
       'browser.language': navigator.language,
       'browser.mobile': navigator.userAgentData?.mobile,
       'browser.platform': navigator.userAgentData?.platform,
+      'client.address': '$remote_ip', // updated at the API
       'user_agent.original': navigator.userAgent,
       ...attrs,
     });
