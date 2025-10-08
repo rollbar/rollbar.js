@@ -58,6 +58,27 @@ describe('options', function () {
     expect(session.attributes['user.email']).to.equal('user@test.com');
     expect(session.attributes['rollbar.codeVersion']).to.equal('abc123');
   });
+
+  it('should set session attributes from payload key', function () {
+    const rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: false,
+      payload: {
+        person: {
+          id: '12345',
+          name: 'Test User',
+          email: 'user@test.com',
+        },
+        codeVersion: 'abc123',
+      },
+    });
+    const session = rollbar.tracing.session;
+    expect(session).to.exist;
+    expect(session.attributes['user.id']).to.equal('12345');
+    expect(session.attributes['user.name']).to.equal('Test User');
+    expect(session.attributes['user.email']).to.equal('user@test.com');
+    expect(session.attributes['rollbar.codeVersion']).to.equal('abc123');
+  });
 });
 
 describe('options.captureUncaught', function () {

@@ -450,13 +450,17 @@ class Rollbar {
   }
 
   setSessionAttributesFromOptions(options) {
-    if (options.person) {
-      this.setSessionUser(options.person);
+    const person = options.person || options.payload?.person;
+    if (person) {
+      this.setSessionUser(person);
     }
     const code_version =
       options.client?.javascript?.code_version ||
       options.codeVersion ||
-      options.code_version;
+      options.code_version ||
+      options.payload?.client?.javascript?.code_version ||
+      options.payload?.code_version ||
+      options.payload?.codeVersion;
     this.setSessionAttributes({
       'rollbar.codeVersion': code_version,
       'rollbar.notifier.name': 'rollbar-browser-js',
