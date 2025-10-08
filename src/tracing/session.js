@@ -85,6 +85,7 @@ export class Session {
       'browser.mobile': navigator.userAgentData?.mobile,
       'browser.platform': navigator.userAgentData?.platform,
       'client.address': '$remote_ip', // updated at the API
+      'rollbar.notifier.framework': 'browser-js',
       'user_agent.original': navigator.userAgent,
       ...attrs,
     });
