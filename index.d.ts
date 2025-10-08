@@ -107,7 +107,7 @@ declare namespace Rollbar {
     ) => void;
     overwriteScrubFields?: boolean;
     payload?: Payload;
-    recorder?: RecorderOptions;
+    replay?: ReplayOptions;
     reportLevel?: Level;
     retryInterval?: number | null;
     rewriteFilenamePatterns?: string[];
@@ -232,7 +232,7 @@ declare namespace Rollbar {
     recorder?: RecorderType;
   }
 
-  export interface RecorderOptions {
+  export interface ReplayOptions {
     enabled?: boolean;
     autoStart?: boolean;
     maxSeconds?: number;
