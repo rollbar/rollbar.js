@@ -252,6 +252,20 @@ var LEVELS = {
   error: 3,
   critical: 4
 };
+function sanitizeHref(url) {
+  try {
+    var urlObject = new URL(url);
+    if (urlObject.password) {
+      urlObject.password = redact();
+    }
+    if (urlObject.search) {
+      urlObject.search = redact();
+    }
+    return urlObject.toString();
+  } catch (_) {
+    return url; // Return original URL if parsing fails
+  }
+}
 function sanitizeUrl(url) {
   var baseUrlParts = parseUri(url);
   if (!baseUrlParts) {
@@ -629,15 +643,6 @@ function addItemAttributes(itemData, attributes) {
     _iterator.f();
   }
 }
-function getItemAttribute(itemData, key) {
-  var attributes = itemData.attributes || [];
-  for (var i = 0; i < attributes.length; ++i) {
-    if (attributes[i].key === key) {
-      return attributes[i].value;
-    }
-  }
-  return undefined;
-}
 
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
@@ -923,9 +928,6 @@ function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMi
 /* harmony default export */ const rateLimiter = (RateLimiter);
 ;// ./src/queue.js
 function queue_typeof(o) { "@babel/helpers - typeof"; return queue_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, queue_typeof(o); }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == queue_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(queue_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
@@ -1046,23 +1048,33 @@ var Queue = /*#__PURE__*/function () {
         return;
       }
       if (this.replayManager && data.body) {
-        var replayId = getItemAttribute(data, 'replay_id');
-        if (replayId) {
-          item.replayId = this.replayManager.add(replayId, data.uuid);
+        item.replayId = this.replayManager.capture(null, data.uuid, {
+          type: 'occurrence',
+          level: item.level
+        });
+        if (item.replayId) {
+          addItemAttributes(item.data, [{
+            key: 'replay_id',
+            value: item.replayId
+          }]);
         }
       }
       this.pendingRequests.push(data);
       try {
         this._makeApiRequest(data, function (err, resp, headers) {
           _this._dequeuePendingRequest(data);
-          if (!err && resp && item.replayId) {
-            _this._handleReplayResponse(item.replayId, resp, headers);
+          if (item.replayId) {
+            _this.replayManager.sendOrDiscardReplay(item.replayId, err, resp, headers);
           }
           callback(err, resp);
         });
-      } catch (e) {
+      } catch (err) {
         this._dequeuePendingRequest(data);
-        callback(e);
+        if (item.replayId) {
+          var _this$replayManager;
+          (_this$replayManager = this.replayManager) === null || _this$replayManager === void 0 || _this$replayManager.discard(item.replayId);
+        }
+        callback(err);
       }
     }
 
@@ -1249,78 +1261,6 @@ var Queue = /*#__PURE__*/function () {
       }
       return false;
     }
-
-    /**
-     * Handles the API response for an item with a replay ID.
-     * Based on the success or failure status of the response,
-     * it either sends or discards the associated session replay.
-     *
-     * @param {string} replayId - The ID of the replay to handle
-     * @param {Object} response - The API response
-     * @param {Object} headers - The response headers
-     * @returns {Promise<boolean>} A promise that resolves to true if replay was sent successfully,
-     *                             false if replay was discarded or an error occurred
-     */
-  }, {
-    key: "_handleReplayResponse",
-    value: (function () {
-      var _handleReplayResponse2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(replayId, response, headers) {
-        return _regeneratorRuntime().wrap(function _callee$(_context) {
-          while (1) switch (_context.prev = _context.next) {
-            case 0:
-              if (this.replayManager) {
-                _context.next = 3;
-                break;
-              }
-              console.warn('Queue._handleReplayResponse: ReplayManager not available');
-              return _context.abrupt("return", false);
-            case 3:
-              if (replayId) {
-                _context.next = 6;
-                break;
-              }
-              console.warn('Queue._handleReplayResponse: No replayId provided');
-              return _context.abrupt("return", false);
-            case 6:
-              _context.prev = 6;
-              if (!this._shouldSendReplay(response, headers)) {
-                _context.next = 13;
-                break;
-              }
-              _context.next = 10;
-              return this.replayManager.send(replayId);
-            case 10:
-              return _context.abrupt("return", _context.sent);
-            case 13:
-              this.replayManager.discard(replayId);
-              return _context.abrupt("return", false);
-            case 15:
-              _context.next = 21;
-              break;
-            case 17:
-              _context.prev = 17;
-              _context.t0 = _context["catch"](6);
-              console.error('Error handling replay response:', _context.t0);
-              return _context.abrupt("return", false);
-            case 21:
-            case "end":
-              return _context.stop();
-          }
-        }, _callee, this, [[6, 17]]);
-      }));
-      function _handleReplayResponse(_x, _x2, _x3) {
-        return _handleReplayResponse2.apply(this, arguments);
-      }
-      return _handleReplayResponse;
-    }())
-  }, {
-    key: "_shouldSendReplay",
-    value: function _shouldSendReplay(response, headers) {
-      if ((response === null || response === void 0 ? void 0 : response.err) !== 0 || !headers || headers['Rollbar-Replay-Enabled'] !== 'true' || headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
-        return false;
-      }
-      return true;
-    }
   }]);
 }();
 _defineProperty(Queue, "RETRIABLE_ERRORS", ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN']);
@@ -1437,126 +1377,7 @@ Notifier.prototype._applyTransforms = function (item, callback) {
   _cb(null, item);
 };
 /* harmony default export */ const notifier = (Notifier);
-;// ./src/browser/replay/replayPredicates.js
-function replayPredicates_typeof(o) { "@babel/helpers - typeof"; return replayPredicates_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayPredicates_typeof(o); }
-function replayPredicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = replayPredicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function replayPredicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return replayPredicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? replayPredicates_arrayLikeToArray(r, a) : void 0; } }
-function replayPredicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function replayPredicates_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function replayPredicates_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayPredicates_toPropertyKey(o.key), o); } }
-function replayPredicates_createClass(e, r, t) { return r && replayPredicates_defineProperties(e.prototype, r), t && replayPredicates_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function replayPredicates_defineProperty(e, r, t) { return (r = replayPredicates_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function replayPredicates_toPropertyKey(t) { var i = replayPredicates_toPrimitive(t, "string"); return "symbol" == replayPredicates_typeof(i) ? i : i + ""; }
-function replayPredicates_toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayPredicates_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-/**
- * ReplayPredicates - Determine if replay is enabled for a given trigger type.
- *
- */
-var ReplayPredicates = /*#__PURE__*/function () {
-  /*
-   * Constructor for ReplayPredicates.
-   *
-   * @param {Object} config - Configuration object containing replay settings.
-   * @param {Object} context - Context object containing state used by predicates.
-   */
-  function ReplayPredicates(config, context) {
-    replayPredicates_classCallCheck(this, ReplayPredicates);
-    replayPredicates_defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
-    this.config = config || {};
-    this.triggers = (config === null || config === void 0 ? void 0 : config.triggers) || [];
-    this.context = context || {};
-    this.predicates = {
-      occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)]
-    };
-  }
-
-  /**
-   * isEnabledForTriggerType - Checks if replay is enabled for a given trigger type.
-   * Applies all predicates for that trigger type and returns true if all predicates pass
-   * for any matching trigger.
-   *
-   * @param {string} triggerType - The type of the trigger to check.
-   * @returns {boolean} - True if replay is enabled for the trigger type, false otherwise.
-   */
-  return replayPredicates_createClass(ReplayPredicates, [{
-    key: "isEnabledForTriggerType",
-    value: function isEnabledForTriggerType(triggerType) {
-      var predicates = this.predicates[triggerType];
-      var _iterator = replayPredicates_createForOfIteratorHelper(this.triggers),
-        _step;
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var t = _step.value;
-          if (t.type === triggerType && this.isEnabledForTrigger(t, predicates)) {
-            return true;
-          }
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-      return false;
-    }
-  }, {
-    key: "isEnabledForTrigger",
-    value: function isEnabledForTrigger(trigger, predicates) {
-      if (predicates.find(function (p) {
-        return !p(trigger);
-      })) {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * isLevelMatching - Checks if the trigger's level matches the context item's level.
-     * If no level is specified in the trigger, it defaults to matching all levels.
-     * @param {Object} trigger - The trigger object containing the level.
-     * @return {boolean} - True if the trigger's level matches the context item's level, false otherwise.
-     */
-  }, {
-    key: "isLevelMatching",
-    value: function isLevelMatching(trigger) {
-      var _trigger$level, _this$context;
-      if (!trigger.level || (_trigger$level = trigger.level) !== null && _trigger$level !== void 0 && _trigger$level.includes((_this$context = this.context) === null || _this$context === void 0 || (_this$context = _this$context.item) === null || _this$context === void 0 ? void 0 : _this$context.level)) {
-        return true;
-      }
-      return false;
-    }
-
-    /**
-     * isSampled - Determines if the trigger should be sampled based on its sampling ratio.
-     * If no ratio is specified, defaults to 1 (always sampled).
-     *
-     * Sampling algorithm is based on OTel probability sampling as described in
-     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-probability-sampling/
-     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-handling/
-     *
-     * Note: String compare is more performant than conversion to float,
-     * assuming the `th` calculation will be moved to the trigger configuration.
-     * This allows `toString` to be called once, rather than `parseInt` to be called on
-     * each replay.
-     *
-     * @param {Object} trigger - The trigger object containing the sampling ratio.
-     * @returns {boolean} - True if the trigger is sampled, false otherwise.
-     */
-  }, {
-    key: "isSampled",
-    value: function isSampled(trigger) {
-      var ratio = trigger.samplingRatio || this.config.baseSamplingRatio || 1;
-      if (ratio == 1) {
-        return true;
-      }
-      var rv = this.context.replayId.slice(-14);
-      var th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
-      return rv >= th;
-    }
-  }]);
-}();
-
 ;// ./src/rollbar.js
-
 
 
 
@@ -1693,8 +1514,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
   try {
     item.level = item.level || defaultLevel;
-    var replayId = this._replayIdIfTriggered(item);
-    this._addTracingAttributes(item, replayId);
+    this._addTracingAttributes(item);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
@@ -1711,13 +1531,10 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     this.logger.error(e);
   }
 };
-Rollbar.prototype._addTracingAttributes = function (item, replayId) {
+Rollbar.prototype._addTracingAttributes = function (item) {
   var _this$tracing, _this$tracing2;
   var span = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.getSpan();
   var attributes = [{
-    key: 'replay_id',
-    value: replayId
-  }, {
     key: 'session_id',
     value: (_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId
   }, {
@@ -1732,17 +1549,6 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
     key: 'rollbar.occurrence.uuid',
     value: item.uuid
   }]);
-};
-Rollbar.prototype._replayIdIfTriggered = function (item) {
-  var _this$tracing3;
-  var replayId = (_this$tracing3 = this.tracing) === null || _this$tracing3 === void 0 ? void 0 : _this$tracing3.idGen(8);
-  var enabled = new ReplayPredicates(this.options.recorder, {
-    item: item,
-    replayId: replayId
-  }).isEnabledForTriggerType('occurrence');
-  if (enabled) {
-    return replayId;
-  }
 };
 Rollbar.prototype._defaultLogLevel = function () {
   return this.options.logLevel || 'debug';
@@ -1933,9 +1739,9 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function api_defineProperty(e, r, t) { return (r = api_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function api_toPropertyKey(t) { var i = api_toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
 function api_toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function api_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ api_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == api_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(api_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function api_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function api_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { api_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { api_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == api_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(api_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 
 
 var api_defaultOptions = {
@@ -2041,11 +1847,11 @@ Api.prototype.postItem = function (data, callback) {
  * @returns {Promise<Object>} A promise that resolves with the API response
  */
 Api.prototype.postSpans = /*#__PURE__*/function () {
-  var _ref2 = api_asyncToGenerator(/*#__PURE__*/api_regeneratorRuntime().mark(function _callee(payload) {
+  var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(payload) {
     var headers,
       options,
       _args = arguments;
-    return api_regeneratorRuntime().wrap(function _callee$(_context) {
+    return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           headers = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
@@ -2122,31 +1928,61 @@ function _getOTLPTransport(options, url) {
   return getTransportFromOptions(options, OTLPDefaultOptions, url);
 }
 /* harmony default export */ const src_api = (Api);
-;// ./src/server/logger.js
-var verbose = true;
+;// ./src/logger.js
+var _log = function log() {};
+var levels = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  disable: 4
+};
 var logger = {
-  /* eslint-disable no-console */
-  log: function log() {
-    if (verbose) {
-      console.log.apply(console, arguments);
-    }
-  },
   error: function error() {
-    if (verbose) {
-      console.error.apply(console, arguments);
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
     }
+    return _log('error', args);
   },
-  /* eslint-enable no-console */
-  setVerbose: function setVerbose(val) {
-    verbose = val;
+  warn: function warn() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    return _log('warn', args);
+  },
+  info: function info() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+    return _log('info', args);
+  },
+  debug: function debug() {
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+    return _log('debug', args);
+  },
+  log: function log() {
+    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+    return _log('info', args);
+  },
+  init: function init(_ref) {
+    var logLevel = _ref.logLevel;
+    _log = function _log(level, args) {
+      if (levels[level] < levels[logLevel]) return;
+      args.unshift('Rollbar:');
+      console[level].apply(console, args);
+    };
   }
 };
-/* harmony default export */ const server_logger = (logger);
+/* harmony default export */ const src_logger = (logger);
 ;// ./src/defaults.js
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.3';
+var version = '3.0.0-beta.4';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -2378,7 +2214,7 @@ Transport.prototype.get = function (accessToken, options, params, callback, tran
     t = _transport(options);
   }
   if (!t) {
-    server_logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
     return callback(new Error('Unknown transport'));
   }
   var req = t.request(options, function (resp) {
@@ -2408,7 +2244,7 @@ Transport.prototype.post = function (_ref) {
   }
   var stringifyResult = truncation.truncate(payload, external_json_stringify_safe_namespaceObject);
   if (stringifyResult.error) {
-    server_logger.error('Problem stringifying payload. Giving up');
+    src_logger.error('Problem stringifying payload. Giving up');
     return callback(stringifyResult.error);
   }
   var writeData = stringifyResult.value;
@@ -2419,7 +2255,7 @@ Transport.prototype.post = function (_ref) {
     t = _transport(options);
   }
   if (!t) {
-    server_logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
     return callback(new Error('Unknown transport'));
   }
   var req = t.request(options, function (resp) {
@@ -2465,7 +2301,7 @@ function _headers(accessToken, options, data) {
     try {
       headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
     } catch (e) {
-      server_logger.error('Could not get the content length of the data');
+      src_logger.error('Could not get the content length of the data');
     }
   }
   headers['X-Rollbar-Access-Token'] = accessToken;
@@ -2480,12 +2316,12 @@ function _transport(options) {
 function _parseApiResponse(data, callback) {
   var parsedData = jsonParse(data);
   if (parsedData.error) {
-    server_logger.error('Could not parse api response, err: ' + parsedData.error);
+    src_logger.error('Could not parse api response, err: ' + parsedData.error);
     return callback(parsedData.error);
   }
   data = parsedData.value;
   if (data.err) {
-    server_logger.error('Received error: ' + data.message);
+    src_logger.error('Received error: ' + data.message);
     return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
   }
   callback(null, data);
@@ -2496,9 +2332,9 @@ function _wrapPostCallback(callback) {
       return callback(err);
     }
     if (data.result && data.result.uuid) {
-      server_logger.log(['Successful api response.', ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid].join(''));
+      src_logger.log(['Successful api response.', ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid].join(''));
     } else {
-      server_logger.log('Successful api response');
+      src_logger.log('Successful api response');
     }
     callback(null, data.result);
   };
@@ -2798,7 +2634,7 @@ var Telemeter = /*#__PURE__*/function () {
       event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
       event.otelAttributes['durationUnixNano'] = fromMillis(duration);
       event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
-      event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+      event.otelAttributes.rate = event.otelAttributes.count / (duration / 1000);
     }
   }, {
     key: "_lastEvent",
@@ -3405,11 +3241,9 @@ function mapSourcePosition(position, diagnostic) {
   }
   return position;
 }
-;
 function stackTrace_sourceContent(source) {
   return sourcesContentCache[source];
 }
-;
 ;// ./src/server/parser.js
 function parser_typeof(o) { "@babel/helpers - typeof"; return parser_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, parser_typeof(o); }
 
@@ -3571,7 +3405,7 @@ function readFileLines(filename, callback) {
       return callback(null, fileLines);
     });
   } catch (e) {
-    server_logger.log(e);
+    src_logger.log(e);
   }
 }
 function checkFileExists(filename, callback) {
@@ -3652,7 +3486,7 @@ function parseException(exc, options, item, callback) {
   return parseStack(exc.stack, options, item, function (err, stack) {
     var message, clss, ret, firstErr, jadeMatch, jadeData;
     if (err) {
-      server_logger.error('could not parse exception, err: ' + err);
+      src_logger.error('could not parse exception, err: ' + err);
       return callback(err);
     }
     message = String(exc.message || '<no message>');
@@ -3679,7 +3513,7 @@ function parseException(exc, options, item, callback) {
     if (item.localsMap) {
       item.notifier.locals.mergeLocals(item.localsMap, stack, exc.stack, function (err) {
         if (err) {
-          server_logger.error('could not parse locals, err: ' + err);
+          src_logger.error('could not parse locals, err: ' + err);
 
           // Don't reject the occurrence, record the error instead.
           item.diagnostic['error parsing locals'] = err;
@@ -3691,7 +3525,6 @@ function parseException(exc, options, item, callback) {
     }
   });
 }
-;
 function parseStack(stack, options, item, callback) {
   var lines,
     _stack = stack;
@@ -3725,7 +3558,6 @@ function parseStack(stack, options, item, callback) {
     });
   });
 }
-;
 ;// external "request-ip"
 const external_request_ip_namespaceObject = require("request-ip");
 ;// ./src/scrub.js
@@ -4415,22 +4247,24 @@ function rollbar_Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
-  this.options = handleOptions(rollbar_Rollbar.defaultOptions, options, null, server_logger);
+  src_logger.init({
+    logLevel: options.logLevel || 'error'
+  });
+  this.options = handleOptions(rollbar_Rollbar.defaultOptions, options, null, src_logger);
   this.options._configuredOptions = options;
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
-  server_logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
   this.lambdaTimeoutHandle = null;
   var transport = new server_transport();
   var api = new src_api(this.options, transport, external_url_namespaceObject, truncation, external_json_stringify_safe_namespaceObject);
   var telemeter = new telemetry(this.options);
-  this.client = client || new rollbar(this.options, api, server_logger, telemeter, null, null, 'server');
+  this.client = client || new rollbar(this.options, api, src_logger, telemeter, null, null, 'server');
   this.instrumenter = new server_telemetry(this.options, this.client.telemeter, this);
   this.instrumenter.instrument();
   if (this.options.locals) {
-    this.locals = initLocals(this.options.locals, server_logger);
+    this.locals = initLocals(this.options.locals, src_logger);
   }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
@@ -4465,7 +4299,7 @@ rollbar_Rollbar.init = function (options, client) {
 };
 function handleUninitialized(maybeCallback) {
   var message = 'Rollbar is not initialized';
-  server_logger.error(message);
+  src_logger.error(message);
   if (maybeCallback) {
     maybeCallback(new Error(message));
   }
@@ -4485,6 +4319,11 @@ rollbar_Rollbar.global = function (options) {
   }
 };
 rollbar_Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    src_logger.init({
+      logLevel: options.logLevel
+    });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
@@ -4492,18 +4331,17 @@ rollbar_Rollbar.prototype.configure = function (options, payloadData) {
       payload: payloadData
     };
   }
-  this.options = handleOptions(oldOptions, options, payload, server_logger);
+  this.options = handleOptions(oldOptions, options, payload, src_logger);
   this.options._configuredOptions = handleOptions(oldOptions._configuredOptions, options, payload);
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
-  server_logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
   this.setupUnhandledCapture();
   if (this.options.locals) {
     if (this.locals) {
       this.locals.updateOptions(this.options.locals);
     } else {
-      this.locals = initLocals(this.options.locals, server_logger);
+      this.locals = initLocals(this.options.locals, src_logger);
     }
   }
   return this;
@@ -4682,7 +4520,7 @@ rollbar_Rollbar.prototype.errorHandler = function () {
   return function (err, request, response, next) {
     var cb = function cb(rollbarError) {
       if (rollbarError) {
-        server_logger.error('Error reporting to rollbar, ignoring: ' + rollbarError);
+        src_logger.error('Error reporting to rollbar, ignoring: ' + rollbarError);
       }
       return next(err, request, response);
     };
@@ -4818,7 +4656,7 @@ rollbar_Rollbar.captureEvent = function () {
 /** DEPRECATED **/
 
 rollbar_Rollbar.prototype.reportMessage = function (message, level, request, callback) {
-  server_logger.log('reportMessage is deprecated');
+  src_logger.log('reportMessage is deprecated');
   if (isFunction(this[level])) {
     return this[level](message, request, callback);
   } else {
@@ -4833,7 +4671,7 @@ rollbar_Rollbar.reportMessage = function (message, level, request, callback) {
   }
 };
 rollbar_Rollbar.prototype.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
-  server_logger.log('reportMessageWithPayloadData is deprecated');
+  src_logger.log('reportMessageWithPayloadData is deprecated');
   return this.error(message, request, payloadData, callback);
 };
 rollbar_Rollbar.reportMessageWithPayloadData = function (message, payloadData, request, callback) {
@@ -4844,7 +4682,7 @@ rollbar_Rollbar.reportMessageWithPayloadData = function (message, payloadData, r
   }
 };
 rollbar_Rollbar.prototype.handleError = function (err, request, callback) {
-  server_logger.log('handleError is deprecated');
+  src_logger.log('handleError is deprecated');
   return this.error(err, request, callback);
 };
 rollbar_Rollbar.handleError = function (err, request, callback) {
@@ -4855,7 +4693,7 @@ rollbar_Rollbar.handleError = function (err, request, callback) {
   }
 };
 rollbar_Rollbar.prototype.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
-  server_logger.log('handleErrorWithPayloadData is deprecated');
+  src_logger.log('handleErrorWithPayloadData is deprecated');
   return this.error(err, request, payloadData, callback);
 };
 rollbar_Rollbar.handleErrorWithPayloadData = function (err, payloadData, request, callback) {
@@ -4896,14 +4734,14 @@ rollbar_Rollbar.handleUncaughtExceptionsAndRejections = function (accessToken, o
 /** Internal **/
 
 function addTransformsToNotifier(notifier) {
-  notifier.addTransform(baseData).addTransform(handleItemWithError).addTransform(addBody).addTransform(addMessageWithError).addTransform(addTelemetryData).addTransform(addRequestData).addTransform(addLambdaData).addTransform(addConfigToPayload).addTransform(scrubPayload).addTransform(addPayloadOptions).addTransform(userTransform(server_logger)).addTransform(addConfiguredOptions).addTransform(addDiagnosticKeys).addTransform(itemToPayload);
+  notifier.addTransform(baseData).addTransform(handleItemWithError).addTransform(addBody).addTransform(addMessageWithError).addTransform(addTelemetryData).addTransform(addRequestData).addTransform(addLambdaData).addTransform(addConfigToPayload).addTransform(scrubPayload).addTransform(addPayloadOptions).addTransform(userTransform(src_logger)).addTransform(addConfiguredOptions).addTransform(addDiagnosticKeys).addTransform(itemToPayload);
 }
 function addPredicatesToQueue(queue) {
-  queue.addPredicate(checkLevel).addPredicate(userCheckIgnore(server_logger)).addPredicate(urlIsNotBlockListed(server_logger)).addPredicate(urlIsSafeListed(server_logger)).addPredicate(messageIsIgnored(server_logger));
+  queue.addPredicate(checkLevel).addPredicate(userCheckIgnore(src_logger)).addPredicate(urlIsNotBlockListed(src_logger)).addPredicate(urlIsSafeListed(src_logger)).addPredicate(messageIsIgnored(src_logger));
 }
 rollbar_Rollbar.prototype._createItem = function (args) {
   var requestKeys = ['headers', 'protocol', 'url', 'method', 'body', 'route'];
-  var item = createItem(args, server_logger, this, requestKeys, this.lambdaContext);
+  var item = createItem(args, src_logger, this, requestKeys, this.lambdaContext);
   if (item.err && item.notifier.locals) {
     item.localsMap = item.notifier.locals.currentLocalsMap();
   }
@@ -4934,8 +4772,8 @@ rollbar_Rollbar.prototype.handleUncaughtExceptions = function () {
     }
     this._uncaughtError(err, function (err) {
       if (err) {
-        server_logger.error('Encountered error while handling an uncaught exception.');
-        server_logger.error(err);
+        src_logger.error('Encountered error while handling an uncaught exception.');
+        src_logger.error(err);
       }
     });
     if (exitOnUncaught) {
@@ -4954,8 +4792,8 @@ rollbar_Rollbar.prototype.handleUnhandledRejections = function () {
     }
     this._uncaughtError(reason, function (err) {
       if (err) {
-        server_logger.error('Encountered error while handling an uncaught exception.');
-        server_logger.error(err);
+        src_logger.error('Encountered error while handling an uncaught exception.');
+        src_logger.error(err);
       }
     });
   }.bind(this));

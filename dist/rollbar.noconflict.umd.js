@@ -9,59 +9,9 @@
 		root["rollbar"] = factory();
 })(this, function() {
 return /******/ (function() { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
-
-/***/ 738:
-/***/ (function() {
-
-// Console-polyfill. MIT license.
-// https://github.com/paulmillr/console-polyfill
-// Make it safe to do console.log() always.
-(function(global) {
-  'use strict';
-  if (!global.console) {
-    global.console = {};
-  }
-  var con = global.console;
-  var prop, method;
-  var dummy = function() {};
-  var properties = ['memory'];
-  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
-     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
-     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
-  while (prop = properties.pop()) if (!con[prop]) con[prop] = {};
-  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
-  // Using `this` for web workers & supports Browserify / Webpack.
-})(typeof window === 'undefined' ? this : window);
-
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
+/******/ 	"use strict";
+/******/ 	// The require scope
+/******/ 	var __webpack_require__ = {};
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
@@ -94,9 +44,6 @@ return /******/ (function() { // webpackBootstrap
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
-!function() {
-"use strict";
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
@@ -329,6 +276,20 @@ var LEVELS = {
   error: 3,
   critical: 4
 };
+function sanitizeHref(url) {
+  try {
+    var urlObject = new URL(url);
+    if (urlObject.password) {
+      urlObject.password = redact();
+    }
+    if (urlObject.search) {
+      urlObject.search = redact();
+    }
+    return urlObject.toString();
+  } catch (_) {
+    return url; // Return original URL if parsing fails
+  }
+}
 function sanitizeUrl(url) {
   var baseUrlParts = parseUri(url);
   if (!baseUrlParts) {
@@ -706,15 +667,6 @@ function addItemAttributes(itemData, attributes) {
     _iterator.f();
   }
 }
-function getItemAttribute(itemData, key) {
-  var attributes = itemData.attributes || [];
-  for (var i = 0; i < attributes.length; ++i) {
-    if (attributes[i].key === key) {
-      return attributes[i].value;
-    }
-  }
-  return undefined;
-}
 
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
@@ -1000,9 +952,6 @@ function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMi
 /* harmony default export */ var rateLimiter = (RateLimiter);
 ;// ./src/queue.js
 function queue_typeof(o) { "@babel/helpers - typeof"; return queue_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, queue_typeof(o); }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == queue_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(queue_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
@@ -1123,23 +1072,33 @@ var Queue = /*#__PURE__*/function () {
         return;
       }
       if (this.replayManager && data.body) {
-        var replayId = getItemAttribute(data, 'replay_id');
-        if (replayId) {
-          item.replayId = this.replayManager.add(replayId, data.uuid);
+        item.replayId = this.replayManager.capture(null, data.uuid, {
+          type: 'occurrence',
+          level: item.level
+        });
+        if (item.replayId) {
+          addItemAttributes(item.data, [{
+            key: 'replay_id',
+            value: item.replayId
+          }]);
         }
       }
       this.pendingRequests.push(data);
       try {
         this._makeApiRequest(data, function (err, resp, headers) {
           _this._dequeuePendingRequest(data);
-          if (!err && resp && item.replayId) {
-            _this._handleReplayResponse(item.replayId, resp, headers);
+          if (item.replayId) {
+            _this.replayManager.sendOrDiscardReplay(item.replayId, err, resp, headers);
           }
           callback(err, resp);
         });
-      } catch (e) {
+      } catch (err) {
         this._dequeuePendingRequest(data);
-        callback(e);
+        if (item.replayId) {
+          var _this$replayManager;
+          (_this$replayManager = this.replayManager) === null || _this$replayManager === void 0 || _this$replayManager.discard(item.replayId);
+        }
+        callback(err);
       }
     }
 
@@ -1326,78 +1285,6 @@ var Queue = /*#__PURE__*/function () {
       }
       return false;
     }
-
-    /**
-     * Handles the API response for an item with a replay ID.
-     * Based on the success or failure status of the response,
-     * it either sends or discards the associated session replay.
-     *
-     * @param {string} replayId - The ID of the replay to handle
-     * @param {Object} response - The API response
-     * @param {Object} headers - The response headers
-     * @returns {Promise<boolean>} A promise that resolves to true if replay was sent successfully,
-     *                             false if replay was discarded or an error occurred
-     */
-  }, {
-    key: "_handleReplayResponse",
-    value: (function () {
-      var _handleReplayResponse2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(replayId, response, headers) {
-        return _regeneratorRuntime().wrap(function _callee$(_context) {
-          while (1) switch (_context.prev = _context.next) {
-            case 0:
-              if (this.replayManager) {
-                _context.next = 3;
-                break;
-              }
-              console.warn('Queue._handleReplayResponse: ReplayManager not available');
-              return _context.abrupt("return", false);
-            case 3:
-              if (replayId) {
-                _context.next = 6;
-                break;
-              }
-              console.warn('Queue._handleReplayResponse: No replayId provided');
-              return _context.abrupt("return", false);
-            case 6:
-              _context.prev = 6;
-              if (!this._shouldSendReplay(response, headers)) {
-                _context.next = 13;
-                break;
-              }
-              _context.next = 10;
-              return this.replayManager.send(replayId);
-            case 10:
-              return _context.abrupt("return", _context.sent);
-            case 13:
-              this.replayManager.discard(replayId);
-              return _context.abrupt("return", false);
-            case 15:
-              _context.next = 21;
-              break;
-            case 17:
-              _context.prev = 17;
-              _context.t0 = _context["catch"](6);
-              console.error('Error handling replay response:', _context.t0);
-              return _context.abrupt("return", false);
-            case 21:
-            case "end":
-              return _context.stop();
-          }
-        }, _callee, this, [[6, 17]]);
-      }));
-      function _handleReplayResponse(_x, _x2, _x3) {
-        return _handleReplayResponse2.apply(this, arguments);
-      }
-      return _handleReplayResponse;
-    }())
-  }, {
-    key: "_shouldSendReplay",
-    value: function _shouldSendReplay(response, headers) {
-      if ((response === null || response === void 0 ? void 0 : response.err) !== 0 || !headers || headers['Rollbar-Replay-Enabled'] !== 'true' || headers['Rollbar-Replay-RateLimit-Remaining'] === '0') {
-        return false;
-      }
-      return true;
-    }
   }]);
 }();
 _defineProperty(Queue, "RETRIABLE_ERRORS", ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN']);
@@ -1514,126 +1401,7 @@ Notifier.prototype._applyTransforms = function (item, callback) {
   _cb(null, item);
 };
 /* harmony default export */ var notifier = (Notifier);
-;// ./src/browser/replay/replayPredicates.js
-function replayPredicates_typeof(o) { "@babel/helpers - typeof"; return replayPredicates_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayPredicates_typeof(o); }
-function replayPredicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = replayPredicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function replayPredicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return replayPredicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? replayPredicates_arrayLikeToArray(r, a) : void 0; } }
-function replayPredicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function replayPredicates_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function replayPredicates_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayPredicates_toPropertyKey(o.key), o); } }
-function replayPredicates_createClass(e, r, t) { return r && replayPredicates_defineProperties(e.prototype, r), t && replayPredicates_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function replayPredicates_defineProperty(e, r, t) { return (r = replayPredicates_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function replayPredicates_toPropertyKey(t) { var i = replayPredicates_toPrimitive(t, "string"); return "symbol" == replayPredicates_typeof(i) ? i : i + ""; }
-function replayPredicates_toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayPredicates_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-/**
- * ReplayPredicates - Determine if replay is enabled for a given trigger type.
- *
- */
-var ReplayPredicates = /*#__PURE__*/function () {
-  /*
-   * Constructor for ReplayPredicates.
-   *
-   * @param {Object} config - Configuration object containing replay settings.
-   * @param {Object} context - Context object containing state used by predicates.
-   */
-  function ReplayPredicates(config, context) {
-    replayPredicates_classCallCheck(this, ReplayPredicates);
-    replayPredicates_defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
-    this.config = config || {};
-    this.triggers = (config === null || config === void 0 ? void 0 : config.triggers) || [];
-    this.context = context || {};
-    this.predicates = {
-      occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)]
-    };
-  }
-
-  /**
-   * isEnabledForTriggerType - Checks if replay is enabled for a given trigger type.
-   * Applies all predicates for that trigger type and returns true if all predicates pass
-   * for any matching trigger.
-   *
-   * @param {string} triggerType - The type of the trigger to check.
-   * @returns {boolean} - True if replay is enabled for the trigger type, false otherwise.
-   */
-  return replayPredicates_createClass(ReplayPredicates, [{
-    key: "isEnabledForTriggerType",
-    value: function isEnabledForTriggerType(triggerType) {
-      var predicates = this.predicates[triggerType];
-      var _iterator = replayPredicates_createForOfIteratorHelper(this.triggers),
-        _step;
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var t = _step.value;
-          if (t.type === triggerType && this.isEnabledForTrigger(t, predicates)) {
-            return true;
-          }
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-      return false;
-    }
-  }, {
-    key: "isEnabledForTrigger",
-    value: function isEnabledForTrigger(trigger, predicates) {
-      if (predicates.find(function (p) {
-        return !p(trigger);
-      })) {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * isLevelMatching - Checks if the trigger's level matches the context item's level.
-     * If no level is specified in the trigger, it defaults to matching all levels.
-     * @param {Object} trigger - The trigger object containing the level.
-     * @return {boolean} - True if the trigger's level matches the context item's level, false otherwise.
-     */
-  }, {
-    key: "isLevelMatching",
-    value: function isLevelMatching(trigger) {
-      var _trigger$level, _this$context;
-      if (!trigger.level || (_trigger$level = trigger.level) !== null && _trigger$level !== void 0 && _trigger$level.includes((_this$context = this.context) === null || _this$context === void 0 || (_this$context = _this$context.item) === null || _this$context === void 0 ? void 0 : _this$context.level)) {
-        return true;
-      }
-      return false;
-    }
-
-    /**
-     * isSampled - Determines if the trigger should be sampled based on its sampling ratio.
-     * If no ratio is specified, defaults to 1 (always sampled).
-     *
-     * Sampling algorithm is based on OTel probability sampling as described in
-     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-probability-sampling/
-     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-handling/
-     *
-     * Note: String compare is more performant than conversion to float,
-     * assuming the `th` calculation will be moved to the trigger configuration.
-     * This allows `toString` to be called once, rather than `parseInt` to be called on
-     * each replay.
-     *
-     * @param {Object} trigger - The trigger object containing the sampling ratio.
-     * @returns {boolean} - True if the trigger is sampled, false otherwise.
-     */
-  }, {
-    key: "isSampled",
-    value: function isSampled(trigger) {
-      var ratio = trigger.samplingRatio || this.config.baseSamplingRatio || 1;
-      if (ratio == 1) {
-        return true;
-      }
-      var rv = this.context.replayId.slice(-14);
-      var th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
-      return rv >= th;
-    }
-  }]);
-}();
-
 ;// ./src/rollbar.js
-
 
 
 
@@ -1770,8 +1538,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
   try {
     item.level = item.level || defaultLevel;
-    var replayId = this._replayIdIfTriggered(item);
-    this._addTracingAttributes(item, replayId);
+    this._addTracingAttributes(item);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
@@ -1788,13 +1555,10 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     this.logger.error(e);
   }
 };
-Rollbar.prototype._addTracingAttributes = function (item, replayId) {
+Rollbar.prototype._addTracingAttributes = function (item) {
   var _this$tracing, _this$tracing2;
   var span = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.getSpan();
   var attributes = [{
-    key: 'replay_id',
-    value: replayId
-  }, {
     key: 'session_id',
     value: (_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId
   }, {
@@ -1809,17 +1573,6 @@ Rollbar.prototype._addTracingAttributes = function (item, replayId) {
     key: 'rollbar.occurrence.uuid',
     value: item.uuid
   }]);
-};
-Rollbar.prototype._replayIdIfTriggered = function (item) {
-  var _this$tracing3;
-  var replayId = (_this$tracing3 = this.tracing) === null || _this$tracing3 === void 0 ? void 0 : _this$tracing3.idGen(8);
-  var enabled = new ReplayPredicates(this.options.recorder, {
-    item: item,
-    replayId: replayId
-  }).isEnabledForTriggerType('occurrence');
-  if (enabled) {
-    return replayId;
-  }
 };
 Rollbar.prototype._defaultLogLevel = function () {
   return this.options.logLevel || 'debug';
@@ -2010,9 +1763,9 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function api_defineProperty(e, r, t) { return (r = api_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function api_toPropertyKey(t) { var i = api_toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
 function api_toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function api_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ api_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == api_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(api_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function api_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function api_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { api_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { api_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == api_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(api_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 
 
 var api_defaultOptions = {
@@ -2118,11 +1871,11 @@ Api.prototype.postItem = function (data, callback) {
  * @returns {Promise<Object>} A promise that resolves with the API response
  */
 Api.prototype.postSpans = /*#__PURE__*/function () {
-  var _ref2 = api_asyncToGenerator(/*#__PURE__*/api_regeneratorRuntime().mark(function _callee(payload) {
+  var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(payload) {
     var headers,
       options,
       _args = arguments;
-    return api_regeneratorRuntime().wrap(function _callee$(_context) {
+    return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           headers = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
@@ -2199,67 +1952,56 @@ function _getOTLPTransport(options, url) {
   return getTransportFromOptions(options, OTLPDefaultOptions, url);
 }
 /* harmony default export */ var src_api = (Api);
-// EXTERNAL MODULE: ./node_modules/console-polyfill/index.js
-var console_polyfill = __webpack_require__(738);
-;// ./src/browser/detection.js
-// This detection.js module is used to encapsulate any ugly browser/feature
-// detection we may need to do.
-
-// Figure out which version of IE we're using, if any.
-// This is gleaned from http://stackoverflow.com/questions/5574842/best-way-to-check-for-ie-less-than-9-in-javascript-without-library
-// Will return an integer on IE (i.e. 8)
-// Will return undefined otherwise
-function getIEVersion() {
-  var undef;
-  if (typeof document === 'undefined') {
-    return undef;
-  }
-  var v = 3,
-    div = document.createElement('div'),
-    all = div.getElementsByTagName('i');
-  while (div.innerHTML = '<!--[if gt IE ' + ++v + ']><i></i><![endif]-->', all[0]);
-  return v > 4 ? v : undef;
-}
-var Detection = {
-  ieVersion: getIEVersion
+;// ./src/logger.js
+var _log = function log() {};
+var levels = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  disable: 4
 };
-/* harmony default export */ var detection = (Detection);
-;// ./src/browser/logger.js
-
-
-
-function error() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.error(formatArgsAsString(args));
-  } else {
-    console.error.apply(console, args);
+var logger = {
+  error: function error() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+    return _log('error', args);
+  },
+  warn: function warn() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    return _log('warn', args);
+  },
+  info: function info() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+    return _log('info', args);
+  },
+  debug: function debug() {
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+    return _log('debug', args);
+  },
+  log: function log() {
+    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+    return _log('info', args);
+  },
+  init: function init(_ref) {
+    var logLevel = _ref.logLevel;
+    _log = function _log(level, args) {
+      if (levels[level] < levels[logLevel]) return;
+      args.unshift('Rollbar:');
+      console[level].apply(console, args);
+    };
   }
-}
-function info() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.info(formatArgsAsString(args));
-  } else {
-    console.info.apply(console, args);
-  }
-}
-function log() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift('Rollbar:');
-  if (detection.ieVersion() <= 8) {
-    console.log(formatArgsAsString(args));
-  } else {
-    console.log.apply(console, args);
-  }
-}
-/* harmony default export */ var logger = ({
-  error: error,
-  info: info,
-  log: log
-});
+};
+/* harmony default export */ var src_logger = (logger);
 ;// ./src/browser/globalSetup.js
 function captureUncaughtExceptions(window, handler, shim) {
   if (!window) {
@@ -2393,7 +2135,7 @@ function makeFetchRequest(_ref) {
     var json = response.json();
     callback(null, json, headers);
   }).catch(function (error) {
-    logger.error(error.message);
+    src_logger.error(error.message);
     callback(error);
   });
 }
@@ -2448,7 +2190,7 @@ function makeXhrRequest(_ref) {
               if (request.status === 403) {
                 // likely caused by using a server access token
                 var message = parseResponse.value && parseResponse.value.message;
-                logger.error(message);
+                src_logger.error(message);
               }
               // return valid http status codes
               callback(new Error(String(request.status)));
@@ -2544,14 +2286,12 @@ function _createXMLHTTPObject() {
   var i;
   var numFactories = factories.length;
   for (i = 0; i < numFactories; i++) {
-    /* eslint-disable no-empty */
     try {
       xmlhttp = factories[i]();
       break;
     } catch (e) {
       // pass
     }
-    /* eslint-enable no-empty */
   }
   return xmlhttp;
 }
@@ -3089,7 +2829,7 @@ function handleItemWithError(item, options, callback) {
         transforms_addErrorContext(item);
       }
     } catch (e) {
-      logger.error('Error while parsing the error object.', e);
+      src_logger.error('Error while parsing the error object.', e);
       try {
         item.message = item.err.message || item.err.description || item.message || String(item.err);
       } catch (e2) {
@@ -3680,9 +3420,15 @@ function messagesFromItem(item) {
   // Start recording automatically when Rollbar initializes
   maxSeconds: 300,
   // Maximum recording duration in seconds
+  postDuration: 5,
+  // Duration of events to include after a post is triggered, in seconds
 
-  baseSamplingRatio: 1.0,
-  // Used by triggers that don't specify a sampling ratio
+  // defaults used by triggers that don't specify them
+  triggerDefaults: {
+    samplingRatio: 1.0,
+    preDuration: 300,
+    postDuration: 5
+  },
   triggers: [{
     type: 'occurrence',
     level: ['error', 'critical']
@@ -3764,292 +3510,11 @@ function messagesFromItem(item) {
   enabled: false,
   endpoint: 'api.rollbar.com/api/1/session/'
 });
-;// ./src/tracing/id.js
-/**
- * Generate a random hexadecimal ID of specified byte length
- *
- * @param {number} bytes - Number of bytes for the ID (default: 16)
- * @returns {string} - Hexadecimal string representation
- */
-function gen() {
-  var bytes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 16;
-  var randomBytes = new Uint8Array(bytes);
-  crypto.getRandomValues(randomBytes);
-  var randHex = Array.from(randomBytes, function (byte) {
-    return byte.toString(16).padStart(2, '0');
-  }).join('');
-  return randHex;
-}
-
-/**
- * Tracing id generation utils
- *
- * @example
- * import id from './id.js';
- *
- * const spanId = id.gen(8); // => "a1b2c3d4e5f6..."
- */
-/* harmony default export */ var id = ({
-  gen: gen
-});
-;// ./src/browser/replay/replayManager.js
-function replayManager_typeof(o) { "@babel/helpers - typeof"; return replayManager_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayManager_typeof(o); }
-function replayManager_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ replayManager_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == replayManager_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(replayManager_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function replayManager_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function replayManager_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-function replayManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function replayManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayManager_toPropertyKey(o.key), o); } }
-function replayManager_createClass(e, r, t) { return r && replayManager_defineProperties(e.prototype, r), t && replayManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function replayManager_defineProperty(e, r, t) { return (r = replayManager_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function replayManager_toPropertyKey(t) { var i = replayManager_toPrimitive(t, "string"); return "symbol" == replayManager_typeof(i) ? i : i + ""; }
-function replayManager_toPrimitive(t, r) { if ("object" != replayManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
-
-
-/**
- * ReplayManager - Manages the mapping between error occurrences and their associated
- * session recordings. This class handles the coordination between when recordings
- * are dumped and when they are eventually sent to the backend.
- */
-var ReplayManager = /*#__PURE__*/function () {
-  /**
-   * Creates a new ReplayManager instance
-   *
-   * @param {Object} props - Configuration props
-   * @param {Object} props.recorder - The recorder instance that dumps replay data into spans
-   * @param {Object} props.api - The API instance used to send replay payloads to the backend
-   * @param {Object} props.tracing - The tracing instance used to create spans and manage context
-   */
-  function ReplayManager(_ref) {
-    var recorder = _ref.recorder,
-      api = _ref.api,
-      tracing = _ref.tracing,
-      telemeter = _ref.telemeter;
-    replayManager_classCallCheck(this, ReplayManager);
-    replayManager_defineProperty(this, "_map", void 0);
-    replayManager_defineProperty(this, "_recorder", void 0);
-    replayManager_defineProperty(this, "_api", void 0);
-    replayManager_defineProperty(this, "_tracing", void 0);
-    replayManager_defineProperty(this, "_telemeter", void 0);
-    if (!recorder) {
-      throw new TypeError("Expected 'recorder' to be provided");
-    }
-    if (!api) {
-      throw new TypeError("Expected 'api' to be provided");
-    }
-    if (!tracing) {
-      throw new TypeError("Expected 'tracing' to be provided");
-    }
-    this._map = new Map();
-    this._recorder = recorder;
-    this._api = api;
-    this._tracing = tracing;
-    this._telemeter = telemeter;
-  }
-
-  /**
-   * Processes a replay by converting recorder events into a transport-ready payload.
-   *
-   * Calls recorder.dump() to capture events as spans, formats them into a proper payload,
-   * and stores the result in the map using replayId as the key.
-   *
-   * @param {string} replayId - The unique ID for this replay
-   * @returns {Promise<string>} A promise resolving to the processed replayId
-   * @private
-   */
-  return replayManager_createClass(ReplayManager, [{
-    key: "_processReplay",
-    value: (function () {
-      var _processReplay2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee(replayId, occurrenceUuid) {
-        var _this$_telemeter, payload;
-        return replayManager_regeneratorRuntime().wrap(function _callee$(_context) {
-          while (1) switch (_context.prev = _context.next) {
-            case 0:
-              try {
-                (_this$_telemeter = this._telemeter) === null || _this$_telemeter === void 0 || _this$_telemeter.exportTelemetrySpan({
-                  'rollbar.replay.id': replayId
-                });
-                payload = this._recorder.dump(this._tracing, replayId, occurrenceUuid);
-                this._map.set(replayId, payload);
-              } catch (transformError) {
-                logger.error('Error transforming spans:', transformError);
-                this._map.set(replayId, null); // TODO(matux): Error span?
-              }
-              return _context.abrupt("return", replayId);
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }, _callee, this);
-      }));
-      function _processReplay(_x, _x2) {
-        return _processReplay2.apply(this, arguments);
-      }
-      return _processReplay;
-    }()
-    /**
-     * Adds a replay to the map and returns a uniquely generated replay ID.
-     *
-     * This method immediately returns the replayId and asynchronously processes
-     * the replay data in the background. The processing involves converting
-     * recorder events into a payload format and storing it in the map.
-     *
-     * @returns {string} A unique identifier for this replay
-     */
-    )
-  }, {
-    key: "add",
-    value: function add(replayId, occurrenceUuid) {
-      replayId = replayId || id.gen(8);
-      this._processReplay(replayId, occurrenceUuid).catch(function (error) {
-        logger.error('Failed to process replay:', error);
-      });
-      return replayId;
-    }
-
-    /**
-     * Sends the replay payload associated with the given replayId to the backend
-     * and removes it from the map.
-     *
-     * Retrieves the payload from the map, checks if it's valid, then sends it
-     * to the API endpoint for processing. The payload can be either a spans array
-     * or a formatted OTLP payload object.
-     *
-     * @param {string} replayId - The ID of the replay to send
-     * @returns {Promise<boolean>} A promise that resolves to true if the payload was found and sent, false otherwise
-     */
-  }, {
-    key: "send",
-    value: (function () {
-      var _send = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee2(replayId) {
-        var payload, isEmpty;
-        return replayManager_regeneratorRuntime().wrap(function _callee2$(_context2) {
-          while (1) switch (_context2.prev = _context2.next) {
-            case 0:
-              if (replayId) {
-                _context2.next = 3;
-                break;
-              }
-              logger.error('ReplayManager.send: No replayId provided');
-              return _context2.abrupt("return", false);
-            case 3:
-              if (this._map.has(replayId)) {
-                _context2.next = 6;
-                break;
-              }
-              logger.error("ReplayManager.send: No replay found for replayId: ".concat(replayId));
-              return _context2.abrupt("return", false);
-            case 6:
-              payload = this._map.get(replayId);
-              this._map.delete(replayId);
-
-              // Check if payload is empty (could be raw spans array or OTLP payload)
-              isEmpty = !payload || Array.isArray(payload) && payload.length === 0 || payload.resourceSpans && payload.resourceSpans.length === 0;
-              if (!isEmpty) {
-                _context2.next = 12;
-                break;
-              }
-              logger.error("ReplayManager.send: No payload found for replayId: ".concat(replayId));
-              return _context2.abrupt("return", false);
-            case 12:
-              _context2.prev = 12;
-              _context2.next = 15;
-              return this._api.postSpans(payload, {
-                'X-Rollbar-Replay-Id': replayId
-              });
-            case 15:
-              return _context2.abrupt("return", true);
-            case 18:
-              _context2.prev = 18;
-              _context2.t0 = _context2["catch"](12);
-              logger.error('Error sending replay:', _context2.t0);
-              return _context2.abrupt("return", false);
-            case 22:
-            case "end":
-              return _context2.stop();
-          }
-        }, _callee2, this, [[12, 18]]);
-      }));
-      function send(_x3) {
-        return _send.apply(this, arguments);
-      }
-      return send;
-    }()
-    /**
-     * Discards the replay associated with the given replay ID by removing
-     * it from the map without sending it.
-     *
-     * @param {string} replayId - The ID of the replay to discard
-     * @returns {boolean} True if a replay was found and discarded, false otherwise
-     */
-    )
-  }, {
-    key: "discard",
-    value: function discard(replayId) {
-      if (!replayId) {
-        logger.error('ReplayManager.discard: No replayId provided');
-        return false;
-      }
-      if (!this._map.has(replayId)) {
-        logger.error("ReplayManager.discard: No replay found for replayId: ".concat(replayId));
-        return false;
-      }
-      this._map.delete(replayId);
-      return true;
-    }
-
-    /**
-     * Gets spans for the given replay ID
-     *
-     * @param {string} replayId - The ID to retrieve spans for
-     * @returns {Array|null} The spans array or null if not found
-     */
-  }, {
-    key: "getSpans",
-    value: function getSpans(replayId) {
-      var _this$_map$get;
-      return (_this$_map$get = this._map.get(replayId)) !== null && _this$_map$get !== void 0 ? _this$_map$get : null;
-    }
-
-    /**
-     * Sets spans for a given replay ID
-     *
-     * @param {string} replayId - The ID to set spans for
-     * @param {Array} spans - The spans to set
-     */
-  }, {
-    key: "setSpans",
-    value: function setSpans(replayId, spans) {
-      this._map.set(replayId, spans);
-    }
-
-    /**
-     * Returns the size of the map (number of stored replays)
-     *
-     * @returns {number} The number of replays currently stored
-     */
-  }, {
-    key: "size",
-    get: function get() {
-      return this._map.size;
-    }
-
-    /**
-     * Clears all stored replays without sending them
-     */
-  }, {
-    key: "clear",
-    value: function clear() {
-      this._map.clear();
-    }
-  }]);
-}();
-
 ;// ./src/defaults.js
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.3';
+var version = '3.0.0-beta.4';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -4089,6 +3554,16 @@ var scrubFields = [].concat(_toConsumableArray(commonScrubFields), ['cc-number',
   scrubFields: scrubFields
 });
 ;// ./src/browser/core.js
+var _Rollbar;
+function core_typeof(o) { "@babel/helpers - typeof"; return core_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, core_typeof(o); }
+function core_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function core_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? core_ownKeys(Object(t), !0).forEach(function (r) { core_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : core_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function core_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function core_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, core_toPropertyKey(o.key), o); } }
+function core_createClass(e, r, t) { return r && core_defineProperties(e.prototype, r), t && core_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function core_defineProperty(e, r, t) { return (r = core_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function core_toPropertyKey(t) { var i = core_toPrimitive(t, "string"); return "symbol" == core_typeof(i) ? i : i + ""; }
+function core_toPrimitive(t, r) { if ("object" != core_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != core_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -4104,479 +3579,561 @@ var scrubFields = [].concat(_toConsumableArray(commonScrubFields), ['cc-number',
 
 
 
-function core_Rollbar(options, client) {
-  this.options = handleOptions(core_defaultOptions, options, null, logger);
-  this.options._configuredOptions = options;
-  var Telemeter = this.components.telemeter;
-  var Instrumenter = this.components.instrumenter;
-  this.wrapGlobals = this.components.wrapGlobals;
-  this.scrub = this.components.scrub;
-  var truncation = this.components.truncation;
-  var Tracing = this.components.tracing;
-  var Recorder = this.components.recorder;
-  var transport = new browser_transport(truncation);
-  var api = new src_api(this.options, transport, url_namespaceObject, truncation);
-  if (Tracing) {
-    this.tracing = new Tracing(_gWindow(), this.options);
-    this.tracing.initSession();
-  }
-  if (Telemeter) {
-    this.telemeter = new Telemeter(this.options, this.tracing);
-  }
-  if (Recorder && isBrowser()) {
-    var recorderOptions = this.options.recorder;
-    this.recorder = new Recorder(recorderOptions);
-    this.replayManager = new ReplayManager({
-      recorder: this.recorder,
-      api: api,
-      tracing: this.tracing,
-      telemeter: this.telemeter
-    });
-    if (recorderOptions.enabled && recorderOptions.autoStart) {
-      this.recorder.start();
-    }
-  }
-  this.client = client || new rollbar(this.options, api, logger, this.telemeter, this.tracing, this.replayManager, 'browser');
-  var gWindow = _gWindow();
-  var gDocument = typeof document != 'undefined' && document;
-  this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
-  this.anonymousErrorsPending = 0;
-  addTransformsToNotifier(this.client.notifier, this, gWindow);
-  addPredicatesToQueue(this.client.queue);
-  this.setupUnhandledCapture();
-  if (Instrumenter) {
-    this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
-    this.instrumenter.instrument();
-  }
-
-  // Used with rollbar-react for rollbar-react-native compatibility.
-  this.rollbar = this;
-}
+// Used to support global `Rollbar` instance.
 var _instance = null;
-core_Rollbar.init = function (options, client) {
-  if (_instance) {
-    return _instance.global(options).configure(options);
-  }
-  _instance = new core_Rollbar(options, client);
-  return _instance;
-};
-core_Rollbar.prototype.components = {};
-core_Rollbar.setComponents = function (components) {
-  core_Rollbar.prototype.components = components;
-};
-function handleUninitialized(maybeCallback) {
-  var message = 'Rollbar is not initialized';
-  logger.error(message);
-  if (maybeCallback) {
-    maybeCallback(new Error(message));
-  }
-}
-core_Rollbar.prototype.global = function (options) {
-  this.client.global(options);
-  return this;
-};
-core_Rollbar.global = function (options) {
-  if (_instance) {
-    return _instance.global(options);
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.configure = function (options, payloadData) {
-  var _this$recorder;
-  var oldOptions = this.options;
-  var payload = {};
-  if (payloadData) {
-    payload = {
-      payload: payloadData
-    };
-  }
-  this.options = handleOptions(oldOptions, options, payload, logger);
-  this.options._configuredOptions = handleOptions(oldOptions._configuredOptions, options, payload);
-  (_this$recorder = this.recorder) === null || _this$recorder === void 0 || _this$recorder.configure(this.options);
-  this.client.configure(this.options, payloadData);
-  this.instrumenter && this.instrumenter.configure(this.options);
-  this.setupUnhandledCapture();
-  return this;
-};
-core_Rollbar.configure = function (options, payloadData) {
-  if (_instance) {
-    return _instance.configure(options, payloadData);
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.lastError = function () {
-  return this.client.lastError;
-};
-core_Rollbar.lastError = function () {
-  if (_instance) {
-    return _instance.lastError();
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.log = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.log(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.log = function () {
-  if (_instance) {
-    return _instance.log.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.debug = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.debug(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.debug = function () {
-  if (_instance) {
-    return _instance.debug.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.info = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.info(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.info = function () {
-  if (_instance) {
-    return _instance.info.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.warn = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.warn(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.warn = function () {
-  if (_instance) {
-    return _instance.warn.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.warning = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.warning(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.warning = function () {
-  if (_instance) {
-    return _instance.warning.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.error = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.error(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.error = function () {
-  if (_instance) {
-    return _instance.error.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.critical = function () {
-  var item = this._createItem(arguments);
-  var uuid = item.uuid;
-  this.client.critical(item);
-  return {
-    uuid: uuid
-  };
-};
-core_Rollbar.critical = function () {
-  if (_instance) {
-    return _instance.critical.apply(_instance, arguments);
-  } else {
-    var maybeCallback = _getFirstFunction(arguments);
-    handleUninitialized(maybeCallback);
-  }
-};
-core_Rollbar.prototype.buildJsonPayload = function (item) {
-  return this.client.buildJsonPayload(item);
-};
-core_Rollbar.buildJsonPayload = function () {
-  if (_instance) {
-    return _instance.buildJsonPayload.apply(_instance, arguments);
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.sendJsonPayload = function (jsonPayload) {
-  return this.client.sendJsonPayload(jsonPayload);
-};
-core_Rollbar.sendJsonPayload = function () {
-  if (_instance) {
-    return _instance.sendJsonPayload.apply(_instance, arguments);
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.setupUnhandledCapture = function () {
-  var gWindow = _gWindow();
-  if (!this.unhandledExceptionsInitialized) {
-    if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
-      captureUncaughtExceptions(gWindow, this);
-      if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
-        this.wrapGlobals(gWindow, this);
-      }
-      this.unhandledExceptionsInitialized = true;
+var core_Rollbar = /*#__PURE__*/function () {
+  function Rollbar(options, client) {
+    core_classCallCheck(this, Rollbar);
+    src_logger.init({
+      logLevel: options.logLevel || 'error'
+    });
+    this.options = handleOptions(core_defaultOptions, options, null, src_logger);
+    this.options._configuredOptions = options;
+    this.components = this.components || {};
+    var Telemeter = this.components.telemeter;
+    var Instrumenter = this.components.instrumenter;
+    this.wrapGlobals = this.components.wrapGlobals;
+    this.scrub = this.components.scrub;
+    var truncation = this.components.truncation;
+    var Tracing = this.components.tracing;
+    var ReplayManager = this.components.replayManager;
+    var transport = new browser_transport(truncation);
+    var api = new src_api(this.options, transport, url_namespaceObject, truncation);
+    if (Tracing) {
+      this.tracing = new Tracing(_gWindow(), api, this.options);
+      this.tracing.initSession();
     }
-  }
-  if (!this.unhandledRejectionsInitialized) {
-    if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
-      captureUnhandledRejections(gWindow, this);
-      this.unhandledRejectionsInitialized = true;
+    if (Telemeter) {
+      this.telemeter = new Telemeter(this.options, this.tracing);
     }
-  }
-};
-core_Rollbar.prototype.handleUncaughtException = function (message, url, lineno, colno, error, context) {
-  if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
-    return;
-  }
-
-  // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
-  // If error is undefined, we have a different caller.
-  // Chrome also sends errors from web workers with null error, but does not invoke
-  // prepareStackTrace() for these. Test for empty url to skip them.
-  if (this.options.inspectAnonymousErrors && this.isChrome && error === null && url === '') {
-    return 'anonymous';
-  }
-  var item;
-  var stackInfo = makeUnhandledStackInfo(message, url, lineno, colno, error, 'onerror', 'uncaught exception', errorParser);
-  if (isError(error)) {
-    item = this._createItem([message, error, context]);
-    item._unhandledStackInfo = stackInfo;
-  } else if (isError(url)) {
-    item = this._createItem([message, url, context]);
-    item._unhandledStackInfo = stackInfo;
-  } else {
-    item = this._createItem([message, context]);
-    item.stackInfo = stackInfo;
-  }
-  item.level = this.options.uncaughtErrorLevel;
-  item._isUncaught = true;
-  this.client.log(item);
-};
-
-/**
- * Chrome only. Other browsers will ignore.
- *
- * Use Error.prepareStackTrace to extract information about errors that
- * do not have a valid error object in onerror().
- *
- * In tested version of Chrome, onerror is called first but has no way
- * to communicate with prepareStackTrace. Use a counter to let this
- * handler know which errors to send to Rollbar.
- *
- * In config options, set inspectAnonymousErrors to enable.
- */
-core_Rollbar.prototype.handleAnonymousErrors = function () {
-  if (!this.options.inspectAnonymousErrors || !this.isChrome) {
-    return;
-  }
-  var r = this;
-  function prepareStackTrace(error, _stack) {
-    if (r.options.inspectAnonymousErrors) {
-      if (r.anonymousErrorsPending) {
-        // This is the only known way to detect that onerror saw an anonymous error.
-        // It depends on onerror reliably being called before Error.prepareStackTrace,
-        // which so far holds true on tested versions of Chrome. If versions of Chrome
-        // are tested that behave differently, this logic will need to be updated
-        // accordingly.
-        r.anonymousErrorsPending -= 1;
-        if (!error) {
-          // Not likely to get here, but calling handleUncaughtException from here
-          // without an error object would throw off the anonymousErrorsPending counter,
-          // so return now.
-          return;
-        }
-
-        // Allow this to be tracked later.
-        error._isAnonymous = true;
-
-        // url, lineno, colno shouldn't be needed for these errors.
-        // If that changes, update this accordingly, using the unused
-        // _stack param as needed (rather than parse error.toString()).
-        r.handleUncaughtException(error.message, null, null, null, error);
+    if (ReplayManager && isBrowser()) {
+      var replayOptions = this.options.replay;
+      this.replayManager = new ReplayManager({
+        tracing: this.tracing,
+        telemeter: this.telemeter,
+        options: replayOptions
+      });
+      if (replayOptions.enabled && replayOptions.autoStart) {
+        this.replayManager.recorder.start();
       }
     }
-
-    // Workaround to ensure stack is preserved for normal errors.
-    return error.stack;
-  }
-
-  // https://v8.dev/docs/stack-trace-api
-  try {
-    Error.prepareStackTrace = prepareStackTrace;
-  } catch (e) {
-    this.options.inspectAnonymousErrors = false;
-    this.error('anonymous error handler failed', e);
-  }
-};
-core_Rollbar.prototype.handleUnhandledRejection = function (reason, promise) {
-  if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
-    return;
-  }
-  var message = 'unhandled rejection was null or undefined!';
-  if (reason) {
-    if (reason.message) {
-      message = reason.message;
-    } else {
-      var reasonResult = stringify(reason);
-      if (reasonResult.value) {
-        message = reasonResult.value;
-      }
+    this.client = client || new rollbar(this.options, api, src_logger, this.telemeter, this.tracing, this.replayManager, 'browser');
+    var gWindow = _gWindow();
+    var gDocument = typeof document != 'undefined' && document;
+    this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
+    this.anonymousErrorsPending = 0;
+    addTransformsToNotifier(this.client.notifier, this, gWindow);
+    addPredicatesToQueue(this.client.queue);
+    this.setupUnhandledCapture();
+    if (Instrumenter) {
+      this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
+      this.instrumenter.instrument();
     }
+    this.setSessionAttributesFromOptions(options);
+
+    // Used with rollbar-react for rollbar-react-native compatibility.
+    this.rollbar = this;
   }
-  var context = reason && reason._rollbarContext || promise && promise._rollbarContext;
-  var item;
-  if (isError(reason)) {
-    item = this._createItem([message, reason, context]);
-  } else {
-    item = this._createItem([message, reason, context]);
-    item.stackInfo = makeUnhandledStackInfo(message, '', 0, 0, null, 'unhandledrejection', '', errorParser);
-  }
-  item.level = this.options.uncaughtErrorLevel;
-  item._isUncaught = true;
-  item._originalArgs = item._originalArgs || [];
-  item._originalArgs.push(promise);
-  this.client.log(item);
-};
-core_Rollbar.prototype.wrap = function (f, context, _before) {
-  try {
-    var ctxFn;
-    if (isFunction(context)) {
-      ctxFn = context;
-    } else {
-      ctxFn = function ctxFn() {
-        return context || {};
+  return core_createClass(Rollbar, [{
+    key: "global",
+    value: function global(options) {
+      this.client.global(options);
+      return this;
+    }
+  }, {
+    key: "configure",
+    value: function configure(options, payloadData) {
+      var _this$tracing, _this$replayManager, _this$instrumenter;
+      if (options.logLevel) {
+        src_logger.init({
+          logLevel: options.logLevel
+        });
+      }
+      this.setSessionAttributesFromOptions(options);
+      var oldOptions = this.options;
+      var payload = {};
+      if (payloadData) {
+        payload = {
+          payload: payloadData
+        };
+      }
+      this.options = handleOptions(oldOptions, options, payload, src_logger);
+      this.options._configuredOptions = handleOptions(oldOptions._configuredOptions, options, payload);
+      (_this$tracing = this.tracing) === null || _this$tracing === void 0 || _this$tracing.configure(this.options);
+      (_this$replayManager = this.replayManager) === null || _this$replayManager === void 0 || (_this$replayManager = _this$replayManager.recorder) === null || _this$replayManager === void 0 || _this$replayManager.configure(this.options);
+      this.client.configure(this.options, payloadData);
+      (_this$instrumenter = this.instrumenter) === null || _this$instrumenter === void 0 || _this$instrumenter.configure(this.options);
+      this.setupUnhandledCapture();
+      return this;
+    }
+  }, {
+    key: "lastError",
+    value: function lastError() {
+      return this.client.lastError;
+    }
+  }, {
+    key: "log",
+    value: function log() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.log(item);
+      return {
+        uuid: uuid
       };
     }
-    if (!isFunction(f)) {
-      return f;
+  }, {
+    key: "debug",
+    value: function debug() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.debug(item);
+      return {
+        uuid: uuid
+      };
     }
-    if (f._isWrap) {
-      return f;
+  }, {
+    key: "info",
+    value: function info() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.info(item);
+      return {
+        uuid: uuid
+      };
     }
-    if (!f._rollbar_wrapped) {
-      f._rollbar_wrapped = function () {
-        if (_before && isFunction(_before)) {
-          _before.apply(this, arguments);
+  }, {
+    key: "warn",
+    value: function warn() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.warn(item);
+      return {
+        uuid: uuid
+      };
+    }
+  }, {
+    key: "warning",
+    value: function warning() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.warning(item);
+      return {
+        uuid: uuid
+      };
+    }
+  }, {
+    key: "error",
+    value: function error() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.error(item);
+      return {
+        uuid: uuid
+      };
+    }
+  }, {
+    key: "critical",
+    value: function critical() {
+      var item = this._createItem(arguments);
+      var uuid = item.uuid;
+      this.client.critical(item);
+      return {
+        uuid: uuid
+      };
+    }
+  }, {
+    key: "buildJsonPayload",
+    value: function buildJsonPayload(item) {
+      return this.client.buildJsonPayload(item);
+    }
+  }, {
+    key: "sendJsonPayload",
+    value: function sendJsonPayload(jsonPayload) {
+      return this.client.sendJsonPayload(jsonPayload);
+    }
+  }, {
+    key: "setupUnhandledCapture",
+    value: function setupUnhandledCapture() {
+      var gWindow = _gWindow();
+      if (!this.unhandledExceptionsInitialized) {
+        if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+          captureUncaughtExceptions(gWindow, this);
+          if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
+            this.wrapGlobals(gWindow, this);
+          }
+          this.unhandledExceptionsInitialized = true;
         }
-        try {
-          return f.apply(this, arguments);
-        } catch (exc) {
-          var e = exc;
-          if (e && window._rollbarWrappedError !== e) {
-            if (isType(e, 'string')) {
-              e = new String(e);
+      }
+      if (!this.unhandledRejectionsInitialized) {
+        if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+          captureUnhandledRejections(gWindow, this);
+          this.unhandledRejectionsInitialized = true;
+        }
+      }
+    }
+  }, {
+    key: "handleUncaughtException",
+    value: function handleUncaughtException(message, url, lineno, colno, error, context) {
+      if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
+        return;
+      }
+
+      // Chrome will always send 5+ arguments and error will be valid or null, not undefined.
+      // If error is undefined, we have a different caller.
+      // Chrome also sends errors from web workers with null error, but does not invoke
+      // prepareStackTrace() for these. Test for empty url to skip them.
+      if (this.options.inspectAnonymousErrors && this.isChrome && error === null && url === '') {
+        return 'anonymous';
+      }
+      var item;
+      var stackInfo = makeUnhandledStackInfo(message, url, lineno, colno, error, 'onerror', 'uncaught exception', errorParser);
+      if (isError(error)) {
+        item = this._createItem([message, error, context]);
+        item._unhandledStackInfo = stackInfo;
+      } else if (isError(url)) {
+        item = this._createItem([message, url, context]);
+        item._unhandledStackInfo = stackInfo;
+      } else {
+        item = this._createItem([message, context]);
+        item.stackInfo = stackInfo;
+      }
+      item.level = this.options.uncaughtErrorLevel;
+      item._isUncaught = true;
+      this.client.log(item);
+    }
+
+    /**
+     * Chrome only. Other browsers will ignore.
+     *
+     * Use Error.prepareStackTrace to extract information about errors that
+     * do not have a valid error object in onerror().
+     *
+     * In tested version of Chrome, onerror is called first but has no way
+     * to communicate with prepareStackTrace. Use a counter to let this
+     * handler know which errors to send to Rollbar.
+     *
+     * In config options, set inspectAnonymousErrors to enable.
+     */
+  }, {
+    key: "handleAnonymousErrors",
+    value: function handleAnonymousErrors() {
+      if (!this.options.inspectAnonymousErrors || !this.isChrome) {
+        return;
+      }
+      var r = this;
+      function prepareStackTrace(error, _stack) {
+        if (r.options.inspectAnonymousErrors) {
+          if (r.anonymousErrorsPending) {
+            // This is the only known way to detect that onerror saw an anonymous error.
+            // It depends on onerror reliably being called before Error.prepareStackTrace,
+            // which so far holds true on tested versions of Chrome. If versions of Chrome
+            // are tested that behave differently, this logic will need to be updated
+            // accordingly.
+            r.anonymousErrorsPending -= 1;
+            if (!error) {
+              // Not likely to get here, but calling handleUncaughtException from here
+              // without an error object would throw off the anonymousErrorsPending counter,
+              // so return now.
+              return;
             }
-            e._rollbarContext = ctxFn() || {};
-            e._rollbarContext._wrappedSource = f.toString();
-            window._rollbarWrappedError = e;
+
+            // Allow this to be tracked later.
+            error._isAnonymous = true;
+
+            // url, lineno, colno shouldn't be needed for these errors.
+            // If that changes, update this accordingly, using the unused
+            // _stack param as needed (rather than parse error.toString()).
+            r.handleUncaughtException(error.message, null, null, null, error);
           }
-          throw e;
         }
-      };
-      f._rollbar_wrapped._isWrap = true;
-      if (f.hasOwnProperty) {
-        for (var prop in f) {
-          if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
-            f._rollbar_wrapped[prop] = f[prop];
+
+        // Workaround to ensure stack is preserved for normal errors.
+        return error.stack;
+      }
+
+      // https://v8.dev/docs/stack-trace-api
+      try {
+        Error.prepareStackTrace = prepareStackTrace;
+      } catch (e) {
+        this.options.inspectAnonymousErrors = false;
+        this.error('anonymous error handler failed', e);
+      }
+    }
+  }, {
+    key: "handleUnhandledRejection",
+    value: function handleUnhandledRejection(reason, promise) {
+      if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
+        return;
+      }
+      var message = 'unhandled rejection was null or undefined!';
+      if (reason) {
+        if (reason.message) {
+          message = reason.message;
+        } else {
+          var reasonResult = stringify(reason);
+          if (reasonResult.value) {
+            message = reasonResult.value;
           }
         }
       }
+      var context = reason && reason._rollbarContext || promise && promise._rollbarContext;
+      var item;
+      if (isError(reason)) {
+        item = this._createItem([message, reason, context]);
+      } else {
+        item = this._createItem([message, reason, context]);
+        item.stackInfo = makeUnhandledStackInfo(message, '', 0, 0, null, 'unhandledrejection', '', errorParser);
+      }
+      item.level = this.options.uncaughtErrorLevel;
+      item._isUncaught = true;
+      item._originalArgs = item._originalArgs || [];
+      item._originalArgs.push(promise);
+      this.client.log(item);
     }
-    return f._rollbar_wrapped;
-  } catch (e) {
-    // Return the original function if the wrap fails.
-    return f;
-  }
-};
-core_Rollbar.wrap = function (f, context) {
-  if (_instance) {
-    return _instance.wrap(f, context);
-  } else {
-    handleUninitialized();
-  }
-};
-core_Rollbar.prototype.captureEvent = function () {
-  var event = createTelemetryEvent(arguments);
-  return this.client.captureEvent(event.type, event.metadata, event.level);
-};
-core_Rollbar.captureEvent = function () {
-  if (_instance) {
-    return _instance.captureEvent.apply(_instance, arguments);
-  } else {
-    handleUninitialized();
-  }
-};
+  }, {
+    key: "wrap",
+    value: function wrap(f, context, _before) {
+      try {
+        var ctxFn;
+        if (isFunction(context)) {
+          ctxFn = context;
+        } else {
+          ctxFn = function ctxFn() {
+            return context || {};
+          };
+        }
+        if (!isFunction(f)) {
+          return f;
+        }
+        if (f._isWrap) {
+          return f;
+        }
+        if (!f._rollbar_wrapped) {
+          f._rollbar_wrapped = function () {
+            if (_before && isFunction(_before)) {
+              _before.apply(this, arguments);
+            }
+            try {
+              return f.apply(this, arguments);
+            } catch (exc) {
+              var e = exc;
+              if (e && window._rollbarWrappedError !== e) {
+                if (isType(e, 'string')) {
+                  e = new String(e);
+                }
+                e._rollbarContext = ctxFn() || {};
+                e._rollbarContext._wrappedSource = f.toString();
+                window._rollbarWrappedError = e;
+              }
+              throw e;
+            }
+          };
+          f._rollbar_wrapped._isWrap = true;
+          if (f.hasOwnProperty) {
+            for (var prop in f) {
+              if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
+                f._rollbar_wrapped[prop] = f[prop];
+              }
+            }
+          }
+        }
+        return f._rollbar_wrapped;
+      } catch (e) {
+        // Return the original function if the wrap fails.
+        return f;
+      }
+    }
+  }, {
+    key: "captureEvent",
+    value: function captureEvent() {
+      var event = createTelemetryEvent(arguments);
+      return this.client.captureEvent(event.type, event.metadata, event.level);
+    }
+  }, {
+    key: "setSessionUser",
+    value: function setSessionUser(user) {
+      var _this$tracing2;
+      if (!((_this$tracing2 = this.tracing) !== null && _this$tracing2 !== void 0 && _this$tracing2.session)) return;
+      this.tracing.session.setUser(user);
+    }
+  }, {
+    key: "setSessionAttributes",
+    value: function setSessionAttributes(attrs) {
+      var _this$tracing3;
+      if (!((_this$tracing3 = this.tracing) !== null && _this$tracing3 !== void 0 && _this$tracing3.session)) return;
+      attrs = core_objectSpread({}, attrs);
+      this.tracing.session.setAttributes(attrs);
+    }
+  }, {
+    key: "setSessionAttributesFromOptions",
+    value: function setSessionAttributesFromOptions(options) {
+      var _options$payload, _options$client, _options$payload2, _options$payload3, _options$payload4;
+      var person = options.person || ((_options$payload = options.payload) === null || _options$payload === void 0 ? void 0 : _options$payload.person);
+      if (person) {
+        this.setSessionUser(person);
+      }
+      var code_version = ((_options$client = options.client) === null || _options$client === void 0 || (_options$client = _options$client.javascript) === null || _options$client === void 0 ? void 0 : _options$client.code_version) || options.codeVersion || options.code_version || ((_options$payload2 = options.payload) === null || _options$payload2 === void 0 || (_options$payload2 = _options$payload2.client) === null || _options$payload2 === void 0 || (_options$payload2 = _options$payload2.javascript) === null || _options$payload2 === void 0 ? void 0 : _options$payload2.code_version) || ((_options$payload3 = options.payload) === null || _options$payload3 === void 0 ? void 0 : _options$payload3.code_version) || ((_options$payload4 = options.payload) === null || _options$payload4 === void 0 ? void 0 : _options$payload4.codeVersion);
+      this.setSessionAttributes({
+        'rollbar.codeVersion': code_version,
+        'rollbar.notifier.name': 'rollbar-browser-js',
+        'rollbar.notifier.version': options.version
+      });
+    }
 
-// The following two methods are used internally and are not meant for public use
-core_Rollbar.prototype.captureDomContentLoaded = function (e, ts) {
-  if (!ts) {
-    ts = new Date();
-  }
-  return this.client.captureDomContentLoaded(ts);
-};
-core_Rollbar.prototype.captureLoad = function (e, ts) {
-  if (!ts) {
-    ts = new Date();
-  }
-  return this.client.captureLoad(ts);
-};
+    // The following two methods are used internally and are not meant for public use
+  }, {
+    key: "captureDomContentLoaded",
+    value: function captureDomContentLoaded(e, ts) {
+      if (!ts) {
+        ts = new Date();
+      }
+      return this.client.captureDomContentLoaded(ts);
+    }
+  }, {
+    key: "captureLoad",
+    value: function captureLoad(e, ts) {
+      if (!ts) {
+        ts = new Date();
+      }
+      return this.client.captureLoad(ts);
+    }
+  }, {
+    key: "loadFull",
+    value: function loadFull() {
+      src_logger.info('Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.');
+    }
+  }, {
+    key: "_createItem",
+    value: function _createItem(args) {
+      return createItem(args, src_logger, this);
+    }
 
+    // Static version of instance methods support the legacy pattern of a
+    // global `Rollbar` instance, where after calling `Rollbar.init()`,
+    // `Rollbar` can be used as if it were an instance.
+    // If support for this pattern is dropped, these static methods can be removed.
+  }], [{
+    key: "init",
+    value: function init(options, client) {
+      if (_instance) {
+        return _instance.global(options).configure(options);
+      }
+      _instance = new Rollbar(options, client);
+      return _instance;
+    }
+  }, {
+    key: "setComponents",
+    value: function setComponents(components) {
+      Rollbar.prototype.components = components;
+    }
+  }, {
+    key: "callInstance",
+    value: function callInstance(method, args) {
+      if (!_instance) {
+        var message = 'Rollbar is not initialized';
+        src_logger.error(message);
+        var maybeCallback = _getFirstFunction(args);
+        if (maybeCallback) {
+          maybeCallback(new Error(message));
+        }
+        return;
+      }
+      return _instance[method].apply(_instance, args);
+    }
+  }]);
+}();
 /* Internal */
-
+_Rollbar = core_Rollbar;
+core_defineProperty(core_Rollbar, "global", function () {
+  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+    args[_key] = arguments[_key];
+  }
+  return _Rollbar.callInstance('global', args);
+});
+core_defineProperty(core_Rollbar, "configure", function () {
+  for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    args[_key2] = arguments[_key2];
+  }
+  return _Rollbar.callInstance('configure', args);
+});
+core_defineProperty(core_Rollbar, "lastError", function () {
+  for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    args[_key3] = arguments[_key3];
+  }
+  return _Rollbar.callInstance('lastError', args);
+});
+core_defineProperty(core_Rollbar, "log", function () {
+  for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    args[_key4] = arguments[_key4];
+  }
+  return _Rollbar.callInstance('log', args);
+});
+core_defineProperty(core_Rollbar, "debug", function () {
+  for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+    args[_key5] = arguments[_key5];
+  }
+  return _Rollbar.callInstance('debug', args);
+});
+core_defineProperty(core_Rollbar, "info", function () {
+  for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+    args[_key6] = arguments[_key6];
+  }
+  return _Rollbar.callInstance('info', args);
+});
+core_defineProperty(core_Rollbar, "warn", function () {
+  for (var _len7 = arguments.length, args = new Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+    args[_key7] = arguments[_key7];
+  }
+  return _Rollbar.callInstance('warn', args);
+});
+core_defineProperty(core_Rollbar, "warning", function () {
+  for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+    args[_key8] = arguments[_key8];
+  }
+  return _Rollbar.callInstance('warning', args);
+});
+core_defineProperty(core_Rollbar, "error", function () {
+  for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+    args[_key9] = arguments[_key9];
+  }
+  return _Rollbar.callInstance('error', args);
+});
+core_defineProperty(core_Rollbar, "critical", function () {
+  for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+    args[_key10] = arguments[_key10];
+  }
+  return _Rollbar.callInstance('critical', args);
+});
+core_defineProperty(core_Rollbar, "buildJsonPayload", function () {
+  for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+    args[_key11] = arguments[_key11];
+  }
+  return _Rollbar.callInstance('buildJsonPayload', args);
+});
+core_defineProperty(core_Rollbar, "sendJsonPayload", function () {
+  for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+    args[_key12] = arguments[_key12];
+  }
+  return _Rollbar.callInstance('sendJsonPayload', args);
+});
+core_defineProperty(core_Rollbar, "wrap", function () {
+  for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+    args[_key13] = arguments[_key13];
+  }
+  return _Rollbar.callInstance('wrap', args);
+});
+core_defineProperty(core_Rollbar, "captureEvent", function () {
+  for (var _len14 = arguments.length, args = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+    args[_key14] = arguments[_key14];
+  }
+  return _Rollbar.callInstance('captureEvent', args);
+});
 function addTransformsToNotifier(notifier, rollbar, gWindow) {
-  notifier.addTransform(handleDomException).addTransform(handleItemWithError).addTransform(ensureItemHasSomethingToSay).addTransform(addBaseInfo).addTransform(addRequestInfo(gWindow)).addTransform(addClientInfo(gWindow)).addTransform(addPluginInfo(gWindow)).addTransform(addBody).addTransform(addMessageWithError).addTransform(addTelemetryData).addTransform(addConfigToPayload).addTransform(addScrubber(rollbar.scrub)).addTransform(addPayloadOptions).addTransform(userTransform(logger)).addTransform(addConfiguredOptions).addTransform(addDiagnosticKeys).addTransform(itemToPayload);
+  notifier.addTransform(handleDomException).addTransform(handleItemWithError).addTransform(ensureItemHasSomethingToSay).addTransform(addBaseInfo).addTransform(addRequestInfo(gWindow)).addTransform(addClientInfo(gWindow)).addTransform(addPluginInfo(gWindow)).addTransform(addBody).addTransform(addMessageWithError).addTransform(addTelemetryData).addTransform(addConfigToPayload).addTransform(addScrubber(rollbar.scrub)).addTransform(addPayloadOptions).addTransform(userTransform(src_logger)).addTransform(addConfiguredOptions).addTransform(addDiagnosticKeys).addTransform(itemToPayload);
 }
 function addPredicatesToQueue(queue) {
-  queue.addPredicate(checkLevel).addPredicate(checkIgnore).addPredicate(userCheckIgnore(logger)).addPredicate(urlIsNotBlockListed(logger)).addPredicate(urlIsSafeListed(logger)).addPredicate(messageIsIgnored(logger));
+  queue.addPredicate(checkLevel).addPredicate(checkIgnore).addPredicate(userCheckIgnore(src_logger)).addPredicate(urlIsNotBlockListed(src_logger)).addPredicate(urlIsSafeListed(src_logger)).addPredicate(messageIsIgnored(src_logger));
 }
-core_Rollbar.prototype.loadFull = function () {
-  logger.info('Unexpected Rollbar.loadFull() called on a Notifier instance. This can happen when Rollbar is loaded multiple times.');
-};
-core_Rollbar.prototype._createItem = function (args) {
-  return createItem(args, logger, this);
-};
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
     if (isFunction(args[i])) {
@@ -4607,7 +4164,7 @@ var core_defaultOptions = {
   inspectAnonymousErrors: true,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
-  recorder: defaults,
+  replay: defaults,
   tracing: tracing_defaults
 };
 /* harmony default export */ var core = (core_Rollbar);
@@ -4900,7 +4457,7 @@ var Telemeter = /*#__PURE__*/function () {
       event.otelAttributes['endTimeUnixNano'] = fromMillis(timestamp);
       event.otelAttributes['durationUnixNano'] = fromMillis(duration);
       event.otelAttributes.count = (event.otelAttributes.count || 1) + 1;
-      event.otelAttributes.ratio = event.otelAttributes.count / (duration / 1000);
+      event.otelAttributes.rate = event.otelAttributes.count / (duration / 1000);
     }
   }, {
     key: "_lastEvent",
@@ -5395,7 +4952,6 @@ function elementArrayToString(a) {
 function domUtility_elementString(elem) {
   return elementArrayToString(treeToArray(elem));
 }
-;
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {
     return '';
@@ -6187,9 +5743,9 @@ var Instrumenter = /*#__PURE__*/function () {
     }
 
     /*
-    * Uses the `input` event for everything except radio and checkbox inputs.
-    * For those, it uses the `change` event.
-    */
+     * Uses the `input` event for everything except radio and checkbox inputs.
+     * For those, it uses the `change` event.
+     */
   }, {
     key: "handleInput",
     value: function handleInput(evt) {
@@ -6371,7 +5927,6 @@ var Instrumenter = /*#__PURE__*/function () {
     }
   }]);
 }();
-;
 function _isUrlObject(input) {
   return typeof URL !== 'undefined' && input instanceof URL;
 }
@@ -6600,6 +6155,34 @@ function createContextKey(key) {
   // Use Symbol for OpenTelemetry compatibility.
   return Symbol.for(key);
 }
+;// ./src/tracing/id.js
+/**
+ * Generate a random hexadecimal ID of specified byte length
+ *
+ * @param {number} bytes - Number of bytes for the ID (default: 16)
+ * @returns {string} - Hexadecimal string representation
+ */
+function gen() {
+  var bytes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 16;
+  var randomBytes = new Uint8Array(bytes);
+  crypto.getRandomValues(randomBytes);
+  var randHex = Array.from(randomBytes, function (byte) {
+    return byte.toString(16).padStart(2, '0');
+  }).join('');
+  return randHex;
+}
+
+/**
+ * Tracing id generation utils
+ *
+ * @example
+ * import id from './id.js';
+ *
+ * const spanId = id.gen(8); // => "a1b2c3d4e5f6..."
+ */
+/* harmony default export */ var id = ({
+  gen: gen
+});
 ;// ./src/tracing/session.js
 function session_typeof(o) { "@babel/helpers - typeof"; return session_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, session_typeof(o); }
 function session_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -6625,10 +6208,13 @@ var Session = /*#__PURE__*/function () {
   return session_createClass(Session, [{
     key: "init",
     value: function init() {
+      var attrs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       if (this.session) {
         return this;
       }
-      return this.getSession() || this.createSession();
+      this.getSession() || this.createSession();
+      this.initSessionAttributes(attrs);
+      return this;
     }
   }, {
     key: "getSession",
@@ -6673,6 +6259,33 @@ var Session = /*#__PURE__*/function () {
     key: "setAttributes",
     value: function setAttributes(attributes) {
       this._attributes = session_objectSpread(session_objectSpread({}, this._attributes), attributes);
+      return this;
+    }
+  }, {
+    key: "setUser",
+    value: function setUser(user) {
+      this.setAttributes({
+        'user.id': user === null || user === void 0 ? void 0 : user.id,
+        'user.email': user === null || user === void 0 ? void 0 : user.email,
+        'user.name': (user === null || user === void 0 ? void 0 : user.name) || (user === null || user === void 0 ? void 0 : user.username)
+      });
+      return this;
+    }
+  }, {
+    key: "initSessionAttributes",
+    value: function initSessionAttributes(attrs) {
+      var _navigator$userAgentD, _navigator$userAgentD2, _navigator$userAgentD3;
+      this.setAttributes(session_objectSpread({
+        'session.id': this.session.id,
+        'browser.brands': (_navigator$userAgentD = navigator.userAgentData) === null || _navigator$userAgentD === void 0 ? void 0 : _navigator$userAgentD.brands,
+        'browser.language': navigator.language,
+        'browser.mobile': (_navigator$userAgentD2 = navigator.userAgentData) === null || _navigator$userAgentD2 === void 0 ? void 0 : _navigator$userAgentD2.mobile,
+        'browser.platform': (_navigator$userAgentD3 = navigator.userAgentData) === null || _navigator$userAgentD3 === void 0 ? void 0 : _navigator$userAgentD3.platform,
+        'client.address': '$remote_ip',
+        // updated at the API
+        'rollbar.notifier.framework': 'browser-js',
+        'user_agent.original': navigator.userAgent
+      }, attrs));
       return this;
     }
   }]);
@@ -6730,12 +6343,16 @@ function add(a, b) {
 /**
  * Get the current high-resolution time as an OpenTelemetry hrtime tuple.
  *
- * Uses the Performance API (timeOrigin + now()).
+ * @param {boolean} usePerformance=false - If true, uses the Performance API (timeOrigin + now()).
  *
  * @returns {[number, number]} The current hrtime tuple [s, ns].
  */
 function now() {
-  return add(hrtime_fromMillis(performance.timeOrigin), hrtime_fromMillis(performance.now()));
+  var usePerformance = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+  if (usePerformance) {
+    return add(hrtime_fromMillis(performance.timeOrigin), hrtime_fromMillis(performance.now()));
+  }
+  return hrtime_fromMillis(Date.now());
 }
 
 /**
@@ -6803,19 +6420,22 @@ function exporter_toPrimitive(t, r) { if ("object" != exporter_typeof(t) || !t) 
  * and transforming them into the OTLP-compatible format.
  */
 var SpanExporter = /*#__PURE__*/function () {
-  function SpanExporter() {
+  function SpanExporter(api) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     exporter_classCallCheck(this, SpanExporter);
+    this.api = api;
+    this.options = options;
   }
+
+  /**
+   * Export spans to the span export queue
+   *
+   * @param {Array} spans - Array of ReadableSpan objects to export
+   * @param {Function} _resultCallback - Optional callback (not used)
+   */
   return exporter_createClass(SpanExporter, [{
     key: "export",
-    value:
-    /**
-     * Export spans to the span export queue
-     *
-     * @param {Array} spans - Array of ReadableSpan objects to export
-     * @param {Function} _resultCallback - Optional callback (not used)
-     */
-    function _export(spans, _resultCallback) {
+    value: function _export(spans, _resultCallback) {
       spanExportQueue.push.apply(spanExportQueue, exporter_toConsumableArray(spans));
     }
 
@@ -6873,6 +6493,20 @@ var SpanExporter = /*#__PURE__*/function () {
           })
         }]
       };
+    }
+
+    /**
+     * Sends the given payload to the Rollbar API.
+     *
+     * @param {String} payload - Serialized OTLP format payload
+     * @param {Object} headers - Optional request headers
+     * @returns {Promise} Promise that resolves when the request completes
+     */
+  }, {
+    key: "post",
+    value: function post(payload) {
+      var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return this.api.postSpans(payload, headers);
     }
 
     /**
@@ -7041,10 +6675,13 @@ function spanProcessor_defineProperties(e, r) { for (var t = 0; t < r.length; t+
 function spanProcessor_createClass(e, r, t) { return r && spanProcessor_defineProperties(e.prototype, r), t && spanProcessor_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function spanProcessor_toPropertyKey(t) { var i = spanProcessor_toPrimitive(t, "string"); return "symbol" == spanProcessor_typeof(i) ? i : i + ""; }
 function spanProcessor_toPrimitive(t, r) { if ("object" != spanProcessor_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != spanProcessor_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 var SpanProcessor = /*#__PURE__*/function () {
   function SpanProcessor(exporter) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     spanProcessor_classCallCheck(this, SpanProcessor);
     this.exporter = exporter;
+    this.options = options;
     this.pendingSpans = new Map();
   }
   return spanProcessor_createClass(SpanProcessor, [{
@@ -7055,6 +6692,15 @@ var SpanProcessor = /*#__PURE__*/function () {
   }, {
     key: "onEnd",
     value: function onEnd(span) {
+      try {
+        if (this.options.transformSpan) {
+          this.options.transformSpan({
+            span: span.span
+          });
+        }
+      } catch (e) {
+        src_logger.error('Error running transformSpan callback', e);
+      }
       this.exporter.export([span.export()]);
       this.pendingSpans.delete(span.span.spanContext.spanId);
     }
@@ -7077,6 +6723,7 @@ function span_toPrimitive(t, r) { if ("object" != span_typeof(t) || !t) return t
 var Span = /*#__PURE__*/function () {
   function Span(options) {
     span_classCallCheck(this, Span);
+    this.usePerformance = options.usePerformance;
     this.initReadableSpan(options);
     this.spanProcessor = options.spanProcessor;
     this.spanProcessor.onStart(this, options.context);
@@ -7088,19 +6735,20 @@ var Span = /*#__PURE__*/function () {
   return span_createClass(Span, [{
     key: "initReadableSpan",
     value: function initReadableSpan(options) {
+      var _options$session;
       this.span = {
         name: options.name,
         kind: options.kind,
         spanContext: options.spanContext,
         parentSpanId: options.parentSpanId,
-        startTime: options.startTime || hrtime.now(),
+        startTime: options.startTime || hrtime.now(options.usePerformance),
         endTime: [0, 0],
         status: {
           code: 0,
           message: ''
         },
         attributes: {
-          'session.id': options.session.id
+          'session.id': (_options$session = options.session) === null || _options$session === void 0 ? void 0 : _options$session.id
         },
         links: [],
         events: [],
@@ -7170,7 +6818,7 @@ var Span = /*#__PURE__*/function () {
     key: "end",
     value: function end(attributes, time) {
       if (attributes) this.setAttributes(attributes);
-      this.span.endTime = time || hrtime.now();
+      this.span.endTime = time || hrtime.now(this.usePerformance);
       this.span.ended = true;
       this.spanProcessor.onEnd(this);
     }
@@ -7183,6 +6831,9 @@ var Span = /*#__PURE__*/function () {
 }();
 ;// ./src/tracing/tracer.js
 function tracer_typeof(o) { "@babel/helpers - typeof"; return tracer_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, tracer_typeof(o); }
+function tracer_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function tracer_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? tracer_ownKeys(Object(t), !0).forEach(function (r) { tracer_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : tracer_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function tracer_defineProperty(e, r, t) { return (r = tracer_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function tracer_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function tracer_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, tracer_toPropertyKey(o.key), o); } }
 function tracer_createClass(e, r, t) { return r && tracer_defineProperties(e.prototype, r), t && tracer_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
@@ -7199,6 +6850,7 @@ var Tracer = /*#__PURE__*/function () {
   return tracer_createClass(Tracer, [{
     key: "startSpan",
     value: function startSpan(name) {
+      var _this$tracing$resourc, _options$resource;
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tracing.contextManager.active();
       var parentSpan = this.tracing.getSpan(context);
@@ -7222,8 +6874,11 @@ var Tracer = /*#__PURE__*/function () {
         traceFlags: traceFlags,
         traceState: traceState
       };
+      var resource = {
+        attributes: tracer_objectSpread(tracer_objectSpread({}, ((_this$tracing$resourc = this.tracing.resource) === null || _this$tracing$resourc === void 0 ? void 0 : _this$tracing$resourc.attributes) || {}), ((_options$resource = options.resource) === null || _options$resource === void 0 ? void 0 : _options$resource.attributes) || {})
+      };
       var span = new Span({
-        resource: this.tracing.resource,
+        resource: resource,
         scope: this.tracing.scope,
         session: this.tracing.session.session,
         context: context,
@@ -7232,7 +6887,8 @@ var Tracer = /*#__PURE__*/function () {
         kind: kind,
         parentSpanId: parentSpanId,
         spanProcessor: this.spanProcessor,
-        startTime: options.startTime
+        startTime: options.startTime,
+        usePerformance: options.usePerformance
       });
       return span;
     }
@@ -7256,14 +6912,23 @@ function tracing_toPrimitive(t, r) { if ("object" != tracing_typeof(t) || !t) re
 
 var SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 var Tracing = /*#__PURE__*/function () {
-  function Tracing(gWindow, options) {
+  function Tracing(gWindow, api, options) {
     tracing_classCallCheck(this, Tracing);
+    this.api = api;
     this.options = options;
     this.window = gWindow;
-    this.session = new Session(this, options);
+    if (this.window.sessionStorage) {
+      this.session = new Session(this, options);
+    }
     this.createTracer();
   }
   return tracing_createClass(Tracing, [{
+    key: "configure",
+    value: function configure(options) {
+      // Options merge happens before configure is called, so we can just replace.
+      this.options = options;
+    }
+  }, {
     key: "initSession",
     value: function initSession() {
       if (this.session) {
@@ -7306,8 +6971,8 @@ var Tracing = /*#__PURE__*/function () {
     key: "createTracer",
     value: function createTracer() {
       this.contextManager = new ContextManager();
-      this.exporter = new SpanExporter();
-      this.spanProcessor = new SpanProcessor(this.exporter);
+      this.exporter = new SpanExporter(this.api, this.options);
+      this.spanProcessor = new SpanProcessor(this.exporter, this.options.tracing);
       this.tracer = new Tracer(this, this.spanProcessor);
     }
   }, {
@@ -21573,7 +21238,7 @@ var types_NodeType = /* @__PURE__ */function (NodeType2) {
 }(types_NodeType || {});
 
 ;// ./src/browser/replay/recorder.js
-var recorder_excluded = ["enabled", "autoStart", "maxSeconds", "triggers", "debug", "emit", "checkoutEveryNms"];
+var recorder_excluded = ["enabled", "autoStart", "maxSeconds", "postDuration", "triggers", "debug", "emit", "checkoutEveryNms"];
 function recorder_typeof(o) { "@babel/helpers - typeof"; return recorder_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, recorder_typeof(o); }
 function recorder_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = recorder_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function recorder_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return recorder_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? recorder_arrayLikeToArray(r, a) : void 0; } }
@@ -21592,34 +21257,45 @@ function recorder_toPrimitive(t, r) { if ("object" != recorder_typeof(t) || !t) 
 
 
 
+
+/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 var Recorder = /*#__PURE__*/function () {
   /**
    * Creates a new Recorder instance for capturing DOM events
    *
    * @param {Object} options - Configuration options for the recorder
-   * @param {Function} [recordFn=rrwebRecordFn] - The recording function to use
    */
   function Recorder(options) {
-    var recordFn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : record;
     recorder_classCallCheck(this, Recorder);
     recorder_defineProperty(this, "_options", void 0);
     recorder_defineProperty(this, "_rrwebOptions", void 0);
+    recorder_defineProperty(this, "_isReady", false);
     recorder_defineProperty(this, "_stopFn", null);
     recorder_defineProperty(this, "_recordFn", void 0);
-    recorder_defineProperty(this, "_events", {
-      previous: [],
-      current: []
-    });
-    if (!recordFn) {
-      throw new TypeError("Expected 'recordFn' to be provided");
-    }
+    /** A two-slot ring buffer for storing events. */
+    recorder_defineProperty(this, "_buffers", [[], []]);
+    /** Active slot index (0|1). Stores new events until next checkout. */
+    recorder_defineProperty(this, "_currentSlot", 0);
     this.options = options;
-    this._recordFn = recordFn;
+
+    // Tests inject a custom rrweb record function or mock.
+    this._recordFn = options.recordFn || record;
   }
   return recorder_createClass(Recorder, [{
+    key: "_previousSlot",
+    get: /** Index of the finalized inactive slot (0|1). Frozen until next checkout. */
+    function get() {
+      return this._currentSlot ^ 1;
+    }
+  }, {
     key: "isRecording",
     get: function get() {
       return this._stopFn !== null;
+    }
+  }, {
+    key: "isReady",
+    get: function get() {
+      return this._isReady;
     }
   }, {
     key: "options",
@@ -21635,6 +21311,7 @@ var Recorder = /*#__PURE__*/function () {
       var enabled = newOptions.enabled,
         autoStart = newOptions.autoStart,
         maxSeconds = newOptions.maxSeconds,
+        postDuration = newOptions.postDuration,
         triggers = newOptions.triggers,
         debug = newOptions.debug,
         emit = newOptions.emit,
@@ -21644,6 +21321,7 @@ var Recorder = /*#__PURE__*/function () {
         enabled: enabled,
         autoStart: autoStart,
         maxSeconds: maxSeconds,
+        postDuration: postDuration,
         triggers: triggers,
         debug: debug
       };
@@ -21652,41 +21330,62 @@ var Recorder = /*#__PURE__*/function () {
         this.stop();
       }
     }
+
+    /**
+     * Calculates the checkout interval in milliseconds.
+     *
+     * Recording may span up to two checkout intervals, so the interval is set
+     * to half of maxSeconds to ensure coverage.
+     *
+     * @returns {number} Checkout interval in milliseconds
+     */
   }, {
     key: "checkoutEveryNms",
     value: function checkoutEveryNms() {
-      // Recording may be up to two checkout intervals, therefore the checkout
-      // interval is set to half of the maxSeconds.
       return (this.options.maxSeconds || 10) * 1000 / 2;
     }
 
     /**
-     * Converts recorded events into a formatted payload ready for transport.
+     * Returns a point-in-time cursor for the active buffer.
      *
-     * This method takes the recorder's stored events, creates a new span with the
-     * provided tracing context, attaches all events with their timestamps as span
-     * events, and then returns a payload ready for transport to the server.
+     * Used to capture a stable cursor that survives a single checkout.
      *
-     * @param {Object} tracing - The tracing system instance to create spans
-     * @param {string} replayId - Unique identifier to associate with this replay recording
-     * @returns {Object|null} A formatted payload containing spans data in OTLP format, or null if no events exist
+     * @remarks
+     *
+     * While offset can be `-1` if the buffer is empty, this cannot occur when
+     * `_isReady` is `true`. The emit callback always pushes the triggering event
+     * after any buffer reset, ensuring the active buffer has at least one event.
+     *
+     * @returns {BufferCursor} Buffer slot and event exclusive offset.
      */
   }, {
-    key: "dump",
-    value: function dump(tracing, replayId, occurrenceUuid) {
+    key: "bufferCursor",
+    value: function bufferCursor() {
+      return {
+        slot: this._currentSlot,
+        offset: this._buffers[this._currentSlot].length - 1
+      };
+    }
+
+    /**
+     * Exports the recording span with all recorded events or events after a cursor.
+     *
+     * @param {Object} tracing - The tracing system instance to create spans
+     * @param {Object} attributes - Span attributes (rollbar.replay.id, etc.)
+     * @param {BufferCursor} [cursor] - Cursor position to start from (exclusive), or all if not provided
+     */
+  }, {
+    key: "exportRecordingSpan",
+    value: function exportRecordingSpan(tracing) {
       var _tracing$session$attr, _tracing$session;
-      var events = this._events.previous.concat(this._events.current);
-      if (events.length < 2) {
-        logger.error('Replay recording cannot have less than 2 events');
-        return null;
+      var attributes = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var cursor = arguments.length > 2 ? arguments[2] : undefined;
+      var events = cursor ? this._collectEventsFromCursor(cursor) : this._collectAll();
+      if (events.length === 0) {
+        throw new Error('Replay recording has no events');
       }
       var recordingSpan = tracing.startSpan('rrweb-replay-recording', {});
-      recordingSpan.setAttributes(recorder_objectSpread(recorder_objectSpread({}, (_tracing$session$attr = (_tracing$session = tracing.session) === null || _tracing$session === void 0 ? void 0 : _tracing$session.attributes) !== null && _tracing$session$attr !== void 0 ? _tracing$session$attr : {}), {}, {
-        'rollbar.replay.id': replayId
-      }));
-      if (occurrenceUuid) {
-        recordingSpan.setAttribute('rollbar.occurrence.uuid', occurrenceUuid);
-      }
+      recordingSpan.setAttributes(recorder_objectSpread(recorder_objectSpread({}, (_tracing$session$attr = (_tracing$session = tracing.session) === null || _tracing$session === void 0 ? void 0 : _tracing$session.attributes) !== null && _tracing$session$attr !== void 0 ? _tracing$session$attr : {}), attributes));
       var earliestEvent = events.reduce(function (earliestEvent, event) {
         return event.timestamp < earliestEvent.timestamp ? event : earliestEvent;
       });
@@ -21706,9 +21405,7 @@ var Recorder = /*#__PURE__*/function () {
       } finally {
         _iterator.f();
       }
-      this._addEndEvent(recordingSpan, replayId);
       recordingSpan.end();
-      return tracing.exporter.toPayload();
     }
   }, {
     key: "start",
@@ -21721,20 +21418,23 @@ var Recorder = /*#__PURE__*/function () {
       this._stopFn = this._recordFn(recorder_objectSpread({
         emit: function emit(event, isCheckout) {
           var _this$options$debug;
+          if (!_this._isReady && event.type === types_EventType.FullSnapshot) {
+            _this._isReady = true;
+          }
           if ((_this$options$debug = _this.options.debug) !== null && _this$options$debug !== void 0 && _this$options$debug.logEmits) {
-            _this._logEvent(event, isCheckout);
+            Recorder._logEvent(event, isCheckout);
           }
           if (isCheckout && event.type === types_EventType.Meta) {
-            _this._events.previous = _this._events.current;
-            _this._events.current = [];
+            _this._currentSlot = _this._previousSlot;
+            _this._buffers[_this._currentSlot] = [];
           }
-          _this._events.current.push(event);
+          _this._buffers[_this._currentSlot].push(event);
         },
         checkoutEveryNms: this.checkoutEveryNms(),
         errorHandler: function errorHandler(error) {
           var _this$options$debug2;
           if ((_this$options$debug2 = _this.options.debug) !== null && _this$options$debug2 !== void 0 && _this$options$debug2.logErrors) {
-            logger.error('Error during replay recording', error);
+            src_logger.error('Error during replay recording', error);
           }
           return true; // swallow the error instead of throwing it to the window
         }
@@ -21749,20 +21449,98 @@ var Recorder = /*#__PURE__*/function () {
       }
       this._stopFn();
       this._stopFn = null;
+      this._isReady = false;
       return this;
     }
   }, {
     key: "clear",
     value: function clear() {
-      this._events = {
-        previous: [],
-        current: []
+      this._buffers = [[], []];
+      this._currentSlot = 0;
+      this._isReady = false;
+    }
+
+    /**
+     * Collects all events (previous ⊕ current) and returns a new array with a
+     * trailing `replay.end` marker.
+     *
+     * @returns {Array} All events with replay.end marker
+     * @private
+     */
+  }, {
+    key: "_collectAll",
+    value: function _collectAll() {
+      var previousEvents = this._buffers[this._previousSlot];
+      var currentEvents = this._buffers[this._currentSlot];
+      var allEvents = previousEvents.concat(currentEvents);
+      if (allEvents.length > 0) {
+        allEvents.push(Recorder._replayEndEvent());
+      }
+      return allEvents;
+    }
+
+    /**
+     * Collects events strictly after `cursor` (exclusive) and returns a new
+     * array with `replay.end`.
+     *
+     * @param {BufferCursor} cursor - Cursor position to collect from
+     * @returns {Array} Events after cursor with replay.end marker
+     * @private
+     */
+  }, {
+    key: "_collectEventsFromCursor",
+    value: function _collectEventsFromCursor(cursor) {
+      var _this$_buffers$cursor, _this$options$debug3;
+      var currentSlot = this._currentSlot;
+      var capturedBuffer = (_this$_buffers$cursor = this._buffers[cursor.slot]) !== null && _this$_buffers$cursor !== void 0 ? _this$_buffers$cursor : [];
+      var currentBuffer = this._buffers[currentSlot];
+      var head = capturedBuffer.slice(Math.max(0, cursor.offset + 1));
+      var tail = cursor.slot === currentSlot ? [] : currentBuffer;
+      var events = head.concat(tail);
+      if ((_this$options$debug3 = this.options.debug) !== null && _this$options$debug3 !== void 0 && _this$options$debug3.logErrors) {
+        if (cursor.slot !== currentSlot && head.length === 0) {
+          src_logger.warn('Captured lead buffer cleared by multiple checkouts');
+        }
+      }
+      if (events.length > 0) {
+        events.push(Recorder._replayEndEvent());
+      }
+      return events;
+    }
+
+    /**
+     * Creates a replay.end noop marker event.
+     *
+     * Helps the application correctly align playback when added at the end of
+     * the recording.
+     *
+     * @returns {Object} replay.end event
+     * @private
+     */
+  }], [{
+    key: "_replayEndEvent",
+    value: function _replayEndEvent() {
+      return {
+        type: types_EventType.Custom,
+        timestamp: Date.now(),
+        data: {
+          tag: 'replay.end',
+          payload: {}
+        }
       };
     }
+
+    /**
+     * Logs an event for debugging purposes.
+     *
+     * @param {Object} event - The event to log
+     * @param {boolean} isCheckout - Whether this is a checkout event
+     * @private
+     */
   }, {
     key: "_logEvent",
     value: function _logEvent(event, isCheckout) {
-      logger.log("Recorder: ".concat(isCheckout ? 'checkout' : '', " event\n"), function (e) {
+      src_logger.log("Recorder: ".concat(isCheckout ? 'checkout' : '', " event\n"), function (e) {
         var seen = new WeakSet();
         return JSON.stringify(e, function (_, v) {
           if (recorder_typeof(v) === 'object' && v !== null) {
@@ -21773,21 +21551,735 @@ var Recorder = /*#__PURE__*/function () {
         }, 2);
       }(event));
     }
+  }]);
+}();
+
+;// ./src/browser/replay/replayPredicates.js
+function replayPredicates_typeof(o) { "@babel/helpers - typeof"; return replayPredicates_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayPredicates_typeof(o); }
+function replayPredicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = replayPredicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function replayPredicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return replayPredicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? replayPredicates_arrayLikeToArray(r, a) : void 0; } }
+function replayPredicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function replayPredicates_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function replayPredicates_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? replayPredicates_ownKeys(Object(t), !0).forEach(function (r) { replayPredicates_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : replayPredicates_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function replayPredicates_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function replayPredicates_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayPredicates_toPropertyKey(o.key), o); } }
+function replayPredicates_createClass(e, r, t) { return r && replayPredicates_defineProperties(e.prototype, r), t && replayPredicates_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function replayPredicates_defineProperty(e, r, t) { return (r = replayPredicates_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function replayPredicates_toPropertyKey(t) { var i = replayPredicates_toPrimitive(t, "string"); return "symbol" == replayPredicates_typeof(i) ? i : i + ""; }
+function replayPredicates_toPrimitive(t, r) { if ("object" != replayPredicates_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayPredicates_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/**
+ * ReplayPredicates - Determine if replay is enabled for a given trigger type.
+ *
+ */
+var ReplayPredicates = /*#__PURE__*/function () {
+  /*
+   * Constructor for ReplayPredicates.
+   *
+   * @param {Object} config - Configuration object containing replay settings.
+   */
+  function ReplayPredicates(config) {
+    replayPredicates_classCallCheck(this, ReplayPredicates);
+    replayPredicates_defineProperty(this, "maxAdjustedCount", Math.pow(2, 56));
+    this.config = config || {};
+    this.triggers = this._triggersWithDefaults(config);
+    this.predicates = {
+      occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)],
+      navigation: [this.isPathMatching.bind(this), this.isSampled.bind(this)],
+      direct: [this.isTagMatching.bind(this), this.isSampled.bind(this)]
+    };
+  }
+  return replayPredicates_createClass(ReplayPredicates, [{
+    key: "_triggersWithDefaults",
+    value: function _triggersWithDefaults(config) {
+      var triggers = (config === null || config === void 0 ? void 0 : config.triggers) || [];
+      return triggers.map(function (t) {
+        return replayPredicates_objectSpread(replayPredicates_objectSpread({}, config.triggerDefaults), t);
+      });
+    }
 
     /**
-     * Helps the application correctly align playback by adding a noop event
-     * to the end of the recording.
-     **/
+     * shouldCaptureForTriggerContext - Checks if replay is enabled for a given trigger type.
+     * Applies all predicates for that trigger type and returns true if all predicates pass
+     * for any matching trigger.
+     *
+     * @param {Object} context - Context object containing state used by predicates.
+     * @return {Object} - The first matching trigger if enabled, otherwise null.
+     */
   }, {
-    key: "_addEndEvent",
-    value: function _addEndEvent(recordingSpan, replayId) {
-      recordingSpan.addEvent('rrweb-replay-events', {
-        eventType: 5,
-        json: JSON.stringify({
-          tag: "replay.end",
-          payload: {}
-        })
-      }, hrtime.fromMillis(Date.now()));
+    key: "shouldCaptureForTriggerContext",
+    value: function shouldCaptureForTriggerContext(context) {
+      var predicates = this.predicates[context.type];
+      var _iterator = replayPredicates_createForOfIteratorHelper(this.triggers),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var t = _step.value;
+          if (t.type === context.type && this.isEnabledForTrigger(t, predicates, context)) {
+            return t;
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+      return null;
+    }
+  }, {
+    key: "isEnabledForTrigger",
+    value: function isEnabledForTrigger(trigger, predicates, context) {
+      if (predicates.find(function (p) {
+        return !p(trigger, context);
+      })) {
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * isLevelMatching - Checks if the trigger's level matches the context item's level.
+     * If no level is specified in the trigger, it defaults to matching all levels.
+     * @param {Object} trigger - The trigger object containing the level.
+     * @return {boolean} - True if the trigger's level matches the context item's level, false otherwise.
+     */
+  }, {
+    key: "isLevelMatching",
+    value: function isLevelMatching(trigger, context) {
+      if (!trigger.level || trigger.level.includes(context.level)) {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * isPathMatching - Checks if the trigger's pathMatch regex matches the context item's path.
+     * If no pathMatch is specified in the trigger, it defaults to matching all paths.
+     * @param {Object} trigger - The trigger object containing the pathMatch regex.
+     * @return {boolean} - True if the trigger's pathMatch matches the context item's path, false otherwise.
+     */
+  }, {
+    key: "isPathMatching",
+    value: function isPathMatching(trigger, context) {
+      var _context$path;
+      if (!trigger.pathMatch) return true;
+      if ((_context$path = context.path) !== null && _context$path !== void 0 && _context$path.match(new RegExp(trigger.pathMatch))) {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * isTagMatching - Checks if the trigger's tags match any of the context item's tags.
+     * If no tags are specified in the trigger, it defaults to matching all tags.
+     * @param {Object} trigger - The trigger object containing the tags.
+     * @return {boolean} - True if the trigger's tags match any of the context item's tags, false otherwise.
+     */
+  }, {
+    key: "isTagMatching",
+    value: function isTagMatching(trigger, context) {
+      var _context$tags;
+      if (!trigger.tags) return true;
+      if ((_context$tags = context.tags) !== null && _context$tags !== void 0 && _context$tags.some(function (t) {
+        return trigger.tags.includes(t);
+      })) {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * isSampled - Determines if the trigger should be sampled based on its sampling ratio.
+     * If no ratio is specified, defaults to 1 (always sampled).
+     *
+     * Sampling algorithm is based on OTel probability sampling as described in
+     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-probability-sampling/
+     * * https://opentelemetry.io/docs/specs/otel/trace/tracestate-handling/
+     *
+     * Note: String compare is more performant than conversion to float,
+     * assuming the `th` calculation will be moved to the trigger configuration.
+     * This allows `toString` to be called once, rather than `parseInt` to be called on
+     * each replay.
+     *
+     * @param {Object} trigger - The trigger object containing the sampling ratio.
+     * @returns {boolean} - True if the trigger is sampled, false otherwise.
+     */
+  }, {
+    key: "isSampled",
+    value: function isSampled(trigger, context) {
+      var _trigger$samplingRati;
+      var ratio = (_trigger$samplingRati = trigger.samplingRatio) !== null && _trigger$samplingRati !== void 0 ? _trigger$samplingRati : 1;
+      if (ratio == 1) {
+        return true;
+      }
+      var rv = context.replayId.slice(-14);
+      var th = (this.maxAdjustedCount * (1 - ratio)).toString(16).padStart(14, '0');
+      return rv >= th;
+    }
+  }]);
+}();
+
+;// ./src/browser/replay/replayManager.js
+function replayManager_typeof(o) { "@babel/helpers - typeof"; return replayManager_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, replayManager_typeof(o); }
+function replayManager_slicedToArray(r, e) { return replayManager_arrayWithHoles(r) || replayManager_iterableToArrayLimit(r, e) || replayManager_unsupportedIterableToArray(r, e) || replayManager_nonIterableRest(); }
+function replayManager_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function replayManager_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return replayManager_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? replayManager_arrayLikeToArray(r, a) : void 0; } }
+function replayManager_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function replayManager_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function replayManager_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function replayManager_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function replayManager_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? replayManager_ownKeys(Object(t), !0).forEach(function (r) { replayManager_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : replayManager_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function replayManager_regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ replayManager_regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == replayManager_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(replayManager_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function replayManager_asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function replayManager_asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { replayManager_asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function replayManager_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function replayManager_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, replayManager_toPropertyKey(o.key), o); } }
+function replayManager_createClass(e, r, t) { return r && replayManager_defineProperties(e.prototype, r), t && replayManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function replayManager_defineProperty(e, r, t) { return (r = replayManager_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function replayManager_toPropertyKey(t) { var i = replayManager_toPrimitive(t, "string"); return "symbol" == replayManager_typeof(i) ? i : i + ""; }
+function replayManager_toPrimitive(t, r) { if ("object" != replayManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != replayManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+
+
+
+/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
+
+/**
+ * Enum for tracking the status of trailing replay sends.
+ * Used to coordinate between trailing and leading replay captures.
+ */
+var TrailingStatus = Object.freeze({
+  PENDING: 'pending',
+  // Trailing not yet sent
+  SENT: 'sent',
+  // Trailing successfully sent
+  FAILED: 'failed' // Trailing failed to send
+});
+
+/**
+ * ReplayManager - Manages the mapping between error occurrences and their associated
+ * session recordings. This class handles the coordination between when recordings
+ * are dumped and when they are eventually sent to the backend.
+ */
+var ReplayManager = /*#__PURE__*/function () {
+  /**
+   * Creates a new ReplayManager instance
+   *
+   * @param {Object} [props.tracing] - The tracing instance used to create spans and manage context
+   * @param {Object} [props.telemeter] - Optional telemeter instance for capturing telemetry events
+   * @param {Object} [props.options] - Configuration options
+   */
+  function ReplayManager(_ref) {
+    var tracing = _ref.tracing,
+      telemeter = _ref.telemeter,
+      options = _ref.options;
+    replayManager_classCallCheck(this, ReplayManager);
+    replayManager_defineProperty(this, "_map", void 0);
+    /** @type {Recorder} */
+    replayManager_defineProperty(this, "_recorder", void 0);
+    replayManager_defineProperty(this, "_tracing", void 0);
+    replayManager_defineProperty(this, "_telemeter", void 0);
+    replayManager_defineProperty(this, "_pendingLeading", void 0);
+    replayManager_defineProperty(this, "_trailingStatus", void 0);
+    if (!tracing) {
+      throw new TypeError("Expected 'tracing' to be provided");
+    }
+    this._map = new Map();
+    this._recorder = new Recorder(options);
+    this._tracing = tracing;
+    this._telemeter = telemeter;
+    this._pendingLeading = new Map();
+    this._trailingStatus = new Map();
+    this._predicates = new ReplayPredicates(options);
+  }
+
+  /**
+   * Exports recording and telemetry spans, then stores the tracing payload in the map.
+   *
+   * Exports both telemetry and recording spans, then generates the complete payload
+   * using the tracing exporter and stores it in the map using replayId as the key.
+   * This is an async operation that runs in the background.
+   *
+   * @param {string} replayId - The unique ID for this replay
+   * @param {string} occurrenceUuid - The UUID of the associated error occurrence
+   * @private
+   */
+  return replayManager_createClass(ReplayManager, [{
+    key: "_exportSpansAndAddTracingPayload",
+    value: (function () {
+      var _exportSpansAndAddTracingPayload2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee(replayId, occurrenceUuid, trigger, triggerContext) {
+        var _this$_telemeter, _this$_recorder$optio;
+        var payload, leadingSeconds;
+        return replayManager_regeneratorRuntime().wrap(function _callee$(_context) {
+          while (1) switch (_context.prev = _context.next) {
+            case 0:
+              _context.prev = 0;
+              this._recorder.exportRecordingSpan(this._tracing, {
+                'rollbar.replay.id': replayId,
+                'rollbar.occurrence.uuid': occurrenceUuid,
+                'rollbar.replay.trigger.type': trigger.type,
+                'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+                'rollbar.replay.trigger': JSON.stringify(trigger),
+                'rollbar.replay.url.full': sanitizeHref(window.location.href)
+              });
+              _context.next = 8;
+              break;
+            case 4:
+              _context.prev = 4;
+              _context.t0 = _context["catch"](0);
+              src_logger.error('Error exporting recording span:', _context.t0);
+              return _context.abrupt("return");
+            case 8:
+              (_this$_telemeter = this._telemeter) === null || _this$_telemeter === void 0 || _this$_telemeter.exportTelemetrySpan({
+                'rollbar.replay.id': replayId
+              });
+              payload = this._tracing.exporter.toPayload();
+              this._map.set(replayId, payload);
+              leadingSeconds = ((_this$_recorder$optio = this._recorder.options) === null || _this$_recorder$optio === void 0 ? void 0 : _this$_recorder$optio.postDuration) || 0;
+              if (leadingSeconds > 0) {
+                this._scheduleLeadingCapture(replayId, occurrenceUuid, leadingSeconds);
+              }
+            case 13:
+            case "end":
+              return _context.stop();
+          }
+        }, _callee, this, [[0, 4]]);
+      }));
+      function _exportSpansAndAddTracingPayload(_x, _x2, _x3, _x4) {
+        return _exportSpansAndAddTracingPayload2.apply(this, arguments);
+      }
+      return _exportSpansAndAddTracingPayload;
+    }()
+    /**
+     * Schedules the capture of leading replay events after a delay.
+     *
+     * @param {string} replayId - The replay ID
+     * @param {string} occurrenceUuid - The occurrence UUID
+     * @param {number} seconds - Number of seconds to wait before capturing
+     * @private
+     */
+    )
+  }, {
+    key: "_scheduleLeadingCapture",
+    value: function _scheduleLeadingCapture(replayId, occurrenceUuid, seconds) {
+      var _this = this;
+      var bufferCursor = this._recorder.bufferCursor();
+      this._trailingStatus.set(replayId, TrailingStatus.PENDING);
+      var timerId = setTimeout(/*#__PURE__*/replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee2() {
+        return replayManager_regeneratorRuntime().wrap(function _callee2$(_context2) {
+          while (1) switch (_context2.prev = _context2.next) {
+            case 0:
+              _context2.prev = 0;
+              _context2.next = 3;
+              return _this._exportLeadingSpansAndAddPayload(replayId, occurrenceUuid, bufferCursor);
+            case 3:
+              _this._sendOrDiscardLeadingReplay(replayId);
+              _context2.next = 9;
+              break;
+            case 6:
+              _context2.prev = 6;
+              _context2.t0 = _context2["catch"](0);
+              src_logger.error('Error during leading replay processing:', _context2.t0);
+            case 9:
+            case "end":
+              return _context2.stop();
+          }
+        }, _callee2, null, [[0, 6]]);
+      })), seconds * 1000);
+      this._pendingLeading.set(replayId, {
+        timerId: timerId,
+        occurrenceUuid: occurrenceUuid,
+        bufferCursor: bufferCursor,
+        leadingReady: false
+      });
+    }
+
+    /**
+     * Exports leading replay spans and adds the payload to pending context.
+     * Similar to _exportSpansAndAddTracingPayload but for leading events.
+     *
+     * @param {string} replayId - The replay ID
+     * @param {string} occurrenceUuid - The occurrence UUID
+     * @param {BufferCursor} bufferCursor - Buffer cursor position
+     * @private
+     */
+  }, {
+    key: "_exportLeadingSpansAndAddPayload",
+    value: (function () {
+      var _exportLeadingSpansAndAddPayload2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee3(replayId, occurrenceUuid, bufferCursor) {
+        var _this$_telemeter2;
+        var pendingContext, leadingPayload;
+        return replayManager_regeneratorRuntime().wrap(function _callee3$(_context3) {
+          while (1) switch (_context3.prev = _context3.next) {
+            case 0:
+              pendingContext = this._pendingLeading.get(replayId);
+              if (pendingContext) {
+                _context3.next = 3;
+                break;
+              }
+              return _context3.abrupt("return");
+            case 3:
+              _context3.prev = 3;
+              this._recorder.exportRecordingSpan(this._tracing, {
+                'rollbar.replay.id': replayId,
+                'rollbar.occurrence.uuid': occurrenceUuid
+              }, bufferCursor);
+              _context3.next = 12;
+              break;
+            case 7:
+              _context3.prev = 7;
+              _context3.t0 = _context3["catch"](3);
+              src_logger.error('Error exporting leading recording span:', _context3.t0);
+              this._discardLeadingCapture(replayId);
+              return _context3.abrupt("return");
+            case 12:
+              (_this$_telemeter2 = this._telemeter) === null || _this$_telemeter2 === void 0 || _this$_telemeter2.exportTelemetrySpan({
+                'rollbar.replay.id': replayId
+              });
+              leadingPayload = this._tracing.exporter.toPayload();
+              pendingContext.leadingReady = true;
+              pendingContext.leadingPayload = leadingPayload;
+              this._pendingLeading.set(replayId, pendingContext);
+            case 17:
+            case "end":
+              return _context3.stop();
+          }
+        }, _callee3, this, [[3, 7]]);
+      }));
+      function _exportLeadingSpansAndAddPayload(_x5, _x6, _x7) {
+        return _exportLeadingSpansAndAddPayload2.apply(this, arguments);
+      }
+      return _exportLeadingSpansAndAddPayload;
+    }()
+    /**
+     * Sends or discards leading replay based on trailing replay status.
+     *
+     * @param {string} replayId - The replay ID
+     * @private
+     */
+    )
+  }, {
+    key: "_sendOrDiscardLeadingReplay",
+    value: (function () {
+      var _sendOrDiscardLeadingReplay2 = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee4(replayId) {
+        var trailingStatus, pendingContext;
+        return replayManager_regeneratorRuntime().wrap(function _callee4$(_context4) {
+          while (1) switch (_context4.prev = _context4.next) {
+            case 0:
+              trailingStatus = this._trailingStatus.get(replayId);
+              pendingContext = this._pendingLeading.get(replayId);
+              if (!(!(pendingContext !== null && pendingContext !== void 0 && pendingContext.leadingReady) || !(pendingContext !== null && pendingContext !== void 0 && pendingContext.leadingPayload))) {
+                _context4.next = 4;
+                break;
+              }
+              return _context4.abrupt("return");
+            case 4:
+              _context4.t0 = trailingStatus;
+              _context4.next = _context4.t0 === TrailingStatus.SENT ? 7 : _context4.t0 === TrailingStatus.FAILED ? 17 : _context4.t0 === TrailingStatus.PENDING ? 19 : 19;
+              break;
+            case 7:
+              _context4.prev = 7;
+              _context4.next = 10;
+              return this._tracing.exporter.post(pendingContext.leadingPayload, {
+                'X-Rollbar-Replay-Id': replayId
+              });
+            case 10:
+              _context4.next = 15;
+              break;
+            case 12:
+              _context4.prev = 12;
+              _context4.t1 = _context4["catch"](7);
+              src_logger.error('Failed to send leading replay:', _context4.t1);
+            case 15:
+              this._discardLeadingCapture(replayId);
+              return _context4.abrupt("break", 20);
+            case 17:
+              this._discardLeadingCapture(replayId);
+              return _context4.abrupt("break", 20);
+            case 19:
+              return _context4.abrupt("break", 20);
+            case 20:
+            case "end":
+              return _context4.stop();
+          }
+        }, _callee4, this, [[7, 12]]);
+      }));
+      function _sendOrDiscardLeadingReplay(_x8) {
+        return _sendOrDiscardLeadingReplay2.apply(this, arguments);
+      }
+      return _sendOrDiscardLeadingReplay;
+    }()
+    /**
+     * Discards all state related to leading capture for a replay.
+     *
+     * @param {string} replayId - The replay ID to discard
+     * @private
+     */
+    )
+  }, {
+    key: "_discardLeadingCapture",
+    value: function _discardLeadingCapture(replayId) {
+      var pendingContext = this._pendingLeading.get(replayId);
+      if (pendingContext !== null && pendingContext !== void 0 && pendingContext.timerId) {
+        clearTimeout(pendingContext.timerId);
+      }
+      this._pendingLeading.delete(replayId);
+      this._trailingStatus.delete(replayId);
+    }
+
+    /**
+     * Captures a replay and returns a uniquely generated replay ID.
+     *
+     * This method immediately returns the replayId and asynchronously processes
+     * the replay data in the background. The processing involves converting
+     * recorder events into a payload format and storing it in the map.
+     *
+     * @returns {string} A unique identifier for this replay
+     */
+  }, {
+    key: "capture",
+    value: function capture(replayId, occurrenceUuid, triggerContext) {
+      if (!this._recorder.isReady) {
+        src_logger.warn('ReplayManager.capture: Recorder is not ready, cannot export replay');
+        return null;
+      }
+      replayId = replayId || id.gen(8);
+      var trigger = this._predicates.shouldCaptureForTriggerContext(replayManager_objectSpread(replayManager_objectSpread({}, triggerContext), {}, {
+        replayId: replayId
+      }));
+      if (!trigger) {
+        return null;
+      }
+
+      // Start processing the replay in the background
+      this._exportSpansAndAddTracingPayload(replayId, occurrenceUuid, trigger, triggerContext);
+      return replayId;
+    }
+
+    /**
+     * Determines if a replay can be sent based on API response and headers.
+     *
+     * @param {Error|null} err - Any error that occurred during the API request
+     * @param {Object|null} resp - The API response object
+     * @param {Object|null} hs - The response headers
+     * @returns {boolean} true if the replay can be sent, false otherwise.
+     * @private
+     */
+  }, {
+    key: "sendOrDiscardReplay",
+    value: (
+    /**
+     * Sends or discards a replay based on whether it can be sent.
+     *
+     * The criteria for sending a replay are:
+     * - No error occurred during the API request
+     * - The response indicates success (err === 0)
+     * - Replay is enabled on the server
+     * - Rate limit quota is not exhausted
+     *
+     * Called by Queue after determining replay eligibility from API response.
+     *
+     * @param {string} replayId - The ID of the replay to send or discard
+     * @param {Error|null} err - Any error that occurred during the API request
+     * @param {Object|null} resp - The API response object
+     * @param {Object|null} headers - The response headers
+     * @returns {Promise<void>} A promise that resolves when the operation is complete
+     */
+    function () {
+      var _sendOrDiscardReplay = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee5(replayId, err, resp, headers) {
+        var canSendReplay;
+        return replayManager_regeneratorRuntime().wrap(function _callee5$(_context5) {
+          while (1) switch (_context5.prev = _context5.next) {
+            case 0:
+              canSendReplay = ReplayManager._canSendReplay(err, resp, headers);
+              if (!canSendReplay) {
+                _context5.next = 13;
+                break;
+              }
+              _context5.prev = 2;
+              _context5.next = 5;
+              return this.send(replayId);
+            case 5:
+              _context5.next = 11;
+              break;
+            case 7:
+              _context5.prev = 7;
+              _context5.t0 = _context5["catch"](2);
+              src_logger.error('Failed to send replay:', _context5.t0);
+              this.discard(replayId);
+            case 11:
+              _context5.next = 14;
+              break;
+            case 13:
+              this.discard(replayId);
+            case 14:
+            case "end":
+              return _context5.stop();
+          }
+        }, _callee5, this, [[2, 7]]);
+      }));
+      function sendOrDiscardReplay(_x9, _x10, _x11, _x12) {
+        return _sendOrDiscardReplay.apply(this, arguments);
+      }
+      return sendOrDiscardReplay;
+    }()
+    /**
+     * Sends the replay payload associated with the given replayId to the backend
+     * and removes it from the map.
+     *
+     * Retrieves the payload from the map, checks if it's valid, then sends it
+     * to the API endpoint for processing. The payload can be either a spans array
+     * or a formatted OTLP payload object.
+     *
+     * @param {string} replayId - The ID of the replay to send
+     * @returns {Promise<boolean>} A promise that resolves to true if the payload was found and sent, false otherwise
+     */
+    )
+  }, {
+    key: "send",
+    value: (function () {
+      var _send = replayManager_asyncToGenerator(/*#__PURE__*/replayManager_regeneratorRuntime().mark(function _callee6(replayId) {
+        var payload, isEmpty;
+        return replayManager_regeneratorRuntime().wrap(function _callee6$(_context6) {
+          while (1) switch (_context6.prev = _context6.next) {
+            case 0:
+              if (replayId) {
+                _context6.next = 2;
+                break;
+              }
+              throw Error('ReplayManager.send: No replayId provided');
+            case 2:
+              if (this._map.has(replayId)) {
+                _context6.next = 4;
+                break;
+              }
+              throw Error("ReplayManager.send: No replay found for id: ".concat(replayId));
+            case 4:
+              payload = this._map.get(replayId);
+              this._map.delete(replayId);
+
+              // Check if payload is empty (could be raw spans array or OTLP payload)
+              isEmpty = !payload || Array.isArray(payload) && payload.length === 0 || payload.resourceSpans && payload.resourceSpans.length === 0;
+              if (!isEmpty) {
+                _context6.next = 9;
+                break;
+              }
+              throw Error("ReplayManager.send: No payload found for id: ".concat(replayId));
+            case 9:
+              _context6.next = 11;
+              return this._tracing.exporter.post(payload, {
+                'X-Rollbar-Replay-Id': replayId
+              });
+            case 11:
+              this._trailingStatus.set(replayId, TrailingStatus.SENT);
+              _context6.next = 14;
+              return this._sendOrDiscardLeadingReplay(replayId);
+            case 14:
+            case "end":
+              return _context6.stop();
+          }
+        }, _callee6, this);
+      }));
+      function send(_x13) {
+        return _send.apply(this, arguments);
+      }
+      return send;
+    }()
+    /**
+     * Discards the replay associated with the given replay ID by removing
+     * it from the map without sending it.
+     *
+     * @param {string} replayId - The ID of the replay to discard
+     * @returns {boolean} True if a replay was found and discarded, false otherwise
+     */
+    )
+  }, {
+    key: "discard",
+    value: function discard(replayId) {
+      if (!replayId) {
+        src_logger.error('ReplayManager.discard: No replayId provided');
+        return false;
+      }
+      this._trailingStatus.set(replayId, TrailingStatus.FAILED);
+      this._discardLeadingCapture(replayId);
+      if (!this._map.has(replayId)) {
+        src_logger.error("ReplayManager.discard: No replay found for replayId: ".concat(replayId));
+        return false;
+      }
+      this._map.delete(replayId);
+      return true;
+    }
+
+    /**
+     * Gets spans for the given replay ID
+     *
+     * @param {string} replayId - The ID to retrieve spans for
+     * @returns {Array|null} The spans array or null if not found
+     */
+  }, {
+    key: "getSpans",
+    value: function getSpans(replayId) {
+      var _this$_map$get;
+      return (_this$_map$get = this._map.get(replayId)) !== null && _this$_map$get !== void 0 ? _this$_map$get : null;
+    }
+
+    /**
+     * Sets spans for a given replay ID
+     *
+     * @param {string} replayId - The ID to set spans for
+     * @param {Array} spans - The spans to set
+     */
+  }, {
+    key: "setSpans",
+    value: function setSpans(replayId, spans) {
+      this._map.set(replayId, spans);
+    }
+
+    /**
+     * Returns the size of the map (number of stored replays)
+     *
+     * @returns {number} The number of replays currently stored
+     */
+  }, {
+    key: "size",
+    get: function get() {
+      return this._map.size;
+    }
+
+    /**
+     * Returns the Recorder instance used by this manager
+     *
+     * @returns {Recorder} The Recorder instance
+     */
+  }, {
+    key: "recorder",
+    get: function get() {
+      return this._recorder;
+    }
+
+    /**
+     * Clears all stored replays without sending them
+     */
+  }, {
+    key: "clear",
+    value: function clear() {
+      this._map.clear();
+    }
+  }], [{
+    key: "_canSendReplay",
+    value: function _canSendReplay(err, resp, hs) {
+      if (!hs) return false;
+      var hasNoErrors = !err && (resp === null || resp === void 0 ? void 0 : resp.err) === 0;
+      var headers = Object.fromEntries(Object.entries(hs).map(function (_ref3) {
+        var _ref4 = replayManager_slicedToArray(_ref3, 2),
+          k = _ref4[0],
+          v = _ref4[1];
+        return [k.toLowerCase(), String(v).trim()];
+      }));
+      var headersAreValid = headers['rollbar-replay-enabled'] === 'true' && headers['rollbar-replay-ratelimit-remaining'] !== '0';
+      return hasNoErrors && headersAreValid;
     }
   }]);
 }();
@@ -21808,7 +22300,7 @@ core.setComponents({
   scrub: src_scrub,
   truncation: truncation,
   tracing: Tracing,
-  recorder: Recorder
+  replayManager: ReplayManager
 });
 /* harmony default export */ var browser_rollbar = (core);
 ;// ./src/browser/bundles/rollbar.noconflict.js
@@ -21817,7 +22309,6 @@ if (typeof window !== 'undefined' && !window._rollbarStartTime) {
   window._rollbarStartTime = new Date().getTime();
 }
 /* harmony default export */ var rollbar_noconflict = (browser_rollbar);
-}();
 __webpack_exports__ = __webpack_exports__["default"];
 /******/ 	return __webpack_exports__;
 /******/ })()
