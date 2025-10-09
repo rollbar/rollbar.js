@@ -194,6 +194,16 @@ class Rollbar {
     return this.client.sendJsonPayload(jsonPayload);
   }
 
+  triggerDirectReplay(context) {
+    return this.triggerReplay({ type: 'direct', ...context });
+  }
+
+  triggerReplay(context) {
+    if (!this.replayManager) return null;
+
+    return this.replayManager.triggerReplay(context);
+  }
+
   setupUnhandledCapture() {
     var gWindow = _gWindow();
 

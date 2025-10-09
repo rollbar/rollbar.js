@@ -16,6 +16,7 @@ const TrailingStatus = Object.freeze({
   PENDING: 'pending', // Trailing not yet sent
   SENT: 'sent', // Trailing successfully sent
   FAILED: 'failed', // Trailing failed to send
+  SKIPPED: 'skipped', // Trailing was skipped (replay is leading only)
 });
 
 /**
@@ -180,6 +181,52 @@ export default class ReplayManager {
       trigger,
       triggerContext,
     );
+
+    return replayId;
+  }
+
+  /**
+   * On a matching trigger condition, captures and sends a replay.
+   * This method handles the non-occurrence based triggers, which don't require
+   * special occurrence-specific handling.
+   *
+   * @returns {string} A unique identifier for this replay or null if not sent.
+   */
+  async triggerReplay(triggerContext) {
+    const replayId = id.gen(8);
+
+    const trigger = this._predicates.shouldCaptureForTriggerContext({
+      ...triggerContext,
+      replayId,
+    });
+    if (!trigger) {
+      return null;
+    }
+
+    if (this._recorder.isReady) {
+      await this._exportSpansAndAddTracingPayload(
+        replayId,
+        null,
+        trigger,
+        triggerContext,
+      );
+    } else {
+      // If the recorder is not ready, mark the trailing capture as skipped and
+      // allow the leading capture to proceed.
+      this._trailingStatus.set(replayId, TrailingStatus.SKIPPED);
+
+      const leadingSeconds = this._recorder.options?.postDuration || 0;
+      if (leadingSeconds > 0) {
+        this._scheduleLeadingCapture(replayId, null, leadingSeconds);
+      }
+    }
+
+    try {
+      await this.send(replayId);
+    } catch (error) {
+      this.discard(replayId);
+      return null;
+    }
 
     return replayId;
   }

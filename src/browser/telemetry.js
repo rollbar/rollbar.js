@@ -670,6 +670,9 @@ class Instrumenter {
     this.addListener('dom', this._window, ['resize'], (e) =>
       this.handleEvent('resize', e),
     );
+    this.addListener('dom', this._document, ['DOMContentLoaded'], (e) =>
+      this.handleEvent('contentLoaded', e),
+    );
   }
 
   handleEvent(name, evt) {
@@ -681,10 +684,18 @@ class Instrumenter {
         form: this.handleForm,
         input: this.handleInput,
         resize: this.handleResize,
+        contentLoaded: this.handleContentLoaded,
       }[name].call(this, evt);
     } catch (exc) {
       console.log(`${name} handler error`, evt, exc, exc.stack);
     }
+  }
+
+  handleContentLoaded(evt) {
+    const replayId = this.rollbar.triggerReplay({
+      type: 'navigation',
+      path: new URL(this._location.href).pathname,
+    });
   }
 
   handleClick(evt) {
@@ -882,6 +893,10 @@ class Instrumenter {
       from = parsedFrom.path + (parsedFrom.hash || '');
     }
     this.telemeter.captureNavigation(from, to, null, _.now());
+    const replayId = this.rollbar.triggerReplay({
+      type: 'navigation',
+      path: to,
+    });
   }
 
   deinstrumentConnectivity = function () {
