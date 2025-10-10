@@ -3,7 +3,7 @@ import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
-import LeadingCapture from './leadingCapture.js';
+import ScheduledCapture from './scheduledCapture.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 /** @typedef {import('./recorder.js').Recorder} Recorder */
@@ -29,7 +29,7 @@ export default class ReplayManager {
   _recorder;
   _tracing;
   _telemeter;
-  _leadingCapture;
+  _scheduledCapture;
   _trailingStatus;
 
   /**
@@ -50,37 +50,37 @@ export default class ReplayManager {
     this._telemeter = telemeter;
     this._trailingStatus = new Map();
     this._predicates = new ReplayPredicates(options);
-    this._leadingCapture = new LeadingCapture({
+    this._scheduledCapture = new ScheduledCapture({
       recorder: this._recorder,
       tracing: this._tracing,
       telemeter: this._telemeter,
-      shouldSend: this._shouldSendLeading.bind(this),
-      onComplete: this._onLeadingComplete.bind(this),
+      shouldSend: this._shouldSendScheduled.bind(this),
+      onComplete: this._onScheduledComplete.bind(this),
     });
   }
 
   /**
-   * Called when a leading capture completes (sent or discarded).
+   * Called when a scheduled capture completes (sent or discarded).
    * Cleans up the trailing status coordination state.
    *
    * @param {string} replayId - The replay ID
    * @private
    */
-  _onLeadingComplete(replayId) {
+  _onScheduledComplete(replayId) {
     this._trailingStatus.delete(replayId);
   }
 
   /**
-   * Determines if a leading replay should be sent based on coordination state.
+   * Determines if a scheduled replay should be sent based on coordination state.
    *
-   * Leading replays can only be sent after the trailing replay has been
+   * Scheduled replays can only be sent after the trailing replay has been
    * successfully sent or explicitly skipped (for leading-only captures).
    *
    * @param {string} replayId - The replay ID
-   * @returns {boolean} True if leading replay can be sent
+   * @returns {boolean} True if scheduled replay can be sent
    * @private
    */
-  _shouldSendLeading(replayId) {
+  _shouldSendScheduled(replayId) {
     const status = this._trailingStatus.get(replayId);
     return status === TrailingStatus.SENT || status === TrailingStatus.SKIPPED;
   }
@@ -125,7 +125,7 @@ export default class ReplayManager {
 
     const leadingSeconds = this._recorder.options?.postDuration || 0;
     if (leadingSeconds > 0) {
-      this._leadingCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
+      this._scheduledCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
       this._trailingStatus.set(replayId, TrailingStatus.PENDING);
     }
   }
@@ -263,7 +263,7 @@ export default class ReplayManager {
     });
 
     this._trailingStatus.set(replayId, TrailingStatus.SENT);
-    await this._leadingCapture.sendIfReady(replayId);
+    await this._scheduledCapture.sendIfReady(replayId);
   }
 
   /**
@@ -280,7 +280,7 @@ export default class ReplayManager {
     }
 
     this._trailingStatus.set(replayId, TrailingStatus.FAILED);
-    this._leadingCapture.discard(replayId);
+    this._scheduledCapture.discard(replayId);
 
     if (!this._map.has(replayId)) {
       logger.error(

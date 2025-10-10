@@ -3,12 +3,14 @@ import logger from '../../logger.js';
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 
 /**
- * Manages delayed "leading" (post-trigger) replay captures.
+ * A utility for coordinating delayed, cursor-based captures.
  *
- * Coordinates timing, buffer cursor stability, and payload preparation
- * for events that occur AFTER the trigger event.
+ * Manages timer-based capture scheduling, buffer cursor stability across
+ * checkouts, and payload preparation. Used primarily for capturing events
+ * that occur after a trigger (leading replays), but the implementation is
+ * generic and could be used for any delayed capture scenario.
  */
-export default class LeadingCapture {
+export default class ScheduledCapture {
   _recorder;
   _tracing;
   _telemeter;
@@ -17,7 +19,7 @@ export default class LeadingCapture {
   _onComplete;
 
   /**
-   * Creates a new LeadingCapture instance
+   * Creates a new ScheduledCapture instance
    *
    * @param {Object} props - Configuration object
    * @param {Object} props.recorder - Recorder instance for capturing events
