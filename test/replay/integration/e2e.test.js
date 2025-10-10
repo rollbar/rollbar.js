@@ -32,6 +32,10 @@ const options = {
       {
         type: 'occurrence',
       },
+      {
+        type: 'direct',
+        tags: ['e2e-test'],
+      },
     ],
     recordFn: mockRecordFn,
   },
@@ -307,6 +311,66 @@ describe('Session Replay E2E', function () {
           }, 200);
         }, 200);
       });
+    }, 50);
+  });
+
+  it('should handle non-occurrence triggerReplay', function (done) {
+    this.timeout(1000);
+
+    replayManager.configure({
+      ...options.replay,
+      triggerDefaults: {
+        preDuration: 300,
+        postDuration: 0.1,
+      },
+    });
+    recorder.start();
+
+    setTimeout(() => {
+      const recorderExportSpy = sinon.spy(recorder, 'exportRecordingSpan');
+      const replayManagerSendSpy = sinon.spy(replayManager, 'send');
+      const apiPostSpansSpy = sinon.spy(tracing.exporter, 'post');
+
+      replayManager.triggerReplay({
+        type: 'direct',
+        tags: ['e2e-test'],
+      });
+
+      setTimeout(() => {
+        expect(recorderExportSpy.called).to.be.true;
+        const expectedReplayId =
+          recorderExportSpy.firstCall.args[1]['rollbar.replay.id'];
+        expect(replayManagerSendSpy.calledWith(expectedReplayId)).to.be.true;
+
+        const trailingExportCall = recorderExportSpy.firstCall;
+        expect(trailingExportCall.args[2]).to.be.undefined;
+
+        setTimeout(() => {
+          expect(apiPostSpansSpy.callCount).to.equal(2);
+
+          const trailingApiCall = apiPostSpansSpy.firstCall;
+          const leadingApiCall = apiPostSpansSpy.secondCall;
+
+          expect(trailingApiCall.args[1]).to.deep.equal({
+            'X-Rollbar-Replay-Id': expectedReplayId,
+          });
+          expect(leadingApiCall.args[1]).to.deep.equal({
+            'X-Rollbar-Replay-Id': expectedReplayId,
+          });
+
+          expect(recorderExportSpy.callCount).to.be.greaterThan(1);
+          const leadingExportCall = recorderExportSpy.lastCall;
+          const leadingCursor = leadingExportCall.args[2];
+
+          expect(leadingCursor).to.be.an('object');
+          expect(leadingCursor).to.have.property('slot');
+          expect(leadingCursor).to.have.property('offset');
+          expect(leadingCursor.slot).to.be.oneOf([0, 1]);
+          expect(leadingCursor.offset).to.be.a('number');
+
+          done();
+        }, 200);
+      }, 200);
     }, 50);
   });
 
