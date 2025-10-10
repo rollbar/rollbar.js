@@ -81,7 +81,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 2000, type: EventType.Meta, data: {} },
     ]);
 
-    sinon.spy(replayManager._leadingCapture, 'sendIfReady');
+    sinon.spy(replayManager._scheduledCapture, 'sendIfReady');
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
@@ -90,19 +90,19 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
-    sinon.assert.notCalled(replayManager._leadingCapture.sendIfReady);
+    sinon.assert.notCalled(replayManager._scheduledCapture.sendIfReady);
 
     await replayManager.send(replayId);
-    sinon.assert.calledOnce(replayManager._leadingCapture.sendIfReady);
+    sinon.assert.calledOnce(replayManager._scheduledCapture.sendIfReady);
 
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(replayManager._leadingCapture.sendIfReady);
+    sinon.assert.calledTwice(replayManager._scheduledCapture.sendIfReady);
     expect(
-      replayManager._leadingCapture.sendIfReady.secondCall.args,
+      replayManager._scheduledCapture.sendIfReady.secondCall.args,
     ).to.deep.equal([replayId]);
 
-    replayManager._leadingCapture.sendIfReady.restore();
+    replayManager._scheduledCapture.sendIfReady.restore();
   });
 
   it('captures and sends leading replay with buffer-index', async function () {
@@ -177,7 +177,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(100);
 
     const capturedCursor =
-      replayManager._leadingCapture._pending.get(replayId).bufferCursor;
+      replayManager._scheduledCapture._pending.get(replayId).bufferCursor;
     expect(capturedCursor).to.be.an('object');
     expect(capturedCursor).to.have.property('slot', 0);
     expect(capturedCursor).to.have.property('offset', 0);
@@ -205,7 +205,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
+    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('discards leading when trailing fails', async function () {
@@ -228,7 +228,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(5000);
 
     sinon.assert.notCalled(tracing.exporter.post);
-    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
+    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('waits while trailing is pending, then sends once trailing is SENT', async function () {
@@ -255,7 +255,8 @@ describe('ReplayManager buffer-index integration', function () {
 
     await clock.tickAsync(5000);
 
-    const pendingContext = replayManager._leadingCapture._pending.get(replayId);
+    const pendingContext =
+      replayManager._scheduledCapture._pending.get(replayId);
     expect(pendingContext.ready).to.be.true;
     sinon.assert.notCalled(tracing.exporter.post);
 
@@ -301,7 +302,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
+    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('does not schedule leading when trailing export throws', async function () {
@@ -317,7 +318,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(100);
 
     expect(replayManager._map.has(replayId)).to.be.false;
-    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
+    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('cleanup: discard cancels timer; success clears state', async function () {
@@ -336,7 +337,7 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.capture(replayId1, occurrenceUuid1, triggerContext);
     await clock.tickAsync(100);
 
-    expect(replayManager._leadingCapture._pending.has(replayId1)).to.be.true;
+    expect(replayManager._scheduledCapture._pending.has(replayId1)).to.be.true;
 
     replayManager.discard(replayId1);
     await clock.tickAsync(10000);
@@ -370,7 +371,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
     ]);
-    expect(replayManager._leadingCapture._pending.has(replayId2)).to.be.false;
+    expect(replayManager._scheduledCapture._pending.has(replayId2)).to.be.false;
     expect(replayManager._trailingStatus.has(replayId2)).to.be.false;
   });
 });
