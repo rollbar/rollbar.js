@@ -73,7 +73,7 @@ describe('ReplayManager buffer-index integration', function () {
     clock.restore();
   });
 
-  it('calls _sendOrDiscardLeadingReplay after timeout', async function () {
+  it('calls sendIfReady after timeout', async function () {
     setPreviousBuffer(recorder, [
       { timestamp: 1000, type: EventType.Meta, data: {} },
     ]);
@@ -81,7 +81,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 2000, type: EventType.Meta, data: {} },
     ]);
 
-    sinon.spy(replayManager, '_sendOrDiscardLeadingReplay');
+    sinon.spy(replayManager._leadingCapture, 'sendIfReady');
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
@@ -90,19 +90,19 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
-    sinon.assert.notCalled(replayManager._sendOrDiscardLeadingReplay);
+    sinon.assert.notCalled(replayManager._leadingCapture.sendIfReady);
 
     await replayManager.send(replayId);
-    sinon.assert.calledOnce(replayManager._sendOrDiscardLeadingReplay);
+    sinon.assert.calledOnce(replayManager._leadingCapture.sendIfReady);
 
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(replayManager._sendOrDiscardLeadingReplay);
+    sinon.assert.calledTwice(replayManager._leadingCapture.sendIfReady);
     expect(
-      replayManager._sendOrDiscardLeadingReplay.secondCall.args,
+      replayManager._leadingCapture.sendIfReady.secondCall.args,
     ).to.deep.equal([replayId]);
 
-    replayManager._sendOrDiscardLeadingReplay.restore();
+    replayManager._leadingCapture.sendIfReady.restore();
   });
 
   it('captures and sends leading replay with buffer-index', async function () {
@@ -177,7 +177,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(100);
 
     const capturedCursor =
-      replayManager._pendingLeading.get(replayId).bufferCursor;
+      replayManager._leadingCapture._pending.get(replayId).bufferCursor;
     expect(capturedCursor).to.be.an('object');
     expect(capturedCursor).to.have.property('slot', 0);
     expect(capturedCursor).to.have.property('offset', 0);
@@ -205,7 +205,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._pendingLeading.has(replayId)).to.be.false;
+    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
   });
 
   it('discards leading when trailing fails', async function () {
@@ -228,7 +228,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(5000);
 
     sinon.assert.notCalled(tracing.exporter.post);
-    expect(replayManager._pendingLeading.has(replayId)).to.be.false;
+    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
   });
 
   it('waits while trailing is pending, then sends once trailing is SENT', async function () {
@@ -255,8 +255,8 @@ describe('ReplayManager buffer-index integration', function () {
 
     await clock.tickAsync(5000);
 
-    const pendingContext = replayManager._pendingLeading.get(replayId);
-    expect(pendingContext.leadingReady).to.be.true;
+    const pendingContext = replayManager._leadingCapture._pending.get(replayId);
+    expect(pendingContext.ready).to.be.true;
     sinon.assert.notCalled(tracing.exporter.post);
 
     await replayManager.send(replayId);
@@ -301,7 +301,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._pendingLeading.has(replayId)).to.be.false;
+    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
   });
 
   it('does not schedule leading when trailing export throws', async function () {
@@ -317,7 +317,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(100);
 
     expect(replayManager._map.has(replayId)).to.be.false;
-    expect(replayManager._pendingLeading.has(replayId)).to.be.false;
+    expect(replayManager._leadingCapture._pending.has(replayId)).to.be.false;
   });
 
   it('cleanup: discard cancels timer; success clears state', async function () {
@@ -336,7 +336,7 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.capture(replayId1, occurrenceUuid1, triggerContext);
     await clock.tickAsync(100);
 
-    expect(replayManager._pendingLeading.has(replayId1)).to.be.true;
+    expect(replayManager._leadingCapture._pending.has(replayId1)).to.be.true;
 
     replayManager.discard(replayId1);
     await clock.tickAsync(10000);
@@ -370,7 +370,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
     ]);
-    expect(replayManager._pendingLeading.has(replayId2)).to.be.false;
+    expect(replayManager._leadingCapture._pending.has(replayId2)).to.be.false;
     expect(replayManager._trailingStatus.has(replayId2)).to.be.false;
   });
 });
