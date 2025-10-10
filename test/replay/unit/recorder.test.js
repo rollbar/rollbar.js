@@ -159,16 +159,28 @@ describe('Recorder', function () {
       expect(recorder.checkoutEveryNms()).to.equal(5000);
     });
 
-    it('uses default of 10 seconds when maxSeconds not provided', function () {
+    it('uses default of 300 seconds when maxSeconds not provided', function () {
       const recorder = new Recorder({}, mockRecordFn);
 
-      expect(recorder.checkoutEveryNms()).to.equal(5000);
+      expect(recorder.checkoutEveryNms()).to.equal(150000);
     });
 
     it('calculates correctly for different maxSeconds values', function () {
       const recorder = new Recorder({ maxSeconds: 20 }, mockRecordFn);
 
       expect(recorder.checkoutEveryNms()).to.equal(10000);
+    });
+
+    it('uses default when maxSeconds is 0', function () {
+      const recorder = new Recorder({ maxSeconds: 0 }, mockRecordFn);
+
+      expect(recorder.checkoutEveryNms()).to.equal(150000);
+    });
+
+    it('uses default when maxSeconds is negative', function () {
+      const recorder = new Recorder({ maxSeconds: -5 }, mockRecordFn);
+
+      expect(recorder.checkoutEveryNms()).to.equal(150000);
     });
   });
 
