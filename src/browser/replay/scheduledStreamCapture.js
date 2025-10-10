@@ -70,6 +70,7 @@ export default class ScheduledStreamCapture {
       chunkIndex: 0,
       sending: false,
       aborted: false,
+      finished: false,
     });
   }
 
@@ -94,6 +95,7 @@ export default class ScheduledStreamCapture {
 
     if (elapsed >= context.postDuration) {
       clearInterval(context.intervalId);
+      context.finished = true;
       await this.sendIfReady(replayId);
       return;
     }
@@ -185,10 +187,7 @@ export default class ScheduledStreamCapture {
     context.sending = false;
     context.chunkQueue = [];
 
-    const elapsed = (Date.now() - context.startTime) / 1000;
-    const isFinished = elapsed >= context.postDuration;
-
-    if (isFinished) {
+    if (context.finished) {
       this._pending.delete(replayId);
       this._onComplete?.(replayId);
     }
