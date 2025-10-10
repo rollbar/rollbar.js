@@ -234,7 +234,13 @@ describe('Session Replay E2E', function () {
   it('should handle trailing and leading replay flow', function (done) {
     this.timeout(10000);
 
-    recorder.configure({ ...recorder.options, postDuration: 0.1 });
+    replayManager.configure({
+      ...options.replay,
+      triggerDefaults: {
+        preDuration: 300,
+        postDuration: 0.1,
+      },
+    });
     recorder.start();
 
     setTimeout(() => {

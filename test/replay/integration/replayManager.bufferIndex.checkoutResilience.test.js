@@ -31,9 +31,11 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       replay: {
         enabled: true,
         autoStart: true,
-        maxSeconds: 10,
-        postDuration: 5,
         emitEveryNms: 100,
+        triggerDefaults: {
+          preDuration: 10,
+          postDuration: 5,
+        },
         triggers: [
           {
             type: 'occurrence',
@@ -63,12 +65,12 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
+    const trigger = replayManager._predicates.triggers[0];
     await clock.tickAsync(100);
 
     const cursor =
@@ -126,13 +128,12 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
+    const trigger = replayManager._predicates.triggers[0];
 
     await clock.tickAsync(1000);
 
@@ -177,7 +178,13 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({ ...options.replay, autoStart: false, maxSeconds: 4 });
+    replayManager.configure({
+      ...options.replay,
+      triggerDefaults: {
+        preDuration: 4,
+        postDuration: 5,
+      },
+    });
 
     sinon.spy(recorder, 'exportRecordingSpan');
 
@@ -185,13 +192,12 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
+    const trigger = replayManager._predicates.triggers[0];
     await clock.tickAsync(100);
 
     const cursor =
@@ -241,19 +247,25 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({ ...options.replay, autoStart: false, maxSeconds: 2 });
+    replayManager.configure({
+      ...options.replay,
+      autoStart: false,
+      triggerDefaults: {
+        preDuration: 2,
+        postDuration: 5,
+      },
+    });
 
     recorder.start();
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
+    const trigger = replayManager._predicates.triggers[0];
     await clock.tickAsync(100);
 
     await clock.tickAsync(2000);
@@ -276,17 +288,22 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({ ...options.replay, autoStart: false, maxSeconds: 4 });
+    replayManager.configure({
+      ...options.replay,
+      autoStart: false,
+      triggerDefaults: {
+        preDuration: 4,
+        postDuration: 5,
+      },
+    });
 
     recorder.start();
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
     await clock.tickAsync(100);
@@ -327,10 +344,13 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({
+    replayManager.configure({
       ...options.replay,
       autoStart: false,
-      maxSeconds: 4,
+      triggerDefaults: {
+        preDuration: 4,
+        postDuration: 5,
+      },
       recordFn: () => () => {},
     });
 
@@ -340,11 +360,9 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     sinon.spy(logger, 'error');
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
     await clock.tickAsync(100);
@@ -370,7 +388,14 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({ ...options.replay, autoStart: false, maxSeconds: 4 });
+    replayManager.configure({
+      ...options.replay,
+      autoStart: false,
+      triggerDefaults: {
+        preDuration: 4,
+        postDuration: 5,
+      },
+    });
 
     tracing.exporter.post.onFirstCall().resolves();
     tracing.exporter.post.onSecondCall().rejects(new Error('Network error'));
@@ -379,11 +404,9 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
     const replayId = replayManager.capture(
       'test-replay-id',
       'test-uuid',
-      trigger,
       triggerContext,
     );
 
@@ -411,15 +434,21 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replayManager.recorder;
-    recorder.configure({ ...options.replay, autoStart: false, maxSeconds: 4 });
+    replayManager.configure({
+      ...options.replay,
+      autoStart: false,
+      triggerDefaults: {
+        preDuration: 4,
+        postDuration: 5,
+      },
+    });
 
     recorder.start();
     await clock.tickAsync(200);
 
     const replayId1 = 'test-replay-id-1';
     const triggerContext = { type: 'occurrence' };
-    const trigger = options.replay.triggers[0];
-    replayManager.capture(replayId1, 'test-uuid-1', trigger, triggerContext);
+    replayManager.capture(replayId1, 'test-uuid-1', triggerContext);
     await clock.tickAsync(100);
 
     expect(replayManager._scheduledCapture._pending.has(replayId1)).to.be.true;
@@ -430,7 +459,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     sinon.assert.notCalled(tracing.exporter.post);
 
     const replayId2 = 'test-replay-id-2';
-    replayManager.capture(replayId2, 'test-uuid-2', trigger, triggerContext);
+    replayManager.capture(replayId2, 'test-uuid-2', triggerContext);
     await clock.tickAsync(100);
 
     await replayManager.send(replayId2);

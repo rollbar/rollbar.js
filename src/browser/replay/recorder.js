@@ -56,9 +56,7 @@ export default class Recorder {
       // Rollbar options
       enabled,
       autoStart,
-      maxSeconds,
-      postDuration,
-      triggers,
+      maxPreDuration,
       debug,
 
       // disallowed rrweb options
@@ -72,9 +70,7 @@ export default class Recorder {
     this._options = {
       enabled,
       autoStart,
-      maxSeconds,
-      postDuration,
-      triggers,
+      maxPreDuration,
       debug,
     };
 
@@ -89,12 +85,12 @@ export default class Recorder {
    * Calculates the checkout interval in milliseconds.
    *
    * Recording may span up to two checkout intervals, so the interval is set
-   * to half of maxSeconds to ensure coverage.
+   * to half of maxPreDuration to ensure coverage.
    *
    * @returns {number} Checkout interval in milliseconds
    */
   checkoutEveryNms() {
-    return ((this.options.maxSeconds || 10) * 1000) / 2;
+    return ((this.options.maxPreDuration || 10) * 1000) / 2;
   }
 
   /**

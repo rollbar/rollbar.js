@@ -11,8 +11,7 @@ export default class ReplayPredicates {
    * @param {Object} config - Configuration object containing replay settings.
    */
   constructor(config) {
-    this.config = config || {};
-    this.triggers = this._triggersWithDefaults(config);
+    this.configure(config);
 
     this.predicates = {
       occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)],
@@ -21,9 +20,21 @@ export default class ReplayPredicates {
     };
   }
 
+  configure(config) {
+    this.config = config || {};
+    this.triggers = this._triggersWithDefaults(config);
+    this.maxPreDuration = this._maxPreDuration();
+  }
+
   _triggersWithDefaults(config) {
     const triggers = config?.triggers || [];
     return triggers.map((t) => ({ ...config.triggerDefaults, ...t }));
+  }
+
+  _maxPreDuration() {
+    if (!this.triggers) return 0;
+
+    return Math.max(...this.triggers.map((t) => t.preDuration || 0), 0);
   }
 
   /**

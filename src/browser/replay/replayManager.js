@@ -45,11 +45,14 @@ export default class ReplayManager {
     }
 
     this._map = new Map();
-    this._recorder = new Recorder(options);
+    this._predicates = new ReplayPredicates(options);
+    this._recorder = new Recorder({
+      ...options,
+      maxPreDuration: this._predicates.maxPreDuration,
+    });
     this._tracing = tracing;
     this._telemeter = telemeter;
     this._trailingStatus = new Map();
-    this._predicates = new ReplayPredicates(options);
     this._scheduledCapture = new ScheduledCapture({
       recorder: this._recorder,
       tracing: this._tracing,
@@ -83,6 +86,14 @@ export default class ReplayManager {
   _shouldSendScheduled(replayId) {
     const status = this._trailingStatus.get(replayId);
     return status === TrailingStatus.SENT || status === TrailingStatus.SKIPPED;
+  }
+
+  configure(options) {
+    this._predicates.configure(options);
+    this._recorder.configure({
+      ...options,
+      maxPreDuration: this._predicates.maxPreDuration,
+    });
   }
 
   /**
@@ -123,7 +134,7 @@ export default class ReplayManager {
     const payload = this._tracing.exporter.toPayload();
     this._map.set(replayId, payload);
 
-    const leadingSeconds = this._recorder.options?.postDuration || 0;
+    const leadingSeconds = trigger?.postDuration || 0;
     if (leadingSeconds > 0) {
       this._scheduledCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
       this._trailingStatus.set(replayId, TrailingStatus.PENDING);
@@ -149,6 +160,11 @@ export default class ReplayManager {
 
     replayId = replayId || id.gen(8);
 
+    /*
+     * trigger.preDuration and trigger.postDuration are the requested capture
+     * durations for the trigger. The recorder buffers have been configured to
+     * handle the max preDuration across all triggers.
+     */
     const trigger = this._predicates.shouldCaptureForTriggerContext({
       ...triggerContext,
       replayId,

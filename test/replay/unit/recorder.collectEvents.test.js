@@ -14,7 +14,7 @@ describe('Recorder buffer-index event collection', function () {
       {
         enabled: true,
         autoStart: false,
-        maxSeconds: 10,
+        maxPreDuration: 10,
       },
       mockRecordFn,
     );

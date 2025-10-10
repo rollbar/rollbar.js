@@ -126,7 +126,7 @@ class Rollbar {
     );
 
     this.tracing?.configure(this.options);
-    this.replayManager?.recorder?.configure(this.options);
+    this.replayManager?.configure(this.options);
     this.client.configure(this.options, payloadData);
     this.instrumenter?.configure(this.options);
     this.setupUnhandledCapture();

@@ -12,8 +12,7 @@ describe('Recorder', function () {
       const options = {
         enabled: true,
         autoStart: false,
-        maxSeconds: 10,
-        postDuration: 5,
+        maxPreDuration: 300,
       };
 
       const recorder = new Recorder(options, mockRecordFn);
@@ -21,9 +20,7 @@ describe('Recorder', function () {
       expect(recorder.options).to.deep.equal({
         enabled: true,
         autoStart: false,
-        maxSeconds: 10,
-        postDuration: 5,
-        triggers: undefined,
+        maxPreDuration: 300,
         debug: undefined,
       });
       expect(recorder.isReady).to.be.false;
@@ -48,12 +45,12 @@ describe('Recorder', function () {
   describe('options getter/setter', function () {
     it('returns configured options', function () {
       const recorder = new Recorder(
-        { enabled: true, maxSeconds: 10 },
+        { enabled: true, maxPreDuration: 10 },
         mockRecordFn,
       );
 
       expect(recorder.options).to.have.property('enabled', true);
-      expect(recorder.options).to.have.property('maxSeconds', 10);
+      expect(recorder.options).to.have.property('maxPreDuration', 10);
     });
 
     it('calls configure when setting options', function () {
@@ -73,18 +70,14 @@ describe('Recorder', function () {
 
       recorder.configure({
         enabled: false,
-        maxSeconds: 20,
-        postDuration: 10,
-        triggers: ['error'],
+        maxPreDuration: 300,
         debug: { logEmits: true },
       });
 
       expect(recorder.options).to.deep.equal({
         enabled: false,
         autoStart: undefined,
-        maxSeconds: 20,
-        postDuration: 10,
-        triggers: ['error'],
+        maxPreDuration: 300,
         debug: { logEmits: true },
       });
     });
@@ -94,7 +87,7 @@ describe('Recorder', function () {
 
       recorder.configure({
         enabled: true,
-        maxSeconds: 10,
+        maxPreDuration: 10,
         sampling: { mousemove: true },
         blockClass: 'rr-block',
       });
@@ -153,20 +146,20 @@ describe('Recorder', function () {
   });
 
   describe('checkoutEveryNms', function () {
-    it('returns half of maxSeconds in milliseconds', function () {
-      const recorder = new Recorder({ maxSeconds: 10 }, mockRecordFn);
+    it('returns half of maxPreDuration in milliseconds', function () {
+      const recorder = new Recorder({ maxPreDuration: 10 }, mockRecordFn);
 
       expect(recorder.checkoutEveryNms()).to.equal(5000);
     });
 
-    it('uses default of 10 seconds when maxSeconds not provided', function () {
+    it('uses default of 10 seconds when maxPreDuration not provided', function () {
       const recorder = new Recorder({}, mockRecordFn);
 
       expect(recorder.checkoutEveryNms()).to.equal(5000);
     });
 
-    it('calculates correctly for different maxSeconds values', function () {
-      const recorder = new Recorder({ maxSeconds: 20 }, mockRecordFn);
+    it('calculates correctly for different maxPreDuration values', function () {
+      const recorder = new Recorder({ maxPreDuration: 20 }, mockRecordFn);
 
       expect(recorder.checkoutEveryNms()).to.equal(10000);
     });
