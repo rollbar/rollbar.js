@@ -83,7 +83,7 @@ export default class ScheduledStreamCapture {
    * @param {string} replayId - The replay ID
    * @private
    */
-  _exportChunk(replayId) {
+  async _exportChunk(replayId) {
     const context = this._pending.get(replayId);
 
     if (!context || context.aborted) {
@@ -94,6 +94,7 @@ export default class ScheduledStreamCapture {
 
     if (elapsed >= context.postDuration) {
       clearInterval(context.intervalId);
+      await this.sendIfReady(replayId);
       return;
     }
 
@@ -153,6 +154,10 @@ export default class ScheduledStreamCapture {
       return;
     }
 
+    if (context.chunkQueue.length === 0) {
+      return;
+    }
+
     context.sending = true;
 
     for (const chunk of context.chunkQueue) {
@@ -177,8 +182,16 @@ export default class ScheduledStreamCapture {
       }
     }
 
-    this._pending.delete(replayId);
-    this._onComplete?.(replayId);
+    context.sending = false;
+    context.chunkQueue = [];
+
+    const elapsed = (Date.now() - context.startTime) / 1000;
+    const isFinished = elapsed >= context.postDuration;
+
+    if (isFinished) {
+      this._pending.delete(replayId);
+      this._onComplete?.(replayId);
+    }
   }
 
   /**
