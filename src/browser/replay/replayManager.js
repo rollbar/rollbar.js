@@ -3,6 +3,7 @@ import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
+import LeadingCapture from './leadingCapture.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 /** @typedef {import('./recorder.js').Recorder} Recorder */
@@ -28,7 +29,7 @@ export default class ReplayManager {
   _recorder;
   _tracing;
   _telemeter;
-  _pendingLeading;
+  _leadingCapture;
   _trailingStatus;
 
   /**
@@ -47,9 +48,41 @@ export default class ReplayManager {
     this._recorder = new Recorder(options);
     this._tracing = tracing;
     this._telemeter = telemeter;
-    this._pendingLeading = new Map();
     this._trailingStatus = new Map();
     this._predicates = new ReplayPredicates(options);
+    this._leadingCapture = new LeadingCapture({
+      recorder: this._recorder,
+      tracing: this._tracing,
+      telemeter: this._telemeter,
+      shouldSend: this._shouldSendLeading.bind(this),
+      onComplete: this._onLeadingComplete.bind(this),
+    });
+  }
+
+  /**
+   * Called when a leading capture completes (sent or discarded).
+   * Cleans up the trailing status coordination state.
+   *
+   * @param {string} replayId - The replay ID
+   * @private
+   */
+  _onLeadingComplete(replayId) {
+    this._trailingStatus.delete(replayId);
+  }
+
+  /**
+   * Determines if a leading replay should be sent based on coordination state.
+   *
+   * Leading replays can only be sent after the trailing replay has been
+   * successfully sent or explicitly skipped (for leading-only captures).
+   *
+   * @param {string} replayId - The replay ID
+   * @returns {boolean} True if leading replay can be sent
+   * @private
+   */
+  _shouldSendLeading(replayId) {
+    const status = this._trailingStatus.get(replayId);
+    return status === TrailingStatus.SENT || status === TrailingStatus.SKIPPED;
   }
 
   /**
@@ -92,139 +125,9 @@ export default class ReplayManager {
 
     const leadingSeconds = this._recorder.options?.postDuration || 0;
     if (leadingSeconds > 0) {
-      this._scheduleLeadingCapture(replayId, occurrenceUuid, leadingSeconds);
+      this._leadingCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
+      this._trailingStatus.set(replayId, TrailingStatus.PENDING);
     }
-  }
-
-  /**
-   * Schedules the capture of leading replay events after a delay.
-   *
-   * @param {string} replayId - The replay ID
-   * @param {string} occurrenceUuid - The occurrence UUID
-   * @param {number} seconds - Number of seconds to wait before capturing
-   * @private
-   */
-  _scheduleLeadingCapture(replayId, occurrenceUuid, seconds) {
-    const bufferCursor = this._recorder.bufferCursor();
-
-    this._trailingStatus.set(replayId, TrailingStatus.PENDING);
-
-    const timerId = setTimeout(async () => {
-      try {
-        await this._exportLeadingSpansAndAddPayload(
-          replayId,
-          occurrenceUuid,
-          bufferCursor,
-        );
-        this._sendOrDiscardLeadingReplay(replayId);
-      } catch (error) {
-        logger.error('Error during leading replay processing:', error);
-      }
-    }, seconds * 1000);
-
-    this._pendingLeading.set(replayId, {
-      timerId,
-      occurrenceUuid,
-      bufferCursor,
-      leadingReady: false,
-    });
-  }
-
-  /**
-   * Exports leading replay spans and adds the payload to pending context.
-   * Similar to _exportSpansAndAddTracingPayload but for leading events.
-   *
-   * @param {string} replayId - The replay ID
-   * @param {string} occurrenceUuid - The occurrence UUID
-   * @param {BufferCursor} bufferCursor - Buffer cursor position
-   * @private
-   */
-  async _exportLeadingSpansAndAddPayload(
-    replayId,
-    occurrenceUuid,
-    bufferCursor,
-  ) {
-    const pendingContext = this._pendingLeading.get(replayId);
-
-    if (!pendingContext) {
-      // Already cleaned up, possibly due to discard
-      return;
-    }
-
-    try {
-      this._recorder.exportRecordingSpan(
-        this._tracing,
-        {
-          'rollbar.replay.id': replayId,
-          'rollbar.occurrence.uuid': occurrenceUuid,
-        },
-        bufferCursor,
-      );
-    } catch (error) {
-      logger.error('Error exporting leading recording span:', error);
-      this._discardLeadingCapture(replayId);
-      return;
-    }
-
-    this._telemeter?.exportTelemetrySpan({
-      'rollbar.replay.id': replayId,
-    });
-
-    const leadingPayload = this._tracing.exporter.toPayload();
-    pendingContext.leadingReady = true;
-    pendingContext.leadingPayload = leadingPayload;
-    this._pendingLeading.set(replayId, pendingContext);
-  }
-
-  /**
-   * Sends or discards leading replay based on trailing replay status.
-   *
-   * @param {string} replayId - The replay ID
-   * @private
-   */
-  async _sendOrDiscardLeadingReplay(replayId) {
-    const trailingStatus = this._trailingStatus.get(replayId);
-    const pendingContext = this._pendingLeading.get(replayId);
-
-    if (!pendingContext?.leadingReady || !pendingContext?.leadingPayload) {
-      return;
-    }
-
-    switch (trailingStatus) {
-      case TrailingStatus.SENT:
-        try {
-          await this._tracing.exporter.post(pendingContext.leadingPayload, {
-            'X-Rollbar-Replay-Id': replayId,
-          });
-        } catch (error) {
-          logger.error('Failed to send leading replay:', error);
-        }
-        this._discardLeadingCapture(replayId);
-        break;
-
-      case TrailingStatus.FAILED:
-        this._discardLeadingCapture(replayId);
-        break;
-
-      case TrailingStatus.PENDING:
-      default:
-        break;
-    }
-  }
-
-  /**
-   * Discards all state related to leading capture for a replay.
-   *
-   * @param {string} replayId - The replay ID to discard
-   * @private
-   */
-  _discardLeadingCapture(replayId) {
-    const pendingContext = this._pendingLeading.get(replayId);
-    if (pendingContext?.timerId) {
-      clearTimeout(pendingContext.timerId);
-    }
-    this._pendingLeading.delete(replayId);
-    this._trailingStatus.delete(replayId);
   }
 
   /**
@@ -360,7 +263,7 @@ export default class ReplayManager {
     });
 
     this._trailingStatus.set(replayId, TrailingStatus.SENT);
-    await this._sendOrDiscardLeadingReplay(replayId);
+    await this._leadingCapture.sendIfReady(replayId);
   }
 
   /**
@@ -377,8 +280,7 @@ export default class ReplayManager {
     }
 
     this._trailingStatus.set(replayId, TrailingStatus.FAILED);
-
-    this._discardLeadingCapture(replayId);
+    this._leadingCapture.discard(replayId);
 
     if (!this._map.has(replayId)) {
       logger.error(
@@ -388,6 +290,7 @@ export default class ReplayManager {
     }
 
     this._map.delete(replayId);
+    this._trailingStatus.delete(replayId);
     return true;
   }
 
@@ -412,6 +315,13 @@ export default class ReplayManager {
   }
 
   /**
+   * Clears all stored replays without sending them
+   */
+  clear() {
+    this._map.clear();
+  }
+
+  /**
    * Returns the size of the map (number of stored replays)
    *
    * @returns {number} The number of replays currently stored
@@ -427,12 +337,5 @@ export default class ReplayManager {
    */
   get recorder() {
     return this._recorder;
-  }
-
-  /**
-   * Clears all stored replays without sending them
-   */
-  clear() {
-    this._map.clear();
   }
 }
