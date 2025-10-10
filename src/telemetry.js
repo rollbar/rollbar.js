@@ -136,7 +136,7 @@ class Telemeter {
 
     // If the uuid is present, this is a message occurrence.
     if (rollbarUUID) {
-      ((otelAttributes = {
+      (otelAttributes = {
         message,
         level,
         type: 'message',
@@ -146,7 +146,7 @@ class Telemeter {
           'rollbar-occurrence-event',
           otelAttributes,
           fromMillis(timestamp),
-        ));
+        );
     } else {
       otelAttributes = { message, level };
       this.telemetrySpan?.addEvent(

@@ -5,8 +5,6 @@
 export default {
   enabled: false, // Whether recording is enabled
   autoStart: true, // Start recording automatically when Rollbar initializes
-  maxSeconds: 300, // Maximum recording duration in seconds
-  postDuration: 5, // Duration of events to include after a post is triggered, in seconds
 
   // defaults used by triggers that don't specify them
   triggerDefaults: {

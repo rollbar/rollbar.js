@@ -45,9 +45,7 @@ describe('Recorder', function () {
       expect(recorder.options).to.deep.equal({
         enabled: undefined,
         autoStart: undefined,
-        maxSeconds: undefined,
-        postDuration: undefined,
-        triggers: undefined,
+        maxPreDuration: undefined,
         debug: undefined,
       });
     });
@@ -59,9 +57,7 @@ describe('Recorder', function () {
       expect(recorder.options).to.deep.equal({
         enabled: true,
         autoStart: undefined,
-        maxSeconds: undefined,
-        postDuration: undefined,
-        triggers: undefined,
+        maxPreDuration: undefined,
         debug: undefined,
       });
     });
@@ -419,14 +415,12 @@ describe('Recorder', function () {
     it('should update options', function () {
       const recorder = new Recorder({ enabled: true, recordFn: recordFnStub });
 
-      recorder.configure({ enabled: false, maxSeconds: 20 });
+      recorder.configure({ enabled: false, maxPreDuration: 20 });
 
       expect(recorder.options).to.deep.equal({
         enabled: false,
         autoStart: undefined,
-        maxSeconds: 20,
-        postDuration: undefined,
-        triggers: undefined,
+        maxPreDuration: 20,
         debug: undefined,
       });
     });
@@ -434,14 +428,12 @@ describe('Recorder', function () {
     it('should set correct checkoutEveryNms', function () {
       const recorder = new Recorder({ enabled: false });
 
-      recorder.configure({ enabled: true, maxSeconds: 15 });
+      recorder.configure({ enabled: true, maxPreDuration: 15 });
 
       expect(recorder.options).to.deep.equal({
         enabled: true,
         autoStart: undefined,
-        maxSeconds: 15,
-        postDuration: undefined,
-        triggers: undefined,
+        maxPreDuration: 15,
         debug: undefined,
       });
 
