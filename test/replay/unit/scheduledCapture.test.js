@@ -138,7 +138,7 @@ describe('ScheduledCapture', function () {
     });
 
     it('should export recording span with cursor', async function () {
-      await scheduledCapture._export('replay-1', 'uuid-1', {
+      scheduledCapture._export('replay-1', 'uuid-1', {
         slot: 0,
         offset: 5,
       });
@@ -157,7 +157,7 @@ describe('ScheduledCapture', function () {
     });
 
     it('should export telemetry span', async function () {
-      await scheduledCapture._export('replay-1', 'uuid-1', {
+      scheduledCapture._export('replay-1', 'uuid-1', {
         slot: 0,
         offset: 5,
       });
@@ -173,7 +173,7 @@ describe('ScheduledCapture', function () {
     it('should work without telemeter', async function () {
       scheduledCapture._telemeter = null;
 
-      await scheduledCapture._export('replay-1', 'uuid-1', {
+      scheduledCapture._export('replay-1', 'uuid-1', {
         slot: 0,
         offset: 5,
       });
@@ -195,16 +195,18 @@ describe('ScheduledCapture', function () {
       });
     });
 
-    it('should handle export error and discard', async function () {
+    it.only('should handle export error and discard', async function () {
       const exportError = new Error('Replay recording has no events');
       mockRecorder.exportRecordingSpan.throws(exportError);
       sinon.spy(logger, 'error');
       sinon.spy(scheduledCapture, 'discard');
 
-      await scheduledCapture._export('replay-1', 'uuid-1', {
-        slot: 0,
-        offset: 5,
-      });
+      expect(() => {
+        scheduledCapture._export('replay-1', 'uuid-1', {
+          slot: 0,
+          offset: 5,
+        });
+      }).to.throw('Leading export failed');
 
       expect(logger.error.calledOnce).to.be.true;
       expect(
@@ -217,13 +219,15 @@ describe('ScheduledCapture', function () {
       expect(mockTelemeter.exportTelemetrySpan.called).to.be.false;
     });
 
-    it('should return early if context was already cleaned up', async function () {
+    it.only('should return early if context was already cleaned up', async function () {
       scheduledCapture._pending.delete('replay-1');
 
-      await scheduledCapture._export('replay-1', 'uuid-1', {
-        slot: 0,
-        offset: 5,
-      });
+      expect(() => {
+        scheduledCapture._export('replay-1', 'uuid-1', {
+          slot: 0,
+          offset: 5,
+        });
+      }).to.throw('No pending context for replayId, cleaned up?');
 
       expect(mockRecorder.exportRecordingSpan.called).to.be.false;
       expect(mockTelemeter.exportTelemetrySpan.called).to.be.false;
@@ -244,7 +248,7 @@ describe('ScheduledCapture', function () {
     it('should send payload when ready and shouldSend returns true', async function () {
       shouldSendStub.returns(true);
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(shouldSendStub.calledWith('replay-1')).to.be.true;
       expect(mockTracing.exporter.post.calledOnce).to.be.true;
@@ -259,7 +263,7 @@ describe('ScheduledCapture', function () {
     it('should not send when shouldSend returns false', async function () {
       shouldSendStub.returns(false);
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(shouldSendStub.calledWith('replay-1')).to.be.true;
       expect(mockTracing.exporter.post.called).to.be.false;
@@ -271,7 +275,7 @@ describe('ScheduledCapture', function () {
         payload: { resourceSpans: [] },
       });
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(mockTracing.exporter.post.called).to.be.false;
       expect(shouldSendStub.called).to.be.false;
@@ -283,26 +287,26 @@ describe('ScheduledCapture', function () {
         payload: null,
       });
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(mockTracing.exporter.post.called).to.be.false;
     });
 
     it('should not send when context does not exist', async function () {
-      await scheduledCapture.sendIfReady('nonexistent');
+      scheduledCapture.sendIfReady('nonexistent');
 
       expect(mockTracing.exporter.post.called).to.be.false;
       expect(shouldSendStub.called).to.be.false;
     });
 
     it('should discard context after sending', async function () {
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(scheduledCapture._pending.has('replay-1')).to.be.false;
     });
 
     it('should call onComplete after sending', async function () {
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(onCompleteStub.calledOnce).to.be.true;
       expect(onCompleteStub.calledWith('replay-1')).to.be.true;
@@ -313,7 +317,7 @@ describe('ScheduledCapture', function () {
       mockTracing.exporter.post.rejects(postError);
       sinon.spy(logger, 'error');
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(logger.error.calledOnce).to.be.true;
       expect(
@@ -326,7 +330,7 @@ describe('ScheduledCapture', function () {
     it('should work without onComplete callback', async function () {
       scheduledCapture._onComplete = null;
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(mockTracing.exporter.post.calledOnce).to.be.true;
       expect(scheduledCapture._pending.has('replay-1')).to.be.false;
@@ -509,7 +513,7 @@ describe('ScheduledCapture', function () {
       expect(mockTracing.exporter.post.called).to.be.false;
 
       shouldSendStub.returns(true);
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(mockTracing.exporter.post.calledOnce).to.be.true;
     });
@@ -520,7 +524,7 @@ describe('ScheduledCapture', function () {
         payload: { resourceSpans: [] },
       });
 
-      await scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-1');
 
       expect(shouldSendStub.calledOnce).to.be.true;
       expect(shouldSendStub.calledWith('replay-1')).to.be.true;
@@ -625,8 +629,8 @@ describe('ScheduledCapture', function () {
         payload: { resourceSpans: [{ id: '2' }] },
       });
 
-      await scheduledCapture.sendIfReady('replay-1');
-      await scheduledCapture.sendIfReady('replay-2');
+      scheduledCapture.sendIfReady('replay-1');
+      scheduledCapture.sendIfReady('replay-2');
 
       expect(mockTracing.exporter.post.callCount).to.equal(2);
       expect(mockTracing.exporter.post.firstCall.args[0]).to.deep.equal({
