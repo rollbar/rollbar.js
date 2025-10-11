@@ -76,7 +76,7 @@ describe('ReplayManager buffer-index integration', function () {
     clock.restore();
   });
 
-  it('calls sendIfReady after timeout', async function () {
+  it('bails out if no leading events after timeout', async function () {
     setPreviousBuffer(recorder, [
       { timestamp: 1000, type: EventType.Meta, data: {} },
     ]);
@@ -84,7 +84,14 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 2000, type: EventType.Meta, data: {} },
     ]);
 
-    sinon.spy(replayManager._scheduledCapture, 'sendIfReady');
+    const capturer = replayManager._scheduledCapture;
+    sinon.spy(capturer, '_export');
+    sinon.spy(capturer, 'sendIfReady');
+    sinon.spy(capturer, '_pendingContextIfReady');
+
+    const exportFn = capturer._export;
+    const sendIfReadyFn = capturer.sendIfReady;
+    const pendingContextIfReadyFn = capturer._pendingContextIfReady;
 
     const replayId = 'test-replay-id';
     const occurrenceUuid = 'test-uuid';
@@ -93,19 +100,36 @@ describe('ReplayManager buffer-index integration', function () {
     replayManager.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
-    sinon.assert.notCalled(replayManager._scheduledCapture.sendIfReady);
+    expect(capturer._pending.has(replayId)).to.be.true;
+
+    sinon.assert.notCalled(exportFn);
+    sinon.assert.notCalled(sendIfReadyFn);
 
     await replayManager.send(replayId);
-    sinon.assert.calledOnce(replayManager._scheduledCapture.sendIfReady);
+
+    // ReplayManager calls sendIfReady immediately on send()
+    sinon.assert.notCalled(exportFn);
+    sinon.assert.calledOnce(sendIfReadyFn);
+    expect(sendIfReadyFn.firstCall.args).to.deep.equal([replayId]);
+
+    sinon.assert.calledOnce(pendingContextIfReadyFn);
+    expect(pendingContextIfReadyFn.firstCall.args).to.deep.equal([replayId]);
+    expect(pendingContextIfReadyFn.firstCall.returnValue).to.be.null;
+
+    exportFn.resetHistory();
+    sendIfReadyFn.resetHistory();
+    pendingContextIfReadyFn.resetHistory();
 
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(replayManager._scheduledCapture.sendIfReady);
-    expect(
-      replayManager._scheduledCapture.sendIfReady.secondCall.args,
-    ).to.deep.equal([replayId]);
+    // Scheduled capture timer fires, but no events to export
+    sinon.assert.calledOnce(exportFn);
+    sinon.assert.notCalled(sendIfReadyFn);
+    sinon.assert.notCalled(pendingContextIfReadyFn);
 
-    replayManager._scheduledCapture.sendIfReady.restore();
+    exportFn.restore();
+    sendIfReadyFn.restore();
+    pendingContextIfReadyFn.restore();
   });
 
   it('captures and sends leading replay with buffer-index', async function () {
@@ -137,14 +161,18 @@ describe('ReplayManager buffer-index integration', function () {
       },
     ]);
 
+    await replayManager.send(replayId);
+
+    await clock.tickAsync(1000);
+
+    // Push leading event
     currentBuffer(recorder).push({
       timestamp: 3000,
       type: EventType.IncrementalSnapshot,
       data: {},
     });
 
-    await replayManager.send(replayId);
-    await clock.tickAsync(5000);
+    await clock.tickAsync(4000);
 
     sinon.assert.calledTwice(recorder.exportRecordingSpan);
     expect(recorder.exportRecordingSpan.secondCall.args).to.deep.equal([

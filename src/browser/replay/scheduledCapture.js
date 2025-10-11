@@ -1,6 +1,7 @@
 import logger from '../../logger.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
 
 /**
  * A utility for coordinating delayed, cursor-based captures.
@@ -11,6 +12,7 @@ import logger from '../../logger.js';
  * generic and could be used for any delayed capture scenario.
  */
 export default class ScheduledCapture {
+  /** @type {Recorder} */
   _recorder;
   _tracing;
   _telemeter;
@@ -52,8 +54,8 @@ export default class ScheduledCapture {
 
     const timerId = setTimeout(async () => {
       try {
-        await this._export(replayId, occurrenceUuid, cursor);
-        await this.sendIfReady(replayId);
+        this._export(replayId, occurrenceUuid, cursor);
+        this.sendIfReady(replayId);
       } catch (error) {
         logger.error('Error during leading replay processing:', error);
       }
@@ -79,12 +81,12 @@ export default class ScheduledCapture {
    * @param {BufferCursor} cursor - Buffer cursor position
    * @private
    */
-  async _export(replayId, occurrenceUuid, cursor) {
+  _export(replayId, occurrenceUuid, cursor) {
     const pendingContext = this._pending.get(replayId);
 
     if (!pendingContext) {
       // Already cleaned up, possibly due to discard
-      return;
+      throw new Error('No pending context for replayId, cleaned up?');
     }
 
     try {
@@ -99,7 +101,7 @@ export default class ScheduledCapture {
     } catch (error) {
       logger.error('Error exporting leading recording span:', error);
       this.discard(replayId);
-      return;
+      throw new Error('Leading export failed', { cause: error });
     }
 
     this._telemeter?.exportTelemetrySpan({

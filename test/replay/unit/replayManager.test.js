@@ -148,7 +148,7 @@ describe('ReplayManager', function () {
 
     it('should not store anything when exportRecordingSpan throws', async function () {
       mockRecorder.exportRecordingSpan.throws(
-        new Error('Replay recording cannot have less than 3 events'),
+        new Error('Replay recording has no events'),
       );
 
       const loggerSpy = sinon.spy(logger, 'error');
