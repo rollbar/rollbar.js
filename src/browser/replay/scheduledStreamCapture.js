@@ -107,7 +107,7 @@ export default class ScheduledStreamCapture {
           'rollbar.occurrence.uuid': context.occurrenceUuid,
           'rollbar.replay.chunk': context.chunkIndex,
         },
-        context.lastCursor,
+        context.cursor,
       );
     } catch (error) {
       logger.error('Error exporting leading chunk:', error);
@@ -122,12 +122,12 @@ export default class ScheduledStreamCapture {
     const payload = this._tracing.exporter.toPayload();
 
     context.chunkQueue.push({
-      cursor: context.lastCursor,
+      cursor: context.cursor,
       payload,
       chunkIndex: context.chunkIndex,
     });
 
-    context.lastCursor = currentCursor;
+    context.cursor = currentCursor;
     context.chunkIndex++;
   }
 
