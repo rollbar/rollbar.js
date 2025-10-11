@@ -91,16 +91,8 @@ export default class ScheduledStreamCapture {
       return;
     }
 
-    const elapsed = (Date.now() - context.startTime) / 1000;
-
-    if (elapsed >= context.postDuration) {
-      clearInterval(context.intervalId);
-      context.finished = true;
-      await this.sendIfReady(replayId);
-      return;
-    }
-
-    const currentCursor = this._recorder.bufferCursor();
+    const cursorBefore = context.cursor;
+    const cursorAfter = this._recorder.bufferCursor();
 
     try {
       this._recorder.exportRecordingSpan(
@@ -108,9 +100,8 @@ export default class ScheduledStreamCapture {
         {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': context.occurrenceUuid,
-          'rollbar.replay.chunk': context.chunkIndex,
         },
-        context.cursor,
+        cursorBefore,
       );
     } catch (error) {
       logger.error('Error exporting leading chunk:', error);
@@ -125,13 +116,19 @@ export default class ScheduledStreamCapture {
     const payload = this._tracing.exporter.toPayload();
 
     context.chunkQueue.push({
-      cursor: context.cursor,
       payload,
-      chunkIndex: context.chunkIndex,
+      cursor: cursorBefore,
     });
 
-    context.cursor = currentCursor;
-    context.chunkIndex++;
+    context.cursor = cursorAfter;
+
+    const elapsed = (Date.now() - context.startTime) / 1000;
+
+    if (elapsed >= context.postDuration) {
+      clearInterval(context.intervalId);
+      context.finished = true;
+      await this.sendIfReady(replayId);
+    }
   }
 
   /**
