@@ -69,7 +69,6 @@ export default class ScheduledStreamCapture {
       occurrenceUuid,
       cursor: startCursor,
       chunkQueue: [],
-      chunkIndex: 0,
       sending: false,
       aborted: false,
       finished: false,
@@ -88,10 +87,7 @@ export default class ScheduledStreamCapture {
    */
   async _export(replayId) {
     const context = this._pending.get(replayId);
-
-    if (!context || context.aborted) {
-      return;
-    }
+    if (!context || context.aborted) return;
 
     const cursorBefore = context.cursor;
     const cursorAfter = this._recorder.bufferCursor();
@@ -144,27 +140,13 @@ export default class ScheduledStreamCapture {
    * @returns {Promise<void>}
    */
   async sendIfReady(replayId) {
-    const context = this._pending.get(replayId);
-
-    if (!context || context.aborted) {
-      return;
-    }
-
-    if (context.sending) {
-      logger.warn('ScheduledStreamCapture: Already sending for', replayId);
-      return;
-    }
-
-    if (context.chunkQueue.length === 0) {
-      return;
-    }
+    const context = this._pendingContextIfReady(replayId);
+    if (!context) return;
 
     context.sending = true;
 
     for (const chunk of context.chunkQueue) {
-      if (context.aborted) {
-        break;
-      }
+      if (context.aborted) break;
 
       if (!this._shouldSend(replayId)) {
         logger.error('Coordination check failed during chunk send');
@@ -177,7 +159,7 @@ export default class ScheduledStreamCapture {
           'X-Rollbar-Replay-Id': replayId,
         });
       } catch (error) {
-        logger.error(`Failed to send chunk ${chunk.chunkIndex}:`, error);
+        logger.error('Failed to send leading replay:', error);
         this.discard(replayId);
         throw error;
       }
@@ -202,10 +184,7 @@ export default class ScheduledStreamCapture {
    */
   discard(replayId) {
     const context = this._pending.get(replayId);
-
-    if (!context) {
-      return;
-    }
+    if (!context) return;
 
     context.aborted = true;
 
@@ -217,5 +196,22 @@ export default class ScheduledStreamCapture {
 
     this._pending.delete(replayId);
     this._onComplete?.(replayId);
+  }
+
+  /**
+   * Returns the pending context for the given replayId if it's ready to be sent.
+   *
+   * @param {string} replayId - The replay ID
+   * @returns {Object|null} The pending context if ready, otherwise null
+   */
+  _pendingContextIfReady(replayId) {
+    const ctx = this._pending.get(replayId);
+    return ctx &&
+      !ctx.aborted &&
+      !ctx.sending &&
+      ctx.chunkQueue.length > 0 &&
+      this._shouldSend(replayId)
+      ? ctx
+      : null;
   }
 }
