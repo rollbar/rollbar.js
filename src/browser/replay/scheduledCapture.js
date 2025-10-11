@@ -48,11 +48,11 @@ export default class ScheduledCapture {
    * @param {number} seconds - Number of seconds to wait before capturing
    */
   schedule(replayId, occurrenceUuid, seconds) {
-    const bufferCursor = this._recorder.bufferCursor();
+    const cursor = this._recorder.bufferCursor();
 
     const timerId = setTimeout(async () => {
       try {
-        await this._export(replayId, occurrenceUuid, bufferCursor);
+        await this._export(replayId, occurrenceUuid, cursor);
         await this.sendIfReady(replayId);
       } catch (error) {
         logger.error('Error during leading replay processing:', error);
@@ -62,7 +62,7 @@ export default class ScheduledCapture {
     this._pending.set(replayId, {
       timerId,
       occurrenceUuid,
-      bufferCursor,
+      cursor,
       ready: false,
     });
   }
@@ -76,10 +76,10 @@ export default class ScheduledCapture {
    *
    * @param {string} replayId - The replay ID
    * @param {string} occurrenceUuid - The occurrence UUID
-   * @param {BufferCursor} bufferCursor - Buffer cursor position
+   * @param {BufferCursor} cursor - Buffer cursor position
    * @private
    */
-  async _export(replayId, occurrenceUuid, bufferCursor) {
+  async _export(replayId, occurrenceUuid, cursor) {
     const pendingContext = this._pending.get(replayId);
 
     if (!pendingContext) {
@@ -94,7 +94,7 @@ export default class ScheduledCapture {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
         },
-        bufferCursor,
+        cursor,
       );
     } catch (error) {
       logger.error('Error exporting leading recording span:', error);
@@ -120,15 +120,8 @@ export default class ScheduledCapture {
    * @returns {Promise<void>}
    */
   async sendIfReady(replayId) {
-    const pendingContext = this._pending.get(replayId);
-
-    if (
-      !pendingContext?.ready ||
-      !pendingContext?.payload ||
-      !this._shouldSend(replayId)
-    ) {
-      return;
-    }
+    const pendingContext = this._pendingContextIfReady(replayId);
+    if (!pendingContext) return;
 
     try {
       await this._tracing.exporter.post(pendingContext.payload, {
@@ -156,5 +149,18 @@ export default class ScheduledCapture {
       clearTimeout(pendingContext.timerId);
     }
     this._pending.delete(replayId);
+  }
+
+  /**
+   * Returns the pending context for the given replayId if it's ready to be sent.
+   *
+   * @param {string} replayId - The replay ID
+   * @returns {Object|null} The pending context if ready, otherwise null
+   */
+  _pendingContextIfReady(replayId) {
+    const ctx = this._pending.get(replayId);
+    return ctx?.ready === true && ctx?.payload && this._shouldSend(replayId)
+      ? ctx
+      : null;
   }
 }
