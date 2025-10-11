@@ -1,6 +1,7 @@
 import logger from '../../logger.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
 
 /**
  * A utility for coordinating streaming, cursor-based captures over extended durations.
@@ -16,6 +17,7 @@ import logger from '../../logger.js';
  * - Duration-limited (stops when postDuration exceeded)
  */
 export default class ScheduledStreamCapture {
+  /** @type {Recorder} */
   _recorder;
   _tracing;
   _telemeter;
@@ -57,7 +59,7 @@ export default class ScheduledStreamCapture {
     const chunkMs = this._recorder.checkoutEveryNms();
 
     const intervalId = setInterval(() => {
-      this._exportChunk(replayId);
+      this._export(replayId);
     }, chunkMs);
 
     this._pending.set(replayId, {
@@ -84,7 +86,7 @@ export default class ScheduledStreamCapture {
    * @param {string} replayId - The replay ID
    * @private
    */
-  async _exportChunk(replayId) {
+  async _export(replayId) {
     const context = this._pending.get(replayId);
 
     if (!context || context.aborted) {
