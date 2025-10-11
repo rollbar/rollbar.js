@@ -217,7 +217,7 @@ export default class ReplayManager {
 
       const leadingSeconds = this._recorder.options?.postDuration || 0;
       if (leadingSeconds > 0) {
-        this._scheduleLeadingCapture(replayId, null, leadingSeconds);
+        this._scheduledCapture.schedule(replayId, null, leadingSeconds);
       }
     }
 
