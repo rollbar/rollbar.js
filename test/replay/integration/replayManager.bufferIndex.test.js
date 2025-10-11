@@ -179,7 +179,7 @@ describe('ReplayManager buffer-index integration', function () {
     await clock.tickAsync(100);
 
     const capturedCursor =
-      replayManager._scheduledCapture._pending.get(replayId).bufferCursor;
+      replayManager._scheduledCapture._pending.get(replayId).cursor;
     expect(capturedCursor).to.be.an('object');
     expect(capturedCursor).to.have.property('slot', 0);
     expect(capturedCursor).to.have.property('offset', 0);
@@ -247,6 +247,12 @@ describe('ReplayManager buffer-index integration', function () {
 
     replayManager.capture(replayId, occurrenceUuid, triggerContext);
     const trigger = replayManager._predicates.triggers[0];
+    expect(trigger).to.deep.equal({
+      preDuration: 10,
+      postDuration: 5,
+      type: 'occurrence',
+    });
+
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({
@@ -257,14 +263,16 @@ describe('ReplayManager buffer-index integration', function () {
 
     await clock.tickAsync(5000);
 
-    const pendingContext =
-      replayManager._scheduledCapture._pending.get(replayId);
-    expect(pendingContext.ready).to.be.true;
+    const capturer = replayManager._scheduledCapture;
+    expect(capturer._pending.has(replayId)).to.be.true;
+    expect(capturer._shouldSend(replayId)).to.be.false;
+    expect(capturer._pendingContextIfReady(replayId)).to.be.null;
     sinon.assert.notCalled(tracing.exporter.post);
 
     await replayManager.send(replayId);
 
     sinon.assert.calledTwice(tracing.exporter.post);
+    expect(capturer._pending.has(replayId)).to.be.false;
   });
 
   it('cleans up on leading post error', async function () {

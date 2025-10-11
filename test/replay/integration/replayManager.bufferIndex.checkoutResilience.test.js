@@ -73,8 +73,8 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     const trigger = replayManager._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    const cursor =
-      replayManager._scheduledCapture._pending.get(replayId).bufferCursor;
+    const capturer = replayManager._scheduledCapture;
+    const cursor = capturer._pending.get(replayId).cursor;
     expect(cursor).to.be.an('object');
     expect(cursor.slot).to.equal(0);
 
@@ -109,7 +109,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(capturer._pending.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
   });
@@ -200,8 +200,8 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     const trigger = replayManager._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    const cursor =
-      replayManager._scheduledCapture._pending.get(replayId).bufferCursor;
+    const capturer = replayManager._scheduledCapture;
+    const cursor = capturer._pending.get(replayId).cursor;
     expect(cursor).to.be.an('object');
 
     await clock.tickAsync(2000);
@@ -235,7 +235,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(capturer._pending.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
   });
@@ -308,8 +308,8 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     );
     await clock.tickAsync(100);
 
-    const cursor =
-      replayManager._scheduledCapture._pending.get(replayId).bufferCursor;
+    const capturer = replayManager._scheduledCapture;
+    const cursor = capturer._pending.get(replayId).cursor;
 
     sinon.spy(recorder, '_collectEventsFromCursor');
 
@@ -332,7 +332,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(capturer._pending.size).to.equal(0);
 
     recorder._collectEventsFromCursor.restore();
   });

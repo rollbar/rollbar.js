@@ -77,7 +77,7 @@ describe('ScheduledCapture', function () {
 
       expect(mockRecorder.bufferCursor.calledOnce).to.be.true;
       const context = scheduledCapture._pending.get('replay-1');
-      expect(context.bufferCursor).to.deep.equal({ slot: 0, offset: 5 });
+      expect(context.cursor).to.deep.equal({ slot: 0, offset: 5 });
     });
 
     it('should schedule timer for specified duration', function () {
@@ -93,7 +93,7 @@ describe('ScheduledCapture', function () {
       const context = scheduledCapture._pending.get('replay-1');
       expect(context).to.deep.include({
         occurrenceUuid: 'uuid-1',
-        bufferCursor: { slot: 0, offset: 5 },
+        cursor: { slot: 0, offset: 5 },
         ready: false,
       });
       expect(context.timerId).to.exist;
@@ -132,7 +132,7 @@ describe('ScheduledCapture', function () {
       scheduledCapture._pending.set('replay-1', {
         timerId: 123,
         occurrenceUuid: 'uuid-1',
-        bufferCursor: { slot: 0, offset: 5 },
+        cursor: { slot: 0, offset: 5 },
         ready: false,
       });
     });
@@ -235,7 +235,7 @@ describe('ScheduledCapture', function () {
       scheduledCapture._pending.set('replay-1', {
         timerId: 123,
         occurrenceUuid: 'uuid-1',
-        bufferCursor: { slot: 0, offset: 5 },
+        cursor: { slot: 0, offset: 5 },
         ready: true,
         payload: { resourceSpans: [{ spanData: 'test' }] },
       });
@@ -339,7 +339,7 @@ describe('ScheduledCapture', function () {
       scheduledCapture._pending.set('replay-1', {
         timerId,
         occurrenceUuid: 'uuid-1',
-        bufferCursor: { slot: 0, offset: 5 },
+        cursor: { slot: 0, offset: 5 },
         ready: false,
       });
 
@@ -413,8 +413,7 @@ describe('ScheduledCapture', function () {
 
       scheduledCapture.schedule('replay-1', 'uuid-1', 0.2);
 
-      const capturedCursor =
-        scheduledCapture._pending.get('replay-1').bufferCursor;
+      const capturedCursor = scheduledCapture._pending.get('replay-1').cursor;
       expect(capturedCursor).to.deep.equal({ slot: 0, offset: 5 });
 
       await clock.tickAsync(100);
@@ -428,6 +427,73 @@ describe('ScheduledCapture', function () {
         slot: 0,
         offset: 5,
       });
+    });
+  });
+
+  describe('_pendingContextIfReady', function () {
+    it('should return context when ready and shouldSend returns true', function () {
+      const payload = { resourceSpans: [{ spanData: 'test' }] };
+      scheduledCapture._pending.set('replay-1', { ready: true, payload });
+      shouldSendStub.returns(true);
+
+      const result = scheduledCapture._pendingContextIfReady('replay-1');
+
+      expect(shouldSendStub.calledOnce).to.be.true;
+      expect(shouldSendStub.calledWith('replay-1')).to.be.true;
+      expect(result).to.deep.equal({ ready: true, payload });
+    });
+
+    it('should return null when shouldSend returns false', function () {
+      scheduledCapture._pending.set('replay-1', {
+        ready: true,
+        payload: { resourceSpans: [] },
+      });
+      shouldSendStub.returns(false);
+
+      const result = scheduledCapture._pendingContextIfReady('replay-1');
+
+      expect(shouldSendStub.calledOnce).to.be.true;
+      expect(result).to.be.null;
+    });
+
+    it('should return null when context is not ready', function () {
+      scheduledCapture._pending.set('replay-1', {
+        ready: false,
+        payload: { resourceSpans: [] },
+      });
+
+      const result = scheduledCapture._pendingContextIfReady('replay-1');
+
+      expect(shouldSendStub.called).to.be.false;
+      expect(result).to.be.null;
+    });
+
+    it('should return null when payload is missing', function () {
+      scheduledCapture._pending.set('replay-1', { ready: true, payload: null });
+
+      const result = scheduledCapture._pendingContextIfReady('replay-1');
+
+      expect(shouldSendStub.called).to.be.false;
+      expect(result).to.be.null;
+    });
+
+    it('should return null when context does not exist', function () {
+      const result = scheduledCapture._pendingContextIfReady('nonexistent');
+
+      expect(shouldSendStub.called).to.be.false;
+      expect(result).to.be.null;
+    });
+
+    it('should return null when ready is not exactly true', function () {
+      scheduledCapture._pending.set('replay-1', {
+        ready: 1, // truthy but not true
+        payload: { resourceSpans: [] },
+      });
+
+      const result = scheduledCapture._pendingContextIfReady('replay-1');
+
+      expect(shouldSendStub.called).to.be.false;
+      expect(result).to.be.null;
     });
   });
 
@@ -536,8 +602,8 @@ describe('ScheduledCapture', function () {
       const context1 = scheduledCapture._pending.get('replay-1');
       const context2 = scheduledCapture._pending.get('replay-2');
 
-      expect(context1.bufferCursor).to.deep.equal({ slot: 0, offset: 5 });
-      expect(context2.bufferCursor).to.deep.equal({ slot: 1, offset: 10 });
+      expect(context1.cursor).to.deep.equal({ slot: 0, offset: 5 });
+      expect(context2.cursor).to.deep.equal({ slot: 1, offset: 10 });
 
       await clock.tickAsync(100);
 
