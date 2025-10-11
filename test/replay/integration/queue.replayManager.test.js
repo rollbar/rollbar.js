@@ -5,6 +5,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import logger from '../../../src/logger.js';
 import Queue from '../../../src/queue.js';
 import Api from '../../../src/api.js';
 
@@ -16,6 +17,8 @@ describe('Queue ReplayManager Integration', function () {
   let replayId;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'warn' });
+
     transport = {
       post: sinon
         .stub()

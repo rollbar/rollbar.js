@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { EventType } from '@rrweb/types';
 
-import Recorder from '../../../src/browser/replay/recorder.js';
+import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import {
   currentBuffer,
@@ -15,6 +15,7 @@ describe('ReplayManager buffer-index integration', function () {
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
+    logger.init({ logLevel: 'warn' });
 
     const mockRecordFn = () => () => {};
     options = {
