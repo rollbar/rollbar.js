@@ -4,10 +4,9 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { record as rrwebRecordFn } from '@rrweb/record';
 
+import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
-import Recorder from '../../../src/browser/replay/recorder.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import Api from '../../../src/api.js';
 import mockRecordFn from '../util/mockRecordFn.js';
@@ -34,6 +33,8 @@ describe('ReplayManager API Integration', function () {
   let replayManager;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'warn' });
+
     transport = {
       post: sinon
         .stub()

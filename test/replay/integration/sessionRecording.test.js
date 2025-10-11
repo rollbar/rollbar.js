@@ -5,6 +5,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import logger from '../../../src/logger.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
@@ -64,6 +65,8 @@ describe('Session Replay Integration', function () {
   let recorder;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'warn' });
+
     tracing = new Tracing(window, null, options);
     tracing.initSession();
   });
@@ -201,6 +204,8 @@ describe('Session Replay Transport Integration', function () {
   let queue;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'warn' });
+
     transport = createMockTransport();
     const urlMock = { parse: sinon.stub().returns({}) };
     const truncationMock = {
