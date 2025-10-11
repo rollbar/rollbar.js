@@ -5,6 +5,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import logger from '../../../src/logger.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import Telemeter from '../../../src/telemetry.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
@@ -55,6 +56,8 @@ describe('Session Replay E2E', function () {
   let rateLimiter;
 
   beforeEach(function () {
+    logger.init({ logLevel: 'warn' });
+
     transport = {
       post: sinon
         .stub()
@@ -73,7 +76,9 @@ describe('Session Replay E2E', function () {
     const truncationMock = {
       truncate: sinon.stub().returns({ error: null, value: '{}' }),
     };
-    const logger = { error: sinon.spy(), log: sinon.spy() };
+
+    sinon.spy(logger, 'error');
+    sinon.spy(logger, 'log');
 
     api = new Api(
       { accessToken: 'test-token-12345' },

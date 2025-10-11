@@ -1,15 +1,17 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import mockRecordFn from '../util/mockRecordFn.js';
-import logger from '../../../src/logger.js';
 
 describe('ReplayManager – Buffer Index Checkout Resilience', function () {
   let options, replayManager, recorder, api, tracing, telemeter, clock;
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
+    logger.init({ logLevel: 'warn' });
+
     api = { postSpans: sinon.stub().resolves() };
     tracing = {
       startSpan: sinon.stub().returns({
