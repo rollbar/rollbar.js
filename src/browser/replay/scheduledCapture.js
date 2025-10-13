@@ -126,15 +126,12 @@ export default class ScheduledCapture {
     if (!pendingContext) return;
 
     try {
-      await this._tracing.exporter.post(pendingContext.payload, {
-        'X-Rollbar-Replay-Id': replayId,
-      });
+      await this._post(replayId, pendingContext.payload);
     } catch (error) {
       logger.error('Failed to send leading replay:', error);
     }
 
     this.discard(replayId);
-    this._onComplete?.(replayId);
   }
 
   /**
@@ -151,6 +148,7 @@ export default class ScheduledCapture {
       clearTimeout(pendingContext.timerId);
     }
     this._pending.delete(replayId);
+    this._onComplete?.(replayId);
   }
 
   /**
@@ -158,11 +156,25 @@ export default class ScheduledCapture {
    *
    * @param {string} replayId - The replay ID
    * @returns {Object|null} The pending context if ready, otherwise null
+   * @private
    */
   _pendingContextIfReady(replayId) {
     const ctx = this._pending.get(replayId);
     return ctx?.ready === true && ctx?.payload && this._shouldSend(replayId)
       ? ctx
       : null;
+  }
+
+  /**
+   * Sends the given payload for the replay id to the Rollbar API.
+   *
+   * @param {string} replayId - The replay ID
+   * @param {string} payload - Serialized OTLP format payload
+   * @private
+   */
+  async _post(replayId, payload) {
+    await this._tracing.exporter.post(payload, {
+      'X-Rollbar-Replay-Id': replayId,
+    });
   }
 }
