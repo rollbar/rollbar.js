@@ -46,15 +46,16 @@ export default class ScheduledStreamCapture {
   /**
    * Schedules streaming chunk captures over the specified duration.
    *
-   * Starts a periodic interval that exports chunks at safe intervals to prevent
-   * event loss during buffer checkouts. Chunks are queued for later sequential sending.
+   * Starts a periodic interval that exports chunks at safe intervals to
+   * prevent event loss during buffer checkouts. Chunks are queued for later
+   * sequential sending.
    *
    * @param {string} replayId - The replay ID
    * @param {string} occurrenceUuid - The occurrence UUID
    * @param {number} postDuration - Duration in seconds to capture
    */
   schedule(replayId, occurrenceUuid, postDuration) {
-    const startCursor = this._recorder.bufferCursor();
+    const cursor = this._recorder.bufferCursor();
     const startTime = Date.now();
     const chunkMs = this._recorder.checkoutEveryNms();
 
@@ -67,7 +68,7 @@ export default class ScheduledStreamCapture {
       startTime,
       postDuration,
       occurrenceUuid,
-      cursor: startCursor,
+      cursor,
       chunkQueue: [],
       sending: false,
       aborted: false,
@@ -120,13 +121,22 @@ export default class ScheduledStreamCapture {
 
     context.cursor = cursorAfter;
 
+    // Opportunistic send after each export
     await this.sendIfReady(replayId);
+
+    // Check if we've reached the end of the capture window
     const elapsed = (Date.now() - context.startTime) / 1000;
 
     if (elapsed >= context.postDuration) {
       clearInterval(context.intervalId);
       context.finished = true;
-      await this.sendIfReady(replayId);
+
+      if (!context.sending && context.chunkQueue.length === 0) {
+        this._pending.delete(replayId);
+        this._onComplete?.(replayId);
+      } else if (!context.sending) {
+        await this.sendIfReady(replayId);
+      }
     }
   }
 
@@ -143,6 +153,17 @@ export default class ScheduledStreamCapture {
   async sendIfReady(replayId) {
     const context = this._pendingContextIfReady(replayId);
     if (!context) return;
+
+    // TODO(matux): Overzealous, simplify discard paths.
+    if (
+      context.finished &&
+      !context.sending &&
+      context.chunkQueue.length === 0
+    ) {
+      this._pending.delete(replayId);
+      this._onComplete?.(replayId);
+      return;
+    }
 
     context.sending = true;
 

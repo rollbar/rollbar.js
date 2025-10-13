@@ -5,7 +5,7 @@ import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 
-describe('ReplayManager – Buffer Index Checkout Resilience', function () {
+describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   let options, replayManager, recorder, api, tracing, telemeter, clock;
 
   beforeEach(function () {
