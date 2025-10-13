@@ -4,17 +4,13 @@ import logger from '../../logger.js';
 /** @typedef {import('./recorder.js').Recorder} Recorder */
 
 /**
- * A utility for coordinating streaming, cursor-based captures over extended durations.
+ * A utility for coordinating streaming, cursor-based captures over extended
+ * durations.
  *
- * Unlike ScheduledCapture (single delayed export), this class exports multiple chunks
- * at intervals to prevent event loss during long postDuration windows. Chunks are
- * queued during capture and sent sequentially after coordination requirements are met.
- *
- * Key features:
- * - Periodic chunk exports at safe intervals (≤ checkoutEveryNms)
- * - Sequential chunk sending (maintains rrweb playback continuity)
- * - Fail-fast abort (any chunk failure discards remaining chunks)
- * - Duration-limited (stops when postDuration exceeded)
+ * Unlike ScheduledCapture (single delayed export), this class exports multiple
+ * chunks at intervals to prevent event loss during long postDuration windows.
+ * Chunks are queued during capture and sent sequentially after coordination
+ * requirements are met.
  */
 export default class ScheduledStreamCapture {
   /** @type {Recorder} */
@@ -55,17 +51,24 @@ export default class ScheduledStreamCapture {
    * @param {number} postDuration - Duration in seconds to capture
    */
   schedule(replayId, occurrenceUuid, postDuration) {
-    const cursor = this._recorder.bufferCursor();
     const startTime = Date.now();
+    const endAt = startTime + postDuration * 1000;
     const chunkMs = this._recorder.checkoutEveryNms();
+    const cursor = this._recorder.bufferCursor();
 
     const intervalId = setInterval(() => {
       this._export(replayId);
     }, chunkMs);
 
+    const endTimerId = setTimeout(() => {
+      this._finalExport(replayId);
+    }, postDuration * 1000);
+
     this._pending.set(replayId, {
       intervalId,
+      endTimerId,
       startTime,
+      endAt,
       postDuration,
       occurrenceUuid,
       cursor,
@@ -87,57 +90,73 @@ export default class ScheduledStreamCapture {
    * @private
    */
   async _export(replayId) {
-    const context = this._pending.get(replayId);
-    if (!context || context.aborted) return;
+    const ctx = this._pending.get(replayId);
+    if (!ctx || ctx.aborted || ctx.finished || Date.now() >= ctx.endAt) {
+      return;
+    }
 
-    const cursorBefore = context.cursor;
-    const cursorAfter = this._recorder.bufferCursor();
+    const before = ctx.cursor;
+    const after = this._recorder.bufferCursor();
 
     try {
       this._recorder.exportRecordingSpan(
         this._tracing,
         {
           'rollbar.replay.id': replayId,
-          'rollbar.occurrence.uuid': context.occurrenceUuid,
+          'rollbar.occurrence.uuid': ctx.occurrenceUuid,
         },
-        cursorBefore,
+        before,
       );
     } catch (error) {
-      logger.error('Error exporting leading chunk:', error);
-      this.discard(replayId);
+      logger.debug('Error exporting leading chunk (tick):', error);
       return;
     }
 
-    this._telemeter?.exportTelemetrySpan({
-      'rollbar.replay.id': replayId,
-    });
+    this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
 
     const payload = this._tracing.exporter.toPayload();
+    ctx.chunkQueue.push({ payload, cursor: before });
+    ctx.cursor = after;
 
-    context.chunkQueue.push({
-      payload,
-      cursor: cursorBefore,
-    });
-
-    context.cursor = cursorAfter;
-
-    // Opportunistic send after each export
     await this.sendIfReady(replayId);
+  }
 
-    // Check if we've reached the end of the capture window
-    const elapsed = (Date.now() - context.startTime) / 1000;
+  async _finalExport(replayId) {
+    const ctx = this._pending.get(replayId);
+    if (!ctx || ctx.aborted) return;
 
-    if (elapsed >= context.postDuration) {
-      clearInterval(context.intervalId);
-      context.finished = true;
+    if (ctx.intervalId) clearInterval(ctx.intervalId);
+    if (ctx.endTimerId) clearTimeout(ctx.endTimerId);
 
-      if (!context.sending && context.chunkQueue.length === 0) {
-        this._pending.delete(replayId);
-        this._onComplete?.(replayId);
-      } else if (!context.sending) {
-        await this.sendIfReady(replayId);
-      }
+    ctx.finished = true;
+
+    const before = ctx.cursor;
+    const after = this._recorder.bufferCursor();
+    try {
+      this._recorder.exportRecordingSpan(
+        this._tracing,
+        {
+          'rollbar.replay.id': replayId,
+          'rollbar.occurrence.uuid': ctx.occurrenceUuid,
+        },
+        before,
+      );
+      this._telemeter?.exportTelemetrySpan({ 'rollbar.replay.id': replayId });
+      const payload = this._tracing.exporter.toPayload();
+      ctx.chunkQueue.push({ payload, cursor: before });
+      ctx.cursor = after;
+    } catch (error) {
+      // TODO(matux): No events probably, this is expected, be more graceful.
+      logger.debug('Error exporting leading chunk (final):', error);
     }
+
+    if (!ctx.sending && ctx.chunkQueue.length === 0) {
+      this._pending.delete(replayId);
+      this._onComplete?.(replayId);
+      return;
+    }
+
+    await this.sendIfReady(replayId);
   }
 
   /**
@@ -151,24 +170,19 @@ export default class ScheduledStreamCapture {
    * @returns {Promise<void>}
    */
   async sendIfReady(replayId) {
-    const context = this._pendingContextIfReady(replayId);
-    if (!context) return;
+    const ctx = this._pendingContextIfReady(replayId);
+    if (!ctx) return;
 
-    // TODO(matux): Overzealous, simplify discard paths.
-    if (
-      context.finished &&
-      !context.sending &&
-      context.chunkQueue.length === 0
-    ) {
+    if (ctx.finished && !ctx.sending && ctx.chunkQueue.length === 0) {
       this._pending.delete(replayId);
       this._onComplete?.(replayId);
       return;
     }
 
-    context.sending = true;
+    ctx.sending = true;
 
-    for (const chunk of context.chunkQueue) {
-      if (context.aborted) break;
+    for (const chunk of ctx.chunkQueue) {
+      if (ctx.aborted) break;
 
       if (!this._shouldSend(replayId)) {
         logger.error('Coordination check failed during chunk send');
@@ -187,10 +201,10 @@ export default class ScheduledStreamCapture {
       }
     }
 
-    context.sending = false;
-    context.chunkQueue = [];
+    ctx.sending = false;
+    ctx.chunkQueue = [];
 
-    if (context.finished) {
+    if (ctx.finished) {
       this._pending.delete(replayId);
       this._onComplete?.(replayId);
     }
@@ -205,16 +219,15 @@ export default class ScheduledStreamCapture {
    * @param {string} replayId - The replay ID to abort
    */
   discard(replayId) {
-    const context = this._pending.get(replayId);
-    if (!context) return;
+    const ctx = this._pending.get(replayId);
+    if (!ctx) return;
 
-    context.aborted = true;
+    ctx.aborted = true;
 
-    if (context.intervalId) {
-      clearInterval(context.intervalId);
-    }
+    if (ctx.intervalId) clearInterval(ctx.intervalId);
+    if (ctx.endTimerId) clearTimeout(ctx.endTimerId);
 
-    context.chunkQueue = [];
+    ctx.chunkQueue = [];
 
     this._pending.delete(replayId);
     this._onComplete?.(replayId);

@@ -125,7 +125,8 @@ export default class ReplayManager {
         'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
       });
     } catch (error) {
-      logger.error('Error exporting recording span:', error);
+      // TODO(matux): No events probably, this is expected, be more graceful.
+      logger.debug('Error exporting recording span:', error);
       return;
     }
 
