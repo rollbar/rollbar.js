@@ -120,6 +120,7 @@ export default class ScheduledStreamCapture {
 
     context.cursor = cursorAfter;
 
+    await this.sendIfReady(replayId);
     const elapsed = (Date.now() - context.startTime) / 1000;
 
     if (elapsed >= context.postDuration) {
