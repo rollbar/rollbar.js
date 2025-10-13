@@ -7,13 +7,150 @@ import ReplayPredicates from '../../../src/browser/replay/replayPredicates.js';
 
 describe('ReplayManager', function () {
   let replayId;
-  let recorderConfig;
+  let replayConfig;
+  let replayPredicates;
 
-  describe('isEnabledForTriggerType', function () {
+  describe('configure', function () {
+    beforeEach(function () {
+      replayConfig = {
+        triggerDefaults: {
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        },
+        triggers: [
+          {
+            type: 'occurrence',
+            level: ['error', 'critical'],
+          },
+        ],
+      };
+      replayPredicates = new ReplayPredicates(replayConfig);
+    });
+
+    it('should set maxPreDuration', function () {
+      replayPredicates.configure({
+        ...replayConfig,
+        triggers: [
+          {
+            type: 'occurrence',
+            level: ['error', 'critical'],
+            preDuration: 100,
+            postDuration: 5,
+          },
+          {
+            type: 'direct',
+            tags: ['foo'],
+            preDuration: 600,
+            postDuration: 5,
+          },
+        ],
+      });
+      expect(replayPredicates.maxPreDuration).to.equal(600);
+    });
+
+    it('should initialize triggers with defaults', function () {
+      replayPredicates.configure({
+        ...replayConfig,
+        triggers: [
+          {
+            type: 'occurrence',
+            level: ['critical'],
+          },
+          {
+            type: 'direct',
+            tags: ['foo'],
+            preDuration: 60,
+            postDuration: 180,
+          },
+          {
+            type: 'navigation',
+            pathMatch: ['products'],
+            preDuration: 0,
+            postDuration: 60,
+            samplingRatio: 0.1,
+          },
+        ],
+      });
+      expect(replayPredicates.triggers).to.deep.equal([
+        {
+          type: 'occurrence',
+          level: ['critical'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        },
+        {
+          type: 'direct',
+          tags: ['foo'],
+          preDuration: 60,
+          postDuration: 180,
+          samplingRatio: 1.0,
+        },
+        {
+          type: 'navigation',
+          pathMatch: ['products'],
+          preDuration: 0,
+          postDuration: 60,
+          samplingRatio: 0.1,
+        },
+      ]);
+    });
+
+    it('should allow multiple triggers of the same type', function () {
+      replayPredicates.configure({
+        ...replayConfig,
+        triggers: [
+          {
+            type: 'navigation',
+            pathMatch: 'app',
+            samplingRatio: 0.5,
+          },
+          {
+            type: 'navigation',
+            pathMatch: 'settings',
+            preDuration: 60,
+            postDuration: 180,
+          },
+          {
+            type: 'navigation',
+            pathMatch: 'user',
+            preDuration: 30,
+            postDuration: 60,
+          },
+        ],
+      });
+      expect(replayPredicates.triggers).to.deep.equal([
+        {
+          type: 'navigation',
+          pathMatch: 'app',
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 0.5,
+        },
+        {
+          type: 'navigation',
+          pathMatch: 'settings',
+          preDuration: 60,
+          postDuration: 180,
+          samplingRatio: 1.0,
+        },
+        {
+          type: 'navigation',
+          pathMatch: 'user',
+          preDuration: 30,
+          postDuration: 60,
+          samplingRatio: 1.0,
+        },
+      ]);
+    });
+  });
+
+  describe('shouldCaptureForTriggerContext', function () {
     describe('occurrence', function () {
       beforeEach(function () {
         replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
-        recorderConfig = {
+        replayConfig = {
           triggerDefaults: {
             preDuration: 300,
             postDuration: 5,
@@ -41,7 +178,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
@@ -60,7 +197,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -71,10 +208,10 @@ describe('ReplayManager', function () {
           level: 'info',
           replayId,
         };
-        delete recorderConfig.triggers[0].level;
+        delete replayConfig.triggers[0].level;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
@@ -90,14 +227,14 @@ describe('ReplayManager', function () {
           level: 'info',
           replayId,
         };
-        recorderConfig.triggers.push({
+        replayConfig.triggers.push({
           type: 'occurrence',
           level: ['info'],
           samplingRatio: 0.5,
         });
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
@@ -114,10 +251,10 @@ describe('ReplayManager', function () {
           level: 'error',
           replayId,
         };
-        delete recorderConfig.triggers[0].samplingRatio;
+        delete replayConfig.triggers[0].samplingRatio;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
@@ -134,10 +271,10 @@ describe('ReplayManager', function () {
           level: 'error',
           replayId,
         };
-        recorderConfig.triggers[0].samplingRatio = 0.1;
+        replayConfig.triggers[0].samplingRatio = 0.1;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -150,11 +287,11 @@ describe('ReplayManager', function () {
         };
         // Note: sampling is generated from replayId, which for the test value
         // will always return not sampled here with ratio of 0.1.
-        recorderConfig.triggerDefaults.samplingRatio = 0.1;
-        delete recorderConfig.triggers[0].samplingRatio;
+        replayConfig.triggerDefaults.samplingRatio = 0.1;
+        delete replayConfig.triggers[0].samplingRatio;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -165,10 +302,10 @@ describe('ReplayManager', function () {
           level: 'error',
           replayId,
         };
-        recorderConfig.triggerDefaults.samplingRatio = 0.1;
+        replayConfig.triggerDefaults.samplingRatio = 0.1;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'occurrence',
@@ -198,10 +335,10 @@ describe('ReplayManager', function () {
           level: 'error',
           replayId,
         };
-        recorderConfig.triggers = null;
+        replayConfig.triggers = null;
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -210,7 +347,7 @@ describe('ReplayManager', function () {
     describe('direct', function () {
       beforeEach(function () {
         replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
-        recorderConfig = {
+        replayConfig = {
           triggerDefaults: {
             preDuration: 300,
             postDuration: 5,
@@ -238,7 +375,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'direct',
@@ -257,7 +394,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -269,7 +406,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
@@ -278,7 +415,7 @@ describe('ReplayManager', function () {
     describe('direct', function () {
       beforeEach(function () {
         replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
-        recorderConfig = {
+        replayConfig = {
           triggerDefaults: {
             preDuration: 300,
             postDuration: 5,
@@ -305,7 +442,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.deep.equal({
           type: 'navigation',
@@ -324,7 +461,7 @@ describe('ReplayManager', function () {
         };
 
         const resp = new ReplayPredicates(
-          recorderConfig,
+          replayConfig,
         ).shouldCaptureForTriggerContext(context);
         expect(resp).to.be.null;
       });
