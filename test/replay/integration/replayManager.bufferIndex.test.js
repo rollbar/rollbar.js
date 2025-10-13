@@ -321,6 +321,8 @@ describe('ReplayManager buffer-index integration', function () {
 
     replayManager.capture(replayId, occurrenceUuid, triggerContext);
     const trigger = replayManager._predicates.triggers[0];
+    expect(trigger).to.exist;
+
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({

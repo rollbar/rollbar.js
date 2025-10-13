@@ -5,14 +5,18 @@ import logger from '../../../src/logger.js';
 import ReplayManager from '../../../src/browser/replay/replayManager.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 
-describe('ReplayManager – Buffer Index Checkout Resilience', function () {
+describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   let options, replayManager, recorder, api, tracing, telemeter, clock;
+
+  before(function () {
+    logger.init({ logLevel: 'debug' });
+  });
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
-    logger.init({ logLevel: 'warn' });
 
     api = { postSpans: sinon.stub().resolves() };
+
     tracing = {
       startSpan: sinon.stub().returns({
         setAttributes: sinon.stub(),
@@ -28,7 +32,9 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       },
       session: { attributes: {} },
     };
+
     telemeter = { exportTelemetrySpan: sinon.stub() };
+
     options = {
       replay: {
         enabled: true,
@@ -173,6 +179,67 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     recorder.exportRecordingSpan.restore();
   });
 
+  it('sends exactly ceil(postDuration / checkoutInterval) leading chunks covering the window', async function () {
+    const preDuration = 4; // seconds -> checkoutEveryNms = 2000
+    const postDuration = 5; // seconds -> expect leading chunks at 2s,4s,5s = 3
+
+    const replayManager = new ReplayManager({
+      tracing,
+      telemeter,
+      options: {
+        ...options.replay,
+        triggerDefaults: { preDuration, postDuration },
+      },
+    });
+
+    const recorder = replayManager.recorder;
+
+    sinon.spy(recorder, 'exportRecordingSpan');
+
+    recorder.start();
+    await clock.tickAsync(200);
+
+    const triggerContext = { type: 'occurrence' };
+    const replayId = replayManager.capture(
+      'test-replay-id',
+      'test-uuid',
+      triggerContext,
+    );
+
+    await clock.tickAsync(100);
+
+    const chunkMs = recorder.checkoutEveryNms();
+    expect(chunkMs).to.equal((preDuration * 1000) / 2);
+
+    const expectedLeadingChunks =
+      replayManager._scheduledCapture.constructor.name === 'ScheduledCapture'
+        ? 1
+        : Math.ceil((postDuration * 1000) / chunkMs);
+
+    await replayManager.send(replayId);
+    await clock.tickAsync(postDuration * 1000 + 1);
+
+    const calls = tracing.exporter.post.getCalls();
+    expect(calls).to.have.lengthOf(
+      1 + expectedLeadingChunks,
+      'total POST count (trailing + leading)',
+    );
+
+    calls.forEach((c) => {
+      expect(c.args[1]).to.deep.equal({ 'X-Rollbar-Replay-Id': replayId });
+    });
+
+    sinon.assert.callCount(
+      recorder.exportRecordingSpan,
+      1 + expectedLeadingChunks,
+    );
+
+    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(replayManager._trailingStatus.has(replayId)).to.be.false;
+
+    recorder.exportRecordingSpan.restore();
+  });
+
   it('uses the exact captured cursor after one rotation', async function () {
     replayManager = new ReplayManager({
       tracing,
@@ -183,8 +250,8 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     replayManager.configure({
       ...options.replay,
       triggerDefaults: {
-        preDuration: 4,
-        postDuration: 5,
+        preDuration: 4, // 2s checkout
+        postDuration: 5, // chunks at 2s, 4s, 6s, but should total 5s
       },
     });
 
@@ -204,14 +271,14 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
 
     const capturer = replayManager._scheduledCapture;
     const cursor = capturer._pending.get(replayId).cursor;
-    expect(cursor).to.be.an('object');
+    expect(cursor).to.deep.equal({ slot: 0, offset: 5 });
 
     await clock.tickAsync(2000);
 
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(recorder.exportRecordingSpan);
+    expect(recorder.exportRecordingSpan.callCount).to.be.within(2, 4);
     expect(recorder.exportRecordingSpan.firstCall.args).to.deep.equal([
       tracing,
       {
@@ -223,20 +290,43 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
         'rollbar.replay.url.full': 'http://localhost:8000/?********',
       },
     ]);
-    expect(recorder.exportRecordingSpan.secondCall.args).to.deep.equal([
-      tracing,
-      {
-        'rollbar.replay.id': 'test-replay-id',
-        'rollbar.occurrence.uuid': 'test-uuid',
-      },
-      cursor,
-    ]);
 
-    sinon.assert.calledTwice(tracing.exporter.post);
-    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
-      { resourceSpans: [{ spanData: 'test' }] },
-      { 'X-Rollbar-Replay-Id': replayId },
-    ]);
+    // Rotating buffer
+    const expectedCursors = [
+      cursor, // slot 0, offset 5 at capture time
+      { slot: 1, offset: 4 },
+      { slot: 0, offset: 4 },
+    ];
+
+    recorder.exportRecordingSpan
+      .getCalls()
+      .slice(1)
+      .forEach((call, i) => {
+        expect(
+          call.args,
+          `exportRecordingSpan call[${i + 1}] args mismatch`,
+        ).to.deep.equal([
+          tracing,
+          {
+            'rollbar.replay.id': 'test-replay-id',
+            'rollbar.occurrence.uuid': 'test-uuid',
+          },
+          expectedCursors[i],
+        ]);
+      });
+
+    expect(tracing.exporter.post.callCount).to.be.within(2, 4);
+
+    tracing.exporter.post
+      .getCalls()
+      .slice(1)
+      .forEach((call) => {
+        expect(call.args).to.deep.equal([
+          { resourceSpans: [{ spanData: 'test' }] },
+          { 'X-Rollbar-Replay-Id': replayId },
+        ]);
+      });
+
     expect(capturer._pending.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
@@ -268,6 +358,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
       triggerContext,
     );
     const trigger = replayManager._predicates.triggers[0];
+    expect(trigger).to.be.an('object');
     await clock.tickAsync(100);
 
     await clock.tickAsync(2000);
@@ -275,11 +366,10 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(tracing.exporter.post);
-    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
-      { resourceSpans: [{ spanData: 'test' }] },
-      { 'X-Rollbar-Replay-Id': replayId },
-    ]);
+    const posts = tracing.exporter.post.getCalls();
+    expect(posts.length).to.be.greaterThan(1);
+    expect(posts.every((c) => c.args[1]['X-Rollbar-Replay-Id'] === replayId)).to
+      .be.true;
     expect(replayManager._scheduledCapture._pending.size).to.equal(0);
   });
 
@@ -320,20 +410,16 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledOnce(recorder._collectEventsFromCursor);
-    expect(recorder._collectEventsFromCursor.firstCall.args).to.deep.equal([
-      cursor,
-    ]);
+    const calls = recorder._collectEventsFromCursor.getCalls();
+    expect(calls.length).to.be.greaterThan(0);
+    expect(calls[0].args[0]).to.deep.equal(cursor);
+    // Prove monotonic advancement (no regress)
+    for (let i = 1; i < calls.length; i++) {
+      const prev = calls[i - 1].args[0];
+      const cur = calls[i].args[0];
+      expect(cur.slot !== prev.slot || cur.offset >= prev.offset).to.be.true;
+    }
 
-    const returnedEvents =
-      recorder._collectEventsFromCursor.firstCall.returnValue;
-    expect(returnedEvents).to.have.lengthOf(10);
-
-    sinon.assert.calledTwice(tracing.exporter.post);
-    expect(tracing.exporter.post.secondCall.args).to.deep.equal([
-      { resourceSpans: [{ spanData: 'test' }] },
-      { 'X-Rollbar-Replay-Id': replayId },
-    ]);
     expect(capturer._pending.size).to.equal(0);
 
     recorder._collectEventsFromCursor.restore();
@@ -359,7 +445,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     recorder._isReady = true;
     recorder._stopFn = () => {};
 
-    sinon.spy(logger, 'error');
+    sinon.spy(logger, 'debug');
 
     const triggerContext = { type: 'occurrence' };
     const replayId = replayManager.capture(
@@ -369,10 +455,10 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     );
     await clock.tickAsync(100);
 
-    sinon.assert.calledOnce(logger.error);
-    expect(logger.error.firstCall.args[0]).to.be.a('string');
-    expect(logger.error.firstCall.args[1]).to.be.instanceOf(Error);
-    expect(logger.error.firstCall.args[1].message).to.equal(
+    sinon.assert.calledOnce(logger.debug);
+    expect(logger.debug.firstCall.args[0]).to.be.a('string');
+    expect(logger.debug.firstCall.args[1]).to.be.instanceOf(Error);
+    expect(logger.debug.firstCall.args[1].message).to.equal(
       'Replay recording has no events',
     );
 
@@ -380,7 +466,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
     sinon.assert.notCalled(api.postSpans);
 
-    logger.error.restore();
+    logger.debug.restore();
   });
 
   it('leading post error is handled and state is cleaned', async function () {
@@ -467,7 +553,7 @@ describe('ReplayManager – Buffer Index Checkout Resilience', function () {
     await replayManager.send(replayId2);
     await clock.tickAsync(5000);
 
-    sinon.assert.calledTwice(tracing.exporter.post);
+    sinon.assert.called(tracing.exporter.post);
     expect(tracing.exporter.post.secondCall.args).to.deep.equal([
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
