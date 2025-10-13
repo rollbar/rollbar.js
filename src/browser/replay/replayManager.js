@@ -4,6 +4,7 @@ import logger from '../../logger.js';
 import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
 import ScheduledCapture from './scheduledCapture.js';
+import ScheduledStreamCapture from './scheduledStreamCapture.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 /** @typedef {import('./recorder.js').Recorder} Recorder */
@@ -54,7 +55,7 @@ export default class ReplayManager {
     this._tracing = tracing;
     this._telemeter = telemeter;
     this._trailingStatus = new Map();
-    this._scheduledCapture = new ScheduledCapture({
+    this._scheduledCapture = new ScheduledStreamCapture({
       recorder: this._recorder,
       tracing: this._tracing,
       telemeter: this._telemeter,
@@ -124,7 +125,8 @@ export default class ReplayManager {
         'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
       });
     } catch (error) {
-      logger.error('Error exporting recording span:', error);
+      // TODO(matux): No events probably, this is expected, be more graceful.
+      logger.debug('Error exporting recording span:', error);
       return;
     }
 

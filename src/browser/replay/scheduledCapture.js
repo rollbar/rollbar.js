@@ -1,6 +1,7 @@
 import logger from '../../logger.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+/** @typedef {import('./recorder.js').Recorder} Recorder */
 
 /**
  * A utility for coordinating delayed, cursor-based captures.
@@ -11,6 +12,7 @@ import logger from '../../logger.js';
  * generic and could be used for any delayed capture scenario.
  */
 export default class ScheduledCapture {
+  /** @type {Recorder} */
   _recorder;
   _tracing;
   _telemeter;
@@ -48,12 +50,12 @@ export default class ScheduledCapture {
    * @param {number} seconds - Number of seconds to wait before capturing
    */
   schedule(replayId, occurrenceUuid, seconds) {
-    const bufferCursor = this._recorder.bufferCursor();
+    const cursor = this._recorder.bufferCursor();
 
     const timerId = setTimeout(async () => {
       try {
-        await this._export(replayId, occurrenceUuid, bufferCursor);
-        await this.sendIfReady(replayId);
+        this._export(replayId, occurrenceUuid, cursor);
+        this.sendIfReady(replayId);
       } catch (error) {
         logger.error('Error during leading replay processing:', error);
       }
@@ -62,7 +64,7 @@ export default class ScheduledCapture {
     this._pending.set(replayId, {
       timerId,
       occurrenceUuid,
-      bufferCursor,
+      cursor,
       ready: false,
     });
   }
@@ -76,15 +78,15 @@ export default class ScheduledCapture {
    *
    * @param {string} replayId - The replay ID
    * @param {string} occurrenceUuid - The occurrence UUID
-   * @param {BufferCursor} bufferCursor - Buffer cursor position
+   * @param {BufferCursor} cursor - Buffer cursor position
    * @private
    */
-  async _export(replayId, occurrenceUuid, bufferCursor) {
+  _export(replayId, occurrenceUuid, cursor) {
     const pendingContext = this._pending.get(replayId);
 
     if (!pendingContext) {
       // Already cleaned up, possibly due to discard
-      return;
+      throw new Error('No pending context for replayId, cleaned up?');
     }
 
     try {
@@ -94,12 +96,12 @@ export default class ScheduledCapture {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
         },
-        bufferCursor,
+        cursor,
       );
     } catch (error) {
       logger.error('Error exporting leading recording span:', error);
       this.discard(replayId);
-      return;
+      throw new Error('Leading export failed', { cause: error });
     }
 
     this._telemeter?.exportTelemetrySpan({
@@ -120,26 +122,16 @@ export default class ScheduledCapture {
    * @returns {Promise<void>}
    */
   async sendIfReady(replayId) {
-    const pendingContext = this._pending.get(replayId);
-
-    if (
-      !pendingContext?.ready ||
-      !pendingContext?.payload ||
-      !this._shouldSend(replayId)
-    ) {
-      return;
-    }
+    const pendingContext = this._pendingContextIfReady(replayId);
+    if (!pendingContext) return;
 
     try {
-      await this._tracing.exporter.post(pendingContext.payload, {
-        'X-Rollbar-Replay-Id': replayId,
-      });
+      await this._post(replayId, pendingContext.payload);
     } catch (error) {
       logger.error('Failed to send leading replay:', error);
     }
 
     this.discard(replayId);
-    this._onComplete?.(replayId);
   }
 
   /**
@@ -156,5 +148,33 @@ export default class ScheduledCapture {
       clearTimeout(pendingContext.timerId);
     }
     this._pending.delete(replayId);
+    this._onComplete?.(replayId);
+  }
+
+  /**
+   * Returns the pending context for the given replayId if it's ready to be sent.
+   *
+   * @param {string} replayId - The replay ID
+   * @returns {Object|null} The pending context if ready, otherwise null
+   * @private
+   */
+  _pendingContextIfReady(replayId) {
+    const ctx = this._pending.get(replayId);
+    return ctx?.ready === true && ctx?.payload && this._shouldSend(replayId)
+      ? ctx
+      : null;
+  }
+
+  /**
+   * Sends the given payload for the replay id to the Rollbar API.
+   *
+   * @param {string} replayId - The replay ID
+   * @param {string} payload - Serialized OTLP format payload
+   * @private
+   */
+  async _post(replayId, payload) {
+    await this._tracing.exporter.post(payload, {
+      'X-Rollbar-Replay-Id': replayId,
+    });
   }
 }
