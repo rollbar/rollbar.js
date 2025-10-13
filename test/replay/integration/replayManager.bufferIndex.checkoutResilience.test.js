@@ -445,7 +445,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     recorder._isReady = true;
     recorder._stopFn = () => {};
 
-    sinon.spy(logger, 'error');
+    sinon.spy(logger, 'debug');
 
     const triggerContext = { type: 'occurrence' };
     const replayId = replayManager.capture(
@@ -455,10 +455,10 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     );
     await clock.tickAsync(100);
 
-    sinon.assert.calledOnce(logger.error);
-    expect(logger.error.firstCall.args[0]).to.be.a('string');
-    expect(logger.error.firstCall.args[1]).to.be.instanceOf(Error);
-    expect(logger.error.firstCall.args[1].message).to.equal(
+    sinon.assert.calledOnce(logger.debug);
+    expect(logger.debug.firstCall.args[0]).to.be.a('string');
+    expect(logger.debug.firstCall.args[1]).to.be.instanceOf(Error);
+    expect(logger.debug.firstCall.args[1].message).to.equal(
       'Replay recording has no events',
     );
 
@@ -466,7 +466,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
     sinon.assert.notCalled(api.postSpans);
 
-    logger.error.restore();
+    logger.debug.restore();
   });
 
   it('leading post error is handled and state is cleaned', async function () {
