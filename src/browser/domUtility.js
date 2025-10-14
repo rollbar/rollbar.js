@@ -34,7 +34,7 @@ function treeToArray(elem) {
   var nextDescription;
   for (var height = 0; elem && height < MAX_HEIGHT; height++) {
     nextDescription = describeElement(elem);
-    if (nextDescription.tagName === 'html') {
+    if (!nextDescription || nextDescription.tagName === 'html') {
       break;
     }
     out.unshift(nextDescription);
