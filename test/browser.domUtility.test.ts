@@ -118,6 +118,11 @@ describe('treeToArray', function () {
     const arr = d.treeToArray(e1);
     expect(arr.length).to.eql(5);
   });
+  it('should handle elements without tag names', function () {
+    var e1 = genElement(null);
+    var arr = d.treeToArray(e1);
+    expect(arr).to.eql([]);
+  });
   it('should put the innermost element last', function () {
     const e1 = genElement('div', 'id1');
     const e2 = genElement('div', 'id2', 'a b');
