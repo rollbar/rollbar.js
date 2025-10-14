@@ -1,12 +1,12 @@
 /**
- * Integration tests for ReplayManager with API
+ * Integration tests for Replay with API
  */
 
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import logger from '../../../src/logger.js';
-import ReplayManager from '../../../src/browser/replay/replayManager.js';
+import Replay from '../../../src/browser/replay/replay.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import Api from '../../../src/api.js';
 import mockRecordFn from '../util/mockRecordFn.js';
@@ -25,12 +25,12 @@ const options = {
   },
 };
 
-describe('ReplayManager API Integration', function () {
+describe('Replay API Integration', function () {
   let tracing;
   let recorder;
   let api;
   let transport;
-  let replayManager;
+  let replay;
 
   beforeEach(function () {
     logger.init({ logLevel: 'warn' });
@@ -67,11 +67,11 @@ describe('ReplayManager API Integration', function () {
 
     const mockPayload = [{ id: 'span1', name: 'recording-span' }];
 
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
+    recorder = replay.recorder;
     sinon.stub(recorder, 'exportRecordingSpan');
     sinon.stub(tracing.exporter, 'toPayload').returns(mockPayload);
 
@@ -90,7 +90,7 @@ describe('ReplayManager API Integration', function () {
     const trigger = options.replay.triggers[0];
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    const replayId = replayManager.capture(null, uuid, triggerContext);
+    const replayId = replay.capture(null, uuid, triggerContext);
 
     expect(replayId).to.be.a('string');
     expect(replayId.length).to.equal(16); // 8 bytes as hex = 16 characters
@@ -108,7 +108,7 @@ describe('ReplayManager API Integration', function () {
     ).to.be.true;
     expect(tracing.exporter.toPayload.calledOnce).to.be.true;
 
-    const payload = replayManager.getSpans(replayId);
+    const payload = replay.getSpans(replayId);
     expect(payload).to.not.be.null;
     expect(payload).to.be.an('array');
     expect(payload[0]).to.have.property('name', 'recording-span');
@@ -122,14 +122,14 @@ describe('ReplayManager API Integration', function () {
     const expectedHeaders = {
       'X-Rollbar-Replay-Id': replayId,
     };
-    replayManager.setSpans(replayId, mockPayload);
+    replay.setSpans(replayId, mockPayload);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
 
     expect(postSpansSpy.calledOnce).to.be.true;
     expect(postSpansSpy.calledWith(mockPayload, expectedHeaders)).to.be.true;
 
-    expect(replayManager.getSpans(replayId)).to.be.null;
+    expect(replay.getSpans(replayId)).to.be.null;
   });
 
   it('should throw API errors during send', async function () {
@@ -138,17 +138,17 @@ describe('ReplayManager API Integration', function () {
 
     const replayId = 'error-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-    replayManager.setSpans(replayId, mockPayload);
+    replay.setSpans(replayId, mockPayload);
 
     let error;
     try {
-      await replayManager.send(replayId);
+      await replay.send(replayId);
     } catch (e) {
       error = e;
     }
 
     expect(error).to.equal(apiError);
-    expect(replayManager.getSpans(replayId)).to.be.null;
+    expect(replay.getSpans(replayId)).to.be.null;
   });
 
   it('should discard replay without sending', function () {
@@ -156,24 +156,24 @@ describe('ReplayManager API Integration', function () {
 
     const replayId = 'discard-replay-id';
     const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-    replayManager.setSpans(replayId, mockPayload);
+    replay.setSpans(replayId, mockPayload);
 
-    const result = replayManager.discard(replayId);
+    const result = replay.discard(replayId);
 
     expect(result).to.be.true;
     expect(postSpansSpy.called).to.be.false;
 
-    expect(replayManager.getSpans(replayId)).to.be.null;
+    expect(replay.getSpans(replayId)).to.be.null;
   });
 
   it('should generate unique replay IDs', function () {
     const replayIds = new Set();
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    sinon.stub(replayManager, '_exportSpansAndAddTracingPayload').resolves();
+    sinon.stub(replay, '_exportSpansAndAddTracingPayload').resolves();
 
     for (let i = 0; i < 100; i++) {
-      const replayId = replayManager.capture(null, null, triggerContext);
+      const replayId = replay.capture(null, null, triggerContext);
       expect(replayIds.has(replayId)).to.be.false;
       replayIds.add(replayId);
     }
@@ -185,11 +185,11 @@ describe('ReplayManager API Integration', function () {
     it('should send replay when API response is successful', async function () {
       const replayId = 'integration-test-replay';
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-      replayManager.setSpans(replayId, mockPayload);
+      replay.setSpans(replayId, mockPayload);
 
       const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
-      await replayManager.sendOrDiscardReplay(
+      await replay.sendOrDiscardReplay(
         replayId,
         null,
         { err: 0 },
@@ -205,17 +205,17 @@ describe('ReplayManager API Integration', function () {
           'X-Rollbar-Replay-Id': replayId,
         }),
       ).to.be.true;
-      expect(replayManager.getSpans(replayId)).to.be.null;
+      expect(replay.getSpans(replayId)).to.be.null;
     });
 
     it('should discard replay when API returns error', async function () {
       const replayId = 'integration-test-discard';
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-      replayManager.setSpans(replayId, mockPayload);
+      replay.setSpans(replayId, mockPayload);
 
       const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
-      await replayManager.sendOrDiscardReplay(
+      await replay.sendOrDiscardReplay(
         replayId,
         null,
         { err: 1, message: 'API Error' },
@@ -223,17 +223,17 @@ describe('ReplayManager API Integration', function () {
       );
 
       expect(postSpansSpy.called).to.be.false;
-      expect(replayManager.getSpans(replayId)).to.be.null;
+      expect(replay.getSpans(replayId)).to.be.null;
     });
 
     it('should discard replay when Rollbar-Replay-Enabled is false', async function () {
       const replayId = 'integration-test-disabled';
       const mockPayload = [{ id: 'test-span', name: 'recording-span' }];
-      replayManager.setSpans(replayId, mockPayload);
+      replay.setSpans(replayId, mockPayload);
 
       const postSpansSpy = sinon.spy(tracing.exporter, 'post');
 
-      await replayManager.sendOrDiscardReplay(
+      await replay.sendOrDiscardReplay(
         replayId,
         null,
         { err: 0 },
@@ -241,7 +241,7 @@ describe('ReplayManager API Integration', function () {
       );
 
       expect(postSpansSpy.called).to.be.false;
-      expect(replayManager.getSpans(replayId)).to.be.null;
+      expect(replay.getSpans(replayId)).to.be.null;
     });
   });
 });

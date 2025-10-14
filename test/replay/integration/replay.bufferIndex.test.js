@@ -3,15 +3,15 @@ import sinon from 'sinon';
 import { EventType } from '@rrweb/types';
 
 import logger from '../../../src/logger.js';
-import ReplayManager from '../../../src/browser/replay/replayManager.js';
+import Replay from '../../../src/browser/replay/replay.js';
 import {
   currentBuffer,
   setCurrentBuffer,
   setPreviousBuffer,
 } from '../util/recorder.js';
 
-describe('ReplayManager buffer-index integration', function () {
-  let options, replayManager, recorder, api, tracing, telemeter, clock;
+describe('Replay buffer-index integration', function () {
+  let options, replay, recorder, api, tracing, telemeter, clock;
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
@@ -58,12 +58,12 @@ describe('ReplayManager buffer-index integration', function () {
       exportTelemetrySpan: sinon.stub(),
     };
 
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options,
     });
-    recorder = replayManager.recorder;
+    recorder = replay.recorder;
 
     recorder._isReady = true;
     recorder._stopFn = () => {};
@@ -84,7 +84,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 2000, type: EventType.Meta, data: {} },
     ]);
 
-    const capturer = replayManager._scheduledCapture;
+    const capturer = replay._scheduledCapture;
     sinon.spy(capturer, '_export');
     sinon.spy(capturer, 'sendIfReady');
     sinon.spy(capturer, '_pendingContextIfReady');
@@ -97,7 +97,7 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
+    replay.capture(replayId, occurrenceUuid, triggerContext);
     await clock.tickAsync(100);
 
     expect(capturer._pending.has(replayId)).to.be.true;
@@ -105,9 +105,9 @@ describe('ReplayManager buffer-index integration', function () {
     sinon.assert.notCalled(exportFn);
     sinon.assert.notCalled(sendIfReadyFn);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
 
-    // ReplayManager calls sendIfReady immediately on send()
+    // Replay calls sendIfReady immediately on send()
     sinon.assert.notCalled(exportFn);
     sinon.assert.calledOnce(sendIfReadyFn);
     expect(sendIfReadyFn.firstCall.args).to.deep.equal([replayId]);
@@ -144,8 +144,8 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
     sinon.assert.calledOnce(recorder.exportRecordingSpan);
@@ -161,7 +161,7 @@ describe('ReplayManager buffer-index integration', function () {
       },
     ]);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
 
     await clock.tickAsync(1000);
 
@@ -203,12 +203,12 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
     const capturedCursor =
-      replayManager._scheduledCapture._pending.get(replayId).cursor;
+      replay._scheduledCapture._pending.get(replayId).cursor;
     expect(capturedCursor).to.be.an('object');
     expect(capturedCursor).to.have.property('slot', 0);
     expect(capturedCursor).to.have.property('offset', 0);
@@ -219,7 +219,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 4000, type: EventType.Meta, data: {} },
     ]);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     expect(recorder.exportRecordingSpan.secondCall.args).to.deep.equal([
@@ -236,7 +236,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('discards leading when trailing fails', async function () {
@@ -251,15 +251,15 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    replayManager.discard(replayId);
+    replay.discard(replayId);
     await clock.tickAsync(5000);
 
     sinon.assert.notCalled(tracing.exporter.post);
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('waits while trailing is pending, then sends once trailing is SENT', async function () {
@@ -274,8 +274,8 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     expect(trigger).to.deep.equal({
       preDuration: 10,
       postDuration: 5,
@@ -292,13 +292,13 @@ describe('ReplayManager buffer-index integration', function () {
 
     await clock.tickAsync(5000);
 
-    const capturer = replayManager._scheduledCapture;
+    const capturer = replay._scheduledCapture;
     expect(capturer._pending.has(replayId)).to.be.true;
     expect(capturer._shouldSend(replayId)).to.be.false;
     expect(capturer._pendingContextIfReady(replayId)).to.be.null;
     sinon.assert.notCalled(tracing.exporter.post);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
 
     sinon.assert.calledTwice(tracing.exporter.post);
     expect(capturer._pending.has(replayId)).to.be.false;
@@ -319,8 +319,8 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     expect(trigger).to.exist;
 
     await clock.tickAsync(100);
@@ -331,7 +331,7 @@ describe('ReplayManager buffer-index integration', function () {
       data: {},
     });
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     sinon.assert.calledTwice(tracing.exporter.post);
@@ -343,7 +343,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('does not schedule leading when trailing export throws', async function () {
@@ -354,12 +354,12 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid = 'test-uuid';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId, occurrenceUuid, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId, occurrenceUuid, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    expect(replayManager._map.has(replayId)).to.be.false;
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._map.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('cleanup: discard cancels timer; success clears state', async function () {
@@ -374,13 +374,13 @@ describe('ReplayManager buffer-index integration', function () {
     const occurrenceUuid1 = 'test-uuid-1';
     const triggerContext = { type: 'occurrence', level: 'error' };
 
-    replayManager.capture(replayId1, occurrenceUuid1, triggerContext);
-    const trigger = replayManager._predicates.triggers[0];
+    replay.capture(replayId1, occurrenceUuid1, triggerContext);
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    expect(replayManager._scheduledCapture._pending.has(replayId1)).to.be.true;
+    expect(replay._scheduledCapture._pending.has(replayId1)).to.be.true;
 
-    replayManager.discard(replayId1);
+    replay.discard(replayId1);
     await clock.tickAsync(10000);
 
     sinon.assert.notCalled(tracing.exporter.post);
@@ -395,7 +395,7 @@ describe('ReplayManager buffer-index integration', function () {
       { timestamp: 6000, type: EventType.Meta, data: {} },
     ]);
 
-    replayManager.capture(replayId2, occurrenceUuid2, triggerContext);
+    replay.capture(replayId2, occurrenceUuid2, triggerContext);
     await clock.tickAsync(100);
 
     currentBuffer(recorder).push({
@@ -404,7 +404,7 @@ describe('ReplayManager buffer-index integration', function () {
       data: {},
     });
 
-    await replayManager.send(replayId2);
+    await replay.send(replayId2);
     await clock.tickAsync(5000);
 
     sinon.assert.calledTwice(tracing.exporter.post);
@@ -412,7 +412,7 @@ describe('ReplayManager buffer-index integration', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
     ]);
-    expect(replayManager._scheduledCapture._pending.has(replayId2)).to.be.false;
-    expect(replayManager._trailingStatus.has(replayId2)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId2)).to.be.false;
+    expect(replay._trailingStatus.has(replayId2)).to.be.false;
   });
 });

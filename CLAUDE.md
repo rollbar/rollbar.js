@@ -166,7 +166,7 @@ The `src/tracing/` directory contains an OpenTelemetry-inspired tracing implemen
 The `src/browser/replay` directory contains the implementation of the Session Replay feature:
 
 - **Recorder**: Core class that integrates with rrweb to record DOM events
-- **ReplayManager**: Manages the mapping between error occurrences and session recordings
+- **Replay**: Manages the mapping between error occurrences and session recordings
 - **Configuration**: Configurable options in `defaults.js` for replay behavior
 
 The Session Replay feature utilizes our tracing infrastructure to:
@@ -180,10 +180,10 @@ The Session Replay feature utilizes our tracing infrastructure to:
 ### Session Replay Flow
 
 1. **Recording**: The Recorder class continuously records DOM events using rrweb
-2. **Error Occurrence**: When an error occurs, Queue.addItem() calls ReplayManager.add()
-3. **Correlation**: ReplayManager generates a replayId and attaches it to the error
-4. **Coordination**: After successful error submission, Queue triggers ReplayManager.send()
-5. **Transport**: ReplayManager retrieves stored replay data and sends via api.postSpans()
+2. **Error Occurrence**: When an error occurs, Queue.addItem() calls Replay.add()
+3. **Correlation**: Replay generates a replayId and attaches it to the error
+4. **Coordination**: After successful error submission, Queue triggers Replay.send()
+5. **Transport**: Replay retrieves stored replay data and sends via api.postSpans()
 
 ### Testing Infrastructure
 

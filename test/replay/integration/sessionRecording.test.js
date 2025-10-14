@@ -9,7 +9,7 @@ import logger from '../../../src/logger.js';
 import Tracing from '../../../src/tracing/tracing.js';
 import { Context } from '../../../src/tracing/context.js';
 import Recorder from '../../../src/browser/replay/recorder.js';
-import ReplayManager from '../../../src/browser/replay/replayManager.js';
+import Replay from '../../../src/browser/replay/replay.js';
 import replayDefaults from '../../../src/browser/replay/defaults.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 import Api from '../../../src/api.js';
@@ -200,7 +200,7 @@ describe('Session Replay Transport Integration', function () {
   let recorder;
   let api;
   let transport;
-  let replayManager;
+  let replay;
   let queue;
 
   beforeEach(function () {
@@ -225,11 +225,11 @@ describe('Session Replay Transport Integration', function () {
       return createPayloadWithReplayId('test-replay-id');
     });
 
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
+    recorder = replay.recorder;
     sinon.stub(recorder, 'exportRecordingSpan');
 
     queue = new Queue(
@@ -237,7 +237,7 @@ describe('Session Replay Transport Integration', function () {
       api,
       console,
       { transmit: true, retryInterval: 500 },
-      replayManager,
+      replay,
     );
 
     recorder.start();
@@ -251,8 +251,8 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should add replayId to error item and send replay on success', function (done) {
-    const captureSpy = sinon.spy(replayManager, 'capture');
-    const sendSpy = sinon.spy(replayManager, 'send');
+    const captureSpy = sinon.spy(replay, 'capture');
+    const sendSpy = sinon.spy(replay, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
     const errorItem = {
@@ -293,9 +293,9 @@ describe('Session Replay Transport Integration', function () {
         }, 10);
       });
 
-    const captureSpy = sinon.spy(replayManager, 'capture');
-    const sendSpy = sinon.spy(replayManager, 'send');
-    const discardSpy = sinon.spy(replayManager, 'discard');
+    const captureSpy = sinon.spy(replay, 'capture');
+    const sendSpy = sinon.spy(replay, 'send');
+    const discardSpy = sinon.spy(replay, 'discard');
 
     const errorItem = {
       data: {
@@ -324,14 +324,11 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should handle full end-to-end flow from error to spans', async function () {
-    const captureSpy = sinon.spy(replayManager, 'capture');
-    const sendSpy = sinon.spy(replayManager, 'send');
+    const captureSpy = sinon.spy(replay, 'capture');
+    const sendSpy = sinon.spy(replay, 'send');
     const postSpansSpy = sinon.spy(api, 'postSpans');
 
-    const sendOrDiscardReplaySpy = sinon.spy(
-      replayManager,
-      'sendOrDiscardReplay',
-    );
+    const sendOrDiscardReplaySpy = sinon.spy(replay, 'sendOrDiscardReplay');
 
     const errorItem = {
       data: {
@@ -377,8 +374,8 @@ describe('Session Replay Transport Integration', function () {
     );
   });
 
-  it('should not add replayId when replayManager is not provided', function (done) {
-    const queueWithoutReplayManager = new Queue(
+  it('should not add replayId when replay is not provided', function (done) {
+    const queueWithoutReplay = new Queue(
       { shouldSend: () => ({ shouldSend: true }) },
       api,
       console,
@@ -390,7 +387,7 @@ describe('Session Replay Transport Integration', function () {
         body: {
           trace: {
             exception: {
-              message: 'Test without replayManager',
+              message: 'Test without replay',
             },
           },
         },
@@ -398,7 +395,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queueWithoutReplayManager.addItem(errorItem, (err, resp) => {
+    queueWithoutReplay.addItem(errorItem, (err, resp) => {
       expect(errorItem).to.not.have.property('replayId');
       done();
     });

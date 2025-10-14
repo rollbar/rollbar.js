@@ -14,14 +14,14 @@ class Queue {
    *    `api.postItem(payload, function(err, response))`
    * @param logger - An object used to log verbose messages if desired
    * @param options - see `Queue.prototype.configure`
-   * @param replayManager - Optional `ReplayManager` for coordinating session replay with error occurrences
+   * @param replay - Optional `Replay` for coordinating session replay with error occurrences
    */
-  constructor(rateLimiter, api, logger, options, replayManager) {
+  constructor(rateLimiter, api, logger, options, replay) {
     this.rateLimiter = rateLimiter;
     this.api = api;
     this.logger = logger;
     this.options = options;
-    this.replayManager = replayManager;
+    this.replay = replay;
     this.predicates = [];
     this.pendingItems = [];
     this.pendingRequests = [];
@@ -101,8 +101,8 @@ class Queue {
       return;
     }
 
-    if (this.replayManager && data.body) {
-      item.replayId = this.replayManager.capture(null, data.uuid, {
+    if (this.replay && data.body) {
+      item.replayId = this.replay.capture(null, data.uuid, {
         type: 'occurrence',
         level: item.level,
       });
@@ -120,12 +120,7 @@ class Queue {
         this._dequeuePendingRequest(data);
 
         if (item.replayId) {
-          this.replayManager.sendOrDiscardReplay(
-            item.replayId,
-            err,
-            resp,
-            headers,
-          );
+          this.replay.sendOrDiscardReplay(item.replayId, err, resp, headers);
         }
 
         callback(err, resp);
@@ -134,7 +129,7 @@ class Queue {
       this._dequeuePendingRequest(data);
 
       if (item.replayId) {
-        this.replayManager?.discard(item.replayId);
+        this.replay?.discard(item.replayId);
       }
 
       callback(err);

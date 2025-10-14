@@ -21,11 +21,11 @@ const TrailingStatus = Object.freeze({
 });
 
 /**
- * ReplayManager - Manages the mapping between error occurrences and their associated
+ * Replay - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
  * are dumped and when they are eventually sent to the backend.
  */
-export default class ReplayManager {
+export default class Replay {
   _map;
   /** @type {Recorder} */
   _recorder;
@@ -35,7 +35,7 @@ export default class ReplayManager {
   _trailingStatus;
 
   /**
-   * Creates a new ReplayManager instance
+   * Creates a new Replay instance
    *
    * @param {Object} [props.tracing] - The tracing instance used to create spans and manage context
    * @param {Object} [props.telemeter] - Optional telemeter instance for capturing telemetry events
@@ -156,7 +156,7 @@ export default class ReplayManager {
   capture(replayId, occurrenceUuid, triggerContext) {
     if (!this._recorder.isReady) {
       logger.warn(
-        'ReplayManager.capture: Recorder is not ready, cannot export replay',
+        'Replay.capture: Recorder is not ready, cannot export replay',
       );
       return null;
     }
@@ -276,7 +276,7 @@ export default class ReplayManager {
    * @returns {Promise<void>} A promise that resolves when the operation is complete
    */
   async sendOrDiscardReplay(replayId, err, resp, headers) {
-    const canSendReplay = ReplayManager._canSendReplay(err, resp, headers);
+    const canSendReplay = Replay._canSendReplay(err, resp, headers);
 
     if (canSendReplay) {
       try {
@@ -303,11 +303,11 @@ export default class ReplayManager {
    */
   async send(replayId) {
     if (!replayId) {
-      throw Error('ReplayManager.send: No replayId provided');
+      throw Error('Replay.send: No replayId provided');
     }
 
     if (!this._map.has(replayId)) {
-      throw Error(`ReplayManager.send: No replay found for id: ${replayId}`);
+      throw Error(`Replay.send: No replay found for id: ${replayId}`);
     }
 
     const payload = this._map.get(replayId);
@@ -320,7 +320,7 @@ export default class ReplayManager {
       (payload.resourceSpans && payload.resourceSpans.length === 0);
 
     if (isEmpty) {
-      throw Error(`ReplayManager.send: No payload found for id: ${replayId}`);
+      throw Error(`Replay.send: No payload found for id: ${replayId}`);
     }
 
     await this._tracing.exporter.post(payload, {
@@ -340,7 +340,7 @@ export default class ReplayManager {
    */
   discard(replayId) {
     if (!replayId) {
-      logger.error('ReplayManager.discard: No replayId provided');
+      logger.error('Replay.discard: No replayId provided');
       return false;
     }
 
@@ -348,9 +348,7 @@ export default class ReplayManager {
     this._scheduledCapture.discard(replayId);
 
     if (!this._map.has(replayId)) {
-      logger.error(
-        `ReplayManager.discard: No replay found for replayId: ${replayId}`,
-      );
+      logger.error(`Replay.discard: No replay found for replayId: ${replayId}`);
       return false;
     }
 

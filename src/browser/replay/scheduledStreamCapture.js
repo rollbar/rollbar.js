@@ -162,7 +162,7 @@ export default class ScheduledStreamCapture {
   /**
    * Sends queued chunks if ready and coordination allows it.
    *
-   * Called by ReplayManager after trailing replay succeeds. Sends chunks
+   * Called by Replay after trailing replay succeeds. Sends chunks
    * sequentially, waiting for each to complete before sending the next. If any
    * chunk fails to send, aborts the entire stream.
    *

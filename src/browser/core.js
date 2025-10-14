@@ -30,7 +30,7 @@ class Rollbar {
     this.scrub = this.components.scrub;
     const truncation = this.components.truncation;
     const Tracing = this.components.tracing;
-    const ReplayManager = this.components.replayManager;
+    const Replay = this.components.replay;
 
     const transport = new Transport(truncation);
     const api = new API(this.options, transport, urllib, truncation);
@@ -42,16 +42,16 @@ class Rollbar {
       this.telemeter = new Telemeter(this.options, this.tracing);
     }
 
-    if (ReplayManager && _.isBrowser()) {
+    if (Replay && _.isBrowser()) {
       const replayOptions = this.options.replay;
-      this.replayManager = new ReplayManager({
+      this.replay = new Replay({
         tracing: this.tracing,
         telemeter: this.telemeter,
         options: replayOptions,
       });
 
       if (replayOptions.enabled && replayOptions.autoStart) {
-        this.replayManager.recorder.start();
+        this.replay.recorder.start();
       }
     }
 
@@ -63,7 +63,7 @@ class Rollbar {
         logger,
         this.telemeter,
         this.tracing,
-        this.replayManager,
+        this.replay,
         'browser',
       );
     var gWindow = _gWindow();
@@ -126,7 +126,7 @@ class Rollbar {
     );
 
     this.tracing?.configure(this.options);
-    this.replayManager?.configure(this.options);
+    this.replay?.configure(this.options);
     this.client.configure(this.options, payloadData);
     this.instrumenter?.configure(this.options);
     this.setupUnhandledCapture();
@@ -199,9 +199,9 @@ class Rollbar {
   }
 
   triggerReplay(context) {
-    if (!this.replayManager) return null;
+    if (!this.replay) return null;
 
-    return this.replayManager.triggerReplay(context);
+    return this.replay.triggerReplay(context);
   }
 
   setupUnhandledCapture() {
