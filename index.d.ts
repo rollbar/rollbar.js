@@ -205,11 +205,13 @@ declare namespace Rollbar {
   class Instrumenter {}
   class Tracing {}
   class Recorder {}
+  class Replay {}
 
   export type TelemeterType = typeof Telemeter;
   export type InstrumenterType = typeof Instrumenter;
   export type TracingType = typeof Tracing;
   export type RecorderType = typeof Recorder;
+  export type ReplayType = typeof Replay;
   export type TruncationType = object;
   export type ScrubType = (
     data: object,
@@ -229,7 +231,7 @@ declare namespace Rollbar {
     scrub?: ScrubType;
     truncation?: TruncationType;
     tracing?: TracingType;
-    recorder?: RecorderType;
+    replay?: ReplayType;
   }
 
   export interface ReplayOptions {

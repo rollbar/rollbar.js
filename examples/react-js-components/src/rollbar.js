@@ -5,7 +5,7 @@ import wrapGlobals from 'rollbar/src/browser/wrapGlobals';
 import scrub from 'rollbar/src/scrub';
 import truncation from 'rollbar/src/truncation';
 import tracing from 'rollbar/src/tracing/tracing';
-import recorder from 'rollbar/src/browser/replay/recorder';
+import replay from 'rollbar/src/browser/replay/replay';
 
 console.log('Testing component imports...');
 
@@ -16,7 +16,7 @@ Rollbar.setComponents({
   scrub,
   truncation,
   tracing,
-  recorder,
+  replay,
 });
 
 export default Rollbar;
