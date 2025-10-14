@@ -11,13 +11,25 @@ export type BufferCursor = {
   offset: number;
 };
 
-export interface Recorder extends Rollbar.RecorderType {
+export class Recorder extends Rollbar.RecorderType {
+  constructor(options: Record<string, any>);
+
+  get isRecording(): boolean;
+  get isReady(): boolean;
+  get options(): Record<string, any>;
+  set options(newOptions: Record<string, any>);
+
+  configure(newOptions: Record<string, any>): void;
+  checkoutEveryNms(): number;
   bufferCursor(): BufferCursor;
   exportRecordingSpan(
     tracing: any,
     attributes?: Record<string, any>,
     cursor?: BufferCursor,
   ): void;
+  start(): this;
+  stop(): this;
+  clear(): void;
 }
 
 declare const Recorder: Recorder;

@@ -5,7 +5,7 @@ const wrapGlobals = require('rollbar/src/browser/wrapGlobals');
 const scrub = require('rollbar/src/scrub');
 const truncation = require('rollbar/src/truncation');
 const tracing = require('rollbar/src/tracing/tracing');
-const recorder = require('rollbar/src/browser/replay/recorder');
+const replay = require('rollbar/src/browser/replay/replay');
 
 Rollbar.setComponents({
   telemeter: telemeter,
@@ -14,7 +14,7 @@ Rollbar.setComponents({
   scrub: scrub,
   truncation: truncation,
   tracing: tracing,
-  recorder: recorder,
+  replay: replay,
 });
 
 
