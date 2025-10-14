@@ -235,7 +235,11 @@ declare namespace Rollbar {
   export interface ReplayOptions {
     enabled?: boolean;
     autoStart?: boolean;
-    maxSeconds?: number;
+    triggerDefaults?: {
+      samplingRatio?: number;
+      preDuration?: number;
+      postDuration?: number;
+    };
     triggers?: {
       type: string;
       level?: Level[];
