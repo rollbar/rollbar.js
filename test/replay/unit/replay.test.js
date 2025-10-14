@@ -29,6 +29,8 @@ class MockTracing {
       post: sinon.stub().resolves({ success: true }),
     };
   }
+
+  addSpanTransform() {}
 }
 
 class MockTelemeter {
