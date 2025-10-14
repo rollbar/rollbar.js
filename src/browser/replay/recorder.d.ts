@@ -1,5 +1,3 @@
-import type { Rollbar } from '../../../index.js';
-
 /** A point-in-time cursor into the active Recorder's two-slot ring buffer. */
 export type BufferCursor = {
   /** Index (0|1) of the active buffer's slot at snapshot time. */
@@ -11,7 +9,7 @@ export type BufferCursor = {
   offset: number;
 };
 
-export class Recorder extends Rollbar.RecorderType {
+export default class Recorder {
   constructor(options: Record<string, any>);
 
   get isRecording(): boolean;
@@ -31,7 +29,3 @@ export class Recorder extends Rollbar.RecorderType {
   stop(): this;
   clear(): void;
 }
-
-declare const Recorder: Recorder;
-
-export default Recorder;
