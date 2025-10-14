@@ -1,4 +1,5 @@
 import * as _ from '../../utility.js';
+import hrtime from '../../tracing/hrtime.js';
 import id from '../../tracing/id.js';
 import logger from '../../logger.js';
 import Recorder from './recorder.js';
@@ -62,6 +63,7 @@ export default class Replay {
       shouldSend: this._shouldSendScheduled.bind(this),
       onComplete: this._onScheduledComplete.bind(this),
     });
+    this._tracing.addSpanTransform(this.uuidsTransform.bind(this));
   }
 
   /**
@@ -355,6 +357,15 @@ export default class Replay {
     this._map.delete(replayId);
     this._trailingStatus.delete(replayId);
     return true;
+  }
+
+  uuidsTransform(span) {
+    const startTime = hrtime.toMillis(span.startTime);
+    const uuidEvents = this._telemeter.queue.filter((e) => {
+      return e.timestamp_ms >= startTime && e.uuid;
+    });
+    const uuids = uuidEvents.map((e) => e.uuid);
+    span.attributes['rollbar.occurrence.uuids'] = JSON.stringify(uuids);
   }
 
   /**

@@ -75,8 +75,12 @@ describe('SpanProcessor()', function () {
         span.resource.attributes['rollbar.environment'] = 'prod-3';
       },
     };
+    const otherTransform = (span) => {
+      span.attributes['test-id'] = '1234';
+    };
     const exporter = new SpanExporter();
     const spanProcessor = new SpanProcessor(exporter, tracingOptions);
+    spanProcessor.addTransform(otherTransform);
 
     expect(spanProcessor.pendingSpans.size).to.equal(0);
 
@@ -93,6 +97,7 @@ describe('SpanProcessor()', function () {
     expect(span.span.resource.attributes['rollbar.environment']).to.equal(
       'prod-3',
     );
+    expect(span.span.attributes['test-id']).to.equal('1234');
     expect(spanProcessor.pendingSpans.size).to.equal(0);
 
     done();

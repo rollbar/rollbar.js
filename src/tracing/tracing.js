@@ -69,6 +69,10 @@ export default class Tracing {
     return this.tracer;
   }
 
+  addSpanTransform(transformFn) {
+    this.spanProcessor.addTransform(transformFn);
+  }
+
   getSpan(context = this.contextManager.active()) {
     return context.getValue(SPAN_KEY);
   }
