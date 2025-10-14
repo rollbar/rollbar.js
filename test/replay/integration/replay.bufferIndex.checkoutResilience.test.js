@@ -31,6 +31,7 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
         post: sinon.stub(),
       },
       session: { attributes: {} },
+      addSpanTransform() {},
     };
 
     telemeter = { exportTelemetrySpan: sinon.stub() };
