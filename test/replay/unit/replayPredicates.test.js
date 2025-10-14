@@ -5,7 +5,7 @@
 import { expect } from 'chai';
 import ReplayPredicates from '../../../src/browser/replay/replayPredicates.js';
 
-describe('ReplayManager', function () {
+describe('Replay', function () {
   let replayId;
   let replayConfig;
   let replayPredicates;

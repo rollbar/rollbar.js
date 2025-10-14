@@ -10,15 +10,7 @@ import * as _ from './utility.js';
  * @param api
  * @param logger
  */
-function Rollbar(
-  options,
-  api,
-  logger,
-  telemeter,
-  tracing,
-  replayManager,
-  platform,
-) {
+function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
@@ -29,7 +21,7 @@ function Rollbar(
     api,
     logger,
     this.options,
-    replayManager,
+    replay,
   );
 
   this.tracing = tracing;

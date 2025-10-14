@@ -2,11 +2,11 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import logger from '../../../src/logger.js';
-import ReplayManager from '../../../src/browser/replay/replayManager.js';
+import Replay from '../../../src/browser/replay/replay.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 
-describe('ReplayManager - Buffer Index Checkout Resilience', function () {
-  let options, replayManager, recorder, api, tracing, telemeter, clock;
+describe('Replay - Buffer Index Checkout Resilience', function () {
+  let options, replay, recorder, api, tracing, telemeter, clock;
 
   before(function () {
     logger.init({ logLevel: 'debug' });
@@ -60,12 +60,12 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   });
 
   it('captures leading with no checkouts', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
+    recorder = replay.recorder;
 
     sinon.spy(recorder, 'exportRecordingSpan');
 
@@ -73,22 +73,22 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
-    const trigger = replayManager._predicates.triggers[0];
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    const capturer = replayManager._scheduledCapture;
+    const capturer = replay._scheduledCapture;
     const cursor = capturer._pending.get(replayId).cursor;
     expect(cursor).to.be.an('object');
     expect(cursor.slot).to.equal(0);
 
     await clock.tickAsync(1000);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     sinon.assert.calledTwice(recorder.exportRecordingSpan);
@@ -123,12 +123,12 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   });
 
   it('captures leading across a single checkout', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
+    recorder = replay.recorder;
 
     sinon.spy(recorder, 'exportRecordingSpan');
 
@@ -136,16 +136,16 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
-    const trigger = replayManager._predicates.triggers[0];
+    const trigger = replay._predicates.triggers[0];
 
     await clock.tickAsync(1000);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     sinon.assert.calledTwice(recorder.exportRecordingSpan);
@@ -174,7 +174,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(replay._scheduledCapture._pending.size).to.equal(0);
 
     recorder.exportRecordingSpan.restore();
   });
@@ -183,7 +183,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     const preDuration = 4; // seconds -> checkoutEveryNms = 2000
     const postDuration = 5; // seconds -> expect leading chunks at 2s,4s,5s = 3
 
-    const replayManager = new ReplayManager({
+    const replay = new Replay({
       tracing,
       telemeter,
       options: {
@@ -192,7 +192,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       },
     });
 
-    const recorder = replayManager.recorder;
+    const recorder = replay.recorder;
 
     sinon.spy(recorder, 'exportRecordingSpan');
 
@@ -200,7 +200,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
@@ -212,11 +212,11 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     expect(chunkMs).to.equal((preDuration * 1000) / 2);
 
     const expectedLeadingChunks =
-      replayManager._scheduledCapture.constructor.name === 'ScheduledCapture'
+      replay._scheduledCapture.constructor.name === 'ScheduledCapture'
         ? 1
         : Math.ceil((postDuration * 1000) / chunkMs);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(postDuration * 1000 + 1);
 
     const calls = tracing.exporter.post.getCalls();
@@ -234,20 +234,20 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       1 + expectedLeadingChunks,
     );
 
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
-    expect(replayManager._trailingStatus.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.size).to.equal(0);
+    expect(replay._trailingStatus.has(replayId)).to.be.false;
 
     recorder.exportRecordingSpan.restore();
   });
 
   it('uses the exact captured cursor after one rotation', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       triggerDefaults: {
         preDuration: 4, // 2s checkout
@@ -261,21 +261,21 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
-    const trigger = replayManager._predicates.triggers[0];
+    const trigger = replay._predicates.triggers[0];
     await clock.tickAsync(100);
 
-    const capturer = replayManager._scheduledCapture;
+    const capturer = replay._scheduledCapture;
     const cursor = capturer._pending.get(replayId).cursor;
     expect(cursor).to.deep.equal({ slot: 0, offset: 5 });
 
     await clock.tickAsync(2000);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     expect(recorder.exportRecordingSpan.callCount).to.be.within(2, 4);
@@ -333,13 +333,13 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   });
 
   it('resilience with multiple checkouts (best-effort still sends)', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       autoStart: false,
       triggerDefaults: {
@@ -352,35 +352,35 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
-    const trigger = replayManager._predicates.triggers[0];
+    const trigger = replay._predicates.triggers[0];
     expect(trigger).to.be.an('object');
     await clock.tickAsync(100);
 
     await clock.tickAsync(2000);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     const posts = tracing.exporter.post.getCalls();
     expect(posts.length).to.be.greaterThan(1);
     expect(posts.every((c) => c.args[1]['X-Rollbar-Replay-Id'] === replayId)).to
       .be.true;
-    expect(replayManager._scheduledCapture._pending.size).to.equal(0);
+    expect(replay._scheduledCapture._pending.size).to.equal(0);
   });
 
   it('collects events strictly after the cursor', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       autoStart: false,
       triggerDefaults: {
@@ -393,21 +393,21 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
     );
     await clock.tickAsync(100);
 
-    const capturer = replayManager._scheduledCapture;
+    const capturer = replay._scheduledCapture;
     const cursor = capturer._pending.get(replayId).cursor;
 
     sinon.spy(recorder, '_collectEventsFromCursor');
 
     await clock.tickAsync(3500);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     const calls = recorder._collectEventsFromCursor.getCalls();
@@ -426,13 +426,13 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
   });
 
   it('no leading scheduled when trailing export throws', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       autoStart: false,
       triggerDefaults: {
@@ -448,7 +448,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     sinon.spy(logger, 'debug');
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
@@ -462,21 +462,21 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       'Replay recording has no events',
     );
 
-    expect(replayManager._map.has(replayId)).to.be.false;
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._map.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
     sinon.assert.notCalled(api.postSpans);
 
     logger.debug.restore();
   });
 
   it('leading post error is handled and state is cleaned', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       autoStart: false,
       triggerDefaults: {
@@ -492,7 +492,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
     await clock.tickAsync(200);
 
     const triggerContext = { type: 'occurrence' };
-    const replayId = replayManager.capture(
+    const replayId = replay.capture(
       'test-replay-id',
       'test-uuid',
       triggerContext,
@@ -500,7 +500,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
 
     await clock.tickAsync(1000);
 
-    await replayManager.send(replayId);
+    await replay.send(replayId);
     await clock.tickAsync(5000);
 
     sinon.assert.calledTwice(tracing.exporter.post);
@@ -512,17 +512,17 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId },
     ]);
-    expect(replayManager._scheduledCapture._pending.has(replayId)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId)).to.be.false;
   });
 
   it('discard cancels timer; success clears state', async function () {
-    replayManager = new ReplayManager({
+    replay = new Replay({
       tracing,
       telemeter,
       options: options.replay,
     });
-    recorder = replayManager.recorder;
-    replayManager.configure({
+    recorder = replay.recorder;
+    replay.configure({
       ...options.replay,
       autoStart: false,
       triggerDefaults: {
@@ -536,21 +536,21 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
 
     const replayId1 = 'test-replay-id-1';
     const triggerContext = { type: 'occurrence' };
-    replayManager.capture(replayId1, 'test-uuid-1', triggerContext);
+    replay.capture(replayId1, 'test-uuid-1', triggerContext);
     await clock.tickAsync(100);
 
-    expect(replayManager._scheduledCapture._pending.has(replayId1)).to.be.true;
+    expect(replay._scheduledCapture._pending.has(replayId1)).to.be.true;
 
-    replayManager.discard(replayId1);
+    replay.discard(replayId1);
     await clock.tickAsync(10000);
 
     sinon.assert.notCalled(tracing.exporter.post);
 
     const replayId2 = 'test-replay-id-2';
-    replayManager.capture(replayId2, 'test-uuid-2', triggerContext);
+    replay.capture(replayId2, 'test-uuid-2', triggerContext);
     await clock.tickAsync(100);
 
-    await replayManager.send(replayId2);
+    await replay.send(replayId2);
     await clock.tickAsync(5000);
 
     sinon.assert.called(tracing.exporter.post);
@@ -558,7 +558,7 @@ describe('ReplayManager - Buffer Index Checkout Resilience', function () {
       { resourceSpans: [{ spanData: 'test' }] },
       { 'X-Rollbar-Replay-Id': replayId2 },
     ]);
-    expect(replayManager._scheduledCapture._pending.has(replayId2)).to.be.false;
-    expect(replayManager._trailingStatus.has(replayId2)).to.be.false;
+    expect(replay._scheduledCapture._pending.has(replayId2)).to.be.false;
+    expect(replay._trailingStatus.has(replayId2)).to.be.false;
   });
 });

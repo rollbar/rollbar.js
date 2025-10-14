@@ -1,5 +1,5 @@
 /**
- * Unit tests for Queue's integration with ReplayManager
+ * Unit tests for Queue's integration with Replay
  */
 
 import { expect } from 'chai';
@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import Queue from '../../../src/queue.js';
 import logger from '../../../src/logger.js';
 
-class MockReplayManager {
+class MockReplay {
   constructor(replayId) {
     this.capture = sinon.stub().callsFake(() => replayId);
     this.send = sinon.stub().resolves(true);
@@ -30,9 +30,9 @@ class MockRateLimiter {
   }
 }
 
-describe('Queue with ReplayManager', function () {
+describe('Queue with Replay', function () {
   let queue;
-  let replayManager;
+  let replay;
   let api;
   let rateLimiter;
   let logger;
@@ -40,18 +40,12 @@ describe('Queue with ReplayManager', function () {
 
   beforeEach(function () {
     replayId = '1234567812345678';
-    replayManager = new MockReplayManager(replayId);
+    replay = new MockReplay(replayId);
     api = new MockApi();
     rateLimiter = new MockRateLimiter();
     logger = { error: sinon.stub(), log: sinon.stub() };
 
-    queue = new Queue(
-      rateLimiter,
-      api,
-      logger,
-      { transmit: true },
-      replayManager,
-    );
+    queue = new Queue(rateLimiter, api, logger, { transmit: true }, replay);
   });
 
   afterEach(function () {
@@ -59,7 +53,7 @@ describe('Queue with ReplayManager', function () {
   });
 
   describe('addItem', function () {
-    it('should add replayId to the item when replayManager is available', function () {
+    it('should add replayId to the item when replay is available', function () {
       const item = {
         data: {
           body: { message: 'test error' },
@@ -70,7 +64,7 @@ describe('Queue with ReplayManager', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayManager.capture.called).to.be.true;
+      expect(replay.capture.called).to.be.true;
       expect(item.replayId).to.equal(replayId);
     });
 
@@ -85,11 +79,11 @@ describe('Queue with ReplayManager', function () {
 
       queue.addItem(item, callback);
 
-      expect(replayManager.capture.called).to.be.false;
+      expect(replay.capture.called).to.be.false;
       expect(item.replayId).to.be.undefined;
     });
 
-    it('should not add replayId when replayManager is not available', function () {
+    it('should not add replayId when replay is not available', function () {
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
       const item = {
@@ -127,17 +121,13 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 1));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(
         '1234567812345678',
       );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(
-        apiError,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be
-        .undefined;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be
-        .undefined;
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.equal(apiError);
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.be.undefined;
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.be.undefined;
     });
 
     it('should call discard when makeApiRequest throws an exception', function () {
@@ -158,8 +148,8 @@ describe('Queue with ReplayManager', function () {
       queue.addItem(item, callback);
 
       // When makeApiRequest throws, Queue directly calls discard
-      expect(replayManager.discard.calledWith(replayId)).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.called).to.be.false;
+      expect(replay.discard.calledWith(replayId)).to.be.true;
+      expect(replay.sendOrDiscardReplay.called).to.be.false;
     });
 
     it('should call sendOrDiscardReplay when rate limiter returns an error', function (done) {
@@ -183,17 +173,13 @@ describe('Queue with ReplayManager', function () {
       // Rate limiter errors now also call sendOrDiscardReplay to clean up replay
       setTimeout(() => {
         expect(callback.calledWith(rateLimitError)).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-          replayId,
-        );
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(
+        expect(replay.sendOrDiscardReplay.called).to.be.true;
+        expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+        expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.equal(
           rateLimitError,
         );
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be
-          .undefined;
-        expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be
-          .undefined;
+        expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.be.undefined;
+        expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.be.undefined;
         done();
       }, 0);
     });
@@ -219,15 +205,13 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
         response,
       );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
         headers,
       );
     });
@@ -253,15 +237,13 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
         response,
       );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
         headers,
       );
     });
@@ -290,15 +272,13 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
         response,
       );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
         headers,
       );
     });
@@ -327,15 +307,13 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.deep.equal(
         response,
       );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.deep.equal(
         headers,
       );
     });
@@ -359,13 +337,11 @@ describe('Queue with ReplayManager', function () {
       // Wait for async operations
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(replayManager.sendOrDiscardReplay.called).to.be.true;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[2]).to.be.null;
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[3]).to.be.null;
+      expect(replay.sendOrDiscardReplay.called).to.be.true;
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[2]).to.be.null;
+      expect(replay.sendOrDiscardReplay.firstCall.args[3]).to.be.null;
     });
 
     it('should only call sendOrDiscardReplay once when retrying after connection error', async function () {
@@ -374,7 +350,7 @@ describe('Queue with ReplayManager', function () {
         api,
         logger,
         { transmit: true, retryInterval: 10, maxRetries: 1 },
-        replayManager,
+        replay,
       );
 
       let callCount = 0;
@@ -403,19 +379,15 @@ describe('Queue with ReplayManager', function () {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Should only be called once with the final error
-      expect(replayManager.sendOrDiscardReplay.callCount).to.equal(1);
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[0]).to.equal(
-        replayId,
-      );
-      expect(replayManager.sendOrDiscardReplay.firstCall.args[1]).to.equal(
-        finalError,
-      );
+      expect(replay.sendOrDiscardReplay.callCount).to.equal(1);
+      expect(replay.sendOrDiscardReplay.firstCall.args[0]).to.equal(replayId);
+      expect(replay.sendOrDiscardReplay.firstCall.args[1]).to.equal(finalError);
     });
   });
 
   describe('API callback handling', function () {
     it('should call sendOrDiscardReplay with replayId and response on success', async function () {
-      const handleStub = replayManager.sendOrDiscardReplay;
+      const handleStub = replay.sendOrDiscardReplay;
 
       const item = {
         data: {
@@ -441,7 +413,7 @@ describe('Queue with ReplayManager', function () {
         callback(new Error('API error'));
       });
 
-      const handleStub = replayManager.sendOrDiscardReplay;
+      const handleStub = replay.sendOrDiscardReplay;
 
       const item = {
         data: {
@@ -463,7 +435,7 @@ describe('Queue with ReplayManager', function () {
     });
 
     it('should not call sendOrDiscardReplay when item has no replayId', async function () {
-      const handleStub = replayManager.sendOrDiscardReplay;
+      const handleStub = replay.sendOrDiscardReplay;
 
       queue = new Queue(rateLimiter, api, logger, { transmit: true });
 
