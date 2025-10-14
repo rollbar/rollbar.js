@@ -204,13 +204,11 @@ declare namespace Rollbar {
   class Telemeter {}
   class Instrumenter {}
   class Tracing {}
-  class Recorder {}
   class Replay {}
 
   export type TelemeterType = typeof Telemeter;
   export type InstrumenterType = typeof Instrumenter;
   export type TracingType = typeof Tracing;
-  export type RecorderType = typeof Recorder;
   export type ReplayType = typeof Replay;
   export type TruncationType = object;
   export type ScrubType = (

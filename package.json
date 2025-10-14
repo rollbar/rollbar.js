@@ -67,10 +67,10 @@
       "require": "./src/tracing/tracing.cjs",
       "default": "./src/tracing/tracing.js"
     },
-    "./src/browser/replay/recorder": {
-      "types": "./src/browser/replay/recorder.d.ts",
-      "require": "./src/browser/replay/recorder.cjs",
-      "default": "./src/browser/replay/recorder.js"
+    "./src/browser/replay/replay": {
+      "types": "./src/browser/replay/replay.d.ts",
+      "require": "./src/browser/replay/replay.cjs",
+      "default": "./src/browser/replay/replay.js"
     }
   },
   "dependencies": {
