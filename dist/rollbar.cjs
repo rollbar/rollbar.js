@@ -950,15 +950,15 @@ var Queue = /*#__PURE__*/function () {
    *    `api.postItem(payload, function(err, response))`
    * @param logger - An object used to log verbose messages if desired
    * @param options - see `Queue.prototype.configure`
-   * @param replay - Optional `Replay` for coordinating session replay with error occurrences
+   * @param replayManager - Optional `ReplayManager` for coordinating session replay with error occurrences
    */
-  function Queue(rateLimiter, api, logger, options, replay) {
+  function Queue(rateLimiter, api, logger, options, replayManager) {
     _classCallCheck(this, Queue);
     this.rateLimiter = rateLimiter;
     this.api = api;
     this.logger = logger;
     this.options = options;
-    this.replay = replay;
+    this.replayManager = replayManager;
     this.predicates = [];
     this.pendingItems = [];
     this.pendingRequests = [];
@@ -1047,8 +1047,8 @@ var Queue = /*#__PURE__*/function () {
         callback(new Error('Transmit disabled'));
         return;
       }
-      if (this.replay && data.body) {
-        item.replayId = this.replay.capture(null, data.uuid, {
+      if (this.replayManager && data.body) {
+        item.replayId = this.replayManager.capture(null, data.uuid, {
           type: 'occurrence',
           level: item.level
         });
@@ -1064,15 +1064,15 @@ var Queue = /*#__PURE__*/function () {
         this._makeApiRequest(data, function (err, resp, headers) {
           _this._dequeuePendingRequest(data);
           if (item.replayId) {
-            _this.replay.sendOrDiscardReplay(item.replayId, err, resp, headers);
+            _this.replayManager.sendOrDiscardReplay(item.replayId, err, resp, headers);
           }
           callback(err, resp);
         });
       } catch (err) {
         this._dequeuePendingRequest(data);
         if (item.replayId) {
-          var _this$replay;
-          (_this$replay = this.replay) === null || _this$replay === void 0 || _this$replay.discard(item.replayId);
+          var _this$replayManager;
+          (_this$replayManager = this.replayManager) === null || _this$replayManager === void 0 || _this$replayManager.discard(item.replayId);
         }
         callback(err);
       }
@@ -1390,13 +1390,13 @@ Notifier.prototype._applyTransforms = function (item, callback) {
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, replayManager, platform) {
   this.options = src_merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replay);
+  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replayManager);
   this.tracing = tracing;
 
   // Legacy OpenTracing support
