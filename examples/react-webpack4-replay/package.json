@@ -1,0 +1,25 @@
+{
+  "name": "react-webpack4-replay-example",
+  "version": "0.0.0",
+  "scripts": {
+    "build": "webpack --mode production --build",
+    "start": "webpack-dev-server --mode development --open"
+  },
+  "private": true,
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.2.1"
+  },
+  "dependencies": {
+    "@rollbar/react": "^1.0.0",
+    "babel-loader": "^7.1.5",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "rollbar": "file:../rollbar.tgz"
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import Rollbar from 'rollbar';
+import Rollbar from 'rollbar/replay';
 
 import ErrorBoundary from './ErrorBoundary';
 import TestError from './TestError';
@@ -10,6 +10,10 @@ const App = () => {
     accessToken: 'POST_CLIENT_ITEM_TOKEN',
     captureUncaught: true,
     captureUnhandledRejections: true,
+    replay: {
+      enabled: true,
+      autoStart: true,
+    },
   }));
 
   const logInfo = () => {
@@ -24,7 +28,7 @@ const App = () => {
 
   return (
     <>
-      <h1>Rollbar Example for React</h1>
+      <h1>Rollbar Example for React with Replay</h1>
       <button id="rollbar-info" onClick={logInfo}>
         Log Info
       </button>

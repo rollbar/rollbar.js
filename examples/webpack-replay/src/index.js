@@ -1,9 +1,13 @@
-import Rollbar from 'rollbar';
+import Rollbar from 'rollbar/replay';
 
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
+  replay: {
+    enabled: true,
+    autoStart: true,
+  },
   checkIgnore: (_isUncaught, _args, payload) => {
     // Example checkIgnore: take action and tell rollbar.js to ignore event if
     // condition is met, else return false.

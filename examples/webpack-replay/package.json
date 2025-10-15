@@ -1,5 +1,5 @@
 {
-  "name": "webpack-example",
+  "name": "webpack-replay-example",
   "version": "0.0.0",
   "scripts": {
     "build": "webpack"

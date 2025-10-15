@@ -1,5 +1,5 @@
 {
-  "name": "webpack-example",
+  "name": "webpack4-replay-example",
   "version": "0.0.0",
   "scripts": {
     "build": "webpack"
@@ -9,7 +9,7 @@
     "rollbar": "file:../rollbar.tgz"
   },
   "devDependencies": {
-    "webpack": "^5.98.0",
-    "webpack-cli": "^5.1.4"
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
   }
 }

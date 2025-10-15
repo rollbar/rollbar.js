@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "react-replay-example",
   "version": "0.0.0",
   "scripts": {
     "build": "webpack --mode production",
