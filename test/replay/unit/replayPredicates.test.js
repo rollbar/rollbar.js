@@ -10,6 +10,14 @@ describe('Replay', function () {
   let replayConfig;
   let replayPredicates;
 
+  let predicateFnTrigger;
+  let predicateFnContext;
+  let predicateFn = (trigger, context) => {
+    predicateFnTrigger = trigger;
+    predicateFnContext = context;
+    return true;
+  };
+
   describe('configure', function () {
     beforeEach(function () {
       replayConfig = {
@@ -431,6 +439,11 @@ describe('Replay', function () {
               pathMatch: /settings/,
             },
             {
+              type: 'navigation',
+              pathMatch: /admin/,
+              predicateFn: predicateFn,
+            },
+            {
               type: 'direct',
               tags: ['neon', 'argon'],
             },
@@ -474,6 +487,35 @@ describe('Replay', function () {
           postDuration: 5,
           samplingRatio: 1.0,
         });
+      });
+
+      it('should return matching trigger on predicateFn match', function () {
+        const context = {
+          type: 'navigation',
+          path: '/admin/',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(
+          replayConfig,
+        ).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'navigation',
+          pathMatch: /admin/,
+          predicateFn: predicateFn,
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
+        expect(predicateFnTrigger).to.deep.equal({
+          type: 'navigation',
+          pathMatch: /admin/,
+          predicateFn: predicateFn,
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
+        expect(predicateFnContext).to.deep.equal(context);
       });
 
       it('should return null on no matching path', function () {

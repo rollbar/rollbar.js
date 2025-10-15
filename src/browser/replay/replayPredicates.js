@@ -14,9 +14,21 @@ export default class ReplayPredicates {
     this.configure(config);
 
     this.predicates = {
-      occurrence: [this.isLevelMatching.bind(this), this.isSampled.bind(this)],
-      navigation: [this.isPathMatching.bind(this), this.isSampled.bind(this)],
-      direct: [this.isTagMatching.bind(this), this.isSampled.bind(this)],
+      occurrence: [
+        this.isLevelMatching.bind(this),
+        this.isPredicateFnMatching.bind(this),
+        this.isSampled.bind(this),
+      ],
+      navigation: [
+        this.isPathMatching.bind(this),
+        this.isPredicateFnMatching.bind(this),
+        this.isSampled.bind(this),
+      ],
+      direct: [
+        this.isTagMatching.bind(this),
+        this.isPredicateFnMatching.bind(this),
+        this.isSampled.bind(this),
+      ],
     };
   }
 
@@ -72,6 +84,7 @@ export default class ReplayPredicates {
    * isLevelMatching - Checks if the trigger's level matches the context item's level.
    * If no level is specified in the trigger, it defaults to matching all levels.
    * @param {Object} trigger - The trigger object containing the level.
+   * @param {Object} context - The context object containing state for the trigger to match.
    * @return {boolean} - True if the trigger's level matches the context item's level, false otherwise.
    */
   isLevelMatching(trigger, context) {
@@ -85,7 +98,8 @@ export default class ReplayPredicates {
    * isPathMatching - Checks if the trigger's pathMatch regex matches the context item's path.
    * If no pathMatch is specified in the trigger, it defaults to matching all paths.
    * @param {Object} trigger - The trigger object containing the pathMatch regex or string.
-   * @return {boolean} - True if the trigger's pathMatch matches the context item's path, false otherwise.
+   * @param {Object} context - The context object containing state for the trigger to match.
+   * @return {boolean} - True if no trigger or the trigger's pathMatch matches the context item's path, false otherwise.
    */
   isPathMatching(trigger, context) {
     const path = context.path;
@@ -110,6 +124,7 @@ export default class ReplayPredicates {
    * isTagMatching - Checks if the trigger's tags match any of the context item's tags.
    * If no tags are specified in the trigger, it defaults to matching all tags.
    * @param {Object} trigger - The trigger object containing the tags.
+   * @param {Object} context - The context object containing state for the trigger to match.
    * @return {boolean} - True if the trigger's tags match any of the context item's tags, false otherwise.
    */
   isTagMatching(trigger, context) {
@@ -120,6 +135,20 @@ export default class ReplayPredicates {
     }
 
     return false;
+  }
+
+  /**
+   * isPredicateFnMatching - Checks if the trigger's custom predicate function returns true.
+   * If no predicate function is specified in the trigger, it defaults to true.
+   * @param {Object} trigger - The trigger object containing the predicate function.
+   * @param {Object} context - The context object containing state for the trigger to match.
+   * @return {boolean} - True if the trigger's predicate function returns true, false otherwise.
+   */
+  isPredicateFnMatching(trigger, context) {
+    console.log('isPredicateFnMatching', trigger, context);
+    if (typeof trigger.predicateFn !== 'function') return true;
+
+    return trigger.predicateFn(trigger, context);
   }
 
   /**
@@ -136,6 +165,7 @@ export default class ReplayPredicates {
    * each replay.
    *
    * @param {Object} trigger - The trigger object containing the sampling ratio.
+   * @param {Object} context - The context object containing the replayId.
    * @returns {boolean} - True if the trigger is sampled, false otherwise.
    */
   isSampled(trigger, context) {
