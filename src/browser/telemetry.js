@@ -799,39 +799,42 @@ class Instrumenter {
   scrubInputValue(value, element, tagName, inputType) {
     const mask = '******';
 
+    if (inputType === 'password') {
+      return mask;
+    }
+
     if (this.scrubTelemetryInputs) {
-      value = mask;
+      return mask;
     } else {
       const description = domUtil.describeElement(element);
       if (this.telemetryScrubber) {
         if (this.telemetryScrubber(description)) {
-          value = mask;
+          return mask;
         }
       } else if (this.defaultValueScrubber(description)) {
-        value = mask;
+        return mask;
       }
     }
 
     // Apply replay options regardless of other scrubbing
     if (
+      domUtil.isMatchingElement(element, this.scrubClasses, this.scrubSelectors)
+    ) {
+      return mask;
+    }
+
+    // This check is last since maskInputFn returns a modified value rather
+    // than a boolean, which would cause an early return even if the value
+    // was not scrubbed.
+    if (
       this.maskInputOptions[tagName.toLowerCase()] ||
       this.maskInputOptions[inputType]
     ) {
       if (this.maskInputFn) {
-        value = this.maskInputFn(value, element);
+        return this.maskInputFn(value, element);
       } else {
-        value = mask;
+        return mask;
       }
-    }
-
-    if (
-      domUtil.isMatchingElement(element, this.scrubClasses, this.scrubSelectors)
-    ) {
-      value = mask;
-    }
-
-    if (inputType === 'password') {
-      value = mask;
     }
 
     return value;
