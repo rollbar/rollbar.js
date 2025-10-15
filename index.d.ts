@@ -229,11 +229,6 @@ declare namespace Rollbar {
     scrub?: ScrubType;
     truncation?: TruncationType;
     tracing?: TracingType;
-    /**
-     * Replay component for session recording.
-     * Only available when using replay bundles (rollbar.replay.*).
-     * Use `import Rollbar from 'rollbar/replay'` to access.
-     */
     replay?: ReplayType;
   }
 
