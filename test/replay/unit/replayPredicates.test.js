@@ -412,7 +412,7 @@ describe('Replay', function () {
       });
     });
 
-    describe('direct', function () {
+    describe('navigation', function () {
       beforeEach(function () {
         replayId = 'aaaabbbbccccdddd'; // fixed value for consistent sampling
         replayConfig = {
@@ -427,6 +427,10 @@ describe('Replay', function () {
               pathMatch: 'foo',
             },
             {
+              type: 'navigation',
+              pathMatch: /settings/,
+            },
+            {
               type: 'direct',
               tags: ['neon', 'argon'],
             },
@@ -434,7 +438,7 @@ describe('Replay', function () {
         };
       });
 
-      it('should return matching trigger on matching path', function () {
+      it('should return matching trigger on string path match', function () {
         const context = {
           type: 'navigation',
           path: '/foo/bar',
@@ -447,6 +451,25 @@ describe('Replay', function () {
         expect(resp).to.deep.equal({
           type: 'navigation',
           pathMatch: 'foo',
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        });
+      });
+
+      it('should return matching trigger on regex path match', function () {
+        const context = {
+          type: 'navigation',
+          path: '/app/settings/',
+          replayId,
+        };
+
+        const resp = new ReplayPredicates(
+          replayConfig,
+        ).shouldCaptureForTriggerContext(context);
+        expect(resp).to.deep.equal({
+          type: 'navigation',
+          pathMatch: /settings/,
           preDuration: 300,
           postDuration: 5,
           samplingRatio: 1.0,

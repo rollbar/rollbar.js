@@ -84,16 +84,25 @@ export default class ReplayPredicates {
   /**
    * isPathMatching - Checks if the trigger's pathMatch regex matches the context item's path.
    * If no pathMatch is specified in the trigger, it defaults to matching all paths.
-   * @param {Object} trigger - The trigger object containing the pathMatch regex.
+   * @param {Object} trigger - The trigger object containing the pathMatch regex or string.
    * @return {boolean} - True if the trigger's pathMatch matches the context item's path, false otherwise.
    */
   isPathMatching(trigger, context) {
-    if (!trigger.pathMatch) return true;
+    const path = context.path;
+    const pathMatch = trigger.pathMatch;
 
-    if (context.path?.match(new RegExp(trigger.pathMatch))) {
-      return true;
+    if (!pathMatch) return true;
+    if (!path) return false;
+
+    if (typeof pathMatch === 'string') {
+      if (path.includes(pathMatch)) {
+        return true;
+      }
+    } else {
+      if (path.match(pathMatch)) {
+        return true;
+      }
     }
-
     return false;
   }
 
