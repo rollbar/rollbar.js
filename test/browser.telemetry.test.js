@@ -76,8 +76,8 @@ describe('instrumentDom', function () {
     await loadHtml('test/fixtures/html/dom-events.html');
     scrubFields = ['foo', 'bar'];
     mask = '******';
-    ((options = { scrubFields, autoInstrument: { log: false } }),
-      (rollbar = new Rollbar({})));
+    options = { scrubFields, autoInstrument: { log: false } };
+    rollbar = new Rollbar({});
     tracing = new Tracing(window, null, {});
     tracing.initSession();
     telemeter = new Telemeter({}, tracing);
