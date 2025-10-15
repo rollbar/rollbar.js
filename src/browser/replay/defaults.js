@@ -49,7 +49,10 @@ export default {
     week: false,
   },
 
-  // Override default class names.
+  // Mask all input values
+  maskAllInputs: false,
+
+  // Class names to block, mask, or ignore the content of elements.
   blockClass: 'rb-block',
   maskTextClass: 'rb-mask',
   ignoreClass: 'rb-ignore',

@@ -69,22 +69,19 @@ describe('instrumentNetwork', function () {
 
 describe('instrumentDom', function () {
   const wait_ms = 1; //ensure events are sent before assertions
-  let tracing, telemeter, instrumenter, rollbar, scrubFields;
+  let tracing, telemeter, instrumenter, mask, options, rollbar, scrubFields;
   const wait = (t) => new Promise((resolve) => setTimeout(resolve, t));
 
   beforeEach(async function () {
     await loadHtml('test/fixtures/html/dom-events.html');
     scrubFields = ['foo', 'bar'];
-    rollbar = new Rollbar({});
+    mask = '******';
+    ((options = { scrubFields, autoInstrument: { log: false } }),
+      (rollbar = new Rollbar({})));
     tracing = new Tracing(window, null, {});
     tracing.initSession();
     telemeter = new Telemeter({}, tracing);
-    instrumenter = new Instrumenter(
-      { scrubFields, autoInstrument: { log: false } },
-      telemeter,
-      rollbar,
-      window,
-    );
+    instrumenter = new Instrumenter(options, telemeter, rollbar, window);
     instrumenter.instrument();
   });
 
@@ -193,12 +190,12 @@ describe('instrumentDom', function () {
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('password');
     expect(event.body.element).to.match(/password/);
-    expect(event.body.value).to.eql(null);
+    expect(event.body.value).to.eql('******');
 
     expect(event.otelAttributes.type).to.eql('password');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
     expect(event.otelAttributes.element).to.match(/password/);
-    expect(event.otelAttributes.value).to.eql(null);
+    expect(event.otelAttributes.value).to.eql('******');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
   });
@@ -345,19 +342,229 @@ describe('instrumentDom', function () {
     expect(event.type).to.eql('dom');
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('text');
-    expect(event.body.element).to.match(/input#text-input\[type=\"text\"\]/);
+    expect(event.body.element).to.match(
+      /input#text-input.rb-scrub\[type=\"text\"\]/,
+    );
     expect(event.body.value).to.eql('abc');
 
     expect(event.otelAttributes.type).to.eql('text');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
     expect(event.otelAttributes.element).to.match(
-      /input#text-input\[type=\"text\"\]/,
+      /input#text-input.rb-scrub\[type=\"text\"\]/,
     );
     expect(event.otelAttributes.value).to.eql('abc');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
     expect(event.otelAttributes.endTimeUnixNano[1]).to.be.a('number');
     expect(event.otelAttributes.count).to.eql(3);
     expect(event.otelAttributes.rate).to.be.a('number');
+  });
+
+  describe('scrubbing', function () {
+    it('should scrub input when scrubTelemetryInputs is set', async function () {
+      instrumenter.configure({ scrubTelemetryInputs: true });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when scrubFields is set', async function () {
+      instrumenter.configure({ scrubFields: ['secret'] });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when replay.maskAllInputs is set', async function () {
+      instrumenter.configure({ replay: { maskAllInputs: true } });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when replay.blockClass is set', async function () {
+      instrumenter.configure({ replay: { blockClass: 'rb-scrub' } });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when replay.blockClass uses regex', async function () {
+      instrumenter.configure({ replay: { blockClass: /rb.scrub/ } });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when replay.blockSelector is set', async function () {
+      instrumenter.configure({
+        replay: { blockSelector: 'div.container > label > input#text-input' },
+      });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should scrub input when replay.maskInputOptions is set', async function () {
+      instrumenter.configure({ replay: { maskInputOptions: { text: true } } });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+    });
+
+    it('should not scrub input when replay.maskInputOptions is not set', async function () {
+      instrumenter.configure({ replay: { maskInputOptions: { text: false } } });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql('radar');
+      expect(event.otelAttributes.value).to.eql('radar');
+    });
+
+    it('should scrub input when telemetryScrubber is set', async function () {
+      let description;
+      const customScrubber = (desc) => {
+        description = desc;
+        return true;
+      };
+      instrumenter.configure({ telemetryScrubber: customScrubber });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql(mask);
+      expect(event.otelAttributes.value).to.eql(mask);
+
+      expect(description.tagName).to.eql('input');
+      expect(description.id).to.eql('text-input');
+      expect(description.classes).to.eql(['rb-scrub']);
+      expect(description.attributes).to.eql([
+        { key: 'type', value: 'text' },
+        { key: 'name', value: 'secret' },
+      ]);
+    });
+
+    it('should scrub input when replay.maskInputFn is set', async function () {
+      let value, element;
+      const maskFn = (v, e) => {
+        value = v;
+        element = e;
+        return 'masked!';
+      };
+      instrumenter.configure({
+        replay: { maskInputOptions: { text: true }, maskInputFn: maskFn },
+      });
+      const elem = document.getElementById('text-input');
+
+      let domEvent = new InputEvent('input');
+      elem.value = 'radar';
+      elem.dispatchEvent(domEvent);
+
+      await wait(wait_ms);
+
+      expect(telemeter.queue.length).to.eql(1);
+      const event = telemeter.queue[0];
+      expect(event.type).to.eql('dom');
+      expect(event.body.type).to.eql('rollbar-input-event');
+      expect(event.body.value).to.eql('masked!');
+      expect(event.otelAttributes.value).to.eql('masked!');
+
+      expect(value).to.eql('radar');
+      expect(element).to.eql(elem);
+    });
   });
 });
 

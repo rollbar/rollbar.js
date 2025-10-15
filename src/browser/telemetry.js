@@ -74,9 +74,7 @@ class Instrumenter {
       }
       this.autoInstrument = _.merge(defaults, autoInstrument);
     }
-    this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-    this.telemetryScrubber = options.telemetryScrubber;
-    this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
+    this.configureScrubbing();
     this.telemeter = telemeter;
     this.rollbar = rollbar;
     this.diagnostic = rollbar.client.notifier.diagnostic;
@@ -98,6 +96,27 @@ class Instrumenter {
     this._lastHref = this._location && this._location.href;
   }
 
+  configureScrubbing() {
+    const options = this.options;
+    this.scrubTelemetryInputs = !!(
+      options.scrubTelemetryInputs ?? options.replay?.maskAllInputs
+    );
+    this.telemetryScrubber = options.telemetryScrubber;
+    this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
+    this.maskInputFn = options.replay?.maskInputFn;
+    this.maskInputOptions = options.replay?.maskInputOptions || {};
+    this.scrubClasses = [
+      options.replay?.blockClass,
+      options.replay?.ignoreClass,
+      options.replay?.maskTextClass,
+    ].filter(Boolean);
+    this.scrubSelectors = [
+      options.replay?.blockSelector,
+      options.replay?.ignoreSelector,
+      options.replay?.maskTextSelector,
+    ].filter(Boolean);
+  }
+
   configure(options) {
     this.options = _.merge(this.options, options);
     let autoInstrument = options.autoInstrument;
@@ -110,13 +129,8 @@ class Instrumenter {
       }
       this.autoInstrument = _.merge(defaults, autoInstrument);
     }
+    this.configureScrubbing();
     this.instrument(oldSettings);
-    if (options.scrubTelemetryInputs !== undefined) {
-      this.scrubTelemetryInputs = !!options.scrubTelemetryInputs;
-    }
-    if (options.telemetryScrubber !== undefined) {
-      this.telemetryScrubber = options.telemetryScrubber;
-    }
   }
 
   // eslint-disable-next-line complexity
@@ -779,6 +793,51 @@ class Instrumenter {
   }
 
   /*
+   * Applies Rollbar telemetry scrubbing options to the dom input value.
+   * When replay options are present, applies those as well.
+   */
+  scrubInputValue(value, element, tagName, inputType) {
+    const mask = '******';
+
+    if (this.scrubTelemetryInputs) {
+      value = mask;
+    } else {
+      const description = domUtil.describeElement(element);
+      if (this.telemetryScrubber) {
+        if (this.telemetryScrubber(description)) {
+          value = mask;
+        }
+      } else if (this.defaultValueScrubber(description)) {
+        value = mask;
+      }
+    }
+
+    // Apply replay options regardless of other scrubbing
+    if (
+      this.maskInputOptions[tagName.toLowerCase()] ||
+      this.maskInputOptions[inputType]
+    ) {
+      if (this.maskInputFn) {
+        value = this.maskInputFn(value, element);
+      } else {
+        value = mask;
+      }
+    }
+
+    if (
+      domUtil.isMatchingElement(element, this.scrubClasses, this.scrubSelectors)
+    ) {
+      value = mask;
+    }
+
+    if (inputType === 'password') {
+      value = mask;
+    }
+
+    return value;
+  }
+
+  /*
    * Uses the `input` event for everything except radio and checkbox inputs.
    * For those, it uses the `change` event.
    */
@@ -788,14 +847,15 @@ class Instrumenter {
     let value = evt.target?.value;
     let inputType = evt.target?.attributes?.type?.value || evt.target?.type;
 
+    if (value !== undefined) {
+      value = this.scrubInputValue(value, evt.target, tagName, inputType);
+    }
+
     switch (type) {
       case 'input':
         if (['radio', 'checkbox'].includes(inputType)) return;
         if (['select', 'textarea'].includes(tagName)) {
           inputType = tagName;
-        }
-        if (inputType === 'password') {
-          value = null;
         }
         break;
 

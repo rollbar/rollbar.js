@@ -133,6 +133,40 @@ function describeElement(elem) {
   return out;
 }
 
+/*
+ * Detects if the given element matches any of the given class names (string or regex),
+ * or CSS selectors.
+ * @param {HTMLElement} element - The DOM element to check.
+ * @param {Array<string|RegExp>} classes - An array of class names (string or regex) to match against.
+ * @param {Array<string>} selectors - An array of CSS selectors to match against.
+ * @return {boolean} - True if the element matches any of the classes or selectors, false otherwise.
+ */
+function isMatchingElement(element, classes, selectors) {
+  try {
+    for (const cls of classes) {
+      if (typeof cls === 'string') {
+        if (element.classList.contains(cls)) {
+          return true;
+        }
+      } else {
+        for (const c of element.classList) {
+          if (cls.test(c)) {
+            return true;
+          }
+        }
+      }
+    }
+    for (const sel of selectors) {
+      if (element.matches(sel)) {
+        return true;
+      }
+    }
+  } catch (e) {
+    // ignore errors from invalid arguments
+  }
+  return false;
+}
+
 export {
   describeElement,
   descriptionToString,
@@ -142,4 +176,5 @@ export {
   getElementFromEvent,
   isDescribedElement,
   getElementType,
+  isMatchingElement,
 };
