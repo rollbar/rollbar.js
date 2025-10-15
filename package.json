@@ -32,14 +32,6 @@
       },
       "default": "./dist/rollbar.umd.min.js"
     },
-    "./replay": {
-      "types": "./index.d.ts",
-      "browser": {
-        "import": "./src/browser/rollbarReplay.js",
-        "require": "./dist/rollbar.replay.umd.min.js"
-      },
-      "default": "./dist/rollbar.replay.umd.min.js"
-    },
     "./src/browser/core": {
       "types": "./src/browser/core.d.ts",
       "require": "./src/browser/core.cjs",
