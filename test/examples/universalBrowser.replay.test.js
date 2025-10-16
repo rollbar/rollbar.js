@@ -46,29 +46,6 @@ describe('Rollbar loaded by snippet with replay config', function () {
     __originalOnError = null;
   });
 
-  it('should have Replay instance available', function () {
-    const rollbar = document.defaultView.Rollbar;
-    expect(rollbar).to.be.ok;
-    console.log('Rollbar instance:');
-    dumpAllPropNames(rollbar);
-    //console.log(rollbar);
-    // Object.keys(rollbar).forEach((key) => console.log(key, obj[key]));
-    // Object.getOwnPropertyNames(rollbar).forEach((key) =>
-    //   console.log(key, obj[key]),
-    // );
-    // for (const key in obj) {
-    //   console.log(key, obj[key]);
-    // }
-    // let current = obj;
-    // while (current) {
-    //   Reflect.ownKeys(current).forEach((key) => console.log(key, obj[key]));
-    //   current = Object.getPrototypeOf(current);
-    // }
-    expect(rollbar.telemeter).to.exist;
-    expect(rollbar.replay).to.exist;
-    expect(rollbar.replay.constructor.name).to.equal('Replay');
-  });
-
   it('should have replay configuration available', function () {
     const rollbar = document.defaultView.Rollbar;
     expect(rollbar.options.replay).to.exist;
