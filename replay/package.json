@@ -1,0 +1,4 @@
+{
+  "browser": "../dist/rollbar.replay.umd.min.js",
+  "module": "../src/browser/rollbarReplay.js"
+}
