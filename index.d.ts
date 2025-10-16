@@ -21,6 +21,8 @@ declare class Rollbar {
   public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
   public wait(callback: () => void): void;
 
+  public triggerDirectReplay(context: Dictionary): Dictionary | null;
+
   public captureEvent(
     metadata: object,
     level: Rollbar.Level,
@@ -49,6 +51,8 @@ declare namespace Rollbar {
   export type MaybeError = Error | undefined | null;
   export type Level = 'debug' | 'info' | 'warning' | 'error' | 'critical';
   export type Dictionary = { [key: string]: unknown };
+  export type StringAttributes = Record<string, string>;
+
   /**
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
    */
@@ -109,6 +113,7 @@ declare namespace Rollbar {
     payload?: Payload;
     replay?: ReplayOptions;
     reportLevel?: Level;
+    resource?: StringAttributes;
     retryInterval?: number | null;
     rewriteFilenamePatterns?: string[];
     scrubFields?: string[];
@@ -242,7 +247,13 @@ declare namespace Rollbar {
     };
     triggers?: {
       type: string;
+      samplingRatio?: number;
+      preDuration?: number;
+      postDuration?: number;
+      predicateFn?: (trigger: Dictionary, context: Dictionary) => boolean;
       level?: Level[];
+      pathMatch?: string | RegExp;
+      tags?: string[];
     }[];
     debug?: {
       logErrors?: boolean;
