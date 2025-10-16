@@ -1,52 +1,42 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import Rollbar from 'rollbar';
 
 import ErrorBoundary from './ErrorBoundary';
 import TestError from './TestError';
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
+const App = () => {
+  const [rollbar] = useState(() => new Rollbar({
+    accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    captureUncaught: true,
+    captureUnhandledRejections: true,
+  }));
 
-    this.state = {
-      rollbar: new Rollbar({
-        accessToken: 'POST_CLIENT_ITEM_TOKEN',
-        captureUncaught: true,
-        captureUnhandledRejections: true,
-      }),
-    };
-
-    this.logInfo = this.logInfo.bind(this);
-    this.throwError = this.throwError.bind(this);
-  }
-
-  logInfo() {
+  const logInfo = () => {
     // Example log event using the rollbar object.
-    this.state.rollbar.info('react test log');
-  }
+    rollbar.info('react test log');
+  };
 
-  throwError() {
+  const throwError = () => {
     // Example error, which will be reported to rollbar.
     throw new Error('react test error');
-  }
+  };
 
-  render() {
-    return (
-      <React.Fragment>
-        <h1>Rollbar Example for React</h1>
-        <button id="rollbar-info" onClick={this.logInfo}>
-          Log Info
-        </button>
-        <button id="throw-error" onClick={this.throwError}>
-          ThrowError
-        </button>
-        <ErrorBoundary rollbar={this.state.rollbar}>
-          <TestError />
-        </ErrorBoundary>
-      </React.Fragment>
-    );
-  }
-}
+  return (
+    <>
+      <h1>Rollbar Example for React</h1>
+      <button id="rollbar-info" onClick={logInfo}>
+        Log Info
+      </button>
+      <button id="throw-error" onClick={throwError}>
+        ThrowError
+      </button>
+      <ErrorBoundary rollbar={rollbar}>
+        <TestError />
+      </ErrorBoundary>
+    </>
+  );
+};
 
-ReactDOM.render(<App />, document.getElementById('index'));
+const root = createRoot(document.getElementById('index'));
+root.render(<App />);

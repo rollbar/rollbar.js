@@ -1,10 +1,10 @@
-var rollbar = require('rollbar');
+import Rollbar from 'rollbar';
 
-var rollbarConfig = {
+const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
-  checkIgnore: function (_isUncaught, _args, payload) {
+  checkIgnore: (_isUncaught, _args, payload) => {
     // Example checkIgnore: take action and tell rollbar.js to ignore event if
     // condition is met, else return false.
     if (
@@ -13,7 +13,7 @@ var rollbarConfig = {
       payload.body.message.extra.storePayload
     ) {
       // Example building fully prepared json from the payload object.
-      window.jsonPayload = window.Rollbar.buildJsonPayload(payload);
+      window.jsonPayload = rollbar.buildJsonPayload(payload);
 
       return true;
     }
@@ -22,25 +22,26 @@ var rollbarConfig = {
   },
 };
 
-window.Rollbar = new rollbar(rollbarConfig);
+const rollbar = new Rollbar(rollbarConfig);
+window.Rollbar = rollbar;
 
-window.rollbarInfo = function rollbarInfo() {
+window.rollbarInfo = () => {
   // Example log event using the rollbar object.
-  Rollbar.info('webpack test log');
+  rollbar.info('webpack test log');
 };
 
-window.throwError = function throwError() {
+window.throwError = () => {
   // Example error, which will be reported to rollbar when `captureUncaught`
   // is true in the config.
   throw new Error('webpack test error');
 };
 
-window.rollbarInfoWithExtra = function rollbarInfoWithExtra() {
+window.rollbarInfoWithExtra = () => {
   // Example log event with custom data.
-  Rollbar.info('webpack test log', { storePayload: true });
+  rollbar.info('webpack test log', { storePayload: true });
 };
 
-window.sendJson = function sendJson() {
+window.sendJson = () => {
   // Example sending fully prepared json payload to Rollbar API.
-  Rollbar.sendJsonPayload(window.jsonPayload);
+  rollbar.sendJsonPayload(window.jsonPayload);
 };
