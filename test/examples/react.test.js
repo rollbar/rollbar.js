@@ -13,7 +13,7 @@ describe('react app', function () {
     __originalOnError = window.onerror;
     window.onerror = () => false;
 
-    await loadHtml('examples/react/dist/index.html');
+    await loadHtml('examples/react-16/dist/index.html');
 
     // Stub the xhr interface.
     window.server = sinon.createFakeServer();

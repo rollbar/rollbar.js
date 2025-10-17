@@ -136,6 +136,23 @@ namedAMDConfigBase.output = extend({}, namedAMDConfigBase.output);
 namedAMDConfigBase.output.library = 'rollbar';
 namedAMDConfigBase.output.libraryTarget = 'amd';
 
+const vanillaReplayConfigBase = extend({}, vanillaConfigBase);
+vanillaReplayConfigBase.entry = {
+  'rollbar.replay': './src/browser/bundles/rollbarReplay.js',
+};
+
+const UMDReplayConfigBase = extend({}, UMDConfigBase);
+UMDReplayConfigBase.entry = {
+  'rollbar.replay.umd': ['./src/browser/bundles/rollbarReplay.js'],
+};
+
+const noConflictReplayConfigBase = extend({}, UMDConfigBase);
+noConflictReplayConfigBase.entry = {
+  'rollbar.replay.noconflict.umd': [
+    './src/browser/bundles/rollbarReplay.noconflict.js',
+  ],
+};
+
 const config = [snippetConfig, pluginConfig];
 
 function optimizationConfig(minimizer) {
@@ -209,6 +226,46 @@ function addServerCJSConfigBase(webpackConfig, filename, minimizer) {
   webpackConfig.push(serverConfig);
 }
 
+function addVanillaReplayToConfig(
+  webpackConfig,
+  filename,
+  extraPlugins,
+  minimizer,
+) {
+  const replayConfig = extend({}, vanillaReplayConfigBase);
+  replayConfig.name = filename;
+  replayConfig.plugins = extraPlugins;
+  replayConfig.optimization = optimizationConfig(minimizer);
+  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  webpackConfig.push(replayConfig);
+}
+
+function addUMDReplayToConfig(
+  webpackConfig,
+  filename,
+  extraPlugins,
+  minimizer,
+) {
+  const replayConfig = extend({}, UMDReplayConfigBase);
+  replayConfig.plugins = extraPlugins;
+  replayConfig.optimization = optimizationConfig(minimizer);
+  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  webpackConfig.push(replayConfig);
+}
+
+function addNoConflictReplayToConfig(
+  webpackConfig,
+  filename,
+  extraPlugins,
+  minimizer,
+) {
+  const replayConfig = extend({}, noConflictReplayConfigBase);
+  replayConfig.plugins = extraPlugins;
+  replayConfig.optimization = optimizationConfig(minimizer);
+  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  webpackConfig.push(replayConfig);
+}
+
 function generateBuildConfig(name, plugins, minimizer) {
   addVanillaToConfig(config, name, plugins, minimizer);
   addUMDToConfig(config, name, plugins, minimizer);
@@ -217,7 +274,16 @@ function generateBuildConfig(name, plugins, minimizer) {
   addServerCJSConfigBase(config, name.replace('.js', '.cjs'), minimizer);
 }
 
+function generateReplayBuildConfig(name, plugins, minimizer) {
+  addVanillaReplayToConfig(config, name, plugins, minimizer);
+  addUMDReplayToConfig(config, name, plugins, minimizer);
+  addNoConflictReplayToConfig(config, name, plugins, minimizer);
+}
+
 generateBuildConfig('[name].js', []);
 generateBuildConfig('[name].min.js', [], uglifyPlugin);
+
+generateReplayBuildConfig('[name].js', []);
+generateReplayBuildConfig('[name].min.js', [], uglifyPlugin);
 
 module.exports = config;
