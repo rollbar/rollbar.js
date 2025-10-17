@@ -22,6 +22,24 @@
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
 
+## 🎬 Session Replay (Beta)
+
+**Important:** Session Replay is now available in beta! This feature captures and replays user sessions around errors, helping you understand exactly what happened before an error occurred. Replay can also be triggered based on custom conditions to capture critical user flows.
+
+Because Session Replay includes additional recording capabilities, it uses a **separate, larger bundle**. If you want to use Session Replay, import from `rollbar/replay` instead of `rollbar`:
+
+```javascript
+// Standard bundle (smaller, no replay)
+import Rollbar from 'rollbar';
+
+// Session Replay bundle (includes replay capabilities)
+import Rollbar from 'rollbar/replay';
+```
+
+Choose the standard bundle if you don't need replay functionality.
+
+For Session Replay configuration and usage, see our [Session Replay documentation](https://docs.rollbar.com/docs/session-replay).
+
 ## Installation
 
 Using npm:
