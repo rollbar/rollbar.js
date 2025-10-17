@@ -61,7 +61,8 @@ function merge() {
     copy,
     clone,
     name,
-    result = {},
+    result = Object.create(null),
+    // no prototype pollution on Object
     current = null,
     length = arguments.length;
   for (i = 0; i < length; i++) {
@@ -671,6 +672,9 @@ function set(obj, path, value) {
   if (!obj) {
     return;
   }
+
+  // Prevent prototype pollution by setting the prototype to null.
+  Object.setPrototypeOf(obj, null);
   var keys = path.split('.');
   var len = keys.length;
   if (len < 1) {
@@ -950,15 +954,15 @@ var Queue = /*#__PURE__*/function () {
    *    `api.postItem(payload, function(err, response))`
    * @param logger - An object used to log verbose messages if desired
    * @param options - see `Queue.prototype.configure`
-   * @param replayManager - Optional `ReplayManager` for coordinating session replay with error occurrences
+   * @param replay - Optional `Replay` for coordinating session replay with error occurrences
    */
-  function Queue(rateLimiter, api, logger, options, replayManager) {
+  function Queue(rateLimiter, api, logger, options, replay) {
     _classCallCheck(this, Queue);
     this.rateLimiter = rateLimiter;
     this.api = api;
     this.logger = logger;
     this.options = options;
-    this.replayManager = replayManager;
+    this.replay = replay;
     this.predicates = [];
     this.pendingItems = [];
     this.pendingRequests = [];
@@ -1047,8 +1051,8 @@ var Queue = /*#__PURE__*/function () {
         callback(new Error('Transmit disabled'));
         return;
       }
-      if (this.replayManager && data.body) {
-        item.replayId = this.replayManager.capture(null, data.uuid, {
+      if (this.replay && data.body) {
+        item.replayId = this.replay.capture(null, data.uuid, {
           type: 'occurrence',
           level: item.level
         });
@@ -1064,15 +1068,15 @@ var Queue = /*#__PURE__*/function () {
         this._makeApiRequest(data, function (err, resp, headers) {
           _this._dequeuePendingRequest(data);
           if (item.replayId) {
-            _this.replayManager.sendOrDiscardReplay(item.replayId, err, resp, headers);
+            _this.replay.sendOrDiscardReplay(item.replayId, err, resp, headers);
           }
           callback(err, resp);
         });
       } catch (err) {
         this._dequeuePendingRequest(data);
         if (item.replayId) {
-          var _this$replayManager;
-          (_this$replayManager = this.replayManager) === null || _this$replayManager === void 0 || _this$replayManager.discard(item.replayId);
+          var _this$replay;
+          (_this$replay = this.replay) === null || _this$replay === void 0 || _this$replay.discard(item.replayId);
         }
         callback(err);
       }
@@ -1390,13 +1394,13 @@ Notifier.prototype._applyTransforms = function (item, callback) {
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, tracing, replayManager, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
   this.options = src_merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replayManager);
+  this.queue = new queue(Rollbar.rateLimiter, api, logger, this.options, replay);
   this.tracing = tracing;
 
   // Legacy OpenTracing support
@@ -1982,7 +1986,7 @@ var logger = {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.4';
+var version = '3.0.0-beta.5';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
