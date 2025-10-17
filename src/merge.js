@@ -32,7 +32,7 @@ function merge() {
     copy,
     clone,
     name,
-    result = {},
+    result = Object.create(null), // no prototype pollution on Object
     current = null,
     length = arguments.length;
 
