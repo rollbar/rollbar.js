@@ -660,6 +660,10 @@ function set(obj, path, value) {
   if (!obj) {
     return;
   }
+
+  // Prevent prototype pollution by setting the prototype to null.
+  Object.setPrototypeOf(obj, null);
+
   var keys = path.split('.');
   var len = keys.length;
   if (len < 1) {

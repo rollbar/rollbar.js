@@ -2,14 +2,14 @@ name: Rollbar.js CI
 
 on:
   push:
-    branches: [master]
+    branches: [next/2.x/main]
     tags: [v*]
   pull_request:
-    branches: [master]
+    branches: [next/2.x/main]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:

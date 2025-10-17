@@ -446,6 +446,13 @@ describe('merge', function () {
     expect(e.amihere).to.eql('yes');
     done();
   });
+  it('should be secure against prototype pollution', function () {
+    const o1 = JSON.parse('{"__proto__": {"polluted": "yes"}}');
+    const o2 = JSON.parse('{"__proto__": {"polluted": "yes"}}');
+    const result = _.merge(o1, o2);
+    expect({}.polluted).to.not.eql('yes');
+    expect(result.polluted).to.not.eql('yes');
+  });
 });
 
 var traverse = require('../src/utility/traverse');
@@ -764,6 +771,12 @@ describe('set', function () {
     expect(o.foo.a).to.eql(98);
     expect(o.foo.bar.buzz).to.eql(97);
     expect(o.foo.bar.baz.fizz).to.eql(1);
+  });
+  it('should be secure against prototype pollution', function () {
+    const o = {};
+    _.set(o, '__proto__.polluted', 'yes');
+    expect({}.polluted).to.not.eql('yes');
+    expect(o.polluted).to.not.eql('yes');
   });
 });
 
