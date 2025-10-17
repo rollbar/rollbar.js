@@ -2,10 +2,10 @@ name: Rollbar.js CI
 
 on:
   push:
-    branches: [master]
+    branches: [next/2.x/main]
     tags: [v*]
   pull_request:
-    branches: [master]
+    branches: [next/2.x/main]
 
 jobs:
   build:
