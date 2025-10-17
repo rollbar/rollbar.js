@@ -145,7 +145,6 @@ export default class ReplayPredicates {
    * @return {boolean} - True if the trigger's predicate function returns true, false otherwise.
    */
   isPredicateFnMatching(trigger, context) {
-    console.log('isPredicateFnMatching', trigger, context);
     if (typeof trigger.predicateFn !== 'function') return true;
 
     return trigger.predicateFn(trigger, context);
