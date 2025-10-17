@@ -22,7 +22,7 @@
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
 
-## 🎬 Session Replay (Beta)
+## Session Replay (Beta)
 
 **Important:** Session Replay is now available in beta! This feature captures and replays user sessions around errors, helping you understand exactly what happened before an error occurred. Replay can also be triggered based on custom conditions to capture critical user flows.
 
