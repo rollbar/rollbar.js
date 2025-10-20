@@ -237,5 +237,31 @@ describe('Tracing()', function () {
         done();
       }, 10);
     });
+
+    it('should post a trace payload without a session', function (done) {
+      // passing an empty window object to simulate no sessionStorage
+      tracing = new Tracing({}, api, {});
+      tracing.initSession();
+      expect(tracing.session).to.be.undefined;
+
+      const span = tracing.startSpan('test.span');
+      span.end();
+      tracing.exporter.post(tracing.exporter.toPayload(), {
+        'X-Rollbar-Session-Id': tracing.sessionId,
+      });
+
+      setTimeout(() => {
+        expect(transport.post.callCount).to.equal(1);
+        const call = transport.post.getCall(0);
+        const { payload, headers } = call.args[0];
+        expect(payload).to.have.property('resourceSpans');
+        expect(headers).to.have.property(
+          'X-Rollbar-Session-Id',
+          tracing.sessionId,
+        );
+
+        done();
+      }, 10);
+    });
   });
 });
