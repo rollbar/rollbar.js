@@ -39,7 +39,7 @@ export class Tracer {
     const span = new Span({
       resource: resource,
       scope: this.tracing.scope,
-      session: this.tracing.session.session,
+      session: this.tracing.session?.session,
       context,
       spanContext,
       name,
