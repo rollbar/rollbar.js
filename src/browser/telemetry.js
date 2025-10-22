@@ -744,7 +744,6 @@ class Instrumenter {
     const elementString = evt.target?.window
       ? 'window'
       : domUtil.elementString(evt.target);
-    console.log('handleForm', type, elementString, evt);
   }
 
   handleResize(evt) {
