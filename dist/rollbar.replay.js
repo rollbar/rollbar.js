@@ -3502,7 +3502,7 @@ function messagesFromItem(item) {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0-beta.5';
+var version = '3.0.0-rc.1';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -3648,7 +3648,7 @@ var core_Rollbar = /*#__PURE__*/function () {
       this.options = handleOptions(oldOptions, options, payload, src_logger);
       this.options._configuredOptions = handleOptions(oldOptions._configuredOptions, options, payload);
       (_this$tracing = this.tracing) === null || _this$tracing === void 0 || _this$tracing.configure(this.options);
-      (_this$replay = this.replay) === null || _this$replay === void 0 || _this$replay.configure(this.options);
+      (_this$replay = this.replay) === null || _this$replay === void 0 || _this$replay.configure(this.options.replay);
       this.client.configure(this.options, payloadData);
       (_this$instrumenter = this.instrumenter) === null || _this$instrumenter === void 0 || _this$instrumenter.configure(this.options);
       this.setupUnhandledCapture();
@@ -5768,7 +5768,6 @@ var Instrumenter = /*#__PURE__*/function () {
       // TODO: implement form event handling
       var type = evt.type;
       var elementString = (_evt$target3 = evt.target) !== null && _evt$target3 !== void 0 && _evt$target3.window ? 'window' : domUtility_elementString(evt.target);
-      console.log('handleForm', type, elementString, evt);
     }
   }, {
     key: "handleResize",
@@ -7009,7 +7008,7 @@ var Tracer = /*#__PURE__*/function () {
   return tracer_createClass(Tracer, [{
     key: "startSpan",
     value: function startSpan(name) {
-      var _this$tracing$resourc, _options$resource;
+      var _this$tracing$resourc, _options$resource, _this$tracing$session;
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tracing.contextManager.active();
       var parentSpan = this.tracing.getSpan(context);
@@ -7039,7 +7038,7 @@ var Tracer = /*#__PURE__*/function () {
       var span = new Span({
         resource: resource,
         scope: this.tracing.scope,
-        session: this.tracing.session.session,
+        session: (_this$tracing$session = this.tracing.session) === null || _this$tracing$session === void 0 ? void 0 : _this$tracing$session.session,
         context: context,
         spanContext: spanContext,
         name: name,
