@@ -183,6 +183,14 @@ class Telemeter {
       'response.headers': JSON.stringify(metadata.response?.headers || {}),
       'response.timeUnixNano': endTimeNano.toString(),
     };
+    const requestBody = metadata.request;
+    const responseBody = metadata.response?.body;
+    if (requestBody) {
+      otelAttributes['request.body'] = JSON.stringify(requestBody);
+    }
+    if (responseBody) {
+      otelAttributes['response.body'] = JSON.stringify(responseBody);
+    }
 
     this.telemetrySpan?.addEvent(
       'rollbar-network-event',
