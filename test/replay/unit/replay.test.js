@@ -127,6 +127,7 @@ describe('Replay', function () {
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.options': JSON.stringify({}),
           'rollbar.replay.trigger.type': trigger.type,
           'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
           'rollbar.replay.trigger': JSON.stringify(trigger),
@@ -168,6 +169,7 @@ describe('Replay', function () {
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.options': JSON.stringify({}),
           'rollbar.replay.trigger.type': trigger.type,
           'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
           'rollbar.replay.trigger': JSON.stringify(trigger),
@@ -208,6 +210,7 @@ describe('Replay', function () {
         mockRecorder.exportRecordingSpan.calledWith(mockTracing, {
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': occurrenceUuid,
+          'rollbar.replay.options': JSON.stringify({}),
           'rollbar.replay.trigger.type': trigger.type,
           'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
           'rollbar.replay.trigger': JSON.stringify(trigger),
