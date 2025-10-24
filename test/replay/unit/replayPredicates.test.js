@@ -36,6 +36,18 @@ describe('Replay', function () {
       replayPredicates = new ReplayPredicates(replayConfig);
     });
 
+    it('should initialize with default occurrence trigger', function () {
+      expect(replayPredicates.triggers).to.deep.equal([
+        {
+          type: 'occurrence',
+          level: ['error', 'critical'],
+          preDuration: 300,
+          postDuration: 5,
+          samplingRatio: 1.0,
+        },
+      ]);
+    });
+
     it('should set maxPreDuration', function () {
       replayPredicates.configure({
         ...replayConfig,
