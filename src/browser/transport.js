@@ -76,14 +76,13 @@ Transport.prototype.post = function ({
     return callback(stringifyResult.error);
   }
 
-  var payload = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
   this._makeZoneRequest({
     accessToken,
     url,
     method,
-    payload,
+    payload: stringifyResult.value,
     headers,
     callback,
     requestFactory,
