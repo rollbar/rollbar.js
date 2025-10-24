@@ -167,8 +167,10 @@ describe('capture events', function () {
       method: 'GET',
       status_code: 400,
       request_headers: { 'Content-Type': 'application/json' },
+      request: { params: 'foo' },
       response: {
         headers: { 'Content-Type': 'application/json' },
+        body: { data: 'foo' },
       },
       start_time_ms: timestamp,
       end_time_ms: 12345678,
@@ -188,6 +190,8 @@ describe('capture events', function () {
       url: metadata.url,
       'request.headers': JSON.stringify(metadata.request_headers),
       'response.headers': JSON.stringify(metadata.response.headers),
+      'request.body': JSON.stringify(metadata.request),
+      'response.body': JSON.stringify(metadata.response.body),
       'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
     });
 
@@ -202,6 +206,8 @@ describe('capture events', function () {
       url: metadata.url,
       'request.headers': JSON.stringify(metadata.request_headers),
       'response.headers': JSON.stringify(metadata.response.headers),
+      'request.body': JSON.stringify(metadata.request),
+      'response.body': JSON.stringify(metadata.response.body),
       'response.timeUnixNano': (metadata.end_time_ms * 1e6).toString(),
     });
     done();
