@@ -100,6 +100,7 @@ describe('Replay API Integration', function () {
       recorder.exportRecordingSpan.calledWith(tracing, {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': uuid,
+        'rollbar.replay.options': JSON.stringify(options.replay),
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),

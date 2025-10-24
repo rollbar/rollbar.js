@@ -155,6 +155,8 @@ describe('Replay buffer-index integration', function () {
       {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': occurrenceUuid,
+        'rollbar.replay.options':
+          '{"enabled":true,"triggerDefaults":{"preDuration":10,"postDuration":5},"triggers":[{"type":"occurrence"}]}',
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),

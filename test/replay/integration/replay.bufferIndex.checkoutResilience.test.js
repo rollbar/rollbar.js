@@ -98,6 +98,8 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
       {
         'rollbar.replay.id': 'test-replay-id',
         'rollbar.occurrence.uuid': 'test-uuid',
+        'rollbar.replay.options':
+          '{"enabled":true,"autoStart":true,"emitEveryNms":100,"triggerDefaults":{"preDuration":10,"postDuration":5},"triggers":[{"type":"occurrence"}]}',
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
@@ -155,6 +157,8 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
       {
         'rollbar.replay.id': 'test-replay-id',
         'rollbar.occurrence.uuid': 'test-uuid',
+        'rollbar.replay.options':
+          '{"enabled":true,"autoStart":true,"emitEveryNms":100,"triggerDefaults":{"preDuration":10,"postDuration":5},"triggers":[{"type":"occurrence"}]}',
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
@@ -285,6 +289,8 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
       {
         'rollbar.replay.id': 'test-replay-id',
         'rollbar.occurrence.uuid': 'test-uuid',
+        'rollbar.replay.options':
+          '{"enabled":true,"autoStart":true,"emitEveryNms":100,"triggerDefaults":{"preDuration":4,"postDuration":5},"triggers":[{"type":"occurrence"}]}',
         'rollbar.replay.trigger.type': trigger.type,
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),

@@ -28,6 +28,7 @@ const TrailingStatus = Object.freeze({
  */
 export default class Replay {
   _map;
+  _options;
   /** @type {Recorder} */
   _recorder;
   _tracing;
@@ -48,6 +49,7 @@ export default class Replay {
     }
 
     this._map = new Map();
+    this._options = options;
     this._predicates = new ReplayPredicates(options);
     this._recorder = new Recorder({
       ...options,
@@ -93,6 +95,7 @@ export default class Replay {
   }
 
   configure(options) {
+    this._options = options;
     this._predicates.configure(options);
     this._recorder.configure({
       ...options,
@@ -125,6 +128,7 @@ export default class Replay {
         'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
         'rollbar.replay.trigger': JSON.stringify(trigger),
         'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
+        'rollbar.replay.options': JSON.stringify(this._options || {}),
       });
     } catch (error) {
       // TODO(matux): No events probably, this is expected, be more graceful.
