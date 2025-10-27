@@ -629,6 +629,7 @@ class Instrumenter {
     const c = this._window.console;
 
     function wrapConsole(method) {
+      // eslint-disable-next-line strict
       'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
 
       const orig = c[method];

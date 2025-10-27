@@ -49,7 +49,7 @@ jobs:
           prettier_extensions: js,cjs,mjs,md,json,yml,yaml
           eslint: true
           eslint_args: '--max-warnings 0'
-          eslint_extensions: js
+          eslint_extensions: js,mjs,cjs
 
       - name: Build
         run: npm run build
