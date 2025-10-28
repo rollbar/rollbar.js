@@ -1,6 +1,6 @@
-import { access } from 'node:fs/promises';
-import { once } from 'node:events';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { access } from 'node:fs/promises';
 import path from 'node:path';
 
 /**

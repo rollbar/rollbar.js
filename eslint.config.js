@@ -1,7 +1,9 @@
-import js from '@eslint/js';
 import babelParser from '@babel/eslint-parser';
-import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
+import importPlugin from 'eslint-plugin-import';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default defineConfig([
   js.configs.recommended,
@@ -10,6 +12,32 @@ export default defineConfig([
   {
     languageOptions: {
       ecmaVersion: 2021,
+    },
+    plugins: {
+      import: importPlugin,
+      'unused-imports': unusedImports,
+    },
+    rules: {
+      complexity: ['error', { max: 35 }],
+      'unused-imports/no-unused-imports': 'error',
+      'import/order': [
+        'warn',
+        {
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+          ],
+          'newlines-between': 'always',
+        },
+      ],
     },
   },
 
@@ -24,7 +52,6 @@ export default defineConfig([
     },
     rules: {
       strict: ['error', 'safe'],
-      complexity: ['error', { max: 35 }],
       'no-prototype-builtins': 'off',
       'no-redeclare': 'off',
       'no-undef': 'off',

@@ -5,15 +5,15 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import logger from '../../../src/logger.js';
-import Tracing from '../../../src/tracing/tracing.js';
-import Telemeter from '../../../src/telemetry.js';
-import Replay from '../../../src/browser/replay/replay.js';
-import replayDefaults from '../../../src/browser/replay/defaults.js';
 import Api from '../../../src/api.js';
+import replayDefaults from '../../../src/browser/replay/defaults.js';
+import Replay from '../../../src/browser/replay/replay.js';
+import logger from '../../../src/logger.js';
 import Queue from '../../../src/queue.js';
-import mockRecordFn from '../util/mockRecordFn.js';
+import Telemeter from '../../../src/telemetry.js';
+import Tracing from '../../../src/tracing/tracing.js';
 import * as payloads from '../../fixtures/replay/payloads.fixtures.js';
+import mockRecordFn from '../util/mockRecordFn.js';
 
 const options = {
   enabled: true,

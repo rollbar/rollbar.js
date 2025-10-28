@@ -1,6 +1,7 @@
-import { SourceMapConsumer } from 'source-map';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+
+import { SourceMapConsumer } from 'source-map';
 
 /**
  * Uses Node source-map to map transpiled JS stack locations to original

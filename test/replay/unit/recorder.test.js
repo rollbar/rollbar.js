@@ -1,6 +1,6 @@
+import { record as rrwebRecordFn } from '@rrweb/record';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { record as rrwebRecordFn } from '@rrweb/record';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
 

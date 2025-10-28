@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 
-import { Span } from '../../src/tracing/span.js';
-import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
-import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 import { ROOT_CONTEXT } from '../../src/tracing/context.js';
+import { SpanExporter } from '../../src/tracing/exporter.js';
+import { Span } from '../../src/tracing/span.js';
+import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 
 const spanOptions = function (options = {}) {
   return {

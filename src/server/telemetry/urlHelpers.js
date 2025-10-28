@@ -1,4 +1,5 @@
 import { URL } from 'url';
+
 import merge from '../../merge.js';
 
 // This function replicates the relevant logic in node/lib/http.js as closely

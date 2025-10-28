@@ -2,6 +2,7 @@
 /* globals it */
 
 import { expect } from 'chai';
+
 import * as p from '../src/predicates.js';
 
 describe('predicates', function () {

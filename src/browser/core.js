@@ -1,19 +1,19 @@
-import Client from '../rollbar.js';
-import * as _ from '../utility.js';
 import API from '../api.js';
+import errorParser from '../errorParser.js';
 import logger from '../logger.js';
-import * as globals from './globalSetup.js';
+import * as sharedPredicates from '../predicates.js';
+import Client from '../rollbar.js';
+import tracingDefaults from '../tracing/defaults.js';
+import * as sharedTransforms from '../transforms.js';
+import * as _ from '../utility.js';
 
+import browserDefaults from './defaults.js';
+import * as globals from './globalSetup.js';
+import * as predicates from './predicates.js';
+import replayDefaults from './replay/defaults.js';
+import * as transforms from './transforms.js';
 import Transport from './transport.js';
 import * as urllib from './url.js';
-
-import * as transforms from './transforms.js';
-import * as sharedTransforms from '../transforms.js';
-import * as predicates from './predicates.js';
-import * as sharedPredicates from '../predicates.js';
-import errorParser from '../errorParser.js';
-import replayDefaults from './replay/defaults.js';
-import tracingDefaults from '../tracing/defaults.js';
 
 // Used to support global `Rollbar` instance.
 let _instance = null;
@@ -594,7 +594,6 @@ import {
   uncaughtErrorLevel,
   endpoint,
 } from '../defaults.js';
-import browserDefaults from './defaults.js';
 
 const defaultOptions = {
   environment: 'unknown',

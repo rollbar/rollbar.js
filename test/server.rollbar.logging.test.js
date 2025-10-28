@@ -4,7 +4,9 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+
 import Rollbar from '../src/server/rollbar.js';
+
 import {
   TestClient,
   ValidOpenTracingTracerStub,

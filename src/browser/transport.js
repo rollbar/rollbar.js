@@ -1,4 +1,5 @@
 import * as _ from '../utility.js';
+
 import makeFetchRequest from './transport/fetch.js';
 import makeXhrRequest from './transport/xhr.js';
 

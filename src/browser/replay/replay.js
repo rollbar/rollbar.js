@@ -1,10 +1,10 @@
-import * as _ from '../../utility.js';
+import logger from '../../logger.js';
 import hrtime from '../../tracing/hrtime.js';
 import id from '../../tracing/id.js';
-import logger from '../../logger.js';
+import * as _ from '../../utility.js';
+
 import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
-import ScheduledCapture from './scheduledCapture.js';
 import ScheduledStreamCapture from './scheduledStreamCapture.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */

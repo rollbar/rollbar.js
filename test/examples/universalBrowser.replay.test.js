@@ -1,8 +1,8 @@
-import sinon from 'sinon';
 import { expect } from 'chai';
+import sinon from 'sinon';
 
-import { setTimeout } from '../util/timers.js';
 import { loadHtml } from '../util/fixtures.js';
+import { setTimeout } from '../util/timers.js';
 
 const log =
   (window.parent &&

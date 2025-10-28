@@ -4,8 +4,10 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import Locals from '../src/server/locals.js';
+
 import logger from '../src/logger.js';
+import Locals from '../src/server/locals.js';
+
 import localsFixtures from './fixtures/locals.fixtures.js';
 
 describe('server.locals merge', function () {

@@ -3,12 +3,13 @@
 /* globals beforeEach */
 /* globals afterEach */
 
-import { expect } from 'chai';
-import sinon from 'sinon';
-import nock from 'nock';
 import http from 'http';
 import https from 'https';
 import { URL } from 'url';
+
+import { expect } from 'chai';
+import nock from 'nock';
+import sinon from 'sinon';
 
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';

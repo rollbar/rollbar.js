@@ -1,5 +1,5 @@
-import * as _ from './utility.js';
 import traverse from './utility/traverse.js';
+import * as _ from './utility.js';
 
 function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];

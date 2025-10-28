@@ -1,7 +1,7 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
 import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Recorder from '../src/browser/replay/recorder.js';
 

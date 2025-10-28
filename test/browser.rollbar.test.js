@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { setTimeout } from './util/timers.js';
-import { loadHtml } from './util/fixtures.js';
-
 import Rollbar from '../src/browser/rollbar.js';
+
+import { loadHtml } from './util/fixtures.js';
+import { setTimeout } from './util/timers.js';
 
 const DUMMY_TRACE_ID = 'some-trace-id';
 const DUMMY_SPAN_ID = 'some-span-id';

@@ -1,5 +1,6 @@
 import { expect, assert } from 'chai';
 import sinon from 'sinon';
+
 import Queue from '../src/queue.js';
 
 function TestRateLimiterGenerator() {

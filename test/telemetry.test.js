@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
+
 import Telemeter from '../src/telemetry.js';
 import Tracing from '../src/tracing/tracing.js';
 

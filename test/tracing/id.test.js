@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import id from '../../src/tracing/id.js';
 
 describe('id', function () {

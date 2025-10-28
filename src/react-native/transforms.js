@@ -1,6 +1,6 @@
-import * as _ from '../utility.js';
-import scrub from '../scrub.js';
 import errorParser from '../errorParser.js';
+import scrub from '../scrub.js';
+import * as _ from '../utility.js';
 
 function baseData(item, options, callback) {
   var environment =

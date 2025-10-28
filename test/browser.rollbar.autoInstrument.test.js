@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { setTimeout } from './util/timers.js';
-
 import Rollbar from '../src/browser/rollbar.js';
+
+import { setTimeout } from './util/timers.js';
 
 describe('options.autoInstrument', function () {
   beforeEach(function () {

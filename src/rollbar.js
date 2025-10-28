@@ -1,6 +1,6 @@
-import RateLimiter from './rateLimiter.js';
-import Queue from './queue.js';
 import Notifier from './notifier.js';
+import Queue from './queue.js';
+import RateLimiter from './rateLimiter.js';
 import * as _ from './utility.js';
 
 /*

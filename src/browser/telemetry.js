@@ -1,9 +1,10 @@
-import * as _ from '../utility.js';
+import scrub from '../scrub.js';
 import headers from '../utility/headers.js';
 import replace from '../utility/replace.js';
-import scrub from '../scrub.js';
-import * as urlparser from './url.js';
+import * as _ from '../utility.js';
+
 import * as domUtil from './domUtility.js';
+import * as urlparser from './url.js';
 
 const defaults = {
   network: true,

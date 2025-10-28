@@ -2,8 +2,10 @@
 /* globals it */
 
 import { expect } from 'chai';
+
 import Rollbar from '../src/server/rollbar.js';
 import * as t from '../src/server/transforms.js';
+
 import { createTestItem } from './server.transforms.test-utils.mjs';
 
 describe('transforms.scrubPayload', function () {

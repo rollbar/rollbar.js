@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
+
 import * as _ from '../src/utility.js';
 
 describe('typeName', function () {

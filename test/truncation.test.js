@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import t from '../src/truncation.js';
 
 describe('truncate', function () {

@@ -1,7 +1,7 @@
 /*global XDomainRequest*/
 
-import * as _ from '../../utility.js';
 import logger from '../../logger.js';
+import * as _ from '../../utility.js';
 
 function makeXhrRequest({
   accessToken,

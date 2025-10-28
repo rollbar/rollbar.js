@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
+
 import * as p from '../src/predicates.js';
 var logger = {
   log: function () {},

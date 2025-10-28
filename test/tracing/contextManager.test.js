@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 
+import { ROOT_CONTEXT } from '../../src/tracing/context.js';
 import {
   ContextManager,
   createContextKey,
 } from '../../src/tracing/contextManager.js';
-import { ROOT_CONTEXT } from '../../src/tracing/context.js';
 
 describe('ContextManager()', function () {
   it('should process pending spans', function (done) {

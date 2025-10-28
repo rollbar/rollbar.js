@@ -13,8 +13,9 @@
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import glob from 'glob';
 
 import { findUp } from './util.js';

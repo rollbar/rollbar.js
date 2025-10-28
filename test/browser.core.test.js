@@ -1,12 +1,12 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { setTimeout } from './util/timers.js';
-import { loadHtml } from './util/fixtures.js';
-
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
 import Tracing from '../src/tracing/tracing.js';
+
+import { loadHtml } from './util/fixtures.js';
+import { setTimeout } from './util/timers.js';
 
 describe('options', function () {
   beforeEach(function () {
