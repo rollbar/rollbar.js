@@ -22,7 +22,7 @@ describe('capture', function () {
   it('should return a valid telemetry event', function (done) {
     var options = {};
     var t = new Telemeter(options);
-    var now = +new Date();
+    var now = Date.now();
     var event = t.capture('network', { url: 'a.com' }, 'debug');
     expect(event.timestamp_ms - now).to.be.below(500);
     expect(event.type).to.equal('network');

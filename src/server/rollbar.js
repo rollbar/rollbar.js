@@ -646,7 +646,7 @@ Rollbar.prototype.setupUnhandledCapture = function () {
 };
 
 Rollbar.prototype.handleUncaughtExceptions = function () {
-  var exitOnUncaught = !!this.options.exitOnUncaughtException;
+  var exitOnUncaught = Boolean(this.options.exitOnUncaughtException);
   delete this.options.exitOnUncaughtException;
 
   addOrReplaceRollbarHandler(

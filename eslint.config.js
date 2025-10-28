@@ -19,6 +19,7 @@ export default defineConfig([
     },
     rules: {
       complexity: ['error', { max: 35 }],
+      'no-implicit-coercion': 'error',
       'unused-imports/no-unused-imports': 'error',
       'import/order': [
         'warn',

@@ -14,7 +14,7 @@ function checkLevel(item, settings) {
 
 function userCheckIgnore(logger) {
   return function (item, settings) {
-    var isUncaught = !!item._isUncaught;
+    var isUncaught = Boolean(item._isUncaught);
     delete item._isUncaught;
     var args = item._originalArgs;
     delete item._originalArgs;

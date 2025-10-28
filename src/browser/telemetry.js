@@ -99,8 +99,8 @@ class Instrumenter {
 
   configureScrubbing() {
     const options = this.options;
-    this.scrubTelemetryInputs = !!(
-      options.scrubTelemetryInputs ?? options.replay?.maskAllInputs
+    this.scrubTelemetryInputs = Boolean(
+      options.scrubTelemetryInputs ?? options.replay?.maskAllInputs,
     );
     this.telemetryScrubber = options.telemetryScrubber;
     this.defaultValueScrubber = defaultValueScrubber(options.scrubFields);
@@ -929,7 +929,7 @@ class Instrumenter {
         return function () {
           const url = arguments.length > 2 ? arguments[2] : undefined;
           if (url) {
-            self.handleUrlChange(self._lastHref, url + '');
+            self.handleUrlChange(self._lastHref, String(url) + '');
           }
           return orig.apply(this, arguments);
         };
