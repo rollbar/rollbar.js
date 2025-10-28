@@ -1,4 +1,5 @@
 import API from '../api.js';
+import defaults from '../defaults.js';
 import errorParser from '../errorParser.js';
 import logger from '../logger.js';
 import * as sharedPredicates from '../predicates.js';
@@ -587,22 +588,14 @@ function _gWindow() {
   );
 }
 
-import {
-  version,
-  logLevel,
-  reportLevel,
-  uncaughtErrorLevel,
-  endpoint,
-} from '../defaults.js';
-
 const defaultOptions = {
   environment: 'unknown',
-  version: version,
+  version: defaults.version,
   scrubFields: browserDefaults.scrubFields,
-  logLevel: logLevel,
-  reportLevel: reportLevel,
-  uncaughtErrorLevel: uncaughtErrorLevel,
-  endpoint: endpoint,
+  logLevel: defaults.logLevel,
+  reportLevel: defaults.reportLevel,
+  uncaughtErrorLevel: defaults.uncaughtErrorLevel,
+  endpoint: defaults.endpoint,
   verbose: false,
   enabled: true,
   transmit: true,
