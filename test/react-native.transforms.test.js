@@ -55,7 +55,6 @@ describe('_matchFilename', function () {
 
   it('should rewrite filenames', function (done) {
     var options = new Rollbar({}).options;
-    console.log(options);
 
     var length = filenames.before.length;
 

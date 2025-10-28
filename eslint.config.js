@@ -19,6 +19,7 @@ export default defineConfig([
     },
     rules: {
       complexity: ['error', { max: 35 }],
+      'no-console': 'error',
       'no-implicit-coercion': 'error',
       'unused-imports/no-unused-imports': 'error',
       'import/order': [
@@ -69,6 +70,13 @@ export default defineConfig([
     rules: {
       strict: 'off',
       'no-undef': 'off',
+    },
+  },
+
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    rules: {
+      'no-console': 'off',
     },
   },
   {

@@ -164,7 +164,6 @@ describe('postSpans', function () {
     expect(transport.post.callCount).to.eql(1);
     expect(transport.post.firstCall.args.length).to.eql(1);
     const params = transport.post.firstCall.args[0];
-    console.log('post params', params);
     expect(params.accessToken).to.eql(accessToken);
     expect(params.options.path).to.match(/\/session\//);
     expect(params.options.method).to.eql('POST');

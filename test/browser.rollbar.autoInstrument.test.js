@@ -34,6 +34,7 @@ describe('options.autoInstrument', function () {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
     }));
 
+    // eslint-disable-next-line no-console
     console.log('console test'); // generate a telemetry event
 
     rollbar.log('test'); // generate a payload to inspect
