@@ -49,8 +49,8 @@ function getTransportFromOptions(options, defaults, url) {
 
 function detectTransport(options) {
   var gWindow =
-    (typeof window != 'undefined' && window) ||
-    (typeof self != 'undefined' && self);
+    (typeof window !== 'undefined' && window) ||
+    (typeof self !== 'undefined' && self);
   var transport = options.defaultTransport || 'xhr';
   if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
   if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
