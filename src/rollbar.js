@@ -162,7 +162,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   try {
     item.level = item.level || defaultLevel;
 
-    this._addTracingAttributes(item);
+    this._addItemAttributes(item);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
@@ -182,7 +182,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
 };
 
-Rollbar.prototype._addTracingAttributes = function (item) {
+Rollbar.prototype._addItemAttributes = function (item) {
   const span = this.tracing?.getSpan();
 
   const attributes = [
@@ -190,6 +190,9 @@ Rollbar.prototype._addTracingAttributes = function (item) {
     { key: 'span_id', value: span?.spanId },
     { key: 'trace_id', value: span?.traceId },
   ];
+  if (item._isUncaught) {
+    attributes.push({ key: 'is_uncaught', value: 'true' });
+  }
   _.addItemAttributes(item.data, attributes);
 
   span?.addEvent('rollbar.occurrence', [
