@@ -6,10 +6,16 @@ import { defineConfig } from 'eslint/config';
 export default defineConfig([
   js.configs.recommended,
   prettierRecommended,
+
+  {
+    languageOptions: {
+      ecmaVersion: 2021,
+    },
+  },
+
   {
     files: ['**/*.{js,mjs}'],
     languageOptions: {
-      ecmaVersion: 2021,
       sourceType: 'module',
       parser: babelParser,
       parserOptions: {
@@ -26,10 +32,10 @@ export default defineConfig([
       'no-useless-escape': 'off',
     },
   },
+
   {
     files: ['**/*.cjs'],
     languageOptions: {
-      ecmaVersion: 2021,
       sourceType: 'commonjs',
     },
     rules: {
