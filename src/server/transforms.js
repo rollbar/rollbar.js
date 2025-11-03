@@ -17,6 +17,7 @@ function baseData(item, options, callback) {
     uuid: item.uuid,
     notifier: JSON.parse(JSON.stringify(options.notifier)),
     custom: item.custom,
+    attributes: item.data?.attributes,
   };
 
   if (options.codeVersion) {

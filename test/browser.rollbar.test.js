@@ -357,6 +357,8 @@ describe('options.captureUncaught', function () {
     expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
       'test error',
     );
+    expect(body.data.attributes[1].key).to.eql('is_uncaught');
+    expect(body.data.attributes[1].value).to.eql('true');
     expect(body.data.notifier.diagnostic.is_uncaught).to.be.true;
 
     // karma doesn't unload the browser between tests, so the onerror handler
