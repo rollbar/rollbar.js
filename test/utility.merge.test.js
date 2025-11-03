@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 
-import { merge } from '../../src/utility.js';
+import { merge } from '../src/utility.js';
 
 describe('merge', function () {
-  it('should work for simple objects', function (done) {
+  it('should work for simple objects', function () {
     var o1 = { a: 1, b: 2 };
     var o2 = { a: 42, c: 101 };
     var e = merge(o1, o2);
@@ -16,10 +16,9 @@ describe('merge', function () {
 
     expect(o1.a).to.eql(1);
     expect(o2.a).to.eql(42);
-
-    done();
   });
-  it('should not concat arrays', function (done) {
+
+  it('should not concat arrays', function () {
     var o1 = { a: 1, b: ['hello', 'world'] };
     var o2 = { a: 42, b: ['goodbye'] };
     var e = merge(o1, o2);
@@ -31,9 +30,9 @@ describe('merge', function () {
 
     expect(o1.b).to.contain('world');
     expect(o1.b).not.to.contain('goodbye');
-    done();
   });
-  it('should handle nested objects', function (done) {
+
+  it('should handle nested objects', function () {
     var o1 = {
       a: 1,
       c: 100,
@@ -54,9 +53,9 @@ describe('merge', function () {
     expect(e.payload.person.name).to.eql('hello');
     expect(e.payload.environment).to.eql('foo');
     expect(e.payload.other).to.eql('bar');
-    done();
   });
-  it('should handle nested arrays and objects, with non-matching structure', function (done) {
+
+  it('should handle nested arrays and objects, with non-matching structure', function () {
     var o1 = {
       a: 1,
       c: {
@@ -82,11 +81,9 @@ describe('merge', function () {
     expect(e.c.payload.foo).to.eql('hello');
     expect(e.c.payload.hello.baz).to.eql('bar');
     expect(e.c.payload.keeper).to.eql('yup');
-
-    done();
   });
 
-  it('should handle many nested objects', function (done) {
+  it('should handle many nested objects', function () {
     var o1 = {
       a: 1,
       c: 100,
@@ -113,8 +110,8 @@ describe('merge', function () {
     expect(e.payload.fuzz).to.eql('buzz');
     expect(e.payload.other).to.eql('bar');
     expect(e.amihere).to.eql('yes');
-    done();
   });
+
   it('should be secure against prototype pollution', function () {
     const o1 = JSON.parse('{"__proto__": {"polluted": "yes"}}');
     const o2 = JSON.parse('{"__proto__": {"polluted": "yes"}}');
