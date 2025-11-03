@@ -32,7 +32,7 @@
   "editor.formatOnSaveMode": "file",
   "editor.tabSize": 2,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "never"
   },
   "files.trimTrailingWhitespace": true,
   "prettier.useEditorConfig": false
