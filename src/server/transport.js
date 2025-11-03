@@ -1,10 +1,11 @@
-import * as _ from '../utility.js';
-import truncation from '../truncation.js';
-import logger from '../logger.js';
-
 import http from 'http';
 import https from 'https';
+
 import jsonBackup from 'json-stringify-safe';
+
+import logger from '../logger.js';
+import truncation from '../truncation.js';
+import * as _ from '../utility.js';
 
 var MAX_RATE_LIMIT_INTERVAL = 60;
 

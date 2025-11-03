@@ -4,6 +4,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+
 import Api from '../../../src/api.js';
 
 describe('Api', function () {

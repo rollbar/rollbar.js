@@ -1,10 +1,11 @@
-import Rollbar from './core.js';
+import scrub from '../scrub.js';
 import Telemeter from '../telemetry.js';
+import Tracing from '../tracing/tracing.js';
+import truncation from '../truncation.js';
+
+import Rollbar from './core.js';
 import Instrumenter from './telemetry.js';
 import wrapGlobals from './wrapGlobals.js';
-import scrub from '../scrub.js';
-import truncation from '../truncation.js';
-import Tracing from '../tracing/tracing.js';
 
 Rollbar.setComponents({
   telemeter: Telemeter,

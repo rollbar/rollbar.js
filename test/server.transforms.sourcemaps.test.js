@@ -3,7 +3,9 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+
 import Rollbar from '../src/server/rollbar.js';
+
 import { throwInScriptFile } from './server.transforms.test-utils.mjs';
 
 describe('transforms.nodeSourceMaps', function () {

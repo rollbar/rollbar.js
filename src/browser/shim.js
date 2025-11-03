@@ -1,4 +1,5 @@
 import * as globals from './globalSetup.js';
+import Wrapper from './rollbarWrapper.js';
 import wrapGlobals from './wrapGlobals.js';
 
 function _wrapInternalErr(f) {
@@ -28,7 +29,6 @@ function Shim(options, wrap) {
   }
 }
 
-import Wrapper from './rollbarWrapper.js';
 var ShimImpl = function (options, wrap) {
   return new Shim(options, wrap);
 };

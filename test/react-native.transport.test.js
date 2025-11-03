@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import truncation from '../src/truncation.js';
 import Transport from '../src/react-native/transport.js';
+import truncation from '../src/truncation.js';
 var t = new Transport(truncation);
 
 describe('post', function () {

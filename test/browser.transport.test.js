@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import truncation from '../src/truncation.js';
+
 import Transport from '../src/browser/transport.js';
+import truncation from '../src/truncation.js';
 const t = new Transport(truncation);
 
 describe('post', function () {

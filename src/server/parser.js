@@ -1,8 +1,11 @@
-import logger from '../logger.js';
-import async from 'async';
 import fs from 'fs';
-import lru from 'lru-cache';
 import util from 'util';
+
+import async from 'async';
+import lru from 'lru-cache';
+
+import logger from '../logger.js';
+
 import * as stackTrace from './sourceMap/stackTrace.js';
 
 var linesOfContext = 3;

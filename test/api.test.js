@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+
 import API from '../src/api.js';
 
 function TestTransportGenerator() {

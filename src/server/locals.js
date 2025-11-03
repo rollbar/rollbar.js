@@ -1,6 +1,8 @@
 /* globals Map */
 import inspector from 'inspector';
+
 import async from 'async';
+
 import * as _ from '../utility.js';
 
 // It's helpful to have default limits, as the data expands quickly in real environments.

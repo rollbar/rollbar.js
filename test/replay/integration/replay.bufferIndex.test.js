@@ -1,9 +1,9 @@
+import { EventType } from '@rrweb/types';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { EventType } from '@rrweb/types';
 
-import logger from '../../../src/logger.js';
 import Replay from '../../../src/browser/replay/replay.js';
+import logger from '../../../src/logger.js';
 import {
   currentBuffer,
   setCurrentBuffer,

@@ -2,8 +2,9 @@
 /* globals it */
 
 import { expect } from 'chai';
-import Locals from '../src/server/locals.js';
+
 import logger from '../src/logger.js';
+import Locals from '../src/server/locals.js';
 
 describe('server.locals constructor', function () {
   it('should use defaults when passing true boolean', function () {

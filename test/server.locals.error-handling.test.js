@@ -5,8 +5,10 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import Rollbar from '../src/server/rollbar.js';
+
 import Locals from '../src/server/locals.js';
+import Rollbar from '../src/server/rollbar.js';
+
 import {
   nodeMajorVersion,
   nodeThrow,

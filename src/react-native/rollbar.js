@@ -1,18 +1,17 @@
-import Client from '../rollbar.js';
-import * as _ from '../utility.js';
 import API from '../api.js';
-import logger from '../logger.js';
-import * as rnDefaults from './defaults.js';
-import { version, reportLevel } from '../defaults.js';
-
-import Transport from './transport.js';
 import * as urllib from '../browser/url.js';
-
-import Telemeter from '../telemetry.js';
-import * as transforms from './transforms.js';
-import * as sharedTransforms from '../transforms.js';
+import { version, reportLevel } from '../defaults.js';
+import logger from '../logger.js';
 import * as sharedPredicates from '../predicates.js';
+import Client from '../rollbar.js';
+import Telemeter from '../telemetry.js';
+import * as sharedTransforms from '../transforms.js';
 import truncation from '../truncation.js';
+import * as _ from '../utility.js';
+
+import * as rnDefaults from './defaults.js';
+import * as transforms from './transforms.js';
+import Transport from './transport.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {

@@ -1,7 +1,8 @@
-const extend = require('util')._extend;
 const path = require('path');
-const nodeExternals = require('webpack-node-externals');
+const extend = require('util')._extend;
+
 const TerserPlugin = require('terser-webpack-plugin');
+const nodeExternals = require('webpack-node-externals');
 
 const outputPath = path.resolve(__dirname, 'dist');
 

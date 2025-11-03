@@ -1,11 +1,11 @@
-import sinon from 'sinon';
 import { expect } from 'chai';
+import sinon from 'sinon';
 
-import { Span } from '../../src/tracing/span.js';
-import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
-import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 import { ROOT_CONTEXT } from '../../src/tracing/context.js';
+import { SpanExporter } from '../../src/tracing/exporter.js';
 import hrtime from '../../src/tracing/hrtime.js';
+import { Span } from '../../src/tracing/span.js';
+import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 
 const spanOptions = function (options = {}) {
   const exporter = new SpanExporter();

@@ -1,6 +1,6 @@
+import { EventType } from '@rrweb/types';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { EventType } from '@rrweb/types';
 
 import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
 import hrtime from '../../src/tracing/hrtime.js';

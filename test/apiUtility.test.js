@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import * as u from '../src/apiUtility.js';
 
 describe('buildPayload', function () {

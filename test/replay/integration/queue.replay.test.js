@@ -5,9 +5,9 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import Api from '../../../src/api.js';
 import logger from '../../../src/logger.js';
 import Queue from '../../../src/queue.js';
-import Api from '../../../src/api.js';
 
 describe('Queue Replay Integration', function () {
   let queue;

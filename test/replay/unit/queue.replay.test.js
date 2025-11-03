@@ -4,8 +4,8 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+
 import Queue from '../../../src/queue.js';
-import logger from '../../../src/logger.js';
 
 class MockReplay {
   constructor(replayId) {

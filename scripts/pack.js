@@ -9,8 +9,8 @@
  */
 
 import { rename } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { findUp, npm } from './util.js';
 

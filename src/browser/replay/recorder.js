@@ -1,8 +1,8 @@
 import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType } from '@rrweb/types';
 
-import hrtime from '../../tracing/hrtime.js';
 import logger from '../../logger.js';
+import hrtime from '../../tracing/hrtime.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 

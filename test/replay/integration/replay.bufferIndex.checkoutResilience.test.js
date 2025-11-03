@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import logger from '../../../src/logger.js';
 import Replay from '../../../src/browser/replay/replay.js';
+import logger from '../../../src/logger.js';
 import mockRecordFn from '../util/mockRecordFn.js';
 
 describe('Replay - Buffer Index Checkout Resilience', function () {

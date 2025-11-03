@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+
+import Rollbar from '../src/browser/core.js';
+import Instrumenter from '../src/browser/telemetry.js';
 import Telemeter from '../src/telemetry.js';
 import Tracing from '../src/tracing/tracing.js';
-import Instrumenter from '../src/browser/telemetry.js';
-import Rollbar from '../src/browser/core.js';
+
 import { loadHtml } from './util/fixtures.js';
 
 describe('instrumentNetwork', function () {

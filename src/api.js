@@ -1,5 +1,5 @@
-import * as _ from './utility.js';
 import * as helpers from './apiUtility.js';
+import * as _ from './utility.js';
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',

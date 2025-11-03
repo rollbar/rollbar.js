@@ -2,6 +2,7 @@
 /* globals it */
 
 import { expect } from 'chai';
+
 import Transport from '../src/server/transport.js';
 
 class TestTransport {

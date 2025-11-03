@@ -1,9 +1,12 @@
-import async from 'async';
-import * as parser from './parser.js';
-import requestIp from 'request-ip';
 import url from 'url';
-import * as _ from '../utility.js';
+
+import async from 'async';
+import requestIp from 'request-ip';
+
 import scrub from '../scrub.js';
+import * as _ from '../utility.js';
+
+import * as parser from './parser.js';
 
 function baseData(item, options, callback) {
   var environment =

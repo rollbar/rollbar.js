@@ -2,15 +2,12 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Api from '../../src/api.js';
-import {
-  ContextManager,
-  createContextKey,
-} from '../../src/tracing/contextManager.js';
-import { Session } from '../../src/tracing/session.js';
+import { ROOT_CONTEXT } from '../../src/tracing/context.js';
+import { ContextManager } from '../../src/tracing/contextManager.js';
 import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
+import { Session } from '../../src/tracing/session.js';
 import { SpanProcessor } from '../../src/tracing/spanProcessor.js';
 import { Tracer } from '../../src/tracing/tracer.js';
-import { ROOT_CONTEXT } from '../../src/tracing/context.js';
 import Tracing from '../../src/tracing/tracing.js';
 
 const tracingOptions = function (options = {}) {

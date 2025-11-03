@@ -1,5 +1,5 @@
-import { Span } from './span.js';
 import id from './id.js';
+import { Span } from './span.js';
 
 export class Tracer {
   constructor(tracing, spanProcessor) {

@@ -2,7 +2,9 @@
 /* globals it */
 
 import { expect } from 'chai';
+
 import Rollbar from '../src/server/rollbar.js';
+
 import {
   ValidOpenTracingTracerStub,
   InvalidOpenTracingTracerStub,

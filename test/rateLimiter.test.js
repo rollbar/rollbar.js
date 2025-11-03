@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import RateLimiter from '../src/rateLimiter.js';
 
 describe('RateLimiter()', function () {

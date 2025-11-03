@@ -1,9 +1,9 @@
 import { ContextManager, createContextKey } from './contextManager.js';
-import { Session } from './session.js';
 import { SpanExporter } from './exporter.js';
+import id from './id.js';
+import { Session } from './session.js';
 import { SpanProcessor } from './spanProcessor.js';
 import { Tracer } from './tracer.js';
-import id from './id.js';
 
 const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 

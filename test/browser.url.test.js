@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import * as url from '../src/browser/url.js';
 
 describe('parse', function () {

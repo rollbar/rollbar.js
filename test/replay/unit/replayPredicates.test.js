@@ -3,6 +3,7 @@
  */
 
 import { expect } from 'chai';
+
 import ReplayPredicates from '../../../src/browser/replay/replayPredicates.js';
 
 describe('Replay', function () {

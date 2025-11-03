@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import * as p from '../src/browser/predicates.js';
 
 describe('checkIgnore', function () {

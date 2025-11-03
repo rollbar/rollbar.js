@@ -1,7 +1,7 @@
-import * as _ from '../utility.js';
-import logger from '../logger.js';
-
 import { Buffer } from 'buffer/';
+
+import logger from '../logger.js';
+import * as _ from '../utility.js';
 
 function Transport(truncation) {
   this.rateLimitExpires = 0;

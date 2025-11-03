@@ -3,6 +3,7 @@
 /* globals beforeEach */
 
 import { expect } from 'chai';
+
 import * as p from '../src/server/parser.js';
 
 describe('parser', function () {

@@ -1,7 +1,9 @@
 import http from 'http';
 import https from 'https';
-import * as _ from '../utility.js';
+
 import replace from '../utility/replace.js';
+import * as _ from '../utility.js';
+
 import * as urlHelpers from './telemetry/urlHelpers.js';
 
 var defaults = {

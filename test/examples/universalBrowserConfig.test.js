@@ -2,11 +2,11 @@
 // tests in separate files. This file is for testing non-default config
 // options during snippet execution. (Before full rollbar.js loads.)
 
-import sinon from 'sinon';
 import { expect } from 'chai';
+import sinon from 'sinon';
 
-import { setTimeout } from '../util/timers.js';
 import { loadHtml } from '../util/fixtures.js';
+import { setTimeout } from '../util/timers.js';
 
 describe('Rollbar loaded by snippet with non-default options', function () {
   let __originalOnError = null;
