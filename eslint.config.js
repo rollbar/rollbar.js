@@ -1,11 +1,11 @@
 import js from '@eslint/js';
 import babelParser from '@babel/eslint-parser';
-import prettierRecommende from 'eslint-plugin-prettier/recommended';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   js.configs.recommended,
-  prettierRecommende,
+  prettierRecommended,
   {
     files: ['**/*.{js,mjs}'],
     languageOptions: {
