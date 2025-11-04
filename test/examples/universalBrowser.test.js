@@ -44,7 +44,6 @@ describe('Rollbar loaded by snippet', function () {
     ]);
 
     const ret = rollbar.info('test');
-    console.log(ret);
 
     await setTimeout(1);
 

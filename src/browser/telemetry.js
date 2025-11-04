@@ -1,3 +1,4 @@
+import logger from '../logger.js';
 import scrub from '../scrub.js';
 import headers from '../utility/headers.js';
 import replace from '../utility/replace.js';
@@ -703,7 +704,7 @@ class Instrumenter {
         contentLoaded: this.handleContentLoaded,
       }[name].call(this, evt);
     } catch (exc) {
-      console.log(`${name} handler error`, evt, exc, exc.stack);
+      logger.log(`${name} handler error`, evt, exc, exc.stack);
     }
   }
 

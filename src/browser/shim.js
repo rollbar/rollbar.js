@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 import * as globals from './globalSetup.js';
 import Wrapper from './rollbarWrapper.js';
 import wrapGlobals from './wrapGlobals.js';
@@ -8,7 +10,7 @@ function _wrapInternalErr(f) {
       return f.apply(this, arguments);
     } catch (e) {
       try {
-        console.error('[Rollbar]: Internal error', e);
+        logger.error('[Rollbar]: Internal error', e);
       } catch (e2) {
         // Ignore
       }

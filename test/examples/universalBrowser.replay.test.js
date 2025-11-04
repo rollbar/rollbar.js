@@ -11,7 +11,7 @@ const log =
   (window.top &&
     window.top.console &&
     window.top.console.log.bind(window.top.console)) ||
-  console.log.bind(console);
+  console.log.bind(console); // eslint-disable-line no-console
 
 (function dumpAllPropNames(o) {
   const seen = new Set();

@@ -116,12 +116,12 @@ describe('telemetry', function () {
       stubPostWithResponse('https://example.com', 201, testHeaders4, testBody2);
 
       // Invoke telemetry events
-      console.info(testMessage1, testMessagePart);
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       response1 = await request(http, 'http://example.com/api/users', {
         method: 'GET',
         headers: testHeaders1,
       });
-      console.error(testMessage2);
+      console.error(testMessage2); // eslint-disable-line no-console
       response2 = await request(https, 'https://example.com/api/users', {
         method: 'POST',
         headers: testHeaders2,
@@ -206,12 +206,12 @@ describe('telemetry', function () {
       stubPostWithResponse('http://example.com', 201, testHeaders4, testBody2);
 
       // Invoke telemetry events
-      console.info(testMessage1, testMessagePart);
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'GET',
         headers: testHeaders1,
       });
-      console.error(testMessage2);
+      console.error(testMessage2); // eslint-disable-line no-console
       await request(http, 'http://example.com/api/users', {
         method: 'POST',
         headers: testHeaders2,
@@ -265,12 +265,12 @@ describe('telemetry', function () {
       stubPostWithResponse('https://example.com', 201, testHeaders4, testBody2);
 
       // Invoke telemetry events
-      console.info(testMessage1, testMessagePart);
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'GET',
         headers: testHeaders1,
       });
-      console.error(testMessage2);
+      console.error(testMessage2); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'POST',
         headers: testHeaders2,
@@ -318,10 +318,10 @@ describe('telemetry', function () {
       };
 
       // Invoke telemetry events
-      console.info(testMessage1, testMessagePart);
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
       response1 = await requestWithCallback(https, options).catch((e) => e);
-      console.error(testMessage2);
+      console.error(testMessage2); // eslint-disable-line no-console
       stubGetWithError('https://example.com');
       response2 = await requestWithCallback(https, options).catch((e) => e);
 
