@@ -189,8 +189,8 @@ function shouldReadFrameFile(frameFilename, callback) {
   var isValidFilename, isCached, isPending;
 
   isValidFilename = frameFilename[0] === '/' || frameFilename[0] === '.';
-  isCached = !!cache.get(frameFilename);
-  isPending = !!pendingReads[frameFilename];
+  isCached = Boolean(cache.get(frameFilename));
+  isPending = Boolean(pendingReads[frameFilename]);
 
   callback(null, isValidFilename && !isCached && !isPending);
 }
@@ -385,7 +385,7 @@ export function parseStack(stack, options, item, callback) {
       async.filter(
         frames,
         function (frame, callback) {
-          callback(null, !!frame);
+          callback(null, Boolean(frame));
         },
         function (err, results) {
           if (err) return callback(err);
