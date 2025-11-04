@@ -929,7 +929,7 @@ class Instrumenter {
         return function () {
           const url = arguments.length > 2 ? arguments[2] : undefined;
           if (url) {
-            self.handleUrlChange(self._lastHref, String(url) + '');
+            self.handleUrlChange(self._lastHref, String(url));
           }
           return orig.apply(this, arguments);
         };
