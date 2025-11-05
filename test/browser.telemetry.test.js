@@ -102,14 +102,14 @@ describe('instrumentDom', function () {
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('select');
     expect(event.body.element).to.match(
-      /select#fruit-select\[name=\"selectedFruit\"\]/,
+      /select#fruit-select\[name="selectedFruit"\]/,
     );
     expect(event.body.value).to.eql('orange');
 
     expect(event.otelAttributes.type).to.eql('select');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
     expect(event.otelAttributes.element).to.match(
-      /select#fruit-select\[name=\"selectedFruit\"\]/,
+      /select#fruit-select\[name="selectedFruit"\]/,
     );
     expect(event.otelAttributes.value).to.eql('orange');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
@@ -138,14 +138,14 @@ describe('instrumentDom', function () {
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('checkbox');
     expect(event.body.element).to.match(
-      /input#remember-me-checkbox\[type=\"checkbox\"\]/,
+      /input#remember-me-checkbox\[type="checkbox"\]/,
     );
     expect(event.body.value).to.eql(true);
 
     expect(event.otelAttributes.type).to.eql('checkbox');
     expect(event.otelAttributes.isSynthetic).to.eql(false);
     expect(event.otelAttributes.element).to.match(
-      /input#remember-me-checkbox\[type=\"checkbox\"\]/,
+      /input#remember-me-checkbox\[type="checkbox"\]/,
     );
     expect(event.otelAttributes.value).to.eql(true);
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');
@@ -345,14 +345,14 @@ describe('instrumentDom', function () {
     expect(event.body.type).to.eql('rollbar-input-event');
     expect(event.body.subtype).to.eql('text');
     expect(event.body.element).to.match(
-      /input#text-input.rb-scrub\[type=\"text\"\]/,
+      /input#text-input.rb-scrub\[type="text"\]/,
     );
     expect(event.body.value).to.eql('abc');
 
     expect(event.otelAttributes.type).to.eql('text');
     expect(event.otelAttributes.isSynthetic).to.eql(true);
     expect(event.otelAttributes.element).to.match(
-      /input#text-input.rb-scrub\[type=\"text\"\]/,
+      /input#text-input.rb-scrub\[type="text"\]/,
     );
     expect(event.otelAttributes.value).to.eql('abc');
     expect(event.otelAttributes.endTimeUnixNano[0]).to.be.a('number');

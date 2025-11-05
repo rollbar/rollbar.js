@@ -58,7 +58,6 @@ export default defineConfig([
       'no-redeclare': 'off',
       'no-undef': 'off',
       'no-unused-vars': 'off',
-      'no-useless-escape': 'off',
     },
   },
 

@@ -59,10 +59,10 @@ function retrieveFile(path) {
 function supportRelativeURL(file, url) {
   if (!file) return url;
   var dir = path.dirname(file);
-  var match = /^\w+:\/\/[^\/]*/.exec(dir);
+  var match = /^\w+:\/\/[^/]*/.exec(dir);
   var protocol = match ? match[0] : '';
   var startPath = dir.slice(protocol.length);
-  if (protocol && /^\/\w\:/.test(startPath)) {
+  if (protocol && /^\/\w:/.test(startPath)) {
     // handle file:///C:/ paths
     protocol += '/';
     return (
@@ -79,7 +79,7 @@ function retrieveSourceMapURL(source) {
   // Get the URL of the source map
   fileData = retrieveFile(source);
   var re =
-    /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
+    /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
   // Keep executing the search to find the *last* sourceMappingURL to avoid
   // picking up sourceMappingURLs from comments, strings, etc.
   var lastMatch, match;
