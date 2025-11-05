@@ -10,18 +10,18 @@ import { loadHtml } from './util/fixtures.js';
 
 describe('instrumentNetwork', function () {
   it('should capture XHR requests with string URL', function (done) {
-    var callback = sinon.spy();
-    var windowMock = {
+    const callback = sinon.spy();
+    const windowMock = {
       XMLHttpRequest: function () {},
     };
 
     windowMock.XMLHttpRequest.prototype.open = function () {};
     windowMock.XMLHttpRequest.prototype.send = function () {};
 
-    var i = createInstrumenter(callback, windowMock);
+    let i = createInstrumenter(callback, windowMock);
     i.instrumentNetwork();
 
-    var xhr = new windowMock.XMLHttpRequest();
+    const xhr = new windowMock.XMLHttpRequest();
     xhr.open('GET', 'http://first.call');
     xhr.send();
     xhr.onreadystatechange();
@@ -32,10 +32,10 @@ describe('instrumentNetwork', function () {
     i.deinstrumentNetwork();
     i = createInstrumenter(callback, windowMock);
     i.instrumentNetwork();
-    var xhr = new windowMock.XMLHttpRequest();
-    xhr.open('GET', new URL('http://second.call'));
-    xhr.send();
-    xhr.onreadystatechange();
+    const xhr2 = new windowMock.XMLHttpRequest();
+    xhr2.open('GET', new URL('http://second.call'));
+    xhr2.send();
+    xhr2.onreadystatechange();
     expect(callback.callCount).to.eql(2);
     expect(callback.args[1][0].url).to.eql('http://second.call/');
 
@@ -43,14 +43,14 @@ describe('instrumentNetwork', function () {
   });
 
   it('should capture XHR requests with string URL', function (done) {
-    var callback = sinon.spy();
-    var windowMock = {
+    const callback = sinon.spy();
+    const windowMock = {
       fetch: function () {
         return Promise.resolve();
       },
     };
 
-    var i = createInstrumenter(callback, windowMock);
+    let i = createInstrumenter(callback, windowMock);
     i.instrumentNetwork();
 
     windowMock.fetch('http://first.call');

@@ -266,10 +266,10 @@ describe('filterTelemetry', function () {
 
 describe('configure', function () {
   it('should truncate events to new max', function (done) {
-    var options = { maxTelemetryEvents: 5 };
-    var t = new Telemeter(options);
+    const options = { maxTelemetryEvents: 5 };
+    const t = new Telemeter(options);
 
-    for (var i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       t.capture('network', { url: 'a.com' }, 'debug');
     }
 
@@ -279,34 +279,34 @@ describe('configure', function () {
     done();
   });
   it('should lengthen events to allow new max', function (done) {
-    var options = { maxTelemetryEvents: 3 };
-    var t = new Telemeter(options);
+    const options = { maxTelemetryEvents: 3 };
+    const t = new Telemeter(options);
 
-    for (var i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       t.capture('network', { url: 'a.com' }, 'debug');
     }
 
     expect(t.queue.length).to.equal(3);
     t.configure({ maxTelemetryEvents: 5 });
     expect(t.queue.length).to.equal(3);
-    for (var i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       t.capture('network', { url: 'a.com' }, 'debug');
     }
     expect(t.queue.length).to.equal(5);
     done();
   });
   it('does not drop existing options that are not passed to configure', function (done) {
-    var options = { maxTelemetryEvents: 3 };
-    var t = new Telemeter(options);
+    const options = { maxTelemetryEvents: 3 };
+    const t = new Telemeter(options);
 
-    for (var i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       t.capture('network', { url: 'a.com' }, 'debug');
     }
 
     expect(t.queue.length).to.equal(3);
     t.configure({});
     expect(t.queue.length).to.equal(3);
-    for (var i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       t.capture('network', { url: 'a.com' }, 'debug');
     }
     expect(t.queue.length).to.equal(3);
