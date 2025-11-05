@@ -1,4 +1,3 @@
-/* globals Map */
 import inspector from 'inspector';
 
 import async from 'async';
