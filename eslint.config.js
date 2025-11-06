@@ -67,7 +67,6 @@ export default defineConfig([
     },
     rules: {
       strict: 'off',
-      'no-undef': 'off',
     },
   },
 

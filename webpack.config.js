@@ -1,18 +1,23 @@
-const path = require('path');
-const extend = require('util')._extend;
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const TerserPlugin = require('terser-webpack-plugin');
-const nodeExternals = require('webpack-node-externals');
+import TerserPlugin from 'terser-webpack-plugin';
+import nodeExternals from 'webpack-node-externals';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const extend = (target, ...sources) => Object.assign(target, ...sources);
 
 const outputPath = path.resolve(__dirname, 'dist');
 
 // Packages that need to be transpiled to ES5
-const needToTranspile = ['@rrweb', 'error-stack-parser-es'].join('|');
+const needToTranspile = ['@rrweb', 'error-stack-parser-es'];
 const excludePattern = new RegExp(
-  'node_modules/(?!(' + needToTranspile + ')/)',
+  `node_modules/(?!(${needToTranspile.join('|')})/)`,
 );
 
-const uglifyPlugin = new TerserPlugin({
+const terserPlugin = new TerserPlugin({
   parallel: true,
 });
 
@@ -43,7 +48,7 @@ const pluginConfig = {
     jquery: './src/browser/plugins/jquery.js',
   },
   output: {
-    path: outputPath + '/plugins/',
+    path: path.join(outputPath, 'plugins'),
     filename: '[name].min.js',
   },
   target: ['web', 'es5'],
@@ -158,7 +163,7 @@ const config = [snippetConfig, pluginConfig];
 
 function optimizationConfig(minimizer) {
   return {
-    minimize: minimizer ? true : false,
+    minimize: Boolean(minimizer),
     minimizer: minimizer ? [minimizer] : [],
   };
 }
@@ -171,7 +176,7 @@ function addVanillaToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 
   vanillaConfig.optimization = optimizationConfig(minimizer);
 
-  vanillaConfig.output = extend({ filename: filename }, vanillaConfig.output);
+  vanillaConfig.output = extend({ filename }, vanillaConfig.output);
 
   webpackConfig.push(vanillaConfig);
 }
@@ -183,7 +188,7 @@ function addUMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 
   UMDConfig.optimization = optimizationConfig(minimizer);
 
-  UMDConfig.output = extend({ filename: filename }, UMDConfig.output);
+  UMDConfig.output = extend({ filename }, UMDConfig.output);
 
   webpackConfig.push(UMDConfig);
 }
@@ -200,10 +205,7 @@ function addNoConflictToConfig(
 
   noConflictConfig.optimization = optimizationConfig(minimizer);
 
-  noConflictConfig.output = extend(
-    { filename: filename },
-    noConflictConfig.output,
-  );
+  noConflictConfig.output = extend({ filename }, noConflictConfig.output);
 
   webpackConfig.push(noConflictConfig);
 }
@@ -215,7 +217,7 @@ function addNamedAMDToConfig(webpackConfig, filename, extraPlugins, minimizer) {
 
   AMDConfig.optimization = optimizationConfig(minimizer);
 
-  AMDConfig.output = extend({ filename: filename }, AMDConfig.output);
+  AMDConfig.output = extend({ filename }, AMDConfig.output);
 
   webpackConfig.push(AMDConfig);
 }
@@ -237,7 +239,7 @@ function addVanillaReplayToConfig(
   replayConfig.name = filename;
   replayConfig.plugins = extraPlugins;
   replayConfig.optimization = optimizationConfig(minimizer);
-  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  replayConfig.output = extend({ filename }, replayConfig.output);
   webpackConfig.push(replayConfig);
 }
 
@@ -250,7 +252,7 @@ function addUMDReplayToConfig(
   const replayConfig = extend({}, UMDReplayConfigBase);
   replayConfig.plugins = extraPlugins;
   replayConfig.optimization = optimizationConfig(minimizer);
-  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  replayConfig.output = extend({ filename }, replayConfig.output);
   webpackConfig.push(replayConfig);
 }
 
@@ -263,7 +265,7 @@ function addNoConflictReplayToConfig(
   const replayConfig = extend({}, noConflictReplayConfigBase);
   replayConfig.plugins = extraPlugins;
   replayConfig.optimization = optimizationConfig(minimizer);
-  replayConfig.output = extend({ filename: filename }, replayConfig.output);
+  replayConfig.output = extend({ filename }, replayConfig.output);
   webpackConfig.push(replayConfig);
 }
 
@@ -282,9 +284,9 @@ function generateReplayBuildConfig(name, plugins, minimizer) {
 }
 
 generateBuildConfig('[name].js', []);
-generateBuildConfig('[name].min.js', [], uglifyPlugin);
+generateBuildConfig('[name].min.js', [], terserPlugin);
 
 generateReplayBuildConfig('[name].js', []);
-generateReplayBuildConfig('[name].min.js', [], uglifyPlugin);
+generateReplayBuildConfig('[name].min.js', [], terserPlugin);
 
-module.exports = config;
+export default config;
