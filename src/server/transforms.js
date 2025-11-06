@@ -145,7 +145,7 @@ function addRequestData(item, options, callback) {
       routePath = req.app._router.matchRequest(req).path;
       item.data.context =
         baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
-    } catch (ignore) {
+    } catch (_ignore) {
       // Ignored
     }
   }

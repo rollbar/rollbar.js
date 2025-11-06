@@ -20,17 +20,15 @@ describe('Queue Replay Integration', function () {
     logger.init({ logLevel: 'warn' });
 
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(
-              null,
-              { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' },
-            );
-          }, 10);
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'true' },
+          );
+        }, 10);
+      }),
       postJsonPayload: sinon.stub(),
     };
 
@@ -125,7 +123,7 @@ describe('Queue Replay Integration', function () {
   });
 
   it('should call sendOrDiscardReplay when API response has error', function (done) {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(null, { err: 1, message: 'API Error' });
       }, 10);
@@ -161,7 +159,7 @@ describe('Queue Replay Integration', function () {
   });
 
   it('should call sendOrDiscardReplay when replay is disabled in headers', function (done) {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(
           null,
@@ -204,7 +202,7 @@ describe('Queue Replay Integration', function () {
   });
 
   it('should call sendOrDiscardReplay when rate limit is exhausted', function (done) {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(
           null,
@@ -252,7 +250,7 @@ describe('Queue Replay Integration', function () {
 
   it('should handle retrying items with replayId', function (done) {
     let apiCallCount = 0;
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       apiCallCount++;
       if (apiCallCount === 1) {
         setTimeout(() => {
@@ -347,13 +345,11 @@ describe('Queue Replay Integration', function () {
   describe('Memory leak prevention - replay cleanup', function () {
     it('should call sendOrDiscardReplay on transport error', function (done) {
       const transportError = new Error('Transport failed');
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(transportError);
-          }, 10);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(transportError);
+        }, 10);
+      });
 
       const item = {
         data: {
@@ -389,14 +385,12 @@ describe('Queue Replay Integration', function () {
     });
 
     it('should call sendOrDiscardReplay when headers are missing', function (done) {
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            // Success but no headers
-            callback(null, { err: 0, result: { id: '12345' } }, null);
-          }, 10);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        setTimeout(() => {
+          // Success but no headers
+          callback(null, { err: 0, result: { id: '12345' } }, null);
+        }, 10);
+      });
 
       const item = {
         data: {
@@ -429,20 +423,18 @@ describe('Queue Replay Integration', function () {
     });
 
     it('should call sendOrDiscardReplay on rate limit header zero', function (done) {
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(
-              null,
-              { err: 0, result: { id: '12345' } },
-              {
-                'Rollbar-Replay-Enabled': 'true',
-                'Rollbar-Replay-RateLimit-Remaining': '0',
-              },
-            );
-          }, 10);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            {
+              'Rollbar-Replay-Enabled': 'true',
+              'Rollbar-Replay-RateLimit-Remaining': '0',
+            },
+          );
+        }, 10);
+      });
 
       const item = {
         data: {
@@ -473,13 +465,11 @@ describe('Queue Replay Integration', function () {
     });
 
     it('should handle multiple concurrent failures without leaking', function (done) {
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(new Error('Network error'));
-          }, 10);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(new Error('Network error'));
+        }, 10);
+      });
 
       const items = [];
       for (let i = 0; i < 5; i++) {
@@ -516,7 +506,7 @@ describe('Queue Replay Integration', function () {
   });
 
   it('should call sendOrDiscardReplay on null response', function (done) {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(null, null);
       }, 10);

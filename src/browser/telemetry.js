@@ -328,7 +328,7 @@ class Instrumenter {
                           headers[h] = xhr.getResponseHeader(h);
                         }
                       }
-                    } catch (e) {
+                    } catch (_e) {
                       /* we ignore the errors here that could come from different
                        * browser issues with the xhr methods */
                     }
@@ -337,7 +337,7 @@ class Instrumenter {
                   if (self.autoInstrument.networkResponseBody) {
                     try {
                       body = xhr.responseText;
-                    } catch (e) {
+                    } catch (_e) {
                       /* ignore errors from reading responseText */
                     }
                   }
@@ -374,7 +374,7 @@ class Instrumenter {
                     xhr.__rollbar_event.level =
                       self.telemeter.levelFromStatus(code);
                     self.errorOnHttpStatus(xhr.__rollbar_xhr);
-                  } catch (e) {
+                  } catch (_e) {
                     /* ignore possible exception from xhr.status */
                   }
                 }
@@ -415,7 +415,7 @@ class Instrumenter {
         this._window,
         'fetch',
         function (orig) {
-          return function (fn, t) {
+          return function (_fn, _t) {
             const args = [...arguments];
             const input = args[0];
             let method = 'GET';
@@ -586,7 +586,7 @@ class Instrumenter {
           outHeaders[h] = inHeaders.get(h);
         }
       }
-    } catch (e) {
+    } catch (_e) {
       /* ignore probable IE errors */
     }
     return outHeaders;
@@ -662,7 +662,6 @@ class Instrumenter {
   }
 
   instrumentDom() {
-    const self = this;
     this.addListener(
       'dom',
       this._window,
@@ -708,8 +707,8 @@ class Instrumenter {
     }
   }
 
-  handleContentLoaded(evt) {
-    const replayId = this.rollbar.triggerReplay({
+  handleContentLoaded(_evt) {
+    this.rollbar.triggerReplay({
       type: 'navigation',
       path: new URL(this._location.href).pathname,
     });
@@ -741,12 +740,12 @@ class Instrumenter {
     });
   }
 
-  handleForm(evt) {
+  handleForm(_evt) {
     // TODO: implement form event handling
-    const type = evt.type;
-    const elementString = evt.target?.window
-      ? 'window'
-      : domUtil.elementString(evt.target);
+    //const type = evt.type;
+    //const elementString = evt.target?.window
+    //  ? 'window'
+    //  : domUtil.elementString(evt.target);
   }
 
   handleResize(evt) {
@@ -958,7 +957,7 @@ class Instrumenter {
       from = parsedFrom.path + (parsedFrom.hash || '');
     }
     this.telemeter.captureNavigation(from, to, null, _.now());
-    const replayId = this.rollbar.triggerReplay({
+    this.rollbar.triggerReplay({
       type: 'navigation',
       path: to,
     });

@@ -64,7 +64,7 @@ function scrubPath(obj, path) {
         obj[keys[i]] = _.redact();
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Missing key is OK;
   }
 }

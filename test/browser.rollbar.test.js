@@ -168,6 +168,7 @@ describe('Rollbar()', function () {
     var rollbar = (window.rollbar = new Rollbar(options, client));
 
     var result = rollbar.log('a message', 'another one');
+    expect(result).to.be.an('object');
     var loggedItem = client.logCalls[0].item;
     expect(loggedItem.message).to.eql('a message');
     expect(loggedItem.custom).to.be.ok;
@@ -1119,7 +1120,7 @@ describe('callback options', function () {
       var options = {
         accessToken: 'POST_CLIENT_ITEM_TOKEN',
         captureUncaught: true,
-        checkIgnore: function (isUncaught, args, payload) {
+        checkIgnore: function (isUncaught, _args, _payload) {
           if (isUncaught === true) {
             return true;
           }

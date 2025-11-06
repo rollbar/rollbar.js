@@ -40,17 +40,15 @@ const options = {
 
 const createMockTransport = () => {
   return {
-    post: sinon
-      .stub()
-      .callsFake(({ accessToken, options, payload, callback }) => {
-        setTimeout(() => {
-          callback(
-            null,
-            { err: 0, result: { id: '12345' } },
-            { 'Rollbar-Replay-Enabled': 'true' },
-          );
-        }, 10);
-      }),
+    post: sinon.stub().callsFake(({ callback }) => {
+      setTimeout(() => {
+        callback(
+          null,
+          { err: 0, result: { id: '12345' } },
+          { 'Rollbar-Replay-Enabled': 'true' },
+        );
+      }, 10);
+    }),
     postJsonPayload: sinon.stub(),
   };
 };
@@ -285,13 +283,11 @@ describe('Session Replay Transport Integration', function () {
   });
 
   it('should discard replay when API returns an error', function (done) {
-    transport.post = sinon
-      .stub()
-      .callsFake(({ accessToken, options, payload, callback }) => {
-        setTimeout(() => {
-          callback(null, { err: 1, message: 'API Error' });
-        }, 10);
-      });
+    transport.post = sinon.stub().callsFake(({ callback }) => {
+      setTimeout(() => {
+        callback(null, { err: 1, message: 'API Error' });
+      }, 10);
+    });
 
     const captureSpy = sinon.spy(replay, 'capture');
     const sendSpy = sinon.spy(replay, 'send');
@@ -310,7 +306,7 @@ describe('Session Replay Transport Integration', function () {
       level: 'error',
     };
 
-    queue.addItem(errorItem, (err, resp) => {
+    queue.addItem(errorItem, (_err, _resp) => {
       expect(errorItem).to.have.property('replayId');
       expect(captureSpy.calledOnce).to.be.true;
 
@@ -395,7 +391,7 @@ describe('Session Replay Transport Integration', function () {
       },
     };
 
-    queueWithoutReplay.addItem(errorItem, (err, resp) => {
+    queueWithoutReplay.addItem(errorItem, (_err, _resp) => {
       expect(errorItem).to.not.have.property('replayId');
       done();
     });

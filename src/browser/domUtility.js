@@ -161,7 +161,7 @@ function isMatchingElement(element, classes, selectors) {
         return true;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // ignore errors from invalid arguments
   }
   return false;

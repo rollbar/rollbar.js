@@ -26,7 +26,7 @@ describe('Api()', function () {
   it('use the defaults if no custom endpoint is given', function (done) {
     var transport = new (TestTransportGenerator())();
     var url = {
-      parse: function (e) {
+      parse: function () {
         expect(false).to.be.ok;
       },
     };
@@ -45,8 +45,8 @@ describe('Api()', function () {
     var transport = new (TestTransportGenerator())();
     var endpoint = 'http://woo.foo.com/api/42';
     var url = {
-      parse: function (e) {
-        expect(e).to.eql(endpoint);
+      parse: function (parsedUrl) {
+        expect(parsedUrl).to.eql(endpoint);
         return {
           hostname: 'woo.foo.com',
           protocol: 'http:',
@@ -71,7 +71,7 @@ describe('postItem', function () {
     var response = 'yes';
     var transport = new (TestTransportGenerator())(null, response);
     var url = {
-      parse: function (e) {
+      parse: function () {
         expect(false).to.be.ok;
       },
     };
@@ -95,7 +95,7 @@ describe('postItem', function () {
     var response = 'yes';
     var transport = new (TestTransportGenerator())(null, response);
     var url = {
-      parse: function (e) {
+      parse: function () {
         expect(false).to.be.ok;
       },
     };
@@ -125,11 +125,9 @@ describe('postSpans', function () {
   beforeEach(function () {
     // Create mock transport
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          callback(null, { result: 'ok' });
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        callback(null, { result: 'ok' });
+      }),
       postJsonPayload: sinon.stub(),
     };
   });
@@ -140,12 +138,6 @@ describe('postSpans', function () {
 
   it('should call post on the transport object', async function () {
     const urllib = await import('../src/browser/url.js');
-    const response = 'yes';
-    const url = {
-      parse: function (e) {
-        expect(false).to.be.ok;
-      },
-    };
     const accessToken = 'abc123';
     const options = {
       accessToken: accessToken,

@@ -20,13 +20,11 @@ describe('API Span Transport', function () {
     accessToken = 'test-token-12345';
 
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(null, { err: 0, result: { id: '12345' } });
-          }, 10);
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(null, { err: 0, result: { id: '12345' } });
+        }, 10);
+      }),
       postJsonPayload: sinon.stub(),
     };
 
@@ -67,7 +65,7 @@ describe('API Span Transport', function () {
 
   it('should handle transport errors', async function () {
     const testError = new Error('Transport failure');
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(testError);
       }, 10);
@@ -84,7 +82,7 @@ describe('API Span Transport', function () {
   });
 
   it('should handle API response errors', async function () {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       setTimeout(() => {
         callback(null, { err: 1, message: 'API Error' });
       }, 10);

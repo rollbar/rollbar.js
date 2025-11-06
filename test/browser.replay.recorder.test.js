@@ -1,5 +1,5 @@
 import { record as rrwebRecordFn } from '@rrweb/record';
-import { EventType } from '@rrweb/types';
+import { EventType, IncrementalSource } from '@rrweb/types';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -371,14 +371,21 @@ describe('Recorder', function () {
       recorder.start();
 
       emitCallback(
-        { timestamp: 1000, type: 'fullSnapshot', data: { a: 1 } },
+        {
+          timestamp: 1000,
+          type: EventType.FullSnapshot,
+          data: { a: 1 },
+        },
         false,
       );
       emitCallback(
-        { timestamp: 2000, type: 'mouseMove', data: { b: 2 } },
+        { timestamp: 2000, type: IncrementalSource.MouseMove, data: { b: 2 } },
         false,
       );
-      emitCallback({ timestamp: 3000, type: 'input', data: { c: 3 } }, false);
+      emitCallback(
+        { timestamp: 3000, type: IncrementalSource.Input, data: { c: 3 } },
+        false,
+      );
 
       recorder.exportRecordingSpan(mockTracing, {
         'rollbar.replay.id': testReplayId,
@@ -387,14 +394,14 @@ describe('Recorder', function () {
       // Event count includes the custom end event
       expect(mockSpan.addEvent.callCount).to.equal(4);
 
-      for (let i = 0; i < mockSpan.addEvent.callCount; i++) {
-        const eventName = mockSpan.addEvent.getCall(i).args[0];
-        const eventAttrs = mockSpan.addEvent.getCall(i).args[1];
-        expect(eventName).to.equal(
-          'rrweb-replay-events',
-          `Event at index ${i} should have name "rrweb-replay-events"`,
-        );
-      }
+      sinon.assert.alwaysCalledWithMatch(
+        mockSpan.addEvent,
+        'rrweb-replay-events',
+        sinon.match({
+          eventType: sinon.match((v) => typeof v === 'number'),
+          json: sinon.match((v) => typeof v === 'string' && v.length > 0),
+        }),
+      );
     });
 
     it('should handle no events', function () {

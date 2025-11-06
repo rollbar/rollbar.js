@@ -97,7 +97,7 @@ function makeXhrRequest({
 
       request.onreadystatechange = onreadystatechange;
       request.send(payload);
-    } catch (e1) {
+    } catch (_e1) {
       // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
       if (typeof XDomainRequest !== 'undefined') {
         // Assume we are in a really old browser which has a bunch of limitations:
@@ -169,7 +169,7 @@ function _createXMLHTTPObject() {
     try {
       xmlhttp = factories[i]();
       break;
-    } catch (e) {
+    } catch (_e) {
       // pass
     }
   }

@@ -435,7 +435,7 @@ class Rollbar {
       }
 
       return f._rollbar_wrapped;
-    } catch (e) {
+    } catch (_e) {
       // Return the original function if the wrap fails.
       return f;
     }

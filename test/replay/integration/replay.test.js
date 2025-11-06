@@ -36,17 +36,15 @@ describe('Replay API Integration', function () {
     logger.init({ logLevel: 'warn' });
 
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(
-              null,
-              { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' },
-            );
-          }, 10);
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'true' },
+          );
+        }, 10);
+      }),
       postJsonPayload: sinon.stub(),
     };
 

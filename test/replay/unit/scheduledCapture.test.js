@@ -572,11 +572,7 @@ describe('ScheduledCapture', function () {
   describe('timer management', function () {
     it('should clear timer on discard', function () {
       scheduledCapture.schedule('replay-1', 'uuid-1', 10);
-      const context = scheduledCapture._pending.get('replay-1');
-      const timerId = context.timerId;
-
       scheduledCapture.discard('replay-1');
-
       expect(scheduledCapture._pending.has('replay-1')).to.be.false;
     });
 

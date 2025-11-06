@@ -37,7 +37,7 @@ describe('handleDomException', function () {
     var args = ['a message', err];
     var item = itemFromArgs(args);
     var options = {};
-    t.handleDomException(item, options, function (e, i) {
+    t.handleDomException(item, options, function (e, _i) {
       expect(item.err).to.eql(item.err);
       expect(item.err.nested).to.not.be.ok;
       done(e);
@@ -48,7 +48,7 @@ describe('handleDomException', function () {
     var args = ['a message', err];
     var item = itemFromArgs(args);
     var options = {};
-    t.handleDomException(item, options, function (e, i) {
+    t.handleDomException(item, options, function (e, _i) {
       expect(item.err.nested.constructor.name).to.eql('DOMException');
       expect(item.err.constructor.name).to.eql('Error');
       done(e);

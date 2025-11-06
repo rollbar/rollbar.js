@@ -60,8 +60,8 @@ export default class Recorder {
       debug,
 
       // disallowed rrweb options
-      emit,
-      checkoutEveryNms,
+      emit: _emit,
+      checkoutEveryNms: _checkoutEveryNms,
 
       // rrweb options
       ...rrwebOptions

@@ -105,7 +105,7 @@ describe('SpanProcessor()', function () {
 
   it('should catch exception in transformSpan', function (done) {
     const tracingOptions = {
-      transformSpan: ({ span }) => {
+      transformSpan: ({ span: _span }) => {
         throw new Error('test error');
       },
     };

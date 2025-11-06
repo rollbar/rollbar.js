@@ -16,13 +16,6 @@ class MockRecorder {
   }
 }
 
-class MockApi {
-  constructor() {
-    this.postSpans = sinon.stub();
-    this.postSpans.resolves({ success: true });
-  }
-}
-
 class MockTracing {
   constructor(returnPayload = [{ id: 'span1' }, { id: 'span2' }]) {
     this.exporter = {
@@ -42,9 +35,7 @@ class MockTelemeter {
 
 describe('Replay', function () {
   let replay;
-  let recorder;
   let mockRecorder;
-  let mockApi;
   let mockTracing;
   let mockTelemeter;
 
@@ -53,7 +44,6 @@ describe('Replay', function () {
     sinon.stub(id, 'gen').returns('1234567890abcdef');
 
     mockRecorder = new MockRecorder();
-    mockApi = new MockApi();
     mockTracing = new MockTracing();
     mockTelemeter = new MockTelemeter();
 

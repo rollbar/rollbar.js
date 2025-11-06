@@ -195,8 +195,8 @@ describe('everything', function () {
     var d2 = d.descriptionToString(d.describeElement(e2));
     var d3 = d.descriptionToString(d.describeElement(e3));
     var d4 = d.descriptionToString(d.describeElement(e4));
-    var d5 = d.descriptionToString(d.describeElement(e5));
-    var d6 = d.descriptionToString(d.describeElement(e6));
+    var _d5 = d.descriptionToString(d.describeElement(e5));
+    var _d6 = d.descriptionToString(d.describeElement(e6));
 
     var description = ['...', d4, d3, d2, d1].join(' > ');
     var result = d.elementArrayToString(d.treeToArray(e1));

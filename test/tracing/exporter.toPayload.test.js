@@ -9,16 +9,16 @@ import { standardPayload } from '../fixtures/replay/payloads.fixtures.js';
 
 describe('SpanExporter.toPayload()', function () {
   let exporter;
-  let hrtimeStub;
-  let idStub;
+  let _hrtimeStub;
+  let _idStub;
 
   beforeEach(function () {
     spanExportQueue.length = 0;
     exporter = new SpanExporter();
 
-    hrtimeStub = sinon.stub(hrtime, 'now').returns([1, 2]);
+    _hrtimeStub = sinon.stub(hrtime, 'now').returns([1, 2]);
     sinon.stub(hrtime, 'toNanos').returns(1000000000);
-    idStub = sinon.stub(id, 'gen').returns('1234567890abcdef');
+    _idStub = sinon.stub(id, 'gen').returns('1234567890abcdef');
   });
 
   afterEach(function () {
@@ -331,7 +331,6 @@ describe('SpanExporter.toPayload()', function () {
     exporter.export([span]);
     const payload = exporter.toPayload();
 
-    const expected = JSON.parse(JSON.stringify(standardPayload));
     const actualSpan = payload.resourceSpans[0].scopeSpans[0].spans[0];
 
     expect(actualSpan.traceId).to.equal('abcdef1234567890abcdef1234567890');

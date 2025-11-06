@@ -51,7 +51,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined;
     };
 
     try {
@@ -76,7 +76,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined;
     };
 
     try {
@@ -127,7 +127,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined;
     };
 
     try {
@@ -166,7 +166,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined;
     };
 
     try {

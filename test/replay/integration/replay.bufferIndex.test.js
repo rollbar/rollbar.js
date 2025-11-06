@@ -11,7 +11,7 @@ import {
 } from '../util/recorder.js';
 
 describe('Replay buffer-index integration', function () {
-  let options, replay, recorder, api, tracing, telemeter, clock;
+  let options, replay, recorder, tracing, telemeter, clock;
 
   beforeEach(function () {
     clock = sinon.useFakeTimers();
@@ -49,10 +49,6 @@ describe('Replay buffer-index integration', function () {
         attributes: {},
       },
       addSpanTransform() {},
-    };
-
-    api = {
-      postSpans: sinon.stub().resolves(),
     };
 
     telemeter = {
@@ -208,6 +204,12 @@ describe('Replay buffer-index integration', function () {
 
     replay.capture(replayId, occurrenceUuid, triggerContext);
     const trigger = replay._predicates.triggers[0];
+    expect(trigger).to.deep.equal({
+      preDuration: 10,
+      postDuration: 5,
+      type: 'occurrence',
+    });
+
     await clock.tickAsync(100);
 
     const capturedCursor =
@@ -256,6 +258,12 @@ describe('Replay buffer-index integration', function () {
 
     replay.capture(replayId, occurrenceUuid, triggerContext);
     const trigger = replay._predicates.triggers[0];
+    expect(trigger).to.deep.equal({
+      preDuration: 10,
+      postDuration: 5,
+      type: 'occurrence',
+    });
+
     await clock.tickAsync(100);
 
     replay.discard(replayId);
@@ -359,6 +367,12 @@ describe('Replay buffer-index integration', function () {
 
     replay.capture(replayId, occurrenceUuid, triggerContext);
     const trigger = replay._predicates.triggers[0];
+    expect(trigger).to.deep.equal({
+      preDuration: 10,
+      postDuration: 5,
+      type: 'occurrence',
+    });
+
     await clock.tickAsync(100);
 
     expect(replay._map.has(replayId)).to.be.false;
@@ -379,6 +393,12 @@ describe('Replay buffer-index integration', function () {
 
     replay.capture(replayId1, occurrenceUuid1, triggerContext);
     const trigger = replay._predicates.triggers[0];
+    expect(trigger).to.deep.equal({
+      preDuration: 10,
+      postDuration: 5,
+      type: 'occurrence',
+    });
+
     await clock.tickAsync(100);
 
     expect(replay._scheduledCapture._pending.has(replayId1)).to.be.true;

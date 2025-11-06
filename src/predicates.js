@@ -168,7 +168,7 @@ function messageIsIgnored(logger) {
         }
       }
     } catch (
-      e
+      _e
       /* istanbul ignore next */
     ) {
       settings.ignoredMessages = null;

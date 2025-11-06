@@ -37,7 +37,7 @@ function Stack(exception, skip) {
 
     try {
       parserStack = parseErrorStack(exception);
-    } catch (e) {
+    } catch (_e) {
       parserStack = [];
     }
 
