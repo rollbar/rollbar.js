@@ -1,7 +1,3 @@
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-
 import { expect } from 'chai';
 
 import * as p from '../src/server/parser.js';

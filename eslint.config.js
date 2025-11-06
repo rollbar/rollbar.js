@@ -4,6 +4,7 @@ import { defineConfig } from 'eslint/config';
 import importPlugin from 'eslint-plugin-import';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import unusedImports from 'eslint-plugin-unused-imports';
+import globals from 'globals';
 
 export default defineConfig([
   js.configs.recommended,
@@ -52,8 +53,30 @@ export default defineConfig([
     },
   },
 
+  // globals
   {
-    files: ['**/*.{js,mjs}'],
+    files: ['test/**/*.js'],
+    languageOptions: { globals: { ...globals.mocha } },
+  },
+
+  {
+    files: ['src/**/*.{js,cjs}', 'test/**/*.js'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+
+  {
+    files: [
+      'src/server/**/*.js',
+      'src/react-native/**/*.js',
+      'test/**/server.*.js',
+      'scripts/**/*.js',
+    ],
+    languageOptions: { globals: { ...globals.node } },
+  },
+
+  // sources
+  {
+    files: ['**/*.js'],
     languageOptions: {
       sourceType: 'module',
       parser: babelParser,
@@ -64,26 +87,22 @@ export default defineConfig([
     rules: {
       strict: ['error', 'safe'],
       'no-prototype-builtins': 'off',
-      'no-undef': 'off',
     },
   },
 
+  // cjs
   {
     files: ['**/*.cjs'],
-    languageOptions: {
-      sourceType: 'commonjs',
-    },
-    rules: {
-      strict: 'off',
-    },
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { strict: 'off' },
   },
 
+  // scripts
   {
-    files: ['scripts/**/*.{js,mjs,cjs}'],
-    rules: {
-      'no-console': 'off',
-    },
+    files: ['scripts/**/*.{js,cjs}'],
+    rules: { 'no-console': 'off' },
   },
+
   {
     ignores: ['dist', 'examples', 'node_modules', 'vendor', 'coverage'],
   },

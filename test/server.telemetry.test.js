@@ -1,8 +1,3 @@
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
-
 import http from 'http';
 import https from 'https';
 import { URL } from 'url';

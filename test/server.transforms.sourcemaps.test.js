@@ -1,12 +1,9 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Rollbar from '../src/server/rollbar.js';
 
-import { throwInScriptFile } from './server.transforms.test-utils.mjs';
+import { throwInScriptFile } from './server.transforms.test-utils.js';
 
 describe('transforms.nodeSourceMaps', function () {
   let rollbar;

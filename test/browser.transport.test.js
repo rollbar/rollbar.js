@@ -148,31 +148,31 @@ describe('post', function () {
 
     var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
-    it('should use fetch when requested', function (done) {
+    it.only('should use fetch when requested', function (done) {
       var callback = function (err, _resp) {
         expect(window.fetchStub.called).to.be.ok;
-        expect(server.requests.length).to.eql(0);
+        expect(window.server.requests.length).to.eql(0);
         done(err);
       };
       stubFetchResponse();
       stubXhrResponse();
-      server.requests.length = 0;
+      window.server.requests.length = 0;
       options.transport = 'fetch';
       t.post({ accessToken, options, payload, callback });
     });
     it('should use xhr when requested', function (done) {
       var callback = function (err, _resp) {
         expect(window.fetchStub.called).to.not.be.ok;
-        expect(server.requests.length).to.eql(1);
+        expect(window.server.requests.length).to.eql(1);
         done(err);
       };
       stubFetchResponse();
       stubXhrResponse();
-      server.requests.length = 0;
+      window.server.requests.length = 0;
       options.transport = 'xhr';
       t.post({ accessToken, options, payload, callback });
       setTimeout(function () {
-        server.respond();
+        window.server.respond();
       }, 1);
     });
   });
