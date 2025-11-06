@@ -351,10 +351,10 @@ function jsonParse(s) {
   var value, error;
   try {
     value = JSON.parse(s);
-  } catch (_e) {
+  } catch (e) {
     error = e;
   }
-  return { error: error, value: value };
+  return { error, value };
 }
 
 function makeUnhandledStackInfo(
@@ -397,7 +397,7 @@ function wrapCallback(logger, f) {
   return function (err, resp) {
     try {
       f(err, resp);
-    } catch (_e) {
+    } catch (e) {
       logger.error(e);
     }
   };
@@ -429,7 +429,7 @@ function nonCircularClone(obj) {
 
         result[name] = value;
       }
-    } catch (_e) {
+    } catch (e) {
       result = 'Failed cloning custom data: ' + e.message;
     }
     return result;
@@ -561,7 +561,7 @@ function addErrorContext(item, errors) {
     if (contextAdded) {
       item.data.custom = custom;
     }
-  } catch (_e) {
+  } catch (e) {
     item.diagnostic.error_context = 'Failed: ' + e.message;
   }
 }

@@ -330,7 +330,7 @@ class Rollbar {
     // https://v8.dev/docs/stack-trace-api
     try {
       Error.prepareStackTrace = prepareStackTrace;
-    } catch (_e) {
+    } catch (e) {
       this.options.inspectAnonymousErrors = false;
       this.error('anonymous error handler failed', e);
     }
