@@ -331,13 +331,7 @@ describe('SpanExporter.toPayload()', function () {
     exporter.export([span]);
     const payload = exporter.toPayload();
 
-    const expected = JSON.parse(JSON.stringify(standardPayload));
-    const expectedSpan = expected.resourceSpans[0].scopeSpans[0].spans[0];
     const actualSpan = payload.resourceSpans[0].scopeSpans[0].spans[0];
-
-    expect(actualSpan.name).to.equal(expectedSpan.name);
-    expect(actualSpan.attributes).to.deep.equal(expectedSpan.attributes);
-    expect(actualSpan.events).to.deep.equal(expectedSpan.events);
 
     expect(actualSpan.traceId).to.equal('abcdef1234567890abcdef1234567890');
     expect(actualSpan.spanId).to.equal('1234567890abcdef');

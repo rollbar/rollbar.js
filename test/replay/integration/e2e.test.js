@@ -370,7 +370,7 @@ describe('Session Replay E2E', function () {
   });
 
   it('should integrate with real components in failure scenario', function (done) {
-    transport.post.callsFake(({ callback }) => {
+    transport.post.callsFake(({ options, callback }) => {
       if (options.path.includes('/api/1/item/')) {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });
