@@ -42,7 +42,7 @@ Locals.prototype.initSession = function () {
   Locals.currentErrors = new Map();
 
   Locals.session.on('Debugger.paused', ({ params }) => {
-    if (params.reason == 'promiseRejection' || params.reason == 'exception') {
+    if (params.reason === 'promiseRejection' || params.reason === 'exception') {
       var key = params.data.description;
       Locals.currentErrors.set(key, params);
 
@@ -75,8 +75,8 @@ Locals.prototype.disconnectSession = function () {
 
 Locals.prototype.updateOptions = function (options) {
   var pauseStateChanged =
-    this.options.enabled != options.enabled ||
-    this.options.uncaughtOnly != options.uncaughtOnly;
+    this.options.enabled !== options.enabled ||
+    this.options.uncaughtOnly !== options.uncaughtOnly;
 
   this.options = _.merge(this.options, options);
 

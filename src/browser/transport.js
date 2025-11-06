@@ -122,8 +122,8 @@ Transport.prototype.postJsonPayload = function (
 // This is equivalent to `NgZone.runOutsideAngular` in Angular.
 Transport.prototype._makeZoneRequest = function () {
   var gWindow =
-    (typeof window != 'undefined' && window) ||
-    (typeof self != 'undefined' && self);
+    (typeof window !== 'undefined' && window) ||
+    (typeof self !== 'undefined' && self);
   // Whenever zone.js is loaded and `Zone` is exposed globally, access
   // the root zone to ensure that requests are always made within it.
   // This approach is framework-agnostic, regardless of which

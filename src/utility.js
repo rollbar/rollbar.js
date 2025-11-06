@@ -72,8 +72,9 @@ function isNativeFunction(f) {
  * @returns true is value is an object function is an object)
  */
 function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
+  return (
+    value != null && (typeof value == 'object' || typeof value == 'function')
+  );
 }
 
 /* isString - Checks if the argument is a string

@@ -38,7 +38,7 @@ function merge() {
 
   for (i = 0; i < length; i++) {
     current = arguments[i];
-    if (current == null) {
+    if (current === null || current === undefined) {
       continue;
     }
 

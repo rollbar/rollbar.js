@@ -170,7 +170,7 @@ export default class ReplayPredicates {
   isSampled(trigger, context) {
     const ratio = trigger.samplingRatio ?? 1;
 
-    if (ratio == 1) {
+    if (ratio === 1) {
       return true;
     }
     const rv = context.replayId.slice(-14);
