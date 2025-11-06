@@ -57,7 +57,6 @@ export default defineConfig([
       'no-prototype-builtins': 'off',
       'no-undef': 'off',
       'no-unused-vars': 'off',
-      'no-useless-escape': 'off',
     },
   },
 
