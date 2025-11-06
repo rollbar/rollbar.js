@@ -65,7 +65,7 @@ export async function nodeThrowNested() {
 export async function nodeThrowWithNestedLocals() {
   setTimeout(() => {
     /* eslint-disable no-unused-vars */
-    // This are necessary to create locals in the stack frames
+    // These are necessary to create locals in the stack frames
     const arr = [{ zero: [0, 0] }, { one: 1 }, { two: 2 }, { three: 3 }];
     const obj = { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e', f: 'f' };
     const password = 'password';
