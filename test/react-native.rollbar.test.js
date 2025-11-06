@@ -213,6 +213,7 @@ describe('Rollbar()', function () {
     var rollbar = new Rollbar(options, client);
 
     var result = rollbar.log('a message', 'another one');
+    expect(result).to.be.an('object');
     var loggedItem = client.logCalls[0].item;
     expect(loggedItem.message).to.eql('a message');
     expect(loggedItem.custom).to.be.ok;

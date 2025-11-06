@@ -231,7 +231,7 @@ export default class Replay {
 
     try {
       await this.send(replayId);
-    } catch (error) {
+    } catch (_error) {
       this.discard(replayId);
       return null;
     }

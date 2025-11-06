@@ -96,16 +96,6 @@ function isFiniteNumber(n) {
 }
 
 /*
- * isDefined - a convenience function for checking if a value is not equal to undefined
- *
- * @param u - any value
- * @returns true if u is anything other than undefined
- */
-function isDefined(u) {
-  return !isType(u, 'undefined');
-}
-
-/*
  * isIterable - convenience function for checking if a value can be iterated, essentially
  * whether it is an object or an array.
  *
@@ -361,7 +351,7 @@ function jsonParse(s) {
   var value, error;
   try {
     value = JSON.parse(s);
-  } catch (e) {
+  } catch (_e) {
     error = e;
   }
   return { error: error, value: value };
@@ -407,7 +397,7 @@ function wrapCallback(logger, f) {
   return function (err, resp) {
     try {
       f(err, resp);
-    } catch (e) {
+    } catch (_e) {
       logger.error(e);
     }
   };
@@ -439,7 +429,7 @@ function nonCircularClone(obj) {
 
         result[name] = value;
       }
-    } catch (e) {
+    } catch (_e) {
       result = 'Failed cloning custom data: ' + e.message;
     }
     return result;
@@ -571,7 +561,7 @@ function addErrorContext(item, errors) {
     if (contextAdded) {
       item.data.custom = custom;
     }
-  } catch (e) {
+  } catch (_e) {
     item.diagnostic.error_context = 'Failed: ' + e.message;
   }
 }
@@ -656,7 +646,7 @@ function get(obj, path) {
     for (var i = 0, len = keys.length; i < len; ++i) {
       result = result[keys[i]];
     }
-  } catch (e) {
+  } catch (_e) {
     result = undefined;
   }
   return result;
@@ -688,7 +678,7 @@ function set(obj, path, value) {
     }
     temp[keys[len - 1]] = value;
     obj[keys[0]] = replacement;
-  } catch (e) {
+  } catch (_e) {
     return;
   }
 }
@@ -757,7 +747,7 @@ function filterIp(requestData, captureIp) {
       } else {
         newIp = null;
       }
-    } catch (e) {
+    } catch (_e) {
       newIp = null;
     }
   }

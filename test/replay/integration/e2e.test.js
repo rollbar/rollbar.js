@@ -59,17 +59,15 @@ describe('Session Replay E2E', function () {
     logger.init({ logLevel: 'warn' });
 
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          setTimeout(() => {
-            callback(
-              null,
-              { err: 0, result: { id: '12345' } },
-              { 'Rollbar-Replay-Enabled': 'true' },
-            );
-          }, 10);
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        setTimeout(() => {
+          callback(
+            null,
+            { err: 0, result: { id: '12345' } },
+            { 'Rollbar-Replay-Enabled': 'true' },
+          );
+        }, 10);
+      }),
       postJsonPayload: sinon.stub(),
     };
     const urlMock = { parse: sinon.stub().returns({}) };
@@ -137,7 +135,7 @@ describe('Session Replay E2E', function () {
         'user.email': 'aaa@bb.com',
       });
 
-      queue.addItem(errorItem, (err, resp) => {
+      queue.addItem(errorItem, (_err, _resp) => {
         expect(errorItem).to.have.property('replayId');
         const expectedReplayId = errorItem.replayId;
         expect(expectedReplayId).to.match(/^[0-9a-fA-F]{16}$/);
@@ -372,7 +370,7 @@ describe('Session Replay E2E', function () {
   });
 
   it('should integrate with real components in failure scenario', function (done) {
-    transport.post.callsFake(({ accessToken, options, payload, callback }) => {
+    transport.post.callsFake(({ callback }) => {
       if (options.path.includes('/api/1/item/')) {
         setTimeout(() => {
           callback(null, { err: 1, message: 'API Error' });

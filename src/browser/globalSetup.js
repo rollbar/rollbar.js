@@ -67,12 +67,12 @@ function captureUnhandledRejections(window, handler, shim) {
     var reason, promise, detail;
     try {
       reason = evt.reason;
-    } catch (e) {
+    } catch (_e) {
       reason = undefined;
     }
     try {
       promise = evt.promise;
-    } catch (e) {
+    } catch (_e) {
       promise = '[unhandledrejection] error getting `promise` from event';
     }
     try {
@@ -81,7 +81,7 @@ function captureUnhandledRejections(window, handler, shim) {
         reason = detail.reason;
         promise = detail.promise;
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore
     }
     if (!reason) {

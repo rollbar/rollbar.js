@@ -11,7 +11,7 @@ function _wrapInternalErr(f) {
     } catch (e) {
       try {
         logger.error('[Rollbar]: Internal error', e);
-      } catch (e2) {
+      } catch (_e2) {
         // Ignore
       }
     }
@@ -146,7 +146,7 @@ Shim.prototype.loadFull = function (
       s.onload = s.onreadystatechange = null;
       try {
         parentNode.removeChild(s);
-      } catch (e) {
+      } catch (_e) {
         // pass
       }
       done = true;
@@ -210,7 +210,7 @@ Shim.prototype.wrap = function (f, context, _before) {
     }
 
     return f._rollbar_wrapped;
-  } catch (e) {
+  } catch (_e) {
     // Return the original function if the wrap fails.
     return f;
   }

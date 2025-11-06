@@ -47,7 +47,7 @@ function retrieveFile(path) {
     if (fs.existsSync(path)) {
       contents = fs.readFileSync(path, 'utf8');
     }
-  } catch (er) {
+  } catch (_er) {
     /* ignore any errors */
   }
 

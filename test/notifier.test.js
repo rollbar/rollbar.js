@@ -3,11 +3,6 @@ import sinon from 'sinon';
 
 import Notifier from '../src/notifier.js';
 
-var rollbarConfig = {
-  accessToken: '12c99de67a444c229fca100e0967486f',
-  captureUncaught: true,
-};
-
 function TestQueueGenerator() {
   var TestQueue = function () {
     this.items = [];

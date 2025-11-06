@@ -95,7 +95,7 @@ function _headers(accessToken, options, data) {
   if (data) {
     try {
       headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
-    } catch (e) {
+    } catch (_e) {
       logger.error('Could not get the content length of the data');
     }
   }

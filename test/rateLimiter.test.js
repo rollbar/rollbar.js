@@ -15,6 +15,7 @@ describe('RateLimiter()', function () {
   it('should have global properties', function (done) {
     var options = {};
     var rateLimiter = new RateLimiter(options);
+    expect(rateLimiter).to.be.an('object');
     expect(RateLimiter).to.have.property('globalSettings');
     var now = new Date().getTime();
     expect(RateLimiter.globalSettings.startTime).to.be.within(
@@ -34,6 +35,7 @@ describe('RateLimiter()', function () {
       fake: 'stuff',
     };
     var rateLimiter = new RateLimiter(options);
+    expect(rateLimiter).to.be.an('object');
     expect(RateLimiter.globalSettings.startTime).to.be.eql(1);
     expect(RateLimiter.globalSettings.maxItems).to.be.eql(50);
     expect(RateLimiter.globalSettings.itemsPerMinute).to.be.eql(102);

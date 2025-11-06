@@ -226,7 +226,7 @@ describe('userTransform', function () {
     };
     var options = {
       endpoint: 'api.rollbar.com',
-      transform: function (newItem) {
+      transform: function (_newItem) {
         return Promise.resolve({ message: 'HELLO' });
       },
     };
@@ -248,7 +248,7 @@ describe('userTransform', function () {
     };
     var options = {
       endpoint: 'api.rollbar.com',
-      transform: function (newItem) {
+      transform: function (_newItem) {
         return Promise.reject(err);
       },
     };

@@ -149,7 +149,7 @@ describe('post', function () {
     var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
     it('should use fetch when requested', function (done) {
-      var callback = function (err, resp) {
+      var callback = function (err, _resp) {
         expect(window.fetchStub.called).to.be.ok;
         expect(server.requests.length).to.eql(0);
         done(err);
@@ -161,7 +161,7 @@ describe('post', function () {
       t.post({ accessToken, options, payload, callback });
     });
     it('should use xhr when requested', function (done) {
-      var callback = function (err, resp) {
+      var callback = function (err, _resp) {
         expect(window.fetchStub.called).to.not.be.ok;
         expect(server.requests.length).to.eql(1);
         done(err);
@@ -189,7 +189,7 @@ var TestRequest = function (response, status, shouldThrowOnSend) {
   this.onreadystatechange = null;
   this.readyState = 0;
   this.shouldThrowOnSend = shouldThrowOnSend;
-  this.getResponseHeader = (key) => undefined;
+  this.getResponseHeader = (_key) => undefined;
 };
 TestRequest.prototype.open = function (m, u, a) {
   this.method = m;

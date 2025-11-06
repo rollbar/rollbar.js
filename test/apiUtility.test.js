@@ -4,14 +4,12 @@ import * as u from '../src/apiUtility.js';
 
 describe('buildPayload', function () {
   it('should package up the input into a payload', function () {
-    var token = 'abc123';
     var data = { context: 'not an object', other: 'stuff' };
     var payload = u.buildPayload(data);
 
     expect(payload.data).to.eql(data);
   });
   it('should stringify context', function () {
-    var token = 'abc123';
     var context = { a: 1, b: 'other' };
     var data = { context: context, other: 'stuff' };
     var payload = u.buildPayload(data);
@@ -20,7 +18,6 @@ describe('buildPayload', function () {
     expect(payload.data.context).to.eql('{"a":1,"b":"other"}');
   });
   it('should truncate context', function () {
-    var token = 'abc123';
     var context = {};
     for (var i = 0; i < 35; i++) {
       context[i] = i;

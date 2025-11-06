@@ -330,7 +330,7 @@ class Rollbar {
     // https://v8.dev/docs/stack-trace-api
     try {
       Error.prepareStackTrace = prepareStackTrace;
-    } catch (e) {
+    } catch (_e) {
       this.options.inspectAnonymousErrors = false;
       this.error('anonymous error handler failed', e);
     }
@@ -435,7 +435,7 @@ class Rollbar {
       }
 
       return f._rollbar_wrapped;
-    } catch (e) {
+    } catch (_e) {
       // Return the original function if the wrap fails.
       return f;
     }

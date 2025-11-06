@@ -40,7 +40,7 @@ class Telemeter {
             events.splice(i, 1);
           }
         }
-      } catch (e) {
+      } catch (_e) {
         this.options.filterTelemetry = null;
       }
     }
@@ -49,7 +49,9 @@ class Telemeter {
     events = events.filter((e) => e.type !== 'connectivity');
 
     // Remove internal keys from output
-    events = events.map(({ otelAttributes, ...event }) => event);
+    events = events.map(
+      ({ otelAttributes: _otelAttributes, ...event }) => event,
+    );
 
     return events;
   }
@@ -90,7 +92,7 @@ class Telemeter {
       ) {
         return false;
       }
-    } catch (exc) {
+    } catch (_exc) {
       this.options.filterTelemetry = null;
     }
 

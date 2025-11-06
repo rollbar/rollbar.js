@@ -186,13 +186,11 @@ describe('Tracing()', function () {
 
     beforeEach(function () {
       transport = {
-        post: sinon
-          .stub()
-          .callsFake(({ accessToken, options, payload, callback }) => {
-            setTimeout(() => {
-              callback(null, { err: 0, result: { id: '12345' } });
-            }, 1);
-          }),
+        post: sinon.stub().callsFake(({ callback }) => {
+          setTimeout(() => {
+            callback(null, { err: 0, result: { id: '12345' } });
+          }, 1);
+        }),
         postJsonPayload: sinon.stub(),
       };
       const urlMock = { parse: sinon.stub().returns({}) };

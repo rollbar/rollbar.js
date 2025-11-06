@@ -40,6 +40,14 @@ export default defineConfig([
           'newlines-between': 'always',
         },
       ],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
@@ -56,7 +64,6 @@ export default defineConfig([
       strict: ['error', 'safe'],
       'no-prototype-builtins': 'off',
       'no-undef': 'off',
-      'no-unused-vars': 'off',
     },
   },
 

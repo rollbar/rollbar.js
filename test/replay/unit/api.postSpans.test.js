@@ -14,11 +14,9 @@ describe('Api', function () {
 
   beforeEach(function () {
     transport = {
-      post: sinon
-        .stub()
-        .callsFake(({ accessToken, options, payload, callback }) => {
-          callback(null, { result: 'ok' });
-        }),
+      post: sinon.stub().callsFake(({ callback }) => {
+        callback(null, { result: 'ok' });
+      }),
       postJsonPayload: sinon.stub(),
     };
 
@@ -79,11 +77,9 @@ describe('Api', function () {
       const spans = [{ id: 'span1' }];
       const expectedError = new Error('Transport error');
 
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          callback(expectedError);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        callback(expectedError);
+      });
 
       try {
         await api.postSpans(spans);
@@ -121,11 +117,9 @@ describe('Api', function () {
   describe('_postPromise', function () {
     it('should resolve with response when transport succeeds', async function () {
       const expectedResponse = { success: true };
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          callback(null, expectedResponse);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        callback(null, expectedResponse);
+      });
 
       const result = await api._postPromise('token', {}, {});
       expect(result).to.deep.equal(expectedResponse);
@@ -133,11 +127,9 @@ describe('Api', function () {
 
     it('should reject with error when transport fails', async function () {
       const expectedError = new Error('Transport error');
-      transport.post.callsFake(
-        ({ accessToken, options, payload, callback }) => {
-          callback(expectedError);
-        },
-      );
+      transport.post.callsFake(({ callback }) => {
+        callback(expectedError);
+      });
 
       try {
         await api._postPromise('token', {}, {});
