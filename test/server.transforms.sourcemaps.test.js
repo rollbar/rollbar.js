@@ -77,7 +77,7 @@ describe('transforms.nodeSourceMaps', function () {
 
     expect(urls[0]).to.include('index.cjs');
     expect(sourceMappingURLs[urls[0]]).to.include('index.cjs.map');
-    expect(urls[1]).to.include('server.transforms.test-utils.mjs');
+    expect(urls[1]).to.include('server.transforms.test-utils.js');
     expect(sourceMappingURLs[urls[1]]).to.include('not found');
 
     // Node until v12 will have 'timers.js' here.
