@@ -68,7 +68,7 @@ class Rollbar {
         'browser',
       );
     var gWindow = _gWindow();
-    var gDocument = typeof document != 'undefined' && document;
+    var gDocument = typeof document !== 'undefined' && document;
     this.isChrome = gWindow.chrome && gWindow.chrome.runtime; // check .runtime to avoid Edge browsers
     this.anonymousErrorsPending = 0;
     addTransformsToNotifier(this.client.notifier, this, gWindow);
@@ -583,8 +583,8 @@ function _getFirstFunction(args) {
 
 function _gWindow() {
   return (
-    (typeof window != 'undefined' && window) ||
-    (typeof self != 'undefined' && self)
+    (typeof window !== 'undefined' && window) ||
+    (typeof self !== 'undefined' && self)
   );
 }
 
