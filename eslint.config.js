@@ -55,10 +55,8 @@ export default defineConfig([
     rules: {
       strict: ['error', 'safe'],
       'no-prototype-builtins': 'off',
-      'no-redeclare': 'off',
       'no-undef': 'off',
       'no-unused-vars': 'off',
-      'no-useless-escape': 'off',
     },
   },
 
