@@ -1,2 +1,4 @@
-# Prettier mass-format
+# 10/07/2025 | Format codebase with prettier, excluding examples (#1349)
 7a829f8ac3bbd146425a401b8434cf9cbaddaba1
+# 03/07/2024 | Integrate prettier to the project and ci and prettify project (#1133)
+443290f2a2f3bb7640cd3383dd95dea872773508
