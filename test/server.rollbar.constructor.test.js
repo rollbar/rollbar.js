@@ -1,6 +1,3 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import Rollbar from '../src/server/rollbar.js';
@@ -8,7 +5,7 @@ import Rollbar from '../src/server/rollbar.js';
 import {
   ValidOpenTracingTracerStub,
   InvalidOpenTracingTracerStub,
-} from './server.rollbar.test-utils.mjs';
+} from './server.rollbar.test-utils.js';
 
 describe('rollbar constructor and configuration', function () {
   describe('constructor', function () {

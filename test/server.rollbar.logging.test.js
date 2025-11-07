@@ -1,7 +1,3 @@
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -13,7 +9,7 @@ import {
   InvalidOpenTracingTracerStub,
   DUMMY_TRACE_ID,
   DUMMY_SPAN_ID,
-} from './server.rollbar.test-utils.mjs';
+} from './server.rollbar.test-utils.js';
 
 describe('rollbar logging and tracing', function () {
   describe('addTracingInfo', function () {

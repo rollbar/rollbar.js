@@ -1,12 +1,9 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import Rollbar from '../src/server/rollbar.js';
 import * as t from '../src/server/transforms.js';
 
-import { createTestItem } from './server.transforms.test-utils.mjs';
+import { createTestItem } from './server.transforms.test-utils.js';
 
 describe('transforms.scrubPayload', function () {
   describe('without scrub fields', function () {

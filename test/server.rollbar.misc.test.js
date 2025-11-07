@@ -1,11 +1,8 @@
-/* globals describe */
-/* globals it */
-
 import { expect } from 'chai';
 
 import Rollbar from '../src/server/rollbar.js';
 
-import { TestClient } from './server.rollbar.test-utils.mjs';
+import { TestClient } from './server.rollbar.test-utils.js';
 
 describe('rollbar miscellaneous methods', function () {
   describe('buildJsonPayload', function () {

@@ -1,8 +1,3 @@
-/* globals describe */
-/* globals it */
-/* globals beforeEach */
-/* globals afterEach */
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -18,7 +13,7 @@ import {
   nodeThrowWithNestedLocals,
   nodeThrowRecursionError,
   verifyRejectedPromise,
-} from './server.locals.test-utils.mjs';
+} from './server.locals.test-utils.js';
 
 describe('server.locals error handling', function () {
   let mochaExceptionHandlers;
