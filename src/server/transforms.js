@@ -31,7 +31,7 @@ function baseData(item, options, callback) {
 
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
+    if (!_.hasOwn(data, name)) {
       data[name] = item.custom[name];
     }
   });
@@ -315,7 +315,7 @@ function _buildRequestData(req) {
     var bodyParams = {};
     if (_.isIterable(body)) {
       for (var k in body) {
-        if (Object.prototype.hasOwnProperty.call(body, k)) {
+        if (_.hasOwn(body, k)) {
           bodyParams[k] = body[k];
         }
       }

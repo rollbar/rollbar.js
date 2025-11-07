@@ -1,6 +1,6 @@
 import { URL } from 'url';
 
-import merge from '../../merge.js';
+import { merge } from '../../utility.js';
 
 // This function replicates the relevant logic in node/lib/http.js as closely
 // as possible in order to produce the same result. Therefore, the code is

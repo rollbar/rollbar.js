@@ -25,7 +25,7 @@ function baseData(item, options, callback) {
 
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
+    if (!_.hasOwn(data, name)) {
       data[name] = item.custom[name];
     }
   });

@@ -1,3 +1,5 @@
+import { hasOwn } from '../utility.js';
+
 /*
  * headers - Detect when fetch Headers are undefined and use a partial polyfill.
  *
@@ -72,12 +74,12 @@ FetchHeaders.prototype.get = function (name) {
 };
 
 FetchHeaders.prototype.has = function (name) {
-  return this.map.hasOwnProperty(normalizeName(name));
+  return hasOwn(this.map, normalizeName(name));
 };
 
 FetchHeaders.prototype.forEach = function (callback, thisArg) {
   for (var name in this.map) {
-    if (this.map.hasOwnProperty(name)) {
+    if (hasOwn(this.map, name)) {
       callback.call(thisArg, this.map[name], name, this);
     }
   }

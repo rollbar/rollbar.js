@@ -24,7 +24,7 @@ function traverse(obj, func, seen) {
 
   if (isObj) {
     for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      if (_.hasOwn(obj, k)) {
         keys.push(k);
       }
     }
