@@ -2,8 +2,8 @@
  * Common test utilities for server transforms tests
  */
 
-import merge from '../src/merge.js';
 import Rollbar from '../src/server/rollbar.js';
+import { merge } from '../src/utility.js';
 
 export class CustomError extends Rollbar.Error {
   constructor(message, nested) {

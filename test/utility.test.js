@@ -147,7 +147,7 @@ describe('isError', function () {
         value: message,
       });
 
-      if (Error.hasOwnProperty('captureStackTrace')) {
+      if (_.hasOwn(Error, 'captureStackTrace')) {
         Error.captureStackTrace(this, TestCustomError);
       } else {
         Object.defineProperty(this, 'stack', {

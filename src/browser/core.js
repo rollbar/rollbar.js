@@ -425,11 +425,9 @@ class Rollbar {
 
         f._rollbar_wrapped._isWrap = true;
 
-        if (f.hasOwnProperty) {
-          for (var prop in f) {
-            if (f.hasOwnProperty(prop) && prop !== '_rollbar_wrapped') {
-              f._rollbar_wrapped[prop] = f[prop];
-            }
+        for (var prop in f) {
+          if (_.hasOwn(f, prop) && prop !== '_rollbar_wrapped') {
+            f._rollbar_wrapped[prop] = f[prop];
           }
         }
       }

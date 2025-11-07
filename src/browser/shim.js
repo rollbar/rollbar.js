@@ -1,4 +1,5 @@
 import logger from '../logger.js';
+import { hasOwn } from '../utility.js';
 
 import * as globals from './globalSetup.js';
 import Wrapper from './rollbarWrapper.js';
@@ -200,11 +201,9 @@ Shim.prototype.wrap = function (f, context, _before) {
 
       f._rollbar_wrapped._isWrap = true;
 
-      if (f.hasOwnProperty) {
-        for (var prop in f) {
-          if (f.hasOwnProperty(prop)) {
-            f._rollbar_wrapped[prop] = f[prop];
-          }
+      for (var prop in f) {
+        if (hasOwn(f, prop)) {
+          f._rollbar_wrapped[prop] = f[prop];
         }
       }
     }

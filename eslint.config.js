@@ -58,12 +58,10 @@ export default defineConfig([
     files: ['test/**/*.js'],
     languageOptions: { globals: { ...globals.mocha } },
   },
-
   {
     files: ['src/**/*.{js,cjs}', 'test/**/*.js'],
     languageOptions: { globals: { ...globals.browser } },
   },
-
   {
     files: [
       'src/server/**/*.js',
@@ -74,7 +72,7 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.node } },
   },
 
-  // sources
+  // js
   {
     files: ['**/*.js'],
     languageOptions: {
@@ -84,10 +82,7 @@ export default defineConfig([
         ecmaVersion: 2021,
       },
     },
-    rules: {
-      strict: ['error', 'safe'],
-      'no-prototype-builtins': 'off',
-    },
+    rules: { strict: ['error', 'safe'] },
   },
 
   // cjs

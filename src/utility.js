@@ -1,5 +1,3 @@
-import merge from './merge.js';
-
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
  * given string.
@@ -75,6 +73,17 @@ function isObject(value) {
   return (
     value != null && (typeof value == 'object' || typeof value == 'function')
   );
+}
+
+/* hasOwn - safe helper around Object.hasOwnProperty */
+function hasOwn(obj, prop) {
+  if (obj == null) {
+    return false;
+  }
+  if (Object.hasOwn) {
+    return Object.hasOwn(obj, prop);
+  }
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 /* isString - Checks if the argument is a string
@@ -552,7 +561,7 @@ function addErrorContext(item, errors) {
 
   try {
     for (var i = 0; i < errors.length; ++i) {
-      if (errors[i].hasOwnProperty('rollbarContext')) {
+      if (hasOwn(errors[i], 'rollbarContext')) {
         custom = merge(custom, nonCircularClone(errors[i].rollbarContext));
         contextAdded = true;
       }
@@ -781,6 +790,63 @@ function updateDeprecatedOptions(options, logger) {
   return options;
 }
 
+function merge() {
+  function isPlainObject(obj) {
+    if (!obj || Object.prototype.toString.call(obj) !== '[object Object]') {
+      return false;
+    }
+
+    var hasOwnConstructor = hasOwn(obj, 'constructor');
+    var hasIsPrototypeOf =
+      obj.constructor &&
+      obj.constructor.prototype &&
+      hasOwn(obj.constructor.prototype, 'isPrototypeOf');
+    // Not own constructor property must be Object
+    if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+      return false;
+    }
+
+    // Own properties are enumerated firstly, so to speed up,
+    // if last one is own, then all properties are own.
+    var key;
+    for (key in obj) {
+      /**/
+    }
+
+    return typeof key === 'undefined' || hasOwn(obj, key);
+  }
+
+  var i,
+    src,
+    copy,
+    clone,
+    name,
+    result = Object.create(null), // no prototype pollution on Object
+    current = null,
+    length = arguments.length;
+
+  for (i = 0; i < length; i++) {
+    current = arguments[i];
+    if (current === null || current === undefined) {
+      continue;
+    }
+
+    for (name in current) {
+      src = result[name];
+      copy = current[name];
+      if (result !== copy) {
+        if (copy && isPlainObject(copy)) {
+          clone = src && isPlainObject(src) ? src : {};
+          result[name] = merge(clone, copy);
+        } else if (typeof copy !== 'undefined') {
+          result[name] = copy;
+        }
+      }
+    }
+  }
+  return result;
+}
+
 export {
   addParamsAndAccessTokenToPath,
   createItem,
@@ -795,6 +861,7 @@ export {
   isError,
   isFiniteNumber,
   isFunction,
+  hasOwn,
   isIterable,
   isNativeFunction,
   isObject,
