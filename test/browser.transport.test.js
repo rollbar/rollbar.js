@@ -148,7 +148,7 @@ describe('post', function () {
 
     var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
-    it.only('should use fetch when requested', function (done) {
+    it('should use fetch when requested', function (done) {
       var callback = function (err, _resp) {
         expect(window.fetchStub.called).to.be.ok;
         expect(window.server.requests.length).to.eql(0);
