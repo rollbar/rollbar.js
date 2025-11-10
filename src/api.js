@@ -99,7 +99,7 @@ class Api {
   async postSpans(payload, headers = {}) {
     const options = helpers.transportOptions(this.OTLPTransportOptions, 'POST');
 
-    return await this._postPromise({
+    return this._postPromise({
       accessToken: this.accessToken,
       options,
       payload,
