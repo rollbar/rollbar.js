@@ -439,7 +439,6 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
       options: options.replay,
     });
     recorder = replay.recorder;
-    const noEventsRecordFn = stubRecordFn();
     replay.configure({
       ...options.replay,
       autoStart: false,
@@ -447,7 +446,7 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
         preDuration: 4,
         postDuration: 5,
       },
-      recordFn: noEventsRecordFn,
+      recordFn: stubRecordFn(),
     });
 
     recorder._isReady = true;
