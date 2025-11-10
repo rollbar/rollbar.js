@@ -3,8 +3,11 @@ import { EventType } from '@rrweb/types';
 
 import logger from '../../logger.js';
 import hrtime from '../../tracing/hrtime.js';
+import * as _ from '../../utility.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
+
+const CHECKOUT_WATCHDOG_MARGIN_MS = 1000;
 
 export default class Recorder {
   _options;
@@ -13,6 +16,8 @@ export default class Recorder {
   _isReady = false;
   _stopFn = null;
   _recordFn;
+  _checkoutWatchdogId = null;
+  _lastCheckoutAt = null;
 
   /** A two-slot ring buffer for storing events. */
   _buffers = [[], []];
@@ -28,11 +33,17 @@ export default class Recorder {
    *
    * @param {Object} options - Configuration options for the recorder
    */
-  constructor(options) {
+  constructor(options = {}) {
     this.options = options;
 
     // Tests inject a custom rrweb record function or mock.
     this._recordFn = options.recordFn || rrwebRecordFn;
+
+    if (!this._recordFn || !_.isFunction(this._recordFn.takeFullSnapshot)) {
+      throw new Error(
+        'Recorder requires an rrweb record function with takeFullSnapshot support',
+      );
+    }
   }
 
   get isRecording() {
@@ -176,6 +187,7 @@ export default class Recorder {
         if (isCheckout && event.type === EventType.Meta) {
           this._currentSlot = this._previousSlot;
           this._buffers[this._currentSlot] = [];
+          this._onCheckout(event.timestamp);
         }
 
         this._buffers[this._currentSlot].push(event);
@@ -190,6 +202,9 @@ export default class Recorder {
       ...this._rrwebOptions,
     });
 
+    this._lastCheckoutAt = Date.now();
+    this._armCheckoutWatchdog();
+
     return this;
   }
 
@@ -201,6 +216,8 @@ export default class Recorder {
     this._stopFn();
     this._stopFn = null;
     this._isReady = false;
+    this._clearCheckoutWatchdog();
+    this._lastCheckoutAt = null;
 
     return this;
   }
@@ -209,6 +226,8 @@ export default class Recorder {
     this._buffers = [[], []];
     this._currentSlot = 0;
     this._isReady = false;
+    this._clearCheckoutWatchdog();
+    this._lastCheckoutAt = null;
   }
 
   /**
@@ -302,5 +321,55 @@ export default class Recorder {
         );
       })(event),
     );
+  }
+
+  _onCheckout(timestamp) {
+    this._lastCheckoutAt =
+      typeof timestamp === 'number' ? timestamp : Date.now();
+    this._armCheckoutWatchdog();
+  }
+
+  _armCheckoutWatchdog() {
+    if (!this.isRecording) {
+      return;
+    }
+
+    this._clearCheckoutWatchdog();
+
+    const delay = this.checkoutEveryNms() + CHECKOUT_WATCHDOG_MARGIN_MS;
+    this._checkoutWatchdogId = setTimeout(() => {
+      this._maybeForceCheckout();
+    }, delay);
+  }
+
+  _clearCheckoutWatchdog() {
+    if (this._checkoutWatchdogId) {
+      clearTimeout(this._checkoutWatchdogId);
+      this._checkoutWatchdogId = null;
+    }
+  }
+
+  _maybeForceCheckout() {
+    if (!this.isRecording) {
+      this._clearCheckoutWatchdog();
+      return;
+    }
+
+    const lastCheckout = this._lastCheckoutAt ?? Date.now();
+    if (Date.now() - lastCheckout < this.checkoutEveryNms()) {
+      this._armCheckoutWatchdog();
+      return;
+    }
+
+    try {
+      this._recordFn.takeFullSnapshot(true);
+      this._lastCheckoutAt = Date.now();
+    } catch (error) {
+      if (this.options.debug?.logErrors) {
+        logger.error('Recorder: Forced checkout failed', error);
+      }
+    }
+
+    this._armCheckoutWatchdog();
   }
 }

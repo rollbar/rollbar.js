@@ -34,6 +34,7 @@ describe('Recorder', function () {
       emitCallback = options.emit;
       return stopFnSpy;
     });
+    recordFnStub.takeFullSnapshot = sinon.stub();
   });
 
   describe('constructor', function () {
@@ -115,6 +116,75 @@ describe('Recorder', function () {
 
       expect(recorder.isRecording).to.be.false;
       expect(stopFnSpy.called).to.be.false;
+    });
+  });
+
+  describe('checkout watchdog', function () {
+    let clock;
+
+    beforeEach(function () {
+      clock = sinon.useFakeTimers();
+    });
+
+    afterEach(function () {
+      clock.restore();
+    });
+
+    it('forces a checkout when idle beyond the interval', function () {
+      const recorder = new Recorder({
+        enabled: true,
+        recordFn: recordFnStub,
+        maxPreDuration: 4,
+      });
+      recorder.start();
+
+      const idleWindow = recorder.checkoutEveryNms() + 1000;
+      clock.tick(idleWindow + 5);
+
+      expect(recordFnStub.takeFullSnapshot.calledOnceWithExactly(true)).to.be
+        .true;
+
+      recorder.stop();
+    });
+
+    it('resets the watchdog after rrweb checkout events', function () {
+      const recorder = new Recorder({
+        enabled: true,
+        recordFn: recordFnStub,
+        maxPreDuration: 4,
+      });
+      recorder.start();
+
+      const idleWindow = recorder.checkoutEveryNms() + 1000;
+      clock.tick(idleWindow - 10);
+
+      emitCallback(
+        { timestamp: Date.now(), type: EventType.Meta, data: {} },
+        true,
+      );
+
+      clock.tick(idleWindow - 10);
+      expect(recordFnStub.takeFullSnapshot.called).to.be.false;
+
+      clock.tick(20);
+      expect(recordFnStub.takeFullSnapshot.calledOnce).to.be.true;
+
+      recorder.stop();
+    });
+
+    it('clears the watchdog when recording stops', function () {
+      const recorder = new Recorder({
+        enabled: true,
+        recordFn: recordFnStub,
+        maxPreDuration: 4,
+      });
+      recorder.start();
+      recorder.stop();
+
+      const idleWindow = recorder.checkoutEveryNms() + 1000;
+      clock.tick(idleWindow * 2);
+
+      expect(recordFnStub.takeFullSnapshot.called).to.be.false;
     });
   });
 

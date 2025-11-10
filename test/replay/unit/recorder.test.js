@@ -6,6 +6,7 @@ import Recorder from '../../../src/browser/replay/recorder.js';
 
 describe('Recorder', function () {
   const mockRecordFn = () => () => {};
+  mockRecordFn.takeFullSnapshot = () => {};
 
   describe('constructor', function () {
     it('initializes with provided options', function () {

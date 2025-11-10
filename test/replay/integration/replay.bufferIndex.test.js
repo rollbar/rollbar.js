@@ -18,6 +18,7 @@ describe('Replay buffer-index integration', function () {
     logger.init({ logLevel: 'warn' });
 
     const mockRecordFn = () => () => {};
+    mockRecordFn.takeFullSnapshot = () => {};
     options = {
       enabled: true,
       triggerDefaults: {

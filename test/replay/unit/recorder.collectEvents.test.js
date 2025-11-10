@@ -8,6 +8,7 @@ import { setCurrentBuffer, setPreviousBuffer } from '../util/recorder.js';
 describe('Recorder buffer-index event collection', function () {
   let recorder;
   const mockRecordFn = () => () => {};
+  mockRecordFn.takeFullSnapshot = () => {};
 
   beforeEach(function () {
     recorder = new Recorder(
