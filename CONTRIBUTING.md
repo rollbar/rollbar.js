@@ -1,7 +1,7 @@
 # Contributing to Rollbar.js
 
-Thanks for helping Rollbar.js! Whether you are polishing docs, reporting a bug, adding a framework example, or enhancing SDK features, your contribution matters. This SDK ships in mission-critical environments, so we lean on automation: tests, linting, formatting. That keeps changes low-risk while keeping the process open and welcoming. Jump in wherever you feel inspired and ask questions early and often.  
-  
+Thanks for helping Rollbar.js! Whether you are polishing docs, reporting a bug, adding a framework example, or enhancing SDK features, your contribution matters. This SDK ships in mission-critical environments, so we lean on automation: tests, linting, formatting. That keeps changes low-risk while keeping the process open and welcoming. Jump in wherever you feel inspired and ask questions early and often.
+
 Rollbar.js is also AI-coding-agent ready: `AGENTS.md` documents Codex-specific guidelines and `CLAUDE.md` covers Claude’s conventions so automated assistants can operate safely alongside humans. Feel free to point AI tools at these docs when co-authoring patches.
 
 ## Ways to contribute
