@@ -88,9 +88,7 @@ export default class CheckoutWatchdog {
     try {
       this._forceCheckout();
     } catch (error) {
-      if (this.options.debug?.logErrors) {
-        logger.error('Replay: Forced checkout failed', error);
-      }
+      logger.error('Replay: Forced checkout failed', error);
     }
 
     this._lastCheckoutAt = this._now();
