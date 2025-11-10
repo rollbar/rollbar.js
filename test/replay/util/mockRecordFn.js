@@ -2,8 +2,16 @@
  * Mock implementation of rrweb.record for testing
  * Emits fixture events on a schedule to test the Recorder
  */
+import sinon from 'sinon';
 
 import { allEvents } from '../../fixtures/replay/index.js';
+
+export function stubRecordFn() {
+  const recordFn = sinon.stub();
+  recordFn.takeFullSnapshot = sinon.stub();
+  recordFn.callsFake(() => () => {});
+  return recordFn;
+}
 
 /**
  * Mock implementation of rrweb's record function
@@ -36,6 +44,13 @@ export default function mockRecordFn(options = {}) {
   let stopping = false;
   let initialSnapshotDone = false;
 
+  const emitCheckoutPair = (emit, isCheckout) => {
+    // rrweb sends both Meta and FullSnapshot events
+    // in the same tick on checkout
+    emit({ ...allEvents.meta }, isCheckout);
+    emit({ ...allEvents.fullSnapshot }, isCheckout);
+  };
+
   const emitNextEvent = () => {
     if (stopping) return;
 
@@ -48,12 +63,7 @@ export default function mockRecordFn(options = {}) {
       now - lastCheckoutTime >= options.checkoutEveryNms
     ) {
       lastCheckoutTime = now;
-
-      // checkout:
-      // rrweb sends both Meta and FullSnapshot events in the same tick
-      // with isCheckout = true
-      emit({ ...allEvents.meta }, true);
-      emit({ ...allEvents.fullSnapshot }, true);
+      emitCheckoutPair(emit, true);
     }
 
     emit(events.next().value, false);
@@ -71,10 +81,18 @@ export default function mockRecordFn(options = {}) {
   emit(allEvents.fullSnapshot, false);
   initialSnapshotDone = true;
 
+  mockRecordFn.takeFullSnapshot = (isCheckout = false) => {
+    lastCheckoutTime = Date.now();
+    emitCheckoutPair(emit, isCheckout);
+  };
+
   // Return a stop function that cleans up the intervals
   return () => {
     stopping = true;
     clearInterval(intervalId);
     intervalId = null;
+    mockRecordFn.takeFullSnapshot = () => {};
   };
 }
+
+mockRecordFn.takeFullSnapshot = () => {};

@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import Replay from '../../../src/browser/replay/replay.js';
 import logger from '../../../src/logger.js';
-import mockRecordFn from '../util/mockRecordFn.js';
+import mockRecordFn, { stubRecordFn } from '../util/mockRecordFn.js';
 
 describe('Replay - Buffer Index Checkout Resilience', function () {
   let options, replay, recorder, api, tracing, telemeter, clock;
@@ -446,7 +446,7 @@ describe('Replay - Buffer Index Checkout Resilience', function () {
         preDuration: 4,
         postDuration: 5,
       },
-      recordFn: () => () => {},
+      recordFn: stubRecordFn(),
     });
 
     recorder._isReady = true;

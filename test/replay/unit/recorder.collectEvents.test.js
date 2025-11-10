@@ -3,11 +3,12 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
 import { setCurrentBuffer, setPreviousBuffer } from '../util/recorder.js';
 
 describe('Recorder buffer-index event collection', function () {
   let recorder;
-  const mockRecordFn = () => () => {};
+  const mockRecordFn = stubRecordFn();
 
   beforeEach(function () {
     recorder = new Recorder(
