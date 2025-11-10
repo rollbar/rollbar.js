@@ -6,8 +6,8 @@
 class RateLimiter {
   static globalSettings = {
     startTime: Date.now(),
-    maxItems: null,
-    itemsPerMinute: null,
+    maxItems: undefined,
+    itemsPerMinute: undefined,
   };
 
   constructor(options = {}) {
@@ -30,13 +30,13 @@ class RateLimiter {
   configureGlobal(options = {}) {
     const { startTime, maxItems, itemsPerMinute } = options;
 
-    if (startTime != null) {
+    if (startTime !== undefined) {
       RateLimiter.globalSettings.startTime = startTime;
     }
-    if (maxItems != null) {
+    if (maxItems !== undefined) {
       RateLimiter.globalSettings.maxItems = maxItems;
     }
-    if (itemsPerMinute != null) {
+    if (itemsPerMinute !== undefined) {
       RateLimiter.globalSettings.itemsPerMinute = itemsPerMinute;
     }
   }
