@@ -4,12 +4,12 @@ import sinon from 'sinon';
 
 import Replay from '../../../src/browser/replay/replay.js';
 import logger from '../../../src/logger.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
 import {
   currentBuffer,
   setCurrentBuffer,
   setPreviousBuffer,
 } from '../util/recorder.js';
-import { stubRecordFn } from '../util/mockRecordFn.js';
 
 describe('Replay buffer-index integration', function () {
   let options, replay, recorder, tracing, telemeter, clock;

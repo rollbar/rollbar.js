@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../src/browser/replay/recorder.js';
+
 import { stubRecordFn } from './replay/util/mockRecordFn.js';
 
 describe('Recorder', function () {

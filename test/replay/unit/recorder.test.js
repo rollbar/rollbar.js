@@ -8,7 +8,6 @@ import { stubRecordFn } from '../util/mockRecordFn.js';
 const mockRecordFn = stubRecordFn();
 
 describe('Recorder', function () {
-
   describe('constructor', function () {
     it('initializes with provided options', function () {
       const options = {
