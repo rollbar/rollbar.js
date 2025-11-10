@@ -68,13 +68,10 @@ export default class Notifier {
    *    backend in case of success.
    */
   log(item, callback) {
-    let cb = callback;
-    if (!cb || !isFunction(cb)) {
-      cb = function () {};
-    }
+    callback = isFunction(callback) ? callback : () => {};
 
     if (!this.options.enabled) {
-      return cb(new Error('Rollbar is not enabled'));
+      return callback(new Error('Rollbar is not enabled'), null);
     }
 
     this.queue.addPendingItem(item);
@@ -82,9 +79,9 @@ export default class Notifier {
     this._applyTransforms(item, (err, i) => {
       if (err) {
         this.queue.removePendingItem(item);
-        return cb(err, null);
+        return callback(err, null);
       }
-      this.queue.addItem(i, cb, originalError, item);
+      this.queue.addItem(i, callback, originalError, item);
     });
   }
 
