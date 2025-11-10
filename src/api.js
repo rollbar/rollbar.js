@@ -158,7 +158,7 @@ Api.prototype.postJsonPayload = function (jsonPayload, callback) {
 };
 
 Api.prototype.configure = function (options) {
-  var oldOptions = this.oldOptions;
+  var oldOptions = this.options;
   this.options = _.merge(oldOptions, options);
   this.transportOptions = _getTransport(this.options, this.url);
   this.OTLPTransportOptions = _getOTLPTransport(this.options, this.url);
