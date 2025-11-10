@@ -3,10 +3,11 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
+
+const mockRecordFn = stubRecordFn();
 
 describe('Recorder', function () {
-  const mockRecordFn = () => () => {};
-  mockRecordFn.takeFullSnapshot = () => {};
 
   describe('constructor', function () {
     it('initializes with provided options', function () {

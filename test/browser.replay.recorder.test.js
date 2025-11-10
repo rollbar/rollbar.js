@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../src/browser/replay/recorder.js';
+import { stubRecordFn } from './replay/util/mockRecordFn.js';
 
 describe('Recorder', function () {
   let mockTracing;
@@ -30,11 +31,10 @@ describe('Recorder', function () {
 
     testReplayId = 'test-replay-id-123';
     stopFnSpy = sinon.spy();
-    recordFnStub = sinon.stub().callsFake(function (options) {
+    recordFnStub = stubRecordFn().callsFake(function (options) {
       emitCallback = options.emit;
       return stopFnSpy;
     });
-    recordFnStub.takeFullSnapshot = sinon.stub();
   });
 
   describe('constructor', function () {

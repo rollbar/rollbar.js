@@ -2,12 +2,15 @@
  * Mock implementation of rrweb.record for testing
  * Emits fixture events on a schedule to test the Recorder
  */
+import sinon from 'sinon';
 
 import { allEvents } from '../../fixtures/replay/index.js';
 
-function emitCheckoutPair(emit, isCheckout) {
-  emit({ ...allEvents.meta }, isCheckout);
-  emit({ ...allEvents.fullSnapshot }, isCheckout);
+export function stubRecordFn() {
+  const recordFn = sinon.stub();
+  recordFn.takeFullSnapshot = sinon.stub();
+  recordFn.callsFake(() => () => {});
+  return recordFn;
 }
 
 /**
@@ -41,6 +44,13 @@ export default function mockRecordFn(options = {}) {
   let stopping = false;
   let initialSnapshotDone = false;
 
+  const emitCheckoutPair = (emit, isCheckout) => {
+    // rrweb sends both Meta and FullSnapshot events
+    // in the same tick on checkout
+    emit({ ...allEvents.meta }, isCheckout);
+    emit({ ...allEvents.fullSnapshot }, isCheckout);
+  };
+
   const emitNextEvent = () => {
     if (stopping) return;
 
@@ -53,10 +63,6 @@ export default function mockRecordFn(options = {}) {
       now - lastCheckoutTime >= options.checkoutEveryNms
     ) {
       lastCheckoutTime = now;
-
-      // checkout:
-      // rrweb sends both Meta and FullSnapshot events in the same tick
-      // with isCheckout = true
       emitCheckoutPair(emit, true);
     }
 

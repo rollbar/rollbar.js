@@ -9,6 +9,7 @@ import {
   setCurrentBuffer,
   setPreviousBuffer,
 } from '../util/recorder.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
 
 describe('Replay buffer-index integration', function () {
   let options, replay, recorder, tracing, telemeter, clock;
@@ -17,8 +18,7 @@ describe('Replay buffer-index integration', function () {
     clock = sinon.useFakeTimers();
     logger.init({ logLevel: 'warn' });
 
-    const mockRecordFn = () => () => {};
-    mockRecordFn.takeFullSnapshot = () => {};
+    const mockRecordFn = stubRecordFn();
     options = {
       enabled: true,
       triggerDefaults: {

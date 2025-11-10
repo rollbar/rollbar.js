@@ -4,11 +4,11 @@ import sinon from 'sinon';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
 import { setCurrentBuffer, setPreviousBuffer } from '../util/recorder.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
 
 describe('Recorder buffer-index event collection', function () {
   let recorder;
-  const mockRecordFn = () => () => {};
-  mockRecordFn.takeFullSnapshot = () => {};
+  const mockRecordFn = stubRecordFn();
 
   beforeEach(function () {
     recorder = new Recorder(
