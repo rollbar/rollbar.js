@@ -24,8 +24,8 @@ If you are unsure where to start, browse the GitHub issues page (<https://github
 
 1. Fork the repository and clone your fork:
    ```bash
-   git clone https://github.com/<your-username>/rollbar-js.git
-   cd rollbar-js
+   git clone https://github.com/<your-username>/rollbar.js.git
+   cd rollbar.js
    ```
 2. Install dependencies:
    ```bash
