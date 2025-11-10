@@ -4,6 +4,7 @@ import sinon from 'sinon';
 
 import Replay from '../../../src/browser/replay/replay.js';
 import logger from '../../../src/logger.js';
+import { stubRecordFn } from '../util/mockRecordFn.js';
 import {
   currentBuffer,
   setCurrentBuffer,
@@ -17,7 +18,7 @@ describe('Replay buffer-index integration', function () {
     clock = sinon.useFakeTimers();
     logger.init({ logLevel: 'warn' });
 
-    const mockRecordFn = () => () => {};
+    const mockRecordFn = stubRecordFn();
     options = {
       enabled: true,
       triggerDefaults: {

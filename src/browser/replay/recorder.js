@@ -3,6 +3,9 @@ import { EventType } from '@rrweb/types';
 
 import logger from '../../logger.js';
 import hrtime from '../../tracing/hrtime.js';
+import { isFunction } from '../../utility.js';
+
+import CheckoutWatchdog from './checkoutWatchdog.js';
 
 /** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
 
@@ -13,6 +16,7 @@ export default class Recorder {
   _isReady = false;
   _stopFn = null;
   _recordFn;
+  _checkoutWatchdog;
 
   /** A two-slot ring buffer for storing events. */
   _buffers = [[], []];
@@ -28,11 +32,20 @@ export default class Recorder {
    *
    * @param {Object} options - Configuration options for the recorder
    */
-  constructor(options) {
+  constructor(options = {}) {
     this.options = options;
 
     // Tests inject a custom rrweb record function or mock.
     this._recordFn = options.recordFn || rrwebRecordFn;
+
+    if (!isFunction(this._recordFn?.takeFullSnapshot)) {
+      throw new Error('Recorder requires a valid rrweb record function');
+    }
+
+    this._checkoutWatchdog = new CheckoutWatchdog({
+      getIntervalMs: () => this.checkoutEveryNms(),
+      forceCheckout: () => this._recordFn.takeFullSnapshot(true),
+    });
   }
 
   get isRecording() {
@@ -176,6 +189,7 @@ export default class Recorder {
         if (isCheckout && event.type === EventType.Meta) {
           this._currentSlot = this._previousSlot;
           this._buffers[this._currentSlot] = [];
+          this._checkoutWatchdog.notify(event.timestamp);
         }
 
         this._buffers[this._currentSlot].push(event);
@@ -190,6 +204,8 @@ export default class Recorder {
       ...this._rrwebOptions,
     });
 
+    this._checkoutWatchdog.start();
+
     return this;
   }
 
@@ -201,6 +217,7 @@ export default class Recorder {
     this._stopFn();
     this._stopFn = null;
     this._isReady = false;
+    this._checkoutWatchdog.stop();
 
     return this;
   }
@@ -209,6 +226,7 @@ export default class Recorder {
     this._buffers = [[], []];
     this._currentSlot = 0;
     this._isReady = false;
+    this._checkoutWatchdog.stop();
   }
 
   /**
