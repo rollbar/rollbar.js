@@ -135,6 +135,14 @@ export default defineConfig(
     },
   },
 
+  // tests
+  {
+    files: ['test/**/*.[tj]s'],
+    languageOptions: {
+      rules: { '@typescript-eslint/no-empty-function': 'off' },
+    },
+  },
+
   // scripts
   {
     files: ['scripts/**/*.{js,cjs}'],

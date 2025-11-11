@@ -12,12 +12,11 @@ describe('instrumentNetwork', function () {
   it('should capture XHR requests with string URL', function (done) {
     const callback = sinon.spy();
     const windowMock = {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       XMLHttpRequest: function () {},
     };
 
-    windowMock.XMLHttpRequest.prototype.open = () => {};
-    windowMock.XMLHttpRequest.prototype.send = () => {};
+    windowMock.XMLHttpRequest.prototype.open = function () {};
+    windowMock.XMLHttpRequest.prototype.send = function () {};
 
     let i = createInstrumenter(callback, windowMock);
     i.instrumentNetwork();

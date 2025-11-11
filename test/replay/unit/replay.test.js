@@ -24,7 +24,7 @@ class MockTracing {
     };
   }
 
-  addSpanTransform = () => {};
+  addSpanTransform() {}
 }
 
 class MockTelemeter {
