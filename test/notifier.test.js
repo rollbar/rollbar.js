@@ -8,13 +8,13 @@ function TestQueueGenerator() {
     this.items = [];
   };
 
-  TestQueue.prototype.addPendingItem = function () {};
-  TestQueue.prototype.removePendingItem = function () {};
+  TestQueue.prototype.addPendingItem = () => {};
+  TestQueue.prototype.removePendingItem = () => {};
   TestQueue.prototype.addItem = function (item, callback) {
     this.items.push({ item: item, callback: callback });
   };
 
-  TestQueue.prototype.configure = function () {};
+  TestQueue.prototype.configure = () => {};
 
   return TestQueue;
 }

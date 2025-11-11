@@ -10,8 +10,8 @@ function itemFromArgs(args) {
 }
 
 var fakeLogger = {
-  error: function () {},
-  log: function () {},
+  error: () => {},
+  log: () => {},
 };
 
 describe('itemToPayload', function () {

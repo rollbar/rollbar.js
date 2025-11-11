@@ -10,7 +10,7 @@ function Transport(truncation) {
 
 Transport.prototype.get = function (accessToken, options, params, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
@@ -29,7 +29,7 @@ Transport.prototype.get = function (accessToken, options, params, callback) {
 
 Transport.prototype.post = function (accessToken, options, payload, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   if (!payload) {
@@ -59,7 +59,7 @@ Transport.prototype.postJsonPayload = function (
   callback,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   if (!jsonPayload) {

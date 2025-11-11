@@ -49,7 +49,7 @@ describe('Replay buffer-index integration', function () {
       session: {
         attributes: {},
       },
-      addSpanTransform() {},
+      addSpanTransform: () => {},
     };
 
     telemeter = {

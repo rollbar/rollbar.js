@@ -34,7 +34,7 @@ function TestApiGenerator() {
     }
   };
 
-  TestApi.prototype.configure = function () {};
+  TestApi.prototype.configure = () => {};
 
   return TestApi;
 }

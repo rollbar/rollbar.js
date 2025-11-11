@@ -121,7 +121,7 @@ function makeXhrRequest({
         }
 
         var xdomainrequest = new XDomainRequest();
-        xdomainrequest.onprogress = function () {};
+        xdomainrequest.onprogress = () => {};
         xdomainrequest.ontimeout = function () {
           var msg = 'Request timed out';
           var code = 'ETIMEDOUT';
