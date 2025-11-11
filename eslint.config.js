@@ -63,19 +63,13 @@ export default defineConfig(
       '@typescript-eslint/no-unused-vars': noUnusedVarsRule,
       '@typescript-eslint/no-empty-function': [
         'error',
-        {
-          allow: ['arrowFunctions'],
-        },
+        { allow: ['arrowFunctions'] },
       ],
 
       // disabled for now
-      '@typescript-eslint/consistent-indexed-object-style': 'off',
-      '@typescript-eslint/consistent-type-assertions': 'off',
-      '@typescript-eslint/consistent-type-definitions': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
       '@typescript-eslint/prefer-for-of': 'off',
-      '@typescript-eslint/prefer-function-type': 'off',
       'chai-friendly/no-unused-expressions': 'off',
       'no-undef': 'off',
       'no-var': 'off',
