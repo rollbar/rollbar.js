@@ -130,7 +130,7 @@ const serverCJSConfigBase = {
   module: {
     rules: [
       {
-        test: /\.m?[jt]s$/,
+        test: /\.m?[tj]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
