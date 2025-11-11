@@ -12,6 +12,13 @@
           "ie": "11"
         }
       }
+    ],
+    [
+      "@babel/preset-typescript",
+      {
+        "allowDeclareFields": true,
+        "onlyRemoveTypeImports": true
+      }
     ]
   ]
 }

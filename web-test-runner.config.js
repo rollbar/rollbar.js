@@ -1,14 +1,22 @@
+import { esbuildPlugin } from '@web/dev-server-esbuild';
 import { playwrightLauncher } from '@web/test-runner-playwright';
 
 export default {
   files: [
     'test/**/*.test.js',
+    'test/**/*.test.ts',
     // Exclude server and React Native tests
     '!test/server.*.test.js',
     '!test/react-native.*.test.js',
   ],
 
   nodeResolve: true,
+
+  plugins: [
+    esbuildPlugin({
+      ts: true,
+    }),
+  ],
 
   browsers: [
     playwrightLauncher({

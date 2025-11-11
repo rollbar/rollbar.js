@@ -11,6 +11,10 @@ const extend = (target, ...sources) => Object.assign(target, ...sources);
 
 const outputPath = path.resolve(__dirname, 'dist');
 
+const resolveConfig = {
+  extensions: ['.ts', '.js', '.json', '.wasm'],
+};
+
 // Packages that need to be transpiled to ES5
 const needToTranspile = ['@rrweb', 'error-stack-parser-es'];
 const excludePattern = new RegExp(
@@ -30,11 +34,12 @@ const snippetConfig = {
     path: outputPath,
     filename: '[name].js',
   },
+  resolve: resolveConfig,
   target: ['web', 'es5'],
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.m?[tj]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -51,11 +56,12 @@ const pluginConfig = {
     path: path.join(outputPath, 'plugins'),
     filename: '[name].min.js',
   },
+  resolve: resolveConfig,
   target: ['web', 'es5'],
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.m?[tj]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -70,12 +76,13 @@ const vanillaConfigBase = {
   output: {
     path: outputPath,
   },
+  resolve: resolveConfig,
   target: ['web', 'es5'],
   devtool: 'hidden-source-map',
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.m?[tj]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -94,12 +101,13 @@ const UMDConfigBase = {
     libraryExport: 'default',
     globalObject: 'this',
   },
+  resolve: resolveConfig,
   target: ['web', 'es5'],
   devtool: 'source-map',
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.m?[tj]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
@@ -116,12 +124,13 @@ const serverCJSConfigBase = {
     libraryTarget: 'commonjs2',
     libraryExport: 'default',
   },
+  resolve: resolveConfig,
   target: 'node',
   externals: [nodeExternals()],
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.m?[jt]s$/,
         loader: 'babel-loader',
         exclude: [excludePattern, /vendor/],
       },
