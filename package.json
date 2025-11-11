@@ -94,6 +94,8 @@
     "@babel/core": "^7.26.10",
     "@babel/eslint-parser": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
+    "@babel/preset-typescript": "^7.28.5",
+    "@web/dev-server-esbuild": "^1.0.4",
     "@web/test-runner": "^0.20.2",
     "@web/test-runner-mocha": "^0.9.0",
     "@web/test-runner-playwright": "^0.11.1",
@@ -113,6 +115,7 @@
     "node-libs-browser": "^0.5.2",
     "prettier": "^3.6.2",
     "sinon": "^8.1.1",
+    "typescript": "^5.9.3",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0"
@@ -131,7 +134,8 @@
     "format": "prettier --write \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
     "pack": "node scripts/pack.js",
-    "validate": "npm run validate:es5 && npm run validate:examples",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run validate:es5 && npm run validate:examples && npm run typecheck",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
     "validate:examples": "node scripts/validate-examples.js -p",
     "update:snippets:examples": "node scripts/update-snippets.js examples"
