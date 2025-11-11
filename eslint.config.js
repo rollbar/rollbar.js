@@ -138,9 +138,7 @@ export default defineConfig(
   // tests
   {
     files: ['test/**/*.[tj]s'],
-    languageOptions: {
-      rules: { '@typescript-eslint/no-empty-function': 'off' },
-    },
+    rules: { '@typescript-eslint/no-empty-function': 'off' },
   },
 
   // scripts
