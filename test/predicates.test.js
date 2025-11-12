@@ -2,8 +2,8 @@ import { expect } from 'chai';
 
 import * as p from '../src/predicates.js';
 var logger = {
-  log: () => {},
-  error: () => {},
+  log: function () {},
+  error: function () {},
 };
 
 describe('userCheckIgnore', function () {

@@ -34,7 +34,7 @@ describe('typeName', function () {
   });
 
   it('should handle functions', function (done) {
-    expect(_.typeName(() => {})).to.eql('function');
+    expect(_.typeName(function () {})).to.eql('function');
     var f = function (x) {
       return x;
     };
@@ -62,7 +62,7 @@ describe('isType', function () {
     expect(_.isType(null, 'null')).to.be.true;
     expect(_.isType(null, 'object')).to.be.false;
     expect(_.isType({}, 'object')).to.be.true;
-    expect(_.isType(() => {}, 'function')).to.be.true;
+    expect(_.isType(function () {}, 'function')).to.be.true;
     expect(_.isType(42, 'number')).to.be.true;
     expect(_.isType('42', 'string')).to.be.true;
     expect(_.isType([], 'array')).to.be.true;

@@ -574,7 +574,7 @@ function createInstrumenter(callback, windowMock) {
   return new Instrumenter(
     { scrubFields: [] },
     { captureNetwork: callback },
-    { wrap: () => {}, client: { notifier: { diagnostic: {} } } },
+    { wrap: function () {}, client: { notifier: { diagnostic: {} } } },
     windowMock,
   );
 }

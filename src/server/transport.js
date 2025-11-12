@@ -38,7 +38,7 @@ Transport.prototype.get = function (
 ) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = () => {};
+    callback = function () {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
@@ -75,7 +75,7 @@ Transport.prototype.post = function ({
 }) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = () => {};
+    callback = function () {};
   }
   if (_currentTime() < this.rateLimitExpires) {
     return callback(new Error('Exceeded rate limit'));

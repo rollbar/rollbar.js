@@ -304,7 +304,7 @@ declare namespace Rollbar {
     plugins?: any[];
   }
 
-  export type TransformSpanParams = { span: any };
+  export type TransformSpanParams = { span: any; }
   export interface TracingOptions {
     enabled?: boolean;
     endpoint?: string;
