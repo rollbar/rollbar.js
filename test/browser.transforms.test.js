@@ -119,11 +119,10 @@ describe('handleItemWithError', function () {
       { name: '', constructor: '', result: '' },
     ];
 
-    for (var i = 0; i < names.length; i++) {
-      err.name = names[i].name;
-      err.constructor = { name: names[i].constructor };
+    for (const { name, constructor, result } of names) {
+      err.name = name;
+      err.constructor = { name: constructor };
       var item = itemFromArgs(args);
-      var result = names[i].result;
 
       t.handleItemWithError(item, options, function (e, i) {
         expect(i.stackInfo.name).to.eql(result);

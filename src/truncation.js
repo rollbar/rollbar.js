@@ -19,10 +19,10 @@ function truncateFrames(payload, jsonBackup, range) {
   var frames;
   if (body.trace_chain) {
     var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      frames = chain[i].frames;
+    for (const trace of chain) {
+      frames = trace.frames;
       frames = selectFrames(frames, range);
-      chain[i].frames = frames;
+      trace.frames = frames;
     }
   } else if (body.trace) {
     frames = body.trace.frames;
@@ -74,8 +74,8 @@ function minBody(payload, jsonBackup) {
   var body = payload.data.body;
   if (body.trace_chain) {
     var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      chain[i] = truncateTraceData(chain[i]);
+    for (const [index, trace] of chain.entries()) {
+      chain[index] = truncateTraceData(trace);
     }
   } else if (body.trace) {
     body.trace = truncateTraceData(body.trace);

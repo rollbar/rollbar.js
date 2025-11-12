@@ -352,8 +352,7 @@ describe('filterIp', function () {
       'FE80::0202:B3FF:FE1E:8329',
       '2607:f0d0:1002:51::4',
     ];
-    for (var i = 0; i < ips.length; i++) {
-      var ip = ips[i];
+    for (const ip of ips) {
       var requestData = { user_ip: ip };
       _.filterIp(requestData, 'anonymize');
       expect(requestData['user_ip']).to.not.eql(ip);

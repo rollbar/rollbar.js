@@ -560,9 +560,9 @@ function addErrorContext(item, errors) {
   var contextAdded = false;
 
   try {
-    for (var i = 0; i < errors.length; ++i) {
-      if (hasOwn(errors[i], 'rollbarContext')) {
-        custom = merge(custom, nonCircularClone(errors[i].rollbarContext));
+    for (const error of errors) {
+      if (hasOwn(error, 'rollbarContext')) {
+        custom = merge(custom, nonCircularClone(error.rollbarContext));
         contextAdded = true;
       }
     }
@@ -587,8 +587,8 @@ var TELEMETRY_TYPES = [
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
 function arrayIncludes(arr, val) {
-  for (var k = 0; k < arr.length; ++k) {
-    if (arr[k] === val) {
+  for (const entry of arr) {
+    if (entry === val) {
       return true;
     }
   }

@@ -115,8 +115,7 @@ function _buildFrames(stack, options) {
   }
 
   var frames = [];
-  for (var i = 0; i < stack.length; ++i) {
-    var stackFrame = stack[i];
+  for (const stackFrame of stack) {
     var filename = stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '<unknown>';
     var frame = {
       filename: _rewriteFilename(filename, options),
