@@ -33,7 +33,7 @@ Transport.prototype.get = function (
   requestFactory,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
 
@@ -59,7 +59,7 @@ Transport.prototype.post = function ({
   requestFactory,
 }) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
 
   if (!payload) {
@@ -100,7 +100,7 @@ Transport.prototype.postJsonPayload = function (
   requestFactory,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
 
   var method = 'POST';

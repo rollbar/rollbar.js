@@ -104,6 +104,7 @@
     "es-check": "^9.1.4",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-chai-friendly": "^1.1.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-unused-imports": "^4.3.0",
@@ -116,6 +117,7 @@
     "prettier": "^3.6.2",
     "sinon": "^8.1.1",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0"
