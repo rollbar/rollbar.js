@@ -229,8 +229,8 @@ var _methods =
     ',',
   );
 
-for (var i = 0; i < _methods.length; ++i) {
-  Shim.prototype[_methods[i]] = stub(_methods[i]);
+for (const method of _methods) {
+  Shim.prototype[method] = stub(method);
 }
 
 export { setupShim, Rollbar };

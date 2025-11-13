@@ -9,9 +9,9 @@ function isDescribedElement(element, type, subtypes) {
   if (!subtypes) {
     return true;
   }
-  element = getElementType(element);
-  for (var i = 0; i < subtypes.length; i++) {
-    if (subtypes[i] === element) {
+  const elementType = getElementType(element);
+  for (const subtype of subtypes) {
+    if (subtype === elementType) {
       return true;
     }
   }
@@ -80,10 +80,8 @@ function descriptionToString(desc) {
   if (desc.classes) {
     out.push('.' + desc.classes.join('.'));
   }
-  for (var i = 0; i < desc.attributes.length; i++) {
-    out.push(
-      '[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]',
-    );
+  for (const attribute of desc.attributes) {
+    out.push('[' + attribute.key + '="' + attribute.value + '"]');
   }
 
   return out.join('');
@@ -109,10 +107,7 @@ function describeElement(elem) {
     return null;
   }
   var out = {},
-    className,
-    key,
-    attr,
-    i;
+    className;
   out.tagName = elem.tagName.toLowerCase();
   if (elem.id) {
     out.id = elem.id;
@@ -123,11 +118,10 @@ function describeElement(elem) {
   }
   var attributes = ['type', 'name', 'title', 'alt'];
   out.attributes = [];
-  for (i = 0; i < attributes.length; i++) {
-    key = attributes[i];
-    attr = elem.getAttribute(key);
+  for (const attribute of attributes) {
+    const attr = elem.getAttribute(attribute);
     if (attr) {
-      out.attributes.push({ key: key, value: attr });
+      out.attributes.push({ key: attribute, value: attr });
     }
   }
   return out;

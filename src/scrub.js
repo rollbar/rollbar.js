@@ -5,8 +5,8 @@ function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
 
   if (scrubPaths) {
-    for (var i = 0; i < scrubPaths.length; ++i) {
-      scrubPath(data, scrubPaths[i]);
+    for (const path of scrubPaths) {
+      scrubPath(data, path);
     }
   }
 
@@ -18,19 +18,17 @@ function scrub(data, scrubFields, scrubPaths) {
   }
 
   function paramScrubber(v) {
-    var i;
     if (_.isType(v, 'string')) {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
+      for (const regex of queryRes) {
+        v = v.replace(regex, redactQueryParam);
       }
     }
     return v;
   }
 
   function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
+    for (const regex of paramRes) {
+      if (regex.test(k)) {
         v = _.redact();
         break;
       }
@@ -57,11 +55,11 @@ function scrubPath(obj, path) {
   var keys = path.split('.');
   var last = keys.length - 1;
   try {
-    for (var i = 0; i <= last; ++i) {
-      if (i < last) {
-        obj = obj[keys[i]];
+    for (const [index, key] of keys.entries()) {
+      if (index < last) {
+        obj = obj[key];
       } else {
-        obj[keys[i]] = _.redact();
+        obj[key] = _.redact();
       }
     }
   } catch (_e) {
@@ -71,9 +69,8 @@ function scrubPath(obj, path) {
 
 function _getScrubFieldRegexs(scrubFields) {
   var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
+  for (const field of scrubFields) {
+    var pat = '^\\[?(%5[bB])?' + field + '\\[?(%5[bB])?\\]?(%5[dD])?$';
     ret.push(new RegExp(pat, 'i'));
   }
   return ret;
@@ -81,9 +78,8 @@ function _getScrubFieldRegexs(scrubFields) {
 
 function _getScrubQueryParamRegexs(scrubFields) {
   var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
+  for (const field of scrubFields) {
+    var pat = '\\[?(%5[bB])?' + field + '\\[?(%5[bB])?\\]?(%5[dD])?';
     ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
   }
   return ret;

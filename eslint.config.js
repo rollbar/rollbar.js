@@ -69,7 +69,6 @@ export default defineConfig(
       // disabled for now
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
-      '@typescript-eslint/prefer-for-of': 'off',
       'chai-friendly/no-unused-expressions': 'off',
       'no-undef': 'off',
       'no-var': 'off',

@@ -190,8 +190,7 @@ function messagesFromItem(item) {
   // So here we preserve the ability to collect strings from any combination of these keys.
   if (body.trace_chain) {
     var traceChain = body.trace_chain;
-    for (var i = 0; i < traceChain.length; i++) {
-      var trace = traceChain[i];
+    for (const trace of traceChain) {
       messages.push(_.get(trace, 'exception.message'));
     }
   }
