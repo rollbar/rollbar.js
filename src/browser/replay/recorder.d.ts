@@ -1,5 +1,5 @@
 /** A point-in-time cursor into the active Recorder's two-slot ring buffer. */
-export type BufferCursor = {
+export interface BufferCursor {
   /** Index (0|1) of the active buffer's slot at snapshot time. */
   slot: 0 | 1;
   /**
@@ -7,7 +7,7 @@ export type BufferCursor = {
    * May be -1 when empty.
    */
   offset: number;
-};
+}
 
 export default class Recorder {
   constructor(options: Record<string, any>);

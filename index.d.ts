@@ -50,7 +50,7 @@ declare namespace Rollbar {
   ) => void | Promise<TResult>;
   export type MaybeError = Error | undefined | null;
   export type Level = 'debug' | 'info' | 'warning' | 'error' | 'critical';
-  export type Dictionary = { [key: string]: unknown };
+  export type Dictionary = Record<string, unknown>;
   export type StringAttributes = Record<string, string>;
 
   /**
@@ -191,9 +191,7 @@ declare namespace Rollbar {
     response: any,
     next: ExpressNextFunction,
   ) => any;
-  export interface ExpressNextFunction {
-    (err?: any): void;
-  }
+  export type ExpressNextFunction = (err?: any) => void;
   class Locals {}
   export type LocalsType = typeof Locals;
   export type LocalsOptions = LocalsType | LocalsSettings;
@@ -304,7 +302,9 @@ declare namespace Rollbar {
     plugins?: any[];
   }
 
-  export type TransformSpanParams = { span: any };
+  export interface TransformSpanParams {
+    span: any;
+  }
   export interface TracingOptions {
     enabled?: boolean;
     endpoint?: string;
