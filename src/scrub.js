@@ -55,14 +55,12 @@ function scrubPath(obj, path) {
   var keys = path.split('.');
   var last = keys.length - 1;
   try {
-    var index = 0;
-    for (const key of keys) {
+    for (const [index, key] of keys.entries()) {
       if (index < last) {
         obj = obj[key];
       } else {
         obj[key] = _.redact();
       }
-      index += 1;
     }
   } catch (_e) {
     // Missing key is OK;
