@@ -17,7 +17,10 @@ export class Session {
     if (this.session) {
       return this;
     }
-    this.getSession() || this.createSession();
+
+    if (this.getSession() === null) {
+      this.createSession();
+    }
 
     this.initSessionAttributes(attrs);
 
