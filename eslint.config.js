@@ -70,7 +70,6 @@ export default defineConfig(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
       'chai-friendly/no-unused-expressions': 'off',
-      'no-undef': 'off',
       'no-var': 'off',
     },
   },
@@ -81,7 +80,7 @@ export default defineConfig(
     languageOptions: { globals: { ...globals.mocha } },
   },
   {
-    files: ['src/**/*.c?[tj]s', 'test/**/*.[tj]s'],
+    files: ['src/**/*.[tj]s', 'test/**/*.[tj]s'],
     languageOptions: { globals: { ...globals.browser } },
   },
   {

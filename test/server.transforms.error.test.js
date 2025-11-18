@@ -47,7 +47,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const _x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined; // eslint-disable-line no-undef
     };
 
     try {
@@ -72,7 +72,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const _x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined; // eslint-disable-line no-undef
     };
 
     try {
@@ -123,7 +123,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const _x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined; // eslint-disable-line no-undef
     };
 
     try {
@@ -162,7 +162,7 @@ describe('transforms.handleItemWithError', function () {
     let testError;
 
     const test = function () {
-      const _x = thisVariableIsNotDefined;
+      const _x = thisVariableIsNotDefined; // eslint-disable-line no-undef
     };
 
     try {
