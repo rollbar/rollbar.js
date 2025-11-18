@@ -70,7 +70,6 @@ export default defineConfig(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
       'chai-friendly/no-unused-expressions': 'off',
-      'no-var': 'off',
     },
   },
 
