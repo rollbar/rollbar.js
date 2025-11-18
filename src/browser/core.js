@@ -295,16 +295,15 @@ class Rollbar {
       return;
     }
 
-    var r = this;
-    function prepareStackTrace(error, _stack) {
-      if (r.options.inspectAnonymousErrors) {
-        if (r.anonymousErrorsPending) {
+    const prepareStackTrace = (error, _stack) => {
+      if (this.options.inspectAnonymousErrors) {
+        if (this.anonymousErrorsPending) {
           // This is the only known way to detect that onerror saw an anonymous error.
           // It depends on onerror reliably being called before Error.prepareStackTrace,
           // which so far holds true on tested versions of Chrome. If versions of Chrome
           // are tested that behave differently, this logic will need to be updated
           // accordingly.
-          r.anonymousErrorsPending -= 1;
+          this.anonymousErrorsPending -= 1;
 
           if (!error) {
             // Not likely to get here, but calling handleUncaughtException from here
@@ -319,13 +318,13 @@ class Rollbar {
           // url, lineno, colno shouldn't be needed for these errors.
           // If that changes, update this accordingly, using the unused
           // _stack param as needed (rather than parse error.toString()).
-          r.handleUncaughtException(error.message, null, null, null, error);
+          this.handleUncaughtException(error.message, null, null, null, error);
         }
       }
 
       // Workaround to ensure stack is preserved for normal errors.
       return error.stack;
-    }
+    };
 
     // https://v8.dev/docs/stack-trace-api
     try {

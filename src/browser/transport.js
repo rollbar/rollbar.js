@@ -132,9 +132,8 @@ Transport.prototype._makeZoneRequest = function () {
   var args = Array.prototype.slice.call(arguments);
 
   if (rootZone) {
-    var self = this;
-    rootZone.run(function () {
-      self._makeRequest.apply(undefined, args);
+    rootZone.run(() => {
+      this._makeRequest.apply(undefined, args);
     });
   } else {
     this._makeRequest.apply(undefined, args);

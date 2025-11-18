@@ -58,10 +58,9 @@ Locals.prototype.initSession = function () {
     }
   });
 
-  var self = this;
   Locals.session.post('Debugger.enable', (_err, _result) => {
-    self.initialized = true;
-    updatePauseState(self.options, self.logger);
+    this.initialized = true;
+    updatePauseState(this.options, this.logger);
   });
 };
 
