@@ -217,8 +217,9 @@ Shim.prototype.wrap = function (f, context, _before) {
 
 function stub(method) {
   return _wrapInternalErr(function () {
+    var shim = this;
     var args = Array.prototype.slice.call(arguments, 0);
-    var data = { shim: this, method: method, args: args, ts: new Date() };
+    var data = { shim: shim, method: method, args: args, ts: new Date() };
     window._rollbarShims[this.shimId()].messages.push(data);
   });
 }
