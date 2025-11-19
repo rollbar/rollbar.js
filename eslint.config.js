@@ -65,6 +65,10 @@ export default defineConfig(
         'error',
         { allow: ['arrowFunctions'] },
       ],
+      '@typescript-eslint/no-this-alias': [
+        'error',
+        { allowDestructuring: true },
+      ],
       'chai-friendly/no-unused-expressions': [
         'error',
         { allowShortCircuit: true },
@@ -72,7 +76,6 @@ export default defineConfig(
 
       // disabled for now
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-this-alias': 'off',
     },
   },
 

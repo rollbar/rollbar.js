@@ -89,9 +89,9 @@ Instrumenter.prototype.instrumentNetwork = function () {
 
 function networkRequestWrapper(orig) {
   var telemeter = this.telemeter;
-  var self = this;
 
-  return function (url, options, cb) {
+  return (...args) => {
+    const [url, options, cb] = args;
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
 
     var metadata = {
@@ -102,23 +102,21 @@ function networkRequestWrapper(orig) {
       end_time_ms: null,
     };
 
-    if (self.autoInstrument.networkRequestHeaders) {
+    if (this.autoInstrument.networkRequestHeaders) {
       metadata.request_headers = mergedOptions.options.headers;
     }
     telemeter.captureNetwork(metadata, 'http');
 
-    // Call the original method with the original arguments and wrapped callback.
-    var wrappedArgs = Array.from(arguments);
     var wrappedCallback = responseCallbackWrapper(
-      self.autoInstrument,
+      this.autoInstrument,
       metadata,
       mergedOptions.cb,
     );
     if (mergedOptions.cb) {
-      wrappedArgs.pop();
+      args.pop();
     }
-    wrappedArgs.push(wrappedCallback);
-    var req = orig.apply(https, wrappedArgs);
+    args.push(wrappedCallback);
+    var req = orig.apply(https, args);
 
     req.on('error', (err) => {
       metadata.status_code = 0;
