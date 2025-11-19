@@ -800,16 +800,12 @@ function updateDeprecatedOptions(options, logger) {
   if (options.hostWhiteList && !options.hostSafeList) {
     options.hostSafeList = options.hostWhiteList;
     options.hostWhiteList = undefined;
-    if (logger) {
-      logger.log('hostWhiteList is deprecated. Use hostSafeList.');
-    }
+    logger && logger.log('hostWhiteList is deprecated. Use hostSafeList.');
   }
   if (options.hostBlackList && !options.hostBlockList) {
     options.hostBlockList = options.hostBlackList;
     options.hostBlackList = undefined;
-    if (logger) {
-      logger.log('hostBlackList is deprecated. Use hostBlockList.');
-    }
+    logger && logger.log('hostBlackList is deprecated. Use hostBlockList.');
   }
   return options;
 }

@@ -65,11 +65,14 @@ export default defineConfig(
         'error',
         { allow: ['arrowFunctions'] },
       ],
+      'chai-friendly/no-unused-expressions': [
+        'error',
+        { allowShortCircuit: true },
+      ],
 
       // disabled for now
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-this-alias': 'off',
-      'chai-friendly/no-unused-expressions': 'off',
     },
   },
 

@@ -78,14 +78,8 @@ Rollbar.prototype.configure = function (options, payloadData) {
     this.tracer = null;
   }
 
-  if (this.notifier) {
-    this.notifier.configure(this.options);
-  }
-
-  if (this.telemeter) {
-    this.telemeter.configure(this.options);
-  }
-
+  this.notifier && this.notifier.configure(this.options);
+  this.telemeter && this.telemeter.configure(this.options);
   setStackTraceLimit(options);
   this.global(this.options);
 
