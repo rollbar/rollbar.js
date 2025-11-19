@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+// TODO(matux): refactor to remove no-this-alias disable
+
 import logger from '../logger.js';
 import scrub from '../scrub.js';
 import headers from '../utility/headers.js';

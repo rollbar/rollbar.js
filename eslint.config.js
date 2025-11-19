@@ -69,10 +69,13 @@ export default defineConfig(
         'error',
         { allowShortCircuit: true },
       ],
+      '@typescript-eslint/no-this-alias': [
+        'error',
+        { allowDestructuring: true },
+      ],
 
       // disabled for now
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-this-alias': 'off',
     },
   },
 
