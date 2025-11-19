@@ -60,7 +60,7 @@ describe('transforms.nodeSourceMaps', function () {
     expect(frame.lineno).to.equal(10);
     expect(frame.colno).to.equal(22);
     expect(frame.code).to.equal(
-      "  var error = new CustomError('foo') as Error;",
+      "  const error = new CustomError('foo') as Error;",
     );
     expect(frame.context.pre[0]).to.equal('    }');
     expect(frame.context.pre[1]).to.equal('  }');
@@ -101,7 +101,7 @@ describe('transforms.nodeSourceMaps', function () {
     expect(frame.lineno).to.equal(10);
     expect(frame.colno).to.equal(22);
     expect(frame.code).to.equal(
-      "  var error = new CustomError('foo') as Error;",
+      "  const error = new CustomError('foo') as Error;",
     );
     expect(frame.context.pre[0]).to.equal('    }');
     expect(frame.context.pre[1]).to.equal('  }');
