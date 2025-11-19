@@ -463,7 +463,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'undefined':
         break;
       case 'string':
-        message ? extraArgs.push(arg) : (message = arg);
+        if (message) {
+          extraArgs.push(arg);
+        } else {
+          message = arg;
+        }
         break;
       case 'function':
         callback = wrapCallback(logger, arg);
@@ -474,7 +478,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'error':
       case 'domexception':
       case 'exception': // Firefox Exception type
-        err ? extraArgs.push(arg) : (err = arg);
+        if (err) {
+          extraArgs.push(arg);
+        } else {
+          err = arg;
+        }
         break;
       case 'object':
       case 'array':
@@ -482,7 +490,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
           arg instanceof Error ||
           (typeof DOMException !== 'undefined' && arg instanceof DOMException)
         ) {
-          err ? extraArgs.push(arg) : (err = arg);
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         if (requestKeys && typ === 'object' && !request) {
@@ -496,14 +508,22 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
             break;
           }
         }
-        custom ? extraArgs.push(arg) : (custom = arg);
+        if (custom) {
+          extraArgs.push(arg);
+        } else {
+          custom = arg;
+        }
         break;
       default:
         if (
           arg instanceof Error ||
           (typeof DOMException !== 'undefined' && arg instanceof DOMException)
         ) {
-          err ? extraArgs.push(arg) : (err = arg);
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         extraArgs.push(arg);

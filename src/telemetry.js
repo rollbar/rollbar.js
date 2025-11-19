@@ -134,29 +134,16 @@ class Telemeter {
   }
 
   captureLog(message, level, rollbarUUID, timestamp) {
-    let otelAttributes = null;
+    const event = rollbarUUID
+      ? 'rollbar-occurrence-event'
+      : 'rollbar-log-event';
+    const otelAttributes = {
+      message,
+      level,
+      ...(rollbarUUID ? { type: 'message', uuid: rollbarUUID } : {}),
+    };
 
-    // If the uuid is present, this is a message occurrence.
-    if (rollbarUUID) {
-      ((otelAttributes = {
-        message,
-        level,
-        type: 'message',
-        uuid: rollbarUUID,
-      }),
-        this.telemetrySpan?.addEvent(
-          'rollbar-occurrence-event',
-          otelAttributes,
-          fromMillis(timestamp),
-        ));
-    } else {
-      otelAttributes = { message, level };
-      this.telemetrySpan?.addEvent(
-        'rollbar-log-event',
-        otelAttributes,
-        fromMillis(timestamp),
-      );
-    }
+    this.telemetrySpan?.addEvent(event, otelAttributes, fromMillis(timestamp));
 
     return this.capture(
       'log',
