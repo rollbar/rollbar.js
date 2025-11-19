@@ -341,86 +341,91 @@ Rollbar.prototype.lambdaHandler = function (handler, timeoutHandler) {
 };
 
 Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
-  var _timeoutHandler = function (event, context) {
-    var message = 'Function timed out';
-    var custom = {
+  const _timeoutHandler = (event, context) => {
+    const message = 'Function timed out';
+    const custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId,
     };
-    self.error(message, custom);
+    this.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function rollbarAsyncLambdaHandler(event, context) {
-    return new Promise(function (resolve, reject) {
-      self.lambdaContext = context;
+
+  const shouldReportTimeouts = this.options.captureLambdaTimeouts;
+
+  const rollbarAsyncLambdaHandler = (event, context) => {
+    return new Promise((resolve, reject) => {
+      this.lambdaContext = context;
       if (shouldReportTimeouts) {
-        var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+        const timeoutCb = (timeoutHandler || _timeoutHandler).bind(
           null,
           event,
           context,
         );
-        self.lambdaTimeoutHandle = setTimeout(
+        this.lambdaTimeoutHandle = setTimeout(
           timeoutCb,
           context.getRemainingTimeInMillis() - 1000,
         );
       }
       handler(event, context)
-        .then(function (resp) {
-          self.wait(function () {
-            clearTimeout(self.lambdaTimeoutHandle);
+        .then((resp) => {
+          this.wait(() => {
+            clearTimeout(this.lambdaTimeoutHandle);
             resolve(resp);
           });
         })
-        .catch(function (err) {
-          self.error(err);
-          self.wait(function () {
-            clearTimeout(self.lambdaTimeoutHandle);
+        .catch((err) => {
+          this.error(err);
+          this.wait(() => {
+            clearTimeout(this.lambdaTimeoutHandle);
             reject(err);
           });
         });
     });
   };
+
+  return rollbarAsyncLambdaHandler;
 };
+
 Rollbar.prototype.syncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
-  var _timeoutHandler = function (event, context, _cb) {
-    var message = 'Function timed out';
-    var custom = {
+  const _timeoutHandler = (event, context, _cb) => {
+    const message = 'Function timed out';
+    const custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId,
     };
-    self.error(message, custom);
+    this.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function (event, context, callback) {
-    self.lambdaContext = context;
+
+  const shouldReportTimeouts = this.options.captureLambdaTimeouts;
+
+  return (event, context, callback) => {
+    this.lambdaContext = context;
     if (shouldReportTimeouts) {
-      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+      const timeoutCb = (timeoutHandler || _timeoutHandler).bind(
         null,
         event,
         context,
         callback,
       );
-      self.lambdaTimeoutHandle = setTimeout(
+      this.lambdaTimeoutHandle = setTimeout(
         timeoutCb,
         context.getRemainingTimeInMillis() - 1000,
       );
     }
     try {
-      handler(event, context, function (err, resp) {
+      handler(event, context, (err, resp) => {
         if (err) {
-          self.error(err);
+          this.error(err);
         }
-        self.wait(function () {
-          clearTimeout(self.lambdaTimeoutHandle);
+        this.wait(() => {
+          clearTimeout(this.lambdaTimeoutHandle);
           callback(err, resp);
         });
       });
     } catch (err) {
-      self.error(err);
-      self.wait(function () {
-        clearTimeout(self.lambdaTimeoutHandle);
+      this.error(err);
+      this.wait(() => {
+        clearTimeout(this.lambdaTimeoutHandle);
         throw err;
       });
     }
