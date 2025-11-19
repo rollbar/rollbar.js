@@ -65,13 +65,13 @@ export default defineConfig(
         'error',
         { allow: ['arrowFunctions'] },
       ],
-      'chai-friendly/no-unused-expressions': [
-        'error',
-        { allowShortCircuit: true },
-      ],
       '@typescript-eslint/no-this-alias': [
         'error',
         { allowDestructuring: true },
+      ],
+      'chai-friendly/no-unused-expressions': [
+        'error',
+        { allowShortCircuit: true },
       ],
 
       // disabled for now
