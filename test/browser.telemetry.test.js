@@ -6,7 +6,7 @@ import Instrumenter from '../src/browser/telemetry.js';
 import Telemeter from '../src/telemetry.js';
 import Tracing from '../src/tracing/tracing.js';
 
-import { loadHtml } from './util/fixtures.js';
+import { loadHtml } from './util/fixtures';
 
 describe('instrumentNetwork', function () {
   it('should capture XHR requests with string URL', function (done) {

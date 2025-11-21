@@ -8,7 +8,7 @@
  * @param {string} relativePath - The path to the HTML file, relative to the
  *  project root.
  */
-export async function loadHtml(relativePath) {
+export async function loadHtml(relativePath: string): Promise<void> {
   const res = await fetch(relativePath);
   const text = await res.text();
   const parser = new DOMParser();
@@ -16,7 +16,7 @@ export async function loadHtml(relativePath) {
 
   document.body.innerHTML = doc.body.innerHTML;
 
-  const scripts = doc.querySelectorAll('script');
+  const scripts = doc.querySelectorAll<HTMLScriptElement>('script');
   for (const script of scripts) {
     if (script.src) {
       // External script
@@ -30,9 +30,9 @@ export async function loadHtml(relativePath) {
         newScript.type = script.type;
       }
 
-      await new Promise((resolve, reject) => {
-        newScript.onload = resolve;
-        newScript.onerror = reject;
+      await new Promise<void>((resolve, reject) => {
+        newScript.onload = () => resolve();
+        newScript.onerror = (event) => reject(event);
         document.body.appendChild(newScript);
       });
     } else if (script.textContent) {
