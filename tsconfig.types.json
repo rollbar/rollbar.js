@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "tmp",
+    "rootDir": "types",
+    "target": "ES2021",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": false,
+    "allowJs": false,
+    "noEmitOnError": true,
+    "skipLibCheck": true
+  },
+  "include": ["types/rollbar.ts"]
+}
