@@ -12,10 +12,17 @@ public
 release
 vendor
 
-# ignore prettifying examples for now due to
-# 1. there being minified snippets all over the place and
-# 2. some tests fail cause they depend on some sources being exactly as they are
-examples
+# Explicit example fixtures that rely on exact formatting
+examples/browser_extension_v2/background.js
+examples/itemsPerMinute.html
+examples/no-conflict/test.html
+examples/snippet-with-replay.html
+examples/snippet.html
+examples/test.html
+examples/universal-browser/test-with-non-default-options.html
+examples/universal-browser/test-with-replay.html
+examples/universal-browser/test.html
+
 !test/examples
 
 # Test fixtures include compiled/generated files with sourcemaps
