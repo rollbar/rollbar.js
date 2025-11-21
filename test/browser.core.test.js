@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import Rollbar from '../src/browser/core.js';
 import Tracing from '../src/tracing/tracing.js';
 
-import { loadHtml } from './util/fixtures.js';
+import { loadHtml } from './util/fixtures';
 import { setTimeout } from './util/timers.js';
 
 describe('options', function () {
