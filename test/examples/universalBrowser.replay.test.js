@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { loadHtml } from '../util/fixtures.js';
+import { loadHtml } from '../util/fixtures';
 import { setTimeout } from '../util/timers.js';
 
 const log =
