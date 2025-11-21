@@ -19,6 +19,22 @@ import * as urllib from './url.js';
 // Used to support global `Rollbar` instance.
 let _instance = null;
 
+/**
+ * Browser Rollbar implementation.
+ * @module rollbar/browser
+ */
+
+/**
+ * @typedef {object} RollbarClient
+ */
+
+/**
+ * Browser Rollbar implementation
+ * @class Rollbar
+ * @alias module:rollbar/browser.Rollbar
+ * @param {RollbarConfig} options
+ * @param {RollbarClient} client
+ */
 class Rollbar {
   constructor(options, client) {
     logger.init({ logLevel: options.logLevel || 'error' });
@@ -99,15 +115,30 @@ class Rollbar {
     return _instance;
   }
 
+  /**
+   * Set the components used by Rollbar (telemeter, instrumenter, etc.).
+   * @param {RollbarComponents} components
+   */
   static setComponents(components) {
     Rollbar.prototype.components = components;
   }
 
+  /**
+   * Set global configuration on the client.
+   * @param {RollbarConfig} options
+   * @returns {Rollbar}
+   */
   global(options) {
     this.client.global(options);
     return this;
   }
 
+  /**
+   * Configure Rollbar options and propagate to components.
+   * @param {RollbarConfig} options
+   * @param {object} [payloadData]
+   * @returns {Rollbar}
+   */
   configure(options, payloadData) {
     if (options.logLevel) {
       logger.init({ logLevel: options.logLevel });

@@ -19,6 +19,10 @@ import Instrumenter from './telemetry.js';
 import * as transforms from './transforms.js';
 import Transport from './transport.js';
 
+/**
+ * Server Rollbar implementation
+ * @class Rollbar
+ */
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
     var accessToken = options;

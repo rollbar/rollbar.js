@@ -1,0 +1,17 @@
+{
+  "source": {
+    "include": [
+      "types/rollbar.js"
+    ],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(^|\\/|\\\\)node_modules"
+  },
+  "plugins": ["./node_modules/tsd-jsdoc/dist/plugin"],
+  "opts": {
+    "template": "./node_modules/tsd-jsdoc/dist",
+    "destination": "tmp",
+    "tsdModule": "rollbar",
+    "tsdVersion": "3.0.0-rc.1",
+    "outFile": "tsd-jsdoc.d.ts"
+  }
+}

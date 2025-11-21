@@ -7,29 +7,31 @@ import Recorder from './recorder.js';
 import ReplayPredicates from './replayPredicates.js';
 import ScheduledStreamCapture from './scheduledStreamCapture.js';
 
-/** @typedef {import('./recorder.js').BufferCursor} BufferCursor */
-/** @typedef {import('./recorder.js').Recorder} Recorder */
+/** @module replay */
 
 /**
  * Enum for tracking the status of trailing replay sends.
  * Used to coordinate between trailing and leading replay captures.
+ * @type {{PENDING: string, SENT: string, FAILED: string, SKIPPED: string}}
  */
 const TrailingStatus = Object.freeze({
-  PENDING: 'pending', // Trailing not yet sent
-  SENT: 'sent', // Trailing successfully sent
-  FAILED: 'failed', // Trailing failed to send
-  SKIPPED: 'skipped', // Trailing was skipped (replay is leading only)
+  PENDING: 'pending',
+  SENT: 'sent',
+  FAILED: 'failed',
+  SKIPPED: 'skipped',
 });
 
 /**
  * Replay - Manages the mapping between error occurrences and their associated
  * session recordings. This class handles the coordination between when recordings
  * are dumped and when they are eventually sent to the backend.
+ *
+ * @class Replay
+ * @alias module:replay.Replay
  */
 export default class Replay {
   _map;
   _options;
-  /** @type {Recorder} */
   _recorder;
   _tracing;
   _telemeter;
@@ -401,8 +403,7 @@ export default class Replay {
 
   /**
    * Returns the size of the map (number of stored replays)
-   *
-   * @returns {number} The number of replays currently stored
+   * @type {number}
    */
   get size() {
     return this._map.size;
@@ -410,8 +411,7 @@ export default class Replay {
 
   /**
    * Returns the Recorder instance used by this manager
-   *
-   * @returns {Recorder} The Recorder instance
+   * @type {any}
    */
   get recorder() {
     return this._recorder;
