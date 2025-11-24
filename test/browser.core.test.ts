@@ -11,7 +11,7 @@ import { setTimeout } from './util/timers.js';
 declare global {
   interface Window {
     rollbar: Rollbar;
-    server: any;
+    server: import('nise').FakeServerStatic;
     chrome: { runtime: boolean };
     _rollbarURH: ((evt: PromiseRejectionEvent) => void) & {
       belongsToShim?: boolean;
