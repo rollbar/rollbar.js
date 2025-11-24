@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { expect } from 'chai';
 
 import Rollbar from '../src/browser/rollbar.js';
@@ -62,7 +61,7 @@ describe('options.autoInstrument', function () {
         return message;
       },
     });
-    window.console = newConsole;
+    window.console = newConsole as Console;
 
     const rollbar = (window.rollbar = new Rollbar({
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
@@ -77,10 +76,11 @@ describe('options.autoInstrument', function () {
     const body = JSON.parse(server.requests[0].requestBody);
     window.console = oldConsole;
 
-    expect(rollbar.client.notifier.diagnostic.instrumentConsole).to.exist;
+    expect((rollbar as any).client.notifier.diagnostic.instrumentConsole).to
+      .exist;
     expect(body.data.notifier.diagnostic.instrumentConsole).to.exist;
 
-    const rollbarDiagnostic = rollbar.client.notifier.diagnostic;
+    const rollbarDiagnostic = (rollbar as any).client.notifier.diagnostic;
     const bodyDiagnostic = body.data.notifier.diagnostic;
     expect(rollbarDiagnostic.instrumentConsole).to.have.property('error');
     expect(bodyDiagnostic.instrumentConsole).to.have.property('error');
