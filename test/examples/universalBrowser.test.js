@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 
+import { fakeServer } from '../browser.rollbar.test-utils.ts';
 import { loadHtml } from '../util/fixtures';
 import { setTimeout } from '../util/timers.js';
 
@@ -22,7 +22,7 @@ describe('Rollbar loaded by snippet', function () {
     await setTimeout(250);
 
     // Stub the xhr interface.
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   after(function () {

@@ -1,13 +1,14 @@
+// @ts-nocheck
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
 
+import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { setTimeout } from './util/timers.js';
 
 describe('options.autoInstrument', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -24,7 +25,7 @@ describe('options.autoInstrument', function () {
   }
 
   function initRollbarForNetworkTelemetry() {
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       autoInstrument: {
         log: false,
@@ -39,7 +40,7 @@ describe('options.autoInstrument', function () {
   }
 
   it('should add telemetry events for POST xhr calls', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
@@ -49,10 +50,10 @@ describe('options.autoInstrument', function () {
       JSON.stringify({ name: 'foo', password: '123456' }),
     ]);
 
-    var rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
+    const rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
 
     // generate a telemetry event
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Content-type', 'application/json');
     xhr.setRequestHeader('Secret', 'abcdef');
@@ -65,7 +66,7 @@ describe('options.autoInstrument', function () {
         server.respond();
 
         expect(server.requests.length).to.eql(2);
-        var body = JSON.parse(server.requests[1].requestBody);
+        const body = JSON.parse(server.requests[1].requestBody);
 
         // Verify request capture and scrubbing
         expect(body.data.body.telemetry[0].body.request).to.eql(
@@ -92,7 +93,7 @@ describe('options.autoInstrument', function () {
   });
 
   it('should add telemetry events for GET xhr calls', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
@@ -102,10 +103,10 @@ describe('options.autoInstrument', function () {
       JSON.stringify({ name: 'foo', password: '123456' }),
     ]);
 
-    var rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
+    const rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
 
     // generate a telemetry event
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Secret', 'abcdef');
     xhr.onreadystatechange = async function () {
@@ -117,7 +118,7 @@ describe('options.autoInstrument', function () {
         server.respond();
 
         expect(server.requests.length).to.eql(2);
-        var body = JSON.parse(server.requests[1].requestBody);
+        const body = JSON.parse(server.requests[1].requestBody);
 
         // Verify request headers capture and case-insensitive scrubbing
         expect(body.data.body.telemetry[0].body.request_headers).to.eql({
@@ -138,7 +139,7 @@ describe('options.autoInstrument', function () {
   });
 
   it('should handle non-string Content-Type', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
@@ -151,10 +152,10 @@ describe('options.autoInstrument', function () {
       JSON.stringify({ name: 'foo', password: '123456' }),
     ]);
 
-    var rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
+    const rollbar = (window.rollbar = initRollbarForNetworkTelemetry());
 
     // generate a telemetry event
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Secret', 'abcdef');
     xhr.onreadystatechange = async function () {
@@ -166,7 +167,7 @@ describe('options.autoInstrument', function () {
         server.respond();
 
         expect(server.requests.length).to.eql(2);
-        var body = JSON.parse(server.requests[1].requestBody);
+        const body = JSON.parse(server.requests[1].requestBody);
 
         // Verify request headers capture and case-insensitive scrubbing
         expect(body.data.body.telemetry[0].body.request_headers).to.eql({
@@ -188,7 +189,7 @@ describe('options.autoInstrument', function () {
   });
 
   it('should send errors for xhr http errors', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
@@ -198,7 +199,7 @@ describe('options.autoInstrument', function () {
       JSON.stringify({ foo: 'bar' }),
     ]);
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       autoInstrument: {
         log: false,
@@ -209,7 +210,7 @@ describe('options.autoInstrument', function () {
     window.rollbar = new Rollbar(options);
 
     // generate a telemetry event
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://example.com/xhr-test', true);
     xhr.setRequestHeader('Content-type', 'application/json');
     xhr.onreadystatechange = async function () {
@@ -219,7 +220,7 @@ describe('options.autoInstrument', function () {
         server.respond();
 
         expect(server.requests.length).to.eql(2);
-        var body = JSON.parse(server.requests[1].requestBody);
+        const body = JSON.parse(server.requests[1].requestBody);
 
         expect(body.data.body.trace.exception.message).to.eql(
           'HTTP request failed with Status 404',

@@ -35,5 +35,6 @@
     "source.fixAll.eslint": "never"
   },
   "files.trimTrailingWhitespace": true,
-  "prettier.useEditorConfig": false
+  "prettier.useEditorConfig": false,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

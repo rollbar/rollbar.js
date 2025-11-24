@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 
+import { fakeServer } from '../browser.rollbar.test-utils.ts';
 import { loadHtml } from '../util/fixtures';
 
 describe('react app', function () {
@@ -16,7 +16,7 @@ describe('react app', function () {
     await loadHtml('examples/react-16/dist/index.html');
 
     // Stub the xhr interface.
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   after(function () {

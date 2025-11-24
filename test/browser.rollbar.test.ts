@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
 
-import { loadHtml } from './util/fixtures';
+import { fakeServer } from './browser.rollbar.test-utils.ts';
+import { loadHtml } from './util/fixtures.ts';
 import { setTimeout } from './util/timers.js';
 
 const DUMMY_TRACE_ID = 'some-trace-id';
@@ -26,7 +27,7 @@ const InvalidOpenTracingTracerStub = {
 };
 
 function TestClientGen() {
-  var TestClient = function () {
+  const TestClient = function () {
     this.transforms = [];
     this.predicates = [];
     this.notifier = {
@@ -42,9 +43,9 @@ function TestClientGen() {
       }.bind(this),
     };
     this.logCalls = [];
-    var logs = 'log,debug,info,warn,warning,error,critical'.split(',');
-    for (var i = 0, len = logs.length; i < len; i++) {
-      var fn = logs[i].slice(0);
+    const logs = 'log,debug,info,warn,warning,error,critical'.split(',');
+    for (let i = 0, len = logs.length; i < len; i++) {
+      const fn = logs[i].slice(0);
       this[fn] = function (fn, item) {
         this.logCalls.push({ func: fn, item: item });
       }.bind(this, fn);
@@ -67,8 +68,8 @@ describe('Rollbar()', function () {
   });
 
   it('should have all of the expected methods with a real client', function () {
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     expect(rollbar).to.have.property('log');
     expect(rollbar).to.have.property('debug');
@@ -80,9 +81,9 @@ describe('Rollbar()', function () {
   });
 
   it('should have all of the expected methods', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar).to.have.property('log');
     expect(rollbar).to.have.property('debug');
@@ -94,16 +95,16 @@ describe('Rollbar()', function () {
   });
 
   it('should have some default options', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.scrubFields).to.contain('password');
   });
 
   it('should merge with the defaults options', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       scrubFields: ['foobar'],
       replay: {
         enabled: true,
@@ -112,7 +113,7 @@ describe('Rollbar()', function () {
         endpoint: 'api.rollbar.com/api/1/tracing/',
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.contain('password');
@@ -128,24 +129,24 @@ describe('Rollbar()', function () {
   });
 
   it('should overwrite default if specified', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       scrubFields: ['foobar'],
       overwriteScrubFields: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.scrubFields).to.contain('foobar');
     expect(rollbar.options.scrubFields).to.not.contain('password');
   });
 
   it('should replace deprecated options', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       hostWhiteList: ['foo'],
       hostBlackList: ['bar'],
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     expect(rollbar.options.hostWhiteList).to.eql(undefined);
     expect(rollbar.options.hostBlackList).to.eql(undefined);
@@ -154,34 +155,34 @@ describe('Rollbar()', function () {
   });
 
   it('should return a uuid when logging', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var result = rollbar.log('a messasge', 'another one');
+    const result = rollbar.log('a messasge', 'another one');
     expect(result.uuid).to.be.ok;
   });
 
   it('should package up the inputs', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var result = rollbar.log('a message', 'another one');
+    const result = rollbar.log('a message', 'another one');
     expect(result).to.be.an('object');
-    var loggedItem = client.logCalls[0].item;
+    const loggedItem = client.logCalls[0].item;
     expect(loggedItem.message).to.eql('a message');
     expect(loggedItem.custom).to.be.ok;
   });
 
   it('should call the client with the right method', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var methods = 'log,debug,info,warn,warning,error,critical'.split(',');
-    for (var i = 0; i < methods.length; i++) {
-      var msg = 'message:' + i;
+    const methods = 'log,debug,info,warn,warning,error,critical'.split(',');
+    for (let i = 0; i < methods.length; i++) {
+      const msg = 'message:' + i;
       rollbar[methods[i]](msg);
       expect(client.logCalls[i].func).to.eql(methods[i]);
       expect(client.logCalls[i].item.message).to.eql(msg);
@@ -190,16 +191,16 @@ describe('Rollbar()', function () {
 
   // Legacy OpenTracing support
   it('should have a tracer if valid tracer is provided', function () {
-    var options = { tracer: ValidOpenTracingTracerStub };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = { tracer: ValidOpenTracingTracerStub };
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     expect(rollbar.client.tracer).to.eql(ValidOpenTracingTracerStub);
   });
 
   // Legacy OpenTracing support
   it('should not have a tracer if invalid tracer is provided', function () {
-    var options = { tracer: InvalidOpenTracingTracerStub };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = { tracer: InvalidOpenTracingTracerStub };
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     expect(rollbar.client.tracer).to.eql(null);
   });
@@ -211,14 +212,14 @@ describe('configure', function () {
   });
 
   it('should configure client', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       payload: {
         a: 42,
         environment: 'testtest',
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({ payload: { environment: 'borkbork' } });
@@ -226,14 +227,14 @@ describe('configure', function () {
     expect(client.options.payload.environment).to.eql('borkbork');
   });
   it('should accept a second parameter and use it as the payload value', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       payload: {
         a: 42,
         environment: 'testtest',
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({ somekey: 'borkbork' }, { b: 97 });
@@ -242,14 +243,14 @@ describe('configure', function () {
     expect(client.payloadData.b).to.eql(97);
   });
   it('should accept a second parameter and override the payload with it', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       payload: {
         a: 42,
         environment: 'testtest',
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
     expect(rollbar.options.payload.environment).to.eql('testtest');
 
     rollbar.configure({ somekey: 'borkbork', payload: { b: 101 } }, { b: 97 });
@@ -258,12 +259,12 @@ describe('configure', function () {
     expect(client.payloadData.b).to.eql(97);
   });
   it('should replace deprecated options', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       hostWhiteList: ['foo'],
       hostBlackList: ['bar'],
     };
-    var rollbar = (window.rollbar = new Rollbar(
+    const rollbar = (window.rollbar = new Rollbar(
       { autoInstrument: false },
       client,
     ));
@@ -275,15 +276,15 @@ describe('configure', function () {
     expect(rollbar.options.hostBlockList).to.contain('bar');
   });
   it('should store configured options', function () {
-    var client = new (TestClientGen())();
-    var options = {
+    const client = new (TestClientGen())();
+    const options = {
       captureUncaught: true,
       payload: {
         a: 42,
         environment: 'testtest',
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const rollbar = (window.rollbar = new Rollbar(options, client));
     expect(rollbar.options._configuredOptions.payload.environment).to.eql(
       'testtest',
     );
@@ -318,7 +319,7 @@ describe('options.captureUncaught', function () {
     // Load the HTML page, so errors can be generated.
     await loadHtml('test/fixtures/html/error.html');
 
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -335,24 +336,24 @@ describe('options.captureUncaught', function () {
   }
 
   it('should capture when enabled in constructor', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-error');
+    const element = document.getElementById('throw-error');
     element.click();
 
     await setTimeout(1);
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
@@ -371,16 +372,16 @@ describe('options.captureUncaught', function () {
   });
 
   it('should respond to enable/disable in configure', async function () {
-    var server = window.server;
-    var element = document.getElementById('throw-error');
+    const server = window.server;
+    const element = document.getElementById('throw-error');
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: false,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     element.click();
 
@@ -400,7 +401,7 @@ describe('options.captureUncaught', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok;
@@ -423,19 +424,19 @@ describe('options.captureUncaught', function () {
   // engine at the time of this comment. However, karma's Chrome and ChromeHeadless
   // don't actually behave like real Chrome so we settle for stubbing some things.
   it('should capture external error data when inspectAnonymousErrors is true', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
     // We're supposedly running on ChromeHeadless, but still need to spoof Chrome. :\
     window.chrome = { runtime: true };
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
       inspectAnonymousErrors: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     // Simulate receiving onerror without an error object.
     rollbar.anonymousErrorsPending += 1;
@@ -450,7 +451,7 @@ describe('options.captureUncaught', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('anon error');
     expect(body.data.notifier.diagnostic.is_anonymous).to.be.true;
@@ -464,20 +465,20 @@ describe('options.captureUncaught', function () {
   });
 
   it('should ignore duplicate errors by default', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-error');
+    const element = document.getElementById('throw-error');
 
     // generate same error twice
-    for (var i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i++) {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
@@ -488,7 +489,7 @@ describe('options.captureUncaught', function () {
     // transmit only once
     expect(server.requests.length).to.eql(1);
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
 
@@ -501,21 +502,21 @@ describe('options.captureUncaught', function () {
   });
 
   it('should transmit duplicate errors when set in config', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
       ignoreDuplicateErrors: false,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-error');
+    const element = document.getElementById('throw-error');
 
     // generate same error twice
-    for (var i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i++) {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
@@ -526,7 +527,7 @@ describe('options.captureUncaught', function () {
     // transmit both errors
     expect(server.requests.length).to.eql(2);
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
 
@@ -538,24 +539,24 @@ describe('options.captureUncaught', function () {
     });
   });
   it('should send DOMException as trace_chain', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-dom-exception');
+    const element = document.getElementById('throw-dom-exception');
     element.click();
 
     await setTimeout(1);
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace_chain[0].exception.message).to.eql(
       'test DOMException',
@@ -570,26 +571,26 @@ describe('options.captureUncaught', function () {
   });
 
   it('should capture exta frames when stackTraceLimit is set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var oldLimit = Error.stackTraceLimit;
-    var options = {
+    const oldLimit = Error.stackTraceLimit;
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
       stackTraceLimit: 50,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-depp-stack-error');
+    const element = document.getElementById('throw-depp-stack-error');
     element.click();
 
     await setTimeout(1);
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('deep stack error');
     expect(body.data.body.trace.frames.length).to.be.above(20);
@@ -604,25 +605,25 @@ describe('options.captureUncaught', function () {
   });
 
   it('should add _wrappedSource when wrapGlobalEventHandlers is set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUncaught: true,
       wrapGlobalEventHandlers: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var element = document.getElementById('throw-event-handler-error');
+    const element = document.getElementById('throw-event-handler-error');
     element.click();
 
     await setTimeout(100);
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql(
       'event handler error',
@@ -641,7 +642,7 @@ describe('options.captureUncaught', function () {
 
 describe('options.captureUnhandledRejections', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -658,15 +659,15 @@ describe('options.captureUnhandledRejections', function () {
   }
 
   it('should capture when enabled in constructor', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     Promise.reject(new Error('test reject'));
 
@@ -674,7 +675,7 @@ describe('options.captureUnhandledRejections', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test reject');
     expect(body.data.notifier.diagnostic.is_uncaught).to.be.true;
@@ -686,15 +687,15 @@ describe('options.captureUnhandledRejections', function () {
   });
 
   it('should respond to enable in configure', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: false,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.configure({
       captureUnhandledRejections: true,
@@ -706,7 +707,7 @@ describe('options.captureUnhandledRejections', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test reject');
 
@@ -719,15 +720,15 @@ describe('options.captureUnhandledRejections', function () {
   });
 
   it('should respond to disable in configure', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.configure({
       captureUnhandledRejections: false,
@@ -748,7 +749,7 @@ describe('options.captureUnhandledRejections', function () {
 
 describe('log', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -765,14 +766,14 @@ describe('log', function () {
   }
 
   it('should send message when called with message and extra args', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log('test message', { foo: 'bar' });
 
@@ -780,7 +781,7 @@ describe('log', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.message.body).to.eql('test message');
     expect(body.data.body.message.extra).to.eql({ foo: 'bar' });
@@ -792,14 +793,14 @@ describe('log', function () {
   });
 
   it('should send exception when called with error and extra args', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log(new Error('test error'), { foo: 'bar' });
 
@@ -807,7 +808,7 @@ describe('log', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.body.trace.extra).to.eql({ foo: 'bar' });
@@ -819,17 +820,17 @@ describe('log', function () {
   });
 
   it('should add custom data when called with error context', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       addErrorContext: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var err = new Error('test error');
+    const err = new Error('test error');
     err.rollbarContext = { err: 'test' };
 
     rollbar.error(err, { foo: 'bar' });
@@ -838,7 +839,7 @@ describe('log', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.custom.foo).to.eql('bar');
@@ -868,7 +869,7 @@ describe('log', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.trace.exception.message).to.eql('test error');
     expect(body.data.attributes).to.be.an('array');
@@ -882,15 +883,15 @@ describe('log', function () {
   });
 
   it('should send message when called with only null arguments', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log(null);
 
@@ -898,7 +899,7 @@ describe('log', function () {
 
     server.respond();
 
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.data.body.message.body).to.eql(
       'Item sent with null or missing arguments.',
@@ -907,17 +908,17 @@ describe('log', function () {
   });
 
   it('should skipFrames when set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       captureUnhandledRejections: true,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var error = new Error('error with stack');
+    const error = new Error('error with stack');
 
     rollbar.log(error);
     rollbar.log(error, { skipFrames: 1 });
@@ -926,9 +927,9 @@ describe('log', function () {
 
     server.respond();
 
-    var frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace
+    const frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace
       .frames;
-    var frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace
+    const frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace
       .frames;
 
     expect(frames1.length).to.eql(frames2.length + 1);
@@ -936,12 +937,12 @@ describe('log', function () {
   });
 
   it('should call the item callback on error', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
     // Create an invalid tracer, in order to force an error in notifier._log()
-    var tracer = {
+    const tracer = {
       scope: function () {
         return {
           active: function () {
@@ -951,14 +952,14 @@ describe('log', function () {
       },
     };
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       tracer: tracer,
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var callbackCalled;
-    var callback = function (err) {
+    let callbackCalled;
+    const callback = function (err) {
       callbackCalled = err;
     };
 
@@ -975,7 +976,7 @@ describe('log', function () {
 // Test direct call to onerror, as used in verification of browser js install.
 describe('onerror', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -1005,11 +1006,11 @@ describe('onerror', function () {
     });
 
     it('should send message when calling onerror directly', async function () {
-      var server = window.server;
+      const server = window.server;
       stubResponse(server);
       server.requests.length = 0;
 
-      var options = {
+      const options = {
         accessToken: 'POST_CLIENT_ITEM_TOKEN',
         captureUncaught: true,
       };
@@ -1024,7 +1025,7 @@ describe('onerror', function () {
 
       server.respond();
 
-      var body = JSON.parse(server.requests[0].requestBody);
+      const body = JSON.parse(server.requests[0].requestBody);
 
       expect(body.data.body.trace.exception.message).to.eql(
         'testing window.onerror',
@@ -1035,7 +1036,7 @@ describe('onerror', function () {
 
 describe('callback options', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
@@ -1052,17 +1053,17 @@ describe('callback options', function () {
   }
 
   it('should use checkIgnore when set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       checkIgnore: function (_isUncaught, _args, _payload) {
         return true;
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log('test'); // generate a payload to ignore
 
@@ -1074,11 +1075,11 @@ describe('callback options', function () {
   });
 
   it('should receive valid arguments at checkIgnore', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       checkIgnore: function (_isUncaught, args, payload) {
         if (_isUncaught === false && args[0] instanceof Error && payload.uuid) {
@@ -1087,7 +1088,7 @@ describe('callback options', function () {
         return false;
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log(new Error('test'));
 
@@ -1113,11 +1114,11 @@ describe('callback options', function () {
     });
 
     it('should receive uncaught at checkIgnore', async function () {
-      var server = window.server;
+      const server = window.server;
       stubResponse(server);
       server.requests.length = 0;
 
-      var options = {
+      const options = {
         accessToken: 'POST_CLIENT_ITEM_TOKEN',
         captureUncaught: true,
         checkIgnore: function (isUncaught, _args, _payload) {
@@ -1129,7 +1130,7 @@ describe('callback options', function () {
       };
       window.rollbar = new Rollbar(options);
 
-      var element = document.getElementById('throw-error');
+      const element = document.getElementById('throw-error');
       element.click();
 
       await setTimeout(1);
@@ -1142,17 +1143,17 @@ describe('callback options', function () {
   });
 
   it('should send when checkIgnore returns false', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       checkIgnore: function (_isUncaught, _args, _payload) {
         return false;
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log('test'); // generate a payload to inspect
 
@@ -1161,24 +1162,24 @@ describe('callback options', function () {
     server.respond();
 
     expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
     expect(
       body.data.notifier.configured_options.checkIgnore.substr(0, 8),
     ).to.eql('function');
   });
 
   it('should use onSendCallback when set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       onSendCallback: function (_isUncaught, _args, payload) {
         payload.foo = 'bar';
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log('test'); // generate a payload to inspect
 
@@ -1187,7 +1188,7 @@ describe('callback options', function () {
     server.respond();
 
     expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
     expect(body.data.foo).to.eql('bar');
     expect(
       body.data.notifier.configured_options.onSendCallback.substr(0, 8),
@@ -1195,17 +1196,17 @@ describe('callback options', function () {
   });
 
   it('should use transform when set', async function () {
-    var server = window.server;
+    const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
 
-    var options = {
+    const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
       transform: function (data, _item) {
         data.foo = 'baz';
       },
     };
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const rollbar = (window.rollbar = new Rollbar(options));
 
     rollbar.log('test'); // generate a payload to inspect
 
@@ -1214,7 +1215,7 @@ describe('callback options', function () {
     server.respond();
 
     expect(server.requests.length).to.eql(1);
-    var body = JSON.parse(server.requests[0].requestBody);
+    const body = JSON.parse(server.requests[0].requestBody);
     expect(body.data.foo).to.eql('baz');
     expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
       'function',
@@ -1228,28 +1229,28 @@ describe('captureEvent', function () {
   });
 
   it('should handle missing/default type and level', function () {
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var event = rollbar.captureEvent({ foo: 'bar' });
+    const event = rollbar.captureEvent({ foo: 'bar' });
     expect(event.type).to.eql('manual');
     expect(event.level).to.eql('info');
     expect(event.body.foo).to.eql('bar');
   });
   it('should handle specified type and level', function () {
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var event = rollbar.captureEvent('log', { foo: 'bar' }, 'debug');
+    const event = rollbar.captureEvent('log', { foo: 'bar' }, 'debug');
     expect(event.type).to.eql('log');
     expect(event.level).to.eql('debug');
     expect(event.body.foo).to.eql('bar');
   });
   it('should handle extra args', function () {
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var event = rollbar.captureEvent(
+    const event = rollbar.captureEvent(
       'meaningless',
       'info',
       { foo: 'bar' },
@@ -1261,10 +1262,10 @@ describe('captureEvent', function () {
     expect(event.body.foo).to.eql('bar');
   });
   it('should handle level that matches a type string', function () {
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options));
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
 
-    var event = rollbar.captureEvent('log', { foo: 'bar' }, 'error');
+    const event = rollbar.captureEvent('log', { foo: 'bar' }, 'error');
     // ensure level 'error' doesn't overwrite type 'log'
     expect(event.type).to.eql('log');
     expect(event.level).to.eql('error');
@@ -1278,37 +1279,37 @@ describe('createItem', function () {
   });
 
   it('should handle multiple strings', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = ['first', 'second'];
-    var item = rollbar._createItem(args);
+    const args = ['first', 'second'];
+    const item = rollbar._createItem(args);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs['0']).to.eql('second');
   });
   it('should handle errors', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', 'second'];
+    const item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs['0']).to.eql('second');
   });
   it('should handle a callback', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var myCallbackCalled = false;
-    var myCallback = function () {
+    let myCallbackCalled = false;
+    const myCallback = function () {
       myCallbackCalled = true;
     };
-    var args = [new Error('Whoa'), 'first', myCallback, 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', myCallback, 'second'];
+    const item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.extraArgs)
@@ -1319,12 +1320,12 @@ describe('createItem', function () {
     expect(myCallbackCalled).to.be.ok;
   });
   it('should handle arrays', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', [1, 2, 3], 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', [1, 2, 3], 'second'];
+    const item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom['0']).to.eql(1);
@@ -1333,12 +1334,12 @@ describe('createItem', function () {
       .that.deep.equals({ 0: 'second' });
   });
   it('should handle objects', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.message).to.eql('first');
     expect(item.custom.a).to.eql(1);
@@ -1348,15 +1349,15 @@ describe('createItem', function () {
       .that.deep.equals({ 0: 'second' });
   });
   it('should handle custom arguments', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [
+    const args = [
       new Error('Whoa'),
       { level: 'info', skipFrames: 1, foo: 'bar' },
     ];
-    var item = rollbar._createItem(args);
+    const item = rollbar._createItem(args);
     expect(item.err).to.eql(args[0]);
     expect(item.level).to.eql('info');
     expect(item.skipFrames).to.eql(1);
@@ -1365,66 +1366,66 @@ describe('createItem', function () {
     expect(item.custom.skipFrames).to.not.be.ok;
   });
   it('should have a timestamp', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
-    var item = rollbar._createItem(args);
-    var now = new Date().getTime();
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    const now = new Date().getTime();
     expect(item.timestamp).to.be.within(now - 1000, now + 1000);
   });
   it('should have an uuid', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
     expect(item.uuid).to.be.ok;
 
-    var parts = item.uuid.split('-');
+    const parts = item.uuid.split('-');
     expect(parts.length).to.eql(5);
     // Type 4 UUID
     expect(parts[2][0]).to.eql('4');
   });
   it('should handle dates', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var y2k = new Date(2000, 0, 1);
-    var args = [new Error('Whoa'), 'first', y2k, { a: 1, b: 2 }, 'second'];
-    var item = rollbar._createItem(args);
+    const y2k = new Date(2000, 0, 1);
+    const args = [new Error('Whoa'), 'first', y2k, { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
     expect(item.custom.extraArgs)
       .to.be.an('object')
       .that.deep.equals({ 0: y2k, 1: 'second' });
   });
   it('should handle numbers', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
-    var args = [new Error('Whoa'), 'first', 42, { a: 1, b: 2 }, 'second'];
-    var item = rollbar._createItem(args);
+    const args = [new Error('Whoa'), 'first', 42, { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
     expect(item.custom.extraArgs)
       .to.be.an('object')
       .that.deep.equals({ 0: 42, 1: 'second' });
   });
   it('should handle domexceptions', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = (window.rollbar = new Rollbar(options, client));
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
 
     if (document && document.querySelectorAll) {
-      var e;
+      let e;
       try {
         document.querySelectorAll('div:foo');
       } catch (ee) {
         e = ee;
       }
-      var args = [e, 'first', 42, { a: 1, b: 2 }, 'second'];
-      var item = rollbar._createItem(args);
+      const args = [e, 'first', 42, { a: 1, b: 2 }, 'second'];
+      const item = rollbar._createItem(args);
       expect(item.err).to.be.ok;
     }
   });
@@ -1432,15 +1433,15 @@ describe('createItem', function () {
 
 describe('singleton', function () {
   it('should pass through the underlying client after init', function () {
-    var client = new (TestClientGen())();
-    var options = {};
-    var rollbar = Rollbar.init(options, client);
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = Rollbar.init(options, client);
 
     rollbar.log('hello 1');
     Rollbar.log('hello 2');
 
-    var loggedItemDirect = client.logCalls[0].item;
-    var loggedItemSingleton = client.logCalls[1].item;
+    const loggedItemDirect = client.logCalls[0].item;
+    const loggedItemSingleton = client.logCalls[1].item;
     expect(loggedItemDirect.message).to.eql('hello 1');
     expect(loggedItemSingleton.message).to.eql('hello 2');
   });

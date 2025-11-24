@@ -3,7 +3,7 @@
 
 export default Rollbar;
 
-declare class Rollbar {
+declare class Rollbar implements Rollbar.Components {
   constructor(options?: Rollbar.Configuration);
   static init(options: Rollbar.Configuration): Rollbar;
   static setComponents(components: Rollbar.Components): void;
@@ -34,12 +34,30 @@ declare class Rollbar {
 
   public errorHandler(): Rollbar.ExpressErrorHandler;
 
+  // Components
+
+  public telemeter?: TelemeterType;
+  public instrumenter?: InstrumenterType;
+  public wrapGlobals?: WrapGlobalsType;
+  public scrub?: ScrubType;
+  public truncation?: TruncationType;
+  public tracing?: TracingType;
+  /**
+   * Replay component for session recording.
+   * Only available when using replay bundles (rollbar.replay.*).
+   * Use `import Rollbar from 'rollbar/replay'` to access.
+   */
+  public replay?: ReplayType;
+
   // Used with rollbar-react for rollbar-react-native compatibility.
   public rollbar: Rollbar;
 
   // Exposed only for testing, should be changed via the configure method
   // DO NOT MODIFY DIRECTLY
   public options: Rollbar.Configuration;
+
+  // Exposed only for testing, tracks pending anonymous errors
+  anonymousErrorsPending: number;
 }
 
 declare namespace Rollbar {
@@ -111,6 +129,7 @@ declare namespace Rollbar {
     ) => void;
     overwriteScrubFields?: boolean;
     payload?: Payload;
+    person?: PersonParams;
     replay?: ReplayOptions;
     reportLevel?: Level;
     resource?: StringAttributes;
@@ -311,6 +330,13 @@ declare namespace Rollbar {
     transformSpan?: (params: TransformSpanParams) => void;
   }
 
+  export interface PersonParams {
+    id: string | DeprecatedNumber | null;
+    username?: string;
+    email?: string;
+    [property: string]: any;
+  }
+
   /**
    * @deprecated number is deprecated for this field
    */
@@ -320,12 +346,7 @@ declare namespace Rollbar {
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#payload-1}
    */
   export interface Payload {
-    person?: {
-      id: string | DeprecatedNumber | null;
-      username?: string;
-      email?: string;
-      [property: string]: any;
-    };
+    person?: PersonParams;
     context?: any;
     client?: {
       javascript?: {

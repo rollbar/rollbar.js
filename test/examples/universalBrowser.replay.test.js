@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 
+import { fakeServer } from '../browser.rollbar.test-utils.ts';
 import { loadHtml } from '../util/fixtures';
 import { setTimeout } from '../util/timers.js';
 
@@ -37,7 +37,7 @@ describe('Rollbar loaded by snippet with replay config', function () {
 
     await setTimeout(250);
 
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   after(function () {

@@ -1,12 +1,23 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
 import Tracing from '../src/tracing/tracing.js';
 
-import { loadHtml } from './util/fixtures';
+import { fakeServer } from './browser.rollbar.test-utils.ts';
+import { loadHtml } from './util/fixtures.ts';
 import { setTimeout } from './util/timers.js';
+
+declare global {
+  interface Window {
+    rollbar: Rollbar;
+    server: any;
+    chrome: { runtime: boolean };
+    _rollbarURH: ((evt: PromiseRejectionEvent) => void) & {
+      belongsToShim?: boolean;
+    };
+  }
+}
 
 describe('options', function () {
   beforeEach(function () {
@@ -99,11 +110,11 @@ describe('options.captureUncaught', function () {
     // Load the HTML page, so errors can be generated.
     await loadHtml('test/fixtures/html/error.html');
 
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {
-    window.rollbar.configure({ autoInstrument: false });
+    window.rollbar?.configure({ autoInstrument: false });
     window.server.restore();
   });
 
@@ -132,7 +143,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -168,7 +179,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -180,7 +191,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -197,7 +208,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -228,10 +239,10 @@ describe('options.captureUncaught', function () {
     try {
       throw new Error('anon error');
     } catch (e) {
-      Error.prepareStackTrace(e);
+      Error.prepareStackTrace(e, []);
     }
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -268,7 +279,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -309,7 +320,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -344,7 +355,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
@@ -379,7 +390,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -399,7 +410,7 @@ describe('options.captureUncaught', function () {
 
   describe('options.captureUnhandledRejections', function () {
     beforeEach(function () {
-      window.server = sinon.createFakeServer();
+      window.server = fakeServer.create();
     });
 
     afterEach(function () {
@@ -429,7 +440,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500);
+      await setTimeout(500, null);
 
       server.respond();
 
@@ -462,7 +473,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500);
+      await setTimeout(500, null);
 
       server.respond();
 
@@ -496,7 +507,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500);
+      await setTimeout(500, null);
 
       server.respond();
 
@@ -509,7 +520,7 @@ describe('options.captureUncaught', function () {
 
   describe('log', function () {
     beforeEach(function (done) {
-      window.server = sinon.createFakeServer();
+      window.server = fakeServer.create();
       done();
     });
 
@@ -539,7 +550,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log('test message', { foo: 'bar' });
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 
@@ -567,7 +578,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log(new Error('test error'), { foo: 'bar' });
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 
@@ -594,12 +605,14 @@ describe('options.captureUncaught', function () {
         addErrorContext: true,
       }));
 
-      const err = new Error('test error');
+      const err = new Error('test error') as Error & {
+        rollbarContext: { err: string };
+      };
       err.rollbarContext = { err: 'test' };
 
       rollbar.error(err, { foo: 'bar' });
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 
@@ -622,24 +635,32 @@ describe('options.captureUncaught', function () {
         addErrorContext: true,
       }));
 
-      const err = new Error('test error');
-      const contextData = { extra: 'baz' };
+      const err = new Error('test error') as Error & {
+        rollbarContext: { err: string; contextData: any };
+      };
+      const contextData = { extra: 'baz', data: null };
       contextData.data = contextData;
       const context = { err: 'test', contextData: contextData };
       err.rollbarContext = context;
 
-      const array = ['one', 'two'];
+      const array: unknown[] = ['one', 'two'];
       array.push(array);
       expect(array).to.be.an('array').that.has.nested.include(array);
 
-      const custom = { foo: 'bar', array: array };
+      const custom = {
+        foo: 'bar',
+        array: array,
+        notCircular1: null,
+        notCircular2: null,
+        self: null,
+      };
       const notCircular = { key: 'value' };
       custom.notCircular1 = notCircular;
       custom.notCircular2 = notCircular;
       custom.self = custom;
       rollbar.error(err, custom);
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 
@@ -681,7 +702,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log(null);
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 
@@ -710,7 +731,7 @@ describe('options.captureUncaught', function () {
       rollbar.log(error);
       rollbar.log(error, { skipFrames: 1 });
 
-      await setTimeout(1);
+      await setTimeout(1, null);
 
       server.respond();
 

@@ -7,6 +7,11 @@ function App() {
     accessToken: 'POST_CLIENT_ITEM_TOKEN',
     captureUncaught: true,
     captureUnhandledRejections: true,
+    person: {
+      id: '12345',
+      name: 'Test User',
+      email: 'user@test.com',
+    },
   }));
 
   const logInfo = () => {

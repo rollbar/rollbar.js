@@ -1,32 +1,46 @@
+// @ts-nocheck
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Transport from '../src/browser/transport.js';
 import truncation from '../src/truncation.js';
+
+import { fakeServer } from './browser.rollbar.test-utils.ts';
+
 const t = new Transport(truncation);
 
 describe('post', function () {
-  var accessToken = 'abc123';
-  var options = {
+  const accessToken = 'abc123';
+  const options = {
     hostname: 'api.rollbar.com',
     protocol: 'https',
     path: '/api/1/item/',
     timeout: 2000,
   };
-  var payload = { access_token: accessToken, data: { a: 1 } };
+  const payload = { access_token: accessToken, data: { a: 1 } };
   it('should handle a failure to make a request', function (done) {
-    var requestFactory = function () {
+    const requestFactory = function () {
       return null;
     };
-    var callback = function (err, resp) {
+    const callback = function (err, resp) {
       expect(err).to.be.ok;
       done(resp);
     };
-    t.post({ accessToken, options, payload, callback, requestFactory });
+    t.post({
+      accessToken,
+      options,
+      payload,
+      callback,
+      requestFactory,
+      headers: null,
+    });
   });
   it('should callback with the right value on success', function (done) {
-    var requestFactory = requestGenerator('{"err": null, "result": true}', 200);
-    var callback = function (err, resp) {
+    const requestFactory = requestGenerator(
+      '{"err": null, "result": true}',
+      200,
+    );
+    const callback = function (err, resp) {
       expect(resp).to.be.ok;
       expect(resp.result).to.be.ok;
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
@@ -38,13 +52,14 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
+      headers: null,
     });
   });
   it('should callback with the server error if 403', function (done) {
-    var response =
+    const response =
       '{"err": "bad request", "result": null, "message": "fail whale"}';
-    var requestFactory = requestGenerator(response, 403);
-    var callback = function (err, resp) {
+    const requestFactory = requestGenerator(response, 403);
+    const callback = function (err, resp) {
       expect(resp).to.not.be.ok;
       expect(err.message).to.eql('403');
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
@@ -56,13 +71,14 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
+      headers: null,
     });
   });
   it('should callback with the server error if 500', function (done) {
-    var response =
+    const response =
       '{"err": "bad request", "result": null, "message": "500!!!"}';
-    var requestFactory = requestGenerator(response, 500);
-    var callback = function (err, resp) {
+    const requestFactory = requestGenerator(response, 500);
+    const callback = function (err, resp) {
       expect(resp).to.not.be.ok;
       expect(err.message).to.eql('500');
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
@@ -74,12 +90,13 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
+      headers: null,
     });
   });
   it('should callback with a retriable error with a weird status', function (done) {
-    var response = '{"err": "bad request"}';
-    var requestFactory = requestGenerator(response, 12005);
-    var callback = function (err, resp) {
+    const response = '{"err": "bad request"}';
+    const requestFactory = requestGenerator(response, 12005);
+    const callback = function (err, resp) {
       expect(resp).to.not.be.ok;
       expect(err.message).to.match(/connection failure/);
       expect(err.code).to.eql('ENOTFOUND');
@@ -92,12 +109,13 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
+      headers: null,
     });
   });
   it('should callback with some error if normal sending throws', function (done) {
-    var response = '{"err": "bad request"}';
-    var requestFactory = requestGenerator(response, 500, true);
-    var callback = function (err, resp) {
+    const response = '{"err": "bad request"}';
+    const requestFactory = requestGenerator(response, 500, true);
+    const callback = function (err, resp) {
       expect(resp).to.not.be.ok;
       expect(err.message).to.match(/Cannot find a method to transport/);
       expect(requestFactory.getInstance().timeout).to.equal(options.timeout);
@@ -109,12 +127,13 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
+      headers: null,
     });
   });
   describe('post', function () {
     beforeEach(function (done) {
       window.fetchStub = sinon.stub(window, 'fetch');
-      window.server = sinon.createFakeServer();
+      window.server = fakeServer.create();
       done();
     });
 
@@ -146,10 +165,10 @@ describe('post', function () {
       ]);
     }
 
-    var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
+    const uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
     it('should use fetch when requested', function (done) {
-      var callback = function (err, _resp) {
+      const callback = function (err, _resp) {
         expect(window.fetchStub.called).to.be.ok;
         expect(window.server.requests.length).to.eql(0);
         done(err);
@@ -158,10 +177,17 @@ describe('post', function () {
       stubXhrResponse();
       window.server.requests.length = 0;
       options.transport = 'fetch';
-      t.post({ accessToken, options, payload, callback });
+      t.post({
+        accessToken,
+        options,
+        payload,
+        callback,
+        requestFactory: null,
+        headers: null,
+      });
     });
     it('should use xhr when requested', function (done) {
-      var callback = function (err, _resp) {
+      const callback = function (err, _resp) {
         expect(window.fetchStub.called).to.not.be.ok;
         expect(window.server.requests.length).to.eql(1);
         done(err);
@@ -170,7 +196,14 @@ describe('post', function () {
       stubXhrResponse();
       window.server.requests.length = 0;
       options.transport = 'xhr';
-      t.post({ accessToken, options, payload, callback });
+      t.post({
+        accessToken,
+        options,
+        payload,
+        callback,
+        requestFactory: null,
+        headers: null,
+      });
       setTimeout(function () {
         window.server.respond();
       }, 1);
@@ -178,7 +211,7 @@ describe('post', function () {
   });
 });
 
-var TestRequest = function (response, status, shouldThrowOnSend) {
+const TestRequest = function (response, status, shouldThrowOnSend) {
   this.method = null;
   this.url = null;
   this.async = false;
@@ -210,8 +243,8 @@ TestRequest.prototype.send = function (data) {
   }
 };
 
-var requestGenerator = function (response, status, shouldThrow) {
-  var request;
+const requestGenerator = function (response, status, shouldThrow = null) {
+  let request;
   return {
     getInstance: function () {
       if (!request) {
