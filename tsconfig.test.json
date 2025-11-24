@@ -4,5 +4,6 @@
     "types": ["mocha", "node"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "include": ["test", "src", "scripts"]
 }
