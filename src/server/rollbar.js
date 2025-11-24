@@ -1,3 +1,4 @@
+// @ts-check
 import os from 'os';
 import urllib from 'url';
 import util from 'util';
@@ -18,6 +19,13 @@ import * as serverDefaults from './defaults.js';
 import Instrumenter from './telemetry.js';
 import * as transforms from './transforms.js';
 import Transport from './transport.js';
+
+/**
+ * Local typedef placeholders for component types used by server Rollbar.
+ * Keep these aligned with the real exports in index.d.ts.
+ * @typedef {any} ScrubType
+ * @typedef {any} TruncationType
+ */
 
 /**
  * Server Rollbar implementation

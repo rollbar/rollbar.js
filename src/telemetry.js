@@ -1,3 +1,4 @@
+// @ts-check
 import * as _ from './utility.js';
 
 const MAX_EVENTS = 100;
@@ -7,6 +8,14 @@ function fromMillis(millis) {
   return [Math.trunc(millis / 1000), Math.round((millis % 1000) * 1e6)];
 }
 
+/**
+ * Browser telemeter
+ * @class Telemeter
+ */
+/**
+ * Browser telemeter
+ * @class Telemeter
+ */
 class Telemeter {
   constructor(options, tracing) {
     this.queue = [];
@@ -542,6 +551,8 @@ class Telemeter {
     }
   }
 }
+
+/** @typedef {typeof Telemeter} TelemeterType */
 
 function getLevel(type, level) {
   if (level) {

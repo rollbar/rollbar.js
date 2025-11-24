@@ -1,3 +1,4 @@
+// @ts-check
 import { ContextManager, createContextKey } from './contextManager.js';
 import { SpanExporter } from './exporter.js';
 import id from './id.js';
@@ -7,6 +8,10 @@ import { Tracer } from './tracer.js';
 
 const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
 
+/**
+ * Tracing facade
+ * @class Tracing
+ */
 export default class Tracing {
   constructor(gWindow, api, options) {
     this.api = api;

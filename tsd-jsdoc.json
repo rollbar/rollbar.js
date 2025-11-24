@@ -1,7 +1,14 @@
 {
   "source": {
     "include": [
-      "types/rollbar.js"
+      "src/browser/core.js",
+      "src/server/rollbar.js",
+      "src/browser/wrapGlobals.js",
+      "src/telemetry.js",
+      "src/tracing/tracing.js",
+      "src/browser/replay/replay.js",
+      "src/scrub.js",
+      "src/truncation.js"
     ],
     "includePattern": ".+\\.js$",
     "excludePattern": "(^|\\/|\\\\)node_modules"

@@ -1,6 +1,21 @@
+// @ts-check
 import traverse from './utility/traverse.js';
 import * as _ from './utility.js';
 
+/**
+ * @typedef {(
+ *   data: object,
+ *   scrubFields?: string[],
+ *   scrubPaths?: string[],
+ * ) => object} ScrubType
+ */
+
+/**
+ * @param {object} data
+ * @param {string[]} [scrubFields]
+ * @param {string[]} [scrubPaths]
+ * @returns {object}
+ */
 function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
 

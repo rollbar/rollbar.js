@@ -1,3 +1,4 @@
+// @ts-check
 import API from '../api.js';
 import defaults from '../defaults.js';
 import errorParser from '../errorParser.js';
@@ -16,6 +17,18 @@ import * as transforms from './transforms.js';
 import Transport from './transport.js';
 import * as urllib from './url.js';
 
+/**
+ * Local typedef placeholders for component types (tsd-jsdoc cannot parse import() types).
+ * Keep these aligned with the real exports in index.d.ts.
+ * @typedef {any} WrapGlobalsType
+ * @typedef {any} TelemeterType
+ * @typedef {any} InstrumenterType
+ * @typedef {any} TracingType
+ * @typedef {any} ReplayType
+ * @typedef {any} ScrubType
+ * @typedef {any} TruncationType
+ */
+
 // Used to support global `Rollbar` instance.
 let _instance = null;
 
@@ -25,15 +38,22 @@ let _instance = null;
  */
 
 /**
- * @typedef {object} RollbarClient
+ * @typedef {object} RollbarComponents
+ * @property {TelemeterType} [telemeter]
+ * @property {InstrumenterType} [instrumenter]
+ * @property {WrapGlobalsType} [wrapGlobals]
+ * @property {ScrubType} [scrub]
+ * @property {TruncationType} [truncation]
+ * @property {TracingType} [tracing]
+ * @property {ReplayType} [replay]
  */
 
 /**
  * Browser Rollbar implementation
  * @class Rollbar
  * @alias module:rollbar/browser.Rollbar
- * @param {RollbarConfig} options
- * @param {RollbarClient} client
+ * @param {Rollbar.Configuration} options
+ * @param {any} client
  */
 class Rollbar {
   constructor(options, client) {
@@ -125,7 +145,7 @@ class Rollbar {
 
   /**
    * Set global configuration on the client.
-   * @param {RollbarConfig} options
+   * @param {Rollbar.Configuration} options
    * @returns {Rollbar}
    */
   global(options) {
@@ -135,7 +155,7 @@ class Rollbar {
 
   /**
    * Configure Rollbar options and propagate to components.
-   * @param {RollbarConfig} options
+   * @param {Rollbar.Configuration} options
    * @param {object} [payloadData]
    * @returns {Rollbar}
    */

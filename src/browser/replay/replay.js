@@ -1,3 +1,4 @@
+// @ts-check
 import logger from '../../logger.js';
 import hrtime from '../../tracing/hrtime.js';
 import id from '../../tracing/id.js';

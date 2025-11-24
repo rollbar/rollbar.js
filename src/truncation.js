@@ -1,5 +1,10 @@
+// @ts-check
 import traverse from './utility/traverse.js';
 import * as _ from './utility.js';
+
+/**
+ * @typedef {object} TruncationType
+ */
 
 function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];

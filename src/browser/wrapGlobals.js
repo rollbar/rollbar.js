@@ -1,5 +1,24 @@
+// @ts-check
+// @ts-check
 import { hasOwn } from '../utility.js';
 
+/**
+ * @typedef {object} WrapGlobalsOptions
+ * @property {any} [globalContext] optional context
+ */
+
+/**
+ * Wrap globals
+ * @param {any} window
+ * @param {any} handler
+ * @param {any} shim
+ */
+/**
+ * Wrap globals
+ * @param {any} window Browser window
+ * @param {any} handler Handler
+ * @param {any} shim Shim
+ */
 function wrapGlobals(window, handler, shim) {
   if (!window) {
     return;
@@ -57,3 +76,5 @@ function _extendListenerPrototype(handler, prototype, shim) {
 }
 
 export default wrapGlobals;
+
+/** @typedef {typeof wrapGlobals} WrapGlobalsType */
