@@ -54,9 +54,10 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 ### Tests
 
 - `npm test` runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- `npm run typecheck` runs the TypeScript pass (via `tsconfig.test.json`) so TS-based tests surface declaration mismatches early.
 - Scope runs as needed:
   - `npm run test:wtr -- --watch` for browser tests with live reload.
-  - `npm run test:server test/server.my-feature.test.js` to focus on one file.
+  - `npm run test:server test/server.my-feature.test.{js,ts}` to focus on one file.
 - `npm run validate` executes ES5 compatibility and example snippets. Use it when touching bundling, transports, or documentation code.
 
 ### Builds

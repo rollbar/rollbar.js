@@ -7,7 +7,9 @@ export default {
     'test/**/*.test.ts',
     // Exclude server and React Native tests
     '!test/server.*.test.js',
+    '!test/server.*.test.ts',
     '!test/react-native.*.test.js',
+    '!test/react-native.*.test.ts',
   ],
 
   nodeResolve: true,

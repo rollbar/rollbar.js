@@ -1,0 +1,6 @@
+{
+  // This file exists so editors (e.g., VS Code) associate files under test/ with
+  // the test TypeScript config; it extends the root tsconfig.test.json used by CI/scripts.
+  "extends": "../tsconfig.test.json",
+  "include": ["./**/*"]
+}
