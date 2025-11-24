@@ -181,7 +181,11 @@ declare namespace Rollbar {
     network?: boolean;
     networkResponseHeaders?: boolean | string[];
     networkResponseBody?: boolean;
+    networkRequestHeaders?: boolean;
     networkRequestBody?: boolean;
+    networkErrorOnHttp5xx?: boolean;
+    networkErrorOnHttp4xx?: boolean;
+    networkErrorOnHttp0?: boolean;
     log?: boolean;
     dom?: boolean;
     navigation?: boolean;

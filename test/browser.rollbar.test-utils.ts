@@ -11,6 +11,7 @@ declare global {
   interface Window {
     nise: typeof import('nise');
 
+    fetch: sinon.SinonStub;
     fetchStub: sinon.SinonStub;
 
     rollbar: Rollbar;
