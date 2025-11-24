@@ -4,7 +4,7 @@
 export default Rollbar;
 
 declare class Rollbar implements Rollbar.Components {
-  constructor(options?: Rollbar.Configuration);
+  constructor(options?: Rollbar.Configuration, client?: Rollbar);
   static init(options: Rollbar.Configuration): Rollbar;
   static setComponents(components: Rollbar.Components): void;
 
