@@ -141,8 +141,9 @@
     "format": "prettier --write \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
     "pack": "node scripts/pack.js",
-    "typecheck": "tsc --noEmit -p tsconfig.test.json",
-    "validate": "npm run validate:es5 && npm run validate:examples && npm run typecheck",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "validate": "npm run validate:es5 && npm run validate:examples && npm run typecheck:tests",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
     "validate:examples": "node scripts/validate-examples.js -p",
     "update:snippets:examples": "node scripts/update-snippets.js examples"
