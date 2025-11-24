@@ -1,7 +1,14 @@
-// @ts-nocheck
 import { expect } from 'chai';
 
 import * as d from '../src/browser/domUtility.js';
+
+interface Node {
+  tagName: string;
+  id?: string;
+  className?: string;
+  getAttribute: (t: string) => string;
+  parentNode?: Node;
+}
 
 function fullElement() {
   return {
@@ -18,24 +25,24 @@ function fullElement() {
   };
 }
 
-function genElement(tag, id, classes, type, name) {
-  const elem = {
+function genElement(
+  tag,
+  id = null,
+  classes = null,
+  type = null,
+  name = null,
+): Node {
+  return {
     tagName: tag,
-    getAttribute: function (t) {
-      return {
+    id,
+    className: classes,
+    getAttribute: (t) =>
+      ({
         type: type,
         name: name,
         other: 'otherAttr',
-      }[t];
-    },
+      })[t],
   };
-  if (id) {
-    elem.id = id;
-  }
-  if (classes) {
-    elem.className = classes;
-  }
-  return elem;
 }
 
 describe('isDescribedElement', function () {

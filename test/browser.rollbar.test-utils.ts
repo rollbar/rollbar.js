@@ -3,10 +3,18 @@
  */
 
 import 'nise';
+import Rollbar from '../src/browser/core.js';
 
 declare global {
   interface Window {
     nise: typeof import('nise');
+
+    rollbar: Rollbar;
+    server: import('nise').FakeServer;
+    chrome: { runtime: boolean };
+    _rollbarURH: ((evt: PromiseRejectionEvent) => void) & {
+      belongsToShim?: boolean;
+    };
   }
 }
 

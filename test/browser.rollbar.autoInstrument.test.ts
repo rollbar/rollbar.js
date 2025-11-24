@@ -40,7 +40,7 @@ describe('options.autoInstrument', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 
@@ -70,7 +70,7 @@ describe('options.autoInstrument', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
 

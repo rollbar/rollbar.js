@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -49,7 +48,7 @@ describe('options.autoInstrument', function () {
 
       document.dispatchEvent(cspEvent);
 
-      await setTimeout(100);
+      await setTimeout(100, null);
 
       expect(queueStub.called).to.be.true;
       const item = queueStub.getCall(0).args[0];

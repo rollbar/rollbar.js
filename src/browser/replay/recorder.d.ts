@@ -28,4 +28,7 @@ export default class Recorder {
   start(): this;
   stop(): this;
   clear(): void;
+
+  // Internal only - for testing
+  get _recordFn(): (event: any) => void;
 }

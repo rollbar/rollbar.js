@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType, IncrementalSource } from '@rrweb/types';
 import { expect } from 'chai';
@@ -41,7 +40,7 @@ describe('Recorder', function () {
 
   describe('constructor', function () {
     it('should initialize with default properties', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({});
 
       expect(recorder.isRecording).to.be.false;
       expect(recorder.isReady).to.be.false;
@@ -54,8 +53,12 @@ describe('Recorder', function () {
     });
 
     it('should initialize removing disallowed options', function () {
-      const options = { enabled: true, checkoutEveryNms: 1000 };
-      const recorder = new Recorder(options, recordFnStub);
+      const options = {
+        enabled: true,
+        checkoutEveryNms: 1000,
+        recordFn: recordFnStub,
+      };
+      const recorder = new Recorder(options);
 
       expect(recorder.options).to.deep.equal({
         enabled: true,
@@ -113,7 +116,7 @@ describe('Recorder', function () {
     });
 
     it('should handle stop when not recording', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.stop();
 
       expect(recorder.isRecording).to.be.false;
@@ -397,7 +400,7 @@ describe('Recorder', function () {
     });
 
     it('should add an end event when exportRecordingSpan is called', function () {
-      const recorder = new Recorder({}, recordFnStub);
+      const recorder = new Recorder({ recordFn: recordFnStub });
       recorder.start();
 
       emitCallback({ timestamp: 1000, type: 'event1', data: { a: 1 } }, false);
