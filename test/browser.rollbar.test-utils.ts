@@ -3,11 +3,15 @@
  */
 
 import 'nise';
+import sinon from 'sinon';
+
 import Rollbar from '../src/browser/core.js';
 
 declare global {
   interface Window {
     nise: typeof import('nise');
+
+    fetchStub: sinon.SinonStub;
 
     rollbar: Rollbar;
     server: import('nise').FakeServer;

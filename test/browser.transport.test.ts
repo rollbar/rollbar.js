@@ -11,12 +11,19 @@ const t = new Transport(truncation);
 
 describe('post', function () {
   const accessToken = 'abc123';
-  const options = {
+  const options: {
+    hostname: string;
+    protocol: string;
+    path: string;
+    timeout: number;
+    transport?: string;
+  } = {
     hostname: 'api.rollbar.com',
     protocol: 'https',
     path: '/api/1/item/',
     timeout: 2000,
   };
+
   const payload = { access_token: accessToken, data: { a: 1 } };
   it('should handle a failure to make a request', function (done) {
     const requestFactory = function () {
