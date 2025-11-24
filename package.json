@@ -133,7 +133,7 @@
     "build:dev": "webpack --mode development",
     "postbuild:dev": "npm run postbuild",
     "test": "npm run test:wtr && npm run test:server",
-    "test:server": "TS_NODE_PROJECT=tsconfig.test.json TS_NODE_TRANSPILE_ONLY=1 node --loader ./node_modules/ts-node/esm.mjs ./node_modules/mocha/bin/mocha.js --extension js --extension ts \"test/server.*.test.{js,ts}\" --reporter spec",
+    "test:server": "node scripts/run-server-tests.js",
     "test:wtr": "web-test-runner",
     "test:wtr:watch": "web-test-runner --watch",
     "lint": "eslint",
