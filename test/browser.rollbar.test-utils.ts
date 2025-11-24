@@ -2,7 +2,7 @@
  * Shared utilities for browser.rollbar tests.
  */
 
-import 'nise/nise.js';
+import 'nise';
 
 declare global {
   interface Window {

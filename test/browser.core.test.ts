@@ -11,7 +11,7 @@ import { setTimeout } from './util/timers.js';
 declare global {
   interface Window {
     rollbar: Rollbar;
-    server: import('nise').FakeServerStatic;
+    server: import('nise').FakeServer;
     chrome: { runtime: boolean };
     _rollbarURH: ((evt: PromiseRejectionEvent) => void) & {
       belongsToShim?: boolean;
@@ -114,7 +114,7 @@ describe('options.captureUncaught', function () {
   });
 
   afterEach(function () {
-    window.rollbar?.configure({ autoInstrument: false });
+    window.rollbar.configure({ autoInstrument: false });
     window.server.restore();
   });
 
