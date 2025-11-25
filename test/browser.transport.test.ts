@@ -6,7 +6,18 @@ import truncation from '../src/truncation.js';
 
 import { fakeServer } from './browser.rollbar.test-utils.ts';
 
-const t = new Transport(truncation);
+interface _Transport {
+  post(args: {
+    accessToken: string;
+    options: Record<string, unknown>;
+    payload: any;
+    headers?: Record<string, unknown>;
+    callback?: any;
+    requestFactory?: any;
+  }): void;
+}
+
+const t = new Transport(truncation) as _Transport;
 
 describe('post', function () {
   const accessToken = 'abc123';
