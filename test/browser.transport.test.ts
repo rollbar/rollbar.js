@@ -26,14 +26,7 @@ describe('post', function () {
       expect(err).to.be.ok;
       done(resp);
     };
-    t.post({
-      accessToken,
-      options,
-      payload,
-      callback,
-      requestFactory,
-      headers: undefined,
-    });
+    t.post({ accessToken, options, payload, callback, requestFactory });
   });
   it('should callback with the right value on success', function (done) {
     const requestFactory = requestGenerator(
@@ -52,7 +45,6 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
-      headers: undefined,
     });
   });
   it('should callback with the server error if 403', function (done) {
@@ -71,7 +63,6 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
-      headers: undefined,
     });
   });
   it('should callback with the server error if 500', function (done) {
@@ -90,7 +81,6 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
-      headers: undefined,
     });
   });
   it('should callback with a retriable error with a weird status', function (done) {
@@ -109,7 +99,6 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
-      headers: undefined,
     });
   });
   it('should callback with some error if normal sending throws', function (done) {
@@ -127,7 +116,6 @@ describe('post', function () {
       payload,
       callback,
       requestFactory: requestFactory.getInstance,
-      headers: undefined,
     });
   });
   describe('post', function () {
@@ -182,8 +170,6 @@ describe('post', function () {
         options,
         payload,
         callback,
-        requestFactory: undefined,
-        headers: undefined,
       });
     });
     it('should use xhr when requested', function (done) {
@@ -201,8 +187,6 @@ describe('post', function () {
         options,
         payload,
         callback,
-        requestFactory: undefined,
-        headers: undefined,
       });
       setTimeout(function () {
         window.server.respond();
