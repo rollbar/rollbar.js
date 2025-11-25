@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
 
+import { Cause } from './browser.rollbar.test-utils.ts';
+
 function TestClientGen() {
   const TestClient = function () {
     this.notifier = {
@@ -438,7 +440,7 @@ describe('addBody', function () {
   describe('with nested error', function () {
     it('should create trace_chain', function (done) {
       const nestedErr = new Error('nested error');
-      const err = new Error('test error') as Error & { nested?: Error };
+      const err = new Error('test error') as Rollbar.ErrorWithContext;
       err.nested = nestedErr;
       const args = ['a message', err];
       const item = itemFromArgs(args);
@@ -458,14 +460,9 @@ describe('addBody', function () {
       });
     });
     it('should create add error context as custom data', function (done) {
-      const nestedErr = new Error('nested error') as Error & {
-        rollbarContext?: any;
-      };
+      const nestedErr = new Error('nested error') as Rollbar.ErrorWithContext;
       nestedErr.rollbarContext = { err1: 'nested context' };
-      const err = new Error('test error') as Error & {
-        rollbarContext?: any;
-        nested?: Error;
-      };
+      const err = new Error('test error') as Rollbar.ErrorWithContext;
       err.rollbarContext = { err2: 'error context' };
       err.nested = nestedErr;
       const args = ['a message', err];
@@ -488,7 +485,7 @@ describe('addBody', function () {
 
     it('should create trace_chain', function (done) {
       const causeErr = new Error('cause error');
-      const err = new Error('test error') as Error & { cause?: Error };
+      const err = new Error('test error') as Error & Cause;
       err.cause = causeErr;
       const args = ['a message', err];
       const item = itemFromArgs(args);
@@ -508,14 +505,9 @@ describe('addBody', function () {
       });
     });
     it('should create add error context as custom data', function (done) {
-      const causeErr = new Error('cause error') as Error & {
-        rollbarContext?: any;
-      };
+      const causeErr = new Error('cause error') as Rollbar.ErrorWithContext;
       causeErr.rollbarContext = { err1: 'cause context' };
-      const err = new Error('test error') as Error & {
-        rollbarContext?: any;
-        cause?: Error;
-      };
+      const err = new Error('test error') as Rollbar.ErrorWithContext & Cause;
       err.cause = causeErr;
       err.rollbarContext = { err2: 'error context' };
       const args = ['a message', err];

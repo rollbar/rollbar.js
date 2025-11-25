@@ -66,10 +66,15 @@ declare namespace Rollbar {
     context: TContext,
     callback: Callback<TResult>,
   ) => void | Promise<TResult>;
-  export type MaybeError = Error | undefined | null;
   export type Level = 'debug' | 'info' | 'warning' | 'error' | 'critical';
   export type Dictionary = Record<string, unknown>;
+  export type MaybeError = Error | undefined | null;
   export type StringAttributes = Record<string, string>;
+
+  export interface ErrorWithContext extends Error {
+    rollbarContext?: Record<string, any>;
+    nested?: Error | null;
+  }
 
   /**
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
