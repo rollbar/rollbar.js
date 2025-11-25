@@ -13,8 +13,8 @@ import logger from '../../../src/logger.js';
 import Queue from '../../../src/queue.js';
 import { Context } from '../../../src/tracing/context.js';
 import Tracing from '../../../src/tracing/tracing.js';
-import { createPayloadWithReplayId } from '../../fixtures/replay/index.js';
-import mockRecordFn from '../util/mockRecordFn.js';
+import { createPayloadWithReplayId } from '../../fixtures/replay/index.ts';
+import mockRecordFn from '../util/mockRecordFn.ts';
 
 const options = {
   enabled: true,

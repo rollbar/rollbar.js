@@ -5,7 +5,7 @@ import Rollbar from '../src/browser/rollbar.js';
 
 import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { loadHtml } from './util/fixtures.ts';
-import { setTimeout } from './util/timers.js';
+import { setTimeoutAsync } from './util/timers.ts';
 
 const DUMMY_TRACE_ID = 'some-trace-id';
 const DUMMY_SPAN_ID = 'some-span-id';
@@ -349,7 +349,7 @@ describe('options.captureUncaught', function () {
     const element = document.getElementById('throw-error');
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -385,7 +385,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -397,7 +397,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -414,7 +414,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -447,7 +447,7 @@ describe('options.captureUncaught', function () {
       Error.prepareStackTrace(e);
     }
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -482,7 +482,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -520,7 +520,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -552,7 +552,7 @@ describe('options.captureUncaught', function () {
     const element = document.getElementById('throw-dom-exception');
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -586,7 +586,7 @@ describe('options.captureUncaught', function () {
     const element = document.getElementById('throw-depp-stack-error');
     element.click();
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -619,7 +619,7 @@ describe('options.captureUncaught', function () {
     const element = document.getElementById('throw-event-handler-error');
     element.click();
 
-    await setTimeout(100);
+    await setTimeoutAsync(100);
 
     server.respond();
 
@@ -671,7 +671,7 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    await setTimeout(500);
+    await setTimeoutAsync(500);
 
     server.respond();
 
@@ -703,7 +703,7 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    await setTimeout(500);
+    await setTimeoutAsync(500);
 
     server.respond();
 
@@ -736,7 +736,7 @@ describe('options.captureUnhandledRejections', function () {
 
     Promise.reject(new Error('test reject'));
 
-    await setTimeout(500);
+    await setTimeoutAsync(500);
 
     server.respond();
 
@@ -777,7 +777,7 @@ describe('log', function () {
 
     rollbar.log('test message', { foo: 'bar' });
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -804,7 +804,7 @@ describe('log', function () {
 
     rollbar.log(new Error('test error'), { foo: 'bar' });
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -835,7 +835,7 @@ describe('log', function () {
 
     rollbar.error(err, { foo: 'bar' });
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -865,7 +865,7 @@ describe('log', function () {
       rollbar.error(err);
     });
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -895,7 +895,7 @@ describe('log', function () {
 
     rollbar.log(null);
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -923,7 +923,7 @@ describe('log', function () {
     rollbar.log(error);
     rollbar.log(error, { skipFrames: 1 });
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -965,7 +965,7 @@ describe('log', function () {
 
     rollbar.log('test', callback);
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -1021,7 +1021,7 @@ describe('onerror', function () {
         window.location.href,
       );
 
-      await setTimeout(1);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -1067,7 +1067,7 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to ignore
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -1092,7 +1092,7 @@ describe('callback options', function () {
 
     rollbar.log(new Error('test'));
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -1133,7 +1133,7 @@ describe('callback options', function () {
       const element = document.getElementById('throw-error');
       element.click();
 
-      await setTimeout(1);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -1157,7 +1157,7 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -1183,7 +1183,7 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -1210,7 +1210,7 @@ describe('callback options', function () {
 
     rollbar.log('test'); // generate a payload to inspect
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 

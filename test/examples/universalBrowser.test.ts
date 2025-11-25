@@ -1,14 +1,10 @@
-// The most maintainable way to reset the browser state in karma is to put
-// tests in separate files. This file is for testing non-default config
-// options during snippet execution. (Before full rollbar.js loads.)
-
 import { expect } from 'chai';
 
 import { fakeServer } from '../browser.rollbar.test-utils.ts';
-import { loadHtml } from '../util/fixtures';
-import { setTimeout } from '../util/timers.js';
+import { loadHtml } from '../util/fixtures.ts';
+import { setTimeoutAsync } from '../util/timers.ts';
 
-describe('Rollbar loaded by snippet with non-default options', function () {
+describe('Rollbar loaded by snippet', function () {
   let __originalOnError = null;
 
   before(async function () {
@@ -17,15 +13,13 @@ describe('Rollbar loaded by snippet with non-default options', function () {
     window.onerror = () => false;
 
     // Load the HTML page.
-    await loadHtml(
-      'examples/universal-browser/test-with-non-default-options.html',
-    );
+    await loadHtml('examples/universal-browser/test.html');
 
     // DOMContentLoaded is not dispatched automatically in WTR/Playwright
     document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
 
     // Give the snippet time to load and init.
-    await setTimeout(250);
+    await setTimeoutAsync(250);
 
     // Stub the xhr interface.
     window.server = fakeServer.create();
@@ -51,18 +45,18 @@ describe('Rollbar loaded by snippet with non-default options', function () {
 
     const ret = rollbar.info('test');
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql(undefined);
+    expect(body.access_token).to.be.undefined;
     expect(body.data.uuid).to.eql(ret.uuid);
     expect(body.data.body.message.body).to.eql('test');
 
-    // Assert that load telemetry was not added. (First event is the log event.)
-    expect(body.data.body.telemetry[0].type).to.eql('log');
-    expect(body.data.body.telemetry[0].body.message).to.eql('test');
+    // Assert load telemetry was added.
+    expect(body.data.body.telemetry[0].type).to.eql('navigation');
+    expect(body.data.body.telemetry[0].body.subtype).to.eql('DOMContentLoaded');
   });
 });

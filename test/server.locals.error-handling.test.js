@@ -13,7 +13,7 @@ import {
   nodeThrowWithNestedLocals,
   nodeThrowRecursionError,
   verifyRejectedPromise,
-} from './server.locals.test-utils.js';
+} from './server.locals.test-utils.ts';
 
 describe('server.locals error handling', function () {
   let mochaExceptionHandlers;

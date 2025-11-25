@@ -9,7 +9,7 @@ import {
   InvalidOpenTracingTracerStub,
   DUMMY_TRACE_ID,
   DUMMY_SPAN_ID,
-} from './server.rollbar.test-utils.js';
+} from './server.rollbar.test-utils.ts';
 
 describe('rollbar logging and tracing', function () {
   describe('addTracingInfo', function () {

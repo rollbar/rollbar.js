@@ -5,7 +5,7 @@ import sinon from 'sinon';
 
 import Recorder from '../src/browser/replay/recorder.js';
 
-import { stubRecordFn } from './replay/util/mockRecordFn.js';
+import { stubRecordFn } from './replay/util/mockRecordFn.ts';
 
 describe('Recorder', function () {
   let mockTracing;

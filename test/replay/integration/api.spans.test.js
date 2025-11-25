@@ -9,7 +9,7 @@ import Api from '../../../src/api.js';
 import {
   standardPayload,
   createPayloadWithReplayId,
-} from '../../fixtures/replay/payloads.fixtures.js';
+} from '../../fixtures/replay/payloads.fixtures.ts';
 
 describe('API Span Transport', function () {
   let api;

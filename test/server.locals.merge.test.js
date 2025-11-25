@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import logger from '../src/logger.js';
 import Locals from '../src/server/locals.js';
 
-import localsFixtures from './fixtures/locals.fixtures.js';
+import localsFixtures from './fixtures/locals.fixtures.ts';
 
 describe('server.locals merge', function () {
   afterEach(function () {

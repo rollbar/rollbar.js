@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import Rollbar from '../src/server/rollbar.js';
 import * as t from '../src/server/transforms.js';
 
-import { createTestItem } from './server.transforms.test-utils.js';
+import { createTestItem } from './server.transforms.test-utils.ts';
 
 describe('transforms.scrubPayload', function () {
   describe('without scrub fields', function () {

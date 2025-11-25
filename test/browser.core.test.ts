@@ -6,7 +6,7 @@ import Tracing from '../src/tracing/tracing.js';
 
 import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { loadHtml } from './util/fixtures.ts';
-import { setTimeout } from './util/timers.js';
+import { setTimeoutAsync } from './util/timers.ts';
 
 describe('options', function () {
   beforeEach(function () {
@@ -132,7 +132,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -168,7 +168,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -180,7 +180,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -197,7 +197,7 @@ describe('options.captureUncaught', function () {
 
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
     expect(server.requests.length).to.eql(0); // Disabled, no event
@@ -231,7 +231,7 @@ describe('options.captureUncaught', function () {
       Error.prepareStackTrace(e, []);
     }
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -268,7 +268,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -309,7 +309,7 @@ describe('options.captureUncaught', function () {
       element.click(); // use for loop to ensure the stack traces have identical line/col info
     }
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -344,7 +344,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
@@ -379,7 +379,7 @@ describe('options.captureUncaught', function () {
     expect(element).to.exist;
     element.click();
 
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
 
@@ -429,7 +429,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500, null);
+      await setTimeoutAsync(500);
 
       server.respond();
 
@@ -462,7 +462,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500, null);
+      await setTimeoutAsync(500);
 
       server.respond();
 
@@ -496,7 +496,7 @@ describe('options.captureUncaught', function () {
 
       Promise.reject(new Error('test reject'));
 
-      await setTimeout(500, null);
+      await setTimeoutAsync(500);
 
       server.respond();
 
@@ -539,7 +539,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log('test message', { foo: 'bar' });
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -567,7 +567,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log(new Error('test error'), { foo: 'bar' });
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -601,7 +601,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.error(err, { foo: 'bar' });
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -649,7 +649,7 @@ describe('options.captureUncaught', function () {
       custom.self = custom;
       rollbar.error(err, custom);
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -691,7 +691,7 @@ describe('options.captureUncaught', function () {
 
       rollbar.log(null);
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 
@@ -720,7 +720,7 @@ describe('options.captureUncaught', function () {
       rollbar.log(error);
       rollbar.log(error, { skipFrames: 1 });
 
-      await setTimeout(1, null);
+      await setTimeoutAsync(1);
 
       server.respond();
 

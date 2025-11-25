@@ -9,7 +9,7 @@ import Api from '../../../src/api.js';
 import Replay from '../../../src/browser/replay/replay.js';
 import logger from '../../../src/logger.js';
 import Tracing from '../../../src/tracing/tracing.js';
-import mockRecordFn from '../util/mockRecordFn.js';
+import mockRecordFn from '../util/mockRecordFn.ts';
 
 const options = {
   enabled: true,

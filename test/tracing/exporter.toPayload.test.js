@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import { SpanExporter, spanExportQueue } from '../../src/tracing/exporter.js';
 import hrtime from '../../src/tracing/hrtime.js';
 import id from '../../src/tracing/id.js';
-import { standardPayload } from '../fixtures/replay/payloads.fixtures.js';
+import { standardPayload } from '../fixtures/replay/payloads.fixtures.ts';
 
 describe('SpanExporter.toPayload()', function () {
   let exporter;

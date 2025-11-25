@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
-import { stubRecordFn } from '../util/mockRecordFn.js';
+import { stubRecordFn } from '../util/mockRecordFn.ts';
 
 const mockRecordFn = stubRecordFn();
 

@@ -1,4 +1,4 @@
-var localsFixtures = {
+const localsFixtures = {
   maps: {
     // simple map includes only the local scope and a single stack frame.
     simple: {

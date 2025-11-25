@@ -2,9 +2,9 @@
  * Export all rrweb fixture events and payloads in a single module
  */
 
-import * as payloads from './payloads.fixtures.js';
-import { rrwebEvents } from './rrwebEvents.fixtures.js';
-import { syntheticEvents } from './rrwebSyntheticEvents.fixtures.js';
+import * as payloads from './payloads.fixtures.ts';
+import { rrwebEvents } from './rrwebEvents.fixtures.ts';
+import { syntheticEvents } from './rrwebSyntheticEvents.fixtures.ts';
 
 // Event collections
 export const realEvents = rrwebEvents;

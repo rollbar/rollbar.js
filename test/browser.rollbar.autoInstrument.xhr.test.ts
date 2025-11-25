@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import Rollbar from '../src/browser/rollbar.js';
 
 import { fakeServer } from './browser.rollbar.test-utils.ts';
-import { setTimeout } from './util/timers.js';
+import { setTimeoutAsync } from './util/timers.ts';
 
 describe('options.autoInstrument', function () {
   beforeEach(function () {
@@ -60,7 +60,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1, null);
+        await setTimeoutAsync(1);
 
         server.respond();
 
@@ -112,7 +112,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1, null);
+        await setTimeoutAsync(1);
 
         server.respond();
 
@@ -161,7 +161,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1, null);
+        await setTimeoutAsync(1);
 
         server.respond();
 
@@ -214,7 +214,7 @@ describe('options.autoInstrument', function () {
     xhr.setRequestHeader('Content-type', 'application/json');
     xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
-        await setTimeout(1, null);
+        await setTimeoutAsync(1);
 
         server.respond();
 
@@ -230,7 +230,7 @@ describe('options.autoInstrument', function () {
       }
     };
     xhr.send(JSON.stringify({ name: 'bar', secret: 'xhr post' }));
-    await setTimeout(1, null);
+    await setTimeoutAsync(1);
 
     server.respond();
   });

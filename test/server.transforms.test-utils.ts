@@ -6,35 +6,40 @@ import Rollbar from '../src/server/rollbar.js';
 import { merge } from '../src/utility.js';
 
 export class CustomError extends Rollbar.Error {
-  constructor(message, nested) {
+  nested: Error | null;
+
+  constructor(message?: string, nested?: Error) {
     super(message, nested);
+    this.nested = nested;
   }
 }
 
 export const nodeVersion = process.versions.node
   .split('.')
-  .map((v) => parseInt(v));
+  .map((v) => parseInt(v, 10));
 
-export const isMinNodeVersion = (major, minor) =>
+export const isMinNodeVersion = (major: number, minor: number): boolean =>
   nodeVersion[0] > major ||
   (nodeVersion[0] === major && nodeVersion[1] >= minor);
 
-export async function wait(ms) {
+export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-export async function throwInScriptFile(filepath) {
-  // Dynamic imports inside setTimeout with async/await can create timing
-  // issues where the error escapes before Rollbar's handler can catch it.
+export async function throwInScriptFile(filepath: string): Promise<void> {
   const module = await import(filepath);
-  setTimeout(() => module.default(), 10);
+  const run = module.default as () => unknown;
+
+  setTimeout(() => run(), 10);
   await wait(500);
 }
 
 // Base test item factory for request-related tests
-export function createTestItem(overrides = {}) {
+export function createTestItem(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   const base = {
     request: {
       headers: {
