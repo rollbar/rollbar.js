@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { expect } from 'chai';
 
 import Rollbar from '../src/browser/rollbar.js';
@@ -61,7 +60,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
@@ -113,7 +112,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
@@ -162,7 +161,7 @@ describe('options.autoInstrument', function () {
       if (xhr.readyState === 4) {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
@@ -215,7 +214,7 @@ describe('options.autoInstrument', function () {
     xhr.setRequestHeader('Content-type', 'application/json');
     xhr.onreadystatechange = async function () {
       if (xhr.readyState === 4) {
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
@@ -231,7 +230,7 @@ describe('options.autoInstrument', function () {
       }
     };
     xhr.send(JSON.stringify({ name: 'bar', secret: 'xhr post' }));
-    await setTimeout(1);
+    await setTimeout(1, null);
 
     server.respond();
   });

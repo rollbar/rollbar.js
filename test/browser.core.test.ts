@@ -8,17 +8,6 @@ import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { loadHtml } from './util/fixtures.ts';
 import { setTimeout } from './util/timers.js';
 
-declare global {
-  interface Window {
-    rollbar: Rollbar;
-    server: import('nise').FakeServer;
-    chrome: { runtime: boolean };
-    _rollbarURH: ((evt: PromiseRejectionEvent) => void) & {
-      belongsToShim?: boolean;
-    };
-  }
-}
-
 describe('options', function () {
   beforeEach(function () {
     Rollbar.setComponents({

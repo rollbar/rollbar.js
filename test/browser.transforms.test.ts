@@ -1,8 +1,13 @@
-// @ts-nocheck
 import { expect } from 'chai';
 
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
+
+// Cause (for Error)
+// Error with cause is supported in +ES2022
+interface Cause {
+  cause?: Error;
+}
 
 function TestClientGen() {
   const TestClient = function () {
@@ -23,7 +28,7 @@ function TestClientGen() {
 function itemFromArgs(args) {
   const client = new (TestClientGen())();
   const rollbar = new Rollbar({ autoInstrument: false }, client);
-  const item = rollbar._createItem(args);
+  const item = (rollbar as any)._createItem(args);
   item.level = 'debug';
   return item;
 }
@@ -67,7 +72,7 @@ describe('handleItemWithError', function () {
     });
   });
   it('should set stack info from error if it is already saved', function (done) {
-    const err = new Error('bork');
+    const err = new Error('bork') as Error & { _savedStackTrace?: any };
     const myTrace = { trace: { frames: [1, 2, 3] } };
     err._savedStackTrace = myTrace;
     const args = ['a message', err];
@@ -122,7 +127,7 @@ describe('handleItemWithError', function () {
 
     for (const { name, constructor, result } of names) {
       err.name = name;
-      err.constructor = { name: constructor };
+      err.constructor = { name: constructor } as any;
       const item = itemFromArgs(args);
 
       t.handleItemWithError(item, options, function (e, i) {
@@ -439,7 +444,7 @@ describe('addBody', function () {
   describe('with nested error', function () {
     it('should create trace_chain', function (done) {
       const nestedErr = new Error('nested error');
-      const err = new Error('test error');
+      const err = new Error('test error') as Rollbar.ErrorWithContext;
       err.nested = nestedErr;
       const args = ['a message', err];
       const item = itemFromArgs(args);
@@ -459,9 +464,9 @@ describe('addBody', function () {
       });
     });
     it('should create add error context as custom data', function (done) {
-      const nestedErr = new Error('nested error');
+      const nestedErr = new Error('nested error') as Rollbar.ErrorWithContext;
       nestedErr.rollbarContext = { err1: 'nested context' };
-      const err = new Error('test error');
+      const err = new Error('test error') as Rollbar.ErrorWithContext;
       err.rollbarContext = { err2: 'error context' };
       err.nested = nestedErr;
       const args = ['a message', err];
@@ -484,7 +489,8 @@ describe('addBody', function () {
 
     it('should create trace_chain', function (done) {
       const causeErr = new Error('cause error');
-      const err = new Error('test error', { cause: causeErr });
+      const err = new Error('test error') as Error & Cause;
+      err.cause = causeErr;
       const args = ['a message', err];
       const item = itemFromArgs(args);
       const options = {};
@@ -503,9 +509,10 @@ describe('addBody', function () {
       });
     });
     it('should create add error context as custom data', function (done) {
-      const causeErr = new Error('cause error');
+      const causeErr = new Error('cause error') as Rollbar.ErrorWithContext;
       causeErr.rollbarContext = { err1: 'cause context' };
-      const err = new Error('test error', { cause: causeErr });
+      const err = new Error('test error') as Rollbar.ErrorWithContext & Cause;
+      err.cause = causeErr;
       err.rollbarContext = { err2: 'error context' };
       const args = ['a message', err];
       const item = itemFromArgs(args);
@@ -548,7 +555,7 @@ describe('scrubPayload', function () {
     const scrub = scrubModule.default;
 
     const scrubberFn = t.addScrubber(scrub);
-    const result = await new Promise((resolve, reject) => {
+    const result: any = await new Promise((resolve, reject) => {
       scrubberFn(payload, options, (err, result) => {
         if (err) reject(err);
         else resolve(result);

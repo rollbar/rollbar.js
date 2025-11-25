@@ -4,7 +4,7 @@
 export default Rollbar;
 
 declare class Rollbar implements Rollbar.Components {
-  constructor(options?: Rollbar.Configuration);
+  constructor(options?: Rollbar.Configuration, client?: Rollbar);
   static init(options: Rollbar.Configuration): Rollbar;
   static setComponents(components: Rollbar.Components): void;
 
@@ -66,10 +66,15 @@ declare namespace Rollbar {
     context: TContext,
     callback: Callback<TResult>,
   ) => void | Promise<TResult>;
-  export type MaybeError = Error | undefined | null;
   export type Level = 'debug' | 'info' | 'warning' | 'error' | 'critical';
   export type Dictionary = Record<string, unknown>;
+  export type MaybeError = Error | undefined | null;
   export type StringAttributes = Record<string, string>;
+
+  export interface ErrorWithContext extends Error {
+    rollbarContext?: Record<string, any>;
+    nested?: Error | null;
+  }
 
   /**
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
@@ -181,7 +186,11 @@ declare namespace Rollbar {
     network?: boolean;
     networkResponseHeaders?: boolean | string[];
     networkResponseBody?: boolean;
+    networkRequestHeaders?: boolean;
     networkRequestBody?: boolean;
+    networkErrorOnHttp5xx?: boolean;
+    networkErrorOnHttp4xx?: boolean;
+    networkErrorOnHttp0?: boolean;
     log?: boolean;
     dom?: boolean;
     navigation?: boolean;

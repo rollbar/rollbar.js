@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -81,7 +80,7 @@ describe('options.autoInstrument', function () {
 
           rollbar.log('test'); // generate a payload to inspect
 
-          await setTimeout(1);
+          await setTimeout(1, null);
 
           server.respond();
 
@@ -154,7 +153,7 @@ describe('options.autoInstrument', function () {
       };
 
       await window.fetch(fetchRequest, fetchInit).then(async (_response) => {
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
@@ -225,7 +224,7 @@ describe('options.autoInstrument', function () {
       await window.fetch(fetchRequest, fetchInit).then(async (response) => {
         rollbar.log('test'); // generate a payload to inspect
 
-        await setTimeout(1);
+        await setTimeout(1, null);
 
         server.respond();
 
