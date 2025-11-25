@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -90,7 +91,7 @@ describe('instrumentDom', function () {
   it('should handle select type input events', async function () {
     const elem = document.getElementById('fruit-select');
 
-    let domEvent = new InputEvent('input');
+    const domEvent = new InputEvent('input');
     elem.value = 'orange';
     elem.dispatchEvent(domEvent);
 
@@ -126,7 +127,7 @@ describe('instrumentDom', function () {
       pointerType: 'touch',
       isPrimary: true,
     };
-    let domEvent = new PointerEvent('click', pointerOptions);
+    const domEvent = new PointerEvent('click', pointerOptions);
     //elem.value = 'on';
     elem.dispatchEvent(domEvent);
 
@@ -155,7 +156,7 @@ describe('instrumentDom', function () {
   it('should handle textarea type input events', async function () {
     const elem = document.getElementById('textarea-1');
 
-    let domEvent = new InputEvent('input');
+    const domEvent = new InputEvent('input');
     elem.value = 'radar';
     elem.dispatchEvent(domEvent);
 
@@ -180,7 +181,7 @@ describe('instrumentDom', function () {
   it('should handle password type input events', async function () {
     const elem = document.getElementById('password-input');
 
-    let domEvent = new InputEvent('input');
+    const domEvent = new InputEvent('input');
     elem.value = 'radar';
     elem.dispatchEvent(domEvent);
 
@@ -366,7 +367,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ scrubTelemetryInputs: true });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -384,7 +385,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ scrubFields: ['secret'] });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -402,7 +403,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ replay: { maskAllInputs: true } });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -420,7 +421,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ replay: { blockClass: 'rb-scrub' } });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -438,7 +439,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ replay: { blockClass: /rb.scrub/ } });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -458,7 +459,7 @@ describe('instrumentDom', function () {
       });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -476,7 +477,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ replay: { maskInputOptions: { text: true } } });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -494,7 +495,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ replay: { maskInputOptions: { text: false } } });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -517,7 +518,7 @@ describe('instrumentDom', function () {
       instrumenter.configure({ telemetryScrubber: customScrubber });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 
@@ -551,7 +552,7 @@ describe('instrumentDom', function () {
       });
       const elem = document.getElementById('text-input');
 
-      let domEvent = new InputEvent('input');
+      const domEvent = new InputEvent('input');
       elem.value = 'radar';
       elem.dispatchEvent(domEvent);
 

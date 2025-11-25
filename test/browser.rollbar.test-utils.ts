@@ -2,6 +2,16 @@
  * Shared utilities for browser.rollbar tests.
  */
 
+import 'nise';
+
+declare global {
+  interface Window {
+    nise: typeof import('nise');
+  }
+}
+
+export const { fakeServer } = window.nise;
+
 export const DUMMY_TRACE_ID = 'some-trace-id';
 export const DUMMY_SPAN_ID = 'some-span-id';
 
@@ -22,7 +32,7 @@ export const InvalidOpenTracingTracerStub = {
 };
 
 export function TestClientGen() {
-  var TestClient = function () {
+  const TestClient = function () {
     this.transforms = [];
     this.predicates = [];
     this.notifier = {
@@ -38,9 +48,9 @@ export function TestClientGen() {
       }.bind(this),
     };
     this.logCalls = [];
-    var logs = 'log,debug,info,warn,warning,error,critical'.split(',');
-    for (var i = 0, len = logs.length; i < len; i++) {
-      var fn = logs[i].slice(0);
+    const logs = 'log,debug,info,warn,warning,error,critical'.split(',');
+    for (let i = 0, len = logs.length; i < len; i++) {
+      const fn = logs[i].slice(0);
       this[fn] = function (fn, item) {
         this.logCalls.push({ func: fn, item: item });
       }.bind(this, fn);

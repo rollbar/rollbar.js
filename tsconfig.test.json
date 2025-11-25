@@ -1,9 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["mocha", "node"],
+    "types": ["mocha", "node", "sinon"],
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["test", "src", "scripts"]
 }

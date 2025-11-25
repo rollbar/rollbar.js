@@ -1,13 +1,15 @@
+// @ts-nocheck
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
 
+import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { setTimeout } from './util/timers.js';
 
 describe('options.autoInstrument', function () {
   beforeEach(function () {
-    window.server = sinon.createFakeServer();
+    window.server = fakeServer.create();
   });
 
   afterEach(function () {

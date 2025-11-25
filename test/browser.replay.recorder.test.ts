@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { record as rrwebRecordFn } from '@rrweb/record';
 import { EventType, IncrementalSource } from '@rrweb/types';
 import { expect } from 'chai';

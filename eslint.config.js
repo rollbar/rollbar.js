@@ -76,6 +76,7 @@ export default defineConfig(
 
       // disabled for now
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/ban-ts-comment': ['error', { 'ts-nocheck': false }],
     },
   },
 
