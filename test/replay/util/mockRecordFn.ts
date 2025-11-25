@@ -2,53 +2,74 @@
  * Mock implementation of rrweb.record for testing
  * Emits fixture events on a schedule to test the Recorder
  */
-import sinon from 'sinon';
+import type { eventWithTime } from '@rrweb/types';
+import sinon, { type SinonStub } from 'sinon';
 
-import { allEvents } from '../../fixtures/replay/index.js';
+import { allEvents } from '../../fixtures/replay/index.ts';
 
-export function stubRecordFn() {
-  const recordFn = sinon.stub();
+interface MockRecordFnOptions {
+  emit: (event: eventWithTime, isCheckout: boolean) => void;
+  checkoutEveryNms?: number;
+  emitEveryNms?: number;
+  errorHandler?: (error: unknown) => boolean | void;
+  [key: string]: unknown;
+}
+
+interface MockRecordFn {
+  (options: MockRecordFnOptions): () => void;
+  takeFullSnapshot: (isCheckout?: boolean) => void;
+}
+
+interface RecordStub extends SinonStub {
+  takeFullSnapshot: SinonStub;
+}
+
+function* cycling<T>(xs: T[]): Generator<T, void, unknown> {
+  let i = 0;
+  while (true) {
+    yield xs[i++ % xs.length];
+  }
+}
+
+export function stubRecordFn(): RecordStub {
+  const recordFn = sinon.stub() as RecordStub;
   recordFn.takeFullSnapshot = sinon.stub();
   recordFn.callsFake(() => () => {});
   return recordFn;
 }
 
-/**
- * Mock implementation of rrweb's record function
- *
- * @param {Object} options Configuration options
- * @param {Function} options.emit Function that will receive events
- * @param {number} options.checkoutEveryNms Milliseconds between checkpoints
- * @param {number} options.emitEveryNms Milliseconds between events
- * @returns {Function} Stop function
- */
-export default function mockRecordFn(options = {}) {
-  function* cycling(xs) {
-    let i = 0;
-    while (true) {
-      yield xs[i++ % xs.length];
-    }
-  }
-
-  const systemEvents = ['domContentLoaded', 'load', 'meta', 'fullSnapshot'];
-  const events = cycling(
-    Object.entries(allEvents)
-      .filter(([eventName]) => !systemEvents.includes(eventName))
-      .map(([_, event]) => event),
-  );
-
+const mockRecordFn = ((options: MockRecordFnOptions) => {
   const emit = options.emit;
 
+  const systemEvents: (keyof typeof allEvents)[] = [
+    'domContentLoaded',
+    'load',
+    'meta',
+    'fullSnapshot',
+  ];
+
+  const events = cycling(
+    Object.entries(allEvents)
+      .filter(
+        ([eventName]) =>
+          !systemEvents.includes(eventName as keyof typeof allEvents),
+      )
+      .map(([, event]) => event),
+  );
+
   let lastCheckoutTime = Date.now();
-  let intervalId = null;
+  let intervalId: ReturnType<typeof setInterval> | null = null;
   let stopping = false;
   let initialSnapshotDone = false;
 
-  const emitCheckoutPair = (emit, isCheckout) => {
+  const emitCheckoutPair = (
+    emitFn: MockRecordFnOptions['emit'],
+    isCheckout: boolean,
+  ) => {
     // rrweb sends both Meta and FullSnapshot events
     // in the same tick on checkout
-    emit({ ...allEvents.meta }, isCheckout);
-    emit({ ...allEvents.fullSnapshot }, isCheckout);
+    emitFn({ ...(allEvents.meta as eventWithTime) }, isCheckout);
+    emitFn({ ...(allEvents.fullSnapshot as eventWithTime) }, isCheckout);
   };
 
   const emitNextEvent = () => {
@@ -66,19 +87,19 @@ export default function mockRecordFn(options = {}) {
       emitCheckoutPair(emit, true);
     }
 
-    emit(events.next().value, false);
+    emit(events.next().value as eventWithTime, false);
   };
 
   // Start emitting events on a regular interval
   // 1 event every 100ms is a reasonable pace for testing
-  intervalId = setInterval(emitNextEvent, options.emitEveryNms);
+  intervalId = setInterval(emitNextEvent, options.emitEveryNms ?? 0);
 
   // Initial events: domContentLoaded, load, meta, fullSnapshot
   // Based on rrweb's implementation, the initial snapshot is NOT a checkout
-  emit(allEvents.domContentLoaded, false);
-  emit(allEvents.load, false);
-  emit(allEvents.meta, false);
-  emit(allEvents.fullSnapshot, false);
+  emit(allEvents.domContentLoaded as eventWithTime, false);
+  emit(allEvents.load as eventWithTime, false);
+  emit(allEvents.meta as eventWithTime, false);
+  emit(allEvents.fullSnapshot as eventWithTime, false);
   initialSnapshotDone = true;
 
   mockRecordFn.takeFullSnapshot = (isCheckout = false) => {
@@ -89,10 +110,14 @@ export default function mockRecordFn(options = {}) {
   // Return a stop function that cleans up the intervals
   return () => {
     stopping = true;
-    clearInterval(intervalId);
-    intervalId = null;
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
     mockRecordFn.takeFullSnapshot = () => {};
   };
-}
+}) as MockRecordFn;
 
 mockRecordFn.takeFullSnapshot = () => {};
+
+export default mockRecordFn;

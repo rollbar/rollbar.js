@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
 
-import { setTimeout } from './util/timers.js';
+import { setTimeoutAsync } from './util/timers.ts';
 
 describe('options.autoInstrument', function () {
   describe('contentSecurityPolicy', function () {
@@ -48,7 +48,7 @@ describe('options.autoInstrument', function () {
 
       document.dispatchEvent(cspEvent);
 
-      await setTimeout(100, null);
+      await setTimeoutAsync(100);
 
       expect(queueStub.called).to.be.true;
       const item = queueStub.getCall(0).args[0];

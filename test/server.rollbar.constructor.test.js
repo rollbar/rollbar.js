@@ -5,7 +5,7 @@ import Rollbar from '../src/server/rollbar.js';
 import {
   ValidOpenTracingTracerStub,
   InvalidOpenTracingTracerStub,
-} from './server.rollbar.test-utils.js';
+} from './server.rollbar.test-utils.ts';
 
 describe('rollbar constructor and configuration', function () {
   describe('constructor', function () {

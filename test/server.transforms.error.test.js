@@ -5,7 +5,7 @@ import * as t from '../src/server/transforms.js';
 import {
   CustomError,
   isMinNodeVersion,
-} from './server.transforms.test-utils.js';
+} from './server.transforms.test-utils.ts';
 
 describe('transforms.handleItemWithError', function () {
   let options;

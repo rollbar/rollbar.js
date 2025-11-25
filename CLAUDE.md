@@ -190,7 +190,7 @@ The Session Replay feature utilizes our tracing infrastructure to:
 - **Unit Tests**: Component-focused tests in `test/replay/unit/`
 - **Integration Tests**: Test component interactions in `test/replay/integration/`
 - **End-to-End Tests**: Full flow verification in `test/replay/integration/e2e.test.js`
-- **Mock Implementation**: `test/replay/util/mockRecordFn.js` provides a deterministic mock of rrweb
+- **Mock Implementation**: `test/replay/util/mockRecordFn.ts` provides a deterministic mock of rrweb
 - **Fixtures**: Realistic rrweb events in `test/fixtures/replay/` for testing
 - **Test Tasks**: Dedicated test configurations for replay code specifically
 

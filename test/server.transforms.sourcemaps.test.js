@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import Rollbar from '../src/server/rollbar.js';
 
-import { throwInScriptFile } from './server.transforms.test-utils.js';
+import { throwInScriptFile } from './server.transforms.test-utils.ts';
 
 describe('transforms.nodeSourceMaps', function () {
   let rollbar;
@@ -77,7 +77,7 @@ describe('transforms.nodeSourceMaps', function () {
 
     expect(urls[0]).to.include('index.cjs');
     expect(sourceMappingURLs[urls[0]]).to.include('index.cjs.map');
-    expect(urls[1]).to.include('server.transforms.test-utils.js');
+    expect(urls[1]).to.include('server.transforms.test-utils.ts');
     expect(sourceMappingURLs[urls[1]]).to.include('not found');
 
     // Node until v12 will have 'timers.js' here.

@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Recorder from '../../../src/browser/replay/recorder.js';
-import { stubRecordFn } from '../util/mockRecordFn.js';
-import { setCurrentBuffer, setPreviousBuffer } from '../util/recorder.js';
+import { stubRecordFn } from '../util/mockRecordFn.ts';
+import { setCurrentBuffer, setPreviousBuffer } from '../util/recorder.ts';
 
 describe('Recorder buffer-index event collection', function () {
   let recorder;

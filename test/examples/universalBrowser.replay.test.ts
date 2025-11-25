@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 
 import { fakeServer } from '../browser.rollbar.test-utils.ts';
-import { loadHtml } from '../util/fixtures';
-import { setTimeout } from '../util/timers.js';
+import { loadHtml } from '../util/fixtures.ts';
+import { setTimeoutAsync } from '../util/timers.ts';
 
 const log =
   (window.parent &&
@@ -35,7 +35,7 @@ describe('Rollbar loaded by snippet with replay config', function () {
 
     document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
 
-    await setTimeout(250);
+    await setTimeoutAsync(250);
 
     window.server = fakeServer.create();
   });
@@ -64,7 +64,7 @@ describe('Rollbar loaded by snippet with replay config', function () {
 
     const ret = rollbar.info('test with replay');
 
-    await setTimeout(1);
+    await setTimeoutAsync(1);
 
     server.respond();
 

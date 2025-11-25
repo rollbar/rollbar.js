@@ -12,8 +12,8 @@ import logger from '../../../src/logger.js';
 import Queue from '../../../src/queue.js';
 import Telemeter from '../../../src/telemetry.js';
 import Tracing from '../../../src/tracing/tracing.js';
-import * as payloads from '../../fixtures/replay/payloads.fixtures.js';
-import mockRecordFn from '../util/mockRecordFn.js';
+import * as payloads from '../../fixtures/replay/payloads.fixtures.ts';
+import mockRecordFn from '../util/mockRecordFn.ts';
 
 const options = {
   enabled: true,

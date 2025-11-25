@@ -2,7 +2,7 @@ import { expect } from 'chai';
 
 import * as t from '../src/server/transforms.js';
 
-import { createTestItem } from './server.transforms.test-utils.js';
+import { createTestItem } from './server.transforms.test-utils.ts';
 
 describe('transforms.addRequestData', function () {
   describe('without custom addRequestData method', function () {

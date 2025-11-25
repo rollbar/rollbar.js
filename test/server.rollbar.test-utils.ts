@@ -5,7 +5,23 @@
 export const DUMMY_TRACE_ID = 'some-trace-id';
 export const DUMMY_SPAN_ID = 'some-span-id';
 
-export const ValidOpenTracingTracerStub = {
+interface OpenTracingContext {
+  toTraceId: () => string;
+  toSpanId: () => string;
+}
+
+interface OpenTracingSpan {
+  setTag: () => void;
+  context: () => OpenTracingContext;
+}
+
+interface OpenTracingScope {
+  active: () => OpenTracingSpan;
+}
+
+export const ValidOpenTracingTracerStub: {
+  scope: () => OpenTracingScope;
+} = {
   scope: () => ({
     active: () => ({
       setTag: () => {},
@@ -21,8 +37,24 @@ export const InvalidOpenTracingTracerStub = {
   foo: () => {},
 };
 
+interface LogCall {
+  func?: string;
+  item: unknown;
+}
+
+type LoggerMethod = (item: unknown) => void;
+const loggerMethods = [
+  'log',
+  'debug',
+  'info',
+  'warn',
+  'warning',
+  'error',
+  'critical',
+] as const;
+
 export class TestClient {
-  logCalls = [];
+  logCalls: LogCall[] = [];
   tracer = ValidOpenTracingTracerStub;
 
   notifier = {
@@ -33,25 +65,32 @@ export class TestClient {
     addPredicate: () => this.queue,
   };
 
+  log?: LoggerMethod;
+  debug?: LoggerMethod;
+  info?: LoggerMethod;
+  warn?: LoggerMethod;
+  warning?: LoggerMethod;
+  error?: LoggerMethod;
+  critical?: LoggerMethod;
+
   constructor() {
-    ['log', 'debug', 'info', 'warn', 'warning', 'error', 'critical'].forEach(
-      (logLevel) => {
-        this[logLevel] = (item) => {
+    loggerMethods.forEach((logLevel) => {
+      (this as Record<(typeof loggerMethods)[number], LoggerMethod>)[logLevel] =
+        (item) => {
           this.logCalls.push({ func: logLevel, item });
         };
-      },
-    );
+    });
   }
 
-  buildJsonPayload(obj) {
+  buildJsonPayload(obj: unknown): void {
     this.logCalls.push({ item: obj });
   }
 
-  sendJsonPayload(json) {
+  sendJsonPayload(json: unknown): void {
     this.logCalls.push({ item: json });
   }
 
-  clearLogCalls() {
+  clearLogCalls(): void {
     this.logCalls = [];
   }
 }

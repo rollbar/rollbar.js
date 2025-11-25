@@ -1,10 +1,9 @@
 import { expect } from 'chai';
 
 import { fakeServer } from '../browser.rollbar.test-utils.ts';
-import { loadHtml } from '../util/fixtures';
-import { setTimeout } from '../util/timers.js';
+import { loadHtml } from '../util/fixtures.ts';
 
-describe('webpack app', function () {
+describe('react app', function () {
   let __originalOnError = null;
 
   this.timeout(4000);
@@ -14,11 +13,7 @@ describe('webpack app', function () {
     __originalOnError = window.onerror;
     window.onerror = () => false;
 
-    // Load the HTML page.
-    await loadHtml('examples/webpack/src/index.html');
-
-    // Give the snippet time to load and init.
-    await setTimeout(250);
+    await loadHtml('examples/react-16/dist/index.html');
 
     // Stub the xhr interface.
     window.server = fakeServer.create();
@@ -53,7 +48,7 @@ describe('webpack app', function () {
     const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.message.body).to.eql('webpack test log');
+    expect(body.data.body.message.body).to.eql('react test log');
 
     done();
   });
@@ -73,52 +68,31 @@ describe('webpack app', function () {
     const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-
-    // This has become necessary because Travis switched their Chrome stable
-    // version _down_ from 76 to 62, which handles this test case differently.
-    // 2020-05-06: Travis Chrome 62 is now returning the original message.
-    const version = parseInt(
-      window.navigator.userAgent.match(
-        new RegExp('^.*HeadlessChrome/([0-9]*).*$'),
-      )[1],
-    );
-    const message = version >= 62 ? 'webpack test error' : 'Script error.';
-
-    expect(body.data.body.trace.exception.message).to.eql(message);
+    expect(body.data.body.trace.exception.message).to.eql('react test error');
 
     done();
   });
 
-  it('should store a payload and send stored payload', function (done) {
+  it('should not report error inside error boundary', function (done) {
     const server = window.server;
 
     stubResponse(server);
     server.requests.length = 0;
 
-    // Invoke rollbar event to be stored, not sent.
-    const element = document.getElementById('rollbar-info-with-extra');
+    const element = document.getElementById('child-error');
     expect(element).to.exist;
     element.click();
 
     server.respond();
 
-    // Verify event is not sent to API
-    expect(server.requests.length).to.eql(0);
-
-    // Verify valid stored payload
-    const parsedJson = JSON.parse(window.jsonPayload);
-    expect(parsedJson.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(parsedJson.data.body.message.body).to.eql('webpack test log');
-
-    // Send stored payload
-    const sendJsonElement = document.getElementById('send-json');
-    expect(sendJsonElement).to.be.ok;
-    sendJsonElement.click();
-
+    // Should only produce one API request.
+    expect(server.requests.length).to.eql(1);
     const body = JSON.parse(server.requests[0].requestBody);
 
     expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
-    expect(body.data.body.message.body).to.eql('webpack test log');
+
+    // Should be a log event, not an uncaught exception
+    expect(body.data.body.message.body).to.eql('react child test error');
 
     done();
   });
