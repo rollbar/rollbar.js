@@ -23,12 +23,6 @@ declare global {
   }
 }
 
-// Cause (for Error)
-// Error with cause is supported in +ES2022
-export interface Cause {
-  cause?: Error;
-}
-
 export const { fakeServer } = window.nise;
 
 export const DUMMY_TRACE_ID = 'some-trace-id';

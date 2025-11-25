@@ -3,7 +3,11 @@ import { expect } from 'chai';
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
 
-import { Cause } from './browser.rollbar.test-utils.ts';
+// Cause (for Error)
+// Error with cause is supported in +ES2022
+interface Cause {
+  cause?: Error;
+}
 
 function TestClientGen() {
   const TestClient = function () {
