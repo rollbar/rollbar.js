@@ -5,6 +5,11 @@ import { URL } from 'url';
 import { expect } from 'chai';
 import nock from 'nock';
 import sinon from 'sinon';
+import {
+  MockAgent,
+  getGlobalDispatcher,
+  setGlobalDispatcher,
+} from 'undici';
 
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
@@ -240,6 +245,79 @@ describe('telemetry', function () {
       expect(telemetry[3].body.response.headers).to.deep.equal({
         authorization: '********',
         bar: '456',
+      });
+    });
+  });
+
+  describe('with fetch network capture enabled', function () {
+    let rollbar;
+    let addItemStub;
+    let response;
+    let mockAgent;
+    let originalDispatcher;
+
+    beforeEach(async function () {
+      if (typeof fetch !== 'function') {
+        this.skip();
+      }
+
+      originalDispatcher = getGlobalDispatcher();
+      mockAgent = new MockAgent();
+      mockAgent.disableNetConnect();
+      setGlobalDispatcher(mockAgent);
+      mockAgent
+        .get('https://example.com')
+        .intercept({ path: '/api/users', method: 'GET' })
+        .reply(200, testBody1, { headers: testHeaders3 });
+
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        autoInstrument: {
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      });
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+
+      response = await fetch('https://example.com/api/users', {
+        method: 'GET',
+        headers: testHeaders1,
+      });
+
+      await message(rollbar);
+    });
+
+    afterEach(function () {
+      addItemStub.restore();
+      if (mockAgent) {
+        mockAgent.close();
+      }
+      if (originalDispatcher) {
+        setGlobalDispatcher(originalDispatcher);
+      }
+    });
+
+    it('message payload should have fetch telemetry', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      const fetchEvent = telemetry.find(
+        (event) => event.type === 'network' && event.body.subtype === 'fetch',
+      );
+
+      expect(response.status).to.equal(200);
+      expect(fetchEvent).to.exist;
+      expect(fetchEvent.body.method).to.equal('GET');
+      expect(fetchEvent.body.url).to.equal('https://example.com/api/users');
+      expect(fetchEvent.body.status_code).to.equal(200);
+      expect(fetchEvent.body.request_headers).to.deep.equal({
+        'Content-Type': 'application/json',
+        'X-access-token': '********',
+      });
+      expect(fetchEvent.body.response.headers).to.deep.equal({
+        'content-type': 'application/json',
+        foo: '123',
       });
     });
   });
