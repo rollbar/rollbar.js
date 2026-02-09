@@ -15,6 +15,7 @@ import truncation from '../truncation.js';
 import * as _ from '../utility.js';
 
 import * as serverDefaults from './defaults.js';
+import rollbarExpressMiddleware from './middleware/rollbarExpressMiddleware.js';
 import Instrumenter from './telemetry.js';
 import * as transforms from './transforms.js';
 import Transport from './transport.js';
@@ -458,6 +459,18 @@ Rollbar.wrapCallback = function (f) {
   } else {
     handleUninitialized();
   }
+};
+
+Rollbar.prototype.expressMiddleware = function () {
+  return rollbarExpressMiddleware(this);
+};
+
+Rollbar.expressMiddleware = function () {
+  if (_instance) {
+    return rollbarExpressMiddleware(_instance);
+  }
+  handleUninitialized();
+  return undefined;
 };
 
 Rollbar.prototype.captureEvent = function () {
