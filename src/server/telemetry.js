@@ -102,10 +102,22 @@ function networkRequestWrapper(orig) {
   return (...args) => {
     const [url, options, cb] = args;
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
+    const requestUrl = urlHelpers.constructUrl(mergedOptions.options);
+    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+
+    if (
+      sessionId &&
+      _.shouldAddBaggageHeader(this.options, { sessionId }, requestUrl)
+    ) {
+      if (!mergedOptions.options.headers) {
+        mergedOptions.options.headers = {};
+      }
+      mergedOptions.options.headers.baggage = `rollbar.session.id=${sessionId}`;
+    }
 
     var metadata = {
       method: mergedOptions.options.method || 'GET',
-      url: urlHelpers.constructUrl(mergedOptions.options),
+      url: requestUrl,
       status_code: null,
       start_time_ms: _.now(),
       end_time_ms: null,
@@ -159,6 +171,7 @@ function fetchRequestWrapper(orig) {
     const init = args[1];
     let method = 'GET';
     let url;
+    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
 
     if (_.isType(input, 'string') || input instanceof URL) {
       url = input.toString();
@@ -171,6 +184,15 @@ function fetchRequestWrapper(orig) {
 
     if (init && init.method) {
       method = init.method;
+    }
+
+    if (
+      sessionId &&
+      _.shouldAddBaggageHeader(this.options, { sessionId }, url)
+    ) {
+      const headers = { baggage: `rollbar.session.id=${sessionId}` };
+
+      _.addHeadersToFetch(args, headers);
     }
 
     const metadata = {

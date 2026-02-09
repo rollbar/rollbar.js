@@ -1,15 +1,12 @@
 import http from 'http';
 import https from 'https';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { URL } from 'url';
 
 import { expect } from 'chai';
 import nock from 'nock';
 import sinon from 'sinon';
-import {
-  MockAgent,
-  getGlobalDispatcher,
-  setGlobalDispatcher,
-} from 'undici';
+import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
@@ -75,11 +72,15 @@ function stubGetWithError(url) {
   return nock(url).get('/api/users').replyWithError('dns error');
 }
 
-const testHeaders1 = {
-  'Content-Type': 'application/json',
-  'X-access-token': '123',
+const testHeaders1 = () => {
+  return {
+    'Content-Type': 'application/json',
+    'X-access-token': '123',
+  };
 };
-const testHeaders2 = { authorization: 'abc', foo: '456' };
+const testHeaders2 = () => {
+  return { authorization: 'abc', foo: '456' };
+};
 const testHeaders3 = { 'content-type': 'application/json', foo: '123' };
 const testHeaders4 = { authorization: 'abc', bar: '456' };
 const testBody1 = 'test body 1';
@@ -87,6 +88,13 @@ const testBody2 = 'test body 2';
 const testMessage1 = 'test console message';
 const testMessage2 = 'test console error message';
 const testMessagePart = ', extra part';
+
+function lowerCaseKeys(headers) {
+  return Object.keys(headers || {}).reduce((acc, key) => {
+    acc[key.toLowerCase()] = headers[key];
+    return acc;
+  }, {});
+}
 
 describe('telemetry', function () {
   describe('with log and network capture enabled', function () {
@@ -119,12 +127,12 @@ describe('telemetry', function () {
       console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       response1 = await request(http, 'http://example.com/api/users', {
         method: 'GET',
-        headers: testHeaders1,
+        headers: testHeaders1(),
       });
       console.error(testMessage2); // eslint-disable-line no-console
       response2 = await request(https, 'https://example.com/api/users', {
         method: 'POST',
-        headers: testHeaders2,
+        headers: testHeaders2(),
       });
 
       await uncaught(rollbar);
@@ -133,6 +141,8 @@ describe('telemetry', function () {
     afterEach(function () {
       addItemStub.restore();
       nock.cleanAll();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
 
       // Restore Mocha's uncaught exception handlers
       mochaHandlers.forEach((handler) => {
@@ -209,12 +219,12 @@ describe('telemetry', function () {
       console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'GET',
-        headers: testHeaders1,
+        headers: testHeaders1(),
       });
       console.error(testMessage2); // eslint-disable-line no-console
       await request(http, 'http://example.com/api/users', {
         method: 'POST',
-        headers: testHeaders2,
+        headers: testHeaders2(),
       });
 
       await message(rollbar);
@@ -223,6 +233,8 @@ describe('telemetry', function () {
     afterEach(function () {
       addItemStub.restore();
       nock.cleanAll();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
     });
 
     it('message payload should have telemetry', function () {
@@ -255,6 +267,8 @@ describe('telemetry', function () {
     let response;
     let mockAgent;
     let originalDispatcher;
+    let sessionId;
+    let asyncLocalStorage;
 
     beforeEach(async function () {
       if (typeof fetch !== 'function') {
@@ -273,24 +287,37 @@ describe('telemetry', function () {
       rollbar = new Rollbar({
         accessToken: 'abc123',
         captureUncaught: true,
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
         autoInstrument: {
           network: true,
           networkResponseHeaders: true,
           networkRequestHeaders: true,
         },
       });
+      sessionId = 'test-session-id';
       addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+      asyncLocalStorage = new AsyncLocalStorage();
+      rollbar.client.asyncLocalStorage = asyncLocalStorage;
 
-      response = await fetch('https://example.com/api/users', {
-        method: 'GET',
-        headers: testHeaders1,
+      await asyncLocalStorage.run({ sessionId }, async () => {
+        response = await fetch('https://example.com/api/users', {
+          method: 'GET',
+          headers: testHeaders1(),
+        });
+
+        await message(rollbar);
       });
-
-      await message(rollbar);
     });
 
     afterEach(function () {
       addItemStub.restore();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
       if (mockAgent) {
         mockAgent.close();
       }
@@ -311,13 +338,89 @@ describe('telemetry', function () {
       expect(fetchEvent.body.method).to.equal('GET');
       expect(fetchEvent.body.url).to.equal('https://example.com/api/users');
       expect(fetchEvent.body.status_code).to.equal(200);
-      expect(fetchEvent.body.request_headers).to.deep.equal({
-        'Content-Type': 'application/json',
-        'X-access-token': '********',
+      expect(lowerCaseKeys(fetchEvent.body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
+        baggage: `rollbar.session.id=${sessionId}`,
       });
-      expect(fetchEvent.body.response.headers).to.deep.equal({
+      expect(lowerCaseKeys(fetchEvent.body.response.headers)).to.deep.equal({
         'content-type': 'application/json',
         foo: '123',
+      });
+    });
+  });
+
+  describe('with fetch network capture enabled and without async local storage', function () {
+    let rollbar;
+    let addItemStub;
+    let response;
+    let mockAgent;
+    let originalDispatcher;
+
+    beforeEach(async function () {
+      if (typeof fetch !== 'function') {
+        this.skip();
+      }
+
+      originalDispatcher = getGlobalDispatcher();
+      mockAgent = new MockAgent();
+      mockAgent.disableNetConnect();
+      setGlobalDispatcher(mockAgent);
+      mockAgent
+        .get('https://example.com')
+        .intercept({ path: '/api/users', method: 'GET' })
+        .reply(200, testBody1, { headers: testHeaders3 });
+
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
+        autoInstrument: {
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      });
+      rollbar.client.asyncLocalStorage = undefined;
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+
+      response = await fetch('https://example.com/api/users', {
+        method: 'GET',
+        headers: testHeaders1(),
+      });
+
+      await message(rollbar);
+    });
+
+    afterEach(function () {
+      addItemStub.restore();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
+      if (mockAgent) {
+        mockAgent.close();
+      }
+      if (originalDispatcher) {
+        setGlobalDispatcher(originalDispatcher);
+      }
+    });
+
+    it('message payload should omit baggage header', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      const fetchEvent = telemetry.find(
+        (event) => event.type === 'network' && event.body.subtype === 'fetch',
+      );
+
+      expect(response.status).to.equal(200);
+      expect(fetchEvent).to.exist;
+      expect(lowerCaseKeys(fetchEvent.body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
       });
     });
   });
@@ -341,12 +444,12 @@ describe('telemetry', function () {
       console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'GET',
-        headers: testHeaders1,
+        headers: testHeaders1(),
       });
       console.error(testMessage2); // eslint-disable-line no-console
       await request(https, 'https://example.com/api/users', {
         method: 'POST',
-        headers: testHeaders2,
+        headers: testHeaders2(),
       });
 
       await message(rollbar);
@@ -369,17 +472,116 @@ describe('telemetry', function () {
     let addItemStub;
     let response1;
     let response2;
+    let sessionId;
+    let asyncLocalStorage;
 
     beforeEach(async function () {
       rollbar = new Rollbar({
         accessToken: 'abc123',
         captureUncaught: true,
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
         autoInstrument: {
           network: true,
           networkResponseHeaders: true,
           networkRequestHeaders: true,
         },
       });
+      sessionId = 'test-session-id';
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+      asyncLocalStorage = new AsyncLocalStorage();
+      rollbar.client.asyncLocalStorage = asyncLocalStorage;
+
+      const options = {
+        method: 'GET',
+        protocol: 'https:',
+        host: 'example.com',
+        path: '/api/users',
+        headers: testHeaders1(),
+      };
+
+      await asyncLocalStorage.run({ sessionId }, async () => {
+        // Invoke telemetry events
+        console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
+        stubGetWithResponse(
+          'https://example.com',
+          200,
+          testHeaders3,
+          testBody1,
+        );
+        response1 = await requestWithCallback(https, options).catch((e) => e);
+        console.error(testMessage2); // eslint-disable-line no-console
+        stubGetWithError('https://example.com');
+        response2 = await requestWithCallback(https, options).catch((e) => e);
+
+        await message(rollbar);
+      });
+    });
+
+    afterEach(function () {
+      addItemStub.restore();
+      nock.cleanAll();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
+    });
+
+    it('message payload should have telemetry or error info', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+
+      // Verify that the responses were received intact.
+      expect(response1.headers).to.deep.equal(testHeaders3);
+      expect(response1.statusCode).to.equal(200);
+      expect(response2).to.be.instanceof(Error);
+
+      // Verify telemetry
+      expect(lowerCaseKeys(telemetry[1].body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
+        baggage: `rollbar.session.id=${sessionId}`,
+      });
+      expect(lowerCaseKeys(telemetry[1].body.response.headers)).to.deep.equal({
+        'content-type': 'application/json',
+        foo: '123',
+      });
+      expect(lowerCaseKeys(telemetry[3].body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
+        baggage: `rollbar.session.id=${sessionId}`,
+      });
+      expect(telemetry[3].body.response).to.be.undefined;
+      expect(telemetry[3].body.status_code).to.equal(0);
+      expect(telemetry[3].body.error).to.equal('Error: dns error');
+    });
+  });
+
+  describe('with callback request and error response without async local storage', function () {
+    let rollbar;
+    let addItemStub;
+    let response1;
+    let response2;
+
+    beforeEach(async function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
+        autoInstrument: {
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      });
+      rollbar.client.asyncLocalStorage = undefined;
       addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
       const options = {
@@ -387,10 +589,9 @@ describe('telemetry', function () {
         protocol: 'https:',
         host: 'example.com',
         path: '/api/users',
-        headers: testHeaders1,
+        headers: testHeaders1(),
       };
 
-      // Invoke telemetry events
       console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
       stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
       response1 = await requestWithCallback(https, options).catch((e) => e);
@@ -404,29 +605,29 @@ describe('telemetry', function () {
     afterEach(function () {
       addItemStub.restore();
       nock.cleanAll();
+      rollbar.instrumenter.deinstrumentNetwork();
+      rollbar.client.asyncLocalStorage = undefined;
     });
 
-    it('message payload should have telemetry or error info', function () {
+    it('message payload should omit baggage header', function () {
       expect(addItemStub.called).to.be.true;
       const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
 
-      // Verify that the responses were received intact.
       expect(response1.headers).to.deep.equal(testHeaders3);
       expect(response1.statusCode).to.equal(200);
       expect(response2).to.be.instanceof(Error);
 
-      // Verify telemetry
-      expect(telemetry[1].body.request_headers).to.deep.equal({
-        'Content-Type': 'application/json',
-        'X-access-token': '********',
+      expect(lowerCaseKeys(telemetry[1].body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
       });
-      expect(telemetry[1].body.response.headers).to.deep.equal({
+      expect(lowerCaseKeys(telemetry[1].body.response.headers)).to.deep.equal({
         'content-type': 'application/json',
         foo: '123',
       });
-      expect(telemetry[3].body.request_headers).to.deep.equal({
-        'Content-Type': 'application/json',
-        'X-access-token': '********',
+      expect(lowerCaseKeys(telemetry[3].body.request_headers)).to.deep.equal({
+        'content-type': 'application/json',
+        'x-access-token': '********',
       });
       expect(telemetry[3].body.response).to.be.undefined;
       expect(telemetry[3].body.status_code).to.equal(0);
@@ -438,11 +639,11 @@ describe('telemetry', function () {
     it('mergeOptions should correctly handle URL and options', function () {
       const optionsUsingStringUrl = mergeOptions(
         'http://example.com/api/users',
-        { method: 'GET', headers: testHeaders1 },
+        { method: 'GET', headers: testHeaders1() },
       );
       const optionsUsingClassUrl = mergeOptions(
         new URL('http://example.com/api/users'),
-        { method: 'GET', headers: testHeaders1 },
+        { method: 'GET', headers: testHeaders1() },
       );
 
       expect(optionsUsingStringUrl).to.deep.equal(optionsUsingClassUrl);
