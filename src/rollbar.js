@@ -184,9 +184,11 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 
 Rollbar.prototype._addItemAttributes = function (item) {
   const span = this.tracing?.getSpan();
+  const asyncLocalSessionId = _.getSessionIdFromAsyncLocalStorage(this);
+  const sessionId = asyncLocalSessionId || this.tracing?.sessionId;
 
   const attributes = [
-    { key: 'session_id', value: this.tracing?.sessionId },
+    { key: 'session_id', value: sessionId },
     { key: 'span_id', value: span?.spanId },
     { key: 'trace_id', value: span?.traceId },
   ];
