@@ -1,4 +1,4 @@
-module.exports = function (options) {
+export default function (options) {
   return function (err) {
     if (err) {
       return;
@@ -26,4 +26,4 @@ module.exports = function (options) {
       window._rollbarInitialized = true;
     }
   };
-};
+}

@@ -6,4 +6,4 @@ function replace(obj, name, replacement, replacements, type) {
   }
 }
 
-module.exports = replace;
+export default replace;

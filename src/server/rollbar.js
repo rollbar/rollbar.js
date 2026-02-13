@@ -1,23 +1,23 @@
-var util = require('util');
-var os = require('os');
+import os from 'os';
+import urllib from 'url';
+import util from 'util';
 
-var packageJson = require('../../package.json');
-var Client = require('../rollbar');
-var _ = require('../utility');
-var API = require('../api');
-var logger = require('./logger');
+import jsonBackup from 'json-stringify-safe';
 
-var Transport = require('./transport');
-var urllib = require('url');
-var jsonBackup = require('json-stringify-safe');
+import API from '../api.js';
+import { version, reportLevel } from '../defaults.js';
+import logger from '../logger.js';
+import * as sharedPredicates from '../predicates.js';
+import Client from '../rollbar.js';
+import Telemeter from '../telemetry.js';
+import * as sharedTransforms from '../transforms.js';
+import truncation from '../truncation.js';
+import * as _ from '../utility.js';
 
-var Telemeter = require('../telemetry');
-var Instrumenter = require('./telemetry');
-var transforms = require('./transforms');
-var sharedTransforms = require('../transforms');
-var sharedPredicates = require('../predicates');
-var truncation = require('../truncation');
-var polyfillJSON = require('../../vendor/JSON-js/json3');
+import * as serverDefaults from './defaults.js';
+import Instrumenter from './telemetry.js';
+import * as transforms from './transforms.js';
+import Transport from './transport.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -29,19 +29,20 @@ function Rollbar(options, client) {
     options.reportLevel = options.minimumLevel;
     delete options.minimumLevel;
   }
+  logger.init({ logLevel: options.logLevel || 'error' });
   this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
   this.options.environment = this.options.environment || 'unspecified';
-  logger.setVerbose(this.options.verbose);
   this.lambdaContext = null;
   this.lambdaTimeoutHandle = null;
   var transport = new Transport();
   var api = new API(this.options, transport, urllib, truncation, jsonBackup);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, 'server');
+    client ||
+    new Client(this.options, api, logger, telemeter, null, null, 'server');
   this.instrumenter = new Instrumenter(
     this.options,
     this.client.telemeter,
@@ -54,7 +55,6 @@ function Rollbar(options, client) {
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
   this.setupUnhandledCapture();
-  _.setupJSON(polyfillJSON);
 }
 
 function initLocals(localsOptions, logger) {
@@ -113,6 +113,9 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    logger.init({ logLevel: options.logLevel });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
@@ -126,7 +129,6 @@ Rollbar.prototype.configure = function (options, payloadData) {
   );
   // On the server we want to ignore any maxItems setting
   delete this.options.maxItems;
-  logger.setVerbose(this.options.verbose);
   this.client.configure(options, payloadData);
   this.setupUnhandledCapture();
 
@@ -250,8 +252,9 @@ Rollbar.error = function () {
 Rollbar.prototype._uncaughtError = function () {
   var item = this._createItem(arguments);
   item._isUncaught = true;
+  item.level = this.options.uncaughtErrorLevel;
   var uuid = item.uuid;
-  this.client.error(item);
+  this.client.log(item);
   return { uuid: uuid };
 };
 
@@ -338,86 +341,91 @@ Rollbar.prototype.lambdaHandler = function (handler, timeoutHandler) {
 };
 
 Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
-  var _timeoutHandler = function (event, context) {
-    var message = 'Function timed out';
-    var custom = {
+  const _timeoutHandler = (event, context) => {
+    const message = 'Function timed out';
+    const custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId,
     };
-    self.error(message, custom);
+    this.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function rollbarAsyncLambdaHandler(event, context) {
-    return new Promise(function (resolve, reject) {
-      self.lambdaContext = context;
+
+  const shouldReportTimeouts = this.options.captureLambdaTimeouts;
+
+  const rollbarAsyncLambdaHandler = (event, context) => {
+    return new Promise((resolve, reject) => {
+      this.lambdaContext = context;
       if (shouldReportTimeouts) {
-        var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+        const timeoutCb = (timeoutHandler || _timeoutHandler).bind(
           null,
           event,
           context,
         );
-        self.lambdaTimeoutHandle = setTimeout(
+        this.lambdaTimeoutHandle = setTimeout(
           timeoutCb,
           context.getRemainingTimeInMillis() - 1000,
         );
       }
       handler(event, context)
-        .then(function (resp) {
-          self.wait(function () {
-            clearTimeout(self.lambdaTimeoutHandle);
+        .then((resp) => {
+          this.wait(() => {
+            clearTimeout(this.lambdaTimeoutHandle);
             resolve(resp);
           });
         })
-        .catch(function (err) {
-          self.error(err);
-          self.wait(function () {
-            clearTimeout(self.lambdaTimeoutHandle);
+        .catch((err) => {
+          this.error(err);
+          this.wait(() => {
+            clearTimeout(this.lambdaTimeoutHandle);
             reject(err);
           });
         });
     });
   };
+
+  return rollbarAsyncLambdaHandler;
 };
+
 Rollbar.prototype.syncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
-  var _timeoutHandler = function (event, context, _cb) {
-    var message = 'Function timed out';
-    var custom = {
+  const _timeoutHandler = (event, context, _cb) => {
+    const message = 'Function timed out';
+    const custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId,
     };
-    self.error(message, custom);
+    this.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function (event, context, callback) {
-    self.lambdaContext = context;
+
+  const shouldReportTimeouts = this.options.captureLambdaTimeouts;
+
+  return (event, context, callback) => {
+    this.lambdaContext = context;
     if (shouldReportTimeouts) {
-      var timeoutCb = (timeoutHandler || _timeoutHandler).bind(
+      const timeoutCb = (timeoutHandler || _timeoutHandler).bind(
         null,
         event,
         context,
         callback,
       );
-      self.lambdaTimeoutHandle = setTimeout(
+      this.lambdaTimeoutHandle = setTimeout(
         timeoutCb,
         context.getRemainingTimeInMillis() - 1000,
       );
     }
     try {
-      handler(event, context, function (err, resp) {
+      handler(event, context, (err, resp) => {
         if (err) {
-          self.error(err);
+          this.error(err);
         }
-        self.wait(function () {
-          clearTimeout(self.lambdaTimeoutHandle);
+        this.wait(() => {
+          clearTimeout(this.lambdaTimeoutHandle);
           callback(err, resp);
         });
       });
     } catch (err) {
-      self.error(err);
-      self.wait(function () {
-        clearTimeout(self.lambdaTimeoutHandle);
+      this.error(err);
+      this.wait(() => {
+        clearTimeout(this.lambdaTimeoutHandle);
         throw err;
       });
     }
@@ -643,7 +651,7 @@ Rollbar.prototype.setupUnhandledCapture = function () {
 };
 
 Rollbar.prototype.handleUncaughtExceptions = function () {
-  var exitOnUncaught = !!this.options.exitOnUncaughtException;
+  var exitOnUncaught = Boolean(this.options.exitOnUncaughtException);
   delete this.options.exitOnUncaughtException;
 
   addOrReplaceRollbarHandler(
@@ -735,13 +743,13 @@ Rollbar.defaultOptions = {
   framework: 'node-js',
   showReportedMessageTraces: false,
   notifier: {
-    name: 'node_rollbar',
-    version: packageJson.version,
+    name: serverDefaults.notifierName,
+    version: version,
   },
-  scrubHeaders: packageJson.defaults.server.scrubHeaders,
-  scrubFields: packageJson.defaults.server.scrubFields,
+  scrubHeaders: serverDefaults.scrubHeaders,
+  scrubFields: serverDefaults.scrubFields,
   addRequestData: null,
-  reportLevel: packageJson.defaults.reportLevel,
+  reportLevel: reportLevel,
   verbose: false,
   enabled: true,
   transmit: true,
@@ -756,4 +764,4 @@ Rollbar.defaultOptions = {
   autoInstrument: false,
 };
 
-module.exports = Rollbar;
+export default Rollbar;

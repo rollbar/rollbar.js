@@ -1,0 +1,17 @@
+{
+  "name": "node-ts-components",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Minimal example to test Rollbar component-based imports",
+  "scripts": {
+    "build": "tsc",
+    "test": "node dist/index.js"
+  },
+  "dependencies": {
+    "rollbar": "file:../rollbar.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

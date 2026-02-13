@@ -1,6 +1,7 @@
 {
   "name": "rollbar",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-rc.1",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "http://github.com/rollbar/rollbar.js"
@@ -14,13 +15,76 @@
     "javascript"
   ],
   "license": "MIT",
-  "main": "src/server/rollbar.js",
+  "main": "dist/rollbar.cjs",
   "browser": "dist/rollbar.umd.min.js",
+  "module": "src/browser/rollbar.js",
   "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "node": {
+        "import": "./src/server/rollbar.js",
+        "require": "./dist/rollbar.cjs"
+      },
+      "browser": {
+        "import": "./src/browser/rollbar.js",
+        "require": "./dist/rollbar.umd.min.js"
+      },
+      "default": "./dist/rollbar.umd.min.js"
+    },
+    "./replay": {
+      "types": "./index.d.ts",
+      "browser": {
+        "import": "./src/browser/rollbarReplay.js",
+        "require": "./dist/rollbar.replay.umd.min.js"
+      },
+      "default": "./dist/rollbar.replay.umd.min.js"
+    },
+    "./src/browser/core": {
+      "types": "./src/browser/core.d.ts",
+      "require": "./src/browser/core.cjs",
+      "default": "./src/browser/core.js"
+    },
+    "./src/telemetry": {
+      "types": "./src/telemetry.d.ts",
+      "require": "./src/telemetry.cjs",
+      "default": "./src/telemetry.js"
+    },
+    "./src/browser/telemetry": {
+      "types": "./src/browser/telemetry.d.ts",
+      "require": "./src/browser/telemetry.cjs",
+      "default": "./src/browser/telemetry.js"
+    },
+    "./src/browser/wrapGlobals": {
+      "types": "./src/browser/wrapGlobals.d.ts",
+      "require": "./src/browser/wrapGlobals.cjs",
+      "default": "./src/browser/wrapGlobals.js"
+    },
+    "./src/scrub": {
+      "types": "./src/scrub.d.ts",
+      "require": "./src/scrub.cjs",
+      "default": "./src/scrub.js"
+    },
+    "./src/truncation": {
+      "types": "./src/truncation.d.ts",
+      "require": "./src/truncation.cjs",
+      "default": "./src/truncation.js"
+    },
+    "./src/tracing/tracing": {
+      "types": "./src/tracing/tracing.d.ts",
+      "require": "./src/tracing/tracing.cjs",
+      "default": "./src/tracing/tracing.js"
+    },
+    "./src/browser/replay/replay": {
+      "types": "./src/browser/replay/replay.d.ts",
+      "require": "./src/browser/replay/replay.cjs",
+      "default": "./src/browser/replay/replay.js"
+    }
+  },
   "dependencies": {
+    "@rrweb/record": "^2.0.0-alpha.18",
     "async": "~3.2.3",
-    "console-polyfill": "0.3.0",
-    "error-stack-parser": "^2.0.4",
+    "error-stack-parser-es": "^1.0.5",
     "json-stringify-safe": "~5.0.0",
     "lru-cache": "~2.2.1",
     "request-ip": "~3.3.0",
@@ -30,130 +94,60 @@
     "@babel/core": "^7.26.10",
     "@babel/eslint-parser": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
-    "babel-eslint": "^10.0.3",
+    "@babel/preset-typescript": "^7.28.5",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.10",
+    "@types/nise": "^1.4.5",
+    "@types/node": "^20.17.12",
+    "@types/sinon": "^21.0.0",
+    "@web/dev-server-esbuild": "^1.0.4",
+    "@web/test-runner": "^0.20.2",
+    "@web/test-runner-mocha": "^0.9.0",
+    "@web/test-runner-playwright": "^0.11.1",
     "babel-loader": "^9.2.1",
-    "bluebird": "^3.3.5",
-    "chai": "^4.2.0",
-    "chalk": "^1.1.1",
-    "coverage-istanbul-loader": "^3.0.5",
+    "chai": "^5.3.3",
+    "es-check": "^9.1.4",
     "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-chai-friendly": "^1.1.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "express": "^4.21.2",
     "glob": "^5.0.14",
-    "grunt": "^1.1.0",
-    "grunt-bumpup": "^0.6.3",
-    "grunt-cli": "^1.5.0",
-    "grunt-contrib-concat": "^2.1.0",
-    "grunt-contrib-connect": "^2.1.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-jshint": "^3.2.0",
-    "grunt-contrib-uglify": "^4.0.0",
-    "grunt-contrib-watch": "^1.1.0",
-    "grunt-karma": "^4.0.2",
-    "grunt-parallel": "^0.5.1",
-    "grunt-text-replace": "^0.4.0",
-    "grunt-vows": "^0.4.2",
-    "grunt-webpack": "^5.0.0",
-    "jade": "~0.27.7",
-    "jasmine-core": "^2.3.4",
-    "jquery-mockjax": "^2.5.0",
-    "karma": "^6.4.4",
-    "karma-chai": "^0.1.0",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-expect": "^1.1.0",
-    "karma-firefox-launcher": "^0.1.6",
-    "karma-html2js-preprocessor": "^1.1.0",
-    "karma-jquery": "^0.1.0",
-    "karma-mocha": "^2.0.1",
-    "karma-mocha-reporter": "^2.2.5",
-    "karma-requirejs": "^0.2.2",
-    "karma-safari-launcher": "^0.1.1",
-    "karma-sinon": "^1.0.4",
-    "karma-sourcemap-loader": "^0.3.5",
-    "karma-webpack": "^5.0.0",
+    "globals": "^16.5.0",
     "mocha": "^11.1.0",
-    "natives": "^1.1.6",
+    "nise": "^6.1.1",
     "nock": "^11.9.1",
     "node-libs-browser": "^0.5.2",
-    "prettier": "^3.2.5",
-    "requirejs": "^2.3.7",
-    "script-loader": "0.6.1",
-    "sinon": "^8.1.1",
-    "stackframe": "^0.2.2",
-    "time-grunt": "^1.0.0",
-    "vows": "^0.8.3",
-    "webpack": "^5.98.0"
+    "prettier": "^3.6.2",
+    "sinon": "^21.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
-    "build": "./node_modules/.bin/grunt",
-    "test": "./node_modules/.bin/grunt test",
-    "test-browser": "./node_modules/.bin/grunt test-browser",
-    "test-server": "./node_modules/.bin/grunt test-server",
-    "test_ci": "./node_modules/.bin/grunt test",
-    "lint": "./node_modules/.bin/eslint ."
-  },
-  "cdn": {
-    "host": "cdn.rollbar.com"
-  },
-  "defaults": {
-    "endpoint": "api.rollbar.com/api/1/item/",
-    "server": {
-      "scrubHeaders": [
-        "authorization",
-        "www-authorization",
-        "http_authorization",
-        "omniauth.auth",
-        "cookie",
-        "oauth-access-token",
-        "x-access-token",
-        "x_csrf_token",
-        "http_x_csrf_token",
-        "x-csrf-token"
-      ],
-      "scrubFields": [
-        "pw",
-        "pass",
-        "passwd",
-        "password",
-        "password_confirmation",
-        "passwordConfirmation",
-        "confirm_password",
-        "confirmPassword",
-        "secret",
-        "secret_token",
-        "secretToken",
-        "secret_key",
-        "secretKey",
-        "api_key",
-        "access_token",
-        "accessToken",
-        "authenticity_token",
-        "oauth_token",
-        "token",
-        "user_session_secret",
-        "request.session.csrf",
-        "request.session._csrf",
-        "request.params._csrf",
-        "request.cookie",
-        "request.cookies"
-      ]
-    },
-    "reactNative": {
-      "rewriteFilenamePatterns": [
-        "^.*/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/[^/]*.app/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/codepush_ios/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/codepush_android/(.*)$",
-        "^.*/[0-9A-Fa-f]{64}/CodePush/(.*)$"
-      ]
-    },
-    "logLevel": "debug",
-    "reportLevel": "debug",
-    "uncaughtErrorLevel": "error",
-    "maxItems": 0,
-    "itemsPerMin": 60
-  },
-  "plugins": {
-    "jquery": {
-      "version": "0.0.8"
-    }
+    "build": "webpack --mode production",
+    "postbuild": "npm run validate:es5 && npm run update:snippets:examples && npm run pack",
+    "build:dev": "webpack --mode development",
+    "postbuild:dev": "npm run postbuild",
+    "test": "npm run test:wtr && npm run test:server",
+    "test:server": "node scripts/run-server-tests.js",
+    "test:wtr": "web-test-runner",
+    "test:wtr:watch": "web-test-runner --watch",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,cjs,mjs,md,json,yml,yaml}\"",
+    "pack": "node scripts/pack.js",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "validate": "npm run validate:es5 && npm run validate:examples && npm run typecheck && npm run typecheck:tests",
+    "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
+    "validate:examples": "node scripts/validate-examples.js -p",
+    "update:snippets:examples": "node scripts/update-snippets.js examples"
   }
 }

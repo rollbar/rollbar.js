@@ -1,16 +1,13 @@
-'use strict';
+import http from 'http';
+import https from 'https';
+import { URL } from 'url';
 
-var assert = require('assert');
-var vows = require('vows');
-var sinon = require('sinon');
-var nock = require('nock');
-var http = require('http');
-var https = require('https');
+import { expect } from 'chai';
+import nock from 'nock';
+import sinon from 'sinon';
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
-var Rollbar = require('../src/server/rollbar');
-var { mergeOptions } = require('../src/server/telemetry/urlHelpers');
-const { URL } = require('url');
+import Rollbar from '../src/server/rollbar.js';
+import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
 
 function wait(ms) {
   return new Promise((resolve) => {
@@ -19,32 +16,25 @@ function wait(ms) {
 }
 
 async function uncaught() {
-  setTimeout(function () {
+  setTimeout(() => {
     throw new Error('rollbar error');
   }, 1);
   await wait(300);
 }
 
 async function message(rollbar) {
-  setTimeout(function () {
-    rollbar.info('rollbar info message');
-  }, 1);
+  setTimeout(() => rollbar.info('rollbar info message'), 1);
   await wait(300);
 }
 
 function request(transport, url, options, body) {
   return new Promise((resolve, reject) => {
-    var req = url
+    const req = url
       ? transport.request(url, options)
       : transport.request(options);
 
-    req.on('response', (res) => {
-      resolve(res);
-    });
-
-    req.on('error', (err) => {
-      reject(err);
-    });
+    req.on('response', resolve);
+    req.on('error', reject);
 
     if (body) {
       req.write(body);
@@ -56,13 +46,9 @@ function request(transport, url, options, body) {
 
 function requestWithCallback(transport, options, body) {
   return new Promise((resolve, reject) => {
-    var req = transport.request(options, function (res) {
-      resolve(res);
-    });
+    const req = transport.request(options, resolve);
 
-    req.on('error', (err) => {
-      reject(err);
-    });
+    req.on('error', reject);
 
     if (body) {
       req.write(body);
@@ -84,360 +70,304 @@ function stubGetWithError(url) {
   return nock(url).get('/api/users').replyWithError('dns error');
 }
 
-var testHeaders1 = {
+const testHeaders1 = {
   'Content-Type': 'application/json',
   'X-access-token': '123',
 };
-var testHeaders2 = { authorization: 'abc', foo: '456' };
-var testHeaders3 = { 'content-type': 'application/json', foo: '123' };
-var testHeaders4 = { authorization: 'abc', bar: '456' };
-var testBody1 = 'test body 1';
-var testBody2 = 'test body 2';
-var testMessage1 = 'test console message';
-var testMessage2 = 'test console error message';
-var testMessagePart = ', extra part';
+const testHeaders2 = { authorization: 'abc', foo: '456' };
+const testHeaders3 = { 'content-type': 'application/json', foo: '123' };
+const testHeaders4 = { authorization: 'abc', bar: '456' };
+const testBody1 = 'test body 1';
+const testBody2 = 'test body 2';
+const testMessage1 = 'test console message';
+const testMessage2 = 'test console error message';
+const testMessagePart = ', extra part';
 
-vows
-  .describe('telemetry')
-  .addBatch({
-    'with log and network capture enabled': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-          autoInstrument: true,
-        });
-        rollbar.testData = {};
-        var notifier = rollbar.client.notifier;
-        rollbar.testData.addItemStub = sinon.stub(notifier.queue, 'addItem');
-        rollbar.testData.getStub = stubGetWithResponse(
-          'http://example.com',
-          200,
-          testHeaders3,
-          testBody1,
-        );
-        rollbar.testData.postStub = stubPostWithResponse(
-          'https://example.com',
-          201,
-          testHeaders4,
-          testBody2,
-        );
+describe('telemetry', function () {
+  describe('with log and network capture enabled', function () {
+    let rollbar;
+    let addItemStub;
+    let response1;
+    let response2;
+    let mochaHandlers;
 
-        var func = async function (callback) {
-          // Invoke telemetry events
-          console.info(testMessage1, testMessagePart);
-          rollbar.testData.response1 = await request(
-            http,
-            'http://example.com/api/users',
-            { method: 'GET', headers: testHeaders1 },
-          );
-          console.error(testMessage2);
-          rollbar.testData.response2 = await request(
-            https,
-            'https://example.com/api/users',
-            { method: 'POST', headers: testHeaders2 },
-          );
+    beforeEach(async function () {
+      // Remove Mocha's uncaught exception handlers to prevent
+      // them from interfering with Rollbar's handlers.
+      mochaHandlers = process.listeners('uncaughtException');
+      mochaHandlers.forEach((handler) => {
+        process.removeListener('uncaughtException', handler);
+      });
 
-          await uncaught(rollbar);
-          callback(rollbar);
-        };
-        func(this.callback);
-      },
-      'exception payload should have telemetry': function (r) {
-        var addItemStub = r.testData.addItemStub;
-        var response1 = r.testData.response1;
-        var response2 = r.testData.response2;
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        autoInstrument: true,
+      });
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
-        assert.isTrue(addItemStub.called);
-        var telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      // These are necessary so nock intercepts these HTTP requests
+      stubGetWithResponse('http://example.com', 200, testHeaders3, testBody1);
+      stubPostWithResponse('https://example.com', 201, testHeaders4, testBody2);
 
-        // Verify that the responses were received intact.
-        assert.deepStrictEqual(response1.headers, testHeaders3);
-        assert.deepStrictEqual(response2.headers, testHeaders4);
-        assert.deepStrictEqual(response1.statusCode, 200);
-        assert.deepStrictEqual(response2.statusCode, 201);
+      // Invoke telemetry events
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
+      response1 = await request(http, 'http://example.com/api/users', {
+        method: 'GET',
+        headers: testHeaders1,
+      });
+      console.error(testMessage2); // eslint-disable-line no-console
+      response2 = await request(https, 'https://example.com/api/users', {
+        method: 'POST',
+        headers: testHeaders2,
+      });
 
-        // Verify telemetry items and order
-        assert.deepStrictEqual(telemetry[0].level, 'info');
-        assert.deepStrictEqual(telemetry[0].type, 'log');
-        assert.deepStrictEqual(
-          telemetry[0].body.message,
-          'test console message , extra part\n',
-        );
+      await uncaught(rollbar);
+    });
 
-        assert.deepStrictEqual(telemetry[1].level, 'info');
-        assert.deepStrictEqual(telemetry[1].type, 'network');
-        assert.deepStrictEqual(telemetry[1].body.method, 'GET');
-        assert.deepStrictEqual(
-          telemetry[1].body.url,
-          'http://example.com/api/users',
-        );
-        assert.deepStrictEqual(telemetry[1].body.status_code, 200);
-        assert.deepStrictEqual(telemetry[1].body.subtype, 'http');
+    afterEach(function () {
+      addItemStub.restore();
+      nock.cleanAll();
 
-        assert.deepStrictEqual(telemetry[2].level, 'error');
-        assert.deepStrictEqual(telemetry[2].type, 'log');
-        assert.deepStrictEqual(
-          telemetry[2].body.message,
-          'test console error message\n',
-        );
+      // Restore Mocha's uncaught exception handlers
+      mochaHandlers.forEach((handler) => {
+        process.on('uncaughtException', handler);
+      });
+    });
 
-        assert.deepStrictEqual(telemetry[3].level, 'info');
-        assert.deepStrictEqual(telemetry[3].type, 'network');
-        assert.deepStrictEqual(telemetry[3].body.method, 'POST');
-        assert.deepStrictEqual(
-          telemetry[3].body.url,
-          'https://example.com/api/users',
-        );
-        assert.deepStrictEqual(telemetry[3].body.status_code, 201);
-        assert.deepStrictEqual(telemetry[3].body.subtype, 'http');
+    it('exception payload should have telemetry', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
 
-        // Verify headers are omitted
-        assert.deepEqual(telemetry[1].body.request_headers, undefined);
-        assert.deepEqual(telemetry[1].body.response.headers, undefined);
-        assert.deepEqual(telemetry[3].body.request_headers, undefined);
-        assert.deepEqual(telemetry[3].body.response.headers, undefined);
+      // Verify that the responses were received intact.
+      expect(response1.headers).to.deep.equal(testHeaders3);
+      expect(response2.headers).to.deep.equal(testHeaders4);
+      expect(response1.statusCode).to.equal(200);
+      expect(response2.statusCode).to.equal(201);
 
-        addItemStub.restore();
-      },
-    },
-  })
-  .addBatch({
-    'with log and network capture enabled with headers enabled': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-          autoInstrument: {
-            network: true,
-            networkResponseHeaders: true,
-            networkRequestHeaders: true,
-          },
-        });
-        rollbar.testData = {};
-        var notifier = rollbar.client.notifier;
-        rollbar.testData.addItemStub = sinon.stub(notifier.queue, 'addItem');
-        rollbar.testData.getStub = stubGetWithResponse(
-          'https://example.com',
-          200,
-          testHeaders3,
-          testBody1,
-        );
-        rollbar.testData.postStub = stubPostWithResponse(
-          'http://example.com',
-          201,
-          testHeaders4,
-          testBody2,
-        );
+      // Verify telemetry items and order
+      expect(telemetry[0].level).to.equal('info');
+      expect(telemetry[0].type).to.equal('log');
+      expect(telemetry[0].body.message).to.equal(
+        'test console message , extra part\n',
+      );
 
-        var func = async function (callback) {
-          // Invoke telemetry events
-          console.info(testMessage1, testMessagePart);
-          rollbar.testData.response1 = await request(
-            https,
-            'https://example.com/api/users',
-            { method: 'GET', headers: testHeaders1 },
-          );
-          console.error(testMessage2);
-          rollbar.testData.response2 = await request(
-            http,
-            'http://example.com/api/users',
-            { method: 'POST', headers: testHeaders2 },
-          );
+      expect(telemetry[1].level).to.equal('info');
+      expect(telemetry[1].type).to.equal('network');
+      expect(telemetry[1].body.method).to.equal('GET');
+      expect(telemetry[1].body.url).to.equal('http://example.com/api/users');
+      expect(telemetry[1].body.status_code).to.equal(200);
+      expect(telemetry[1].body.subtype).to.equal('http');
 
-          await message(rollbar);
-          callback(rollbar);
-        };
-        func(this.callback);
-      },
-      'message payload should have telemetry': function (r) {
-        var addItemStub = r.testData.addItemStub;
+      expect(telemetry[2].level).to.equal('error');
+      expect(telemetry[2].type).to.equal('log');
+      expect(telemetry[2].body.message).to.equal(
+        'test console error message\n',
+      );
 
-        assert.isTrue(addItemStub.called);
-        var telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      expect(telemetry[3].level).to.equal('info');
+      expect(telemetry[3].type).to.equal('network');
+      expect(telemetry[3].body.method).to.equal('POST');
+      expect(telemetry[3].body.url).to.equal('https://example.com/api/users');
+      expect(telemetry[3].body.status_code).to.equal(201);
+      expect(telemetry[3].body.subtype).to.equal('http');
 
-        // Verify headers captures, with scrubbing
-        assert.deepStrictEqual(telemetry[1].body.request_headers, {
-          'Content-Type': 'application/json',
-          'X-access-token': '********',
-        });
-        assert.deepStrictEqual(telemetry[1].body.response.headers, {
-          'content-type': 'application/json',
-          foo: '123',
-        });
-        assert.deepStrictEqual(telemetry[3].body.request_headers, {
-          authorization: '********',
-          foo: '456',
-        });
-        assert.deepStrictEqual(telemetry[3].body.response.headers, {
-          authorization: '********',
-          bar: '456',
-        });
+      // Verify headers are omitted
+      expect(telemetry[1].body.request_headers).to.be.undefined;
+      expect(telemetry[1].body.response.headers).to.be.undefined;
+      expect(telemetry[3].body.request_headers).to.be.undefined;
+      expect(telemetry[3].body.response.headers).to.be.undefined;
+    });
+  });
 
-        addItemStub.restore();
-      },
-    },
-  })
-  .addBatch({
-    'with telemetry disabled': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-        });
-        rollbar.testData = {};
-        var notifier = rollbar.client.notifier;
-        rollbar.testData.addItemStub = sinon.stub(notifier.queue, 'addItem');
-        rollbar.testData.getStub = stubGetWithResponse(
-          'https://example.com',
-          200,
-          testHeaders3,
-          testBody1,
-        );
-        rollbar.testData.postStub = stubPostWithResponse(
-          'https://example.com',
-          201,
-          testHeaders4,
-          testBody2,
-        );
+  describe('with log and network capture enabled with headers enabled', function () {
+    let rollbar;
+    let addItemStub;
 
-        var func = async function (callback) {
-          // Invoke telemetry events
-          console.info(testMessage1, testMessagePart);
-          rollbar.testData.response1 = await request(
-            https,
-            'https://example.com/api/users',
-            { method: 'GET', headers: testHeaders1 },
-          );
-          console.error(testMessage2);
-          rollbar.testData.response2 = await request(
-            https,
-            'https://example.com/api/users',
-            { method: 'POST', headers: testHeaders2 },
-          );
+    beforeEach(async function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        autoInstrument: {
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      });
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
-          await message(rollbar);
-          callback(rollbar);
-        };
-        func(this.callback);
-      },
-      'payload should not have telemetry': function (r) {
-        var addItemStub = r.testData.addItemStub;
+      // These are necessary so nock intercepts these HTTP requests
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+      stubPostWithResponse('http://example.com', 201, testHeaders4, testBody2);
 
-        assert.isTrue(addItemStub.called);
-        var telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      // Invoke telemetry events
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
+      await request(https, 'https://example.com/api/users', {
+        method: 'GET',
+        headers: testHeaders1,
+      });
+      console.error(testMessage2); // eslint-disable-line no-console
+      await request(http, 'http://example.com/api/users', {
+        method: 'POST',
+        headers: testHeaders2,
+      });
 
-        // Verify telemetry is empty
-        assert.deepEqual(telemetry, []);
-      },
-    },
-  })
-  .addBatch({
-    'with callback request and error response': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-          autoInstrument: {
-            network: true,
-            networkResponseHeaders: true,
-            networkRequestHeaders: true,
-          },
-        });
-        var notifier = rollbar.client.notifier;
-        rollbar.testData = {};
-        rollbar.testData.addItemStub = sinon.stub(notifier.queue, 'addItem');
+      await message(rollbar);
+    });
 
-        var func = async function (callback) {
-          var options = {
-            method: 'GET',
-            protocol: 'https:',
-            host: 'example.com',
-            path: '/api/users',
-            headers: testHeaders1,
-          };
+    afterEach(function () {
+      addItemStub.restore();
+      nock.cleanAll();
+    });
 
-          // Invoke telemetry events
-          console.info(testMessage1, testMessagePart);
-          rollbar.testData.getStub = stubGetWithResponse(
-            'https://example.com',
-            200,
-            testHeaders3,
-            testBody1,
-          );
-          rollbar.testData.response1 = await requestWithCallback(
-            https,
-            options,
-          ).catch((e) => e);
-          console.error(testMessage2);
-          rollbar.testData.errorStub = stubGetWithError('https://example.com');
-          rollbar.testData.response2 = await requestWithCallback(
-            https,
-            options,
-          ).catch((e) => e);
+    it('message payload should have telemetry', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
 
-          await message(rollbar);
-          callback(rollbar);
-        };
-        func(this.callback);
-      },
-      'message payload should have telemetry or error info': function (r) {
-        var addItemStub = r.testData.addItemStub;
-        var response1 = r.testData.response1;
-        var response2 = r.testData.response2;
+      // Verify headers captures, with scrubbing
+      expect(telemetry[1].body.request_headers).to.deep.equal({
+        'Content-Type': 'application/json',
+        'X-access-token': '********',
+      });
+      expect(telemetry[1].body.response.headers).to.deep.equal({
+        'content-type': 'application/json',
+        foo: '123',
+      });
+      expect(telemetry[3].body.request_headers).to.deep.equal({
+        authorization: '********',
+        foo: '456',
+      });
+      expect(telemetry[3].body.response.headers).to.deep.equal({
+        authorization: '********',
+        bar: '456',
+      });
+    });
+  });
 
-        assert.isTrue(addItemStub.called);
-        var telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+  describe('with telemetry disabled', function () {
+    let rollbar;
+    let addItemStub;
 
-        // Verify that the responses were received intact.
-        assert.deepStrictEqual(response1.headers, testHeaders3);
-        assert.deepStrictEqual(response1.statusCode, 200);
-        assert(response2 instanceof Error);
+    beforeEach(async function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+      });
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
 
-        // Verify telemetry
-        assert.deepStrictEqual(telemetry[1].body.request_headers, {
-          'Content-Type': 'application/json',
-          'X-access-token': '********',
-        });
-        assert.deepStrictEqual(telemetry[1].body.response.headers, {
-          'content-type': 'application/json',
-          foo: '123',
-        });
-        assert.deepStrictEqual(telemetry[3].body.request_headers, {
-          'Content-Type': 'application/json',
-          'X-access-token': '********',
-        });
-        assert.deepStrictEqual(telemetry[3].body.response, undefined);
-        assert.deepStrictEqual(telemetry[3].body.status_code, 0);
-        assert.deepStrictEqual(telemetry[3].body.error, 'Error: dns error');
+      // These are necessary so nock intercepts these HTTP requests
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+      stubPostWithResponse('https://example.com', 201, testHeaders4, testBody2);
 
-        addItemStub.restore();
-      },
-    },
-  })
-  .addBatch({
-    'while using autoinstrument': {
-      topic: function () {
-        const optionsUsingStringUrl = mergeOptions(
-          'http://example.com/api/users',
-          { method: 'GET', headers: testHeaders1 },
-        );
-        const optionsUsingClassUrl = mergeOptions(
-          new URL('http://example.com/api/users'),
-          { method: 'GET', headers: testHeaders1 },
-        );
+      // Invoke telemetry events
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
+      await request(https, 'https://example.com/api/users', {
+        method: 'GET',
+        headers: testHeaders1,
+      });
+      console.error(testMessage2); // eslint-disable-line no-console
+      await request(https, 'https://example.com/api/users', {
+        method: 'POST',
+        headers: testHeaders2,
+      });
 
-        return {
-          optionsUsingStringUrl,
-          optionsUsingClassUrl,
-        };
-      },
-      'mergeOptions should correctly handle URL and options': function ({
-        optionsUsingStringUrl,
-        optionsUsingClassUrl,
-      }) {
-        assert.deepStrictEqual(optionsUsingStringUrl, optionsUsingClassUrl);
-      },
-    },
-  })
-  .export(module, { error: false });
+      await message(rollbar);
+    });
+
+    afterEach(function () {
+      addItemStub.restore();
+      nock.cleanAll();
+    });
+
+    it('payload should not have telemetry', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+      expect(telemetry).to.deep.equal([]);
+    });
+  });
+
+  describe('with callback request and error response', function () {
+    let rollbar;
+    let addItemStub;
+    let response1;
+    let response2;
+
+    beforeEach(async function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        autoInstrument: {
+          network: true,
+          networkResponseHeaders: true,
+          networkRequestHeaders: true,
+        },
+      });
+      addItemStub = sinon.stub(rollbar.client.notifier.queue, 'addItem');
+
+      const options = {
+        method: 'GET',
+        protocol: 'https:',
+        host: 'example.com',
+        path: '/api/users',
+        headers: testHeaders1,
+      };
+
+      // Invoke telemetry events
+      console.info(testMessage1, testMessagePart); // eslint-disable-line no-console
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+      response1 = await requestWithCallback(https, options).catch((e) => e);
+      console.error(testMessage2); // eslint-disable-line no-console
+      stubGetWithError('https://example.com');
+      response2 = await requestWithCallback(https, options).catch((e) => e);
+
+      await message(rollbar);
+    });
+
+    afterEach(function () {
+      addItemStub.restore();
+      nock.cleanAll();
+    });
+
+    it('message payload should have telemetry or error info', function () {
+      expect(addItemStub.called).to.be.true;
+      const telemetry = addItemStub.getCall(0).args[3].data.body.telemetry;
+
+      // Verify that the responses were received intact.
+      expect(response1.headers).to.deep.equal(testHeaders3);
+      expect(response1.statusCode).to.equal(200);
+      expect(response2).to.be.instanceof(Error);
+
+      // Verify telemetry
+      expect(telemetry[1].body.request_headers).to.deep.equal({
+        'Content-Type': 'application/json',
+        'X-access-token': '********',
+      });
+      expect(telemetry[1].body.response.headers).to.deep.equal({
+        'content-type': 'application/json',
+        foo: '123',
+      });
+      expect(telemetry[3].body.request_headers).to.deep.equal({
+        'Content-Type': 'application/json',
+        'X-access-token': '********',
+      });
+      expect(telemetry[3].body.response).to.be.undefined;
+      expect(telemetry[3].body.status_code).to.equal(0);
+      expect(telemetry[3].body.error).to.equal('Error: dns error');
+    });
+  });
+
+  describe('while using autoinstrument', function () {
+    it('mergeOptions should correctly handle URL and options', function () {
+      const optionsUsingStringUrl = mergeOptions(
+        'http://example.com/api/users',
+        { method: 'GET', headers: testHeaders1 },
+      );
+      const optionsUsingClassUrl = mergeOptions(
+        new URL('http://example.com/api/users'),
+        { method: 'GET', headers: testHeaders1 },
+      );
+
+      expect(optionsUsingStringUrl).to.deep.equal(optionsUsingClassUrl);
+    });
+  });
+});

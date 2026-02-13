@@ -1,10 +1,11 @@
-var _ = require('../utility');
-var truncation = require('../truncation');
-var logger = require('./logger');
+import http from 'http';
+import https from 'https';
 
-var http = require('http');
-var https = require('https');
-var jsonBackup = require('json-stringify-safe');
+import jsonBackup from 'json-stringify-safe';
+
+import logger from '../logger.js';
+import truncation from '../truncation.js';
+import * as _ from '../utility.js';
 
 var MAX_RATE_LIMIT_INTERVAL = 60;
 
@@ -37,7 +38,7 @@ Transport.prototype.get = function (
 ) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
@@ -65,16 +66,16 @@ Transport.prototype.get = function (
   req.end();
 };
 
-Transport.prototype.post = function (
+Transport.prototype.post = function ({
   accessToken,
   options,
   payload,
   callback,
   transportFactory,
-) {
+}) {
   var t;
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   if (_currentTime() < this.rateLimitExpires) {
     return callback(new Error('Exceeded rate limit'));
@@ -154,7 +155,7 @@ function _headers(accessToken, options, data) {
   if (data) {
     try {
       headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
-    } catch (e) {
+    } catch (_e) {
       logger.error('Could not get the content length of the data');
     }
   }
@@ -208,4 +209,4 @@ function _currentTime() {
   return Math.floor(Date.now() / 1000);
 }
 
-module.exports = Transport;
+export default Transport;

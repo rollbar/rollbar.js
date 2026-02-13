@@ -1,17 +1,18 @@
 /*global XDomainRequest*/
 
-var _ = require('../../utility');
-var logger = require('../logger');
+import logger from '../../logger.js';
+import * as _ from '../../utility.js';
 
-function makeXhrRequest(
+function makeXhrRequest({
   accessToken,
   url,
   method,
-  data,
+  payload,
+  headers,
   callback,
   requestFactory,
   timeout,
-) {
+}) {
   var request;
   if (requestFactory) {
     request = requestFactory();
@@ -31,7 +32,23 @@ function makeXhrRequest(
 
             var parseResponse = _.jsonParse(request.responseText);
             if (_isSuccess(request)) {
-              callback(parseResponse.error, parseResponse.value);
+              const isItemRoute = url.endsWith('/api/1/item/');
+
+              const headers = isItemRoute
+                ? {
+                    'Rollbar-Replay-Enabled': request.getResponseHeader(
+                      'Rollbar-Replay-Enabled',
+                    ),
+                    'Rollbar-Replay-RateLimit-Remaining':
+                      request.getResponseHeader(
+                        'Rollbar-Replay-RateLimit-Remaining',
+                      ),
+                    'Rollbar-Replay-RateLimit-Reset': request.getResponseHeader(
+                      'Rollbar-Replay-RateLimit-Reset',
+                    ),
+                  }
+                : {};
+              callback(parseResponse.error, parseResponse.value, headers);
               return;
             } else if (_isNormalFailure(request)) {
               if (request.status === 403) {
@@ -69,6 +86,9 @@ function makeXhrRequest(
       if (request.setRequestHeader) {
         request.setRequestHeader('Content-Type', 'application/json');
         request.setRequestHeader('X-Rollbar-Access-Token', accessToken);
+        for (const [h, v] of Object.entries(headers ?? {})) {
+          request.setRequestHeader(h, v);
+        }
       }
 
       if (_.isFiniteNumber(timeout)) {
@@ -76,8 +96,8 @@ function makeXhrRequest(
       }
 
       request.onreadystatechange = onreadystatechange;
-      request.send(data);
-    } catch (e1) {
+      request.send(payload);
+    } catch (_e1) {
       // Sending using the normal xmlhttprequest object didn't work, try XDomainRequest
       if (typeof XDomainRequest !== 'undefined') {
         // Assume we are in a really old browser which has a bunch of limitations:
@@ -101,7 +121,7 @@ function makeXhrRequest(
         }
 
         var xdomainrequest = new XDomainRequest();
-        xdomainrequest.onprogress = function () {};
+        xdomainrequest.onprogress = () => {};
         xdomainrequest.ontimeout = function () {
           var msg = 'Request timed out';
           var code = 'ETIMEDOUT';
@@ -115,7 +135,7 @@ function makeXhrRequest(
           callback(parseResponse.error, parseResponse.value);
         };
         xdomainrequest.open(method, url, true);
-        xdomainrequest.send(data);
+        xdomainrequest.send(payload);
       } else {
         callback(new Error('Cannot find a method to transport a request'));
       }
@@ -146,14 +166,12 @@ function _createXMLHTTPObject() {
   var i;
   var numFactories = factories.length;
   for (i = 0; i < numFactories; i++) {
-    /* eslint-disable no-empty */
     try {
       xmlhttp = factories[i]();
       break;
-    } catch (e) {
+    } catch (_e) {
       // pass
     }
-    /* eslint-enable no-empty */
   }
   return xmlhttp;
 }
@@ -172,4 +190,4 @@ function _newRetriableError(message, code) {
   return err;
 }
 
-module.exports = makeXhrRequest;
+export default makeXhrRequest;

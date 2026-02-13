@@ -1,6 +1,7 @@
-var _ = require('../utility');
-var makeFetchRequest = require('./transport/fetch');
-var makeXhrRequest = require('./transport/xhr');
+import * as _ from '../utility.js';
+
+import makeFetchRequest from './transport/fetch.js';
+import makeXhrRequest from './transport/xhr.js';
 
 /*
  * accessToken may be embedded in payload but that should not
@@ -32,33 +33,33 @@ Transport.prototype.get = function (
   requestFactory,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
 
   var method = 'GET';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    null,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
-Transport.prototype.post = function (
+Transport.prototype.post = function ({
   accessToken,
   options,
   payload,
+  headers,
   callback,
   requestFactory,
-) {
+}) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
 
   if (!payload) {
@@ -66,7 +67,8 @@ Transport.prototype.post = function (
   }
 
   var stringifyResult;
-  if (this.truncation) {
+  // Check payload.body to ensure only items are truncated.
+  if (this.truncation && payload.body) {
     stringifyResult = this.truncation.truncate(payload);
   } else {
     stringifyResult = _.stringify(payload);
@@ -75,44 +77,44 @@ Transport.prototype.post = function (
     return callback(stringifyResult.error);
   }
 
-  var writeData = stringifyResult.value;
   var method = 'POST';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    writeData,
+    payload: stringifyResult.value,
+    headers,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
 Transport.prototype.postJsonPayload = function (
   accessToken,
   options,
-  jsonPayload,
+  payload,
   callback,
   requestFactory,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
 
   var method = 'POST';
   var url = _.formatUrl(options);
-  this._makeZoneRequest(
+  this._makeZoneRequest({
     accessToken,
     url,
     method,
-    jsonPayload,
+    payload,
     callback,
     requestFactory,
-    options.timeout,
-    options.transport,
-  );
+    timeout: options.timeout,
+    transport: options.transport,
+  });
 };
 
 // Wraps `_makeRequest` if zone.js is being used, ensuring that Rollbar
@@ -120,8 +122,8 @@ Transport.prototype.postJsonPayload = function (
 // This is equivalent to `NgZone.runOutsideAngular` in Angular.
 Transport.prototype._makeZoneRequest = function () {
   var gWindow =
-    (typeof window != 'undefined' && window) ||
-    (typeof self != 'undefined' && self);
+    (typeof window !== 'undefined' && window) ||
+    (typeof self !== 'undefined' && self);
   // Whenever zone.js is loaded and `Zone` is exposed globally, access
   // the root zone to ensure that requests are always made within it.
   // This approach is framework-agnostic, regardless of which
@@ -130,41 +132,24 @@ Transport.prototype._makeZoneRequest = function () {
   var args = Array.prototype.slice.call(arguments);
 
   if (rootZone) {
-    var self = this;
-    rootZone.run(function () {
-      self._makeRequest.apply(undefined, args);
+    rootZone.run(() => {
+      this._makeRequest.apply(undefined, args);
     });
   } else {
     this._makeRequest.apply(undefined, args);
   }
 };
 
-Transport.prototype._makeRequest = function (
-  accessToken,
-  url,
-  method,
-  data,
-  callback,
-  requestFactory,
-  timeout,
-  transport,
-) {
+Transport.prototype._makeRequest = function (params) {
+  const { payload, callback, transport } = params;
   if (typeof RollbarProxy !== 'undefined') {
-    return _proxyRequest(data, callback);
+    return _proxyRequest(payload, callback);
   }
 
   if (transport === 'fetch') {
-    makeFetchRequest(accessToken, url, method, data, callback, timeout);
+    makeFetchRequest(params);
   } else {
-    makeXhrRequest(
-      accessToken,
-      url,
-      method,
-      data,
-      callback,
-      requestFactory,
-      timeout,
-    );
+    makeXhrRequest(params);
   }
 };
 
@@ -175,11 +160,11 @@ function _proxyRequest(json, callback) {
     json,
     function (_msg) {
       /* do nothing */
-    }, // eslint-disable-line no-unused-vars
+    },
     function (err) {
       callback(new Error(err));
     },
   );
 }
 
-module.exports = Transport;
+export default Transport;

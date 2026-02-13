@@ -17,8 +17,8 @@ test-server:
 	@npm run test-server
 	@echo ""
 
-test_ci:
-	@npm run test_ci
+test-ci:
+	@npm run test-ci
 	@echo ""
 
-.PHONY: test test_ci
+.PHONY: test test-ci

@@ -1,5 +1,5 @@
-import Rollbar from '../../index';
+import type { Rollbar } from '../../index.js';
 
-declare var Instrumenter: Rollbar.InstrumenterType;
+declare const Instrumenter: Rollbar.InstrumenterType;
 
-export = Instrumenter;
+export default Instrumenter;

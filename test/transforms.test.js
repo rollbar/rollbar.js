@@ -1,9 +1,7 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
+import { expect } from 'chai';
 
-var _ = require('../src/utility');
-var t = require('../src/transforms');
+import * as t from '../src/transforms.js';
+import * as _ from '../src/utility.js';
 
 function itemFromArgs(args) {
   var item = _.createItem(args);
@@ -12,8 +10,8 @@ function itemFromArgs(args) {
 }
 
 var fakeLogger = {
-  error: function () {},
-  log: function () {},
+  error: () => {},
+  log: () => {},
 };
 
 describe('itemToPayload', function () {
@@ -193,7 +191,7 @@ describe('userTransform', function () {
     expect(payload.data.message).to.not.eql('HELLO');
     t.userTransform(fakeLogger)(payload, options, function (e, i) {
       expect(i.data.message).to.not.eql('HELLO');
-      expect(options.transform).to.not.be.ok();
+      expect(options.transform).to.not.be.ok;
       done(e);
     });
   });
@@ -228,7 +226,7 @@ describe('userTransform', function () {
     };
     var options = {
       endpoint: 'api.rollbar.com',
-      transform: function (newItem) {
+      transform: function (_newItem) {
         return Promise.resolve({ message: 'HELLO' });
       },
     };
@@ -250,7 +248,7 @@ describe('userTransform', function () {
     };
     var options = {
       endpoint: 'api.rollbar.com',
-      transform: function (newItem) {
+      transform: function (_newItem) {
         return Promise.reject(err);
       },
     };

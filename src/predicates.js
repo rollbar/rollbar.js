@@ -1,4 +1,4 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 function checkLevel(item, settings) {
   var level = item.level;
@@ -14,7 +14,7 @@ function checkLevel(item, settings) {
 
 function userCheckIgnore(logger) {
   return function (item, settings) {
-    var isUncaught = !!item._isUncaught;
+    var isUncaught = Boolean(item._isUncaught);
     delete item._isUncaught;
     var args = item._originalArgs;
     delete item._originalArgs;
@@ -168,7 +168,7 @@ function messageIsIgnored(logger) {
         }
       }
     } catch (
-      e
+      _e
       /* istanbul ignore next */
     ) {
       settings.ignoredMessages = null;
@@ -190,8 +190,7 @@ function messagesFromItem(item) {
   // So here we preserve the ability to collect strings from any combination of these keys.
   if (body.trace_chain) {
     var traceChain = body.trace_chain;
-    for (var i = 0; i < traceChain.length; i++) {
-      var trace = traceChain[i];
+    for (const trace of traceChain) {
       messages.push(_.get(trace, 'exception.message'));
     }
   }
@@ -204,10 +203,10 @@ function messagesFromItem(item) {
   return messages;
 }
 
-module.exports = {
-  checkLevel: checkLevel,
-  userCheckIgnore: userCheckIgnore,
-  urlIsNotBlockListed: urlIsNotBlockListed,
-  urlIsSafeListed: urlIsSafeListed,
-  messageIsIgnored: messageIsIgnored,
+export {
+  checkLevel,
+  userCheckIgnore,
+  urlIsNotBlockListed,
+  urlIsSafeListed,
+  messageIsIgnored,
 };

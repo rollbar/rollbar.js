@@ -1,5 +1,5 @@
-var _ = require('./utility');
-var traverse = require('./utility/traverse');
+import traverse from './utility/traverse.js';
+import * as _ from './utility.js';
 
 function raw(payload, jsonBackup) {
   return [payload, _.stringify(payload, jsonBackup)];
@@ -19,10 +19,10 @@ function truncateFrames(payload, jsonBackup, range) {
   var frames;
   if (body.trace_chain) {
     var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      frames = chain[i].frames;
+    for (const trace of chain) {
+      frames = trace.frames;
       frames = selectFrames(frames, range);
-      chain[i].frames = frames;
+      trace.frames = frames;
     }
   } else if (body.trace) {
     frames = body.trace.frames;
@@ -74,8 +74,8 @@ function minBody(payload, jsonBackup) {
   var body = payload.data.body;
   if (body.trace_chain) {
     var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      chain[i] = truncateTraceData(chain[i]);
+    for (const [index, trace] of chain.entries()) {
+      chain[index] = truncateTraceData(trace);
     }
   } else if (body.trace) {
     body.trace = truncateTraceData(body.trace);
@@ -110,12 +110,12 @@ function truncate(payload, jsonBackup, maxSize) {
   return result;
 }
 
-module.exports = {
-  truncate: truncate,
+export default {
+  truncate,
 
   /* for testing */
-  raw: raw,
-  truncateFrames: truncateFrames,
-  truncateStrings: truncateStrings,
-  maybeTruncateValue: maybeTruncateValue,
+  raw,
+  truncateFrames,
+  truncateStrings,
+  maybeTruncateValue,
 };

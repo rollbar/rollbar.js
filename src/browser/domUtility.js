@@ -9,9 +9,9 @@ function isDescribedElement(element, type, subtypes) {
   if (!subtypes) {
     return true;
   }
-  element = getElementType(element);
-  for (var i = 0; i < subtypes.length; i++) {
-    if (subtypes[i] === element) {
+  const elementType = getElementType(element);
+  for (const subtype of subtypes) {
+    if (subtype === elementType) {
       return true;
     }
   }
@@ -65,6 +65,10 @@ function elementArrayToString(a) {
   return out.join(separator);
 }
 
+function elementString(elem) {
+  return elementArrayToString(treeToArray(elem));
+}
+
 function descriptionToString(desc) {
   if (!desc || !desc.tagName) {
     return '';
@@ -76,10 +80,8 @@ function descriptionToString(desc) {
   if (desc.classes) {
     out.push('.' + desc.classes.join('.'));
   }
-  for (var i = 0; i < desc.attributes.length; i++) {
-    out.push(
-      '[' + desc.attributes[i].key + '="' + desc.attributes[i].value + '"]',
-    );
+  for (const attribute of desc.attributes) {
+    out.push('[' + attribute.key + '="' + attribute.value + '"]');
   }
 
   return out.join('');
@@ -105,10 +107,7 @@ function describeElement(elem) {
     return null;
   }
   var out = {},
-    className,
-    key,
-    attr,
-    i;
+    className;
   out.tagName = elem.tagName.toLowerCase();
   if (elem.id) {
     out.id = elem.id;
@@ -119,22 +118,57 @@ function describeElement(elem) {
   }
   var attributes = ['type', 'name', 'title', 'alt'];
   out.attributes = [];
-  for (i = 0; i < attributes.length; i++) {
-    key = attributes[i];
-    attr = elem.getAttribute(key);
+  for (const attribute of attributes) {
+    const attr = elem.getAttribute(attribute);
     if (attr) {
-      out.attributes.push({ key: key, value: attr });
+      out.attributes.push({ key: attribute, value: attr });
     }
   }
   return out;
 }
 
-module.exports = {
-  describeElement: describeElement,
-  descriptionToString: descriptionToString,
-  elementArrayToString: elementArrayToString,
-  treeToArray: treeToArray,
-  getElementFromEvent: getElementFromEvent,
-  isDescribedElement: isDescribedElement,
-  getElementType: getElementType,
+/*
+ * Detects if the given element matches any of the given class names (string or regex),
+ * or CSS selectors.
+ * @param {HTMLElement} element - The DOM element to check.
+ * @param {Array<string|RegExp>} classes - An array of class names (string or regex) to match against.
+ * @param {Array<string>} selectors - An array of CSS selectors to match against.
+ * @return {boolean} - True if the element matches any of the classes or selectors, false otherwise.
+ */
+function isMatchingElement(element, classes, selectors) {
+  try {
+    for (const cls of classes) {
+      if (typeof cls === 'string') {
+        if (element.classList.contains(cls)) {
+          return true;
+        }
+      } else {
+        for (const c of element.classList) {
+          if (cls.test(c)) {
+            return true;
+          }
+        }
+      }
+    }
+    for (const sel of selectors) {
+      if (element.matches(sel)) {
+        return true;
+      }
+    }
+  } catch (_e) {
+    // ignore errors from invalid arguments
+  }
+  return false;
+}
+
+export {
+  describeElement,
+  descriptionToString,
+  elementArrayToString,
+  elementString,
+  treeToArray,
+  getElementFromEvent,
+  isDescribedElement,
+  getElementType,
+  isMatchingElement,
 };

@@ -1,0 +1,7 @@
+.next
+out
+build
+.DS_Store
+.env.local
+.nvmrc
+CLAUDE*.md

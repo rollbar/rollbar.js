@@ -1,10 +1,10 @@
 // Type definitions for rollbar
 // Project: Rollbar
 
-export = Rollbar;
+export default Rollbar;
 
-declare class Rollbar {
-  constructor(options?: Rollbar.Configuration);
+declare class Rollbar implements Rollbar.Components {
+  constructor(options?: Rollbar.Configuration, client?: Rollbar);
   static init(options: Rollbar.Configuration): Rollbar;
   static setComponents(components: Rollbar.Components): void;
 
@@ -21,6 +21,8 @@ declare class Rollbar {
   public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
   public wait(callback: () => void): void;
 
+  public triggerDirectReplay(context: Dictionary): Dictionary | null;
+
   public captureEvent(
     metadata: object,
     level: Rollbar.Level,
@@ -32,12 +34,30 @@ declare class Rollbar {
 
   public errorHandler(): Rollbar.ExpressErrorHandler;
 
+  // Components
+
+  public telemeter?: TelemeterType;
+  public instrumenter?: InstrumenterType;
+  public wrapGlobals?: WrapGlobalsType;
+  public scrub?: ScrubType;
+  public truncation?: TruncationType;
+  public tracing?: TracingType;
+  /**
+   * Replay component for session recording.
+   * Only available when using replay bundles (rollbar.replay.*).
+   * Use `import Rollbar from 'rollbar/replay'` to access.
+   */
+  public replay?: ReplayType;
+
   // Used with rollbar-react for rollbar-react-native compatibility.
   public rollbar: Rollbar;
 
   // Exposed only for testing, should be changed via the configure method
   // DO NOT MODIFY DIRECTLY
   public options: Rollbar.Configuration;
+
+  // Exposed only for testing, tracks pending anonymous errors
+  anonymousErrorsPending: number;
 }
 
 declare namespace Rollbar {
@@ -46,9 +66,16 @@ declare namespace Rollbar {
     context: TContext,
     callback: Callback<TResult>,
   ) => void | Promise<TResult>;
-  export type MaybeError = Error | undefined | null;
   export type Level = 'debug' | 'info' | 'warning' | 'error' | 'critical';
-  export type Dictionary = { [key: string]: unknown };
+  export type Dictionary = Record<string, unknown>;
+  export type MaybeError = Error | undefined | null;
+  export type StringAttributes = Record<string, string>;
+
+  export interface ErrorWithContext extends Error {
+    rollbarContext?: Record<string, any>;
+    nested?: Error | null;
+  }
+
   /**
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#reference}
    */
@@ -107,7 +134,10 @@ declare namespace Rollbar {
     ) => void;
     overwriteScrubFields?: boolean;
     payload?: Payload;
+    person?: PersonParams;
+    replay?: ReplayOptions;
     reportLevel?: Level;
+    resource?: StringAttributes;
     retryInterval?: number | null;
     rewriteFilenamePatterns?: string[];
     scrubFields?: string[];
@@ -119,6 +149,7 @@ declare namespace Rollbar {
     stackTraceLimit?: number;
     telemetryScrubber?: TelemetryScrubber;
     timeout?: number;
+    tracing?: TracingOptions;
     transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
     transmit?: boolean;
     uncaughtErrorLevel?: Level;
@@ -155,7 +186,11 @@ declare namespace Rollbar {
     network?: boolean;
     networkResponseHeaders?: boolean | string[];
     networkResponseBody?: boolean;
+    networkRequestHeaders?: boolean;
     networkRequestBody?: boolean;
+    networkErrorOnHttp5xx?: boolean;
+    networkErrorOnHttp4xx?: boolean;
+    networkErrorOnHttp0?: boolean;
     log?: boolean;
     dom?: boolean;
     navigation?: boolean;
@@ -184,9 +219,7 @@ declare namespace Rollbar {
     response: any,
     next: ExpressNextFunction,
   ) => any;
-  export interface ExpressNextFunction {
-    (err?: any): void;
-  }
+  export type ExpressNextFunction = (err?: any) => void;
   class Locals {}
   export type LocalsType = typeof Locals;
   export type LocalsOptions = LocalsType | LocalsSettings;
@@ -201,9 +234,13 @@ declare namespace Rollbar {
 
   class Telemeter {}
   class Instrumenter {}
+  class Tracing {}
+  class Replay {}
 
   export type TelemeterType = typeof Telemeter;
   export type InstrumenterType = typeof Instrumenter;
+  export type TracingType = typeof Tracing;
+  export type ReplayType = typeof Replay;
   export type TruncationType = object;
   export type ScrubType = (
     data: object,
@@ -215,15 +252,98 @@ declare namespace Rollbar {
     handler?: any,
     shim?: any,
   ) => void;
-  export type PolyfillJSONType = (JSON: any) => any;
 
   export interface Components {
     telemeter?: TelemeterType;
     instrumenter?: InstrumenterType;
-    polyfillJSON?: PolyfillJSONType;
     wrapGlobals?: WrapGlobalsType;
     scrub?: ScrubType;
     truncation?: TruncationType;
+    tracing?: TracingType;
+    /**
+     * Replay component for session recording.
+     * Only available when using replay bundles (rollbar.replay.*).
+     * Use `import Rollbar from 'rollbar/replay'` to access.
+     */
+    replay?: ReplayType;
+  }
+
+  export interface ReplayOptions {
+    enabled?: boolean;
+    autoStart?: boolean;
+    triggerDefaults?: {
+      samplingRatio?: number;
+      preDuration?: number;
+      postDuration?: number;
+    };
+    triggers?: {
+      type: string;
+      samplingRatio?: number;
+      preDuration?: number;
+      postDuration?: number;
+      predicateFn?: (trigger: Dictionary, context: Dictionary) => boolean;
+      level?: Level[];
+      pathMatch?: string | RegExp;
+      tags?: string[];
+    }[];
+    debug?: {
+      logErrors?: boolean;
+      logEmits?: boolean;
+    };
+    inlineStylesheet?: boolean;
+    inlineImages?: boolean;
+    collectFonts?: boolean;
+    maskInputOptions?: {
+      password?: boolean;
+      email?: boolean;
+      tel?: boolean;
+      text?: boolean;
+      color?: boolean;
+      date?: boolean;
+      'datetime-local'?: boolean;
+      month?: boolean;
+      number?: boolean;
+      range?: boolean;
+      search?: boolean;
+      time?: boolean;
+      url?: boolean;
+      week?: boolean;
+    };
+    blockClass?: string;
+    maskTextClass?: string;
+    ignoreClass?: string;
+    slimDOMOptions?: {
+      script?: boolean;
+      comment?: boolean;
+      headFavicon?: boolean;
+      headWhitespace?: boolean;
+      headMetaDescKeywords?: boolean;
+      headMetaSocial?: boolean;
+      headMetaRobots?: boolean;
+      headMetaHttpEquiv?: boolean;
+      headMetaAuthorship?: boolean;
+      headMetaVerification?: boolean;
+    };
+    maskInputFn?: (text: string) => string;
+    maskTextFn?: (text: string) => string;
+    errorHandler?: (error: Error) => void;
+    plugins?: any[];
+  }
+
+  export interface TransformSpanParams {
+    span: any;
+  }
+  export interface TracingOptions {
+    enabled?: boolean;
+    endpoint?: string;
+    transformSpan?: (params: TransformSpanParams) => void;
+  }
+
+  export interface PersonParams {
+    id: string | DeprecatedNumber | null;
+    username?: string;
+    email?: string;
+    [property: string]: any;
   }
 
   /**
@@ -235,12 +355,7 @@ declare namespace Rollbar {
    * {@link https://docs.rollbar.com/docs/rollbarjs-configuration-reference#payload-1}
    */
   export interface Payload {
-    person?: {
-      id: string | DeprecatedNumber | null;
-      username?: string;
-      email?: string;
-      [property: string]: any;
-    };
+    person?: PersonParams;
     context?: any;
     client?: {
       javascript?: {

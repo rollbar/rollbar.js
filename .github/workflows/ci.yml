@@ -5,7 +5,10 @@ on:
     branches: [master]
     tags: [v*]
   pull_request:
-    branches: [master]
+
+permissions:
+  checks: write
+  contents: read
 
 jobs:
   build:
@@ -20,6 +23,8 @@ jobs:
             npm: ^10
           - node: 22
             npm: ^10
+          - node: 24
+            npm: ^11
           - node: latest
             npm: latest
 
@@ -43,9 +48,25 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prettier: true
+          prettier_extensions: js,cjs,mjs,md,json,yml,yaml
           eslint: true
           eslint_args: '--max-warnings 0'
-          eslint_extensions: js
+          eslint_extensions: js,mjs,cjs
 
-      - name: Run tests
-        run: npm run test_ci
+      - name: Build
+        run: npm run build
+
+      - name: Validate ES5 compatibility
+        run: npm run validate:es5
+
+      - name: Run server tests
+        run: npm run test:server
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run browser tests (Web Test Runner)
+        run: npm run test:wtr
+
+      - name: Validate examples
+        run: npm run validate:examples

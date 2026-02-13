@@ -1,0 +1,15 @@
+{
+  "name": "require",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "rollbar": "file:../rollbar.tgz"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node -e \"require('./index.js')\"",
+    "start": "node index.js"
+  },
+  "type": "commonjs"
+}

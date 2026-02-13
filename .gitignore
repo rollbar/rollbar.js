@@ -8,3 +8,9 @@ coverage
 .DS_Store
 *.swp
 npm-debug.log
+examples/rollbar*.tgz
+
+.local
+CLAUDE.*.*
+.aider*
+.codex/instructions.md

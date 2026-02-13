@@ -1,18 +1,17 @@
-var packageJson = require('../../package.json');
-var Client = require('../rollbar');
-var _ = require('../utility');
-var API = require('../api');
-var logger = require('./logger');
+import API from '../api.js';
+import * as urllib from '../browser/url.js';
+import { version, reportLevel } from '../defaults.js';
+import logger from '../logger.js';
+import * as sharedPredicates from '../predicates.js';
+import Client from '../rollbar.js';
+import Telemeter from '../telemetry.js';
+import * as sharedTransforms from '../transforms.js';
+import truncation from '../truncation.js';
+import * as _ from '../utility.js';
 
-var Transport = require('./transport');
-var urllib = require('../browser/url');
-
-var Telemeter = require('../telemetry');
-var transforms = require('./transforms');
-var sharedTransforms = require('../transforms');
-var sharedPredicates = require('../predicates');
-var truncation = require('../truncation');
-var polyfillJSON = require('../../vendor/JSON-js/json3');
+import * as rnDefaults from './defaults.js';
+import * as transforms from './transforms.js';
+import Transport from './transport.js';
 
 function Rollbar(options, client) {
   if (_.isType(options, 'string')) {
@@ -20,6 +19,7 @@ function Rollbar(options, client) {
     options = {};
     options.accessToken = accessToken;
   }
+  logger.init({ logLevel: options.logLevel || 'error' });
   this.options = _.handleOptions(Rollbar.defaultOptions, options, null, logger);
   this.options._configuredOptions = options;
   // This makes no sense in a long running app
@@ -30,10 +30,18 @@ function Rollbar(options, client) {
   var api = new API(this.options, transport, urllib, truncation);
   var telemeter = new Telemeter(this.options);
   this.client =
-    client || new Client(this.options, api, logger, telemeter, 'react-native');
+    client ||
+    new Client(
+      this.options,
+      api,
+      logger,
+      telemeter,
+      null,
+      null,
+      'react-native',
+    );
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
-  _.setupJSON(polyfillJSON);
 }
 
 var _instance = null;
@@ -66,6 +74,9 @@ Rollbar.global = function (options) {
 };
 
 Rollbar.prototype.configure = function (options, payloadData) {
+  if (options.logLevel) {
+    logger.init({ logLevel: options.logLevel });
+  }
   var oldOptions = this.options;
   var payload = {};
   if (payloadData) {
@@ -321,14 +332,13 @@ Rollbar.defaultOptions = {
   framework: 'react-native',
   showReportedMessageTraces: false,
   notifier: {
-    name: 'rollbar-react-native',
-    version: packageJson.version,
+    name: rnDefaults.notifierName,
+    version: version,
   },
-  scrubHeaders: packageJson.defaults.server.scrubHeaders,
-  scrubFields: packageJson.defaults.server.scrubFields,
-  reportLevel: packageJson.defaults.reportLevel,
-  rewriteFilenamePatterns:
-    packageJson.defaults.reactNative.rewriteFilenamePatterns,
+  scrubHeaders: rnDefaults.scrubHeaders,
+  scrubFields: rnDefaults.scrubFields,
+  reportLevel: reportLevel,
+  rewriteFilenamePatterns: rnDefaults.rewriteFilenamePatterns,
   verbose: false,
   enabled: true,
   transmit: true,
@@ -337,4 +347,4 @@ Rollbar.defaultOptions = {
   ignoreDuplicateErrors: true,
 };
 
-module.exports = Rollbar;
+export default Rollbar;

@@ -1,10 +1,7 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
 
-var Rollbar = require('../src/react-native/rollbar');
-var t = require('../src/react-native/transforms');
+import Rollbar from '../src/react-native/rollbar.js';
+import * as t from '../src/react-native/transforms.js';
 
 function TestClientGen() {
   var TestClient = function () {
@@ -36,7 +33,7 @@ describe('handleItemWithError', function () {
     var args = ['a message', err];
     var item = itemFromArgs(args);
     var options = new Rollbar({}).options;
-    t.handleItemWithError(item, options, function (e, i) {
+    t.handleItemWithError(item, options, function (e, _i) {
       expect(item.stackInfo.exception).to.eql({
         class: 'Error',
         message: 'test',
@@ -58,7 +55,6 @@ describe('_matchFilename', function () {
 
   it('should rewrite filenames', function (done) {
     var options = new Rollbar({}).options;
-    console.log(options);
 
     var length = filenames.before.length;
 

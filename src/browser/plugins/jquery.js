@@ -1,5 +1,4 @@
 /* globals jQuery */
-/* globals __JQUERY_PLUGIN_VERSION__ */
 
 (function (jQuery, window, document) {
   var rb = window.Rollbar;
@@ -7,7 +6,7 @@
     return;
   }
 
-  var JQUERY_PLUGIN_VERSION = __JQUERY_PLUGIN_VERSION__;
+  var JQUERY_PLUGIN_VERSION = '0.0.8';
 
   rb.configure({
     payload: {

@@ -1,15 +1,13 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
 function itemToPayload(item, options, callback) {
-  var data = item.data;
-
   if (item._isUncaught) {
-    data._isUncaught = true;
+    item.data._isUncaught = true;
   }
   if (item._originalArgs) {
-    data._originalArgs = item._originalArgs;
+    item.data._originalArgs = item._originalArgs;
   }
-  callback(null, data);
+  callback(null, item);
 }
 
 function addPayloadOptions(item, options, callback) {
@@ -155,13 +153,13 @@ function addDiagnosticKeys(item, options, callback) {
   callback(null, item);
 }
 
-module.exports = {
-  itemToPayload: itemToPayload,
-  addPayloadOptions: addPayloadOptions,
-  addTelemetryData: addTelemetryData,
-  addMessageWithError: addMessageWithError,
-  userTransform: userTransform,
-  addConfigToPayload: addConfigToPayload,
-  addConfiguredOptions: addConfiguredOptions,
-  addDiagnosticKeys: addDiagnosticKeys,
+export {
+  itemToPayload,
+  addPayloadOptions,
+  addTelemetryData,
+  addMessageWithError,
+  userTransform,
+  addConfigToPayload,
+  addConfiguredOptions,
+  addDiagnosticKeys,
 };

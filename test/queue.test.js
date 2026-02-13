@@ -1,9 +1,7 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect, assert } from 'chai';
+import sinon from 'sinon';
 
-var Queue = require('../src/queue');
+import Queue from '../src/queue.js';
 
 function TestRateLimiterGenerator() {
   var TestRateLimiter = function () {
@@ -120,7 +118,7 @@ describe('addItem', function () {
           cb(null, serverResponse);
           done();
         };
-        queue.addItem({ mykey: 'myvalue' });
+        queue.addItem({ data: { mykey: 'myvalue' } });
       });
       it('should work with a garbage callback', function (done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
@@ -141,7 +139,7 @@ describe('addItem', function () {
           cb(null, serverResponse);
           done();
         };
-        queue.addItem({ mykey: 'myvalue' }, 'woops');
+        queue.addItem({ data: { mykey: 'myvalue' } }, 'woops');
       });
       it('should work with no predicates', function (done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
@@ -161,7 +159,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           done(err);
         });
@@ -184,7 +182,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem(item, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.error[0][0]).to.eql('hello');
           done(err);
@@ -208,7 +206,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem(item, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.log[0][0]).to.eql('hello');
           done(err);
@@ -232,7 +230,7 @@ describe('addItem', function () {
           expect(i).to.eql(item);
           cb(null, serverResponse);
         };
-        queue.addItem(item, function (err, resp) {
+        queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
           expect(logger.calls.log.length).to.eql(0);
           done(err);
@@ -245,22 +243,17 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
-
-        rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
-          return { error: null, shouldSend: true, payload: null };
+        rateLimiter.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        api.handler = function (i, cb) {
-          expect(false).to.be.ok();
-          cb(null, serverResponse);
+        api.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        queue.addPredicate(function (i, s) {
+        queue.addPredicate(function () {
           return false;
         });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-          expect(resp).to.not.be.ok();
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+          expect(resp).to.not.be.ok;
           done(err);
         });
       });
@@ -271,24 +264,21 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
+        rateLimiter.handler = function () {
+          assert.fail('This handler should not be called');
+        };
 
-        rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
-          return { error: null, shouldSend: true, payload: null };
+        api.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        api.handler = function (i, cb) {
-          expect(false).to.be.ok();
-          cb(null, serverResponse);
-        };
+
         var predicateError = 'bork bork';
-        queue.addPredicate(function (i, s) {
+        queue.addPredicate(function () {
           return { err: predicateError };
         });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(predicateError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -299,31 +289,23 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
+        rateLimiter.handler = function () {
+          assert.fail('This handler should not be called');
+        };
 
-        rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
-          return { error: null, shouldSend: true, payload: null };
+        api.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        api.handler = function (i, cb) {
-          expect(false).to.be.ok();
-          cb(null, serverResponse);
-        };
+
         var predicateError = 'bork bork';
         queue
-          .addPredicate(function (i, s) {
-            return true;
-          })
-          .addPredicate(function (i, s) {
-            return { err: predicateError };
-          })
-          .addPredicate(function (i, s) {
-            return true;
-          });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+          .addPredicate(() => true)
+          .addPredicate(() => ({ err: predicateError }))
+          .addPredicate(() => true);
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(predicateError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -334,22 +316,29 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
+        rateLimiter.handler = function () {
+          assert.fail('This handler should not be called');
+        };
 
-        rateLimiter.handler = function (i) {
-          expect(false).to.be.ok();
-          return { error: null, shouldSend: true, payload: null };
+        api.handler = function () {
+          assert.fail('This handler should not be called');
         };
-        api.handler = function (i, cb) {
-          expect(false).to.be.ok();
-          cb(null, serverResponse);
-        };
+
+        let callCount = 0;
+
         queue.wait(function () {
-          done();
+          expect(callCount).to.be.lessThan(3);
+
+          // The wait callback is expected to be called exactly twice:
+          // once for the initial wait due to the queue being empty, and once
+          // after the item is transmitted.
+          if (++callCount === 2) {
+            done();
+          }
         });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-          expect(resp).to.be.ok();
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (_err, resp) {
+          expect(resp).to.be.ok;
         });
       });
       it('should work if wait is called with a non-function', function (done) {
@@ -359,18 +348,20 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
         var serverResponse = { success: true };
 
-        rateLimiter.handler = function (i) {
+        rateLimiter.handler = function () {
           return { error: null, shouldSend: true, payload: null };
         };
-        api.handler = function (i, cb) {
+
+        api.handler = function (_, cb) {
           cb(null, serverResponse);
         };
+
         queue.wait({});
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-          expect(resp).to.be.ok();
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+          expect(resp).to.be.ok;
           done(err);
         });
       });
@@ -381,26 +372,19 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var serverResponse = { success: true };
-
         rateLimiter.handler = function (i) {
-          expect(i).to.eql(item);
+          expect(i).to.eql({ mykey: 'myvalue' });
           return { error: null, shouldSend: true, payload: null };
         };
+
         api.handler = function (i, cb) {
-          expect(i).to.eql(item);
-          cb(null, serverResponse);
+          expect(i).to.eql({ mykey: 'myvalue' });
+          cb(null, { success: true });
         };
-        queue
-          .addPredicate(function (i, s) {
-            return true;
-          })
-          .addPredicate(function () {
-            return true;
-          });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-          expect(resp).to.eql(serverResponse);
+
+        queue.addPredicate(() => true).addPredicate(() => true);
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+          expect(resp).to.eql({ success: true });
           done(err);
         });
       });
@@ -413,26 +397,19 @@ describe('addItem', function () {
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
 
-        var item = { mykey: 'myvalue' };
-        var exception = 'boom!';
-
         rateLimiter.handler = function (i) {
-          expect(i).to.eql(item);
+          expect(i).to.eql({ mykey: 'myvalue' });
           return { error: null, shouldSend: true, payload: null };
         };
-        api.handler = function (i, cb) {
-          throw exception;
+
+        api.handler = function () {
+          throw 'boom!';
         };
-        queue
-          .addPredicate(function (i, s) {
-            return true;
-          })
-          .addPredicate(function () {
-            return true;
-          });
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-          expect(resp).to.not.be.ok();
-          expect(err).to.eql(exception);
+
+        queue.addPredicate(() => true).addPredicate(() => true);
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+          expect(resp).to.not.be.ok;
+          expect(err).to.eql('boom!');
           done();
         });
       });
@@ -442,19 +419,17 @@ describe('addItem', function () {
         var logger = new (TestLoggerGenerator())();
         var options = { retryInterval: 1, transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
-
-        var item = { mykey: 'myvalue' };
         var apiError = { code: 'NOPE', message: 'borked' };
 
-        rateLimiter.handler = function (i) {
+        rateLimiter.handler = function () {
           return { error: null, shouldSend: true, payload: null };
         };
-        api.handler = function (i, cb) {
+        api.handler = function (_i, cb) {
           cb(apiError);
         };
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(apiError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -464,19 +439,19 @@ describe('addItem', function () {
         var logger = new (TestLoggerGenerator())();
         var options = { transmit: true };
         var queue = new Queue(rateLimiter, api, logger, options);
-
-        var item = { mykey: 'myvalue' };
         var apiError = { code: 'ENOTFOUND', message: 'No internet connection' };
 
-        rateLimiter.handler = function (i) {
+        rateLimiter.handler = function () {
           return { error: null, shouldSend: true, payload: null };
         };
-        api.handler = function (i, cb) {
+
+        api.handler = function (_i, cb) {
           cb(apiError);
         };
-        queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
           expect(err).to.eql(apiError);
-          expect(resp).to.not.be.ok();
+          expect(resp).to.not.be.ok;
           done();
         });
       });
@@ -487,29 +462,26 @@ describe('addItem', function () {
           var logger = new (TestLoggerGenerator())();
           var options = { retryInterval: 1, transmit: true };
           var queue = new Queue(rateLimiter, api, logger, options);
-
-          var item = { mykey: 'myvalue' };
-          var serverResponse = { success: true };
           var apiError = {
             code: 'ENOTFOUND',
             message: 'No internet connection',
           };
 
           var apiRequestCount = 0;
-          rateLimiter.handler = function (i) {
+          rateLimiter.handler = function () {
             return { error: null, shouldSend: true, payload: null };
           };
-          api.handler = function (i, cb) {
+          api.handler = function (_i, cb) {
             apiRequestCount++;
             if (apiRequestCount === 1) {
               cb(apiError);
             } else {
-              cb(null, serverResponse);
+              cb(null, { success: true });
             }
           };
-          queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-            expect(err).to.not.be.ok();
-            expect(resp).to.eql(serverResponse);
+          queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+            expect(err).to.not.be.ok;
+            expect(resp).to.eql({ success: true });
             expect(apiRequestCount).to.eql(2);
             done();
           });
@@ -520,27 +492,24 @@ describe('addItem', function () {
           var logger = new (TestLoggerGenerator())();
           var options = { retryInterval: 1, maxRetries: 2, transmit: true };
           var queue = new Queue(rateLimiter, api, logger, options);
-
-          var item = { mykey: 'myvalue' };
-          var serverResponse = { success: true };
           var apiError = {
             code: 'ENOTFOUND',
             message: 'No internet connection',
           };
 
           var apiRequestCount = 0;
-          rateLimiter.handler = function (i) {
+          rateLimiter.handler = function () {
             return { error: null, shouldSend: true, payload: null };
           };
-          api.handler = function (i, cb) {
+          api.handler = function (_i, cb) {
             apiRequestCount++;
             cb({ ...apiError, retry: apiRequestCount });
           };
-          queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+          queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
             var numRequests = options.maxRetries + 1;
             expect(apiRequestCount).to.eql(numRequests);
             expect(err).to.eql({ ...apiError, retry: numRequests });
-            expect(resp).to.not.be.ok();
+            expect(resp).to.not.be.ok;
             done();
           });
         });
@@ -555,11 +524,11 @@ describe('addItem', function () {
         var queue = new Queue(rateLimiter, api, logger, options);
         var makeApiRequestStub = sinon.stub(queue, '_makeApiRequest');
 
-        queue.addItem({ mykey: 'myvalue' }, function (err) {
+        queue.addItem({ data: { mykey: 'myvalue' } }, function (err) {
           expect(err.message).to.eql('Transmit disabled');
         });
 
-        expect(makeApiRequestStub.called).to.eql(0);
+        expect(makeApiRequestStub.called).to.be.false;
 
         queue._makeApiRequest.restore();
         done();
@@ -581,18 +550,12 @@ describe('addItem', function () {
         expect(i).to.eql(item);
         return { error: rateLimitError, shouldSend: false, payload: null };
       };
-      api.handler = function (i, cb) {
+      api.handler = function (_i, cb) {
         cb(null, 'Good times');
       };
-      queue
-        .addPredicate(function (i, s) {
-          return true;
-        })
-        .addPredicate(function () {
-          return true;
-        });
-      queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
-        expect(resp).to.not.be.ok();
+      queue.addPredicate(() => true).addPredicate(() => true);
+      queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
+        expect(resp).to.not.be.ok;
         expect(err).to.eql(rateLimitError);
         done();
       });
@@ -616,16 +579,10 @@ describe('addItem', function () {
         expect(i).to.eql(rateLimitPayload);
         cb(null, serverResponse);
       };
-      queue
-        .addPredicate(function (i, s) {
-          return true;
-        })
-        .addPredicate(function () {
-          return true;
-        });
-      queue.addItem({ mykey: 'myvalue' }, function (err, resp) {
+      queue.addPredicate(() => true).addPredicate(() => true);
+      queue.addItem({ data: { mykey: 'myvalue' } }, function (err, resp) {
         expect(resp).to.eql(serverResponse);
-        expect(err).to.not.be.ok();
+        expect(err).to.not.be.ok;
         done();
       });
     });

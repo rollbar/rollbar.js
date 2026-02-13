@@ -1,6 +1,6 @@
-var _ = require('../utility');
-var scrub = require('../scrub');
-var errorParser = require('../errorParser');
+import errorParser from '../errorParser.js';
+import scrub from '../scrub.js';
+import * as _ from '../utility.js';
 
 function baseData(item, options, callback) {
   var environment =
@@ -25,7 +25,7 @@ function baseData(item, options, callback) {
 
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
+    if (!_.hasOwn(data, name)) {
       data[name] = item.custom[name];
     }
   });
@@ -115,8 +115,7 @@ function _buildFrames(stack, options) {
   }
 
   var frames = [];
-  for (var i = 0; i < stack.length; ++i) {
-    var stackFrame = stack[i];
+  for (const stackFrame of stack) {
     var filename = stackFrame.url ? _.sanitizeUrl(stackFrame.url) : '<unknown>';
     var frame = {
       filename: _rewriteFilename(filename, options),
@@ -155,10 +154,10 @@ function _matchFilename(filename, options) {
   return null;
 }
 
-module.exports = {
-  baseData: baseData,
-  handleItemWithError: handleItemWithError,
-  addBody: addBody,
-  scrubPayload: scrubPayload,
-  _matchFilename: _matchFilename, // to enable unit test
+export {
+  baseData,
+  handleItemWithError,
+  addBody,
+  scrubPayload,
+  _matchFilename, // to enable unit test
 };

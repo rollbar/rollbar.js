@@ -1,7 +1,8 @@
-/* globals Map */
-var inspector = require('inspector');
-var async = require('async');
-var _ = require('../utility');
+import inspector from 'inspector';
+
+import async from 'async';
+
+import * as _ from '../utility.js';
 
 // It's helpful to have default limits, as the data expands quickly in real environments.
 // depth = 1 is  enough to capture the members of top level objects and arrays.
@@ -41,7 +42,7 @@ Locals.prototype.initSession = function () {
   Locals.currentErrors = new Map();
 
   Locals.session.on('Debugger.paused', ({ params }) => {
-    if (params.reason == 'promiseRejection' || params.reason == 'exception') {
+    if (params.reason === 'promiseRejection' || params.reason === 'exception') {
       var key = params.data.description;
       Locals.currentErrors.set(key, params);
 
@@ -57,10 +58,9 @@ Locals.prototype.initSession = function () {
     }
   });
 
-  var self = this;
   Locals.session.post('Debugger.enable', (_err, _result) => {
-    self.initialized = true;
-    updatePauseState(self.options, self.logger);
+    this.initialized = true;
+    updatePauseState(this.options, this.logger);
   });
 };
 
@@ -74,8 +74,8 @@ Locals.prototype.disconnectSession = function () {
 
 Locals.prototype.updateOptions = function (options) {
   var pauseStateChanged =
-    this.options.enabled != options.enabled ||
-    this.options.uncaughtOnly != options.uncaughtOnly;
+    this.options.enabled !== options.enabled ||
+    this.options.uncaughtOnly !== options.uncaughtOnly;
 
   this.options = _.merge(this.options, options);
 
@@ -327,4 +327,4 @@ function getProperties(objectId, callback) {
   );
 }
 
-module.exports = Locals;
+export default Locals;

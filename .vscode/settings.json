@@ -32,8 +32,9 @@
   "editor.formatOnSaveMode": "file",
   "editor.tabSize": 2,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "never"
   },
   "files.trimTrailingWhitespace": true,
-  "prettier.useEditorConfig": false
+  "prettier.useEditorConfig": false,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

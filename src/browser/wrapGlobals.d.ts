@@ -1,5 +1,5 @@
-import Rollbar from '../../index';
+import type { Rollbar } from '../../index.js';
 
-declare var wrapGlobals: Rollbar.WrapGlobalsType;
+declare const wrapGlobals: Rollbar.WrapGlobalsType;
 
-export = wrapGlobals;
+export default wrapGlobals;

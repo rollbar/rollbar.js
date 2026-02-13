@@ -1,11 +1,12 @@
-'use strict';
+import fs from 'fs';
+import util from 'util';
 
-var logger = require('./logger');
-var async = require('async');
-var fs = require('fs');
-var lru = require('lru-cache');
-var util = require('util');
-var stackTrace = require('./sourceMap/stackTrace');
+import async from 'async';
+import lru from 'lru-cache';
+
+import logger from '../logger.js';
+
+import * as stackTrace from './sourceMap/stackTrace.js';
 
 var linesOfContext = 3;
 var tracePattern =
@@ -17,8 +18,7 @@ var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 var cache = new lru({ max: 100 });
 var pendingReads = {};
 
-exports.cache = cache;
-exports.pendingReads = pendingReads;
+export { cache, pendingReads };
 
 /*
  * Internal
@@ -189,8 +189,8 @@ function shouldReadFrameFile(frameFilename, callback) {
   var isValidFilename, isCached, isPending;
 
   isValidFilename = frameFilename[0] === '/' || frameFilename[0] === '.';
-  isCached = !!cache.get(frameFilename);
-  isPending = !!pendingReads[frameFilename];
+  isCached = Boolean(cache.get(frameFilename));
+  isPending = Boolean(pendingReads[frameFilename]);
 
   callback(null, isValidFilename && !isCached && !isPending);
 }
@@ -296,10 +296,10 @@ function gatherContexts(frames, callback) {
  * Public API
  */
 
-exports.parseException = function (exc, options, item, callback) {
+export function parseException(exc, options, item, callback) {
   var multipleErrs = getMultipleErrors(exc.errors);
 
-  return exports.parseStack(exc.stack, options, item, function (err, stack) {
+  return parseStack(exc.stack, options, item, function (err, stack) {
     var message, clss, ret, firstErr, jadeMatch, jadeData;
 
     if (err) {
@@ -351,9 +351,9 @@ exports.parseException = function (exc, options, item, callback) {
       return callback(null, ret);
     }
   });
-};
+}
 
-exports.parseStack = function (stack, options, item, callback) {
+export function parseStack(stack, options, item, callback) {
   var lines,
     _stack = stack;
 
@@ -385,7 +385,7 @@ exports.parseStack = function (stack, options, item, callback) {
       async.filter(
         frames,
         function (frame, callback) {
-          callback(null, !!frame);
+          callback(null, Boolean(frame));
         },
         function (err, results) {
           if (err) return callback(err);
@@ -394,4 +394,4 @@ exports.parseStack = function (stack, options, item, callback) {
       );
     },
   );
-};
+}

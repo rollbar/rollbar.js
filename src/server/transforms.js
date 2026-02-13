@@ -1,9 +1,12 @@
-var async = require('async');
-var parser = require('./parser');
-var requestIp = require('request-ip');
-var url = require('url');
-var _ = require('../utility');
-var scrub = require('../scrub');
+import url from 'url';
+
+import async from 'async';
+import requestIp from 'request-ip';
+
+import scrub from '../scrub.js';
+import * as _ from '../utility.js';
+
+import * as parser from './parser.js';
 
 function baseData(item, options, callback) {
   var environment =
@@ -17,6 +20,7 @@ function baseData(item, options, callback) {
     uuid: item.uuid,
     notifier: JSON.parse(JSON.stringify(options.notifier)),
     custom: item.custom,
+    attributes: item.data?.attributes,
   };
 
   if (options.codeVersion) {
@@ -27,7 +31,7 @@ function baseData(item, options, callback) {
 
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
+    if (!_.hasOwn(data, name)) {
       data[name] = item.custom[name];
     }
   });
@@ -141,7 +145,7 @@ function addRequestData(item, options, callback) {
       routePath = req.app._router.matchRequest(req).path;
       item.data.context =
         baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
-    } catch (ignore) {
+    } catch (_ignore) {
       // Ignored
     }
   }
@@ -311,7 +315,7 @@ function _buildRequestData(req) {
     var bodyParams = {};
     if (_.isIterable(body)) {
       for (var k in body) {
-        if (Object.prototype.hasOwnProperty.call(body, k)) {
+        if (_.hasOwn(body, k)) {
           bodyParams[k] = body[k];
         }
       }
@@ -323,13 +327,13 @@ function _buildRequestData(req) {
   return data;
 }
 
-module.exports = {
-  baseData: baseData,
-  handleItemWithError: handleItemWithError,
-  addBody: addBody,
-  addMessageData: addMessageData,
-  addErrorData: addErrorData,
-  addRequestData: addRequestData,
-  addLambdaData: addLambdaData,
-  scrubPayload: scrubPayload,
+export {
+  baseData,
+  handleItemWithError,
+  addBody,
+  addMessageData,
+  addErrorData,
+  addRequestData,
+  addLambdaData,
+  scrubPayload,
 };

@@ -1,6 +1,7 @@
-var SourceMapConsumer = require('source-map').SourceMapConsumer;
-var path = require('path');
-var fs = require('fs');
+import fs from 'fs';
+import path from 'path';
+
+import { SourceMapConsumer } from 'source-map';
 
 /**
  * Uses Node source-map to map transpiled JS stack locations to original
@@ -46,7 +47,7 @@ function retrieveFile(path) {
     if (fs.existsSync(path)) {
       contents = fs.readFileSync(path, 'utf8');
     }
-  } catch (er) {
+  } catch (_er) {
     /* ignore any errors */
   }
 
@@ -58,10 +59,10 @@ function retrieveFile(path) {
 function supportRelativeURL(file, url) {
   if (!file) return url;
   var dir = path.dirname(file);
-  var match = /^\w+:\/\/[^\/]*/.exec(dir);
+  var match = /^\w+:\/\/[^/]*/.exec(dir);
   var protocol = match ? match[0] : '';
   var startPath = dir.slice(protocol.length);
-  if (protocol && /^\/\w\:/.test(startPath)) {
+  if (protocol && /^\/\w:/.test(startPath)) {
     // handle file:///C:/ paths
     protocol += '/';
     return (
@@ -78,7 +79,7 @@ function retrieveSourceMapURL(source) {
   // Get the URL of the source map
   fileData = retrieveFile(source);
   var re =
-    /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
+    /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
   // Keep executing the search to find the *last* sourceMappingURL to avoid
   // picking up sourceMappingURLs from comments, strings, etc.
   var lastMatch, match;
@@ -132,7 +133,7 @@ function cacheSourceContent(sourceMap, originalSource, newSource) {
   );
 }
 
-exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
+export function mapSourcePosition(position, diagnostic) {
   var sourceMap = sourceMapCache[position.source];
   if (!sourceMap) {
     // Call the (overrideable) retrieveSourceMap function to get the source map.
@@ -191,8 +192,8 @@ exports.mapSourcePosition = function mapSourcePosition(position, diagnostic) {
   }
 
   return position;
-};
+}
 
-exports.sourceContent = function sourceContent(source) {
+export function sourceContent(source) {
   return sourcesContentCache[source];
-};
+}

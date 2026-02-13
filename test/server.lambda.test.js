@@ -1,14 +1,10 @@
-'use strict';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
-var assert = require('assert');
-var vows = require('vows');
-var sinon = require('sinon');
-
-process.env.NODE_ENV = process.env.NODE_ENV || 'test-node-env';
-var Rollbar = require('../src/server/rollbar');
+import Rollbar from '../src/server/rollbar.js';
 
 function promisePending(promise, callback) {
-  var testValue = 'test-pending';
+  const testValue = 'test-pending';
 
   // Detect if a given promise is pending/unfulfilled using the
   // behavior of Promise.race(), which always returns the first
@@ -28,167 +24,146 @@ function promisePending(promise, callback) {
 
 function fakePostItem(_item, callback) {
   // 1000ms simulates low API response, and allows testing the state before completion.
-  setTimeout(function () {
-    callback();
-  }, 1000);
+  setTimeout(callback, 1000);
 }
 
-var stubContext = {
-  getRemainingTimeInMillis: function () {
-    return 2000;
-  },
+const stubContext = {
+  getRemainingTimeInMillis: () => 2000,
 };
 
-vows
-  .describe('lambda')
-  .addBatch({
-    'async handler sends message': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-          captureLambdaTimeouts: false,
-        });
-        var api = rollbar.client.notifier.queue.api;
-        rollbar.requestStub = sinon
-          .stub(api, 'postItem')
-          .callsFake(fakePostItem);
+describe('lambda', function () {
+  describe('async handler sends message', function () {
+    let rollbar;
+    let handler;
+    let requestStub;
+    let testPromise;
 
-        rollbar.testHandlerInstance = rollbar.lambdaHandler(
-          async (_event, _context) => {
-            // Testing the condition where the client handler sends a message before exit.
-            // The Rollbar wrapper should send, and should not resolve until the API request
-            // has completed.
-            rollbar.info('lambda test message');
-            return 'done';
-          },
+    beforeEach(function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        captureLambdaTimeouts: false,
+      });
+      const api = rollbar.client.notifier.queue.api;
+      requestStub = sinon.stub(api, 'postItem').callsFake(fakePostItem);
+
+      handler = rollbar.lambdaHandler(async (_event, _context) => {
+        // Testing the condition where the client handler sends a message before exit.
+        // The Rollbar wrapper should send, and should not resolve until the API request
+        // has completed.
+        rollbar.info('lambda test message');
+        return 'done';
+      });
+    });
+
+    afterEach(function () {
+      requestStub.restore();
+    });
+
+    it('invokes handler and receives promise', function () {
+      // rollbar.lambdaHandler should have returned a
+      // handler with the correct signature. (The callback handler is length = 3)
+      expect(handler.length).to.equal(2);
+      expect(handler.name).to.equal('rollbarAsyncLambdaHandler');
+
+      // The rollbar.wait() in the wrapper should prevent this from
+      // resolving until the response is received.
+      testPromise = handler({}, stubContext);
+    });
+
+    it('promise is pending after handler invoked', function (done) {
+      testPromise = handler({}, stubContext);
+
+      // This timeout allows a few extra ticks so that without the wait in
+      // the wrapper this test should fail.
+      setTimeout(function () {
+        promisePending(testPromise, function (pending) {
+          expect(pending).to.be.true;
+          done();
+        });
+      }, 10);
+    });
+
+    it('sends message before exit after promise resolved', function (done) {
+      testPromise = handler({}, stubContext);
+
+      testPromise.then(function (value) {
+        expect(value).to.equal('done');
+
+        // If the handler is allowed to exit prematurely, this will fail.
+        expect(requestStub.called).to.be.true;
+        const data = requestStub.getCall(0).args[0];
+        expect(data.body.message.body).to.equal('lambda test message');
+
+        requestStub.reset();
+        done();
+      });
+    });
+  });
+
+  describe('async handler catches exception', function () {
+    let rollbar;
+    let handler;
+    let requestStub;
+    let testPromise;
+
+    beforeEach(function () {
+      rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: true,
+        captureLambdaTimeouts: false,
+      });
+      const api = rollbar.client.notifier.queue.api;
+      requestStub = sinon.stub(api, 'postItem').callsFake(fakePostItem);
+
+      handler = rollbar.lambdaHandler(async (_event, _context) => {
+        // Testing the condition where the client handler throws.
+        // The Rollbar wrapper should catch and report, and should not reject
+        // until the API request has completed.
+        throw new Error('lambda test error');
+      });
+    });
+
+    afterEach(function () {
+      requestStub.restore();
+    });
+
+    it('invokes handler and receives promise', function () {
+      // rollbar.lambdaHandler should have returned a
+      // handler with the correct signature. (The callback handler is length = 3)
+      expect(handler.length).to.equal(2);
+      expect(handler.name).to.equal('rollbarAsyncLambdaHandler');
+
+      // The rollbar.wait() in the wrapper should prevent this from
+      // resolving until the response is received.
+      testPromise = handler({}, stubContext);
+    });
+
+    it('promise is pending after handler invoked', function (done) {
+      testPromise = handler({}, stubContext);
+
+      promisePending(testPromise, function (pending) {
+        expect(pending).to.be.true;
+        done();
+      });
+    });
+
+    it('sends message before exit after promise rejected', function (done) {
+      testPromise = handler({}, stubContext);
+
+      testPromise.catch(function (error) {
+        expect(error.message).to.equal('lambda test error');
+
+        // If the handler is allowed to exit prematurely, this will fail.
+        expect(requestStub.called).to.be.true;
+        const data = requestStub.getCall(0).args[0];
+        expect(data.body.trace_chain[0].exception.message).to.equal(
+          'lambda test error',
         );
 
-        return rollbar;
-      },
-      'invokes handler and receives promise': function (r) {
-        var handler = r.testHandlerInstance;
-
-        // rollbar.lambdaHandler in the above topic should have returned a
-        // handler with the correct signature. (The callback handler is length = 3)
-        assert.equal(handler.length, 2);
-        assert.equal(handler.name, 'rollbarAsyncLambdaHandler');
-
-        // The rollbar.wait() in the wrapper should prevent this from
-        // resolving until the response is received.
-        r.testPromise = handler({}, stubContext);
-      },
-      'after handler invoked': {
-        topic: function (r) {
-          var callback = this.callback;
-
-          // This timeout allows a few extra ticks so that without the wait in
-          // the wrapper this test should fail.
-          setTimeout(function () {
-            promisePending(r.testPromise, function (pending) {
-              r.promiseIsPending = pending;
-              callback(r);
-            });
-          }, 10);
-        },
-        'promise is pending': function (r) {
-          assert.isTrue(r.promiseIsPending);
-        },
-        'after promise resolved': {
-          topic: function (r) {
-            var callback = this.callback;
-
-            r.testPromise.then(function (value) {
-              assert.equal(value, 'done');
-              callback(r);
-            });
-          },
-          'sends message before exit': function (r) {
-            var requestStub = r.requestStub;
-
-            // If the handler is allowed to exit prematurely, this will fail.
-            assert.isTrue(requestStub.called);
-            var data = requestStub.getCall(0).args[0];
-            assert.equal(data.body.message.body, 'lambda test message');
-
-            requestStub.reset();
-          },
-        },
-      },
-    },
-  })
-  .addBatch({
-    'async handler catches exception': {
-      topic: function () {
-        var rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
-          captureLambdaTimeouts: false,
-        });
-        var api = rollbar.client.notifier.queue.api;
-        rollbar.requestStub = sinon
-          .stub(api, 'postItem')
-          .callsFake(fakePostItem);
-
-        rollbar.testHandlerInstance = rollbar.lambdaHandler(
-          async (_event, _context) => {
-            // Testing the condition where the client handler throws.
-            // The Rollbar wrapper should catch and report, and should not reject
-            // until the API request has completed.
-            throw new Error('lambda test error');
-          },
-        );
-
-        return rollbar;
-      },
-      'invokes handler and receives promise': function (r) {
-        var handler = r.testHandlerInstance;
-
-        // rollbar.lambdaHandler in the above topic should have returned a
-        // handler with the correct signature. (The callback handler is length = 3)
-        assert.equal(handler.length, 2);
-        assert.equal(handler.name, 'rollbarAsyncLambdaHandler');
-
-        // The rollbar.wait() in the wrapper should prevent this from
-        // resolving until the response is received.
-        r.testPromise = handler({}, stubContext);
-      },
-      'after handler invoked': {
-        topic: function (r) {
-          var callback = this.callback;
-
-          promisePending(r.testPromise, function (pending) {
-            r.promiseIsPending = pending;
-            callback(r);
-          });
-        },
-        'promise is pending': function (r) {
-          assert.isTrue(r.promiseIsPending);
-        },
-        'after promise rejected': {
-          topic: function (r) {
-            var callback = this.callback;
-
-            r.testPromise.catch(function (error) {
-              assert.equal(error.message, 'lambda test error');
-              callback(r);
-            });
-          },
-          'sends message before exit': function (r) {
-            var requestStub = r.requestStub;
-
-            // If the handler is allowed to exit prematurely, this will fail.
-            assert.isTrue(requestStub.called);
-            var data = requestStub.getCall(0).args[0];
-            assert.equal(
-              data.body.trace_chain[0].exception.message,
-              'lambda test error',
-            );
-
-            requestStub.reset();
-          },
-        },
-      },
-    },
-  })
-  .export(module, { error: false });
+        requestStub.reset();
+        done();
+      });
+    });
+  });
+});

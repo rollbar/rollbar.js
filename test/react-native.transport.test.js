@@ -1,13 +1,9 @@
-/* globals expect */
-/* globals describe */
-/* globals it */
-/* globals sinon */
+import { expect } from 'chai';
+import sinon from 'sinon';
 
-var truncation = require('../src/truncation');
-var Transport = require('../src/react-native/transport');
+import Transport from '../src/react-native/transport.js';
+import truncation from '../src/truncation.js';
 var t = new Transport(truncation);
-var utility = require('../src/utility');
-utility.setupJSON();
 
 describe('post', function () {
   var accessToken = 'abc123';
@@ -16,10 +12,7 @@ describe('post', function () {
     protocol: 'https',
     path: '/api/1/item/',
   };
-  var payload = {
-    access_token: accessToken,
-    data: { a: 1 },
-  };
+  var payload = { access_token: accessToken, data: { a: 1 } };
   var uuid = 'd4c7acef55bf4c9ea95e4fe9428a8287';
 
   before(function (done) {
@@ -55,8 +48,8 @@ describe('post', function () {
     stubResponse(200, 0, 'OK');
 
     var callback = function (err, data) {
-      expect(err).to.eql(null);
-      expect(data).to.be.ok();
+      expect(err).to.be.null;
+      expect(data).to.be.ok;
       expect(data.uuid).to.eql(uuid);
       done();
     };
@@ -67,7 +60,7 @@ describe('post', function () {
     stubResponse(403, '403', 'bad request');
 
     var callback = function (err, resp) {
-      expect(resp).to.not.be.ok();
+      expect(resp).to.not.be.ok;
       expect(err.message).to.eql('Api error: bad request');
       done();
     };

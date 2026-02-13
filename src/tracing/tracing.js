@@ -1,0 +1,101 @@
+import { ContextManager, createContextKey } from './contextManager.js';
+import { SpanExporter } from './exporter.js';
+import id from './id.js';
+import { Session } from './session.js';
+import { SpanProcessor } from './spanProcessor.js';
+import { Tracer } from './tracer.js';
+
+const SPAN_KEY = createContextKey('Rollbar Context Key SPAN');
+
+export default class Tracing {
+  constructor(gWindow, api, options) {
+    this.api = api;
+    this.options = options;
+    this.window = gWindow;
+
+    if (this.window.sessionStorage) {
+      this.session = new Session(this, options);
+    }
+    this.createTracer();
+  }
+
+  configure(options) {
+    // Options merge happens before configure is called, so we can just replace.
+    this.options = options;
+  }
+
+  initSession() {
+    if (this.session) {
+      this.session.init();
+    }
+  }
+
+  get sessionId() {
+    if (this.session) {
+      return this.session.session.id;
+    }
+    return null;
+  }
+
+  get resource() {
+    return {
+      attributes: {
+        ...(this.options.resource || {}),
+        'rollbar.environment':
+          this.options.payload?.environment ?? this.options.environment,
+      },
+    };
+  }
+
+  get scope() {
+    return {
+      name: 'rollbar-browser-js',
+      version: this.options.version,
+    };
+  }
+
+  idGen(bytes = 16) {
+    return id.gen(bytes);
+  }
+
+  createTracer() {
+    this.contextManager = new ContextManager();
+    this.exporter = new SpanExporter(this.api, this.options);
+    this.spanProcessor = new SpanProcessor(this.exporter, this.options.tracing);
+    this.tracer = new Tracer(this, this.spanProcessor);
+  }
+
+  getTracer() {
+    return this.tracer;
+  }
+
+  addSpanTransform(transformFn) {
+    this.spanProcessor.addTransform(transformFn);
+  }
+
+  getSpan(context = this.contextManager.active()) {
+    return context.getValue(SPAN_KEY);
+  }
+
+  setSpan(context = this.contextManager.active(), span) {
+    return context.setValue(SPAN_KEY, span);
+  }
+
+  startSpan(name, options = {}, context = this.contextManager.active()) {
+    return this.tracer.startSpan(name, options, context);
+  }
+
+  with(context, fn, thisArg, ...args) {
+    return this.contextManager.with(context, fn, thisArg, ...args);
+  }
+
+  withSpan(name, options, fn, thisArg) {
+    const span = this.startSpan(name, options);
+    return this.with(
+      this.setSpan(this.contextManager.active(), span),
+      fn,
+      thisArg,
+      span,
+    );
+  }
+}

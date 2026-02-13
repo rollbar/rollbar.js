@@ -1,5 +1,5 @@
-import Rollbar from '../index';
+import type { Rollbar } from '../index.js';
 
-declare var Telemeter: Rollbar.TelemeterType;
+declare const Telemeter: Rollbar.TelemeterType;
 
-export = Telemeter;
+export default Telemeter;

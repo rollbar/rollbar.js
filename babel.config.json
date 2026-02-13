@@ -1,9 +1,24 @@
 {
   "parserOpts": {
     "ecmaVersion": 2021,
-    "sourceType": "module",
+    "sourceType": "module"
   },
   "presets": [
-    "@babel/preset-env"
+    [
+      "@babel/preset-env",
+      {
+        "modules": "auto",
+        "targets": {
+          "ie": "11"
+        }
+      }
+    ],
+    [
+      "@babel/preset-typescript",
+      {
+        "allowDeclareFields": true,
+        "onlyRemoveTypeImports": true
+      }
+    ]
   ]
 }

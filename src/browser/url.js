@@ -82,6 +82,4 @@ function parse(url) {
   return result;
 }
 
-module.exports = {
-  parse: parse,
-};
+export { parse };

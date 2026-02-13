@@ -1,7 +1,7 @@
-var _ = require('../utility');
-var logger = require('./logger');
+import { Buffer } from 'buffer/';
 
-var Buffer = require('buffer/').Buffer;
+import logger from '../logger.js';
+import * as _ from '../utility.js';
 
 function Transport(truncation) {
   this.rateLimitExpires = 0;
@@ -10,7 +10,7 @@ function Transport(truncation) {
 
 Transport.prototype.get = function (accessToken, options, params, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   _.addParamsAndAccessTokenToPath(accessToken, options, params);
@@ -29,7 +29,7 @@ Transport.prototype.get = function (accessToken, options, params, callback) {
 
 Transport.prototype.post = function (accessToken, options, payload, callback) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   if (!payload) {
@@ -59,7 +59,7 @@ Transport.prototype.postJsonPayload = function (
   callback,
 ) {
   if (!callback || !_.isFunction(callback)) {
-    callback = function () {};
+    callback = () => {};
   }
   options = options || {};
   if (!jsonPayload) {
@@ -95,7 +95,7 @@ function _headers(accessToken, options, data) {
   if (data) {
     try {
       headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
-    } catch (e) {
+    } catch (_e) {
       logger.error('Could not get the content length of the data');
     }
   }
@@ -134,4 +134,4 @@ function _wrapPostCallback(callback) {
   };
 }
 
-module.exports = Transport;
+export default Transport;

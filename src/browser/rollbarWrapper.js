@@ -18,8 +18,8 @@ function _setupForwarding(prototype) {
     'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,captureDomContentLoaded,captureLoad'.split(
       ',',
     );
-  for (var i = 0; i < _methods.length; i++) {
-    prototype[_methods[i]] = _forward(_methods[i]);
+  for (const method of _methods) {
+    prototype[method] = _forward(method);
   }
 }
 
@@ -40,4 +40,4 @@ RollbarWrap.prototype._swapAndProcessMessages = function (impl, messages) {
   return this;
 };
 
-module.exports = RollbarWrap;
+export default RollbarWrap;

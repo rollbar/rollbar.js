@@ -1,4 +1,4 @@
-var _ = require('../utility');
+import * as _ from '../utility.js';
 
 function traverse(obj, func, seen) {
   var k, v, i;
@@ -24,7 +24,7 @@ function traverse(obj, func, seen) {
 
   if (isObj) {
     for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      if (_.hasOwn(obj, k)) {
         keys.push(k);
       }
     }
@@ -50,4 +50,4 @@ function traverse(obj, func, seen) {
   return !same ? result : obj;
 }
 
-module.exports = traverse;
+export default traverse;

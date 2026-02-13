@@ -1,4 +1,4 @@
-var rollbar = require('rollbar-browser');
+var rollbar = require('rollbar');
 
 var rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',

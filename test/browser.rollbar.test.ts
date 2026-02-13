@@ -1,0 +1,1455 @@
+// @ts-nocheck
+import { expect } from 'chai';
+
+import Rollbar from '../src/browser/rollbar.js';
+
+import { fakeServer } from './browser.rollbar.test-utils.ts';
+import { loadHtml } from './util/fixtures.ts';
+import { setTimeoutAsync } from './util/timers.ts';
+
+const DUMMY_TRACE_ID = 'some-trace-id';
+const DUMMY_SPAN_ID = 'some-span-id';
+
+const ValidOpenTracingTracerStub = {
+  scope: () => ({
+    active: () => ({
+      setTag: () => {},
+      context: () => ({
+        toTraceId: () => DUMMY_TRACE_ID,
+        toSpanId: () => DUMMY_SPAN_ID,
+      }),
+    }),
+  }),
+};
+
+const InvalidOpenTracingTracerStub = {
+  foo: () => {},
+};
+
+function TestClientGen() {
+  const TestClient = function () {
+    this.transforms = [];
+    this.predicates = [];
+    this.notifier = {
+      addTransform: function (t) {
+        this.transforms.push(t);
+        return this.notifier;
+      }.bind(this),
+    };
+    this.queue = {
+      addPredicate: function (p) {
+        this.predicates.push(p);
+        return this.queue;
+      }.bind(this),
+    };
+    this.logCalls = [];
+    const logs = 'log,debug,info,warn,warning,error,critical'.split(',');
+    for (let i = 0, len = logs.length; i < len; i++) {
+      const fn = logs[i].slice(0);
+      this[fn] = function (fn, item) {
+        this.logCalls.push({ func: fn, item: item });
+      }.bind(this, fn);
+    }
+    this.options = {};
+    this.payloadData = {};
+    this.configure = function (o, payloadData) {
+      this.options = o;
+      this.payloadData = payloadData;
+    };
+    this.tracer = ValidOpenTracingTracerStub;
+  };
+
+  return TestClient;
+}
+
+describe('Rollbar()', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should have all of the expected methods with a real client', function () {
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    expect(rollbar).to.have.property('log');
+    expect(rollbar).to.have.property('debug');
+    expect(rollbar).to.have.property('info');
+    expect(rollbar).to.have.property('warn');
+    expect(rollbar).to.have.property('warning');
+    expect(rollbar).to.have.property('error');
+    expect(rollbar).to.have.property('critical');
+  });
+
+  it('should have all of the expected methods', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    expect(rollbar).to.have.property('log');
+    expect(rollbar).to.have.property('debug');
+    expect(rollbar).to.have.property('info');
+    expect(rollbar).to.have.property('warn');
+    expect(rollbar).to.have.property('warning');
+    expect(rollbar).to.have.property('error');
+    expect(rollbar).to.have.property('critical');
+  });
+
+  it('should have some default options', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    expect(rollbar.options.scrubFields).to.contain('password');
+  });
+
+  it('should merge with the defaults options', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      scrubFields: ['foobar'],
+      replay: {
+        enabled: true,
+      },
+      tracing: {
+        endpoint: 'api.rollbar.com/api/1/tracing/',
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    expect(rollbar.options.scrubFields).to.contain('foobar');
+    expect(rollbar.options.scrubFields).to.contain('password');
+    expect(rollbar.options.replay.enabled).to.be.true;
+    expect(rollbar.options.replay.triggers[0].level).to.eql([
+      'error',
+      'critical',
+    ]);
+    expect(rollbar.options.tracing.endpoint).to.eql(
+      'api.rollbar.com/api/1/tracing/',
+    );
+    expect(rollbar.options.tracing.enabled).to.be.false;
+  });
+
+  it('should overwrite default if specified', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      scrubFields: ['foobar'],
+      overwriteScrubFields: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    expect(rollbar.options.scrubFields).to.contain('foobar');
+    expect(rollbar.options.scrubFields).to.not.contain('password');
+  });
+
+  it('should replace deprecated options', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      hostWhiteList: ['foo'],
+      hostBlackList: ['bar'],
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    expect(rollbar.options.hostWhiteList).to.eql(undefined);
+    expect(rollbar.options.hostBlackList).to.eql(undefined);
+    expect(rollbar.options.hostSafeList).to.contain('foo');
+    expect(rollbar.options.hostBlockList).to.contain('bar');
+  });
+
+  it('should return a uuid when logging', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const result = rollbar.log('a messasge', 'another one');
+    expect(result.uuid).to.be.ok;
+  });
+
+  it('should package up the inputs', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const result = rollbar.log('a message', 'another one');
+    expect(result).to.be.an('object');
+    const loggedItem = client.logCalls[0].item;
+    expect(loggedItem.message).to.eql('a message');
+    expect(loggedItem.custom).to.be.ok;
+  });
+
+  it('should call the client with the right method', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const methods = 'log,debug,info,warn,warning,error,critical'.split(',');
+    for (let i = 0; i < methods.length; i++) {
+      const msg = 'message:' + i;
+      rollbar[methods[i]](msg);
+      expect(client.logCalls[i].func).to.eql(methods[i]);
+      expect(client.logCalls[i].item.message).to.eql(msg);
+    }
+  });
+
+  // Legacy OpenTracing support
+  it('should have a tracer if valid tracer is provided', function () {
+    const options = { tracer: ValidOpenTracingTracerStub };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    expect(rollbar.client.tracer).to.eql(ValidOpenTracingTracerStub);
+  });
+
+  // Legacy OpenTracing support
+  it('should not have a tracer if invalid tracer is provided', function () {
+    const options = { tracer: InvalidOpenTracingTracerStub };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    expect(rollbar.client.tracer).to.eql(null);
+  });
+});
+
+describe('configure', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should configure client', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      payload: {
+        a: 42,
+        environment: 'testtest',
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({ payload: { environment: 'borkbork' } });
+    expect(rollbar.options.payload.environment).to.eql('borkbork');
+    expect(client.options.payload.environment).to.eql('borkbork');
+  });
+  it('should accept a second parameter and use it as the payload value', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      payload: {
+        a: 42,
+        environment: 'testtest',
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({ somekey: 'borkbork' }, { b: 97 });
+    expect(rollbar.options.somekey).to.eql('borkbork');
+    expect(rollbar.options.payload.b).to.eql(97);
+    expect(client.payloadData.b).to.eql(97);
+  });
+  it('should accept a second parameter and override the payload with it', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      payload: {
+        a: 42,
+        environment: 'testtest',
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    expect(rollbar.options.payload.environment).to.eql('testtest');
+
+    rollbar.configure({ somekey: 'borkbork', payload: { b: 101 } }, { b: 97 });
+    expect(rollbar.options.somekey).to.eql('borkbork');
+    expect(rollbar.options.payload.b).to.eql(97);
+    expect(client.payloadData.b).to.eql(97);
+  });
+  it('should replace deprecated options', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      hostWhiteList: ['foo'],
+      hostBlackList: ['bar'],
+    };
+    const rollbar = (window.rollbar = new Rollbar(
+      { autoInstrument: false },
+      client,
+    ));
+    rollbar.configure(options);
+
+    expect(rollbar.options.hostWhiteList).to.eql(undefined);
+    expect(rollbar.options.hostBlackList).to.eql(undefined);
+    expect(rollbar.options.hostSafeList).to.contain('foo');
+    expect(rollbar.options.hostBlockList).to.contain('bar');
+  });
+  it('should store configured options', function () {
+    const client = new (TestClientGen())();
+    const options = {
+      captureUncaught: true,
+      payload: {
+        a: 42,
+        environment: 'testtest',
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    expect(rollbar.options._configuredOptions.payload.environment).to.eql(
+      'testtest',
+    );
+    expect(rollbar.options._configuredOptions.captureUncaught).to.be.true;
+
+    rollbar.configure({
+      captureUncaught: false,
+      payload: { environment: 'borkbork' },
+    });
+    expect(rollbar.options._configuredOptions.payload.environment).to.eql(
+      'borkbork',
+    );
+    expect(rollbar.options._configuredOptions.captureUncaught).to.be.false;
+  });
+});
+
+describe('options.captureUncaught', function () {
+  let __originalOnError = null;
+
+  before(function () {
+    // Prevent WTR/Mocha from failing the test on uncaught errors.
+    __originalOnError = window.onerror;
+    window.onerror = () => false;
+  });
+
+  after(function () {
+    window.onerror = __originalOnError;
+    __originalOnError = null;
+  });
+
+  beforeEach(async function () {
+    // Load the HTML page, so errors can be generated.
+    await loadHtml('test/fixtures/html/error.html');
+
+    window.server = fakeServer.create();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+  }
+
+  it('should capture when enabled in constructor', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-error');
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.raw_error.message).to.eql(
+      'test error',
+    );
+    expect(body.data.attributes[1].key).to.eql('is_uncaught');
+    expect(body.data.attributes[1].value).to.eql('true');
+    expect(body.data.notifier.diagnostic.is_uncaught).to.be.true;
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
+  });
+
+  it('should respond to enable/disable in configure', async function () {
+    const server = window.server;
+    const element = document.getElementById('throw-error');
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: false,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+    server.requests.length = 0;
+
+    rollbar.configure({
+      captureUncaught: true,
+    });
+
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.notifier.diagnostic.is_anonymous).to.not.be.ok;
+
+    server.requests.length = 0;
+
+    rollbar.configure({
+      captureUncaught: false,
+    });
+
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+  });
+
+  // Test case expects Chrome, which is the currently configured karma js/browser
+  // engine at the time of this comment. However, karma's Chrome and ChromeHeadless
+  // don't actually behave like real Chrome so we settle for stubbing some things.
+  it('should capture external error data when inspectAnonymousErrors is true', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // We're supposedly running on ChromeHeadless, but still need to spoof Chrome. :\
+    window.chrome = { runtime: true };
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      inspectAnonymousErrors: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    // Simulate receiving onerror without an error object.
+    rollbar.anonymousErrorsPending += 1;
+
+    try {
+      throw new Error('anon error');
+    } catch (e) {
+      Error.prepareStackTrace(e);
+    }
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('anon error');
+    expect(body.data.notifier.diagnostic.is_anonymous).to.be.true;
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
+  });
+
+  it('should ignore duplicate errors by default', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-error');
+
+    // generate same error twice
+    for (let i = 0; i < 2; i++) {
+      element.click(); // use for loop to ensure the stack traces have identical line/col info
+    }
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    // transmit only once
+    expect(server.requests.length).to.eql(1);
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
+  });
+
+  it('should transmit duplicate errors when set in config', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      ignoreDuplicateErrors: false,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-error');
+
+    // generate same error twice
+    for (let i = 0; i < 2; i++) {
+      element.click(); // use for loop to ensure the stack traces have identical line/col info
+    }
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    // transmit both errors
+    expect(server.requests.length).to.eql(2);
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
+  });
+
+  it('should send DOMException as trace_chain', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-dom-exception');
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace_chain[0].exception).to.eql({
+      class: 'Error',
+      message: 'test DOMException',
+      description: 'Uncaught Error: test DOMException',
+    });
+    expect(body.data.body.trace_chain[1].exception).to.eql({
+      class: 'DOMException',
+      message: 'test DOMException',
+    });
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+    });
+  });
+
+  it('should capture extra frames when stackTraceLimit is set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const oldLimit = Error.stackTraceLimit;
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      stackTraceLimit: 50,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-depp-stack-error');
+    element.click();
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('deep stack error');
+    expect(body.data.body.trace.frames.length).to.be.above(20);
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      stackTraceLimit: oldLimit, // reset to default
+    });
+  });
+
+  it('should add _wrappedSource when wrapGlobalEventHandlers is set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: true,
+      wrapGlobalEventHandlers: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const element = document.getElementById('throw-event-handler-error');
+    element.click();
+
+    await setTimeoutAsync(100);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql(
+      'event handler error',
+    );
+    expect(body.data.body.trace.extra).to.have.property('_wrappedSource');
+
+    // karma doesn't unload the browser between tests, so the onerror handler
+    // will remain installed. Unset captureUncaught so the onerror handler
+    // won't affect other tests.
+    rollbar.configure({
+      captureUncaught: false,
+      wrapGlobalEventHandlers: false,
+    });
+  });
+});
+
+describe('options.captureUnhandledRejections', function () {
+  beforeEach(function () {
+    window.server = fakeServer.create();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+  }
+
+  it('should capture when enabled in constructor', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    Promise.reject(new Error('test reject'));
+
+    await setTimeoutAsync(500);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test reject');
+    expect(body.data.notifier.diagnostic.is_uncaught).to.be.true;
+
+    rollbar.configure({
+      captureUnhandledRejections: false,
+    });
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
+  });
+
+  it('should respond to enable in configure', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: false,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.configure({
+      captureUnhandledRejections: true,
+    });
+
+    Promise.reject(new Error('test reject'));
+
+    await setTimeoutAsync(500);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test reject');
+
+    server.requests.length = 0;
+
+    rollbar.configure({
+      captureUnhandledRejections: false,
+    });
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
+  });
+
+  it('should respond to disable in configure', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.configure({
+      captureUnhandledRejections: false,
+    });
+
+    Promise.reject(new Error('test reject'));
+
+    await setTimeoutAsync(500);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(0); // Disabled, no event
+    server.requests.length = 0;
+
+    window.removeEventListener('unhandledrejection', window._rollbarURH);
+  });
+});
+
+describe('log', function () {
+  beforeEach(function () {
+    window.server = fakeServer.create();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+  }
+
+  it('should send message when called with message and extra args', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test message', { foo: 'bar' });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.message.body).to.eql('test message');
+    expect(body.data.body.message.extra).to.eql({ foo: 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
+      'string',
+      'object',
+    ]);
+  });
+
+  it('should send exception when called with error and extra args', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log(new Error('test error'), { foo: 'bar' });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.body.trace.extra).to.eql({ foo: 'bar' });
+    expect(body.data.notifier.diagnostic.is_uncaught).to.eql(undefined);
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql([
+      'error',
+      'object',
+    ]);
+  });
+
+  it('should add custom data when called with error context', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      addErrorContext: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const err = new Error('test error');
+    err.rollbarContext = { err: 'test' };
+
+    rollbar.error(err, { foo: 'bar' });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.custom.foo).to.eql('bar');
+    expect(body.data.custom.err).to.eql('test');
+  });
+
+  it('should add tracing attributes when called in an active span', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      recorder: {
+        enabled: true,
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const err = new Error('test error');
+
+    rollbar.tracing.withSpan('test', {}, () => {
+      rollbar.error(err);
+    });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.trace.exception.message).to.eql('test error');
+    expect(body.data.attributes).to.be.an('array');
+    expect(body.data.attributes.length).to.eql(3);
+    expect(body.data.attributes[0].key).to.eql('session_id');
+    expect(body.data.attributes[0].value).to.match(/^[a-f0-9]{32}$/);
+    expect(body.data.attributes[1].key).to.eql('span_id');
+    expect(body.data.attributes[1].value).to.match(/^[a-f0-9]{16}$/);
+    expect(body.data.attributes[2].key).to.eql('trace_id');
+    expect(body.data.attributes[2].value).to.match(/^[a-f0-9]{32}$/);
+  });
+
+  it('should send message when called with only null arguments', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log(null);
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.body.message.body).to.eql(
+      'Item sent with null or missing arguments.',
+    );
+    expect(body.data.notifier.diagnostic.original_arg_types).to.eql(['null']);
+  });
+
+  it('should skipFrames when set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUnhandledRejections: true,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const error = new Error('error with stack');
+
+    rollbar.log(error);
+    rollbar.log(error, { skipFrames: 1 });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const frames1 = JSON.parse(server.requests[0].requestBody).data.body.trace
+      .frames;
+    const frames2 = JSON.parse(server.requests[1].requestBody).data.body.trace
+      .frames;
+
+    expect(frames1.length).to.eql(frames2.length + 1);
+    expect(frames1.slice(0, -1)).to.eql(frames2);
+  });
+
+  it('should call the item callback on error', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // Create an invalid tracer, in order to force an error in notifier._log()
+    const tracer = {
+      scope: function () {
+        return {
+          active: function () {
+            throw new Error('Test error');
+          },
+        };
+      },
+    };
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      tracer: tracer,
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    let callbackCalled;
+    const callback = function (err) {
+      callbackCalled = err;
+    };
+
+    rollbar.log('test', callback);
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(callbackCalled.message).to.eql('Test error');
+  });
+});
+
+// Test direct call to onerror, as used in verification of browser js install.
+describe('onerror', function () {
+  beforeEach(function () {
+    window.server = fakeServer.create();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+  }
+
+  describe('uncaught', function () {
+    let __originalOnError = null;
+
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
+    });
+
+    after(function () {
+      window.onerror = __originalOnError;
+    });
+
+    it('should send message when calling onerror directly', async function () {
+      const server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
+
+      const options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        captureUncaught: true,
+      };
+      window.rollbar = new Rollbar(options);
+
+      window.onerror(
+        'TestRollbarError: testing window.onerror',
+        window.location.href,
+      );
+
+      await setTimeoutAsync(1);
+
+      server.respond();
+
+      const body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.data.body.trace.exception.message).to.eql(
+        'testing window.onerror',
+      );
+    });
+  });
+});
+
+describe('callback options', function () {
+  beforeEach(function () {
+    window.server = fakeServer.create();
+  });
+
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+    window.server.restore();
+  });
+
+  function stubResponse(server) {
+    server.respondWith('POST', 'api/1/item', [
+      200,
+      { 'Content-Type': 'application/json' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+  }
+
+  it('should use checkIgnore when set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function (_isUncaught, _args, _payload) {
+        return true;
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test'); // generate a payload to ignore
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(0);
+  });
+
+  it('should receive valid arguments at checkIgnore', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function (_isUncaught, args, payload) {
+        if (_isUncaught === false && args[0] instanceof Error && payload.uuid) {
+          return true;
+        }
+        return false;
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log(new Error('test'));
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    // Should be ignored if all checks pass.
+    expect(server.requests.length).to.eql(0);
+  });
+
+  describe('uncaught', function () {
+    let __originalOnError = null;
+
+    before(function () {
+      // Prevent WTR/Mocha from failing the test on uncaught errors.
+      __originalOnError = window.onerror;
+      window.onerror = () => false;
+    });
+
+    after(function () {
+      window.onerror = __originalOnError;
+    });
+
+    it('should receive uncaught at checkIgnore', async function () {
+      const server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
+
+      const options = {
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        captureUncaught: true,
+        checkIgnore: function (isUncaught, _args, _payload) {
+          if (isUncaught === true) {
+            return true;
+          }
+          return false;
+        },
+      };
+      window.rollbar = new Rollbar(options);
+
+      const element = document.getElementById('throw-error');
+      element.click();
+
+      await setTimeoutAsync(1);
+
+      server.respond();
+
+      // Should be ignored if checkIgnore receives isUncaught.
+      expect(server.requests.length).to.eql(0);
+    });
+  });
+
+  it('should send when checkIgnore returns false', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function (_isUncaught, _args, _payload) {
+        return false;
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(
+      body.data.notifier.configured_options.checkIgnore.substr(0, 8),
+    ).to.eql('function');
+  });
+
+  it('should use onSendCallback when set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function (_isUncaught, _args, payload) {
+        payload.foo = 'bar';
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('bar');
+    expect(
+      body.data.notifier.configured_options.onSendCallback.substr(0, 8),
+    ).to.eql('function');
+  });
+
+  it('should use transform when set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      transform: function (data, _item) {
+        data.foo = 'baz';
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.foo).to.eql('baz');
+    expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
+      'function',
+    );
+  });
+});
+
+describe('captureEvent', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should handle missing/default type and level', function () {
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const event = rollbar.captureEvent({ foo: 'bar' });
+    expect(event.type).to.eql('manual');
+    expect(event.level).to.eql('info');
+    expect(event.body.foo).to.eql('bar');
+  });
+  it('should handle specified type and level', function () {
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const event = rollbar.captureEvent('log', { foo: 'bar' }, 'debug');
+    expect(event.type).to.eql('log');
+    expect(event.level).to.eql('debug');
+    expect(event.body.foo).to.eql('bar');
+  });
+  it('should handle extra args', function () {
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const event = rollbar.captureEvent(
+      'meaningless',
+      'info',
+      { foo: 'bar' },
+      23,
+      'debug',
+    );
+    expect(event.type).to.eql('manual');
+    expect(event.level).to.eql('info');
+    expect(event.body.foo).to.eql('bar');
+  });
+  it('should handle level that matches a type string', function () {
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    const event = rollbar.captureEvent('log', { foo: 'bar' }, 'error');
+    // ensure level 'error' doesn't overwrite type 'log'
+    expect(event.type).to.eql('log');
+    expect(event.level).to.eql('error');
+    expect(event.body.foo).to.eql('bar');
+  });
+});
+
+describe('createItem', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should handle multiple strings', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = ['first', 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.message).to.eql('first');
+    expect(item.custom.extraArgs['0']).to.eql('second');
+  });
+  it('should handle errors', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.message).to.eql('first');
+    expect(item.custom.extraArgs['0']).to.eql('second');
+  });
+  it('should handle a callback', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    let myCallbackCalled = false;
+    const myCallback = function () {
+      myCallbackCalled = true;
+    };
+    const args = [new Error('Whoa'), 'first', myCallback, 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.message).to.eql('first');
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
+    expect(item.callback).to.be.ok;
+    item.callback();
+    expect(myCallbackCalled).to.be.ok;
+  });
+  it('should handle arrays', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', [1, 2, 3], 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.message).to.eql('first');
+    expect(item.custom['0']).to.eql(1);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
+  });
+  it('should handle objects', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.message).to.eql('first');
+    expect(item.custom.a).to.eql(1);
+    expect(item.custom.b).to.eql(2);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 'second' });
+  });
+  it('should handle custom arguments', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [
+      new Error('Whoa'),
+      { level: 'info', skipFrames: 1, foo: 'bar' },
+    ];
+    const item = rollbar._createItem(args);
+    expect(item.err).to.eql(args[0]);
+    expect(item.level).to.eql('info');
+    expect(item.skipFrames).to.eql(1);
+    expect(item.custom.foo).to.eql('bar');
+    expect(item.custom.level).to.not.be.ok;
+    expect(item.custom.skipFrames).to.not.be.ok;
+  });
+  it('should have a timestamp', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    const now = new Date().getTime();
+    expect(item.timestamp).to.be.within(now - 1000, now + 1000);
+  });
+  it('should have an uuid', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.uuid).to.be.ok;
+
+    const parts = item.uuid.split('-');
+    expect(parts.length).to.eql(5);
+    // Type 4 UUID
+    expect(parts[2][0]).to.eql('4');
+  });
+  it('should handle dates', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const y2k = new Date(2000, 0, 1);
+    const args = [new Error('Whoa'), 'first', y2k, { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: y2k, 1: 'second' });
+  });
+  it('should handle numbers', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    const args = [new Error('Whoa'), 'first', 42, { a: 1, b: 2 }, 'second'];
+    const item = rollbar._createItem(args);
+    expect(item.custom.extraArgs)
+      .to.be.an('object')
+      .that.deep.equals({ 0: 42, 1: 'second' });
+  });
+  it('should handle domexceptions', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+
+    if (document && document.querySelectorAll) {
+      let e;
+      try {
+        document.querySelectorAll('div:foo');
+      } catch (ee) {
+        e = ee;
+      }
+      const args = [e, 'first', 42, { a: 1, b: 2 }, 'second'];
+      const item = rollbar._createItem(args);
+      expect(item.err).to.be.ok;
+    }
+  });
+});
+
+describe('singleton', function () {
+  it('should pass through the underlying client after init', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = Rollbar.init(options, client);
+
+    rollbar.log('hello 1');
+    Rollbar.log('hello 2');
+
+    const loggedItemDirect = client.logCalls[0].item;
+    const loggedItemSingleton = client.logCalls[1].item;
+    expect(loggedItemDirect.message).to.eql('hello 1');
+    expect(loggedItemSingleton.message).to.eql('hello 2');
+  });
+});

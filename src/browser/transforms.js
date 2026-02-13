@@ -1,6 +1,6 @@
-var _ = require('../utility');
-var errorParser = require('../errorParser');
-var logger = require('./logger');
+import errorParser from '../errorParser.js';
+import logger from '../logger.js';
+import * as _ from '../utility.js';
 
 function handleDomException(item, options, callback) {
   if (item.err && errorParser.Stack(item.err).name === 'DOMException') {
@@ -181,9 +181,9 @@ function addBodyMessage(item, options, callback) {
   callback(null, item);
 }
 
-function stackFromItem(item) {
+function stackFromItem(item, stackInfo = null) {
   // Transform a TraceKit stackInfo object into a Rollbar trace
-  var stack = item.stackInfo.stack;
+  let stack = (stackInfo || item.stackInfo).stack;
   if (
     stack &&
     stack.length === 0 &&
@@ -230,7 +230,7 @@ function addBodyTrace(item, options, callback) {
 function buildTrace(item, stackInfo, options) {
   var description = item && item.data.description;
   var custom = item && item.custom;
-  var stack = stackFromItem(item);
+  var stack = stackFromItem(item, stackInfo);
 
   var guess = errorParser.guessErrorClass(stackInfo.message);
   var className = errorClass(stackInfo, guess[0], options);
@@ -344,14 +344,14 @@ function addScrubber(scrubFn) {
   };
 }
 
-module.exports = {
-  handleDomException: handleDomException,
-  handleItemWithError: handleItemWithError,
-  ensureItemHasSomethingToSay: ensureItemHasSomethingToSay,
-  addBaseInfo: addBaseInfo,
-  addRequestInfo: addRequestInfo,
-  addClientInfo: addClientInfo,
-  addPluginInfo: addPluginInfo,
-  addBody: addBody,
-  addScrubber: addScrubber,
+export {
+  handleDomException,
+  handleItemWithError,
+  ensureItemHasSomethingToSay,
+  addBaseInfo,
+  addRequestInfo,
+  addClientInfo,
+  addPluginInfo,
+  addBody,
+  addScrubber,
 };

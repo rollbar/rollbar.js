@@ -1,7 +1,7 @@
-var RateLimiter = require('./rateLimiter');
-var Queue = require('./queue');
-var Notifier = require('./notifier');
-var _ = require('./utility');
+import Notifier from './notifier.js';
+import Queue from './queue.js';
+import RateLimiter from './rateLimiter.js';
+import * as _ from './utility.js';
 
 /*
  * Rollbar - the interface to Rollbar
@@ -10,14 +10,23 @@ var _ = require('./utility');
  * @param api
  * @param logger
  */
-function Rollbar(options, api, logger, telemeter, platform) {
+function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
   this.options = _.merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
   this.api = api;
-  this.queue = new Queue(Rollbar.rateLimiter, api, logger, this.options);
+  this.queue = new Queue(
+    Rollbar.rateLimiter,
+    api,
+    logger,
+    this.options,
+    replay,
+  );
 
+  this.tracing = tracing;
+
+  // Legacy OpenTracing support
   // This must happen before the Notifier is created
   var tracer = this.options.tracer || null;
   if (validateTracer(tracer)) {
@@ -57,6 +66,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
 
   this.options = _.merge(oldOptions, options, payload);
 
+  // Legacy OpenTracing support
   // This must happen before the Notifier is configured
   var tracer = this.options.tracer || null;
   if (validateTracer(tracer)) {
@@ -150,11 +160,19 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     return;
   }
   try {
-    this._addTracingInfo(item);
     item.level = item.level || defaultLevel;
-    this.telemeter && this.telemeter._captureRollbarItem(item);
-    item.telemetryEvents =
-      (this.telemeter && this.telemeter.copyEvents()) || [];
+
+    this._addItemAttributes(item);
+
+    // Legacy OpenTracing support
+    this._addTracingInfo(item);
+
+    const telemeter = this.telemeter;
+    if (telemeter) {
+      telemeter._captureRollbarItem(item);
+      item.telemetryEvents = telemeter.copyEvents() || [];
+    }
+
     this.notifier.log(item, callback);
   } catch (e) {
     if (callback) {
@@ -162,6 +180,24 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     }
     this.logger.error(e);
   }
+};
+
+Rollbar.prototype._addItemAttributes = function (item) {
+  const span = this.tracing?.getSpan();
+
+  const attributes = [
+    { key: 'session_id', value: this.tracing?.sessionId },
+    { key: 'span_id', value: span?.spanId },
+    { key: 'trace_id', value: span?.traceId },
+  ];
+  if (item._isUncaught) {
+    attributes.push({ key: 'is_uncaught', value: 'true' });
+  }
+  _.addItemAttributes(item.data, attributes);
+
+  span?.addEvent('rollbar.occurrence', [
+    { key: 'rollbar.occurrence.uuid', value: item.uuid },
+  ]);
 };
 
 Rollbar.prototype._defaultLogLevel = function () {
@@ -280,4 +316,4 @@ function validateSpan(span) {
   return true;
 }
 
-module.exports = Rollbar;
+export default Rollbar;

@@ -1,7 +1,15 @@
-var logger = require('../logger');
-var _ = require('../../utility');
+import logger from '../../logger.js';
+import * as _ from '../../utility.js';
 
-function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
+function makeFetchRequest({
+  accessToken,
+  url,
+  method,
+  payload,
+  headers,
+  callback,
+  timeout,
+}) {
   var controller;
   var timeoutId;
 
@@ -12,21 +20,37 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     }, timeout);
   }
 
+  headers = {
+    'Content-Type': 'application/json',
+    'X-Rollbar-Access-Token': accessToken,
+    signal: controller && controller.signal,
+    ...headers,
+  };
+
   fetch(url, {
-    method: method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Rollbar-Access-Token': accessToken,
-      signal: controller && controller.signal,
-    },
-    body: data,
+    method,
+    headers,
+    body: payload,
   })
     .then(function (response) {
       if (timeoutId) clearTimeout(timeoutId);
-      return response.json();
-    })
-    .then(function (data) {
-      callback(null, data);
+      const respHeaders = response.headers;
+
+      const isItemRoute = url.endsWith('/api/1/item/');
+      const headers = isItemRoute
+        ? {
+            'Rollbar-Replay-Enabled': respHeaders.get('Rollbar-Replay-Enabled'),
+            'Rollbar-Replay-RateLimit-Remaining': respHeaders.get(
+              'Rollbar-Replay-RateLimit-Remaining',
+            ),
+            'Rollbar-Replay-RateLimit-Reset': respHeaders.get(
+              'Rollbar-Replay-RateLimit-Reset',
+            ),
+          }
+        : {};
+
+      const json = response.json();
+      callback(null, json, headers);
     })
     .catch(function (error) {
       logger.error(error.message);
@@ -34,4 +58,4 @@ function makeFetchRequest(accessToken, url, method, data, callback, timeout) {
     });
 }
 
-module.exports = makeFetchRequest;
+export default makeFetchRequest;

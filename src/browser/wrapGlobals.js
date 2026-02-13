@@ -1,3 +1,5 @@
+import { hasOwn } from '../utility.js';
+
 function wrapGlobals(window, handler, shim) {
   if (!window) {
     return;
@@ -18,10 +20,7 @@ function wrapGlobals(window, handler, shim) {
 }
 
 function _extendListenerPrototype(handler, prototype, shim) {
-  if (
-    prototype.hasOwnProperty &&
-    prototype.hasOwnProperty('addEventListener')
-  ) {
+  if (hasOwn(prototype, 'addEventListener')) {
     var oldAddEventListener = prototype.addEventListener;
     while (
       oldAddEventListener._rollbarOldAdd &&
@@ -57,4 +56,4 @@ function _extendListenerPrototype(handler, prototype, shim) {
   }
 }
 
-module.exports = wrapGlobals;
+export default wrapGlobals;

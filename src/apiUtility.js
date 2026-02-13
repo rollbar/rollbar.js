@@ -1,8 +1,8 @@
-var _ = require('./utility');
+import * as _ from './utility.js';
 
-function buildPayload(accessToken, data, jsonBackup) {
+function buildPayload(data) {
   if (!_.isType(data.context, 'string')) {
-    var contextResult = _.stringify(data.context, jsonBackup);
+    var contextResult = _.stringify(data.context);
     if (contextResult.error) {
       data.context = "Error: could not serialize 'context'";
     } else {
@@ -13,7 +13,6 @@ function buildPayload(accessToken, data, jsonBackup) {
     }
   }
   return {
-    access_token: accessToken,
     data: data,
   };
 }
@@ -50,8 +49,8 @@ function getTransportFromOptions(options, defaults, url) {
 
 function detectTransport(options) {
   var gWindow =
-    (typeof window != 'undefined' && window) ||
-    (typeof self != 'undefined' && self);
+    (typeof window !== 'undefined' && window) ||
+    (typeof self !== 'undefined' && self);
   var transport = options.defaultTransport || 'xhr';
   if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
   if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
@@ -100,9 +99,9 @@ function appendPathToPath(base, path) {
   return base + path;
 }
 
-module.exports = {
-  buildPayload: buildPayload,
-  getTransportFromOptions: getTransportFromOptions,
-  transportOptions: transportOptions,
-  appendPathToPath: appendPathToPath,
+export {
+  buildPayload,
+  getTransportFromOptions,
+  transportOptions,
+  appendPathToPath,
 };

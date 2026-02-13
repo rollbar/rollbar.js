@@ -1,5 +1,9 @@
-var globals = require('./globalSetup');
-var wrapGlobals = require('./wrapGlobals');
+import logger from '../logger.js';
+import { hasOwn } from '../utility.js';
+
+import * as globals from './globalSetup.js';
+import Wrapper from './rollbarWrapper.js';
+import wrapGlobals from './wrapGlobals.js';
 
 function _wrapInternalErr(f) {
   return function () {
@@ -7,10 +11,8 @@ function _wrapInternalErr(f) {
       return f.apply(this, arguments);
     } catch (e) {
       try {
-        /* eslint-disable no-console */
-        console.error('[Rollbar]: Internal error', e);
-        /* eslint-enable no-console */
-      } catch (e2) {
+        logger.error('[Rollbar]: Internal error', e);
+      } catch (_e2) {
         // Ignore
       }
     }
@@ -30,7 +32,6 @@ function Shim(options, wrap) {
   }
 }
 
-var Wrapper = require('./rollbarWrapper');
 var ShimImpl = function (options, wrap) {
   return new Shim(options, wrap);
 };
@@ -146,7 +147,7 @@ Shim.prototype.loadFull = function (
       s.onload = s.onreadystatechange = null;
       try {
         parentNode.removeChild(s);
-      } catch (e) {
+      } catch (_e) {
         // pass
       }
       done = true;
@@ -200,17 +201,15 @@ Shim.prototype.wrap = function (f, context, _before) {
 
       f._rollbar_wrapped._isWrap = true;
 
-      if (f.hasOwnProperty) {
-        for (var prop in f) {
-          if (f.hasOwnProperty(prop)) {
-            f._rollbar_wrapped[prop] = f[prop];
-          }
+      for (var prop in f) {
+        if (hasOwn(f, prop)) {
+          f._rollbar_wrapped[prop] = f[prop];
         }
       }
     }
 
     return f._rollbar_wrapped;
-  } catch (e) {
+  } catch (_e) {
     // Return the original function if the wrap fails.
     return f;
   }
@@ -218,9 +217,8 @@ Shim.prototype.wrap = function (f, context, _before) {
 
 function stub(method) {
   return _wrapInternalErr(function () {
-    var shim = this;
-    var args = Array.prototype.slice.call(arguments, 0);
-    var data = { shim: shim, method: method, args: args, ts: new Date() };
+    const args = Array.prototype.slice.call(arguments, 0);
+    const data = { shim: this, method: method, args: args, ts: new Date() };
     window._rollbarShims[this.shimId()].messages.push(data);
   });
 }
@@ -230,11 +228,8 @@ var _methods =
     ',',
   );
 
-for (var i = 0; i < _methods.length; ++i) {
-  Shim.prototype[_methods[i]] = stub(_methods[i]);
+for (const method of _methods) {
+  Shim.prototype[method] = stub(method);
 }
 
-module.exports = {
-  setupShim: setupShim,
-  Rollbar: Rollbar,
-};
+export { setupShim, Rollbar };

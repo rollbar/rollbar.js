@@ -1,6 +1,6 @@
 // src/app/rollbar.errorhandler.ts
 import { ErrorHandler, inject, Injectable, InjectionToken } from '@angular/core';
-import * as Rollbar from 'rollbar';
+import Rollbar from 'rollbar';
 
 // InjectionToken for providing a Rollbar instance
 export const RollbarService = new InjectionToken<Rollbar>('rollbar');

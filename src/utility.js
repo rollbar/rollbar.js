@@ -1,35 +1,3 @@
-var merge = require('./merge');
-
-var RollbarJSON = {};
-function setupJSON(polyfillJSON) {
-  if (isFunction(RollbarJSON.stringify) && isFunction(RollbarJSON.parse)) {
-    return;
-  }
-
-  if (isDefined(JSON)) {
-    // If polyfill is provided, prefer it over existing non-native shims.
-    if (polyfillJSON) {
-      if (isNativeFunction(JSON.stringify)) {
-        RollbarJSON.stringify = JSON.stringify;
-      }
-      if (isNativeFunction(JSON.parse)) {
-        RollbarJSON.parse = JSON.parse;
-      }
-    } else {
-      // else accept any interface that is present.
-      if (isFunction(JSON.stringify)) {
-        RollbarJSON.stringify = JSON.stringify;
-      }
-      if (isFunction(JSON.parse)) {
-        RollbarJSON.parse = JSON.parse;
-      }
-    }
-  }
-  if (!isFunction(RollbarJSON.stringify) || !isFunction(RollbarJSON.parse)) {
-    polyfillJSON && polyfillJSON(RollbarJSON);
-  }
-}
-
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
  * given string.
@@ -102,8 +70,20 @@ function isNativeFunction(f) {
  * @returns true is value is an object function is an object)
  */
 function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
+  return (
+    value != null && (typeof value == 'object' || typeof value == 'function')
+  );
+}
+
+/* hasOwn - safe helper around Object.hasOwnProperty */
+function hasOwn(obj, prop) {
+  if (obj == null) {
+    return false;
+  }
+  if (Object.hasOwn) {
+    return Object.hasOwn(obj, prop);
+  }
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 /* isString - Checks if the argument is a string
@@ -123,16 +103,6 @@ function isString(value) {
  */
 function isFiniteNumber(n) {
   return Number.isFinite(n);
-}
-
-/*
- * isDefined - a convenience function for checking if a value is not equal to undefined
- *
- * @param u - any value
- * @returns true if u is anything other than undefined
- */
-function isDefined(u) {
-  return !isType(u, 'undefined');
 }
 
 /*
@@ -167,6 +137,15 @@ function isPromise(p) {
   return isObject(p) && isType(p.then, 'function');
 }
 
+/**
+ * isBrowser - a convenience function for checking if the code is running in a browser
+ *
+ * @returns true if the code is running in a browser environment
+ */
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
 function redact() {
   return '********';
 }
@@ -192,6 +171,21 @@ var LEVELS = {
   error: 3,
   critical: 4,
 };
+
+function sanitizeHref(url) {
+  try {
+    const urlObject = new URL(url);
+    if (urlObject.password) {
+      urlObject.password = redact();
+    }
+    if (urlObject.search) {
+      urlObject.search = redact();
+    }
+    return urlObject.toString();
+  } catch (_) {
+    return url; // Return original URL if parsing fails
+  }
+}
 
 function sanitizeUrl(url) {
   var baseUrlParts = parseUri(url);
@@ -232,9 +226,9 @@ var parseUriOptions = {
   },
   parser: {
     strict:
-      /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      /^(?:([^:/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?))?((((?:[^?#/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
     loose:
-      /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      /^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#/]*\.[^?#/.]+(?:[?#]|$)))*\/?)?([^?#/]*))(?:\?([^#]*))?(?:#(.*))?)/,
   },
 };
 
@@ -318,7 +312,7 @@ function formatUrl(u, protocol) {
 function stringify(obj, backup) {
   var value, error;
   try {
-    value = RollbarJSON.stringify(obj);
+    value = JSON.stringify(obj);
   } catch (jsonError) {
     if (backup && isFunction(backup)) {
       try {
@@ -366,11 +360,11 @@ function maxByteSize(string) {
 function jsonParse(s) {
   var value, error;
   try {
-    value = RollbarJSON.parse(s);
+    value = JSON.parse(s);
   } catch (e) {
     error = e;
   }
-  return { error: error, value: value };
+  return { error, value };
 }
 
 function makeUnhandledStackInfo(
@@ -469,7 +463,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'undefined':
         break;
       case 'string':
-        message ? extraArgs.push(arg) : (message = arg);
+        if (message) {
+          extraArgs.push(arg);
+        } else {
+          message = arg;
+        }
         break;
       case 'function':
         callback = wrapCallback(logger, arg);
@@ -480,7 +478,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'error':
       case 'domexception':
       case 'exception': // Firefox Exception type
-        err ? extraArgs.push(arg) : (err = arg);
+        if (err) {
+          extraArgs.push(arg);
+        } else {
+          err = arg;
+        }
         break;
       case 'object':
       case 'array':
@@ -488,7 +490,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
           arg instanceof Error ||
           (typeof DOMException !== 'undefined' && arg instanceof DOMException)
         ) {
-          err ? extraArgs.push(arg) : (err = arg);
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         if (requestKeys && typ === 'object' && !request) {
@@ -502,14 +508,22 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
             break;
           }
         }
-        custom ? extraArgs.push(arg) : (custom = arg);
+        if (custom) {
+          extraArgs.push(arg);
+        } else {
+          custom = arg;
+        }
         break;
       default:
         if (
           arg instanceof Error ||
           (typeof DOMException !== 'undefined' && arg instanceof DOMException)
         ) {
-          err ? extraArgs.push(arg) : (err = arg);
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         extraArgs.push(arg);
@@ -534,6 +548,8 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     diagnostic: diagnostic,
     uuid: uuid4(),
   };
+
+  item.data = item.data || {};
 
   setCustomItemKeys(item, custom);
 
@@ -564,9 +580,9 @@ function addErrorContext(item, errors) {
   var contextAdded = false;
 
   try {
-    for (var i = 0; i < errors.length; ++i) {
-      if (errors[i].hasOwnProperty('rollbarContext')) {
-        custom = merge(custom, nonCircularClone(errors[i].rollbarContext));
+    for (const error of errors) {
+      if (hasOwn(error, 'rollbarContext')) {
+        custom = merge(custom, nonCircularClone(error.rollbarContext));
         contextAdded = true;
       }
     }
@@ -591,8 +607,8 @@ var TELEMETRY_TYPES = [
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 
 function arrayIncludes(arr, val) {
-  for (var k = 0; k < arr.length; ++k) {
-    if (arr[k] === val) {
+  for (const entry of arr) {
+    if (entry === val) {
       return true;
     }
   }
@@ -632,6 +648,16 @@ function createTelemetryEvent(args) {
   return event;
 }
 
+function addItemAttributes(itemData, attributes) {
+  itemData.attributes = itemData.attributes || [];
+  for (const a of attributes) {
+    if (a.value === undefined) {
+      continue;
+    }
+    itemData.attributes.push(a);
+  }
+}
+
 /*
  * get - given an obj/array and a keypath, return the value at that keypath or
  *       undefined if not possible.
@@ -650,7 +676,7 @@ function get(obj, path) {
     for (var i = 0, len = keys.length; i < len; ++i) {
       result = result[keys[i]];
     }
-  } catch (e) {
+  } catch (_e) {
     result = undefined;
   }
   return result;
@@ -660,6 +686,10 @@ function set(obj, path, value) {
   if (!obj) {
     return;
   }
+
+  // Prevent prototype pollution by setting the prototype to null.
+  Object.setPrototypeOf(obj, null);
+
   var keys = path.split('.');
   var len = keys.length;
   if (len < 1) {
@@ -678,7 +708,7 @@ function set(obj, path, value) {
     }
     temp[keys[len - 1]] = value;
     obj[keys[0]] = replacement;
-  } catch (e) {
+  } catch (_e) {
     return;
   }
 }
@@ -713,9 +743,9 @@ function formatArgsAsString(args) {
 
 function now() {
   if (Date.now) {
-    return +Date.now();
+    return Date.now();
   }
-  return +new Date();
+  return Number(new Date());
 }
 
 function filterIp(requestData, captureIp) {
@@ -747,7 +777,7 @@ function filterIp(requestData, captureIp) {
       } else {
         newIp = null;
       }
-    } catch (e) {
+    } catch (_e) {
       newIp = null;
     }
   }
@@ -780,37 +810,96 @@ function updateDeprecatedOptions(options, logger) {
   return options;
 }
 
-module.exports = {
-  addParamsAndAccessTokenToPath: addParamsAndAccessTokenToPath,
-  createItem: createItem,
-  addErrorContext: addErrorContext,
-  createTelemetryEvent: createTelemetryEvent,
-  filterIp: filterIp,
-  formatArgsAsString: formatArgsAsString,
-  formatUrl: formatUrl,
-  get: get,
-  handleOptions: handleOptions,
-  isError: isError,
-  isFiniteNumber: isFiniteNumber,
-  isFunction: isFunction,
-  isIterable: isIterable,
-  isNativeFunction: isNativeFunction,
-  isObject: isObject,
-  isString: isString,
-  isType: isType,
-  isPromise: isPromise,
-  jsonParse: jsonParse,
-  LEVELS: LEVELS,
-  makeUnhandledStackInfo: makeUnhandledStackInfo,
-  merge: merge,
-  now: now,
-  redact: redact,
-  RollbarJSON: RollbarJSON,
-  sanitizeUrl: sanitizeUrl,
-  set: set,
-  setupJSON: setupJSON,
-  stringify: stringify,
-  maxByteSize: maxByteSize,
-  typeName: typeName,
-  uuid4: uuid4,
+function merge() {
+  function isPlainObject(obj) {
+    if (!obj || Object.prototype.toString.call(obj) !== '[object Object]') {
+      return false;
+    }
+
+    var hasOwnConstructor = hasOwn(obj, 'constructor');
+    var hasIsPrototypeOf =
+      obj.constructor &&
+      obj.constructor.prototype &&
+      hasOwn(obj.constructor.prototype, 'isPrototypeOf');
+    // Not own constructor property must be Object
+    if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+      return false;
+    }
+
+    // Own properties are enumerated firstly, so to speed up,
+    // if last one is own, then all properties are own.
+    var key;
+    for (key in obj) {
+      /**/
+    }
+
+    return typeof key === 'undefined' || hasOwn(obj, key);
+  }
+
+  var i,
+    src,
+    copy,
+    clone,
+    name,
+    result = Object.create(null), // no prototype pollution on Object
+    current = null,
+    length = arguments.length;
+
+  for (i = 0; i < length; i++) {
+    current = arguments[i];
+    if (current === null || current === undefined) {
+      continue;
+    }
+
+    for (name in current) {
+      src = result[name];
+      copy = current[name];
+      if (result !== copy) {
+        if (copy && isPlainObject(copy)) {
+          clone = src && isPlainObject(src) ? src : {};
+          result[name] = merge(clone, copy);
+        } else if (typeof copy !== 'undefined') {
+          result[name] = copy;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+export {
+  addParamsAndAccessTokenToPath,
+  createItem,
+  addErrorContext,
+  createTelemetryEvent,
+  addItemAttributes,
+  filterIp,
+  formatArgsAsString,
+  formatUrl,
+  get,
+  handleOptions,
+  isError,
+  isFiniteNumber,
+  isFunction,
+  hasOwn,
+  isIterable,
+  isNativeFunction,
+  isObject,
+  isString,
+  isType,
+  isPromise,
+  isBrowser,
+  jsonParse,
+  LEVELS,
+  makeUnhandledStackInfo,
+  merge,
+  now,
+  redact,
+  sanitizeHref,
+  sanitizeUrl,
+  set,
+  stringify,
+  maxByteSize,
+  typeName,
+  uuid4,
 };
