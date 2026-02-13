@@ -115,6 +115,69 @@ describe('options.autoInstrument', function () {
         });
     });
 
+    it('should add baggage header when propagation enabled', async function () {
+      const server = window.server;
+      expect(server).to.exist;
+
+      stubResponse(server);
+      server.requests.length = 0;
+
+      window.fetchStub = sinon.stub(window, 'fetch');
+      window.fetch.returns(
+        Promise.resolve(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
+      );
+
+      const rollbar = (window.rollbar = new Rollbar({
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+        tracing: {
+          enabled: true,
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/fetch-test'],
+          },
+        },
+        autoInstrument: {
+          log: false,
+          network: true,
+          networkRequestHeaders: true,
+        },
+      }));
+
+      const fetchHeaders = new Headers();
+      fetchHeaders.append('Content-Type', 'application/json');
+
+      const fetchRequest = new Request('https://example.com/fetch-test');
+      const fetchInit = {
+        method: 'POST',
+        headers: fetchHeaders,
+        body: JSON.stringify({ name: 'bar' }),
+      };
+
+      await window.fetch(fetchRequest, fetchInit).then(async () => {
+        rollbar.log('test'); // generate a payload to inspect
+
+        await setTimeoutAsync(1);
+
+        server.respond();
+
+        expect(server.requests).to.have.lengthOf(1);
+        const body = JSON.parse(server.requests[0].requestBody);
+
+        expect(body.data.body.telemetry[0].body.request_headers).to.include({
+          baggage: `rollbar.session.id=${rollbar.tracing.sessionId}`,
+        });
+
+        rollbar.configure({ autoInstrument: false });
+        window.fetch.restore();
+      });
+    });
+
     it('should report error for http 4xx when enabled', async function () {
       const server = window.server;
       expect(server).to.exist;

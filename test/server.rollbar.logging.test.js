@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -318,6 +320,27 @@ describe('rollbar logging and tracing', function () {
           item.callback();
           expect(callback.calledOnce).to.be.true;
         });
+      });
+    });
+  });
+
+  describe('_addItemAttributes', function () {
+    it('should use async local session id', function () {
+      const rollbar = new Rollbar({
+        captureUncaught: true,
+        environment: 'fake-env',
+      });
+      rollbar.client.asyncLocalStorage = new AsyncLocalStorage();
+      const sessionId = 'als-session';
+
+      rollbar.client.asyncLocalStorage.run({ sessionId }, () => {
+        const item = { uuid: 'item-1', data: {} };
+        rollbar.client._addItemAttributes(item);
+
+        const sessionAttr = item.data.attributes.find(
+          (attr) => attr.key === 'session_id',
+        );
+        expect(sessionAttr.value).to.equal(sessionId);
       });
     });
   });
