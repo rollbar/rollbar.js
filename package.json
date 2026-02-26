@@ -119,7 +119,7 @@
     "mocha": "^11.1.0",
     "nise": "^6.1.1",
     "nock": "^11.9.1",
-    "node-libs-browser": "^0.5.2",
+    "node-libs-browser": "^2.2.1",
     "prettier": "^3.6.2",
     "sinon": "^21.0.0",
     "ts-node": "^10.9.2",
