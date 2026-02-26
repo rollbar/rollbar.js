@@ -460,6 +460,9 @@ describe('addBody', function () {
         expect(i.data.body.trace_chain[1].exception.message).to.eql(
           'nested error',
         );
+        expect(i.data.body.trace_chain[0].frames.at(-1).lineno).to.not.eql(
+          i.data.body.trace_chain[1].frames.at(-1).lineno,
+        );
         done(e);
       });
     });
