@@ -33,6 +33,7 @@ declare class Rollbar implements Rollbar.Components {
   ): Rollbar.LambdaHandler<T>;
 
   public errorHandler(): Rollbar.ExpressErrorHandler;
+  public expressMiddleware(): Rollbar.ExpressMiddleware | undefined;
 
   // Components
 
@@ -219,6 +220,11 @@ declare namespace Rollbar {
     response: any,
     next: ExpressNextFunction,
   ) => any;
+  export type ExpressMiddleware = (
+    request: any,
+    response: any,
+    next: ExpressNextFunction,
+  ) => any;
   export type ExpressNextFunction = (err?: any) => void;
   class Locals {}
   export type LocalsType = typeof Locals;
@@ -333,9 +339,18 @@ declare namespace Rollbar {
   export interface TransformSpanParams {
     span: any;
   }
+  export type TracingPropagationHeader =
+    | 'baggage'
+    | 'traceparent'
+    | 'tracestate';
+  export interface TracingPropagationOptions {
+    enabledHeaders?: TracingPropagationHeader[];
+    enabledCorsUrls?: (string | RegExp)[];
+  }
   export interface TracingOptions {
     enabled?: boolean;
     endpoint?: string;
+    propagation?: TracingPropagationOptions;
     transformSpan?: (params: TransformSpanParams) => void;
   }
 
