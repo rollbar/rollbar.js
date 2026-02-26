@@ -119,8 +119,8 @@ describe('treeToArray', function () {
     expect(arr.length).to.eql(5);
   });
   it('should handle elements without tag names', function () {
-    var e1 = genElement(null);
-    var arr = d.treeToArray(e1);
+    const e1 = genElement(null);
+    const arr = d.treeToArray(e1);
     expect(arr).to.eql([]);
   });
   it('should put the innermost element last', function () {
