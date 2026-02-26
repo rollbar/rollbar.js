@@ -1,0 +1,43 @@
+import * as Rollbar from 'rollbar';
+import { BrowserModule } from '@angular/platform-browser';
+import {
+  Injectable,
+  Injector,
+  InjectionToken,
+  NgModule,
+  ErrorHandler
+} from '@angular/core';
+import { AppComponent } from './app.component';
+
+const rollbarConfig = {
+  accessToken: '84c91171e55941d6b841447347492dd2',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+};
+
+@Injectable()
+export class RollbarErrorHandler implements ErrorHandler {
+  constructor(private injector: Injector) {}
+
+  handleError(err:any) : void {
+    var rollbar = this.injector.get(RollbarService);
+    rollbar.error(err.originalError || err);
+  }
+}
+
+export function rollbarFactory() {
+    return new Rollbar(rollbarConfig);
+}
+
+export const RollbarService = new InjectionToken<Rollbar>('rollbar');
+
+@NgModule({
+  imports: [ BrowserModule ],
+  declarations: [ AppComponent ],
+  bootstrap: [ AppComponent ],
+  providers: [
+    { provide: ErrorHandler, useClass: RollbarErrorHandler },
+    { provide: RollbarService, useFactory: rollbarFactory }
+  ]
+})
+export class AppModule { }
