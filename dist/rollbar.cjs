@@ -29,70 +29,19 @@ __webpack_require__.d(__webpack_exports__, {
   "default": () => (/* binding */ server_rollbar)
 });
 
-;// external "util"
-const external_util_namespaceObject = require("util");
 ;// external "os"
 const external_os_namespaceObject = require("os");
-;// ./src/merge.js
-var hasOwn = Object.prototype.hasOwnProperty;
-var toStr = Object.prototype.toString;
-var isPlainObject = function isPlainObject(obj) {
-  if (!obj || toStr.call(obj) !== '[object Object]') {
-    return false;
-  }
-  var hasOwnConstructor = hasOwn.call(obj, 'constructor');
-  var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn.call(obj.constructor.prototype, 'isPrototypeOf');
-  // Not own constructor property must be Object
-  if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
-    return false;
-  }
-
-  // Own properties are enumerated firstly, so to speed up,
-  // if last one is own, then all properties are own.
-  var key;
-  for (key in obj) {
-    /**/
-  }
-  return typeof key === 'undefined' || hasOwn.call(obj, key);
-};
-function merge() {
-  var i,
-    src,
-    copy,
-    clone,
-    name,
-    result = Object.create(null),
-    // no prototype pollution on Object
-    current = null,
-    length = arguments.length;
-  for (i = 0; i < length; i++) {
-    current = arguments[i];
-    if (current == null) {
-      continue;
-    }
-    for (name in current) {
-      src = result[name];
-      copy = current[name];
-      if (result !== copy) {
-        if (copy && isPlainObject(copy)) {
-          clone = src && isPlainObject(src) ? src : {};
-          result[name] = merge(clone, copy);
-        } else if (typeof copy !== 'undefined') {
-          result[name] = copy;
-        }
-      }
-    }
-  }
-  return result;
-}
-/* harmony default export */ const src_merge = (merge);
+;// external "url"
+const external_url_namespaceObject = require("url");
+;// external "util"
+const external_util_namespaceObject = require("util");
+;// external "json-stringify-safe"
+const external_json_stringify_safe_namespaceObject = require("json-stringify-safe");
 ;// ./src/utility.js
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-
-
 /*
  * isType - Given a Javascript value and a string, returns true if the type of the value matches the
  * given string.
@@ -159,8 +108,18 @@ function isNativeFunction(f) {
  * @returns true is value is an object function is an object)
  */
 function isObject(value) {
-  var type = _typeof(value);
-  return value != null && (type == 'object' || type == 'function');
+  return value != null && (_typeof(value) == 'object' || typeof value == 'function');
+}
+
+/* hasOwn - safe helper around Object.hasOwnProperty */
+function hasOwn(obj, prop) {
+  if (obj == null) {
+    return false;
+  }
+  if (Object.hasOwn) {
+    return Object.hasOwn(obj, prop);
+  }
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 /* isString - Checks if the argument is a string
@@ -180,16 +139,6 @@ function isString(value) {
  */
 function isFiniteNumber(n) {
   return Number.isFinite(n);
-}
-
-/*
- * isDefined - a convenience function for checking if a value is not equal to undefined
- *
- * @param u - any value
- * @returns true if u is anything other than undefined
- */
-function isDefined(u) {
-  return !isType(u, 'undefined');
 }
 
 /*
@@ -238,7 +187,7 @@ function redact() {
 
 // from http://stackoverflow.com/a/8809472/1138191
 function uuid4() {
-  var d = utility_now();
+  var d = now();
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
@@ -288,8 +237,8 @@ var parseUriOptions = {
     parser: /(?:^|&)([^&=]*)=?([^&]*)/g
   },
   parser: {
-    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-    loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    strict: /^(?:([^:/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?))?((((?:[^?#/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+    loose: /^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#/]*\.[^?#/.]+(?:[?#]|$)))*\/?)?([^?#/]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
 };
 function parseUri(str) {
@@ -489,7 +438,11 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'undefined':
         break;
       case 'string':
-        message ? extraArgs.push(arg) : message = arg;
+        if (message) {
+          extraArgs.push(arg);
+        } else {
+          message = arg;
+        }
         break;
       case 'function':
         callback = wrapCallback(logger, arg);
@@ -501,12 +454,20 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
       case 'domexception':
       case 'exception':
         // Firefox Exception type
-        err ? extraArgs.push(arg) : err = arg;
+        if (err) {
+          extraArgs.push(arg);
+        } else {
+          err = arg;
+        }
         break;
       case 'object':
       case 'array':
         if (arg instanceof Error || typeof DOMException !== 'undefined' && arg instanceof DOMException) {
-          err ? extraArgs.push(arg) : err = arg;
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         if (requestKeys && typ === 'object' && !request) {
@@ -520,11 +481,19 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
             break;
           }
         }
-        custom ? extraArgs.push(arg) : custom = arg;
+        if (custom) {
+          extraArgs.push(arg);
+        } else {
+          custom = arg;
+        }
         break;
       default:
         if (arg instanceof Error || typeof DOMException !== 'undefined' && arg instanceof DOMException) {
-          err ? extraArgs.push(arg) : err = arg;
+          if (err) {
+            extraArgs.push(arg);
+          } else {
+            err = arg;
+          }
           break;
         }
         extraArgs.push(arg);
@@ -541,7 +510,7 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
     message: message,
     err: err,
     custom: custom,
-    timestamp: utility_now(),
+    timestamp: now(),
     callback: callback,
     notifier: notifier,
     diagnostic: diagnostic,
@@ -573,14 +542,23 @@ function addErrorContext(item, errors) {
   var custom = item.data.custom || {};
   var contextAdded = false;
   try {
-    for (var i = 0; i < errors.length; ++i) {
-      if (errors[i].hasOwnProperty('rollbarContext')) {
-        custom = src_merge(custom, nonCircularClone(errors[i].rollbarContext));
-        contextAdded = true;
+    var _iterator = _createForOfIteratorHelper(errors),
+      _step;
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var error = _step.value;
+        if (hasOwn(error, 'rollbarContext')) {
+          custom = merge(custom, nonCircularClone(error.rollbarContext));
+          contextAdded = true;
+        }
       }
-    }
 
-    // Avoid adding an empty object to the data.
+      // Avoid adding an empty object to the data.
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
     if (contextAdded) {
       item.data.custom = custom;
     }
@@ -591,10 +569,19 @@ function addErrorContext(item, errors) {
 var TELEMETRY_TYPES = ['log', 'network', 'dom', 'navigation', 'error', 'manual'];
 var TELEMETRY_LEVELS = ['critical', 'error', 'warning', 'info', 'debug'];
 function arrayIncludes(arr, val) {
-  for (var k = 0; k < arr.length; ++k) {
-    if (arr[k] === val) {
-      return true;
+  var _iterator2 = _createForOfIteratorHelper(arr),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var entry = _step2.value;
+      if (entry === val) {
+        return true;
+      }
     }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
   }
   return false;
 }
@@ -628,20 +615,20 @@ function createTelemetryEvent(args) {
 }
 function addItemAttributes(itemData, attributes) {
   itemData.attributes = itemData.attributes || [];
-  var _iterator = _createForOfIteratorHelper(attributes),
-    _step;
+  var _iterator3 = _createForOfIteratorHelper(attributes),
+    _step3;
   try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var a = _step.value;
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var a = _step3.value;
       if (a.value === undefined) {
         continue;
       }
       itemData.attributes.push(a);
     }
   } catch (err) {
-    _iterator.e(err);
+    _iterator3.e(err);
   } finally {
-    _iterator.f();
+    _iterator3.f();
   }
 }
 
@@ -663,7 +650,7 @@ function get(obj, path) {
     for (var i = 0, len = keys.length; i < len; ++i) {
       result = result[keys[i]];
     }
-  } catch (e) {
+  } catch (_e) {
     result = undefined;
   }
   return result;
@@ -693,7 +680,7 @@ function set(obj, path, value) {
     }
     temp[keys[len - 1]] = value;
     obj[keys[0]] = replacement;
-  } catch (e) {
+  } catch (_e) {
     return;
   }
 }
@@ -724,11 +711,11 @@ function formatArgsAsString(args) {
   }
   return result.join(' ');
 }
-function utility_now() {
+function now() {
   if (Date.now) {
-    return +Date.now();
+    return Date.now();
   }
-  return +new Date();
+  return Number(new Date());
 }
 function filterIp(requestData, captureIp) {
   if (!requestData || !requestData['user_ip'] || captureIp === true) {
@@ -759,14 +746,14 @@ function filterIp(requestData, captureIp) {
       } else {
         newIp = null;
       }
-    } catch (e) {
+    } catch (_e) {
       newIp = null;
     }
   }
   requestData['user_ip'] = newIp;
 }
 function handleOptions(current, input, payload, logger) {
-  var result = src_merge(current, input, payload);
+  var result = merge(current, input, payload);
   result = updateDeprecatedOptions(result, logger);
   if (!input || input.overwriteScrubFields) {
     return result;
@@ -789,155 +776,756 @@ function updateDeprecatedOptions(options, logger) {
   }
   return options;
 }
+function merge() {
+  function isPlainObject(obj) {
+    if (!obj || Object.prototype.toString.call(obj) !== '[object Object]') {
+      return false;
+    }
+    var hasOwnConstructor = hasOwn(obj, 'constructor');
+    var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn(obj.constructor.prototype, 'isPrototypeOf');
+    // Not own constructor property must be Object
+    if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+      return false;
+    }
 
-;// ./src/rateLimiter.js
-
-
-/*
- * RateLimiter - an object that encapsulates the logic for counting items sent to Rollbar
- *
- * @param options - the same options that are accepted by configureGlobal offered as a convenience
- */
-function RateLimiter(options) {
-  this.startTime = utility_now();
-  this.counter = 0;
-  this.perMinCounter = 0;
-  this.platform = null;
-  this.platformOptions = {};
-  this.configureGlobal(options);
-}
-RateLimiter.globalSettings = {
-  startTime: utility_now(),
-  maxItems: undefined,
-  itemsPerMinute: undefined
-};
-
-/*
- * configureGlobal - set the global rate limiter options
- *
- * @param options - Only the following values are recognized:
- *    startTime: a timestamp of the form returned by (new Date()).getTime()
- *    maxItems: the maximum items
- *    itemsPerMinute: the max number of items to send in a given minute
- */
-RateLimiter.prototype.configureGlobal = function (options) {
-  if (options.startTime !== undefined) {
-    RateLimiter.globalSettings.startTime = options.startTime;
+    // Own properties are enumerated firstly, so to speed up,
+    // if last one is own, then all properties are own.
+    var key;
+    for (key in obj) {
+      /**/
+    }
+    return typeof key === 'undefined' || hasOwn(obj, key);
   }
-  if (options.maxItems !== undefined) {
-    RateLimiter.globalSettings.maxItems = options.maxItems;
-  }
-  if (options.itemsPerMinute !== undefined) {
-    RateLimiter.globalSettings.itemsPerMinute = options.itemsPerMinute;
-  }
-};
-
-/*
- * shouldSend - determine if we should send a given item based on rate limit settings
- *
- * @param item - the item we are about to send
- * @returns An object with the following structure:
- *  error: (Error|null)
- *  shouldSend: bool
- *  payload: (Object|null)
- *  If shouldSend is false, the item passed as a parameter should not be sent to Rollbar, and
- *  exactly one of error or payload will be non-null. If error is non-null, the returned Error will
- *  describe the situation, but it means that we were already over a rate limit (either globally or
- *  per minute) when this item was checked. If error is null, and therefore payload is non-null, it
- *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
- *  place of the passed in item.
- */
-RateLimiter.prototype.shouldSend = function (item, now) {
-  now = now || utility_now();
-  var elapsedTime = now - this.startTime;
-  if (elapsedTime < 0 || elapsedTime >= 60000) {
-    this.startTime = now;
-    this.perMinCounter = 0;
-  }
-  var globalRateLimit = RateLimiter.globalSettings.maxItems;
-  var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
-  if (checkRate(item, globalRateLimit, this.counter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimit + ' max items reached', false);
-  } else if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
-    return shouldSendValue(this.platform, this.platformOptions, globalRateLimitPerMin + ' items per minute reached', false);
-  }
-  this.counter++;
-  this.perMinCounter++;
-  var shouldSend = !checkRate(item, globalRateLimit, this.counter);
-  var perMinute = shouldSend;
-  shouldSend = shouldSend && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
-  return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
-};
-RateLimiter.prototype.setPlatformOptions = function (platform, options) {
-  this.platform = platform;
-  this.platformOptions = options;
-};
-
-/* Helpers */
-
-function checkRate(item, limit, counter) {
-  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
-}
-function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
-  var payload = null;
-  if (error) {
-    error = new Error(error);
-  }
-  if (!error && !shouldSend) {
-    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
-  }
-  return {
-    error: error,
-    shouldSend: shouldSend,
-    payload: payload
-  };
-}
-function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
-  var environment = options.environment || options.payload && options.payload.environment;
-  var msg;
-  if (perMinute) {
-    msg = 'item per minute limit reached, ignoring errors until timeout';
-  } else {
-    msg = 'maxItems has been hit, ignoring errors until reset.';
-  }
-  var item = {
-    body: {
-      message: {
-        body: msg,
-        extra: {
-          maxItems: globalRateLimit,
-          itemsPerMinute: limitPerMin
+  var i,
+    src,
+    copy,
+    clone,
+    name,
+    result = Object.create(null),
+    // no prototype pollution on Object
+    current = null,
+    length = arguments.length;
+  for (i = 0; i < length; i++) {
+    current = arguments[i];
+    if (current === null || current === undefined) {
+      continue;
+    }
+    for (name in current) {
+      src = result[name];
+      copy = current[name];
+      if (result !== copy) {
+        if (copy && isPlainObject(copy)) {
+          clone = src && isPlainObject(src) ? src : {};
+          result[name] = merge(clone, copy);
+        } else if (typeof copy !== 'undefined') {
+          result[name] = copy;
         }
       }
-    },
-    language: 'javascript',
-    environment: environment,
-    notifier: {
-      version: options.notifier && options.notifier.version || options.version
     }
-  };
-  if (platform === 'browser') {
-    item.platform = 'browser';
-    item.framework = 'browser-js';
-    item.notifier.name = 'rollbar-browser-js';
-  } else if (platform === 'server') {
-    item.framework = options.framework || 'node-js';
-    item.notifier.name = options.notifier.name;
-  } else if (platform === 'react-native') {
-    item.framework = options.framework || 'react-native';
-    item.notifier.name = options.notifier.name;
   }
-  return item;
+  return result;
 }
-/* harmony default export */ const rateLimiter = (RateLimiter);
-;// ./src/queue.js
-function queue_typeof(o) { "@babel/helpers - typeof"; return queue_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, queue_typeof(o); }
+
+;// ./src/apiUtility.js
+
+function buildPayload(data) {
+  if (!isType(data.context, 'string')) {
+    var contextResult = stringify(data.context);
+    if (contextResult.error) {
+      data.context = "Error: could not serialize 'context'";
+    } else {
+      data.context = contextResult.value || '';
+    }
+    if (data.context.length > 255) {
+      data.context = data.context.substr(0, 255);
+    }
+  }
+  return {
+    data: data
+  };
+}
+function getTransportFromOptions(options, defaults, url) {
+  var hostname = defaults.hostname;
+  var protocol = defaults.protocol;
+  var port = defaults.port;
+  var path = defaults.path;
+  var search = defaults.search;
+  var timeout = options.timeout;
+  var transport = detectTransport(options);
+  var proxy = options.proxy;
+  if (options.endpoint) {
+    var opts = url.parse(options.endpoint);
+    hostname = opts.hostname;
+    protocol = opts.protocol;
+    port = opts.port;
+    path = opts.pathname;
+    search = opts.search;
+  }
+  return {
+    timeout: timeout,
+    hostname: hostname,
+    protocol: protocol,
+    port: port,
+    path: path,
+    search: search,
+    proxy: proxy,
+    transport: transport
+  };
+}
+function detectTransport(options) {
+  var gWindow = typeof window !== 'undefined' && window || typeof self !== 'undefined' && self;
+  var transport = options.defaultTransport || 'xhr';
+  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
+  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
+  return transport;
+}
+function apiUtility_transportOptions(transport, method) {
+  var protocol = transport.protocol || 'https:';
+  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
+  var hostname = transport.hostname;
+  var path = transport.path;
+  var timeout = transport.timeout;
+  var transportAPI = transport.transport;
+  if (transport.search) {
+    path = path + transport.search;
+  }
+  if (transport.proxy) {
+    path = protocol + '//' + hostname + path;
+    hostname = transport.proxy.host || transport.proxy.hostname;
+    port = transport.proxy.port;
+    protocol = transport.proxy.protocol || protocol;
+  }
+  return {
+    timeout: timeout,
+    protocol: protocol,
+    hostname: hostname,
+    path: path,
+    port: port,
+    method: method,
+    transport: transportAPI
+  };
+}
+function appendPathToPath(base, path) {
+  var baseTrailingSlash = /\/$/.test(base);
+  var pathBeginningSlash = /^\//.test(path);
+  if (baseTrailingSlash && pathBeginningSlash) {
+    path = path.substring(1);
+  } else if (!baseTrailingSlash && !pathBeginningSlash) {
+    path = '/' + path;
+  }
+  return base + path;
+}
+
+;// ./src/api.js
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function api_typeof(o) { "@babel/helpers - typeof"; return api_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, api_typeof(o); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == queue_typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != queue_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != queue_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+var defaultOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/item/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443
+};
+var OTLPDefaultOptions = {
+  hostname: 'api.rollbar.com',
+  path: '/api/1/session/',
+  search: null,
+  version: '1',
+  protocol: 'https:',
+  port: 443
+};
+
+/**
+ * Api encapsulates methods of communicating with the Rollbar API.  It is a
+ * standard interface with some parts implemented differently for server or
+ * browser contexts.  It is an object that should be instantiated when used so
+ * it can contain non-global options that may be different for another instance
+ * of RollbarApi.
+ */
+var Api = /*#__PURE__*/function () {
+  /**
+   * @param {Object} options - Configuration supplied from the parent Rollbar instance.
+   * @param {string} options.accessToken - Token used to authenticate API calls.
+   * @param {string} [options.endpoint] - Optional fully qualified URL overriding
+   *   the default `https://api.rollbar.com/api/1/item`.
+   * @param {Object} [options.proxy] - Optional proxy descriptor containing:
+   *   `host`/`hostname` (required), `port`, and `protocol`.
+   * @param {Object} transport - Adapter implementing `post` and `postJsonPayload`.
+   * @param {Object} urllib - Minimal URL helper used for option normalization.
+   * @param {Object} truncation - Optional truncation helper for payload size enforcement.
+   */
+  function Api(options, transport, urllib, truncation) {
+    _classCallCheck(this, Api);
+    this.options = options;
+    this.transport = transport;
+    this.url = urllib;
+    this.truncation = truncation;
+    this.accessToken = options.accessToken;
+    this.transportOptions = _getTransport(options, urllib);
+    this.OTLPTransportOptions = _getOTLPTransport(options, urllib);
+  }
+
+  /**
+   * Wraps transport.post in a Promise to support async/await
+   *
+   * @param {Object} options - Options for the API request
+   * @param {string} options.accessToken - The access token for authentication
+   * @param {Object} options.transportOptions - Options for the transport
+   * @param {Object} options.payload - The data payload to send
+   * @returns {Promise} A promise that resolves with the response or rejects with an error
+   * @private
+   */
+  return _createClass(Api, [{
+    key: "_postPromise",
+    value: function _postPromise(_ref) {
+      var _this = this;
+      var accessToken = _ref.accessToken,
+        options = _ref.options,
+        payload = _ref.payload,
+        headers = _ref.headers;
+      return new Promise(function (resolve, reject) {
+        _this.transport.post({
+          accessToken: accessToken,
+          options: options,
+          payload: payload,
+          headers: headers,
+          callback: function callback(err, resp) {
+            return err ? reject(err) : resolve(resp);
+          }
+        });
+      });
+    }
+
+    /**
+     *
+     * @param data
+     * @param callback
+     */
+  }, {
+    key: "postItem",
+    value: function postItem(data, callback) {
+      var _this2 = this;
+      var options = apiUtility_transportOptions(this.transportOptions, 'POST');
+      var payload = buildPayload(data);
+
+      // ensure the network request is scheduled after the current tick.
+      setTimeout(function () {
+        _this2.transport.post({
+          accessToken: _this2.accessToken,
+          options: options,
+          payload: payload,
+          callback: callback
+        });
+      }, 0);
+    }
+
+    /**
+     * Posts spans to the Rollbar API using the session endpoint
+     *
+     * @param {Array} payload - The spans to send
+     * @returns {Promise<Object>} A promise that resolves with the API response
+     */
+  }, {
+    key: "postSpans",
+    value: (function () {
+      var _postSpans = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(payload) {
+        var headers,
+          options,
+          _args = arguments;
+        return _regenerator().w(function (_context) {
+          while (1) switch (_context.n) {
+            case 0:
+              headers = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+              options = apiUtility_transportOptions(this.OTLPTransportOptions, 'POST');
+              return _context.a(2, this._postPromise({
+                accessToken: this.accessToken,
+                options: options,
+                payload: payload,
+                headers: headers
+              }));
+          }
+        }, _callee, this);
+      }));
+      function postSpans(_x) {
+        return _postSpans.apply(this, arguments);
+      }
+      return postSpans;
+    }()
+    /**
+     *
+     * @param data
+     * @param callback
+     */
+    )
+  }, {
+    key: "buildJsonPayload",
+    value: function buildJsonPayload(data, callback) {
+      var payload = buildPayload(data);
+      var stringifyResult;
+      if (this.truncation) {
+        stringifyResult = this.truncation.truncate(payload);
+      } else {
+        stringifyResult = stringify(payload);
+      }
+      if (stringifyResult.error) {
+        if (callback) {
+          callback(stringifyResult.error);
+        }
+        return null;
+      }
+      return stringifyResult.value;
+    }
+
+    /**
+     *
+     * @param jsonPayload
+     * @param callback
+     */
+  }, {
+    key: "postJsonPayload",
+    value: function postJsonPayload(jsonPayload, callback) {
+      var transportOptions = apiUtility_transportOptions(this.transportOptions, 'POST');
+      this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
+    }
+  }, {
+    key: "configure",
+    value: function configure(options) {
+      var oldOptions = this.options;
+      this.options = merge(oldOptions, options);
+      this.transportOptions = _getTransport(this.options, this.url);
+      this.OTLPTransportOptions = _getOTLPTransport(this.options, this.url);
+      if (this.options.accessToken !== undefined) {
+        this.accessToken = this.options.accessToken;
+      }
+      return this;
+    }
+  }]);
+}();
+function _getTransport(options, url) {
+  return getTransportFromOptions(options, defaultOptions, url);
+}
+function _getOTLPTransport(options, url) {
+  var _options$tracing;
+  options = _objectSpread(_objectSpread({}, options), {}, {
+    endpoint: (_options$tracing = options.tracing) === null || _options$tracing === void 0 ? void 0 : _options$tracing.endpoint
+  });
+  return getTransportFromOptions(options, OTLPDefaultOptions, url);
+}
+/* harmony default export */ const src_api = (Api);
+;// ./src/defaults.js
+/**
+ * Default options shared across platforms
+ */
+var version = '3.0.0';
+var endpoint = 'api.rollbar.com/api/1/item/';
+var logLevel = 'debug';
+var reportLevel = 'debug';
+var uncaughtErrorLevel = 'error';
+var maxItems = 0;
+var itemsPerMin = 60;
+var commonScrubFields = ['pw', 'pass', 'passwd', 'password', 'secret', 'confirm_password', 'confirmPassword', 'password_confirmation', 'passwordConfirmation', 'access_token', 'accessToken', 'X-Rollbar-Access-Token', 'secret_key', 'secretKey', 'secretToken'];
+var apiScrubFields = ['api_key', 'authenticity_token', 'oauth_token', 'token', 'user_session_secret'];
+var requestScrubFields = ['request.session.csrf', 'request.session._csrf', 'request.params._csrf', 'request.cookie', 'request.cookies'];
+var commonScrubHeaders = ['authorization', 'www-authorization', 'http_authorization', 'omniauth.auth', 'cookie', 'oauth-access-token', 'x-access-token', 'x_csrf_token', 'http_x_csrf_token', 'x-csrf-token'];
+
+// For backward compatibility with default export
+/* harmony default export */ const defaults = ({
+  version: version,
+  endpoint: endpoint,
+  logLevel: logLevel,
+  reportLevel: reportLevel,
+  uncaughtErrorLevel: uncaughtErrorLevel,
+  maxItems: maxItems,
+  itemsPerMin: itemsPerMin
+});
+;// ./src/logger.js
+var _log = function log() {};
+var levels = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  disable: 4
+};
+var logger = {
+  error: function error() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+    return _log('error', args);
+  },
+  warn: function warn() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    return _log('warn', args);
+  },
+  info: function info() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+    return _log('info', args);
+  },
+  debug: function debug() {
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+    return _log('debug', args);
+  },
+  log: function log() {
+    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+    return _log('info', args);
+  },
+  init: function init(_ref) {
+    var logLevel = _ref.logLevel;
+    _log = function _log(level, args) {
+      if (levels[level] < levels[logLevel]) return;
+      args.unshift('Rollbar:');
+
+      // eslint-disable-next-line no-console
+      console[level].apply(console, args);
+    };
+  }
+};
+/* harmony default export */ const src_logger = (logger);
+;// ./src/predicates.js
+function predicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = predicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function predicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return predicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? predicates_arrayLikeToArray(r, a) : void 0; } }
+function predicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+function checkLevel(item, settings) {
+  var level = item.level;
+  var levelVal = LEVELS[level] || 0;
+  var reportLevel = settings.reportLevel;
+  var reportLevelVal = LEVELS[reportLevel] || 0;
+  if (levelVal < reportLevelVal) {
+    return false;
+  }
+  return true;
+}
+function userCheckIgnore(logger) {
+  return function (item, settings) {
+    var isUncaught = Boolean(item._isUncaught);
+    delete item._isUncaught;
+    var args = item._originalArgs;
+    delete item._originalArgs;
+    try {
+      if (isFunction(settings.onSendCallback)) {
+        settings.onSendCallback(isUncaught, args, item);
+      }
+    } catch (e) {
+      settings.onSendCallback = null;
+      logger.error('Error while calling onSendCallback, removing', e);
+    }
+    try {
+      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+        return false;
+      }
+    } catch (e) {
+      settings.checkIgnore = null;
+      logger.error('Error while calling custom checkIgnore(), removing', e);
+    }
+    return true;
+  };
+}
+function urlIsNotBlockListed(logger) {
+  return function (item, settings) {
+    return !urlIsOnAList(item, settings, 'blocklist', logger);
+  };
+}
+function urlIsSafeListed(logger) {
+  return function (item, settings) {
+    return urlIsOnAList(item, settings, 'safelist', logger);
+  };
+}
+function matchFrames(trace, list, block) {
+  if (!trace) {
+    return !block;
+  }
+  var frames = trace.frames;
+  if (!frames || frames.length === 0) {
+    return !block;
+  }
+  var frame, filename, url, urlRegex;
+  var listLength = list.length;
+  var frameLength = frames.length;
+  for (var i = 0; i < frameLength; i++) {
+    frame = frames[i];
+    filename = frame.filename;
+    if (!isType(filename, 'string')) {
+      return !block;
+    }
+    for (var j = 0; j < listLength; j++) {
+      url = list[j];
+      urlRegex = new RegExp(url);
+      if (urlRegex.test(filename)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function urlIsOnAList(item, settings, safeOrBlock, logger) {
+  // safelist is the default
+  var block = false;
+  if (safeOrBlock === 'blocklist') {
+    block = true;
+  }
+  var list, traces;
+  try {
+    list = block ? settings.hostBlockList : settings.hostSafeList;
+    traces = get(item, 'body.trace_chain') || [get(item, 'body.trace')];
+
+    // These two checks are important to come first as they are defaults
+    // in case the list is missing or the trace is missing or not well-formed
+    if (!list || list.length === 0) {
+      return !block;
+    }
+    if (traces.length === 0 || !traces[0]) {
+      return !block;
+    }
+    var tracesLength = traces.length;
+    for (var i = 0; i < tracesLength; i++) {
+      if (matchFrames(traces[i], list, block)) {
+        return true;
+      }
+    }
+  } catch (e
+  /* istanbul ignore next */) {
+    if (block) {
+      settings.hostBlockList = null;
+    } else {
+      settings.hostSafeList = null;
+    }
+    var listName = block ? 'hostBlockList' : 'hostSafeList';
+    logger.error("Error while reading your configuration's " + listName + ' option. Removing custom ' + listName + '.', e);
+    return !block;
+  }
+  return false;
+}
+function messageIsIgnored(logger) {
+  return function (item, settings) {
+    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
+    try {
+      messageIsIgnored = false;
+      ignoredMessages = settings.ignoredMessages;
+      if (!ignoredMessages || ignoredMessages.length === 0) {
+        return true;
+      }
+      messages = messagesFromItem(item);
+      if (messages.length === 0) {
+        return true;
+      }
+      len = ignoredMessages.length;
+      for (i = 0; i < len; i++) {
+        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
+        for (j = 0; j < messages.length; j++) {
+          messageIsIgnored = rIgnoredMessage.test(messages[j]);
+          if (messageIsIgnored) {
+            return false;
+          }
+        }
+      }
+    } catch (_e
+    /* istanbul ignore next */) {
+      settings.ignoredMessages = null;
+      logger.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
+    }
+    return true;
+  };
+}
+function messagesFromItem(item) {
+  var body = item.body;
+  var messages = [];
+
+  // The payload schema only allows one of trace_chain, message, or trace.
+  // However, existing test cases are based on having both trace and message present.
+  // So here we preserve the ability to collect strings from any combination of these keys.
+  if (body.trace_chain) {
+    var traceChain = body.trace_chain;
+    var _iterator = predicates_createForOfIteratorHelper(traceChain),
+      _step;
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var trace = _step.value;
+        messages.push(get(trace, 'exception.message'));
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+  }
+  if (body.trace) {
+    messages.push(get(body, 'trace.exception.message'));
+  }
+  if (body.message) {
+    messages.push(get(body, 'message.body'));
+  }
+  return messages;
+}
+
+;// ./src/notifier.js
+function notifier_typeof(o) { "@babel/helpers - typeof"; return notifier_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, notifier_typeof(o); }
+function notifier_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function notifier_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, notifier_toPropertyKey(o.key), o); } }
+function notifier_createClass(e, r, t) { return r && notifier_defineProperties(e.prototype, r), t && notifier_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function notifier_toPropertyKey(t) { var i = notifier_toPrimitive(t, "string"); return "symbol" == notifier_typeof(i) ? i : i + ""; }
+function notifier_toPrimitive(t, r) { if ("object" != notifier_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != notifier_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+/*
+ * Notifier - delegates between the client exposed API, the chain of transforms
+ * necessary to turn an item into something that can be sent to Rollbar, and the
+ * queue which handles the communcation with the Rollbar API servers.
+ */
+var Notifier = /*#__PURE__*/function () {
+  /**
+   *
+   * @param {Object} queue - an object that conforms to the interface:
+   *    `addItem(item, callback)`
+   * @param {Object} options - an object representing the options to be set for
+   *    this notifier, this should have any defaults already set by the caller
+   */
+  function Notifier(queue, options) {
+    notifier_classCallCheck(this, Notifier);
+    this.queue = queue;
+    this.options = options;
+    this.transforms = [];
+    this.diagnostic = {};
+  }
+
+  /**
+   * configure - updates the options for this notifier with the passed in object
+   *
+   * @param {Object} options - an object which gets merged with the current
+   *    options set on this notifier
+   * @returns this
+   */
+  return notifier_createClass(Notifier, [{
+    key: "configure",
+    value: function configure(options) {
+      var _this$queue;
+      (_this$queue = this.queue) === null || _this$queue === void 0 || _this$queue.configure(options);
+      var oldOptions = this.options;
+      this.options = merge(oldOptions, options);
+      return this;
+    }
+
+    /**
+     * Adds a transform onto the end of the queue of transforms for this notifier
+     *
+     * @param {Function} transform - a function which takes three arguments:
+     *    - item: An Object representing the data to eventually be sent to Rollbar
+     *    - options: The current value of the options for this notifier
+     *    - callback: `function(err: (Null|Error), item: (Null|Object))` the
+     *      transform must call this callback with a null value for error if it
+     *      wants the processing chain to continue, otherwise with an error to
+     *      terminate the processing. The item should be the updated item after
+     *      this transform is finished modifying it.
+     */
+  }, {
+    key: "addTransform",
+    value: function addTransform(transform) {
+      if (isFunction(transform)) {
+        this.transforms.push(transform);
+      }
+      return this;
+    }
+
+    /**
+     * The internal log function which applies the configured transforms and then
+     * pushes onto the queue to be sent to the backend.
+     *
+     * @param {Object} item - An object with the following structure:
+     *    - message [String] - An optional string to be sent to rollbar
+     *    - error [Error] - An optional error
+     * @param {Function} callback - A function of type `function(err, resp)` which
+     *    will be called with exactly one null argument and one non-null argument.
+     *    The callback will be called once, either during the transform stage if
+     *    an error occurs inside a transform, or in response to the communication
+     *    with the backend. The second argument will be the response from the
+     *    backend in case of success.
+     */
+  }, {
+    key: "log",
+    value: function log(item, callback) {
+      var _this = this;
+      callback = isFunction(callback) ? callback : function () {};
+      if (!this.options.enabled) {
+        return callback(new Error('Rollbar is not enabled'), null);
+      }
+      this.queue.addPendingItem(item);
+      var originalError = item.err;
+      this._applyTransforms(item, function (err, i) {
+        if (err) {
+          _this.queue.removePendingItem(item);
+          return callback(err, null);
+        }
+        _this.queue.addItem(i, callback, originalError, item);
+      });
+    }
+
+    /* Internal */
+
+    /**
+     * Applies the transforms that have been added to this notifier sequentially.
+     * See `addTransform` for more information.
+     *
+     * @param {Object} item - An item to be transformed
+     * @param {Function} callback - A function of type `function(err, item)` which
+     *    will be called with a non-null error and a null item in the case of a
+     *    transform failure, or a null error and non-null item after all
+     *    transforms have been applied.
+     */
+  }, {
+    key: "_applyTransforms",
+    value: function _applyTransforms(item, callback) {
+      var transformIndex = -1;
+      var transformsLength = this.transforms.length;
+      var transforms = this.transforms;
+      var options = this.options;
+      var _next = function next(err, i) {
+        if (err) {
+          callback(err, null);
+          return;
+        }
+        transformIndex++;
+        if (transformIndex === transformsLength) {
+          callback(null, i);
+          return;
+        }
+        transforms[transformIndex](i, options, _next);
+      };
+      _next(null, item);
+    }
+  }]);
+}();
+
+;// ./src/queue.js
+function queue_typeof(o) { "@babel/helpers - typeof"; return queue_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, queue_typeof(o); }
+function queue_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function queue_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, queue_toPropertyKey(o.key), o); } }
+function queue_createClass(e, r, t) { return r && queue_defineProperties(e.prototype, r), t && queue_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function queue_defineProperty(e, r, t) { return (r = queue_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function queue_toPropertyKey(t) { var i = queue_toPrimitive(t, "string"); return "symbol" == queue_typeof(i) ? i : i + ""; }
+function queue_toPrimitive(t, r) { if ("object" != queue_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != queue_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /**
@@ -957,7 +1545,7 @@ var Queue = /*#__PURE__*/function () {
    * @param replay - Optional `Replay` for coordinating session replay with error occurrences
    */
   function Queue(rateLimiter, api, logger, options, replay) {
-    _classCallCheck(this, Queue);
+    queue_classCallCheck(this, Queue);
     this.rateLimiter = rateLimiter;
     this.api = api;
     this.logger = logger;
@@ -977,13 +1565,13 @@ var Queue = /*#__PURE__*/function () {
    *
    * @param options
    */
-  return _createClass(Queue, [{
+  return queue_createClass(Queue, [{
     key: "configure",
     value: function configure(options) {
       var _this$api;
       (_this$api = this.api) === null || _this$api === void 0 || _this$api.configure(options);
       var oldOptions = this.options;
-      this.options = src_merge(oldOptions, options);
+      this.options = merge(oldOptions, options);
       return this;
     }
 
@@ -1267,120 +1855,161 @@ var Queue = /*#__PURE__*/function () {
     }
   }]);
 }();
-_defineProperty(Queue, "RETRIABLE_ERRORS", ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN']);
+queue_defineProperty(Queue, "RETRIABLE_ERRORS", ['ECONNRESET', 'ENOTFOUND', 'ESOCKETTIMEDOUT', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'EPIPE', 'EAI_AGAIN']);
 /* harmony default export */ const queue = (Queue);
-;// ./src/notifier.js
-
-
+;// ./src/rateLimiter.js
+function rateLimiter_typeof(o) { "@babel/helpers - typeof"; return rateLimiter_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, rateLimiter_typeof(o); }
+function _readOnlyError(r) { throw new TypeError('"' + r + '" is read-only'); }
+function rateLimiter_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function rateLimiter_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, rateLimiter_toPropertyKey(o.key), o); } }
+function rateLimiter_createClass(e, r, t) { return r && rateLimiter_defineProperties(e.prototype, r), t && rateLimiter_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function rateLimiter_defineProperty(e, r, t) { return (r = rateLimiter_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function rateLimiter_toPropertyKey(t) { var i = rateLimiter_toPrimitive(t, "string"); return "symbol" == rateLimiter_typeof(i) ? i : i + ""; }
+function rateLimiter_toPrimitive(t, r) { if ("object" != rateLimiter_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != rateLimiter_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /*
- * Notifier - the internal object responsible for delegating between the client exposed API, the
- * chain of transforms necessary to turn an item into something that can be sent to Rollbar, and the
- * queue which handles the communcation with the Rollbar API servers.
+ * RateLimiter - encapsulates the logic for counting items sent to Rollbar.
  *
- * @param queue - an object that conforms to the interface: addItem(item, callback)
- * @param options - an object representing the options to be set for this notifier, this should have
- * any defaults already set by the caller
+ * @param options - the same options that are accepted by configureGlobal offered as a convenience
  */
-function Notifier(queue, options) {
-  this.queue = queue;
-  this.options = options;
-  this.transforms = [];
-  this.diagnostic = {};
+var RateLimiter = /*#__PURE__*/function () {
+  function RateLimiter() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    rateLimiter_classCallCheck(this, RateLimiter);
+    this.startTime = Date.now();
+    this.counter = 0;
+    this.perMinCounter = 0;
+    this.platform = null;
+    this.platformOptions = {};
+    this.configureGlobal(options);
+  }
+
+  /*
+   * configureGlobal - set the global rate limiter options
+   *
+   * @param options - Only the following values are recognized:
+   *    startTime: a timestamp of the form returned by (new Date()).getTime()
+   *    maxItems: the maximum items
+   *    itemsPerMinute: the max number of items to send in a given minute
+   */
+  return rateLimiter_createClass(RateLimiter, [{
+    key: "configureGlobal",
+    value: function configureGlobal() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var startTime = options.startTime,
+        maxItems = options.maxItems,
+        itemsPerMinute = options.itemsPerMinute;
+      if (startTime !== undefined) {
+        RateLimiter.globalSettings.startTime = startTime;
+      }
+      if (maxItems !== undefined) {
+        RateLimiter.globalSettings.maxItems = maxItems;
+      }
+      if (itemsPerMinute !== undefined) {
+        RateLimiter.globalSettings.itemsPerMinute = itemsPerMinute;
+      }
+    }
+
+    /*
+     * shouldSend - determine if we should send a given item based on rate limit settings
+     *
+     * @param item - the item we are about to send
+     * @returns An object with the following structure:
+     *  error: (Error|null)
+     *  shouldSend: bool
+     *  payload: (Object|null)
+     *  If shouldSend is false, the item passed as a parameter should not be sent to Rollbar, and
+     *  exactly one of error or payload will be non-null. If error is non-null, the returned Error will
+     *  describe the situation, but it means that we were already over a rate limit (either globally or
+     *  per minute) when this item was checked. If error is null, and therefore payload is non-null, it
+     *  means this item put us over the global rate limit and the payload should be sent to Rollbar in
+     *  place of the passed in item.
+     */
+  }, {
+    key: "shouldSend",
+    value: function shouldSend(item) {
+      var now = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Date.now();
+      var elapsedTime = now - this.startTime;
+      if (elapsedTime < 0 || elapsedTime >= 60000) {
+        this.startTime = now;
+        this.perMinCounter = 0;
+      }
+      var globalRateLimit = RateLimiter.globalSettings.maxItems;
+      var globalRateLimitPerMin = RateLimiter.globalSettings.itemsPerMinute;
+      if (checkRate(item, globalRateLimit, this.counter)) {
+        return shouldSendValue(this.platform, this.platformOptions, "".concat(globalRateLimit, " max items reached"), false);
+      }
+      if (checkRate(item, globalRateLimitPerMin, this.perMinCounter)) {
+        return shouldSendValue(this.platform, this.platformOptions, "".concat(globalRateLimitPerMin, " items per minute reached"), false);
+      }
+      this.counter += 1;
+      this.perMinCounter += 1;
+      var underGlobalLimit = !checkRate(item, globalRateLimit, this.counter);
+      var perMinute = underGlobalLimit;
+      var shouldSend = underGlobalLimit && !checkRate(item, globalRateLimitPerMin, this.perMinCounter);
+      return shouldSendValue(this.platform, this.platformOptions, null, shouldSend, globalRateLimit, globalRateLimitPerMin, perMinute);
+    }
+  }, {
+    key: "setPlatformOptions",
+    value: function setPlatformOptions(platform, options) {
+      this.platform = platform;
+      this.platformOptions = options;
+    }
+  }]);
+}();
+/* Helpers */
+rateLimiter_defineProperty(RateLimiter, "globalSettings", {
+  startTime: Date.now(),
+  maxItems: undefined,
+  itemsPerMinute: undefined
+});
+function checkRate(item, limit, counter) {
+  return !item.ignoreRateLimit && limit >= 1 && counter > limit;
 }
-
-/*
- * configure - updates the options for this notifier with the passed in object
- *
- * @param options - an object which gets merged with the current options set on this notifier
- * @returns this
- */
-Notifier.prototype.configure = function (options) {
-  this.queue && this.queue.configure(options);
-  var oldOptions = this.options;
-  this.options = src_merge(oldOptions, options);
-  return this;
-};
-
-/*
- * addTransform - adds a transform onto the end of the queue of transforms for this notifier
- *
- * @param transform - a function which takes three arguments:
- *    * item: An Object representing the data to eventually be sent to Rollbar
- *    * options: The current value of the options for this notifier
- *    * callback: function(err: (Null|Error), item: (Null|Object)) the transform must call this
- *    callback with a null value for error if it wants the processing chain to continue, otherwise
- *    with an error to terminate the processing. The item should be the updated item after this
- *    transform is finished modifying it.
- */
-Notifier.prototype.addTransform = function (transform) {
-  if (isFunction(transform)) {
-    this.transforms.push(transform);
+function shouldSendValue(platform, options, error, shouldSend, globalRateLimit, limitPerMin, perMinute) {
+  var payload = null;
+  var errorResult = error ? new Error(error) : null;
+  if (!errorResult && !shouldSend) {
+    payload = rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute);
   }
-  return this;
-};
-
-/*
- * log - the internal log function which applies the configured transforms and then pushes onto the
- * queue to be sent to the backend.
- *
- * @param item - An object with the following structure:
- *    message [String] - An optional string to be sent to rollbar
- *    error [Error] - An optional error
- *
- * @param callback - A function of type function(err, resp) which will be called with exactly one
- * null argument and one non-null argument. The callback will be called once, either during the
- * transform stage if an error occurs inside a transform, or in response to the communication with
- * the backend. The second argument will be the response from the backend in case of success.
- */
-Notifier.prototype.log = function (item, callback) {
-  if (!callback || !isFunction(callback)) {
-    callback = function callback() {};
-  }
-  if (!this.options.enabled) {
-    return callback(new Error('Rollbar is not enabled'));
-  }
-  this.queue.addPendingItem(item);
-  var originalError = item.err;
-  this._applyTransforms(item, function (err, i) {
-    if (err) {
-      this.queue.removePendingItem(item);
-      return callback(err, null);
-    }
-    this.queue.addItem(i, callback, originalError, item);
-  }.bind(this));
-};
-
-/* Internal */
-
-/*
- * _applyTransforms - Applies the transforms that have been added to this notifier sequentially. See
- * `addTransform` for more information.
- *
- * @param item - An item to be transformed
- * @param callback - A function of type function(err, item) which will be called with a non-null
- * error and a null item in the case of a transform failure, or a null error and non-null item after
- * all transforms have been applied.
- */
-Notifier.prototype._applyTransforms = function (item, callback) {
-  var transformIndex = -1;
-  var transformsLength = this.transforms.length;
-  var transforms = this.transforms;
-  var options = this.options;
-  var _cb = function cb(err, i) {
-    if (err) {
-      callback(err, null);
-      return;
-    }
-    transformIndex++;
-    if (transformIndex === transformsLength) {
-      callback(null, i);
-      return;
-    }
-    transforms[transformIndex](i, options, _cb);
+  return {
+    error: errorResult,
+    shouldSend: shouldSend,
+    payload: payload
   };
-  _cb(null, item);
-};
-/* harmony default export */ const notifier = (Notifier);
+}
+function rateLimitPayload(platform, options, globalRateLimit, limitPerMin, perMinute) {
+  var environment = options.environment || options.payload && options.payload.environment;
+  var msg = perMinute ? 'item per minute limit reached, ignoring errors until timeout' : 'maxItems has been hit, ignoring errors until reset.';
+  var item = {
+    body: {
+      message: {
+        body: msg,
+        extra: {
+          maxItems: globalRateLimit,
+          itemsPerMinute: limitPerMin
+        }
+      }
+    },
+    language: 'javascript',
+    environment: environment,
+    notifier: {
+      version: options.notifier && options.notifier.version || options.version
+    }
+  };
+  if (platform === 'browser') {
+    item.platform = 'browser';
+    item.framework = 'browser-js';
+    item.notifier.name = 'rollbar-browser-js';
+  } else if (platform === 'server') {
+    item.framework = options.framework || 'node-js';
+    item.notifier.name = options.notifier.name;
+  } else if (platform === 'react-native') {
+    item.framework = options.framework || 'react-native';
+    item.notifier.name = options.notifier.name;
+  }
+  return item;
+}
+/* harmony default export */ const rateLimiter = (RateLimiter);
 ;// ./src/rollbar.js
 
 
@@ -1395,7 +2024,7 @@ Notifier.prototype._applyTransforms = function (item, callback) {
  * @param logger
  */
 function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
-  this.options = src_merge(options);
+  this.options = merge(options);
   this.logger = logger;
   Rollbar.rateLimiter.configureGlobal(this.options);
   Rollbar.rateLimiter.setPlatformOptions(platform, this.options);
@@ -1414,17 +2043,17 @@ function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
   } else {
     this.tracer = null;
   }
-  this.notifier = new notifier(this.queue, this.options);
+  this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = telemeter;
   setStackTraceLimit(options);
   this.lastError = null;
   this.lastErrorHash = 'none';
 }
-var defaultOptions = {
+var rollbar_defaultOptions = {
   maxItems: 0,
   itemsPerMinute: 60
 };
-Rollbar.rateLimiter = new rateLimiter(defaultOptions);
+Rollbar.rateLimiter = new rateLimiter(rollbar_defaultOptions);
 Rollbar.prototype.global = function (options) {
   Rollbar.rateLimiter.configureGlobal(options);
   return this;
@@ -1437,7 +2066,7 @@ Rollbar.prototype.configure = function (options, payloadData) {
       payload: payloadData
     };
   }
-  this.options = src_merge(oldOptions, options, payload);
+  this.options = merge(oldOptions, options, payload);
 
   // Legacy OpenTracing support
   // This must happen before the Notifier is configured
@@ -1518,7 +2147,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
   }
   try {
     item.level = item.level || defaultLevel;
-    this._addTracingAttributes(item);
+    this._addItemAttributes(item);
 
     // Legacy OpenTracing support
     this._addTracingInfo(item);
@@ -1535,7 +2164,7 @@ Rollbar.prototype._log = function (defaultLevel, item) {
     this.logger.error(e);
   }
 };
-Rollbar.prototype._addTracingAttributes = function (item) {
+Rollbar.prototype._addItemAttributes = function (item) {
   var _this$tracing, _this$tracing2;
   var span = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.getSpan();
   var attributes = [{
@@ -1548,6 +2177,12 @@ Rollbar.prototype._addTracingAttributes = function (item) {
     key: 'trace_id',
     value: span === null || span === void 0 ? void 0 : span.traceId
   }];
+  if (item._isUncaught) {
+    attributes.push({
+      key: 'is_uncaught',
+      value: 'true'
+    });
+  }
   addItemAttributes(item.data, attributes);
   span === null || span === void 0 || span.addEvent('rollbar.occurrence', [{
     key: 'rollbar.occurrence.uuid',
@@ -1646,709 +2281,6 @@ function validateSpan(span) {
   return true;
 }
 /* harmony default export */ const rollbar = (Rollbar);
-;// ./src/apiUtility.js
-
-function buildPayload(data) {
-  if (!isType(data.context, 'string')) {
-    var contextResult = stringify(data.context);
-    if (contextResult.error) {
-      data.context = "Error: could not serialize 'context'";
-    } else {
-      data.context = contextResult.value || '';
-    }
-    if (data.context.length > 255) {
-      data.context = data.context.substr(0, 255);
-    }
-  }
-  return {
-    data: data
-  };
-}
-function getTransportFromOptions(options, defaults, url) {
-  var hostname = defaults.hostname;
-  var protocol = defaults.protocol;
-  var port = defaults.port;
-  var path = defaults.path;
-  var search = defaults.search;
-  var timeout = options.timeout;
-  var transport = detectTransport(options);
-  var proxy = options.proxy;
-  if (options.endpoint) {
-    var opts = url.parse(options.endpoint);
-    hostname = opts.hostname;
-    protocol = opts.protocol;
-    port = opts.port;
-    path = opts.pathname;
-    search = opts.search;
-  }
-  return {
-    timeout: timeout,
-    hostname: hostname,
-    protocol: protocol,
-    port: port,
-    path: path,
-    search: search,
-    proxy: proxy,
-    transport: transport
-  };
-}
-function detectTransport(options) {
-  var gWindow = typeof window != 'undefined' && window || typeof self != 'undefined' && self;
-  var transport = options.defaultTransport || 'xhr';
-  if (typeof gWindow.fetch === 'undefined') transport = 'xhr';
-  if (typeof gWindow.XMLHttpRequest === 'undefined') transport = 'fetch';
-  return transport;
-}
-function apiUtility_transportOptions(transport, method) {
-  var protocol = transport.protocol || 'https:';
-  var port = transport.port || (protocol === 'http:' ? 80 : protocol === 'https:' ? 443 : undefined);
-  var hostname = transport.hostname;
-  var path = transport.path;
-  var timeout = transport.timeout;
-  var transportAPI = transport.transport;
-  if (transport.search) {
-    path = path + transport.search;
-  }
-  if (transport.proxy) {
-    path = protocol + '//' + hostname + path;
-    hostname = transport.proxy.host || transport.proxy.hostname;
-    port = transport.proxy.port;
-    protocol = transport.proxy.protocol || protocol;
-  }
-  return {
-    timeout: timeout,
-    protocol: protocol,
-    hostname: hostname,
-    path: path,
-    port: port,
-    method: method,
-    transport: transportAPI
-  };
-}
-function appendPathToPath(base, path) {
-  var baseTrailingSlash = /\/$/.test(base);
-  var pathBeginningSlash = /^\//.test(path);
-  if (baseTrailingSlash && pathBeginningSlash) {
-    path = path.substring(1);
-  } else if (!baseTrailingSlash && !pathBeginningSlash) {
-    path = '/' + path;
-  }
-  return base + path;
-}
-
-;// ./src/api.js
-function api_typeof(o) { "@babel/helpers - typeof"; return api_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, api_typeof(o); }
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { api_defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function api_defineProperty(e, r, t) { return (r = api_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function api_toPropertyKey(t) { var i = api_toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
-function api_toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == api_typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(api_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-
-
-var api_defaultOptions = {
-  hostname: 'api.rollbar.com',
-  path: '/api/1/item/',
-  search: null,
-  version: '1',
-  protocol: 'https:',
-  port: 443
-};
-var OTLPDefaultOptions = {
-  hostname: 'api.rollbar.com',
-  path: '/api/1/session/',
-  search: null,
-  version: '1',
-  protocol: 'https:',
-  port: 443
-};
-
-/**
- * Api is an object that encapsulates methods of communicating with
- * the Rollbar API.  It is a standard interface with some parts implemented
- * differently for server or browser contexts.  It is an object that should
- * be instantiated when used so it can contain non-global options that may
- * be different for another instance of RollbarApi.
- *
- * @param options {
- *    accessToken: the accessToken to use for posting items to rollbar
- *    endpoint: an alternative endpoint to send errors to
- *        must be a valid, fully qualified URL.
- *        The default is: https://api.rollbar.com/api/1/item
- *    proxy: if you wish to proxy requests provide an object
- *        with the following keys:
- *          host or hostname (required): foo.example.com
- *          port (optional): 123
- *          protocol (optional): https
- * }
- */
-function Api(options, transport, urllib, truncation) {
-  this.options = options;
-  this.transport = transport;
-  this.url = urllib;
-  this.truncation = truncation;
-  this.accessToken = options.accessToken;
-  this.transportOptions = _getTransport(options, urllib);
-  this.OTLPTransportOptions = _getOTLPTransport(options, urllib);
-}
-
-/**
- * Wraps transport.post in a Promise to support async/await
- *
- * @param {Object} options - Options for the API request
- * @param {string} options.accessToken - The access token for authentication
- * @param {Object} options.transportOptions - Options for the transport
- * @param {Object} options.payload - The data payload to send
- * @returns {Promise} A promise that resolves with the response or rejects with an error
- * @private
- */
-Api.prototype._postPromise = function (_ref) {
-  var accessToken = _ref.accessToken,
-    options = _ref.options,
-    payload = _ref.payload,
-    headers = _ref.headers;
-  var self = this;
-  return new Promise(function (resolve, reject) {
-    self.transport.post({
-      accessToken: accessToken,
-      options: options,
-      payload: payload,
-      headers: headers,
-      callback: function callback(err, resp) {
-        return err ? reject(err) : resolve(resp);
-      }
-    });
-  });
-};
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.postItem = function (data, callback) {
-  var options = apiUtility_transportOptions(this.transportOptions, 'POST');
-  var payload = buildPayload(data);
-  var self = this;
-
-  // ensure the network request is scheduled after the current tick.
-  setTimeout(function () {
-    self.transport.post({
-      accessToken: self.accessToken,
-      options: options,
-      payload: payload,
-      callback: callback
-    });
-  }, 0);
-};
-
-/**
- * Posts spans to the Rollbar API using the session endpoint
- *
- * @param {Array} payload - The spans to send
- * @returns {Promise<Object>} A promise that resolves with the API response
- */
-Api.prototype.postSpans = /*#__PURE__*/function () {
-  var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(payload) {
-    var headers,
-      options,
-      _args = arguments;
-    return _regeneratorRuntime().wrap(function _callee$(_context) {
-      while (1) switch (_context.prev = _context.next) {
-        case 0:
-          headers = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
-          options = apiUtility_transportOptions(this.OTLPTransportOptions, 'POST');
-          _context.next = 4;
-          return this._postPromise({
-            accessToken: this.accessToken,
-            options: options,
-            payload: payload,
-            headers: headers
-          });
-        case 4:
-          return _context.abrupt("return", _context.sent);
-        case 5:
-        case "end":
-          return _context.stop();
-      }
-    }, _callee, this);
-  }));
-  return function (_x) {
-    return _ref2.apply(this, arguments);
-  };
-}();
-
-/**
- *
- * @param data
- * @param callback
- */
-Api.prototype.buildJsonPayload = function (data, callback) {
-  var payload = buildPayload(data);
-  var stringifyResult;
-  if (this.truncation) {
-    stringifyResult = this.truncation.truncate(payload);
-  } else {
-    stringifyResult = stringify(payload);
-  }
-  if (stringifyResult.error) {
-    if (callback) {
-      callback(stringifyResult.error);
-    }
-    return null;
-  }
-  return stringifyResult.value;
-};
-
-/**
- *
- * @param jsonPayload
- * @param callback
- */
-Api.prototype.postJsonPayload = function (jsonPayload, callback) {
-  var transportOptions = apiUtility_transportOptions(this.transportOptions, 'POST');
-  this.transport.postJsonPayload(this.accessToken, transportOptions, jsonPayload, callback);
-};
-Api.prototype.configure = function (options) {
-  var oldOptions = this.oldOptions;
-  this.options = src_merge(oldOptions, options);
-  this.transportOptions = _getTransport(this.options, this.url);
-  this.OTLPTransportOptions = _getOTLPTransport(this.options, this.url);
-  if (this.options.accessToken !== undefined) {
-    this.accessToken = this.options.accessToken;
-  }
-  return this;
-};
-function _getTransport(options, url) {
-  return getTransportFromOptions(options, api_defaultOptions, url);
-}
-function _getOTLPTransport(options, url) {
-  var _options$tracing;
-  options = _objectSpread(_objectSpread({}, options), {}, {
-    endpoint: (_options$tracing = options.tracing) === null || _options$tracing === void 0 ? void 0 : _options$tracing.endpoint
-  });
-  return getTransportFromOptions(options, OTLPDefaultOptions, url);
-}
-/* harmony default export */ const src_api = (Api);
-;// ./src/logger.js
-var _log = function log() {};
-var levels = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-  disable: 4
-};
-var logger = {
-  error: function error() {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-    return _log('error', args);
-  },
-  warn: function warn() {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
-    return _log('warn', args);
-  },
-  info: function info() {
-    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      args[_key3] = arguments[_key3];
-    }
-    return _log('info', args);
-  },
-  debug: function debug() {
-    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-      args[_key4] = arguments[_key4];
-    }
-    return _log('debug', args);
-  },
-  log: function log() {
-    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-      args[_key5] = arguments[_key5];
-    }
-    return _log('info', args);
-  },
-  init: function init(_ref) {
-    var logLevel = _ref.logLevel;
-    _log = function _log(level, args) {
-      if (levels[level] < levels[logLevel]) return;
-      args.unshift('Rollbar:');
-      console[level].apply(console, args);
-    };
-  }
-};
-/* harmony default export */ const src_logger = (logger);
-;// ./src/defaults.js
-/**
- * Default options shared across platforms
- */
-var version = '3.0.0-rc.1';
-var endpoint = 'api.rollbar.com/api/1/item/';
-var logLevel = 'debug';
-var reportLevel = 'debug';
-var uncaughtErrorLevel = 'error';
-var maxItems = 0;
-var itemsPerMin = 60;
-var commonScrubFields = ['pw', 'pass', 'passwd', 'password', 'secret', 'confirm_password', 'confirmPassword', 'password_confirmation', 'passwordConfirmation', 'access_token', 'accessToken', 'X-Rollbar-Access-Token', 'secret_key', 'secretKey', 'secretToken'];
-var apiScrubFields = ['api_key', 'authenticity_token', 'oauth_token', 'token', 'user_session_secret'];
-var requestScrubFields = ['request.session.csrf', 'request.session._csrf', 'request.params._csrf', 'request.cookie', 'request.cookies'];
-var commonScrubHeaders = ['authorization', 'www-authorization', 'http_authorization', 'omniauth.auth', 'cookie', 'oauth-access-token', 'x-access-token', 'x_csrf_token', 'http_x_csrf_token', 'x-csrf-token'];
-
-// For backward compatibility with default export
-/* harmony default export */ const defaults = ({
-  version: version,
-  endpoint: endpoint,
-  logLevel: logLevel,
-  reportLevel: reportLevel,
-  uncaughtErrorLevel: uncaughtErrorLevel,
-  maxItems: maxItems,
-  itemsPerMin: itemsPerMin
-});
-;// ./src/server/defaults.js
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || defaults_unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function defaults_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return defaults_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? defaults_arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return defaults_arrayLikeToArray(r); }
-function defaults_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-/**
- * Default server-side application options
- */
-
-var notifierName = 'node_rollbar';
-var scrubHeaders = commonScrubHeaders;
-var scrubFields = [].concat(_toConsumableArray(commonScrubFields), _toConsumableArray(apiScrubFields), _toConsumableArray(requestScrubFields));
-;// ./src/utility/traverse.js
-
-function traverse(obj, func, seen) {
-  var k, v, i;
-  var isObj = isType(obj, 'object');
-  var isArray = isType(obj, 'array');
-  var keys = [];
-  var seenIndex;
-
-  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
-  seen = seen || {
-    obj: [],
-    mapped: []
-  };
-  if (isObj) {
-    seenIndex = seen.obj.indexOf(obj);
-    if (isObj && seenIndex !== -1) {
-      // Prefer the mapped object if there is one.
-      return seen.mapped[seenIndex] || seen.obj[seenIndex];
-    }
-    seen.obj.push(obj);
-    seenIndex = seen.obj.length - 1;
-  }
-  if (isObj) {
-    for (k in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) {
-        keys.push(k);
-      }
-    }
-  } else if (isArray) {
-    for (i = 0; i < obj.length; ++i) {
-      keys.push(i);
-    }
-  }
-  var result = isObj ? {} : [];
-  var same = true;
-  for (i = 0; i < keys.length; ++i) {
-    k = keys[i];
-    v = obj[k];
-    result[k] = func(k, v, seen);
-    same = same && result[k] === obj[k];
-  }
-  if (isObj && !same) {
-    seen.mapped[seenIndex] = result;
-  }
-  return !same ? result : obj;
-}
-/* harmony default export */ const utility_traverse = (traverse);
-;// ./src/truncation.js
-
-
-function raw(payload, jsonBackup) {
-  return [payload, stringify(payload, jsonBackup)];
-}
-function selectFrames(frames, range) {
-  var len = frames.length;
-  if (len > range * 2) {
-    return frames.slice(0, range).concat(frames.slice(len - range));
-  }
-  return frames;
-}
-function truncateFrames(payload, jsonBackup, range) {
-  range = typeof range === 'undefined' ? 30 : range;
-  var body = payload.data.body;
-  var frames;
-  if (body.trace_chain) {
-    var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      frames = chain[i].frames;
-      frames = selectFrames(frames, range);
-      chain[i].frames = frames;
-    }
-  } else if (body.trace) {
-    frames = body.trace.frames;
-    frames = selectFrames(frames, range);
-    body.trace.frames = frames;
-  }
-  return [payload, stringify(payload, jsonBackup)];
-}
-function maybeTruncateValue(len, val) {
-  if (!val) {
-    return val;
-  }
-  if (val.length > len) {
-    return val.slice(0, len - 3).concat('...');
-  }
-  return val;
-}
-function truncateStrings(len, payload, jsonBackup) {
-  function truncator(k, v, seen) {
-    switch (typeName(v)) {
-      case 'string':
-        return maybeTruncateValue(len, v);
-      case 'object':
-      case 'array':
-        return utility_traverse(v, truncator, seen);
-      default:
-        return v;
-    }
-  }
-  payload = utility_traverse(payload, truncator);
-  return [payload, stringify(payload, jsonBackup)];
-}
-function truncateTraceData(traceData) {
-  if (traceData.exception) {
-    delete traceData.exception.description;
-    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
-  }
-  traceData.frames = selectFrames(traceData.frames, 1);
-  return traceData;
-}
-function minBody(payload, jsonBackup) {
-  var body = payload.data.body;
-  if (body.trace_chain) {
-    var chain = body.trace_chain;
-    for (var i = 0; i < chain.length; i++) {
-      chain[i] = truncateTraceData(chain[i]);
-    }
-  } else if (body.trace) {
-    body.trace = truncateTraceData(body.trace);
-  }
-  return [payload, stringify(payload, jsonBackup)];
-}
-function needsTruncation(payload, maxSize) {
-  return maxByteSize(payload) > maxSize;
-}
-function truncate(payload, jsonBackup, maxSize) {
-  maxSize = typeof maxSize === 'undefined' ? 512 * 1024 : maxSize;
-  var strategies = [raw, truncateFrames, truncateStrings.bind(null, 1024), truncateStrings.bind(null, 512), truncateStrings.bind(null, 256), minBody];
-  var strategy, results, result;
-  while (strategy = strategies.shift()) {
-    results = strategy(payload, jsonBackup);
-    payload = results[0];
-    result = results[1];
-    if (result.error || !needsTruncation(result.value, maxSize)) {
-      return result;
-    }
-  }
-  return result;
-}
-/* harmony default export */ const truncation = ({
-  truncate: truncate,
-  /* for testing */
-  raw: raw,
-  truncateFrames: truncateFrames,
-  truncateStrings: truncateStrings,
-  maybeTruncateValue: maybeTruncateValue
-});
-;// external "http"
-const external_http_namespaceObject = require("http");
-;// external "https"
-const external_https_namespaceObject = require("https");
-;// external "json-stringify-safe"
-const external_json_stringify_safe_namespaceObject = require("json-stringify-safe");
-;// ./src/server/transport.js
-
-
-
-
-
-
-var MAX_RATE_LIMIT_INTERVAL = 60;
-
-/*
- * accessToken may be embedded in payload but that should not be assumed
- *
- * options: {
- *   hostname
- *   protocol
- *   path
- *   port
- *   method
- * }
- *
- * params is an object containing key/value pairs to be
- *    appended to the path as 'key=value&key=value'
- *
- * payload is an unserialized object
- */
-function Transport() {
-  this.rateLimitExpires = 0;
-}
-Transport.prototype.get = function (accessToken, options, params, callback, transportFactory) {
-  var t;
-  if (!callback || !isFunction(callback)) {
-    callback = function callback() {};
-  }
-  options = options || {};
-  addParamsAndAccessTokenToPath(accessToken, options, params);
-  options.headers = _headers(accessToken, options);
-  if (transportFactory) {
-    t = transportFactory(options);
-  } else {
-    t = _transport(options);
-  }
-  if (!t) {
-    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
-    return callback(new Error('Unknown transport'));
-  }
-  var req = t.request(options, function (resp) {
-    this.handleResponse(resp, callback);
-  }.bind(this));
-  req.on('error', function (err) {
-    callback(err);
-  });
-  req.end();
-};
-Transport.prototype.post = function (_ref) {
-  var accessToken = _ref.accessToken,
-    options = _ref.options,
-    payload = _ref.payload,
-    callback = _ref.callback,
-    transportFactory = _ref.transportFactory;
-  var t;
-  if (!callback || !isFunction(callback)) {
-    callback = function callback() {};
-  }
-  if (_currentTime() < this.rateLimitExpires) {
-    return callback(new Error('Exceeded rate limit'));
-  }
-  options = options || {};
-  if (!payload) {
-    return callback(new Error('Cannot send empty request'));
-  }
-  var stringifyResult = truncation.truncate(payload, external_json_stringify_safe_namespaceObject);
-  if (stringifyResult.error) {
-    src_logger.error('Problem stringifying payload. Giving up');
-    return callback(stringifyResult.error);
-  }
-  var writeData = stringifyResult.value;
-  options.headers = _headers(accessToken, options, writeData);
-  if (transportFactory) {
-    t = transportFactory(options);
-  } else {
-    t = _transport(options);
-  }
-  if (!t) {
-    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
-    return callback(new Error('Unknown transport'));
-  }
-  var req = t.request(options, function (resp) {
-    this.handleResponse(resp, _wrapPostCallback(callback));
-  }.bind(this));
-  req.on('error', function (err) {
-    callback(err);
-  });
-  if (writeData) {
-    req.write(writeData);
-  }
-  req.end();
-};
-Transport.prototype.updateRateLimit = function (resp) {
-  var remaining = parseInt(resp.headers['x-rate-limit-remaining'] || 0);
-  var remainingSeconds = Math.min(MAX_RATE_LIMIT_INTERVAL, resp.headers['x-rate-limit-remaining-seconds'] || 0);
-  var currentTime = _currentTime();
-  if (resp.statusCode === 429 && remaining === 0) {
-    this.rateLimitExpires = currentTime + remainingSeconds;
-  } else {
-    this.rateLimitExpires = currentTime;
-  }
-};
-Transport.prototype.handleResponse = function (resp, callback) {
-  this.updateRateLimit(resp);
-  var respData = [];
-  resp.setEncoding('utf8');
-  resp.on('data', function (chunk) {
-    respData.push(chunk);
-  });
-  resp.on('end', function () {
-    respData = respData.join('');
-    _parseApiResponse(respData, callback);
-  });
-};
-
-/** Helpers **/
-
-function _headers(accessToken, options, data) {
-  var headers = options && options.headers || {};
-  headers['Content-Type'] = 'application/json';
-  if (data) {
-    try {
-      headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
-    } catch (e) {
-      src_logger.error('Could not get the content length of the data');
-    }
-  }
-  headers['X-Rollbar-Access-Token'] = accessToken;
-  return headers;
-}
-function _transport(options) {
-  return {
-    'http:': external_http_namespaceObject,
-    'https:': external_https_namespaceObject
-  }[options.protocol];
-}
-function _parseApiResponse(data, callback) {
-  var parsedData = jsonParse(data);
-  if (parsedData.error) {
-    src_logger.error('Could not parse api response, err: ' + parsedData.error);
-    return callback(parsedData.error);
-  }
-  data = parsedData.value;
-  if (data.err) {
-    src_logger.error('Received error: ' + data.message);
-    return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
-  }
-  callback(null, data);
-}
-function _wrapPostCallback(callback) {
-  return function (err, data) {
-    if (err) {
-      return callback(err);
-    }
-    if (data.result && data.result.uuid) {
-      src_logger.log(['Successful api response.', ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid].join(''));
-    } else {
-      src_logger.log('Successful api response');
-    }
-    callback(null, data.result);
-  };
-}
-function _currentTime() {
-  return Math.floor(Date.now() / 1000);
-}
-/* harmony default export */ const server_transport = (Transport);
-;// external "url"
-const external_url_namespaceObject = require("url");
 ;// ./src/telemetry.js
 var _excluded = ["otelAttributes"];
 function telemetry_typeof(o) { "@babel/helpers - typeof"; return telemetry_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, telemetry_typeof(o); }
@@ -2374,7 +2306,7 @@ var Telemeter = /*#__PURE__*/function () {
     var _this$tracing;
     telemetry_classCallCheck(this, Telemeter);
     this.queue = [];
-    this.options = src_merge(options);
+    this.options = merge(options);
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
     this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
     this.tracing = tracing;
@@ -2384,7 +2316,7 @@ var Telemeter = /*#__PURE__*/function () {
     key: "configure",
     value: function configure(options) {
       var oldOptions = this.options;
-      this.options = src_merge(oldOptions, options);
+      this.options = merge(oldOptions, options);
       var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
       var newMaxEvents = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
       var deleteCount = 0;
@@ -2406,7 +2338,7 @@ var Telemeter = /*#__PURE__*/function () {
               events.splice(i, 1);
             }
           }
-        } catch (e) {
+        } catch (_e) {
           this.options.filterTelemetry = null;
         }
       }
@@ -2418,7 +2350,7 @@ var Telemeter = /*#__PURE__*/function () {
 
       // Remove internal keys from output
       events = events.map(function (_ref) {
-        var otelAttributes = _ref.otelAttributes,
+        var _otelAttributes = _ref.otelAttributes,
           event = _objectWithoutProperties(_ref, _excluded);
         return event;
       });
@@ -2441,7 +2373,7 @@ var Telemeter = /*#__PURE__*/function () {
       var e = {
         level: getLevel(type, level),
         type: type,
-        timestamp_ms: timestamp || utility_now(),
+        timestamp_ms: timestamp || now(),
         body: metadata,
         source: 'client'
       };
@@ -2455,7 +2387,7 @@ var Telemeter = /*#__PURE__*/function () {
         if (isFunction(this.options.filterTelemetry) && this.options.filterTelemetry(e)) {
           return false;
         }
-      } catch (exc) {
+      } catch (_exc) {
         this.options.filterTelemetry = null;
       }
       this.push(e);
@@ -2489,25 +2421,16 @@ var Telemeter = /*#__PURE__*/function () {
   }, {
     key: "captureLog",
     value: function captureLog(message, level, rollbarUUID, timestamp) {
-      var otelAttributes = null;
-
-      // If the uuid is present, this is a message occurrence.
-      if (rollbarUUID) {
-        var _this$telemetrySpan2;
-        otelAttributes = {
-          message: message,
-          level: level,
-          type: 'message',
-          uuid: rollbarUUID
-        }, (_this$telemetrySpan2 = this.telemetrySpan) === null || _this$telemetrySpan2 === void 0 ? void 0 : _this$telemetrySpan2.addEvent('rollbar-occurrence-event', otelAttributes, fromMillis(timestamp));
-      } else {
-        var _this$telemetrySpan3;
-        otelAttributes = {
-          message: message,
-          level: level
-        };
-        (_this$telemetrySpan3 = this.telemetrySpan) === null || _this$telemetrySpan3 === void 0 || _this$telemetrySpan3.addEvent('rollbar-log-event', otelAttributes, fromMillis(timestamp));
-      }
+      var _this$telemetrySpan2;
+      var event = rollbarUUID ? 'rollbar-occurrence-event' : 'rollbar-log-event';
+      var otelAttributes = telemetry_objectSpread({
+        message: message,
+        level: level
+      }, rollbarUUID ? {
+        type: 'message',
+        uuid: rollbarUUID
+      } : {});
+      (_this$telemetrySpan2 = this.telemetrySpan) === null || _this$telemetrySpan2 === void 0 || _this$telemetrySpan2.addEvent(event, otelAttributes, fromMillis(timestamp));
       return this.capture('log', {
         message: message
       }, level, rollbarUUID, timestamp, otelAttributes);
@@ -2515,7 +2438,7 @@ var Telemeter = /*#__PURE__*/function () {
   }, {
     key: "captureNetwork",
     value: function captureNetwork(metadata, subtype, rollbarUUID, requestData) {
-      var _metadata$response, _this$telemetrySpan4;
+      var _metadata$response, _metadata$response2, _this$telemetrySpan3;
       subtype = subtype || 'xhr';
       metadata.subtype = metadata.subtype || subtype;
       if (requestData) {
@@ -2532,7 +2455,15 @@ var Telemeter = /*#__PURE__*/function () {
         'response.headers': JSON.stringify(((_metadata$response = metadata.response) === null || _metadata$response === void 0 ? void 0 : _metadata$response.headers) || {}),
         'response.timeUnixNano': endTimeNano.toString()
       };
-      (_this$telemetrySpan4 = this.telemetrySpan) === null || _this$telemetrySpan4 === void 0 || _this$telemetrySpan4.addEvent('rollbar-network-event', otelAttributes, fromMillis(metadata.start_time_ms));
+      var requestBody = metadata.request;
+      var responseBody = (_metadata$response2 = metadata.response) === null || _metadata$response2 === void 0 ? void 0 : _metadata$response2.body;
+      if (requestBody) {
+        otelAttributes['request.body'] = JSON.stringify(requestBody);
+      }
+      if (responseBody) {
+        otelAttributes['response.body'] = JSON.stringify(responseBody);
+      }
+      (_this$telemetrySpan3 = this.telemetrySpan) === null || _this$telemetrySpan3 === void 0 || _this$telemetrySpan3.addEvent('rollbar-network-event', otelAttributes, fromMillis(metadata.start_time_ms));
       return this.capture('network', metadata, level, rollbarUUID, metadata.start_time_ms, otelAttributes);
     }
   }, {
@@ -2564,7 +2495,7 @@ var Telemeter = /*#__PURE__*/function () {
   }, {
     key: "captureInput",
     value: function captureInput(_ref2) {
-      var _this$telemetrySpan5;
+      var _this$telemetrySpan4;
       var type = _ref2.type,
         isSynthetic = _ref2.isSynthetic,
         element = _ref2.element,
@@ -2588,13 +2519,13 @@ var Telemeter = /*#__PURE__*/function () {
       if (event) {
         return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
-      (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan4 = this.telemetrySpan) === null || _this$telemetrySpan4 === void 0 || _this$telemetrySpan4.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
     }
   }, {
     key: "captureClick",
     value: function captureClick(_ref3) {
-      var _this$telemetrySpan6;
+      var _this$telemetrySpan5;
       var type = _ref3.type,
         isSynthetic = _ref3.isSynthetic,
         element = _ref3.element,
@@ -2615,7 +2546,7 @@ var Telemeter = /*#__PURE__*/function () {
       if (event) {
         return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
-      (_this$telemetrySpan6 = this.telemetrySpan) === null || _this$telemetrySpan6 === void 0 || _this$telemetrySpan6.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan5 = this.telemetrySpan) === null || _this$telemetrySpan5 === void 0 || _this$telemetrySpan5.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
     }
   }, {
@@ -2648,7 +2579,7 @@ var Telemeter = /*#__PURE__*/function () {
   }, {
     key: "captureFocus",
     value: function captureFocus(_ref4) {
-      var _this$telemetrySpan7;
+      var _this$telemetrySpan6;
       var type = _ref4.type,
         isSynthetic = _ref4.isSynthetic,
         element = _ref4.element,
@@ -2664,13 +2595,13 @@ var Telemeter = /*#__PURE__*/function () {
         isSynthetic: isSynthetic,
         element: element
       };
-      (_this$telemetrySpan7 = this.telemetrySpan) === null || _this$telemetrySpan7 === void 0 || _this$telemetrySpan7.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan6 = this.telemetrySpan) === null || _this$telemetrySpan6 === void 0 || _this$telemetrySpan6.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
     }
   }, {
     key: "captureResize",
     value: function captureResize(_ref5) {
-      var _this$telemetrySpan8;
+      var _this$telemetrySpan7;
       var type = _ref5.type,
         isSynthetic = _ref5.isSynthetic,
         width = _ref5.width,
@@ -2696,13 +2627,13 @@ var Telemeter = /*#__PURE__*/function () {
       if (event) {
         return this._updateRepeatedEvent(event, otelAttributes, timestamp);
       }
-      (_this$telemetrySpan8 = this.telemetrySpan) === null || _this$telemetrySpan8 === void 0 || _this$telemetrySpan8.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan7 = this.telemetrySpan) === null || _this$telemetrySpan7 === void 0 || _this$telemetrySpan7.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
     }
   }, {
     key: "captureDragDrop",
     value: function captureDragDrop(_ref6) {
-      var _this$telemetrySpan9;
+      var _this$telemetrySpan8;
       var type = _ref6.type,
         isSynthetic = _ref6.isSynthetic,
         element = _ref6.element,
@@ -2749,14 +2680,14 @@ var Telemeter = /*#__PURE__*/function () {
           mediaTypes: mediaTypes
         });
       }
-      (_this$telemetrySpan9 = this.telemetrySpan) === null || _this$telemetrySpan9 === void 0 || _this$telemetrySpan9.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan8 = this.telemetrySpan) === null || _this$telemetrySpan8 === void 0 || _this$telemetrySpan8.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('dom', metadata, 'info', null, timestamp, otelAttributes);
     }
   }, {
     key: "captureNavigation",
     value: function captureNavigation(from, to, rollbarUUID, timestamp) {
-      var _this$telemetrySpan10;
-      (_this$telemetrySpan10 = this.telemetrySpan) === null || _this$telemetrySpan10 === void 0 || _this$telemetrySpan10.addEvent('rollbar-navigation-event', {
+      var _this$telemetrySpan9;
+      (_this$telemetrySpan9 = this.telemetrySpan) === null || _this$telemetrySpan9 === void 0 || _this$telemetrySpan9.addEvent('rollbar-navigation-event', {
         'previous.url.full': from,
         'url.full': to
       }, fromMillis(timestamp));
@@ -2790,7 +2721,7 @@ var Telemeter = /*#__PURE__*/function () {
   }, {
     key: "captureConnectivityChange",
     value: function captureConnectivityChange(_ref7) {
-      var _this$telemetrySpan11;
+      var _this$telemetrySpan0;
       var type = _ref7.type,
         isSynthetic = _ref7.isSynthetic,
         timestamp = _ref7.timestamp;
@@ -2803,7 +2734,7 @@ var Telemeter = /*#__PURE__*/function () {
         type: type,
         isSynthetic: isSynthetic
       };
-      (_this$telemetrySpan11 = this.telemetrySpan) === null || _this$telemetrySpan11 === void 0 || _this$telemetrySpan11.addEvent(name, otelAttributes, fromMillis(timestamp));
+      (_this$telemetrySpan0 = this.telemetrySpan) === null || _this$telemetrySpan0 === void 0 || _this$telemetrySpan0.addEvent(name, otelAttributes, fromMillis(timestamp));
       return this.capture('connectivity', metadata, 'info', null, timestamp, otelAttributes);
     }
 
@@ -2845,6 +2776,332 @@ function getLevel(type, level) {
   return defaultLevel[type] || 'info';
 }
 /* harmony default export */ const telemetry = (Telemeter);
+;// ./src/transforms.js
+
+function itemToPayload(item, options, callback) {
+  if (item._isUncaught) {
+    item.data._isUncaught = true;
+  }
+  if (item._originalArgs) {
+    item.data._originalArgs = item._originalArgs;
+  }
+  callback(null, item);
+}
+function addPayloadOptions(item, options, callback) {
+  var payloadOptions = options.payload || {};
+  if (payloadOptions.body) {
+    delete payloadOptions.body;
+  }
+  item.data = merge(item.data, payloadOptions);
+  callback(null, item);
+}
+function addTelemetryData(item, options, callback) {
+  if (item.telemetryEvents) {
+    set(item, 'data.body.telemetry', item.telemetryEvents);
+  }
+  callback(null, item);
+}
+function addMessageWithError(item, options, callback) {
+  if (!item.message) {
+    callback(null, item);
+    return;
+  }
+  var tracePath = 'data.body.trace_chain.0';
+  var trace = get(item, tracePath);
+  if (!trace) {
+    tracePath = 'data.body.trace';
+    trace = get(item, tracePath);
+  }
+  if (trace) {
+    if (!(trace.exception && trace.exception.description)) {
+      set(item, tracePath + '.exception.description', item.message);
+      callback(null, item);
+      return;
+    }
+    var extra = get(item, tracePath + '.extra') || {};
+    var newExtra = merge(extra, {
+      message: item.message
+    });
+    set(item, tracePath + '.extra', newExtra);
+  }
+  callback(null, item);
+}
+function userTransform(logger) {
+  return function (item, options, callback) {
+    var newItem = merge(item);
+    var response = null;
+    try {
+      if (isFunction(options.transform)) {
+        response = options.transform(newItem.data, item);
+      }
+    } catch (e) {
+      options.transform = null;
+      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
+      callback(null, item);
+      return;
+    }
+    if (isPromise(response)) {
+      response.then(function (promisedItem) {
+        if (promisedItem) {
+          newItem.data = promisedItem;
+        }
+        callback(null, newItem);
+      }, function (error) {
+        callback(error, item);
+      });
+    } else {
+      callback(null, newItem);
+    }
+  };
+}
+function addConfigToPayload(item, options, callback) {
+  if (!options.sendConfig) {
+    return callback(null, item);
+  }
+  var configKey = '_rollbarConfig';
+  var custom = get(item, 'data.custom') || {};
+  custom[configKey] = options;
+  item.data.custom = custom;
+  callback(null, item);
+}
+function addFunctionOption(options, name) {
+  if (isFunction(options[name])) {
+    options[name] = options[name].toString();
+  }
+}
+function addConfiguredOptions(item, options, callback) {
+  var configuredOptions = options._configuredOptions;
+
+  // These must be stringified or they'll get dropped during serialization.
+  addFunctionOption(configuredOptions, 'transform');
+  addFunctionOption(configuredOptions, 'checkIgnore');
+  addFunctionOption(configuredOptions, 'onSendCallback');
+  delete configuredOptions.accessToken;
+  item.data.notifier.configured_options = configuredOptions;
+  callback(null, item);
+}
+function addDiagnosticKeys(item, options, callback) {
+  var diagnostic = merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
+  if (get(item, 'err._isAnonymous')) {
+    diagnostic.is_anonymous = true;
+  }
+  if (item._isUncaught) {
+    diagnostic.is_uncaught = item._isUncaught;
+  }
+  if (item.err) {
+    try {
+      diagnostic.raw_error = {
+        message: item.err.message,
+        name: item.err.name,
+        constructor_name: item.err.constructor && item.err.constructor.name,
+        filename: item.err.fileName,
+        line: item.err.lineNumber,
+        column: item.err.columnNumber,
+        stack: item.err.stack
+      };
+    } catch (e) {
+      diagnostic.raw_error = {
+        failed: String(e)
+      };
+    }
+  }
+  item.data.notifier.diagnostic = merge(item.data.notifier.diagnostic, diagnostic);
+  callback(null, item);
+}
+
+;// ./src/utility/traverse.js
+
+function traverse(obj, func, seen) {
+  var k, v, i;
+  var isObj = isType(obj, 'object');
+  var isArray = isType(obj, 'array');
+  var keys = [];
+  var seenIndex;
+
+  // Best might be to use Map here with `obj` as the keys, but we want to support IE < 11.
+  seen = seen || {
+    obj: [],
+    mapped: []
+  };
+  if (isObj) {
+    seenIndex = seen.obj.indexOf(obj);
+    if (isObj && seenIndex !== -1) {
+      // Prefer the mapped object if there is one.
+      return seen.mapped[seenIndex] || seen.obj[seenIndex];
+    }
+    seen.obj.push(obj);
+    seenIndex = seen.obj.length - 1;
+  }
+  if (isObj) {
+    for (k in obj) {
+      if (hasOwn(obj, k)) {
+        keys.push(k);
+      }
+    }
+  } else if (isArray) {
+    for (i = 0; i < obj.length; ++i) {
+      keys.push(i);
+    }
+  }
+  var result = isObj ? {} : [];
+  var same = true;
+  for (i = 0; i < keys.length; ++i) {
+    k = keys[i];
+    v = obj[k];
+    result[k] = func(k, v, seen);
+    same = same && result[k] === obj[k];
+  }
+  if (isObj && !same) {
+    seen.mapped[seenIndex] = result;
+  }
+  return !same ? result : obj;
+}
+/* harmony default export */ const utility_traverse = (traverse);
+;// ./src/truncation.js
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || truncation_unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function truncation_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = truncation_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function truncation_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return truncation_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? truncation_arrayLikeToArray(r, a) : void 0; } }
+function truncation_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+
+function raw(payload, jsonBackup) {
+  return [payload, stringify(payload, jsonBackup)];
+}
+function selectFrames(frames, range) {
+  var len = frames.length;
+  if (len > range * 2) {
+    return frames.slice(0, range).concat(frames.slice(len - range));
+  }
+  return frames;
+}
+function truncateFrames(payload, jsonBackup, range) {
+  range = typeof range === 'undefined' ? 30 : range;
+  var body = payload.data.body;
+  var frames;
+  if (body.trace_chain) {
+    var chain = body.trace_chain;
+    var _iterator = truncation_createForOfIteratorHelper(chain),
+      _step;
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var trace = _step.value;
+        frames = trace.frames;
+        frames = selectFrames(frames, range);
+        trace.frames = frames;
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+  } else if (body.trace) {
+    frames = body.trace.frames;
+    frames = selectFrames(frames, range);
+    body.trace.frames = frames;
+  }
+  return [payload, stringify(payload, jsonBackup)];
+}
+function maybeTruncateValue(len, val) {
+  if (!val) {
+    return val;
+  }
+  if (val.length > len) {
+    return val.slice(0, len - 3).concat('...');
+  }
+  return val;
+}
+function truncateStrings(len, payload, jsonBackup) {
+  function truncator(k, v, seen) {
+    switch (typeName(v)) {
+      case 'string':
+        return maybeTruncateValue(len, v);
+      case 'object':
+      case 'array':
+        return utility_traverse(v, truncator, seen);
+      default:
+        return v;
+    }
+  }
+  payload = utility_traverse(payload, truncator);
+  return [payload, stringify(payload, jsonBackup)];
+}
+function truncateTraceData(traceData) {
+  if (traceData.exception) {
+    delete traceData.exception.description;
+    traceData.exception.message = maybeTruncateValue(255, traceData.exception.message);
+  }
+  traceData.frames = selectFrames(traceData.frames, 1);
+  return traceData;
+}
+function minBody(payload, jsonBackup) {
+  var body = payload.data.body;
+  if (body.trace_chain) {
+    var chain = body.trace_chain;
+    var _iterator2 = truncation_createForOfIteratorHelper(chain.entries()),
+      _step2;
+    try {
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var _step2$value = _slicedToArray(_step2.value, 2),
+          index = _step2$value[0],
+          trace = _step2$value[1];
+        chain[index] = truncateTraceData(trace);
+      }
+    } catch (err) {
+      _iterator2.e(err);
+    } finally {
+      _iterator2.f();
+    }
+  } else if (body.trace) {
+    body.trace = truncateTraceData(body.trace);
+  }
+  return [payload, stringify(payload, jsonBackup)];
+}
+function needsTruncation(payload, maxSize) {
+  return maxByteSize(payload) > maxSize;
+}
+function truncate(payload, jsonBackup, maxSize) {
+  maxSize = typeof maxSize === 'undefined' ? 512 * 1024 : maxSize;
+  var strategies = [raw, truncateFrames, truncateStrings.bind(null, 1024), truncateStrings.bind(null, 512), truncateStrings.bind(null, 256), minBody];
+  var strategy, results, result;
+  while (strategy = strategies.shift()) {
+    results = strategy(payload, jsonBackup);
+    payload = results[0];
+    result = results[1];
+    if (result.error || !needsTruncation(result.value, maxSize)) {
+      return result;
+    }
+  }
+  return result;
+}
+/* harmony default export */ const truncation = ({
+  truncate: truncate,
+  /* for testing */
+  raw: raw,
+  truncateFrames: truncateFrames,
+  truncateStrings: truncateStrings,
+  maybeTruncateValue: maybeTruncateValue
+});
+;// ./src/server/defaults.js
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || defaults_unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function defaults_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return defaults_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? defaults_arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return defaults_arrayLikeToArray(r); }
+function defaults_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+/**
+ * Default server-side application options
+ */
+
+var notifierName = 'node_rollbar';
+var scrubHeaders = commonScrubHeaders;
+var scrubFields = [].concat(_toConsumableArray(commonScrubFields), _toConsumableArray(apiScrubFields), _toConsumableArray(requestScrubFields));
+;// external "http"
+const external_http_namespaceObject = require("http");
+;// external "https"
+const external_https_namespaceObject = require("https");
 ;// ./src/utility/replace.js
 function replace(obj, name, replacement, replacements, type) {
   var orig = obj[name];
@@ -2880,7 +3137,7 @@ function mergeOptions(input, options, cb) {
     cb = options;
     options = input || {};
   } else {
-    options = src_merge(input || {}, options);
+    options = merge(input || {}, options);
   }
   return {
     options: options,
@@ -2947,7 +3204,7 @@ function Instrumenter(options, telemeter, rollbar) {
     if (!isType(autoInstrument, 'object')) {
       autoInstrument = telemetry_defaults;
     }
-    this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
+    this.autoInstrument = merge(telemetry_defaults, autoInstrument);
   }
   this.telemeter = telemeter;
   this.rollbar = rollbar;
@@ -2958,16 +3215,16 @@ function Instrumenter(options, telemeter, rollbar) {
   };
 }
 Instrumenter.prototype.configure = function (options) {
-  this.options = src_merge(this.options, options);
+  this.options = merge(this.options, options);
   var autoInstrument = options.autoInstrument;
-  var oldSettings = src_merge(this.autoInstrument);
+  var oldSettings = merge(this.autoInstrument);
   if (options.enabled === false || autoInstrument === false) {
     this.autoInstrument = {};
   } else {
     if (!isType(autoInstrument, 'object')) {
       autoInstrument = telemetry_defaults;
     }
-    this.autoInstrument = src_merge(telemetry_defaults, autoInstrument);
+    this.autoInstrument = merge(telemetry_defaults, autoInstrument);
   }
   this.instrument(oldSettings);
 };
@@ -2991,30 +3248,33 @@ Instrumenter.prototype.instrumentNetwork = function () {
   utility_replace(external_https_namespaceObject, 'request', networkRequestWrapper.bind(this), this.replacements, 'network');
 };
 function networkRequestWrapper(orig) {
+  var _this = this;
   var telemeter = this.telemeter;
-  var self = this;
-  return function (url, options, cb) {
+  return function () {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+    var url = args[0],
+      options = args[1],
+      cb = args[2];
     var mergedOptions = mergeOptions(url, options, cb);
     var metadata = {
       method: mergedOptions.options.method || 'GET',
       url: constructUrl(mergedOptions.options),
       status_code: null,
-      start_time_ms: utility_now(),
+      start_time_ms: now(),
       end_time_ms: null
     };
-    if (self.autoInstrument.networkRequestHeaders) {
+    if (_this.autoInstrument.networkRequestHeaders) {
       metadata.request_headers = mergedOptions.options.headers;
     }
     telemeter.captureNetwork(metadata, 'http');
-
-    // Call the original method with the original arguments and wrapped callback.
-    var wrappedArgs = Array.from(arguments);
-    var wrappedCallback = responseCallbackWrapper(self.autoInstrument, metadata, mergedOptions.cb);
+    var wrappedCallback = responseCallbackWrapper(_this.autoInstrument, metadata, mergedOptions.cb);
     if (mergedOptions.cb) {
-      wrappedArgs.pop();
+      args.pop();
     }
-    wrappedArgs.push(wrappedCallback);
-    var req = orig.apply(external_https_namespaceObject, wrappedArgs);
+    args.push(wrappedCallback);
+    var req = orig.apply(external_https_namespaceObject, args);
     req.on('error', function (err) {
       metadata.status_code = 0;
       metadata.error = [err.name, err.message].join(': ');
@@ -3024,7 +3284,7 @@ function networkRequestWrapper(orig) {
 }
 function responseCallbackWrapper(options, metadata, callback) {
   return function (res) {
-    metadata.end_time_ms = utility_now();
+    metadata.end_time_ms = now();
     metadata.status_code = res.statusCode;
     metadata.response = {};
     if (options.networkResponseHeaders) {
@@ -3068,14 +3328,156 @@ function restore(replacements, type) {
 /* harmony default export */ const server_telemetry = (Instrumenter);
 ;// external "async"
 const external_async_namespaceObject = require("async");
+;// external "request-ip"
+const external_request_ip_namespaceObject = require("request-ip");
+;// ./src/scrub.js
+function scrub_slicedToArray(r, e) { return scrub_arrayWithHoles(r) || scrub_iterableToArrayLimit(r, e) || scrub_unsupportedIterableToArray(r, e) || scrub_nonIterableRest(); }
+function scrub_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function scrub_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function scrub_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function scrub_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = scrub_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function scrub_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return scrub_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? scrub_arrayLikeToArray(r, a) : void 0; } }
+function scrub_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+
+function scrub(data, scrubFields, scrubPaths) {
+  scrubFields = scrubFields || [];
+  if (scrubPaths) {
+    var _iterator = scrub_createForOfIteratorHelper(scrubPaths),
+      _step;
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var path = _step.value;
+        scrubPath(data, path);
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+  }
+  var paramRes = _getScrubFieldRegexs(scrubFields);
+  var queryRes = _getScrubQueryParamRegexs(scrubFields);
+  function redactQueryParam(dummy0, paramPart) {
+    return paramPart + redact();
+  }
+  function paramScrubber(v) {
+    if (isType(v, 'string')) {
+      var _iterator2 = scrub_createForOfIteratorHelper(queryRes),
+        _step2;
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var regex = _step2.value;
+          v = v.replace(regex, redactQueryParam);
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+    }
+    return v;
+  }
+  function valScrubber(k, v) {
+    var _iterator3 = scrub_createForOfIteratorHelper(paramRes),
+      _step3;
+    try {
+      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+        var regex = _step3.value;
+        if (regex.test(k)) {
+          v = redact();
+          break;
+        }
+      }
+    } catch (err) {
+      _iterator3.e(err);
+    } finally {
+      _iterator3.f();
+    }
+    return v;
+  }
+  function scrubber(k, v, seen) {
+    var tmpV = valScrubber(k, v);
+    if (tmpV === v) {
+      if (isType(v, 'object') || isType(v, 'array')) {
+        return utility_traverse(v, scrubber, seen);
+      }
+      return paramScrubber(tmpV);
+    } else {
+      return tmpV;
+    }
+  }
+  return utility_traverse(data, scrubber);
+}
+function scrubPath(obj, path) {
+  var keys = path.split('.');
+  var last = keys.length - 1;
+  try {
+    var _iterator4 = scrub_createForOfIteratorHelper(keys.entries()),
+      _step4;
+    try {
+      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+        var _step4$value = scrub_slicedToArray(_step4.value, 2),
+          index = _step4$value[0],
+          key = _step4$value[1];
+        if (index < last) {
+          obj = obj[key];
+        } else {
+          obj[key] = redact();
+        }
+      }
+    } catch (err) {
+      _iterator4.e(err);
+    } finally {
+      _iterator4.f();
+    }
+  } catch (_e) {
+    // Missing key is OK;
+  }
+}
+function _getScrubFieldRegexs(scrubFields) {
+  var ret = [];
+  var _iterator5 = scrub_createForOfIteratorHelper(scrubFields),
+    _step5;
+  try {
+    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+      var field = _step5.value;
+      var pat = '^\\[?(%5[bB])?' + field + '\\[?(%5[bB])?\\]?(%5[dD])?$';
+      ret.push(new RegExp(pat, 'i'));
+    }
+  } catch (err) {
+    _iterator5.e(err);
+  } finally {
+    _iterator5.f();
+  }
+  return ret;
+}
+function _getScrubQueryParamRegexs(scrubFields) {
+  var ret = [];
+  var _iterator6 = scrub_createForOfIteratorHelper(scrubFields),
+    _step6;
+  try {
+    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+      var field = _step6.value;
+      var pat = '\\[?(%5[bB])?' + field + '\\[?(%5[bB])?\\]?(%5[dD])?';
+      ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
+    }
+  } catch (err) {
+    _iterator6.e(err);
+  } finally {
+    _iterator6.f();
+  }
+  return ret;
+}
+/* harmony default export */ const src_scrub = (scrub);
 ;// external "fs"
 const external_fs_namespaceObject = require("fs");
 ;// external "lru-cache"
 const external_lru_cache_namespaceObject = require("lru-cache");
-;// external "source-map"
-const external_source_map_namespaceObject = require("source-map");
 ;// external "path"
 const external_path_namespaceObject = require("path");
+;// external "source-map"
+const external_source_map_namespaceObject = require("source-map");
 ;// ./src/server/sourceMap/stackTrace.js
 
 
@@ -3122,7 +3524,7 @@ function retrieveFile(path) {
     if (external_fs_namespaceObject.existsSync(path)) {
       contents = external_fs_namespaceObject.readFileSync(path, 'utf8');
     }
-  } catch (er) {
+  } catch (_er) {
     /* ignore any errors */
   }
   return fileContentsCache[path] = contents;
@@ -3133,10 +3535,10 @@ function retrieveFile(path) {
 function supportRelativeURL(file, url) {
   if (!file) return url;
   var dir = external_path_namespaceObject.dirname(file);
-  var match = /^\w+:\/\/[^\/]*/.exec(dir);
+  var match = /^\w+:\/\/[^/]*/.exec(dir);
   var protocol = match ? match[0] : '';
   var startPath = dir.slice(protocol.length);
-  if (protocol && /^\/\w\:/.test(startPath)) {
+  if (protocol && /^\/\w:/.test(startPath)) {
     // handle file:///C:/ paths
     protocol += '/';
     return protocol + external_path_namespaceObject.resolve(dir.slice(protocol.length), url).replace(/\\/g, '/');
@@ -3148,7 +3550,7 @@ function retrieveSourceMapURL(source) {
 
   // Get the URL of the source map
   fileData = retrieveFile(source);
-  var re = /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
+  var re = /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^*]+?)[ \t]*(?:\*\/)[ \t]*$)/gm;
   // Keep executing the search to find the *last* sourceMappingURL to avoid
   // picking up sourceMappingURLs from comments, strings, etc.
   var lastMatch, match;
@@ -3394,8 +3796,8 @@ function parseFrameLine(line, callback) {
 function shouldReadFrameFile(frameFilename, callback) {
   var isValidFilename, isCached, isPending;
   isValidFilename = frameFilename[0] === '/' || frameFilename[0] === '.';
-  isCached = !!cache.get(frameFilename);
-  isPending = !!pendingReads[frameFilename];
+  isCached = Boolean(cache.get(frameFilename));
+  isPending = Boolean(pendingReads[frameFilename]);
   callback(null, isValidFilename && !isCached && !isPending);
 }
 function readFileLines(filename, callback) {
@@ -3555,96 +3957,13 @@ function parseStack(stack, options, item, callback) {
     }
     frames.reverse();
     external_async_namespaceObject.filter(frames, function (frame, callback) {
-      callback(null, !!frame);
+      callback(null, Boolean(frame));
     }, function (err, results) {
       if (err) return callback(err);
       gatherContexts(results, callback);
     });
   });
 }
-;// external "request-ip"
-const external_request_ip_namespaceObject = require("request-ip");
-;// ./src/scrub.js
-
-
-function scrub(data, scrubFields, scrubPaths) {
-  scrubFields = scrubFields || [];
-  if (scrubPaths) {
-    for (var i = 0; i < scrubPaths.length; ++i) {
-      scrubPath(data, scrubPaths[i]);
-    }
-  }
-  var paramRes = _getScrubFieldRegexs(scrubFields);
-  var queryRes = _getScrubQueryParamRegexs(scrubFields);
-  function redactQueryParam(dummy0, paramPart) {
-    return paramPart + redact();
-  }
-  function paramScrubber(v) {
-    var i;
-    if (isType(v, 'string')) {
-      for (i = 0; i < queryRes.length; ++i) {
-        v = v.replace(queryRes[i], redactQueryParam);
-      }
-    }
-    return v;
-  }
-  function valScrubber(k, v) {
-    var i;
-    for (i = 0; i < paramRes.length; ++i) {
-      if (paramRes[i].test(k)) {
-        v = redact();
-        break;
-      }
-    }
-    return v;
-  }
-  function scrubber(k, v, seen) {
-    var tmpV = valScrubber(k, v);
-    if (tmpV === v) {
-      if (isType(v, 'object') || isType(v, 'array')) {
-        return utility_traverse(v, scrubber, seen);
-      }
-      return paramScrubber(tmpV);
-    } else {
-      return tmpV;
-    }
-  }
-  return utility_traverse(data, scrubber);
-}
-function scrubPath(obj, path) {
-  var keys = path.split('.');
-  var last = keys.length - 1;
-  try {
-    for (var i = 0; i <= last; ++i) {
-      if (i < last) {
-        obj = obj[keys[i]];
-      } else {
-        obj[keys[i]] = redact();
-      }
-    }
-  } catch (e) {
-    // Missing key is OK;
-  }
-}
-function _getScrubFieldRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '^\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?$';
-    ret.push(new RegExp(pat, 'i'));
-  }
-  return ret;
-}
-function _getScrubQueryParamRegexs(scrubFields) {
-  var ret = [];
-  var pat;
-  for (var i = 0; i < scrubFields.length; ++i) {
-    pat = '\\[?(%5[bB])?' + scrubFields[i] + '\\[?(%5[bB])?\\]?(%5[dD])?';
-    ret.push(new RegExp('(' + pat + '=)([^&\\n]+)', 'igm'));
-  }
-  return ret;
-}
-/* harmony default export */ const src_scrub = (scrub);
 ;// ./src/server/transforms.js
 
 
@@ -3653,6 +3972,7 @@ function _getScrubQueryParamRegexs(scrubFields) {
 
 
 function baseData(item, options, callback) {
+  var _item$data;
   var environment = options.payload && options.payload.environment || options.environment;
   var data = {
     timestamp: Math.round(item.timestamp / 1000),
@@ -3662,7 +3982,8 @@ function baseData(item, options, callback) {
     framework: item.framework || options.framework,
     uuid: item.uuid,
     notifier: JSON.parse(JSON.stringify(options.notifier)),
-    custom: item.custom
+    custom: item.custom,
+    attributes: (_item$data = item.data) === null || _item$data === void 0 ? void 0 : _item$data.attributes
   };
   if (options.codeVersion) {
     data.code_version = options.codeVersion;
@@ -3671,7 +3992,7 @@ function baseData(item, options, callback) {
   }
   var props = Object.getOwnPropertyNames(item.custom || {});
   props.forEach(function (name) {
-    if (!data.hasOwnProperty(name)) {
+    if (!hasOwn(data, name)) {
       data[name] = item.custom[name];
     }
   });
@@ -3762,7 +4083,7 @@ function addRequestData(item, options, callback) {
     try {
       routePath = req.app._router.matchRequest(req).path;
       item.data.context = baseUrl && baseUrl.length ? baseUrl + routePath : routePath;
-    } catch (ignore) {
+    } catch (_ignore) {
       // Ignored
     }
   }
@@ -3912,7 +4233,7 @@ function _buildRequestData(req) {
     var bodyParams = {};
     if (isIterable(body)) {
       for (var k in body) {
-        if (Object.prototype.hasOwnProperty.call(body, k)) {
+        if (hasOwn(body, k)) {
           bodyParams[k] = body[k];
         }
       }
@@ -3924,305 +4245,177 @@ function _buildRequestData(req) {
   return data;
 }
 
-;// ./src/transforms.js
+;// ./src/server/transport.js
 
-function itemToPayload(item, options, callback) {
-  if (item._isUncaught) {
-    item.data._isUncaught = true;
-  }
-  if (item._originalArgs) {
-    item.data._originalArgs = item._originalArgs;
-  }
-  callback(null, item);
+
+
+
+
+
+var MAX_RATE_LIMIT_INTERVAL = 60;
+
+/*
+ * accessToken may be embedded in payload but that should not be assumed
+ *
+ * options: {
+ *   hostname
+ *   protocol
+ *   path
+ *   port
+ *   method
+ * }
+ *
+ * params is an object containing key/value pairs to be
+ *    appended to the path as 'key=value&key=value'
+ *
+ * payload is an unserialized object
+ */
+function Transport() {
+  this.rateLimitExpires = 0;
 }
-function addPayloadOptions(item, options, callback) {
-  var payloadOptions = options.payload || {};
-  if (payloadOptions.body) {
-    delete payloadOptions.body;
+Transport.prototype.get = function (accessToken, options, params, callback, transportFactory) {
+  var t;
+  if (!callback || !isFunction(callback)) {
+    callback = function callback() {};
   }
-  item.data = src_merge(item.data, payloadOptions);
-  callback(null, item);
-}
-function addTelemetryData(item, options, callback) {
-  if (item.telemetryEvents) {
-    set(item, 'data.body.telemetry', item.telemetryEvents);
+  options = options || {};
+  addParamsAndAccessTokenToPath(accessToken, options, params);
+  options.headers = _headers(accessToken, options);
+  if (transportFactory) {
+    t = transportFactory(options);
+  } else {
+    t = _transport(options);
   }
-  callback(null, item);
-}
-function addMessageWithError(item, options, callback) {
-  if (!item.message) {
-    callback(null, item);
-    return;
+  if (!t) {
+    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    return callback(new Error('Unknown transport'));
   }
-  var tracePath = 'data.body.trace_chain.0';
-  var trace = get(item, tracePath);
-  if (!trace) {
-    tracePath = 'data.body.trace';
-    trace = get(item, tracePath);
+  var req = t.request(options, function (resp) {
+    this.handleResponse(resp, callback);
+  }.bind(this));
+  req.on('error', function (err) {
+    callback(err);
+  });
+  req.end();
+};
+Transport.prototype.post = function (_ref) {
+  var accessToken = _ref.accessToken,
+    options = _ref.options,
+    payload = _ref.payload,
+    callback = _ref.callback,
+    transportFactory = _ref.transportFactory;
+  var t;
+  if (!callback || !isFunction(callback)) {
+    callback = function callback() {};
   }
-  if (trace) {
-    if (!(trace.exception && trace.exception.description)) {
-      set(item, tracePath + '.exception.description', item.message);
-      callback(null, item);
-      return;
-    }
-    var extra = get(item, tracePath + '.extra') || {};
-    var newExtra = src_merge(extra, {
-      message: item.message
-    });
-    set(item, tracePath + '.extra', newExtra);
+  if (_currentTime() < this.rateLimitExpires) {
+    return callback(new Error('Exceeded rate limit'));
   }
-  callback(null, item);
-}
-function userTransform(logger) {
-  return function (item, options, callback) {
-    var newItem = src_merge(item);
-    var response = null;
+  options = options || {};
+  if (!payload) {
+    return callback(new Error('Cannot send empty request'));
+  }
+  var stringifyResult = truncation.truncate(payload, external_json_stringify_safe_namespaceObject);
+  if (stringifyResult.error) {
+    src_logger.error('Problem stringifying payload. Giving up');
+    return callback(stringifyResult.error);
+  }
+  var writeData = stringifyResult.value;
+  options.headers = _headers(accessToken, options, writeData);
+  if (transportFactory) {
+    t = transportFactory(options);
+  } else {
+    t = _transport(options);
+  }
+  if (!t) {
+    src_logger.error('Unknown transport based on given protocol: ' + options.protocol);
+    return callback(new Error('Unknown transport'));
+  }
+  var req = t.request(options, function (resp) {
+    this.handleResponse(resp, _wrapPostCallback(callback));
+  }.bind(this));
+  req.on('error', function (err) {
+    callback(err);
+  });
+  if (writeData) {
+    req.write(writeData);
+  }
+  req.end();
+};
+Transport.prototype.updateRateLimit = function (resp) {
+  var remaining = parseInt(resp.headers['x-rate-limit-remaining'] || 0);
+  var remainingSeconds = Math.min(MAX_RATE_LIMIT_INTERVAL, resp.headers['x-rate-limit-remaining-seconds'] || 0);
+  var currentTime = _currentTime();
+  if (resp.statusCode === 429 && remaining === 0) {
+    this.rateLimitExpires = currentTime + remainingSeconds;
+  } else {
+    this.rateLimitExpires = currentTime;
+  }
+};
+Transport.prototype.handleResponse = function (resp, callback) {
+  this.updateRateLimit(resp);
+  var respData = [];
+  resp.setEncoding('utf8');
+  resp.on('data', function (chunk) {
+    respData.push(chunk);
+  });
+  resp.on('end', function () {
+    respData = respData.join('');
+    _parseApiResponse(respData, callback);
+  });
+};
+
+/** Helpers **/
+
+function _headers(accessToken, options, data) {
+  var headers = options && options.headers || {};
+  headers['Content-Type'] = 'application/json';
+  if (data) {
     try {
-      if (isFunction(options.transform)) {
-        response = options.transform(newItem.data, item);
-      }
-    } catch (e) {
-      options.transform = null;
-      logger.error('Error while calling custom transform() function. Removing custom transform().', e);
-      callback(null, item);
-      return;
+      headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
+    } catch (_e) {
+      src_logger.error('Could not get the content length of the data');
     }
-    if (isPromise(response)) {
-      response.then(function (promisedItem) {
-        if (promisedItem) {
-          newItem.data = promisedItem;
-        }
-        callback(null, newItem);
-      }, function (error) {
-        callback(error, item);
-      });
+  }
+  headers['X-Rollbar-Access-Token'] = accessToken;
+  return headers;
+}
+function _transport(options) {
+  return {
+    'http:': external_http_namespaceObject,
+    'https:': external_https_namespaceObject
+  }[options.protocol];
+}
+function _parseApiResponse(data, callback) {
+  var parsedData = jsonParse(data);
+  if (parsedData.error) {
+    src_logger.error('Could not parse api response, err: ' + parsedData.error);
+    return callback(parsedData.error);
+  }
+  data = parsedData.value;
+  if (data.err) {
+    src_logger.error('Received error: ' + data.message);
+    return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
+  }
+  callback(null, data);
+}
+function _wrapPostCallback(callback) {
+  return function (err, data) {
+    if (err) {
+      return callback(err);
+    }
+    if (data.result && data.result.uuid) {
+      src_logger.log(['Successful api response.', ' Link: https://rollbar.com/occurrence/uuid/?uuid=' + data.result.uuid].join(''));
     } else {
-      callback(null, newItem);
+      src_logger.log('Successful api response');
     }
+    callback(null, data.result);
   };
 }
-function addConfigToPayload(item, options, callback) {
-  if (!options.sendConfig) {
-    return callback(null, item);
-  }
-  var configKey = '_rollbarConfig';
-  var custom = get(item, 'data.custom') || {};
-  custom[configKey] = options;
-  item.data.custom = custom;
-  callback(null, item);
+function _currentTime() {
+  return Math.floor(Date.now() / 1000);
 }
-function addFunctionOption(options, name) {
-  if (isFunction(options[name])) {
-    options[name] = options[name].toString();
-  }
-}
-function addConfiguredOptions(item, options, callback) {
-  var configuredOptions = options._configuredOptions;
-
-  // These must be stringified or they'll get dropped during serialization.
-  addFunctionOption(configuredOptions, 'transform');
-  addFunctionOption(configuredOptions, 'checkIgnore');
-  addFunctionOption(configuredOptions, 'onSendCallback');
-  delete configuredOptions.accessToken;
-  item.data.notifier.configured_options = configuredOptions;
-  callback(null, item);
-}
-function addDiagnosticKeys(item, options, callback) {
-  var diagnostic = src_merge(item.notifier.client.notifier.diagnostic, item.diagnostic);
-  if (get(item, 'err._isAnonymous')) {
-    diagnostic.is_anonymous = true;
-  }
-  if (item._isUncaught) {
-    diagnostic.is_uncaught = item._isUncaught;
-  }
-  if (item.err) {
-    try {
-      diagnostic.raw_error = {
-        message: item.err.message,
-        name: item.err.name,
-        constructor_name: item.err.constructor && item.err.constructor.name,
-        filename: item.err.fileName,
-        line: item.err.lineNumber,
-        column: item.err.columnNumber,
-        stack: item.err.stack
-      };
-    } catch (e) {
-      diagnostic.raw_error = {
-        failed: String(e)
-      };
-    }
-  }
-  item.data.notifier.diagnostic = src_merge(item.data.notifier.diagnostic, diagnostic);
-  callback(null, item);
-}
-
-;// ./src/predicates.js
-
-function checkLevel(item, settings) {
-  var level = item.level;
-  var levelVal = LEVELS[level] || 0;
-  var reportLevel = settings.reportLevel;
-  var reportLevelVal = LEVELS[reportLevel] || 0;
-  if (levelVal < reportLevelVal) {
-    return false;
-  }
-  return true;
-}
-function userCheckIgnore(logger) {
-  return function (item, settings) {
-    var isUncaught = !!item._isUncaught;
-    delete item._isUncaught;
-    var args = item._originalArgs;
-    delete item._originalArgs;
-    try {
-      if (isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
-      }
-    } catch (e) {
-      settings.onSendCallback = null;
-      logger.error('Error while calling onSendCallback, removing', e);
-    }
-    try {
-      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
-        return false;
-      }
-    } catch (e) {
-      settings.checkIgnore = null;
-      logger.error('Error while calling custom checkIgnore(), removing', e);
-    }
-    return true;
-  };
-}
-function urlIsNotBlockListed(logger) {
-  return function (item, settings) {
-    return !urlIsOnAList(item, settings, 'blocklist', logger);
-  };
-}
-function urlIsSafeListed(logger) {
-  return function (item, settings) {
-    return urlIsOnAList(item, settings, 'safelist', logger);
-  };
-}
-function matchFrames(trace, list, block) {
-  if (!trace) {
-    return !block;
-  }
-  var frames = trace.frames;
-  if (!frames || frames.length === 0) {
-    return !block;
-  }
-  var frame, filename, url, urlRegex;
-  var listLength = list.length;
-  var frameLength = frames.length;
-  for (var i = 0; i < frameLength; i++) {
-    frame = frames[i];
-    filename = frame.filename;
-    if (!isType(filename, 'string')) {
-      return !block;
-    }
-    for (var j = 0; j < listLength; j++) {
-      url = list[j];
-      urlRegex = new RegExp(url);
-      if (urlRegex.test(filename)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-function urlIsOnAList(item, settings, safeOrBlock, logger) {
-  // safelist is the default
-  var block = false;
-  if (safeOrBlock === 'blocklist') {
-    block = true;
-  }
-  var list, traces;
-  try {
-    list = block ? settings.hostBlockList : settings.hostSafeList;
-    traces = get(item, 'body.trace_chain') || [get(item, 'body.trace')];
-
-    // These two checks are important to come first as they are defaults
-    // in case the list is missing or the trace is missing or not well-formed
-    if (!list || list.length === 0) {
-      return !block;
-    }
-    if (traces.length === 0 || !traces[0]) {
-      return !block;
-    }
-    var tracesLength = traces.length;
-    for (var i = 0; i < tracesLength; i++) {
-      if (matchFrames(traces[i], list, block)) {
-        return true;
-      }
-    }
-  } catch (e
-  /* istanbul ignore next */) {
-    if (block) {
-      settings.hostBlockList = null;
-    } else {
-      settings.hostSafeList = null;
-    }
-    var listName = block ? 'hostBlockList' : 'hostSafeList';
-    logger.error("Error while reading your configuration's " + listName + ' option. Removing custom ' + listName + '.', e);
-    return !block;
-  }
-  return false;
-}
-function messageIsIgnored(logger) {
-  return function (item, settings) {
-    var i, j, ignoredMessages, len, messageIsIgnored, rIgnoredMessage, messages;
-    try {
-      messageIsIgnored = false;
-      ignoredMessages = settings.ignoredMessages;
-      if (!ignoredMessages || ignoredMessages.length === 0) {
-        return true;
-      }
-      messages = messagesFromItem(item);
-      if (messages.length === 0) {
-        return true;
-      }
-      len = ignoredMessages.length;
-      for (i = 0; i < len; i++) {
-        rIgnoredMessage = new RegExp(ignoredMessages[i], 'gi');
-        for (j = 0; j < messages.length; j++) {
-          messageIsIgnored = rIgnoredMessage.test(messages[j]);
-          if (messageIsIgnored) {
-            return false;
-          }
-        }
-      }
-    } catch (e
-    /* istanbul ignore next */) {
-      settings.ignoredMessages = null;
-      logger.error("Error while reading your configuration's ignoredMessages option. Removing custom ignoredMessages.");
-    }
-    return true;
-  };
-}
-function messagesFromItem(item) {
-  var body = item.body;
-  var messages = [];
-
-  // The payload schema only allows one of trace_chain, message, or trace.
-  // However, existing test cases are based on having both trace and message present.
-  // So here we preserve the ability to collect strings from any combination of these keys.
-  if (body.trace_chain) {
-    var traceChain = body.trace_chain;
-    for (var i = 0; i < traceChain.length; i++) {
-      var trace = traceChain[i];
-      messages.push(get(trace, 'exception.message'));
-    }
-  }
-  if (body.trace) {
-    messages.push(get(body, 'trace.exception.message'));
-  }
-  if (body.message) {
-    messages.push(get(body, 'message.body'));
-  }
-  return messages;
-}
-
+/* harmony default export */ const server_transport = (Transport);
 ;// ./src/server/rollbar.js
 
 
@@ -4551,69 +4744,70 @@ rollbar_Rollbar.prototype.lambdaHandler = function (handler, timeoutHandler) {
   return this.syncLambdaHandler(handler, timeoutHandler);
 };
 rollbar_Rollbar.prototype.asyncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
+  var _this = this;
   var _timeoutHandler = function _timeoutHandler(event, context) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId
     };
-    self.error(message, custom);
+    _this.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
-  return function rollbarAsyncLambdaHandler(event, context) {
+  var shouldReportTimeouts = this.options.captureLambdaTimeouts;
+  var rollbarAsyncLambdaHandler = function rollbarAsyncLambdaHandler(event, context) {
     return new Promise(function (resolve, reject) {
-      self.lambdaContext = context;
+      _this.lambdaContext = context;
       if (shouldReportTimeouts) {
         var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context);
-        self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+        _this.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
       }
       handler(event, context).then(function (resp) {
-        self.wait(function () {
-          clearTimeout(self.lambdaTimeoutHandle);
+        _this.wait(function () {
+          clearTimeout(_this.lambdaTimeoutHandle);
           resolve(resp);
         });
       }).catch(function (err) {
-        self.error(err);
-        self.wait(function () {
-          clearTimeout(self.lambdaTimeoutHandle);
+        _this.error(err);
+        _this.wait(function () {
+          clearTimeout(_this.lambdaTimeoutHandle);
           reject(err);
         });
       });
     });
   };
+  return rollbarAsyncLambdaHandler;
 };
 rollbar_Rollbar.prototype.syncLambdaHandler = function (handler, timeoutHandler) {
-  var self = this;
+  var _this2 = this;
   var _timeoutHandler = function _timeoutHandler(event, context, _cb) {
     var message = 'Function timed out';
     var custom = {
       originalEvent: event,
       originalRequestId: context.awsRequestId
     };
-    self.error(message, custom);
+    _this2.error(message, custom);
   };
-  var shouldReportTimeouts = self.options.captureLambdaTimeouts;
+  var shouldReportTimeouts = this.options.captureLambdaTimeouts;
   return function (event, context, callback) {
-    self.lambdaContext = context;
+    _this2.lambdaContext = context;
     if (shouldReportTimeouts) {
       var timeoutCb = (timeoutHandler || _timeoutHandler).bind(null, event, context, callback);
-      self.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
+      _this2.lambdaTimeoutHandle = setTimeout(timeoutCb, context.getRemainingTimeInMillis() - 1000);
     }
     try {
       handler(event, context, function (err, resp) {
         if (err) {
-          self.error(err);
+          _this2.error(err);
         }
-        self.wait(function () {
-          clearTimeout(self.lambdaTimeoutHandle);
+        _this2.wait(function () {
+          clearTimeout(_this2.lambdaTimeoutHandle);
           callback(err, resp);
         });
       });
     } catch (err) {
-      self.error(err);
-      self.wait(function () {
-        clearTimeout(self.lambdaTimeoutHandle);
+      _this2.error(err);
+      _this2.wait(function () {
+        clearTimeout(_this2.lambdaTimeoutHandle);
         throw err;
       });
     }
@@ -4768,7 +4962,7 @@ rollbar_Rollbar.prototype.setupUnhandledCapture = function () {
   }
 };
 rollbar_Rollbar.prototype.handleUncaughtExceptions = function () {
-  var exitOnUncaught = !!this.options.exitOnUncaughtException;
+  var exitOnUncaught = Boolean(this.options.exitOnUncaughtException);
   delete this.options.exitOnUncaughtException;
   addOrReplaceRollbarHandler('uncaughtException', function (err) {
     if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
