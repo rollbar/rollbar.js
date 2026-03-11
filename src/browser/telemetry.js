@@ -284,6 +284,23 @@ class Instrumenter {
         function (orig) {
           return function (data) {
             const xhr = this;
+            const tracing = self.rollbar?.tracing;
+            if (
+              _.shouldAddBaggageHeader(
+                self.options,
+                tracing,
+                xhr.__rollbar_xhr?.url,
+              )
+            ) {
+              try {
+                xhr.setRequestHeader(
+                  'baggage',
+                  `rollbar.session.id=${tracing.sessionId}`,
+                );
+              } catch (_e) {
+                /* ignore errors from adding baggage header */
+              }
+            }
 
             function onreadystatechangeHandler() {
               if (xhr.__rollbar_xhr) {
@@ -434,6 +451,14 @@ class Instrumenter {
             }
             if (args[1] && args[1].method) {
               method = args[1].method;
+            }
+            const tracing = self.rollbar?.tracing;
+            if (_.shouldAddBaggageHeader(self.options, tracing, url)) {
+              const headers = {
+                baggage: `rollbar.session.id=${tracing.sessionId}`,
+              };
+
+              _.addHeadersToFetch(args, headers);
             }
             const metadata = {
               method: method,

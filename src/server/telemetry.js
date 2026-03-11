@@ -85,6 +85,15 @@ Instrumenter.prototype.instrumentNetwork = function () {
     this.replacements,
     'network',
   );
+  if (typeof globalThis.fetch === 'function') {
+    replace(
+      globalThis,
+      'fetch',
+      fetchRequestWrapper.bind(this),
+      this.replacements,
+      'network',
+    );
+  }
 };
 
 function networkRequestWrapper(orig) {
@@ -93,10 +102,22 @@ function networkRequestWrapper(orig) {
   return (...args) => {
     const [url, options, cb] = args;
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
+    const requestUrl = urlHelpers.constructUrl(mergedOptions.options);
+    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+
+    if (
+      sessionId &&
+      _.shouldAddBaggageHeader(this.options, { sessionId }, requestUrl)
+    ) {
+      if (!mergedOptions.options.headers) {
+        mergedOptions.options.headers = {};
+      }
+      mergedOptions.options.headers.baggage = `rollbar.session.id=${sessionId}`;
+    }
 
     var metadata = {
       method: mergedOptions.options.method || 'GET',
-      url: urlHelpers.constructUrl(mergedOptions.options),
+      url: requestUrl,
       status_code: null,
       start_time_ms: _.now(),
       end_time_ms: null,
@@ -140,6 +161,104 @@ function responseCallbackWrapper(options, metadata, callback) {
       return callback.apply(undefined, arguments);
     }
   };
+}
+
+function fetchRequestWrapper(orig) {
+  var telemeter = this.telemeter;
+
+  return (...args) => {
+    const input = args[0];
+    const init = args[1];
+    let method = 'GET';
+    let url;
+    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+
+    if (_.isType(input, 'string') || input instanceof URL) {
+      url = input.toString();
+    } else if (input) {
+      url = input.url;
+      if (input.method) {
+        method = input.method;
+      }
+    }
+
+    if (init && init.method) {
+      method = init.method;
+    }
+
+    if (
+      sessionId &&
+      _.shouldAddBaggageHeader(this.options, { sessionId }, url)
+    ) {
+      const headers = { baggage: `rollbar.session.id=${sessionId}` };
+
+      _.addHeadersToFetch(args, headers);
+    }
+
+    const metadata = {
+      method: method,
+      url: url,
+      status_code: null,
+      start_time_ms: _.now(),
+      end_time_ms: null,
+    };
+
+    if (this.autoInstrument.networkRequestHeaders) {
+      const requestHeaders = normalizeFetchHeaders(
+        init && init.headers ? init.headers : input && input.headers,
+      );
+      if (requestHeaders) {
+        metadata.request_headers = requestHeaders;
+      }
+    }
+
+    telemeter.captureNetwork(metadata, 'fetch');
+
+    return orig.apply(globalThis, args).then(
+      (res) => {
+        metadata.end_time_ms = _.now();
+        metadata.status_code = res.status;
+        if (this.autoInstrument.networkResponseHeaders) {
+          const responseHeaders = normalizeFetchHeaders(res.headers);
+          if (responseHeaders) {
+            metadata.response = metadata.response || {};
+            metadata.response.headers = responseHeaders;
+          }
+        }
+        return res;
+      },
+      (err) => {
+        metadata.end_time_ms = _.now();
+        metadata.status_code = 0;
+        metadata.error = [err.name, err.message].join(': ');
+        throw err;
+      },
+    );
+  };
+}
+
+function normalizeFetchHeaders(headers) {
+  if (!headers) return null;
+  if (typeof headers.forEach === 'function') {
+    const normalized = {};
+    headers.forEach((value, key) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+  if (Array.isArray(headers)) {
+    const normalized = {};
+    headers.forEach((pair) => {
+      if (pair && pair.length > 1) {
+        normalized[pair[0]] = pair[1];
+      }
+    });
+    return normalized;
+  }
+  if (_.isType(headers, 'object')) {
+    return headers;
+  }
+  return null;
 }
 
 Instrumenter.prototype.captureNetwork = function (

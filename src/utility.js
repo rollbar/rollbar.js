@@ -146,6 +146,10 @@ function isBrowser() {
   return typeof window !== 'undefined';
 }
 
+function isRequestObject(input) {
+  return typeof Request !== 'undefined' && input instanceof Request;
+}
+
 function redact() {
   return '********';
 }
@@ -867,6 +871,69 @@ function merge() {
   return result;
 }
 
+function shouldAddBaggageHeader(options, tracing, url) {
+  if (!tracing?.sessionId || !url) {
+    return false;
+  }
+  const propagation = options?.tracing?.propagation;
+  const enabledHeaders = propagation?.enabledHeaders;
+  if (!Array.isArray(enabledHeaders) || !enabledHeaders.includes('baggage')) {
+    return false;
+  }
+  const enabledCorsUrls = propagation?.enabledCorsUrls;
+  if (!Array.isArray(enabledCorsUrls) || enabledCorsUrls.length === 0) {
+    return false;
+  }
+  return enabledCorsUrls.some((pattern) => {
+    if (isType(pattern, 'string')) {
+      return url === pattern;
+    }
+    if (isType(pattern, 'regexp')) {
+      return pattern.test(url);
+    }
+    return false;
+  });
+}
+
+function addHeadersToFetch(args, newHeaders) {
+  // Headers may be in the request object or the init object.
+  // If present in both places, the init object must be used.
+  //
+  let init = args[1];
+  const initHeaders = init?.headers;
+  const reqHeaders = isRequestObject(args[0]) && args[0].headers;
+  let headers = initHeaders || reqHeaders;
+
+  // If headers are not present in either place, they are added to the init object.
+  // If there is no init object, one must be created and added to args.
+  if (!headers) {
+    if (!init) {
+      args[1] = init = {};
+    }
+    headers = init.headers = {};
+  }
+
+  // `headers` may be a Headers object or a plain object.
+  if (headers instanceof Headers) {
+    for (const key of Object.keys(newHeaders)) {
+      headers.append(key, newHeaders[key]);
+    }
+  } else if (isObject(headers)) {
+    for (const key of Object.keys(newHeaders)) {
+      headers[key] = newHeaders[key];
+    }
+  }
+}
+
+function getSessionIdFromAsyncLocalStorage(client) {
+  const storage = client.asyncLocalStorage;
+  if (!storage || typeof storage.getStore !== 'function') {
+    return null;
+  }
+  const store = storage.getStore();
+  return store?.sessionId || null;
+}
+
 export {
   addParamsAndAccessTokenToPath,
   createItem,
@@ -902,4 +969,7 @@ export {
   maxByteSize,
   typeName,
   uuid4,
+  shouldAddBaggageHeader,
+  addHeadersToFetch,
+  getSessionIdFromAsyncLocalStorage,
 };
