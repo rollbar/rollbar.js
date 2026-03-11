@@ -187,6 +187,9 @@ function isPromise(p) {
 function isBrowser() {
   return typeof window !== 'undefined';
 }
+function isRequestObject(input) {
+  return typeof Request !== 'undefined' && input instanceof Request;
+}
 function redact() {
   return '********';
 }
@@ -830,6 +833,70 @@ function merge() {
     }
   }
   return result;
+}
+function shouldAddBaggageHeader(options, tracing, url) {
+  var _options$tracing;
+  if (!(tracing !== null && tracing !== void 0 && tracing.sessionId) || !url) {
+    return false;
+  }
+  var propagation = options === null || options === void 0 || (_options$tracing = options.tracing) === null || _options$tracing === void 0 ? void 0 : _options$tracing.propagation;
+  var enabledHeaders = propagation === null || propagation === void 0 ? void 0 : propagation.enabledHeaders;
+  if (!Array.isArray(enabledHeaders) || !enabledHeaders.includes('baggage')) {
+    return false;
+  }
+  var enabledCorsUrls = propagation === null || propagation === void 0 ? void 0 : propagation.enabledCorsUrls;
+  if (!Array.isArray(enabledCorsUrls) || enabledCorsUrls.length === 0) {
+    return false;
+  }
+  return enabledCorsUrls.some(function (pattern) {
+    if (isType(pattern, 'string')) {
+      return url === pattern;
+    }
+    if (isType(pattern, 'regexp')) {
+      return pattern.test(url);
+    }
+    return false;
+  });
+}
+function addHeadersToFetch(args, newHeaders) {
+  var _init;
+  // Headers may be in the request object or the init object.
+  // If present in both places, the init object must be used.
+  //
+  var init = args[1];
+  var initHeaders = (_init = init) === null || _init === void 0 ? void 0 : _init.headers;
+  var reqHeaders = isRequestObject(args[0]) && args[0].headers;
+  var headers = initHeaders || reqHeaders;
+
+  // If headers are not present in either place, they are added to the init object.
+  // If there is no init object, one must be created and added to args.
+  if (!headers) {
+    if (!init) {
+      args[1] = init = {};
+    }
+    headers = init.headers = {};
+  }
+
+  // `headers` may be a Headers object or a plain object.
+  if (headers instanceof Headers) {
+    for (var _i = 0, _Object$keys = Object.keys(newHeaders); _i < _Object$keys.length; _i++) {
+      var key = _Object$keys[_i];
+      headers.append(key, newHeaders[key]);
+    }
+  } else if (isObject(headers)) {
+    for (var _i2 = 0, _Object$keys2 = Object.keys(newHeaders); _i2 < _Object$keys2.length; _i2++) {
+      var _key = _Object$keys2[_i2];
+      headers[_key] = newHeaders[_key];
+    }
+  }
+}
+function getSessionIdFromAsyncLocalStorage(client) {
+  var storage = client.asyncLocalStorage;
+  if (!storage || typeof storage.getStore !== 'function') {
+    return null;
+  }
+  var store = storage.getStore();
+  return (store === null || store === void 0 ? void 0 : store.sessionId) || null;
 }
 
 ;// ./src/utility/traverse.js
@@ -2980,7 +3047,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0';
+var version = '3.1.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -4243,9 +4310,11 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 Rollbar.prototype._addItemAttributes = function (item) {
   var _this$tracing, _this$tracing2;
   var span = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.getSpan();
+  var asyncLocalSessionId = getSessionIdFromAsyncLocalStorage(this);
+  var sessionId = asyncLocalSessionId || ((_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId);
   var attributes = [{
     key: 'session_id',
-    value: (_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId
+    value: sessionId
   }, {
     key: 'span_id',
     value: span === null || span === void 0 ? void 0 : span.spanId
@@ -22507,7 +22576,16 @@ var Instrumenter = /*#__PURE__*/function () {
         }, this.replacements, 'network');
         utility_replace(xhrp, 'send', function (orig) {
           return function (data) {
+            var _self$rollbar, _xhr$__rollbar_xhr;
             var xhr = this;
+            var tracing = (_self$rollbar = self.rollbar) === null || _self$rollbar === void 0 ? void 0 : _self$rollbar.tracing;
+            if (shouldAddBaggageHeader(self.options, tracing, (_xhr$__rollbar_xhr = xhr.__rollbar_xhr) === null || _xhr$__rollbar_xhr === void 0 ? void 0 : _xhr$__rollbar_xhr.url)) {
+              try {
+                xhr.setRequestHeader('baggage', "rollbar.session.id=".concat(tracing.sessionId));
+              } catch (_e) {
+                /* ignore errors from adding baggage header */
+              }
+            }
             function onreadystatechangeHandler() {
               if (xhr.__rollbar_xhr) {
                 if (xhr.__rollbar_xhr.status_code === null) {
@@ -22628,6 +22706,7 @@ var Instrumenter = /*#__PURE__*/function () {
       if ('fetch' in this._window) {
         utility_replace(this._window, 'fetch', function (orig) {
           return function (_fn, _t) {
+            var _self$rollbar2;
             var args = Array.prototype.slice.call(arguments);
             var input = args[0];
             var method = 'GET';
@@ -22643,6 +22722,13 @@ var Instrumenter = /*#__PURE__*/function () {
             }
             if (args[1] && args[1].method) {
               method = args[1].method;
+            }
+            var tracing = (_self$rollbar2 = self.rollbar) === null || _self$rollbar2 === void 0 ? void 0 : _self$rollbar2.tracing;
+            if (shouldAddBaggageHeader(self.options, tracing, url)) {
+              var _headers2 = {
+                baggage: "rollbar.session.id=".concat(tracing.sessionId)
+              };
+              addHeadersToFetch(args, _headers2);
             }
             var metadata = {
               method: method,

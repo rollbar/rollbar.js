@@ -181,6 +181,9 @@ function isPromise(p) {
 function isBrowser() {
   return typeof window !== 'undefined';
 }
+function isRequestObject(input) {
+  return typeof Request !== 'undefined' && input instanceof Request;
+}
 function redact() {
   return '********';
 }
@@ -825,6 +828,70 @@ function merge() {
   }
   return result;
 }
+function shouldAddBaggageHeader(options, tracing, url) {
+  var _options$tracing;
+  if (!(tracing !== null && tracing !== void 0 && tracing.sessionId) || !url) {
+    return false;
+  }
+  var propagation = options === null || options === void 0 || (_options$tracing = options.tracing) === null || _options$tracing === void 0 ? void 0 : _options$tracing.propagation;
+  var enabledHeaders = propagation === null || propagation === void 0 ? void 0 : propagation.enabledHeaders;
+  if (!Array.isArray(enabledHeaders) || !enabledHeaders.includes('baggage')) {
+    return false;
+  }
+  var enabledCorsUrls = propagation === null || propagation === void 0 ? void 0 : propagation.enabledCorsUrls;
+  if (!Array.isArray(enabledCorsUrls) || enabledCorsUrls.length === 0) {
+    return false;
+  }
+  return enabledCorsUrls.some(function (pattern) {
+    if (isType(pattern, 'string')) {
+      return url === pattern;
+    }
+    if (isType(pattern, 'regexp')) {
+      return pattern.test(url);
+    }
+    return false;
+  });
+}
+function addHeadersToFetch(args, newHeaders) {
+  var _init;
+  // Headers may be in the request object or the init object.
+  // If present in both places, the init object must be used.
+  //
+  var init = args[1];
+  var initHeaders = (_init = init) === null || _init === void 0 ? void 0 : _init.headers;
+  var reqHeaders = isRequestObject(args[0]) && args[0].headers;
+  var headers = initHeaders || reqHeaders;
+
+  // If headers are not present in either place, they are added to the init object.
+  // If there is no init object, one must be created and added to args.
+  if (!headers) {
+    if (!init) {
+      args[1] = init = {};
+    }
+    headers = init.headers = {};
+  }
+
+  // `headers` may be a Headers object or a plain object.
+  if (headers instanceof Headers) {
+    for (var _i = 0, _Object$keys = Object.keys(newHeaders); _i < _Object$keys.length; _i++) {
+      var key = _Object$keys[_i];
+      headers.append(key, newHeaders[key]);
+    }
+  } else if (isObject(headers)) {
+    for (var _i2 = 0, _Object$keys2 = Object.keys(newHeaders); _i2 < _Object$keys2.length; _i2++) {
+      var _key = _Object$keys2[_i2];
+      headers[_key] = newHeaders[_key];
+    }
+  }
+}
+function getSessionIdFromAsyncLocalStorage(client) {
+  var storage = client.asyncLocalStorage;
+  if (!storage || typeof storage.getStore !== 'function') {
+    return null;
+  }
+  var store = storage.getStore();
+  return (store === null || store === void 0 ? void 0 : store.sessionId) || null;
+}
 
 ;// ./src/apiUtility.js
 
@@ -1130,7 +1197,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '3.0.0';
+var version = '3.1.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -2167,9 +2234,11 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 Rollbar.prototype._addItemAttributes = function (item) {
   var _this$tracing, _this$tracing2;
   var span = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.getSpan();
+  var asyncLocalSessionId = getSessionIdFromAsyncLocalStorage(this);
+  var sessionId = asyncLocalSessionId || ((_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId);
   var attributes = [{
     key: 'session_id',
-    value: (_this$tracing2 = this.tracing) === null || _this$tracing2 === void 0 ? void 0 : _this$tracing2.sessionId
+    value: sessionId
   }, {
     key: 'span_id',
     value: span === null || span === void 0 ? void 0 : span.spanId
@@ -3098,6 +3167,83 @@ function defaults_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r
 var notifierName = 'node_rollbar';
 var scrubHeaders = commonScrubHeaders;
 var scrubFields = [].concat(_toConsumableArray(commonScrubFields), _toConsumableArray(apiScrubFields), _toConsumableArray(requestScrubFields));
+;// external "node:async_hooks"
+const external_node_async_hooks_namespaceObject = require("node:async_hooks");
+;// ./src/server/middleware/rollbarExpressMiddleware.js
+function rollbarExpressMiddleware_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = rollbarExpressMiddleware_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
+function rollbarExpressMiddleware_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return rollbarExpressMiddleware_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? rollbarExpressMiddleware_arrayLikeToArray(r, a) : void 0; } }
+function rollbarExpressMiddleware_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+function extractSessionId(headerValue) {
+  if (!headerValue) {
+    return null;
+  }
+  var rawValue = Array.isArray(headerValue) ? headerValue.join(',') : headerValue;
+  if (typeof rawValue !== 'string') {
+    return null;
+  }
+  var entries = rawValue.split(',');
+  var _iterator = rollbarExpressMiddleware_createForOfIteratorHelper(entries),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var entry = _step.value;
+      var trimmed = entry.trim();
+      if (!trimmed) {
+        continue;
+      }
+      var equalsIndex = trimmed.indexOf('=');
+      if (equalsIndex === -1) {
+        continue;
+      }
+      var key = trimmed.slice(0, equalsIndex).trim();
+      if (key !== 'rollbar.session.id') {
+        continue;
+      }
+      var value = trimmed.slice(equalsIndex + 1).trim();
+      if (!value) {
+        return null;
+      }
+      try {
+        return decodeURIComponent(value);
+      } catch (_e) {
+        return value;
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return null;
+}
+function getBaggageHeader(req) {
+  var _req$headers;
+  if (!req) {
+    return null;
+  }
+  if (typeof req.get === 'function') {
+    return req.get('baggage');
+  }
+  return ((_req$headers = req.headers) === null || _req$headers === void 0 ? void 0 : _req$headers.baggage) || null;
+}
+function rollbarExpressMiddleware(rollbar) {
+  var storage = (rollbar === null || rollbar === void 0 ? void 0 : rollbar.client.asyncLocalStorage) || new external_node_async_hooks_namespaceObject.AsyncLocalStorage();
+  if (rollbar) {
+    rollbar.client.asyncLocalStorage = storage;
+  }
+  return function rollbarExpressMiddlewareHandler(req, _res, next) {
+    var sessionId = extractSessionId(getBaggageHeader(req));
+    if (!sessionId) {
+      return next();
+    }
+    return storage.run({
+      sessionId: sessionId
+    }, function () {
+      return next();
+    });
+  };
+}
 ;// external "http"
 const external_http_namespaceObject = require("http");
 ;// external "https"
@@ -3246,6 +3392,9 @@ Instrumenter.prototype.deinstrumentNetwork = function () {
 Instrumenter.prototype.instrumentNetwork = function () {
   utility_replace(external_http_namespaceObject, 'request', networkRequestWrapper.bind(this), this.replacements, 'network');
   utility_replace(external_https_namespaceObject, 'request', networkRequestWrapper.bind(this), this.replacements, 'network');
+  if (typeof globalThis.fetch === 'function') {
+    utility_replace(globalThis, 'fetch', fetchRequestWrapper.bind(this), this.replacements, 'network');
+  }
 };
 function networkRequestWrapper(orig) {
   var _this = this;
@@ -3258,9 +3407,19 @@ function networkRequestWrapper(orig) {
       options = args[1],
       cb = args[2];
     var mergedOptions = mergeOptions(url, options, cb);
+    var requestUrl = constructUrl(mergedOptions.options);
+    var sessionId = getSessionIdFromAsyncLocalStorage(_this.rollbar.client);
+    if (sessionId && shouldAddBaggageHeader(_this.options, {
+      sessionId: sessionId
+    }, requestUrl)) {
+      if (!mergedOptions.options.headers) {
+        mergedOptions.options.headers = {};
+      }
+      mergedOptions.options.headers.baggage = "rollbar.session.id=".concat(sessionId);
+    }
     var metadata = {
       method: mergedOptions.options.method || 'GET',
-      url: constructUrl(mergedOptions.options),
+      url: requestUrl,
       status_code: null,
       start_time_ms: now(),
       end_time_ms: null
@@ -3294,6 +3453,93 @@ function responseCallbackWrapper(options, metadata, callback) {
       return callback.apply(undefined, arguments);
     }
   };
+}
+function fetchRequestWrapper(orig) {
+  var _this2 = this;
+  var telemeter = this.telemeter;
+  return function () {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    var input = args[0];
+    var init = args[1];
+    var method = 'GET';
+    var url;
+    var sessionId = getSessionIdFromAsyncLocalStorage(_this2.rollbar.client);
+    if (isType(input, 'string') || input instanceof URL) {
+      url = input.toString();
+    } else if (input) {
+      url = input.url;
+      if (input.method) {
+        method = input.method;
+      }
+    }
+    if (init && init.method) {
+      method = init.method;
+    }
+    if (sessionId && shouldAddBaggageHeader(_this2.options, {
+      sessionId: sessionId
+    }, url)) {
+      var headers = {
+        baggage: "rollbar.session.id=".concat(sessionId)
+      };
+      addHeadersToFetch(args, headers);
+    }
+    var metadata = {
+      method: method,
+      url: url,
+      status_code: null,
+      start_time_ms: now(),
+      end_time_ms: null
+    };
+    if (_this2.autoInstrument.networkRequestHeaders) {
+      var requestHeaders = normalizeFetchHeaders(init && init.headers ? init.headers : input && input.headers);
+      if (requestHeaders) {
+        metadata.request_headers = requestHeaders;
+      }
+    }
+    telemeter.captureNetwork(metadata, 'fetch');
+    return orig.apply(globalThis, args).then(function (res) {
+      metadata.end_time_ms = now();
+      metadata.status_code = res.status;
+      if (_this2.autoInstrument.networkResponseHeaders) {
+        var responseHeaders = normalizeFetchHeaders(res.headers);
+        if (responseHeaders) {
+          metadata.response = metadata.response || {};
+          metadata.response.headers = responseHeaders;
+        }
+      }
+      return res;
+    }, function (err) {
+      metadata.end_time_ms = now();
+      metadata.status_code = 0;
+      metadata.error = [err.name, err.message].join(': ');
+      throw err;
+    });
+  };
+}
+function normalizeFetchHeaders(headers) {
+  if (!headers) return null;
+  if (typeof headers.forEach === 'function') {
+    var normalized = {};
+    headers.forEach(function (value, key) {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+  if (Array.isArray(headers)) {
+    var _normalized = {};
+    headers.forEach(function (pair) {
+      if (pair && pair.length > 1) {
+        _normalized[pair[0]] = pair[1];
+      }
+    });
+    return _normalized;
+  }
+  if (isType(headers, 'object')) {
+    return headers;
+  }
+  return null;
 }
 Instrumenter.prototype.captureNetwork = function (metadata, subtype, rollbarUUID) {
   return this.telemeter.captureNetwork(metadata, subtype, rollbarUUID);
@@ -4434,6 +4680,7 @@ function _currentTime() {
 
 
 
+
 function rollbar_Rollbar(options, client) {
   if (isType(options, 'string')) {
     var accessToken = options;
@@ -4838,6 +5085,16 @@ rollbar_Rollbar.wrapCallback = function (f) {
   } else {
     handleUninitialized();
   }
+};
+rollbar_Rollbar.prototype.expressMiddleware = function () {
+  return rollbarExpressMiddleware(this);
+};
+rollbar_Rollbar.expressMiddleware = function () {
+  if (_instance) {
+    return rollbarExpressMiddleware(_instance);
+  }
+  handleUninitialized();
+  return undefined;
 };
 rollbar_Rollbar.prototype.captureEvent = function () {
   var event = createTelemetryEvent(arguments);
