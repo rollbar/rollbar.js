@@ -538,6 +538,7 @@ describe('options.captureUncaught', function () {
       captureUncaught: false,
     });
   });
+
   it('should send DOMException as trace_chain', async function () {
     const server = window.server;
     stubResponse(server);
@@ -558,9 +559,15 @@ describe('options.captureUncaught', function () {
 
     const body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.data.body.trace_chain[0].exception.message).to.eql(
-      'test DOMException',
-    );
+    expect(body.data.body.trace_chain[0].exception).to.eql({
+      class: 'Error',
+      message: 'test DOMException',
+      description: 'Uncaught Error: test DOMException',
+    });
+    expect(body.data.body.trace_chain[1].exception).to.eql({
+      class: 'DOMException',
+      message: 'test DOMException',
+    });
 
     // karma doesn't unload the browser between tests, so the onerror handler
     // will remain installed. Unset captureUncaught so the onerror handler
@@ -570,7 +577,7 @@ describe('options.captureUncaught', function () {
     });
   });
 
-  it('should capture exta frames when stackTraceLimit is set', async function () {
+  it('should capture extra frames when stackTraceLimit is set', async function () {
     const server = window.server;
     stubResponse(server);
     server.requests.length = 0;
