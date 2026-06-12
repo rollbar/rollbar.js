@@ -13,8 +13,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    # `latest` is a floating, non-LTS target used as a forward-compat canary;
+    # let it warn without blocking PRs or (with fail-fast off) cancelling the
+    # supported legs.
+    continue-on-error: ${{ matrix.node == 'latest' }}
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - node: 18
@@ -62,10 +68,22 @@ jobs:
       - name: Run server tests
         run: npm run test:server
 
+      # Browser tests launch chromium; the harness Node version is irrelevant to
+      # browser coverage, so run them only on stable Node. The chromium download
+      # in `playwright install` stalls indefinitely on Node 24/latest.
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        if: matrix.node != 24 && matrix.node != 'latest'
+        # The chromium download can stall; cap each attempt and retry so a
+        # transient stall doesn't hang the job until the timeout.
+        run: |
+          for i in 1 2 3; do
+            timeout 300 npx playwright install chromium && exit 0
+            echo "playwright install attempt $i stalled or failed; retrying"
+          done
+          exit 1
 
       - name: Run browser tests (Web Test Runner)
+        if: matrix.node != 24 && matrix.node != 'latest'
         run: npm run test:wtr
 
       - name: Validate examples
