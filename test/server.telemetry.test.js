@@ -6,12 +6,7 @@ import { URL } from 'url';
 import { expect } from 'chai';
 import nock from 'nock';
 import sinon from 'sinon';
-import {
-  fetch as undiciFetch,
-  MockAgent,
-  getGlobalDispatcher,
-  setGlobalDispatcher,
-} from 'undici';
+import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
@@ -272,7 +267,6 @@ describe('telemetry', function () {
     let response;
     let mockAgent;
     let originalDispatcher;
-    let originalFetch;
     let sessionId;
     let asyncLocalStorage;
 
@@ -280,14 +274,6 @@ describe('telemetry', function () {
       if (typeof fetch !== 'function') {
         this.skip();
       }
-
-      // Route the global fetch through the same undici instance that MockAgent
-      // patches. Node's built-in fetch uses the bundled undici, whose global
-      // dispatcher symbol can diverge from the npm undici across Node versions,
-      // silently bypassing setGlobalDispatcher and letting the request reach the
-      // real network.
-      originalFetch = globalThis.fetch;
-      globalThis.fetch = undiciFetch;
 
       originalDispatcher = getGlobalDispatcher();
       mockAgent = new MockAgent();
@@ -338,9 +324,6 @@ describe('telemetry', function () {
       if (originalDispatcher) {
         setGlobalDispatcher(originalDispatcher);
       }
-      if (originalFetch) {
-        globalThis.fetch = originalFetch;
-      }
     });
 
     it('message payload should have fetch telemetry', function () {
@@ -373,20 +356,11 @@ describe('telemetry', function () {
     let response;
     let mockAgent;
     let originalDispatcher;
-    let originalFetch;
 
     beforeEach(async function () {
       if (typeof fetch !== 'function') {
         this.skip();
       }
-
-      // Route the global fetch through the same undici instance that MockAgent
-      // patches. Node's built-in fetch uses the bundled undici, whose global
-      // dispatcher symbol can diverge from the npm undici across Node versions,
-      // silently bypassing setGlobalDispatcher and letting the request reach the
-      // real network.
-      originalFetch = globalThis.fetch;
-      globalThis.fetch = undiciFetch;
 
       originalDispatcher = getGlobalDispatcher();
       mockAgent = new MockAgent();
@@ -432,9 +406,6 @@ describe('telemetry', function () {
       }
       if (originalDispatcher) {
         setGlobalDispatcher(originalDispatcher);
-      }
-      if (originalFetch) {
-        globalThis.fetch = originalFetch;
       }
     });
 
