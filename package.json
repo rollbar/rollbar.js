@@ -125,8 +125,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
-    "undici": "^6.23.0",
-    "undici-v7": "npm:undici@^7.27.2",
+    "undici": "^7.27.2",
+    "undici-v6": "npm:undici@^6.23.0",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0"

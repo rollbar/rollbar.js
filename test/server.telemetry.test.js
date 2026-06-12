@@ -10,11 +10,12 @@ import sinon from 'sinon';
 // symbol matches the running Node's bundled undici: undici 6 (symbol `.1`) for
 // Node 18-24, undici 7 (symbol `.2`) for the undici-7-bundled `latest` leg.
 // undici 7 also requires Node 20+ (it references the global `File`), so Node 18
-// must stay on undici 6. Dynamic import so only the selected major is loaded
-// (statically importing undici 7 on Node 18 would crash at load time).
+// must stay on undici 6 (the `undici-v6` alias). Dynamic import so only the
+// selected major is loaded (statically importing undici 7 on Node 18 would
+// crash at load time).
 const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
 const { MockAgent, getGlobalDispatcher, setGlobalDispatcher } =
-  nodeMajor >= 20 ? await import('undici-v7') : await import('undici');
+  nodeMajor >= 20 ? await import('undici') : await import('undici-v6');
 
 import Rollbar from '../src/server/rollbar.js';
 import { mergeOptions } from '../src/server/telemetry/urlHelpers.js';
