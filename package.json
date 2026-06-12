@@ -132,10 +132,9 @@
     "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
-    "build": "webpack --mode production",
-    "postbuild": "npm run validate:es5 && npm run update:snippets:examples && npm run pack",
-    "build:dev": "webpack --mode development",
-    "postbuild:dev": "npm run postbuild",
+    "build": "webpack --mode production && npm run build:finalize",
+    "build:dev": "webpack --mode development && npm run build:finalize",
+    "build:finalize": "npm run validate:es5 && npm run update:snippets:examples && npm run pack",
     "test": "npm run test:wtr && npm run test:server",
     "test:server": "node scripts/run-server-tests.js",
     "test:wtr": "web-test-runner",
