@@ -16,6 +16,7 @@ const rollbarConfig = {
   },
 };
 
-export function RollbarFactory() {
+export function createRollbar() {
   return new Rollbar(rollbarConfig);
 }
+
