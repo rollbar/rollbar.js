@@ -224,7 +224,7 @@ function stub(method) {
 }
 
 var _methods =
-  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,captureDomContentLoaded,captureLoad'.split(
+  'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,wait,captureDomContentLoaded,captureLoad'.split(
     ',',
   );
 
