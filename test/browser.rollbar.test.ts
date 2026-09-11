@@ -56,6 +56,10 @@ function TestClientGen() {
       this.options = o;
       this.payloadData = payloadData;
     };
+    this.waitCalls = [];
+    this.wait = function (callback) {
+      this.waitCalls.push(callback);
+    };
     this.tracer = ValidOpenTracingTracerStub;
   };
 
@@ -78,6 +82,7 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
+    expect(rollbar.wait).to.be.a('function');
   });
 
   it('should have all of the expected methods', function () {
@@ -92,6 +97,7 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
+    expect(rollbar.wait).to.be.a('function');
   });
 
   it('should have some default options', function () {
@@ -1230,6 +1236,23 @@ describe('callback options', function () {
   });
 });
 
+describe('wait', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should pass the callback through to the client', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    const callback = function () {};
+
+    rollbar.wait(callback);
+
+    expect(client.waitCalls).to.eql([callback]);
+  });
+});
+
 describe('captureEvent', function () {
   afterEach(function () {
     window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
@@ -1451,5 +1474,9 @@ describe('singleton', function () {
     const loggedItemSingleton = client.logCalls[1].item;
     expect(loggedItemDirect.message).to.eql('hello 1');
     expect(loggedItemSingleton.message).to.eql('hello 2');
+
+    const callback = function () {};
+    Rollbar.wait(callback);
+    expect(client.waitCalls).to.eql([callback]);
   });
 });
