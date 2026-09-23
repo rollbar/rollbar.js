@@ -313,3 +313,42 @@ describe('configure', function () {
     done();
   });
 });
+
+describe('telemetry span', function () {
+  beforeEach(function () {
+    const tracing = new Tracing(window, null, {
+      resource: {
+        'service.name': 'Test',
+      },
+    });
+    tracing.initSession();
+    this.tracing = tracing;
+    this.t = new Telemeter({}, tracing);
+  });
+
+  it('should bound span events when the span is never exported', function () {
+    const total = 5000;
+    for (let i = 0; i < total; i++) {
+      this.t.captureLog(`tick ${i}`, 'info', null, 1000 + i);
+    }
+
+    const span = this.t.telemetrySpan.span;
+    expect(span.events.length).to.equal(1000);
+    expect(span.droppedEventsCount).to.equal(total - 1000);
+    expect(span.events[0].attributes.message).to.equal('tick 4000');
+    expect(span.events[999].attributes.message).to.equal('tick 4999');
+    expect(this.t.queue.length).to.equal(100);
+  });
+
+  it('should bound the replacement span after export', function () {
+    this.t.exportTelemetrySpan();
+    this.tracing.exporter.toPayload();
+
+    for (let i = 0; i < 1500; i++) {
+      this.t.captureLog(`tick ${i}`, 'info', null, 1000 + i);
+    }
+
+    expect(this.t.telemetrySpan.span.events.length).to.equal(1000);
+    expect(this.t.telemetrySpan.span.droppedEventsCount).to.equal(500);
+  });
+});
