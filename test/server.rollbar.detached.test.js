@@ -155,6 +155,9 @@ describe('level methods called without their instance', function () {
       expect(item.data.level).to.equal('error');
       expect(exceptionMessage(item)).to.equal('inventory unavailable');
     } finally {
+      // fetch keeps the socket alive, and before Node 19 close() waits for
+      // idle keep-alive sockets to time out, which overruns the test timeout.
+      server.closeAllConnections();
       await new Promise((done) => server.close(done));
     }
   });
