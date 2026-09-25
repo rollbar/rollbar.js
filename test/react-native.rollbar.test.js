@@ -147,6 +147,26 @@ describe('Rollbar()', function () {
     done();
   });
 
+  it('should keep level methods working when detached', function (done) {
+    var client = new (TestClientGen())();
+    var rollbar = new Rollbar({}, client);
+    var levels = 'log,debug,info,warn,warning,error,critical'.split(',');
+
+    levels.forEach(function (level) {
+      var detached = rollbar[level];
+      detached('hello ' + level);
+    });
+
+    expect(
+      client.logCalls.map(function (call) {
+        return call.func;
+      }),
+    ).to.eql(levels);
+    expect(client.logCalls[5].item.message).to.eql('hello error');
+
+    done();
+  });
+
   it('should have some default options', function (done) {
     var client = new (TestClientGen())();
     var options = {};

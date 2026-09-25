@@ -934,8 +934,36 @@ function getSessionIdFromAsyncLocalStorage(client) {
   return store?.sessionId || null;
 }
 
+var LOG_METHODS = [
+  'log',
+  'debug',
+  'info',
+  'warn',
+  'warning',
+  'error',
+  'critical',
+];
+
+/*
+ * bindLogMethods - Give an instance its own copies of the level methods that
+ * keep `this` pointing at the instance, so they still work when detached,
+ * e.g. `promise.catch(rollbar.error)` or `const { error } = rollbar`.
+ * Each copy looks the method up on the prototype at call time, so subclass
+ * overrides and stubs on the prototype still apply.
+ *
+ * @param instance - a Rollbar instance
+ */
+function bindLogMethods(instance) {
+  LOG_METHODS.forEach(function (method) {
+    instance[method] = function () {
+      return Object.getPrototypeOf(instance)[method].apply(instance, arguments);
+    };
+  });
+}
+
 export {
   addParamsAndAccessTokenToPath,
+  bindLogMethods,
   createItem,
   addErrorContext,
   createTelemetryEvent,

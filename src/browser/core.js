@@ -73,6 +73,7 @@ class Rollbar {
     this.anonymousErrorsPending = 0;
     addTransformsToNotifier(this.client.notifier, this, gWindow);
     addPredicatesToQueue(this.client.queue);
+    _.bindLogMethods(this);
     this.setupUnhandledCapture();
     if (Instrumenter) {
       this.instrumenter = new Instrumenter(
