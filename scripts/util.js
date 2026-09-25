@@ -114,3 +114,65 @@ export async function parallelMap(xs, f, c) {
   await Promise.all(jobs);
   return ys;
 }
+
+/**
+ * Checks whether a version satisfies a node-semver style range, such as a
+ * package's `engines.node` field.
+ *
+ * Supports `||` alternatives, space-separated comparators, the `^`, `~`, `>=`,
+ * `>`, `<=`, `<` and `=` operators, and partial versions (`>=18`, `^22.12`).
+ * Prerelease tags are not supported.
+ *
+ * @param {string} version - The version to check, eg. `process.versions.node`.
+ * @param {string} range - The range to check against.
+ * @returns {boolean} Whether `version` satisfies `range`.
+ * @throws {Error} If `range` uses syntax that is not supported.
+ * @example
+ * satisfiesRange('22.23.3', '^22.22.3 || ^24.15.0 || >=26.0.0'); // true
+ * satisfiesRange('20.19.2', '>=18'); // true
+ */
+export function satisfiesRange(version, range) {
+  const v = version.replace(/^v/, '').split('.').map(Number);
+
+  return range.split('||').some((set) =>
+    set
+      .trim()
+      .split(/\s+/)
+      .every((comparator) => {
+        if (comparator === '' || comparator === '*') return true;
+
+        const match = /^(\^|~|>=|<=|>|<|=)?v?(\d+(?:\.\d+){0,2})$/.exec(
+          comparator,
+        );
+        if (!match) {
+          throw new Error(`Unsupported version range: ${range}`);
+        }
+
+        const [, op = '=', target] = match;
+        const t = target.split('.').map(Number);
+        // Compare only the parts the comparator specifies, so `>=18` matches
+        // any 18.x and `<=18` excludes 19.0.0, as in node-semver.
+        let cmp = 0;
+        for (let i = 0; i < t.length && cmp === 0; i++) {
+          cmp = Math.sign((v[i] ?? 0) - t[i]);
+        }
+
+        switch (op) {
+          case '>=':
+            return cmp >= 0;
+          case '>':
+            return cmp > 0;
+          case '<=':
+            return cmp <= 0;
+          case '<':
+            return cmp < 0;
+          case '^':
+            return cmp >= 0 && v[0] === t[0];
+          case '~':
+            return cmp >= 0 && v[0] === t[0] && (t.length < 2 || v[1] === t[1]);
+          default:
+            return cmp === 0;
+        }
+      }),
+  );
+}
