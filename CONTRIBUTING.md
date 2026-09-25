@@ -17,7 +17,7 @@ If you are unsure where to start, browse the GitHub issues page (<https://github
 
 **Prerequisites**
 
-- Node.js 18+ and npm 9+
+- Node.js 20+ and npm 10+
 - A GitHub fork or branch you can push to
 
 **Setup**
@@ -54,6 +54,7 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 ### Tests
 
 - `npm test` runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- Browser tests need Node 22 or newer (a Web Test Runner requirement); server tests, lint, and builds run on Node 20+.
 - `npm run typecheck` runs the TypeScript pass (via `tsconfig.test.json`) so TS-based tests surface declaration mismatches early.
 - Scope runs as needed:
   - `npm run test:wtr -- --watch` for browser tests with live reload.
@@ -86,7 +87,7 @@ CI re-runs lint (`--max-warnings 0`), `format:check`, tests, and ES5/example val
 
 ## Troubleshooting linting & formatting
 
-- **ESLint cannot find a plugin**: run `npm install` to ensure devDependencies are installed; the flat config loads plugins via native `import`, so Node 18+ is required.
+- **ESLint cannot find a plugin**: run `npm install` to ensure devDependencies are installed; the flat config loads plugins via native `import`, so Node 20+ is required.
 - **`unused-imports` keeps flagging helper params**: delete the import or prefix intentional unused params with `_` (e.g., `_req`) and rerun `npm run lint:fix`.
 - **Prettier rewrites the entire file**: confirm you are using the repo’s pinned Prettier version (`npm run format` handles it) or format just the file you touched (`npm run format -- src/foo.js`).
 - **CI fails `format:check` but local format looks fine**: make sure your editor isn’t stripping trailing newlines or converting line endings; set `git config core.autocrlf false` (Unix) or `true` (Windows) and format again.

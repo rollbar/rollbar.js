@@ -163,14 +163,7 @@ declare namespace Rollbar {
     response: TResponse,
   ) => void;
   export type LogArgument =
-    | string
-    | Error
-    | object
-    | Dictionary
-    | Callback
-    | Date
-    | any[]
-    | undefined;
+    string | Error | object | Dictionary | Callback | Date | any[] | undefined;
   export interface LogResult {
     uuid: string;
   }
@@ -340,9 +333,7 @@ declare namespace Rollbar {
     span: any;
   }
   export type TracingPropagationHeader =
-    | 'baggage'
-    | 'traceparent'
-    | 'tracestate';
+    'baggage' | 'traceparent' | 'tracestate';
   export interface TracingPropagationOptions {
     enabledHeaders?: TracingPropagationHeader[];
     enabledCorsUrls?: (string | RegExp)[];
