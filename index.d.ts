@@ -21,7 +21,9 @@ declare class Rollbar implements Rollbar.Components {
   public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
   public wait(callback: () => void): void;
 
-  public triggerDirectReplay(context: Dictionary): Dictionary | null;
+  public triggerDirectReplay(
+    context: Rollbar.Dictionary,
+  ): Rollbar.Dictionary | null;
 
   public captureEvent(
     metadata: object,
@@ -37,18 +39,18 @@ declare class Rollbar implements Rollbar.Components {
 
   // Components
 
-  public telemeter?: TelemeterType;
-  public instrumenter?: InstrumenterType;
-  public wrapGlobals?: WrapGlobalsType;
-  public scrub?: ScrubType;
-  public truncation?: TruncationType;
-  public tracing?: TracingType;
+  public telemeter?: Rollbar.TelemeterType;
+  public instrumenter?: Rollbar.InstrumenterType;
+  public wrapGlobals?: Rollbar.WrapGlobalsType;
+  public scrub?: Rollbar.ScrubType;
+  public truncation?: Rollbar.TruncationType;
+  public tracing?: Rollbar.TracingType;
   /**
    * Replay component for session recording.
    * Only available when using replay bundles (rollbar.replay.*).
    * Use `import Rollbar from 'rollbar/replay'` to access.
    */
-  public replay?: ReplayType;
+  public replay?: Rollbar.ReplayType;
 
   // Used with rollbar-react for rollbar-react-native compatibility.
   public rollbar: Rollbar;
