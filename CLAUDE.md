@@ -48,7 +48,7 @@ As of version 3.0.0, the SDK has been updated to use modern JavaScript features 
   - Webpack 5 with Babel for transpilation
   - ESLint for code quality
   - Configurable output formats (UMD, AMD, vanilla)
-- **Minimum Node.js**: Version 18+ for absolute imports
+- **Minimum Node.js**: Version 20+
 - **Toolchain Configuration**:
   - `babel.config.json`: Controls transpilation options
   - `eslint.config.mjs`: Modern ESLint flat config format

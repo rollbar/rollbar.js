@@ -23,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - node: 18
-            npm: ^9
           - node: 20
             npm: ^10
           - node: 22
