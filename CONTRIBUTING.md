@@ -54,6 +54,7 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 ### Tests
 
 - `npm test` runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- Browser tests need Node 22 or newer (a Web Test Runner requirement); server tests, lint, and builds run on Node 20+.
 - `npm run typecheck` runs the TypeScript pass (via `tsconfig.test.json`) so TS-based tests surface declaration mismatches early.
 - Scope runs as needed:
   - `npm run test:wtr -- --watch` for browser tests with live reload.

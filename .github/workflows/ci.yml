@@ -67,10 +67,11 @@ jobs:
         run: npm run test:server
 
       # Browser tests launch chromium; the harness Node version is irrelevant to
-      # browser coverage, so run them only on stable Node. The chromium download
-      # in `playwright install` stalls indefinitely on Node 24/latest.
+      # browser coverage, so run them on a single leg. Node 22 because
+      # @web/test-runner 1.x requires Node >= 22, and the chromium download in
+      # `playwright install` stalls indefinitely on Node 24/latest.
       - name: Install Playwright browsers
-        if: matrix.node != 24 && matrix.node != 'latest'
+        if: matrix.node == 22
         # The chromium download can stall; cap each attempt and retry so a
         # transient stall doesn't hang the job until the timeout.
         run: |
@@ -81,7 +82,7 @@ jobs:
           exit 1
 
       - name: Run browser tests (Web Test Runner)
-        if: matrix.node != 24 && matrix.node != 'latest'
+        if: matrix.node == 22
         run: npm run test:wtr
 
       - name: Validate examples
