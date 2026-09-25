@@ -195,6 +195,10 @@ class Rollbar {
     return this.client.sendJsonPayload(jsonPayload);
   }
 
+  wait(callback) {
+    this.client.wait(callback);
+  }
+
   triggerDirectReplay(context) {
     return this.triggerReplay({ type: 'direct', ...context });
   }
@@ -532,6 +536,7 @@ class Rollbar {
     Rollbar.callInstance('buildJsonPayload', args);
   static sendJsonPayload = (...args) =>
     Rollbar.callInstance('sendJsonPayload', args);
+  static wait = (...args) => Rollbar.callInstance('wait', args);
   static wrap = (...args) => Rollbar.callInstance('wrap', args);
   static captureEvent = (...args) => Rollbar.callInstance('captureEvent', args);
 }
