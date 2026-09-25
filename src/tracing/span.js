@@ -3,6 +3,7 @@ import hrtime from './hrtime.js';
 export class Span {
   constructor(options) {
     this.usePerformance = options.usePerformance;
+    this.maxEvents = options.maxEvents;
     this.initReadableSpan(options);
 
     this.spanProcessor = options.spanProcessor;
@@ -63,8 +64,25 @@ export class Span {
     return this;
   }
 
+  /**
+   * Adds an event to the span.
+   *
+   * When the span was started with a positive `maxEvents`, the events list
+   * behaves as a ring buffer: once full, the oldest event is dropped and
+   * `droppedEventsCount` is incremented, so a long-lived span stays bounded.
+   *
+   * @param {string} name - Event name
+   * @param {Object} [attributes] - Event attributes
+   * @param {Array<number>} [time] - Event time as an hrtime tuple
+   * @returns {Span} This span
+   */
   addEvent(name, attributes = {}, time) {
     if (this.span.ended) return this;
+
+    if (this.maxEvents > 0 && this.span.events.length >= this.maxEvents) {
+      this.span.events.shift();
+      this.span.droppedEventsCount++;
+    }
 
     this.span.events.push({
       name,
