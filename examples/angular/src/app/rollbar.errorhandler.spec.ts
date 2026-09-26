@@ -1,7 +1,11 @@
+import { REQUEST_CONTEXT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type Rollbar from 'rollbar';
 
-import { RollbarErrorHandler } from './rollbar.errorhandler';
+import {
+  RollbarErrorHandler,
+  type RollbarRequestContext,
+} from './rollbar.errorhandler';
 import { RollbarService } from './rollbar.service';
 
 describe('RollbarErrorHandler', () => {
@@ -40,5 +44,17 @@ describe('RollbarErrorHandler', () => {
       TestBed.inject(RollbarErrorHandler).handleError(new Error('boom')),
     ).not.toThrow();
     await load.mock.results[0].value;
+  });
+
+  it('should report the error through the request context during SSR', () => {
+    const context: RollbarRequestContext = { reportError: vi.fn() };
+    TestBed.overrideProvider(REQUEST_CONTEXT, { useValue: context });
+    const error = new Error('boom');
+
+    TestBed.inject(RollbarErrorHandler).handleError(error);
+
+    expect(console.error).toHaveBeenCalledWith(error);
+    expect(context.reportError).toHaveBeenCalledWith(error);
+    expect(load).not.toHaveBeenCalled();
   });
 });

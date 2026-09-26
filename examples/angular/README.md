@@ -10,7 +10,7 @@ Angular 22 requires Node.js `^22.22.3 || ^24.15.0 || >=26.0.0`.
 - `src/app/rollbar.service.ts` loads that file with a dynamic `import()`, so Rollbar is kept out of the initial bundle and downloaded as a separate chunk. `src/app/app.config.ts` starts loading it as soon as the app starts, so telemetry is collected before the first error.
 - `src/app/rollbar.errorhandler.ts` replaces Angular's `ErrorHandler`. It logs each error to the console and sends it to Rollbar once Rollbar has loaded, so errors that happen while the chunk is still downloading are not lost.
 - `provideBrowserGlobalErrorListeners()` forwards uncaught errors and unhandled promise rejections to that `ErrorHandler`. This is why `captureUncaught` and `captureUnhandledRejections` are turned off in `rollbar.config.ts`: leaving them on would report those errors twice.
-- `src/server.ts` creates a separate server-side Rollbar instance for the Express server.
+- `src/server.ts` creates a separate server-side Rollbar instance for the Express server. It passes a `reportError()` function to the Angular app in the request context, so errors that Angular catches during server-side rendering are reported with that instance, along with the request, by the same `RollbarErrorHandler`.
 
 The app runs without zone.js, which is the default since Angular 21.
 

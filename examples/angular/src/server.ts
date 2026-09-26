@@ -10,6 +10,8 @@ import { join } from 'node:path';
 // 1) Import Rollbar
 import Rollbar from 'rollbar';
 
+import type { RollbarRequestContext } from './app/rollbar.errorhandler';
+
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 /**
@@ -54,24 +56,43 @@ app.use(
 
 /**
  * Handle all other requests by rendering the Angular application.
+ *
+ * Angular passes errors thrown while rendering to `RollbarErrorHandler`, which
+ * reports them with `context.reportError()`. Most of them don't fail the
+ * request, so they never reach the error-handling middleware below.
  */
 app.use((req: Request, res: Response, next: NextFunction) => {
+  const reported = new Set<unknown>();
+  const context: RollbarRequestContext = {
+    reportError(error) {
+      reported.add(error);
+      rollbar.error(error, req);
+    },
+  };
+
   angularApp
-    .handle(req)
+    .handle(req, context)
     .then((response) =>
       response ? writeResponseToNodeResponse(response, res) : next(),
     )
-    .catch(next);
+    .catch((err) => {
+      // A failure to bootstrap the app is passed to `RollbarErrorHandler`
+      // before it fails the request, so it has been reported already.
+      res.locals['rollbarReported'] = reported.has(err);
+      next(err);
+    });
 });
 
 /**
  * 4) An Express error-handling middleware for *unhandled* errors.
- *    This will catch SSR rendering errors (and any other thrown errors)
- *    that make it to `next(err)`.
+ *    This will catch any thrown errors that make it to `next(err)`, including
+ *    SSR failures that `RollbarErrorHandler` has not already reported.
  */
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   // Report unhandled error to Rollbar
-  rollbar.error(err, req);
+  if (!res.locals['rollbarReported']) {
+    rollbar.error(err, req);
+  }
 
   // Respond with 500 (or however you want to handle SSR errors)
   res.status(500).send('An unexpected server error occurred');

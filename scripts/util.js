@@ -139,7 +139,9 @@ export function satisfiesRange(version, range) {
       .trim()
       .split(/\s+/)
       .every((comparator) => {
-        if (comparator === '' || comparator === '*') return true;
+        if (comparator === '' || comparator === '*') {
+          return true;
+        }
 
         const match = /^(\^|~|>=|<=|>|<|=)?v?(\d+(?:\.\d+){0,2})$/.exec(
           comparator,

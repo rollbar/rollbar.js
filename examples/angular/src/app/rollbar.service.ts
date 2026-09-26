@@ -8,9 +8,9 @@ import type Rollbar from 'rollbar';
  *
  * `load()` imports `./rollbar.config` and creates the Rollbar instance the
  * first time it is called, and returns the same instance after that. It
- * resolves to `null` during server-side rendering, where the server's own
- * Rollbar instance in `server.ts` is used instead, and if the chunk fails to
- * load, so reporting never breaks the app.
+ * resolves to `null` if the chunk fails to load, so reporting never breaks the
+ * app, and during server-side rendering, where `RollbarErrorHandler` reports
+ * errors with the server's Rollbar instance from `server.ts` instead.
  */
 @Injectable({ providedIn: 'root' })
 export class RollbarService {
