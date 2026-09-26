@@ -3,6 +3,9 @@
 /**
  * Validates all examples in the `examples` directory by installing dependencies
  * and building each example using the local `rollbar.tgz` package.
+ *
+ * Examples whose `engines.node` range excludes the running Node version are
+ * skipped.
  */
 
 import { access, readdir, readFile } from 'node:fs/promises';
@@ -10,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findUp, npm, parallelMap } from './util.js';
+import { findUp, npm, parallelMap, satisfiesRange } from './util.js';
 
 const dryRun = ['--dry-run', '-n'].some((f) => process.argv.includes(f));
 const jobsCount = (() => {
@@ -67,10 +70,22 @@ async function validateExamples() {
       continue;
     }
 
-    const { dependencies } = JSON.parse(pkg);
-    if (dependencies?.rollbar === 'file:../rollbar.tgz') {
-      exampleDirs.push(subdir);
+    const { dependencies, engines } = JSON.parse(pkg);
+    if (dependencies?.rollbar !== 'file:../rollbar.tgz') {
+      continue;
     }
+
+    // Skip examples whose toolchain cannot run on this Node version, eg.
+    // the Angular example on the older Node versions in the CI matrix.
+    if (engines?.node && !satisfiesRange(process.versions.node, engines.node)) {
+      console.log(
+        `  - examples/${path.basename(subdir)} skipped ` +
+          `(requires Node ${engines.node}, running ${process.versions.node})`,
+      );
+      continue;
+    }
+
+    exampleDirs.push(subdir);
   }
 
   if (exampleDirs.length === 0) {
