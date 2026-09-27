@@ -12,8 +12,8 @@
     "@rollbar/react": "^1.0.0",
     "react": "19.1.4",
     "react-dom": "19.1.4",
-    "next": "15.4.10",
-    "rollbar": "file::../rollbar.tgz"
+    "next": "15.5.26",
+    "rollbar": "file:../rollbar.tgz"
   },
   "devDependencies": {
     "typescript": "^5",
