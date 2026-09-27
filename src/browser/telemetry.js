@@ -219,6 +219,7 @@ class Instrumenter {
 
     if ('XMLHttpRequest' in this._window) {
       const xhrp = this._window.XMLHttpRequest.prototype;
+      const xhrReplacements = { xhr: [] };
       replace(
         xhrp,
         'open',
@@ -246,8 +247,8 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
 
       replace(
@@ -274,8 +275,8 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
 
       replace(
@@ -425,9 +426,18 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
+
+      // open, setRequestHeader and send share __rollbar_xhr state, so a
+      // partially patched prototype would record broken telemetry. If any of
+      // them is read-only (#1451), leave XHR uninstrumented entirely.
+      if (xhrReplacements.xhr.length === 3) {
+        this.replacements.network.push(...xhrReplacements.xhr);
+      } else {
+        restore(xhrReplacements, 'xhr');
+      }
     }
 
     if ('fetch' in this._window) {

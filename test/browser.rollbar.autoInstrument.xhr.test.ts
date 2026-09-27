@@ -283,4 +283,59 @@ describe('options.autoInstrument', function () {
 
     server.respond();
   });
+
+  // https://github.com/rollbar/rollbar.js/issues/1451
+  describe('when XMLHttpRequest.prototype.open is read-only', function () {
+    let xhrp;
+    let openDescriptor;
+
+    beforeEach(function () {
+      // Reproduces the condition reported from Chrome 97 on Windows 7, where
+      // XMLHttpRequest.prototype.open is non-writable on the page.
+      // configurable: true lets afterEach undo it for the rest of the suite.
+      xhrp = window.XMLHttpRequest.prototype;
+      openDescriptor = Object.getOwnPropertyDescriptor(xhrp, 'open');
+      Object.defineProperty(xhrp, 'open', {
+        value: xhrp.open,
+        writable: false,
+        configurable: true,
+      });
+    });
+
+    afterEach(function () {
+      if (openDescriptor) {
+        Object.defineProperty(xhrp, 'open', openDescriptor);
+      } else {
+        delete xhrp.open;
+      }
+    });
+
+    it('should initialize without throwing and still report items', async function () {
+      const server = window.server;
+      stubResponse(server);
+      server.requests.length = 0;
+      const open = xhrp.open;
+      const send = xhrp.send;
+
+      let rollbar;
+      expect(() => {
+        rollbar = window.rollbar = initRollbarForNetworkTelemetry();
+      }).to.not.throw();
+
+      // XHR is left alone rather than half-instrumented.
+      expect(xhrp.open).to.equal(open);
+      expect(xhrp.send).to.equal(send);
+
+      rollbar.error('after init');
+      await setTimeoutAsync(1);
+      server.respond();
+
+      // The queue may still flush an item left over from the previous test,
+      // so look for this test's item rather than counting requests.
+      const messages = server.requests.map(
+        (r) => JSON.parse(r.requestBody).data.body.message?.body,
+      );
+      expect(messages).to.include('after init');
+    });
+  });
 });

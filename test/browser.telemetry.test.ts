@@ -65,6 +65,90 @@ describe('instrumentNetwork', function () {
 
     done();
   });
+
+  // https://github.com/rollbar/rollbar.js/issues/1451
+  describe('when XMLHttpRequest.prototype cannot be patched', function () {
+    function createWindowMock() {
+      const open = function () {};
+      const setRequestHeader = function () {};
+      const send = function () {};
+      const fetch = (_) => Promise.resolve();
+      const XMLHttpRequest = function () {};
+      XMLHttpRequest.prototype.open = open;
+      XMLHttpRequest.prototype.setRequestHeader = setRequestHeader;
+      XMLHttpRequest.prototype.send = send;
+      return {
+        windowMock: { XMLHttpRequest, fetch },
+        originals: { open, setRequestHeader, send, fetch },
+      };
+    }
+
+    function expectXhrUntouched(windowMock, originals) {
+      const xhrp = windowMock.XMLHttpRequest.prototype;
+      expect(xhrp.open).to.equal(originals.open);
+      expect(xhrp.setRequestHeader).to.equal(originals.setRequestHeader);
+      expect(xhrp.send).to.equal(originals.send);
+    }
+
+    it('should not throw when open is read-only', function () {
+      const callback = sinon.spy();
+      const { windowMock, originals } = createWindowMock();
+      Object.defineProperty(windowMock.XMLHttpRequest.prototype, 'open', {
+        value: originals.open,
+        writable: false,
+      });
+
+      const i = createInstrumenter(callback, windowMock);
+      expect(() => i.instrumentNetwork()).to.not.throw();
+
+      expectXhrUntouched(windowMock, originals);
+    });
+
+    it('should leave XHR unpatched when only a later method is read-only', function () {
+      const callback = sinon.spy();
+      const { windowMock, originals } = createWindowMock();
+      Object.defineProperty(windowMock.XMLHttpRequest.prototype, 'send', {
+        value: originals.send,
+        writable: false,
+      });
+
+      const i = createInstrumenter(callback, windowMock);
+      expect(() => i.instrumentNetwork()).to.not.throw();
+
+      // open and setRequestHeader were patchable, but without send the XHR
+      // telemetry is incomplete, so they must be rolled back.
+      expectXhrUntouched(windowMock, originals);
+    });
+
+    it('should not throw when the prototype is frozen', function () {
+      const callback = sinon.spy();
+      const { windowMock, originals } = createWindowMock();
+      Object.freeze(windowMock.XMLHttpRequest.prototype);
+
+      const i = createInstrumenter(callback, windowMock);
+      expect(() => i.instrumentNetwork()).to.not.throw();
+
+      expectXhrUntouched(windowMock, originals);
+    });
+
+    it('should still instrument fetch and deinstrument cleanly', function () {
+      const callback = sinon.spy();
+      const { windowMock, originals } = createWindowMock();
+      Object.freeze(windowMock.XMLHttpRequest.prototype);
+
+      const i = createInstrumenter(callback, windowMock);
+      i.instrumentNetwork();
+
+      expect(windowMock.fetch).to.not.equal(originals.fetch);
+      windowMock.fetch('http://fetch.call');
+      expect(callback.callCount).to.eql(1);
+      expect(callback.args[0][0].url).to.eql('http://fetch.call');
+
+      expect(() => i.deinstrumentNetwork()).to.not.throw();
+      expect(windowMock.fetch).to.equal(originals.fetch);
+      expectXhrUntouched(windowMock, originals);
+    });
+  });
 });
 
 describe('instrumentDom', function () {
