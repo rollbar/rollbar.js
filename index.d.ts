@@ -117,6 +117,12 @@ declare namespace Rollbar {
     hostBlockList?: string[];
     hostWhiteList?: string[]; // deprecated
     hostSafeList?: string[];
+    /**
+     * Browser only. When true, errors thrown from browser extension code
+     * (chrome-extension://, moz-extension://, safari-web-extension://, etc.)
+     * are not sent. Defaults to false.
+     */
+    ignoreBrowserExtensions?: boolean;
     ignoredMessages?: (string | RegExp)[];
     ignoreDuplicateErrors?: boolean;
     includeItemsInTelemetry?: boolean;
