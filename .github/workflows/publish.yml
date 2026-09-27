@@ -1,0 +1,67 @@
+name: Publish to npm
+
+# Publishes via npm trusted publishing (OIDC): npm exchanges this workflow's
+# GitHub identity for a short-lived publish token, so no NPM_TOKEN secret is
+# used. The trusted publisher on npmjs.com is bound to this file name
+# (publish.yml) -- renaming it breaks publishing.
+#
+# The CDN upload of dist/ is a separate workflow (workflow.yml).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+
+      # No registry-url: that makes setup-node write an .npmrc with a
+      # placeholder NODE_AUTH_TOKEN, and the default registry is already npmjs.
+      - name: Set up node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Check package version matches release tag
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "$version" != "${TAG#v}" ]; then
+            echo "::error::package.json version $version does not match release tag $TAG"
+            exit 1
+          fi
+          # A pre-release (e.g. 3.2.0-rc.1) must not become `latest`. Build
+          # metadata after `+` may itself contain hyphens, so strip it first.
+          core="${version%%+*}"
+          if [[ "$core" == *-* ]]; then
+            echo "dist-tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish
+        run: npm publish --provenance --access public --tag ${{ steps.version.outputs.dist-tag }}
