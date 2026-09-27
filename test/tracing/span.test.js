@@ -222,4 +222,30 @@ describe('Span()', function () {
     timeOriginStub.restore();
     nowStub.restore();
   });
+
+  it('should not limit events by default', function () {
+    const span = new Span(spanOptions());
+
+    for (let i = 0; i < 500; i++) {
+      span.addEvent(`event-${i}`);
+    }
+
+    expect(span.span.events.length).to.equal(500);
+    expect(span.span.droppedEventsCount).to.equal(0);
+  });
+
+  it('should keep only the newest events when maxEvents is set', function () {
+    const span = new Span(spanOptions({ maxEvents: 3 }));
+
+    for (let i = 0; i < 5; i++) {
+      span.addEvent(`event-${i}`);
+    }
+
+    expect(span.span.events.map((e) => e.name)).to.deep.equal([
+      'event-2',
+      'event-3',
+      'event-4',
+    ]);
+    expect(span.span.droppedEventsCount).to.equal(2);
+  });
 });

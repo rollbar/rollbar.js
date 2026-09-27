@@ -48,6 +48,7 @@ export class Tracer {
       spanProcessor: this.spanProcessor,
       startTime: options.startTime,
       usePerformance: options.usePerformance,
+      maxEvents: options.maxEvents,
     });
     return span;
   }

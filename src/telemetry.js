@@ -2,6 +2,13 @@ import * as _ from './utility.js';
 
 const MAX_EVENTS = 100;
 
+// Upper bound on events held by the `rollbar-telemetry` span. The span is only
+// ended (and its events released) when Session Replay exports it, so without a
+// cap it grows for the lifetime of the page. The bound is larger than
+// MAX_EVENTS so a replay's default 300s pre-duration keeps its telemetry
+// timeline on busy pages.
+const MAX_SPAN_EVENTS = 1000;
+
 // Temporary workaround while solving commonjs -> esm issues in Node 18 - 20.
 function fromMillis(millis) {
   return [Math.trunc(millis / 1000), Math.round((millis % 1000) * 1e6)];
@@ -14,7 +21,13 @@ class Telemeter {
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
     this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
     this.tracing = tracing;
-    this.telemetrySpan = this.tracing?.startSpan('rollbar-telemetry', {});
+    this.telemetrySpan = this.startTelemetrySpan();
+  }
+
+  startTelemetrySpan() {
+    return this.tracing?.startSpan('rollbar-telemetry', {
+      maxEvents: MAX_SPAN_EVENTS,
+    });
   }
 
   configure(options) {
@@ -59,7 +72,7 @@ class Telemeter {
   exportTelemetrySpan(attributes = {}) {
     if (this.telemetrySpan) {
       this.telemetrySpan.end(attributes);
-      this.telemetrySpan = this.tracing.startSpan('rollbar-telemetry', {});
+      this.telemetrySpan = this.startTelemetrySpan();
     }
   }
 
