@@ -64,7 +64,7 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 ### Builds
 
 - `npm run build:dev` compiles bundles in development mode (faster debug cycle).
-- `npm run build` + `npm run postbuild` mirrors the release pipeline; only run this when you need to inspect distributables.
+- `npm run build` mirrors the release pipeline (webpack, ES5 check, example snippets, `examples/rollbar.tgz`); only run this when you need to inspect distributables.
 
 ## Code style philosophy
 

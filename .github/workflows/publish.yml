@@ -3,7 +3,13 @@ name: Publish to npm
 # Publishes via npm trusted publishing (OIDC): npm exchanges this workflow's
 # GitHub identity for a short-lived publish token, so no NPM_TOKEN secret is
 # used. The trusted publisher on npmjs.com is bound to this file name
-# (publish.yml) -- renaming it breaks publishing.
+# (publish.yml) and to the `npm-publish` environment -- renaming either breaks
+# publishing.
+#
+# The environment is what stops a modified copy of this file on another branch
+# from publishing: npm only accepts tokens from jobs running in `npm-publish`,
+# and that environment's protection rules (deployments limited to `v*` tags,
+# required reviewers) decide which runs may enter it.
 #
 # The CDN upload of dist/ is a separate workflow (workflow.yml).
 
@@ -18,6 +24,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: npm-publish
     timeout-minutes: 20
 
     steps:
@@ -53,6 +60,16 @@ jobs:
           core="${version%%+*}"
           if [[ "$core" == *-* ]]; then
             echo "dist-tag=next" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A release on an older line (e.g. 2.26.6 after 3.1.0) must not move
+          # `latest` backwards; it goes to `latest-<major>` instead.
+          current="$(npm view rollbar dist-tags.latest)"
+          current="${current%%[-+]*}"
+          newest="$(printf '%s\n' "$current" "$core" | sort -V | tail -n 1)"
+          if [ "$core" != "$current" ] && [ "$newest" = "$current" ]; then
+            echo "::notice::$version is older than latest ($current); publishing as latest-${core%%.*}"
+            echo "dist-tag=latest-${core%%.*}" >> "$GITHUB_OUTPUT"
           else
             echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
           fi
@@ -62,6 +79,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # workflow.yml uploads the committed dist/ to the CDN, while npm gets
+      # this rebuild. Fail rather than ship two different bundles.
+      - name: Check committed dist/ matches the build
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -n "$(git status --porcelain -- dist/)" ]; then
+            git status --short -- dist/
+            echo "::error::dist/ committed at $TAG differs from a fresh build; commit the rebuilt dist/ before tagging"
+            exit 1
+          fi
 
       - name: Publish
         run: npm publish --provenance --access public --tag ${{ steps.version.outputs.dist-tag }}
