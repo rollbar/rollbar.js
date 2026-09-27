@@ -9,7 +9,19 @@ with your valid client token before building your webpack bundle.
 
 ## Node modules
 
-Run `npm install` to install node modules.
+This example installs rollbar.js from `../rollbar.tgz`, a tarball of the local
+SDK that is not checked in. Create it first by running this from the repository
+root:
+
+```
+npm run pack
+```
+
+(`npm run build` at the root also creates it, after rebuilding `dist/`.)
+
+Then run `npm install` in this directory to install node modules. If the
+tarball is missing, npm fails with a misleading `ERESOLVE` error about
+`rollbar@undefined` and the `@rollbar/react` peer dependency.
 
 ## Build
 
@@ -24,16 +36,16 @@ every change, then open `dev/index.html` in a browser. This keeps the committed
 (For rollbar.js maintainers)
 
 Rollbar.js test automation includes tests that load and exercise this example app.
-For those tests to work, main.js must be available and up to date in ./examples/webpack/dist/.
+For those tests to work, main.js must be available and up to date in ./examples/react-16/dist/.
 If the example app has changed or changes to rollbar.js need to be pulled in,
 update and commit a new main.js.
 
 ```
-# Build the rollbar.js dist if needed.
+# Build the rollbar.js dist if needed. This also creates examples/rollbar.tgz.
 npm run build
 
 # Prepare the example's npm bundle.
-cd examples/react && npm install
+cd examples/react-16 && npm install
 
 # Build the output files.
 npm run build
