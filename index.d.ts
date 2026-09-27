@@ -92,6 +92,12 @@ declare namespace Rollbar {
     captureUncaught?: boolean;
     captureUnhandledRejections?: boolean;
     captureUsername?: boolean;
+    /**
+     * Return `true` to drop the item before it is sent.
+     *
+     * `args` is an array of the arguments originally passed to the log
+     * method (e.g. `rollbar.error('msg', err, custom)`).
+     */
     checkIgnore?: (
       isUncaught: boolean,
       args: LogArgument[],
@@ -128,6 +134,9 @@ declare namespace Rollbar {
     maxRetries?: number;
     maxTelemetryEvents?: number;
     nodeSourceMaps?: boolean;
+    /**
+     * `args` is an array of the arguments originally passed to the log method.
+     */
     onSendCallback?: (
       isUncaught: boolean,
       args: LogArgument[],

@@ -563,7 +563,10 @@ function createItem(args, logger, notifier, requestKeys, lambdaContext) {
   if (lambdaContext) {
     item.lambdaContext = lambdaContext;
   }
-  item._originalArgs = args;
+  // Log methods pass their `arguments` object here. Copy it into a real array
+  // because it is handed to the user's checkIgnore/onSendCallback, which are
+  // typed as receiving `LogArgument[]`.
+  item._originalArgs = Array.prototype.slice.call(args);
   item.diagnostic.original_arg_types = argTypes;
   return item;
 }
