@@ -19,10 +19,10 @@ export class AppComponent {
     throw new Error('Test error from AppComponent!');
   }
 
-  logWarning(): void {
+  logWarning(): Promise<void> {
     // Manually log a warning to Rollbar
-    void this.rollbarService
-      .load()
-      .then((rollbar) => rollbar?.warning('Test warning from AppComponent'));
+    return this.rollbarService.load().then((rollbar) => {
+      rollbar?.warning('Test warning from AppComponent');
+    });
   }
 }

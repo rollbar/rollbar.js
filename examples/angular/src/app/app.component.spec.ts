@@ -38,7 +38,6 @@ describe('AppComponent', () => {
   it('should log a warning to Rollbar', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     await fixture.componentInstance.logWarning();
-    await fixture.whenStable();
     expect(rollbar.warning).toHaveBeenCalledWith(
       'Test warning from AppComponent',
     );
