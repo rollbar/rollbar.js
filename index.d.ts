@@ -121,6 +121,12 @@ declare namespace Rollbar {
      * Browser only. When true, errors thrown from browser extension code
      * (chrome-extension://, moz-extension://, safari-web-extension://, etc.)
      * are not sent. Defaults to false.
+     *
+     * Don't enable this when Rollbar runs inside a browser extension (content
+     * scripts, popups, background pages): the extension's own errors would be
+     * dropped. As with the other ignore options, a dropped error is still
+     * recorded as a telemetry event on later items while
+     * `includeItemsInTelemetry` is on.
      */
     ignoreBrowserExtensions?: boolean;
     ignoredMessages?: (string | RegExp)[];

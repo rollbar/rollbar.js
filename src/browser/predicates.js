@@ -8,10 +8,13 @@ function checkIgnore(item, settings) {
 }
 
 // Safari replaces the URLs of extension scripts with webkit-masked-url://hidden/
-// in stack traces, so that scheme is treated as an extension too.
+// in stack traces, so that scheme is treated as an extension too. Scripts an
+// extension loads from blob URLs it created appear as blob:<extension-origin>.
 var EXTENSION_URL_REGEX =
-  /^(?:(?:chrome|moz|safari|safari-web|ms-browser)-extension|webkit-masked-url):\/\//i;
-var URL_REGEX = /^[a-z][a-z0-9+.-]*:\/\//i;
+  /^(?:blob:)?(?:(?:chrome|moz|safari|safari-web|ms-browser)-extension|webkit-masked-url):\/\//i;
+// Any `scheme:` counts as a URL, including blob: and data: scripts. Built-in
+// and unknown frames such as `(native)`, `[native code]` and `(unknown)` don't.
+var URL_REGEX = /^[a-z][a-z0-9+.-]*:/i;
 
 /**
  * Finds the frame an error was thrown from. Rollbar orders frames with the

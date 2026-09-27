@@ -73,6 +73,7 @@ describe('checkBrowserExtension', function () {
     'safari-web-extension://ABCDEF12-3456-7890-ABCD-EF1234567890/content.js',
     'ms-browser-extension://ext_1234/content.js',
     'webkit-masked-url://hidden/',
+    'blob:chrome-extension://abc/0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0',
   ].forEach(function (filename) {
     it(`should return false when the error is thrown from ${filename}`, function () {
       const item = traceItem(['https://example.com/app.js', filename]);
@@ -107,6 +108,31 @@ describe('checkBrowserExtension', function () {
         settings,
       ),
     ).to.be.ok;
+  });
+
+  it('should treat blob: and data: scripts as frames with a URL', function () {
+    [
+      'blob:https://example.com/0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0',
+      'data:text/javascript,throw new Error()',
+    ].forEach(function (filename) {
+      expect(
+        p.checkBrowserExtension(
+          traceItem(['chrome-extension://abc/wrapper.js', filename]),
+          settings,
+        ),
+      ).to.be.ok;
+    });
+  });
+
+  it('should skip unknown frames to find the originating frame', function () {
+    ['(unknown)', 'native'].forEach(function (filename) {
+      expect(
+        p.checkBrowserExtension(
+          traceItem(['chrome-extension://abc/injected.js', filename]),
+          settings,
+        ),
+      ).to.not.be.ok;
+    });
   });
 
   it('should not match extension schemes elsewhere in the URL', function () {
