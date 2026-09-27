@@ -2,9 +2,6 @@
 
 const path = require('path');
 const express = require('express');
-const webpack = require('webpack');
-const webpackMiddleware = require('webpack-dev-middleware');
-const webpackHotMiddleware = require('webpack-hot-middleware');
 const Rollbar = require('rollbar');
 
 const isDeveloping = process.env.NODE_ENV !== 'production';

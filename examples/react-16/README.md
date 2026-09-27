@@ -15,7 +15,9 @@ Run `npm install` to install node modules.
 
 Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
-Run `npm run start` to launch index.html in a browser.
+Run `npm start` to build a development bundle into `dev/` and rebuild it on
+every change, then open `dev/index.html` in a browser. This keeps the committed
+`dist/` bundle untouched.
 
 ## Preparing for rollbar.js tests
 
