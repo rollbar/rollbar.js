@@ -206,6 +206,16 @@ class Rollbar {
   }
 
   setupUnhandledCapture() {
+    // Hooking page globals must never make `new Rollbar()` throw and take
+    // the host page down with it. The snippet shim has the same guard.
+    try {
+      this._setupUnhandledCapture();
+    } catch (e) {
+      logger.error('[Rollbar]: Internal error', e);
+    }
+  }
+
+  _setupUnhandledCapture() {
     var gWindow = _gWindow();
 
     if (!this.unhandledExceptionsInitialized) {

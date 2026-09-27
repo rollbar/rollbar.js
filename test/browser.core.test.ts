@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 // Use minimal browser package, with no optional components added.
 import Rollbar from '../src/browser/core.js';
@@ -395,6 +396,71 @@ describe('options.captureUncaught', function () {
       captureUncaught: false,
       stackTraceLimit: oldLimit, // reset to default
     });
+  });
+
+  // https://github.com/rollbar/rollbar.js/issues/839
+  it('should initialize and capture when window.onerror is a Restricted extension handler', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    // Firefox exposes an onerror installed by a browser extension to the page
+    // as a callable `Restricted {}` object whose property reads all throw.
+    const pageOnError = window.onerror;
+    const extensionOnError = sinon.spy(() => false);
+    window.onerror = new Proxy(extensionOnError, {
+      get(_target, prop) {
+        throw new Error(
+          `Permission denied to access property "${String(prop)}"`,
+        );
+      },
+    });
+
+    try {
+      let rollbar;
+      expect(() => {
+        rollbar = window.rollbar = new Rollbar({
+          accessToken: 'POST_CLIENT_ITEM_TOKEN',
+          captureUncaught: true,
+        });
+      }).to.not.throw();
+
+      document.getElementById('throw-error').click();
+      await setTimeoutAsync(1);
+      server.respond();
+
+      const body = JSON.parse(server.requests[0].requestBody);
+      expect(body.data.body.trace.exception.message).to.eql('test error');
+      expect(extensionOnError.calledOnce).to.be.true;
+
+      rollbar.configure({ captureUncaught: false });
+    } finally {
+      window.onerror = pageOnError;
+    }
+  });
+
+  it('should not throw from the constructor when hooking globals fails', function () {
+    Rollbar.setComponents({
+      wrapGlobals: () => {
+        throw new Error(
+          'Permission denied to access property "addEventListener"',
+        );
+      },
+    });
+
+    try {
+      expect(() => {
+        window.rollbar = new Rollbar({
+          accessToken: 'POST_CLIENT_ITEM_TOKEN',
+          captureUncaught: true,
+          wrapGlobalEventHandlers: true,
+        });
+      }).to.not.throw();
+
+      window.rollbar.configure({ captureUncaught: false });
+    } finally {
+      Rollbar.setComponents({});
+    }
   });
 
   describe('options.captureUnhandledRejections', function () {

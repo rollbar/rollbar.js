@@ -7,10 +7,7 @@ function captureUncaughtExceptions(window, handler, shim) {
   if (typeof handler._rollbarOldOnError === 'function') {
     oldOnError = handler._rollbarOldOnError;
   } else if (window.onerror) {
-    oldOnError = window.onerror;
-    while (oldOnError._rollbarOldOnError) {
-      oldOnError = oldOnError._rollbarOldOnError;
-    }
+    oldOnError = _unwrapOnError(window.onerror);
     handler._rollbarOldOnError = oldOnError;
   }
 
@@ -24,6 +21,35 @@ function captureUncaughtExceptions(window, handler, shim) {
     fn._rollbarOldOnError = oldOnError;
   }
   window.onerror = fn;
+}
+
+/**
+ * Follows the `_rollbarOldOnError` chain left by earlier Rollbar instances
+ * (e.g. the snippet shim) back to the page's original `onerror` handler.
+ *
+ * In Firefox, an `onerror` installed by a browser extension is exposed to the
+ * page as an opaque `Restricted {}` object, and reading any property from it
+ * throws "Permission denied to access property". Such a handler can't have
+ * been installed by Rollbar, so it is treated as the end of the chain.
+ * See https://github.com/rollbar/rollbar.js/issues/839
+ *
+ * @param {Function} onError - The current `window.onerror` value.
+ * @returns {Function} The innermost handler that Rollbar should chain to.
+ */
+function _unwrapOnError(onError) {
+  var current = onError;
+  for (;;) {
+    var next;
+    try {
+      next = current._rollbarOldOnError;
+    } catch (_e) {
+      return current;
+    }
+    if (!next) {
+      return current;
+    }
+    current = next;
+  }
 }
 
 function _rollbarWindowOnError(window, r, old, args) {
@@ -40,7 +66,9 @@ function _rollbarWindowOnError(window, r, old, args) {
   var ret = r.handleUncaughtException.apply(r, args);
 
   if (old) {
-    old.apply(window, args);
+    // Avoid `old.apply`: it is a property read, which throws on the
+    // Restricted handlers described in _unwrapOnError().
+    Function.prototype.apply.call(old, window, args);
   }
 
   // Let other chained onerror handlers above run before setting this.
