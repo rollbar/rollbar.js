@@ -70,6 +70,10 @@ function exceptionMessage(item) {
 }
 
 describe('level methods called without their instance', function () {
+  // Longer than waitForItems' 2000 ms, so a missing item fails with its
+  // "expected N item(s)" message rather than Mocha's generic timeout.
+  this.timeout(5000);
+
   let api;
   let rollbar;
 
