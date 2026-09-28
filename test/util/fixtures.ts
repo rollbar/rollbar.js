@@ -10,6 +10,9 @@
  */
 export async function loadHtml(relativePath: string): Promise<void> {
   const res = await fetch(relativePath);
+  if (!res.ok) {
+    throw new Error(`Failed to load ${relativePath}: HTTP ${res.status}`);
+  }
   const text = await res.text();
   const parser = new DOMParser();
   const doc = parser.parseFromString(text, 'text/html');
@@ -32,12 +35,31 @@ export async function loadHtml(relativePath: string): Promise<void> {
 
       await new Promise<void>((resolve, reject) => {
         newScript.onload = () => resolve();
-        newScript.onerror = (event) => reject(event);
+        newScript.onerror = () =>
+          reject(new Error(`Failed to load script ${newScript.src}`));
         document.body.appendChild(newScript);
       });
     } else if (script.textContent) {
       // Inline script
       eval(script.textContent);
     }
+  }
+}
+
+/**
+ * Loads an example app page with `loadHtml`. The app's bundle is not
+ * committed; `npm run build:test-examples` builds it against the current SDK.
+ *
+ * @param {string} relativePath - The path to the HTML file, relative to the
+ *  project root.
+ */
+export async function loadExampleHtml(relativePath: string): Promise<void> {
+  try {
+    await loadHtml(relativePath);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `${message}. Run \`npm run build:test-examples\` to build the example apps.`,
+    );
   }
 }

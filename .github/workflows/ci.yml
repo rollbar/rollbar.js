@@ -81,6 +81,12 @@ jobs:
           done
           exit 1
 
+      # test/examples/ loads these apps' bundles, so build them from the SDK
+      # the Build step just produced instead of committing stale copies.
+      - name: Build example apps for browser tests
+        if: matrix.node == 22
+        run: npm run build:test-examples
+
       - name: Run browser tests (Web Test Runner)
         if: matrix.node == 22
         run: npm run test:wtr
