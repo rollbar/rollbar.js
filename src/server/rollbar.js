@@ -726,6 +726,7 @@ function addOrReplaceRollbarHandler(event, action) {
   // rather than dealing with `arguments` and `apply`
   var fn = function (a, b) {
     action(a, b);
+    printUnhandledError(event, a);
   };
   fn._rollbarHandler = true;
 
@@ -737,6 +738,30 @@ function addOrReplaceRollbarHandler(event, action) {
     }
   }
   process.on(event, fn);
+}
+
+/**
+ * Print an uncaught exception or unhandled rejection to stderr the way Node
+ * would have if Rollbar were not listening for it.
+ *
+ * Node only prints these errors when nothing is listening for the event, so
+ * installing Rollbar's listener hides them from developers and from tools
+ * that surface process output, such as nodemon (#1108). If the application
+ * has its own listener, reporting the error is left to that listener.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {*} err - The thrown value or rejection reason.
+ */
+function printUnhandledError(event, err) {
+  var onlyRollbarListening = process
+    .listeners(event)
+    .every(function (listener) {
+      return listener._rollbarHandler;
+    });
+  if (!onlyRollbarListening) {
+    return;
+  }
+  process.stderr.write(util.inspect(err) + '\n');
 }
 
 function RollbarError(message, nested) {

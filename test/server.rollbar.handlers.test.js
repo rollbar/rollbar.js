@@ -1,3 +1,6 @@
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
 import { expect } from 'chai';
 import sinon from 'sinon';
 
@@ -14,6 +17,17 @@ async function nodeReject() {
   await wait(500);
 }
 
+function runChild(mode) {
+  const fixture = fileURLToPath(
+    new URL('./fixtures/server/unhandled.js', import.meta.url),
+  );
+  return spawnSync(process.execPath, [fixture, mode], { encoding: 'utf8' });
+}
+
+function written(stub) {
+  return stub.args.map((args) => String(args[0])).join('');
+}
+
 async function nodeThrow() {
   setTimeout(function () {
     throw new Error('node error');
@@ -22,6 +36,18 @@ async function nodeThrow() {
 }
 
 describe('rollbar exception handlers', function () {
+  let stderrWrite;
+
+  beforeEach(function () {
+    // Rollbar prints unhandled errors to stderr when it is the only listener;
+    // capture that output instead of cluttering the test report.
+    stderrWrite = sinon.stub(process.stderr, 'write');
+  });
+
+  afterEach(function () {
+    stderrWrite.restore();
+  });
+
   before(function () {
     // Increase max listeners to avoid warnings during tests
     // Multiple Rollbar instances are created and each adds handlers
@@ -143,6 +169,54 @@ describe('rollbar exception handlers', function () {
         logStub.restore();
       });
     });
+    describe('printing to stderr (#1108)', function () {
+      it('should print the error when Rollbar is the only listener', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        await nodeThrow();
+        expect(logStub.called).to.be.true;
+        expect(written(stderrWrite)).to.contain('Error: node error\n    at ');
+
+        logStub.restore();
+      });
+
+      it('should print the error after captureUncaught is disabled in configure', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+        rollbar.configure({ captureUncaught: false });
+
+        await nodeThrow();
+        expect(logStub.called).to.be.false;
+        expect(written(stderrWrite)).to.contain('Error: node error');
+
+        logStub.restore();
+      });
+
+      it('should leave printing to the app when it has its own listener', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+        const appHandler = sinon.spy();
+        process.on('uncaughtException', appHandler);
+
+        await nodeThrow();
+        expect(logStub.called).to.be.true;
+        expect(appHandler.called).to.be.true;
+        expect(written(stderrWrite)).to.not.contain('node error');
+
+        process.removeListener('uncaughtException', appHandler);
+        logStub.restore();
+      });
+    });
   });
 
   describe('captureUnhandledRejections', function () {
@@ -244,6 +318,59 @@ describe('rollbar exception handlers', function () {
 
         logStub.restore();
       });
+    });
+
+    describe('printing to stderr (#1108)', function () {
+      it('should print the reason when Rollbar is the only listener', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUnhandledRejections: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        await nodeReject();
+        expect(logStub.called).to.be.true;
+        expect(written(stderrWrite)).to.contain('Error: node reject\n    at ');
+
+        logStub.restore();
+      });
+
+      it('should leave printing to the app when it has its own listener', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUnhandledRejections: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+        const appHandler = sinon.spy();
+        process.on('unhandledRejection', appHandler);
+
+        await nodeReject();
+        expect(logStub.called).to.be.true;
+        expect(appHandler.called).to.be.true;
+        expect(written(stderrWrite)).to.not.contain('node reject');
+
+        process.removeListener('unhandledRejection', appHandler);
+        logStub.restore();
+      });
+    });
+  });
+
+  // Runs Rollbar in a real Node process, with no Mocha listeners in the way,
+  // which is how the issue was reported: under nodemon the crash output
+  // disappeared as soon as Rollbar was initialized.
+  describe('in a separate process (#1108)', function () {
+    it('should still print uncaught exceptions to stderr', function () {
+      const child = runChild('throw');
+
+      expect(child.stderr).to.contain('Error: child error\n    at ');
+      expect(child.stderr).to.contain('unhandled.js');
+    });
+
+    it('should still print unhandled rejections to stderr', function () {
+      const child = runChild('reject');
+
+      expect(child.stderr).to.contain('Error: child reject\n    at ');
+      expect(child.stderr).to.contain('unhandled.js');
     });
   });
 });
