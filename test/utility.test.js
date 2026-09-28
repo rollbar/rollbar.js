@@ -485,6 +485,33 @@ describe('formatArgsAsString', function () {
     expect(result.length).to.eql(500);
     expect(result.endsWith('...')).to.eql(true);
   });
+  it('should use a placeholder for a Proxy whose traps throw', function () {
+    var proxy = new Proxy(
+      {},
+      {
+        get: function () {
+          throw new Error('trap');
+        },
+      },
+    );
+    var result = _.formatArgsAsString(['before', proxy, 'after']);
+
+    expect(result).to.eql('before [unformattable object] after');
+  });
+  it('should use a placeholder for a revoked Proxy', function () {
+    var revocable = Proxy.revocable({}, {});
+    revocable.revoke();
+    var result = _.formatArgsAsString(['before', revocable.proxy, 'after']);
+
+    expect(result).to.eql('before [unformattable object] after');
+  });
+  it('should use a placeholder for an unparseable Symbol.toStringTag', function () {
+    var obj = { a: 1 };
+    obj[Symbol.toStringTag] = '';
+    var result = _.formatArgsAsString(['before', obj, 'after']);
+
+    expect(result).to.eql('before [unformattable object] after');
+  });
 });
 
 describe('addItemAttributes', function () {

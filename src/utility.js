@@ -720,7 +720,9 @@ function set(obj, path, value) {
 /**
  * formatArgsAsString - Formats console method arguments as a single message.
  *
- * Never throws, so it is safe to call from the console wrapper.
+ * Never throws, so it is safe to call from the console wrapper. An argument
+ * that can't be formatted is replaced with a placeholder, so the rest of the
+ * message is kept.
  *
  * @param {Array} args - The arguments passed to a console method.
  * @returns {string} The arguments formatted and joined by spaces.
@@ -728,7 +730,15 @@ function set(obj, path, value) {
 function formatArgsAsString(args) {
   var result = [];
   for (var i = 0, len = args.length; i < len; ++i) {
-    result.push(formatArgAsString(args[i]));
+    var str;
+    try {
+      str = formatArgAsString(args[i]);
+    } catch (_e) {
+      // e.g. a Proxy whose traps throw, a revoked Proxy, or a
+      // Symbol.toStringTag that typeName can't parse.
+      str = '[unformattable ' + typeof args[i] + ']';
+    }
+    result.push(str);
   }
   return result.join(' ');
 }
