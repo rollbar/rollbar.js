@@ -16,7 +16,7 @@ import * as _ from '../utility.js';
 
 import * as serverDefaults from './defaults.js';
 import rollbarExpressMiddleware from './middleware/rollbarExpressMiddleware.js';
-import Instrumenter from './telemetry.js';
+import Instrumenter, { withoutLogCapture } from './telemetry.js';
 import * as transforms from './transforms.js';
 import Transport from './transport.js';
 
@@ -761,7 +761,40 @@ function printUnhandledError(event, err) {
   if (!onlyRollbarListening) {
     return;
   }
-  process.stderr.write(util.inspect(err) + '\n');
+  if (event === 'unhandledRejection' && !nodePrintsUnhandledRejections()) {
+    return;
+  }
+  withoutLogCapture(function () {
+    process.stderr.write(util.inspect(err) + '\n');
+  });
+}
+
+/**
+ * Whether Node, left to itself, would print an unhandled rejection that has
+ * no `unhandledRejection` listener, and would not already print it anyway.
+ *
+ * That holds for the default `throw` mode and for `warn-with-error-code`.
+ * Under `warn`, Node prints its own warning even with a listener installed.
+ * Under `strict`, the rejection is raised as an uncaught exception first, so
+ * it has already been printed or handled by the time this event fires. Under
+ * `none`, Node prints nothing.
+ *
+ * @returns {boolean}
+ */
+function nodePrintsUnhandledRejections() {
+  var mode = 'throw';
+  // Flags on the command line take precedence over NODE_OPTIONS.
+  var args = (process.env.NODE_OPTIONS || '')
+    .split(/\s+/)
+    .concat(process.execArgv);
+  args.forEach(function (arg, i) {
+    if (arg === '--unhandled-rejections') {
+      mode = args[i + 1];
+    } else if (arg.indexOf('--unhandled-rejections=') === 0) {
+      mode = arg.slice('--unhandled-rejections='.length);
+    }
+  });
+  return mode !== 'warn' && mode !== 'strict' && mode !== 'none';
 }
 
 function RollbarError(message, nested) {
