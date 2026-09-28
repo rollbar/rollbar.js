@@ -28,28 +28,17 @@ tarball is missing, npm fails with a misleading `ERESOLVE` error about
 Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
 Run `npm start` to build a development bundle into `dev/` and rebuild it on
-every change, then open `dev/index.html` in a browser. This keeps the committed
-`dist/` bundle untouched.
+every change, then open `dev/index.html` in a browser. This keeps it separate
+from the production `dist/` build that the rollbar.js tests load.
 
-## Preparing for rollbar.js tests
+## For rollbar.js maintainers
 
-(For rollbar.js maintainers)
+`test/examples/react.test.ts` loads this app's production build from `dist/`,
+which is not committed.
 
-Rollbar.js test automation includes tests that load and exercise this example app.
-For those tests to work, main.js must be available and up to date in ./examples/react-16/dist/.
-If the example app has changed or changes to rollbar.js need to be pulled in,
-update and commit a new main.js.
+From the repository root, `npm run build:test-examples` packs the SDK's current
+`dist/` and builds this app against it. Run `npm run build` first if you've
+changed the SDK's source. `npm test` and CI run it before the browser tests.
 
-```
-# Build the rollbar.js dist if needed. This also creates examples/rollbar.tgz.
-npm run build
-
-# Prepare the example's npm bundle.
-cd examples/react-16 && npm install
-
-# Build the output files.
-npm run build
-
-# The rollbar.js dist is no longer needed, and can be reverted.
-cd ../.. && git checkout dist
-```
+The production build uses an absolute `publicPath`, `/examples/react-16/dist/`,
+because the test loads the page from the repository root.
