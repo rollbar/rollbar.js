@@ -17,14 +17,11 @@ async function nodeReject() {
   await wait(500);
 }
 
-function runChild(
-  mode,
-  { nodeArgs = [], env = process.env, appListener = false } = {},
-) {
+function runChild(mode, { nodeArgs = [], env = process.env, variant } = {}) {
   const fixture = fileURLToPath(
     new URL('./fixtures/server/unhandled.js', import.meta.url),
   );
-  const fixtureArgs = appListener ? [mode, 'app-listener'] : [mode];
+  const fixtureArgs = variant ? [mode, variant] : [mode];
   // spawnSync blocks the event loop, so Mocha's own timeout cannot stop a
   // child that never exits; this one turns a hang into a test failure.
   const child = spawnSync(
@@ -424,9 +421,24 @@ describe('rollbar exception handlers', function () {
     // Neither Node nor Rollbar prints when the app has its own listener.
     ['throw', 'reject'].forEach((mode) => {
       it(`should print nothing when the app listens too (${mode})`, function () {
-        const child = runChild(mode, { appListener: true });
+        const child = runChild(mode, { variant: 'app-listener' });
 
         expect(child.stderr).to.not.contain('Error: child');
+      });
+    });
+
+    // Printing is best-effort: a throw from Rollbar's uncaughtException
+    // listener would make Node exit with code 7, and one from its
+    // unhandledRejection listener would raise a second uncaught exception.
+    ['throw', 'reject'].forEach((mode) => {
+      it(`should survive a value whose inspect method throws (${mode})`, function () {
+        const child = runChild(mode, { variant: 'uninspectable' });
+
+        expect(child.status).to.equal(0);
+        expect(child.stderr).to.contain(
+          'Rollbar: Failed to print unhandled error. Error: inspect failed',
+        );
+        expect(occurrences(child.stderr, 'inspect failed')).to.equal(1);
       });
     });
 

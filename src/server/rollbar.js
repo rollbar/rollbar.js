@@ -769,9 +769,18 @@ function printUnhandledError(event, err) {
   if (event === 'unhandledRejection' && !nodePrintsUnhandledRejections()) {
     return;
   }
-  withoutLogCapture(function () {
-    process.stderr.write(util.inspect(err) + '\n');
-  });
+  try {
+    withoutLogCapture(function () {
+      process.stderr.write(util.inspect(err) + '\n');
+    });
+  } catch (e) {
+    // This runs inside Rollbar's process listener. A throw from an
+    // uncaughtException listener makes Node exit with code 7, dropping the
+    // item just queued, and one from an unhandledRejection listener becomes
+    // a second, spurious uncaught exception. `util.inspect` can throw when
+    // the value has a custom inspect method, so printing stays best-effort.
+    logger.error('Failed to print unhandled error.', e);
+  }
 }
 
 /**
