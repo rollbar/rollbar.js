@@ -85,6 +85,25 @@ describe('globalSetup.captureUncaughtExceptions', function () {
     });
   });
 
+  it('keeps its bookkeeping when the chained handler throws', function () {
+    const chainError = new Error('Permission denied to access object');
+    const win: Record<string, unknown> = {
+      onerror: sinon.stub().throws(chainError),
+    };
+    const handler = Object.assign(fakeHandler(), {
+      handleUncaughtException: sinon.stub().returns('anonymous'),
+      anonymousErrorsPending: 0,
+    });
+
+    captureUncaughtExceptions(win, handler, false);
+
+    expect(() =>
+      (win.onerror as (...args: unknown[]) => void)('boom'),
+    ).to.throw(chainError);
+    expect(handler.handleUncaughtException.calledOnce).to.be.true;
+    expect(handler.anonymousErrorsPending).to.equal(1);
+  });
+
   it('unwraps previously installed Rollbar handlers to the original onerror', function () {
     const original = sinon.spy();
     const shimOnError = Object.assign(function () {}, {

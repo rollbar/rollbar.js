@@ -65,17 +65,22 @@ function _rollbarWindowOnError(window, r, old, args) {
 
   var ret = r.handleUncaughtException.apply(r, args);
 
-  if (old) {
-    // Avoid `old.apply`: it is a property read, which throws on the
-    // Restricted handlers described in _unwrapOnError().
-    Function.prototype.apply.call(old, window, args);
-  }
-
-  // Let other chained onerror handlers above run before setting this.
-  // If an error is thrown and caught within a chained onerror handler,
-  // Error.prepareStackTrace() will see that one before the one we want.
-  if (ret === 'anonymous') {
-    r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+  // `finally`, not `catch`: an error from the page's own handler should still
+  // surface, but must not skip Rollbar's bookkeeping. That includes a
+  // Restricted handler (see _unwrapOnError()) Firefox won't let the page call.
+  try {
+    if (old) {
+      // Avoid `old.apply`: it is a property read, which throws on the
+      // Restricted handlers described in _unwrapOnError().
+      Function.prototype.apply.call(old, window, args);
+    }
+  } finally {
+    // Let other chained onerror handlers above run before setting this.
+    // If an error is thrown and caught within a chained onerror handler,
+    // Error.prepareStackTrace() will see that one before the one we want.
+    if (ret === 'anonymous') {
+      r.anonymousErrorsPending += 1; // See Rollbar.prototype.handleAnonymousErrors()
+    }
   }
 }
 

@@ -440,25 +440,49 @@ describe('options.captureUncaught', function () {
   });
 
   it('should not throw from the constructor when hooking globals fails', function () {
-    Rollbar.setComponents({
-      wrapGlobals: () => {
-        throw new Error(
-          'Permission denied to access property "addEventListener"',
-        );
-      },
-    });
+    const wrapGlobals = sinon
+      .stub()
+      .throws(
+        new Error('Permission denied to access property "addEventListener"'),
+      );
+    Rollbar.setComponents({ wrapGlobals });
+    const pageOnError = window.onerror;
+    const pageURH = window._rollbarURH;
+    const addEventListener = sinon.spy(window, 'addEventListener');
 
     try {
       expect(() => {
         window.rollbar = new Rollbar({
           accessToken: 'POST_CLIENT_ITEM_TOKEN',
           captureUncaught: true,
+          captureUnhandledRejections: true,
           wrapGlobalEventHandlers: true,
         });
       }).to.not.throw();
 
-      window.rollbar.configure({ captureUncaught: false });
+      // The failing step doesn't skip the ones after it.
+      expect(window._rollbarURH).to.be.a('function');
+      expect(window._rollbarURH).to.not.equal(pageURH);
+      expect(addEventListener.calledWith('unhandledrejection')).to.be.true;
+
+      // A later configure() doesn't redo the half-finished setup, which would
+      // chain a second Rollbar onerror behind the first.
+      const rollbarOnError = window.onerror;
+      window.rollbar.configure({ environment: 'test' });
+      expect(wrapGlobals.calledOnce).to.be.true;
+      expect(window.onerror).to.equal(rollbarOnError);
+      expect(addEventListener.withArgs('unhandledrejection').calledOnce).to.be
+        .true;
+
+      window.rollbar.configure({
+        captureUncaught: false,
+        captureUnhandledRejections: false,
+      });
     } finally {
+      addEventListener.restore();
+      window.removeEventListener('unhandledrejection', window._rollbarURH);
+      window._rollbarURH = pageURH;
+      window.onerror = pageOnError;
       Rollbar.setComponents({});
     }
   });
