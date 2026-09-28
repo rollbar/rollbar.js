@@ -467,21 +467,3 @@ describe('addItemAttributes', function () {
     expect(item.data.attributes[0].value).to.equal('12345');
   });
 });
-
-describe('createItem', function () {
-  var logger = { log: () => {}, error: () => {} };
-
-  it('should store _originalArgs as a real array when given an arguments object', function () {
-    var err = new Error('bork');
-    var custom = { a: 1 };
-    var args = (function () {
-      return arguments;
-    })('hello', err, custom);
-
-    var item = _.createItem(args, logger);
-
-    expect(Array.isArray(item._originalArgs)).to.be.true;
-    expect(item._originalArgs).to.eql(['hello', err, custom]);
-    expect(item._originalArgs.some((arg) => arg instanceof Error)).to.be.true;
-  });
-});

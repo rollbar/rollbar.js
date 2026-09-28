@@ -57,6 +57,11 @@ jobs:
           eslint_args: '--max-warnings 0'
           eslint_extensions: js,mjs,cjs
 
+      # Covers src and the compile-time tests in test/types that pin the
+      # public types in index.d.ts.
+      - name: Type check
+        run: npm run typecheck:tests
+
       - name: Build
         run: npm run build
 

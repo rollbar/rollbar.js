@@ -93,10 +93,26 @@ declare namespace Rollbar {
     captureUnhandledRejections?: boolean;
     captureUsername?: boolean;
     /**
-     * Return `true` to drop the item before it is sent.
+     * Called for each item before it is sent, to decide whether to drop it.
      *
-     * `args` is an array of the arguments originally passed to the log
-     * method (e.g. `rollbar.error('msg', err, custom)`).
+     * Runs after `onSendCallback` and before `hostBlockList`, `hostSafeList`
+     * and `ignoredMessages` are applied. Items below `reportLevel` never
+     * reach it.
+     *
+     * If this function throws, the SDK logs the error, doesn't drop the item,
+     * and stops calling `checkIgnore` for the rest of the session.
+     *
+     * @param isUncaught - `true` for errors the SDK captured automatically
+     *   (uncaught exceptions and unhandled rejections), `false` for calls to
+     *   a log method.
+     * @param args - A new array on each call. For a log method call, it
+     *   holds the arguments passed to it: `['msg', err, custom]` for
+     *   `rollbar.error('msg', err, custom)`. When `isUncaught` is `true`, the
+     *   SDK builds `args` itself and its contents vary by platform and error
+     *   source, so read the error details from `item` instead.
+     * @param item - The item's payload data, such as `item.level` and
+     *   `item.body`.
+     * @returns `true` to drop the item, `false` to send it.
      */
     checkIgnore?: (
       isUncaught: boolean,
@@ -135,7 +151,24 @@ declare namespace Rollbar {
     maxTelemetryEvents?: number;
     nodeSourceMaps?: boolean;
     /**
-     * `args` is an array of the arguments originally passed to the log method.
+     * Called for each item on its way to being sent.
+     *
+     * Runs before `checkIgnore`, `hostBlockList`, `hostSafeList` and
+     * `ignoredMessages` are applied, so it is also called for items those
+     * options then drop. Items below `reportLevel` never reach it.
+     *
+     * If this function throws, the SDK logs the error and stops calling
+     * `onSendCallback` for the rest of the session. The throw doesn't drop
+     * the item.
+     *
+     * @param isUncaught - `true` for errors the SDK captured automatically
+     *   (uncaught exceptions and unhandled rejections), `false` for calls to
+     *   a log method.
+     * @param args - A new array on each call, separate from the one
+     *   `checkIgnore` receives. Its contents are as described for
+     *   `checkIgnore`.
+     * @param item - The item's payload data, such as `item.level` and
+     *   `item.body`.
      */
     onSendCallback?: (
       isUncaught: boolean,
@@ -172,7 +205,15 @@ declare namespace Rollbar {
     response: TResponse,
   ) => void;
   export type LogArgument =
-    string | Error | object | Dictionary | Callback | Date | any[] | undefined;
+    | string
+    | Error
+    | object
+    | Dictionary
+    | Callback
+    | Date
+    | any[]
+    | null
+    | undefined;
   export interface LogResult {
     uuid: string;
   }
