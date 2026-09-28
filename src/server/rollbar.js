@@ -722,11 +722,28 @@ Rollbar.prototype.handleUnhandledRejections = function () {
 };
 
 function addOrReplaceRollbarHandler(event, action) {
+  var snapshot;
+  // Runs ahead of every other listener to record whether the app is
+  // listening. A listener added with `process.once` is removed just before
+  // Node calls it, so one registered ahead of Rollbar's is already gone by
+  // the time the handler below runs.
+  var probe = function (a) {
+    snapshot = { value: a, appListening: appIsListening(event) };
+  };
+  probe._rollbarHandler = true;
+
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
   var fn = function (a, b) {
+    var appListening =
+      snapshot && snapshot.value === a
+        ? snapshot.appListening
+        : appIsListening(event);
+    snapshot = undefined;
     action(a, b);
-    printUnhandledError(event, a);
+    if (!appListening) {
+      printUnhandledError(event, a);
+    }
   };
   fn._rollbarHandler = true;
 
@@ -737,17 +754,38 @@ function addOrReplaceRollbarHandler(event, action) {
       process.removeListener(event, listeners[i]);
     }
   }
+  process.prependListener(event, probe);
   process.on(event, fn);
 }
 
 /**
+ * Whether anything other than Rollbar is listening for `event`.
+ *
+ * Node's `domain` module, once loaded, adds `domainUncaughtExceptionClear`
+ * as soon as any other `uncaughtException` listener is added. It only resets
+ * domain state and prints nothing, so it does not count as the app handling
+ * the error.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @returns {boolean}
+ */
+function appIsListening(event) {
+  return process.listeners(event).some(function (listener) {
+    return (
+      !listener._rollbarHandler &&
+      listener.name !== 'domainUncaughtExceptionClear'
+    );
+  });
+}
+
+/**
  * Print an uncaught exception or unhandled rejection to stderr the way Node
- * would have if Rollbar were not listening for it.
+ * would have if Rollbar were not listening for it. Only called when the app
+ * has no listener of its own; if it does, reporting the error is left to it.
  *
  * Node only prints these errors when nothing is listening for the event, so
  * installing Rollbar's listener hides them from developers and from tools
- * that surface process output, such as nodemon (#1108). If the application
- * has its own listener, reporting the error is left to that listener.
+ * that surface process output, such as nodemon (#1108).
  *
  * That holds on every Node version this SDK supports (20 and later), with one
  * exception: under `--unhandled-rejections=warn`, Node prints rejections even
@@ -758,29 +796,75 @@ function addOrReplaceRollbarHandler(event, action) {
  * @param {*} err - The thrown value or rejection reason.
  */
 function printUnhandledError(event, err) {
-  var onlyRollbarListening = process
-    .listeners(event)
-    .every(function (listener) {
-      return listener._rollbarHandler;
-    });
-  if (!onlyRollbarListening) {
-    return;
-  }
   if (event === 'unhandledRejection' && !nodePrintsUnhandledRejections()) {
     return;
   }
   try {
+    var text = formatUnhandledError(err);
     withoutLogCapture(function () {
-      process.stderr.write(util.inspect(err) + '\n');
+      writeToStderr(text + '\n');
     });
   } catch (e) {
     // This runs inside Rollbar's process listener. A throw from an
     // uncaughtException listener makes Node exit with code 7, dropping the
     // item just queued, and one from an unhandledRejection listener becomes
-    // a second, spurious uncaught exception. `util.inspect` can throw when
-    // the value has a custom inspect method, so printing stays best-effort.
+    // a second, spurious uncaught exception.
     logger.error('Failed to print unhandled error.', e);
   }
+}
+
+/**
+ * Format an unhandled error the way Node does for its own fatal errors:
+ * ignoring any custom inspect method, which may itself throw, and falling
+ * back to the stack if inspecting fails.
+ *
+ * @param {*} err - The thrown value or rejection reason.
+ * @returns {string}
+ */
+function formatUnhandledError(err) {
+  try {
+    return util.inspect(err, {
+      customInspect: false,
+      depth: Math.max(util.inspect.defaultOptions.depth, 5),
+    });
+  } catch (e) {
+    if (err && typeof err.stack === 'string') {
+      return err.stack;
+    }
+    throw e;
+  }
+}
+
+/**
+ * Write to stderr without letting a write error become an uncaught
+ * exception, the same way `console` does.
+ *
+ * Without this, a closed stderr pipe (`node app.js 2>&1 | head`, or a log
+ * collector that has exited) turns each print into an uncaught EPIPE, which
+ * Rollbar reports and prints again, looping forever.
+ *
+ * @param {string} text - The text to write.
+ */
+function writeToStderr(text) {
+  var stderr = process.stderr;
+  // Errors can surface synchronously (files, TTYs) or after the write
+  // returns (pipes), so guard both.
+  if (stderr.listenerCount('error') === 0) {
+    stderr.once('error', ignoreStderrError);
+  }
+  try {
+    stderr.write(text, function (err) {
+      if (err && !stderr.destroyed && stderr.listenerCount('error') === 0) {
+        stderr.once('error', ignoreStderrError);
+      }
+    });
+  } finally {
+    stderr.removeListener('error', ignoreStderrError);
+  }
+}
+
+function ignoreStderrError() {
+  // Nowhere left to report a failure to write the error report itself.
 }
 
 /**

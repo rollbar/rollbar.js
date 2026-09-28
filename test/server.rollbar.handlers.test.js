@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { expect } from 'chai';
@@ -35,6 +35,26 @@ function runChild(mode, { nodeArgs = [], env = process.env, variant } = {}) {
   );
   expect(child.error, 'child process did not exit cleanly').to.be.undefined;
   return child;
+}
+
+// Runs the fixture with its stderr pipe already closed, as under
+// `node app.js 2>&1 | head` once `head` has exited. Resolves with the exit
+// status, or null if the child had to be killed.
+function runChildWithClosedStderr(mode) {
+  const fixture = fileURLToPath(
+    new URL('./fixtures/server/unhandled.js', import.meta.url),
+  );
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [fixture, mode], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    child.stderr.destroy();
+    const timer = setTimeout(() => child.kill('SIGKILL'), 10000);
+    child.on('exit', (status) => {
+      clearTimeout(timer);
+      resolve(status);
+    });
+  });
 }
 
 function occurrences(text, substring) {
@@ -427,18 +447,83 @@ describe('rollbar exception handlers', function () {
       });
     });
 
+    // A listener added with `process.once` has removed itself by the time
+    // Rollbar's handler runs, but it still handled the error.
+    ['throw', 'reject'].forEach((mode) => {
+      it(`should print nothing when the app listens with once (${mode})`, function () {
+        const child = runChild(mode, { variant: 'app-once' });
+
+        expect(child.stderr).to.not.contain('Error: child');
+      });
+    });
+
+    // Loading `domain` adds a listener of Node's own next to Rollbar's; it
+    // prints nothing, so Rollbar still has to.
+    ['throw', 'reject'].forEach((mode) => {
+      it(`should still print with the domain module loaded (${mode})`, function () {
+        const child = runChild(mode, { variant: 'domain' });
+        const message = mode === 'reject' ? 'child reject' : 'child error';
+
+        expect(
+          occurrences(child.stderr, `Error: ${message}\n    at `),
+        ).to.equal(1);
+      });
+    });
+
+    // Like Node, Rollbar ignores custom inspect methods when printing, and
+    // falls back to the stack if inspecting fails.
+    ['throw', 'reject'].forEach((mode) => {
+      const message = mode === 'reject' ? 'child reject' : 'child error';
+
+      it(`should print a value whose inspect method throws (${mode})`, function () {
+        const child = runChild(mode, { variant: 'uninspectable' });
+
+        expect(child.status).to.equal(0);
+        expect(
+          occurrences(child.stderr, `Error: ${message}\n    at `),
+        ).to.equal(1);
+        // Node lists the method as an ordinary property when it prints the
+        // error itself; the stack fallback would leave it out.
+        expect(child.stderr).to.contain('Symbol(nodejs.util.inspect.custom)');
+        expect(child.stderr).to.not.contain('inspect failed');
+        expect(child.stderr).to.not.contain('Failed to print');
+      });
+
+      it(`should print the stack when util.inspect throws (${mode})`, function () {
+        const child = runChild(mode, { variant: 'no-inspect' });
+
+        expect(child.status).to.equal(0);
+        expect(
+          occurrences(child.stderr, `Error: ${message}\n    at `),
+        ).to.equal(1);
+        expect(child.stderr).to.not.contain('Failed to print');
+      });
+    });
+
     // Printing is best-effort: a throw from Rollbar's uncaughtException
     // listener would make Node exit with code 7, and one from its
     // unhandledRejection listener would raise a second uncaught exception.
     ['throw', 'reject'].forEach((mode) => {
-      it(`should survive a value whose inspect method throws (${mode})`, function () {
-        const child = runChild(mode, { variant: 'uninspectable' });
+      it(`should survive a value that cannot be printed (${mode})`, function () {
+        const child = runChild(mode, { variant: 'unprintable' });
 
         expect(child.status).to.equal(0);
-        expect(child.stderr).to.contain(
-          'Rollbar: Failed to print unhandled error. Error: inspect failed',
-        );
-        expect(occurrences(child.stderr, 'inspect failed')).to.equal(1);
+        expect(
+          occurrences(
+            child.stderr,
+            'Rollbar: Failed to print unhandled error. Error: inspect failed',
+          ),
+        ).to.equal(1);
+      });
+    });
+
+    // Otherwise each print raises an uncaught EPIPE, which Rollbar reports
+    // and prints again, forever.
+    ['throw', 'reject'].forEach((mode) => {
+      it(`should exit when stderr is a closed pipe (${mode})`, async function () {
+        this.timeout(15000);
+
+        expect(await runChildWithClosedStderr(mode)).to.equal(0);
       });
     });
 
