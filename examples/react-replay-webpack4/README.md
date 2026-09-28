@@ -24,5 +24,8 @@ this example against the current SDK, which checks that webpack 4 still resolves
 `rollbar/replay` through `replay/package.json`.
 
 The production build uses an absolute `publicPath`,
-`/examples/react-replay-webpack4/dist/`, so a browser test can load it from the
-repository root the way `test/examples/react.test.ts` loads `react-16`.
+`/examples/react-replay-webpack4/dist/`, because `loadHtml` in
+`test/util/fixtures.ts` recreates a page's scripts inside the test runner's
+page, where a relative path would resolve against the wrong URL. Because `dist/`
+is not committed, a browser test that loads this build would also need CI to
+build the example before the browser tests run.
