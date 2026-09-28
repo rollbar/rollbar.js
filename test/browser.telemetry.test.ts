@@ -67,6 +67,41 @@ describe('instrumentNetwork', function () {
   });
 });
 
+describe('instrumentConsole', function () {
+  function createConsoleInstrumenter(telemeter, windowMock) {
+    return new Instrumenter(
+      { scrubFields: [], autoInstrument: { log: true } },
+      telemeter,
+      { wrap: () => {}, client: { notifier: { diagnostic: {} } } },
+      windowMock,
+    );
+  }
+
+  it('should capture module namespace objects', async function () {
+    const log = sinon.spy();
+    const captureLog = sinon.spy();
+    const windowMock = { console: { log } };
+    createConsoleInstrumenter({ captureLog }, windowMock).instrumentConsole();
+
+    const ns = await import('./fixtures/esm-module.js');
+    windowMock.console.log(ns);
+
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(captureLog.args[0][0]).to.eql('{"x":1}');
+    expect(log.calledOnceWithExactly(ns)).to.eql(true);
+  });
+
+  it('should call the original console method if telemetry throws', function () {
+    const log = sinon.spy();
+    const captureLog = sinon.stub().throws(new Error('boom'));
+    const windowMock = { console: { log } };
+    createConsoleInstrumenter({ captureLog }, windowMock).instrumentConsole();
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+});
+
 describe('instrumentDom', function () {
   const wait_ms = 1; //ensure events are sent before assertions
   let tracing, telemeter, instrumenter, mask, options, rollbar, scrubFields;

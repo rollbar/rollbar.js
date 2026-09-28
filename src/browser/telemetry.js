@@ -667,8 +667,12 @@ class Instrumenter {
       const level = method === 'warn' ? 'warning' : method;
       c[method] = function () {
         const args = Array.prototype.slice.call(arguments);
-        const message = _.formatArgsAsString(args);
-        self.telemeter.captureLog(message, level, null, _.now());
+        try {
+          const message = _.formatArgsAsString(args);
+          self.telemeter.captureLog(message, level, null, _.now());
+        } catch (_e) {
+          // Telemetry must never prevent the app's own console call.
+        }
         if (orig) {
           Function.prototype.apply.call(orig, origConsole, args);
         }

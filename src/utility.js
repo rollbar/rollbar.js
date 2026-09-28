@@ -717,32 +717,61 @@ function set(obj, path, value) {
   }
 }
 
+/**
+ * formatArgsAsString - Formats console method arguments as a single message.
+ *
+ * Never throws, so it is safe to call from the console wrapper.
+ *
+ * @param {Array} args - The arguments passed to a console method.
+ * @returns {string} The arguments formatted and joined by spaces.
+ */
 function formatArgsAsString(args) {
-  var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; ++i) {
-    arg = args[i];
-    switch (typeName(arg)) {
-      case 'object':
-        arg = stringify(arg);
-        arg = arg.error || arg.value;
-        if (arg.length > 500) {
-          arg = arg.substr(0, 497) + '...';
-        }
-        break;
-      case 'null':
-        arg = 'null';
-        break;
-      case 'undefined':
-        arg = 'undefined';
-        break;
-      case 'symbol':
-        arg = arg.toString();
-        break;
-    }
-    result.push(arg);
+  for (var i = 0, len = args.length; i < len; ++i) {
+    result.push(formatArgAsString(args[i]));
   }
   return result.join(' ');
+}
+
+/**
+ * formatArgAsString - Formats a single console argument as a string.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The formatted value.
+ */
+function formatArgAsString(arg) {
+  switch (typeName(arg)) {
+    case 'object':
+      return stringifyArg(arg);
+    case 'null':
+      return 'null';
+    case 'undefined':
+      return 'undefined';
+    case 'symbol':
+      return arg.toString();
+  }
+  try {
+    return String(arg);
+  } catch (_e) {
+    // Values with no toString/valueOf, like the module namespace object from
+    // `await import()`, can't be converted to a primitive (#1127).
+    return stringifyArg(arg);
+  }
+}
+
+/**
+ * stringifyArg - JSON-encodes a console argument, truncated to 500 chars.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The JSON, or the serialization error message.
+ */
+function stringifyArg(arg) {
+  var result = stringify(arg);
+  var str = String(result.error || result.value);
+  if (str.length > 500) {
+    str = str.substr(0, 497) + '...';
+  }
+  return str;
 }
 
 function now() {

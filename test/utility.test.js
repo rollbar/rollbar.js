@@ -442,15 +442,49 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('');
   });
-  /*
-   * PhantomJS does not support Symbol yet
-  it('should handle symbols', function() {
+  it('should handle symbols', function () {
     var args = [1, Symbol('hello')];
     var result = _.formatArgsAsString(args);
 
-    expect(result).to.eql('1 symbol(\'hello\')');
+    expect(result).to.eql('1 Symbol(hello)');
   });
-  */
+  it('should handle module namespace objects', async function () {
+    const ns = await import('./fixtures/esm-module.js');
+    var result = _.formatArgsAsString([1, ns]);
+
+    expect(result).to.eql('1 {"x":1}');
+  });
+  it('should handle objects that cannot be converted to a primitive', function () {
+    var obj = Object.create(null);
+    obj[Symbol.toStringTag] = 'Custom';
+    obj.a = 1;
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('{"a":1}');
+  });
+  it('should handle circular objects', function () {
+    var obj = { a: 1 };
+    obj.self = obj;
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.match(/^TypeError: .*circular/i);
+  });
+  it('should handle objects whose toJSON returns undefined', function () {
+    var obj = {
+      toJSON: function () {
+        return undefined;
+      },
+    };
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('undefined');
+  });
+  it('should truncate long objects', function () {
+    var result = _.formatArgsAsString([{ a: 'x'.repeat(600) }]);
+
+    expect(result.length).to.eql(500);
+    expect(result.endsWith('...')).to.eql(true);
+  });
 });
 
 describe('addItemAttributes', function () {
