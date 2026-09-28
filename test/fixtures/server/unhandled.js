@@ -12,6 +12,7 @@
 //   uninspectable  The thrown value's custom inspect method throws.
 //   no-inspect     `util.inspect` throws, so only the stack is available.
 //   unprintable    `util.inspect` throws and the value has no stack.
+//   string         The thrown value or rejection reason is a plain string.
 // For the last three, Rollbar's logger is left on so the test can see whether
 // it reports a failed print.
 import process from 'node:process';
@@ -46,7 +47,12 @@ if (variant === 'app-listener') {
 
 setTimeout(function () {
   const message = mode === 'reject' ? 'child reject' : 'child error';
-  const err = variant === 'unprintable' ? { message } : new Error(message);
+  let err = new Error(message);
+  if (variant === 'unprintable') {
+    err = { message };
+  } else if (variant === 'string') {
+    err = message;
+  }
   if (variant === 'uninspectable') {
     err[util.inspect.custom] = function () {
       throw new Error('inspect failed');

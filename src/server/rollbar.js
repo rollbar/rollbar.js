@@ -800,7 +800,7 @@ function printUnhandledError(event, err) {
     return;
   }
   try {
-    var text = formatUnhandledError(err);
+    var text = formatUnhandledError(event, err);
     withoutLogCapture(function () {
       writeToStderr(text + '\n');
     });
@@ -818,21 +818,87 @@ function printUnhandledError(event, err) {
  * ignoring any custom inspect method, which may itself throw, and falling
  * back to the stack if inspecting fails.
  *
+ * A value that isn't error-like (an object with its own `stack`, as Node
+ * defines it) has no stack to show where it came from, so it gets a label:
+ * rejections get Node's own `UnhandledPromiseRejection` message, and
+ * exceptions get `Uncaught`, as in Node's REPL. Node's fatal printer would
+ * show the throwing source line instead, which only Node can produce.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
  * @param {*} err - The thrown value or rejection reason.
  * @returns {string}
  */
-function formatUnhandledError(err) {
+function formatUnhandledError(event, err) {
+  if (!isErrorLike(err)) {
+    return event === 'unhandledRejection'
+      ? formatUnhandledRejection(err)
+      : 'Uncaught ' + util.inspect(err, inspectOptions());
+  }
   try {
-    return util.inspect(err, {
-      customInspect: false,
-      depth: Math.max(util.inspect.defaultOptions.depth, 5),
-    });
+    return util.inspect(err, inspectOptions());
   } catch (e) {
-    if (err && typeof err.stack === 'string') {
+    if (typeof err.stack === 'string') {
       return err.stack;
     }
     throw e;
   }
+}
+
+/**
+ * The message Node prints for a rejection whose reason isn't error-like.
+ *
+ * Primitive reasons appear exactly as Node shows them. For objects Node only
+ * gives the constructor (`#<Object>`), so the value is inspected on one line
+ * instead.
+ *
+ * @param {*} reason - The rejection reason.
+ * @returns {string}
+ */
+function formatUnhandledRejection(reason) {
+  var described =
+    reason !== null &&
+    (typeof reason === 'object' || typeof reason === 'function')
+      ? util.inspect(
+          reason,
+          Object.assign(inspectOptions(), { breakLength: Infinity }),
+        )
+      : String(reason);
+  return (
+    'UnhandledPromiseRejection: This error originated either by throwing ' +
+    'inside of an async function without a catch block, or by rejecting a ' +
+    'promise which was not handled with .catch(). The promise rejected with ' +
+    'the reason "' +
+    described +
+    '".'
+  );
+}
+
+/**
+ * Whether Node treats `value` as an error when it is unhandled: an object
+ * with its own `stack` (`isErrorLike` in `lib/internal/process/promises.js`).
+ *
+ * @param {*} value - The thrown value or rejection reason.
+ * @returns {boolean}
+ */
+function isErrorLike(value) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    Object.prototype.hasOwnProperty.call(value, 'stack')
+  );
+}
+
+/**
+ * The options Node's fatal-error printer (`afterInspector` in
+ * `lib/internal/errors.js`) passes to `util.inspect`.
+ *
+ * @returns {object}
+ */
+function inspectOptions() {
+  return {
+    customInspect: false,
+    depth: Math.max(util.inspect.defaultOptions.depth, 5),
+  };
 }
 
 /**

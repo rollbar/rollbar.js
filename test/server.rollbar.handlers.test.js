@@ -257,6 +257,22 @@ describe('rollbar exception handlers', function () {
         expect(JSON.stringify(logEvents)).to.not.contain('node error');
       });
 
+      it('should label a thrown value that is not an error', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        setTimeout(function () {
+          throw { code: 42 };
+        }, 10);
+        await wait(500);
+        expect(written(stderrWrite)).to.contain('Uncaught { code: 42 }\n');
+
+        logStub.restore();
+      });
+
       it('should leave printing to the app when it has its own listener', async function () {
         const rollbar = new Rollbar({
           accessToken: 'abc123',
@@ -393,6 +409,31 @@ describe('rollbar exception handlers', function () {
         logStub.restore();
       });
 
+      // Node prints its own UnhandledPromiseRejection message for these.
+      [
+        [undefined, 'undefined'],
+        ['boom', 'boom'],
+        [{ code: 42 }, '{ code: 42 }'],
+      ].forEach(([reason, described]) => {
+        it(`should label a rejection reason that is not an error (${described})`, async function () {
+          const rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUnhandledRejections: true,
+          });
+          const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+          Promise.reject(reason);
+          await wait(500);
+          const output = written(stderrWrite);
+          expect(output).to.contain('UnhandledPromiseRejection: ');
+          expect(output).to.contain(
+            `The promise rejected with the reason "${described}".\n`,
+          );
+
+          logStub.restore();
+        });
+      });
+
       it('should leave printing to the app when it has its own listener', async function () {
         const rollbar = new Rollbar({
           accessToken: 'abc123',
@@ -498,6 +539,42 @@ describe('rollbar exception handlers', function () {
         ).to.equal(1);
         expect(child.stderr).to.not.contain('Failed to print');
       });
+    });
+
+    // A value with no stack gets the label Node would give it, so it can
+    // still be told apart from other output.
+    it('should label a thrown string', function () {
+      const child = runChild('throw', { variant: 'string' });
+
+      expect(occurrences(child.stderr, "Uncaught 'child error'\n")).to.equal(1);
+    });
+
+    it('should label a string rejection reason', function () {
+      const child = runChild('reject', { variant: 'string' });
+
+      expect(
+        occurrences(
+          child.stderr,
+          'The promise rejected with the reason "child reject".',
+        ),
+      ).to.equal(1);
+    });
+
+    // Under `strict`, Node wraps the reason in its own error and raises that
+    // as an uncaught exception, which is printed like any other error.
+    it('should print a string rejection reason once with --unhandled-rejections=strict', function () {
+      const child = runChild('reject', {
+        nodeArgs: ['--unhandled-rejections=strict'],
+        variant: 'string',
+      });
+
+      expect(
+        occurrences(
+          child.stderr,
+          'The promise rejected with the reason "child reject".',
+        ),
+      ).to.equal(1);
+      expect(child.stderr).to.not.contain('Uncaught');
     });
 
     // Printing is best-effort: a throw from Rollbar's uncaughtException
