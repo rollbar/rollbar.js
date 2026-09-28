@@ -748,19 +748,16 @@ function formatArgsAsString(args) {
  * @returns {string} The formatted value.
  */
 function formatArgAsString(arg) {
-  switch (typeName(arg)) {
-    // Module namespace objects have no toString/valueOf, so String() would
-    // throw on them (#1127).
-    case 'module':
-    case 'object':
-      return stringifyArg(arg);
-    case 'null':
-      return 'null';
-    case 'undefined':
-      return 'undefined';
-    case 'symbol':
-      // An object tagged 'Symbol' can return anything from toString.
-      return String(arg.toString());
+  // Checked directly, not via typeName, which an object can spoof with a
+  // Symbol.toStringTag like 'Null' or 'Symbol'.
+  if (arg === null || arg === undefined || typeof arg === 'symbol') {
+    return String(arg);
+  }
+  var type = typeName(arg);
+  // Module namespace objects have no toString/valueOf, so String() would
+  // throw on them (#1127).
+  if (type === 'object' || type === 'module') {
+    return stringifyArg(arg);
   }
   try {
     return String(arg);

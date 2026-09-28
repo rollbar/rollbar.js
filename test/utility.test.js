@@ -475,7 +475,8 @@ describe('formatArgsAsString', function () {
     obj.self = obj;
     var result = _.formatArgsAsString([obj]);
 
-    expect(result).to.match(/^TypeError: .*circular/i);
+    // Engines word the message differently, e.g. Firefox says "cyclic".
+    expect(result).to.match(/^TypeError: /);
   });
   it('should handle objects whose toJSON returns undefined', function () {
     var obj = {
@@ -537,8 +538,17 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('before {"a":1} after');
   });
-  it('should use a placeholder for a Symbol-tagged object whose toString returns an object', function () {
+  it('should not treat objects tagged Null, Undefined or Symbol as those values', function () {
+    var args = ['Null', 'Undefined', 'Symbol'].map(function (tag) {
+      return { a: 1, [Symbol.toStringTag]: tag };
+    });
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('[object Null] [object Undefined] [object Symbol]');
+  });
+  it('should fall back to JSON for a Symbol-tagged object whose toString returns an object', function () {
     var obj = {
+      a: 1,
       [Symbol.toStringTag]: 'Symbol',
       toString: function () {
         return Object.create(null);
@@ -546,7 +556,7 @@ describe('formatArgsAsString', function () {
     };
     var result = _.formatArgsAsString(['before', obj, 'after']);
 
-    expect(result).to.eql('before [unformattable object] after');
+    expect(result).to.eql('before {"a":1} after');
   });
 });
 
