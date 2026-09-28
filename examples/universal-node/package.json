@@ -36,8 +36,6 @@
     "html-webpack-plugin": "^1.6.1",
     "jsdom": "^6.5.1",
     "react-addons-test-utils": "^0.14.3",
-    "webpack": "^1.12.2",
-    "webpack-dev-middleware": "^1.2.0",
-    "webpack-hot-middleware": "^2.2.0"
+    "webpack": "^1.12.2"
   }
 }
