@@ -17,17 +17,25 @@ async function nodeReject() {
   await wait(500);
 }
 
-function runChild(mode, { nodeArgs = [], env = process.env } = {}) {
+function runChild(
+  mode,
+  { nodeArgs = [], env = process.env, appListener = false } = {},
+) {
   const fixture = fileURLToPath(
     new URL('./fixtures/server/unhandled.js', import.meta.url),
   );
+  const fixtureArgs = appListener ? [mode, 'app-listener'] : [mode];
   // spawnSync blocks the event loop, so Mocha's own timeout cannot stop a
   // child that never exits; this one turns a hang into a test failure.
-  const child = spawnSync(process.execPath, [...nodeArgs, fixture, mode], {
-    encoding: 'utf8',
-    env,
-    timeout: 10000,
-  });
+  const child = spawnSync(
+    process.execPath,
+    [...nodeArgs, fixture, ...fixtureArgs],
+    {
+      encoding: 'utf8',
+      env,
+      timeout: 10000,
+    },
+  );
   expect(child.error, 'child process did not exit cleanly').to.be.undefined;
   return child;
 }
@@ -391,12 +399,18 @@ describe('rollbar exception handlers', function () {
   // Runs Rollbar in a real Node process, with no Mocha listeners in the way,
   // which is how the issue was reported: under nodemon the crash output
   // disappeared as soon as Rollbar was initialized.
+  //
+  // Counting occurrences, rather than checking that the error appears, also
+  // pins the Node behaviour the fix relies on: Node stays silent once any
+  // listener is installed. CI runs these on every supported Node version, so
+  // a version that also printed would fail here with a count of 2.
   describe('in a separate process (#1108)', function () {
     it('should still print uncaught exceptions to stderr', function () {
       const child = runChild('throw');
 
       expect(child.stderr).to.contain('Error: child error\n    at ');
       expect(child.stderr).to.contain('unhandled.js');
+      expect(occurrences(child.stderr, 'Error: child error')).to.equal(1);
     });
 
     it('should still print unhandled rejections to stderr', function () {
@@ -404,11 +418,22 @@ describe('rollbar exception handlers', function () {
 
       expect(child.stderr).to.contain('Error: child reject\n    at ');
       expect(child.stderr).to.contain('unhandled.js');
+      expect(occurrences(child.stderr, 'Error: child reject')).to.equal(1);
+    });
+
+    // Neither Node nor Rollbar prints when the app has its own listener.
+    ['throw', 'reject'].forEach((mode) => {
+      it(`should print nothing when the app listens too (${mode})`, function () {
+        const child = runChild(mode, { appListener: true });
+
+        expect(child.stderr).to.not.contain('Error: child');
+      });
     });
 
     // Node's --unhandled-rejections mode decides whether it prints a
     // rejection itself; Rollbar should never make it appear twice.
     [
+      ['throw', 1],
       ['warn', 1],
       ['strict', 1],
       ['warn-with-error-code', 1],

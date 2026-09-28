@@ -749,6 +749,11 @@ function addOrReplaceRollbarHandler(event, action) {
  * that surface process output, such as nodemon (#1108). If the application
  * has its own listener, reporting the error is left to that listener.
  *
+ * That holds on every Node version this SDK supports (20 and later), with one
+ * exception: under `--unhandled-rejections=warn`, Node prints rejections even
+ * with a listener (see nodePrintsUnhandledRejections). The separate-process
+ * tests in test/server.rollbar.handlers.test.js check this on each CI leg.
+ *
  * @param {string} event - `uncaughtException` or `unhandledRejection`.
  * @param {*} err - The thrown value or rejection reason.
  */
