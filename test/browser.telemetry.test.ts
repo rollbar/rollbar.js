@@ -102,6 +102,9 @@ describe('instrumentNetwork', function () {
       expect(() => i.instrumentNetwork()).to.not.throw();
 
       expectXhrUntouched(windowMock, originals);
+      expect(i.diagnostic.instrumentNetwork).to.eql({
+        xhr: 'skipped: XMLHttpRequest.prototype not writable (open)',
+      });
     });
 
     it('should leave XHR unpatched when only a later method is read-only', function () {
@@ -118,6 +121,9 @@ describe('instrumentNetwork', function () {
       // open and setRequestHeader were patchable, but without send the XHR
       // telemetry is incomplete, so they must be rolled back.
       expectXhrUntouched(windowMock, originals);
+      expect(i.diagnostic.instrumentNetwork).to.eql({
+        xhr: 'skipped: XMLHttpRequest.prototype not writable (send)',
+      });
     });
 
     it('should not throw when the prototype is frozen', function () {
@@ -129,6 +135,19 @@ describe('instrumentNetwork', function () {
       expect(() => i.instrumentNetwork()).to.not.throw();
 
       expectXhrUntouched(windowMock, originals);
+      expect(i.diagnostic.instrumentNetwork).to.eql({
+        xhr: 'skipped: XMLHttpRequest.prototype not writable (open, setRequestHeader, send)',
+      });
+    });
+
+    it('should not record a diagnostic when XHR is patched', function () {
+      const callback = sinon.spy();
+      const { windowMock } = createWindowMock();
+
+      const i = createInstrumenter(callback, windowMock);
+      i.instrumentNetwork();
+
+      expect(i.diagnostic).to.not.have.property('instrumentNetwork');
     });
 
     it('should still instrument fetch and deinstrument cleanly', function () {

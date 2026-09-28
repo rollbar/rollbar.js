@@ -336,6 +336,14 @@ describe('options.autoInstrument', function () {
         (r) => JSON.parse(r.requestBody).data.body.message?.body,
       );
       expect(messages).to.include('after init');
+
+      // The skip is reported on the item so missing XHR telemetry is explained.
+      const item = server.requests
+        .map((r) => JSON.parse(r.requestBody).data)
+        .find((d) => d.body.message?.body === 'after init');
+      expect(item.notifier.diagnostic.instrumentNetwork).to.eql({
+        xhr: 'skipped: XMLHttpRequest.prototype not writable (open)',
+      });
     });
   });
 });

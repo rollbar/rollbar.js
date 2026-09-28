@@ -436,7 +436,19 @@ class Instrumenter {
       if (xhrReplacements.xhr.length === 3) {
         this.replacements.network.push(...xhrReplacements.xhr);
       } else {
+        const patched = xhrReplacements.xhr.map((r) => r[1]);
+        const readOnly = ['open', 'setRequestHeader', 'send'].filter(
+          (m) => !patched.includes(m),
+        );
         restore(xhrReplacements, 'xhr');
+        // Recorded in notifier.diagnostic so the missing XHR telemetry is
+        // explained on every occurrence (see addDiagnosticKeys). An injected
+        // client may not provide one, and this runs in the constructor.
+        if (this.diagnostic) {
+          this.diagnostic.instrumentNetwork = {
+            xhr: `skipped: XMLHttpRequest.prototype not writable (${readOnly.join(', ')})`,
+          };
+        }
       }
     }
 
