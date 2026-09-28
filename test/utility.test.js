@@ -53,6 +53,14 @@ describe('typeName', function () {
     expect(_.typeName([1, { a: 42 }, null])).to.eql('array');
     done();
   });
+
+  it('should fall back to object for an unparseable Symbol.toStringTag', function () {
+    for (const tag of ['', '123', ' ']) {
+      const obj = { a: 1 };
+      obj[Symbol.toStringTag] = tag;
+      expect(_.typeName(obj)).to.eql('object');
+    }
+  });
 });
 
 describe('isType', function () {
@@ -479,11 +487,28 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('undefined');
   });
+  it('should handle objects whose getter throws a falsy value', function () {
+    var obj = {
+      get a() {
+        throw 0;
+      },
+    };
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('0');
+  });
   it('should truncate long objects', function () {
     var result = _.formatArgsAsString([{ a: 'x'.repeat(600) }]);
 
     expect(result.length).to.eql(500);
     expect(result.endsWith('...')).to.eql(true);
+  });
+  it('should not split a surrogate pair when truncating', function () {
+    // '{"a":"' is 6 chars, so the 497-char cut lands after a high surrogate.
+    var result = _.formatArgsAsString([{ a: '😀'.repeat(300) }]);
+
+    expect(result.length).to.eql(499);
+    expect(result.endsWith('😀...')).to.eql(true);
   });
   it('should use a placeholder for a Proxy whose traps throw', function () {
     var proxy = new Proxy(
@@ -505,9 +530,20 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('before [unformattable object] after');
   });
-  it('should use a placeholder for an unparseable Symbol.toStringTag', function () {
+  it('should handle objects with an unparseable Symbol.toStringTag', function () {
     var obj = { a: 1 };
     obj[Symbol.toStringTag] = '';
+    var result = _.formatArgsAsString(['before', obj, 'after']);
+
+    expect(result).to.eql('before {"a":1} after');
+  });
+  it('should use a placeholder for a Symbol-tagged object whose toString returns an object', function () {
+    var obj = {
+      [Symbol.toStringTag]: 'Symbol',
+      toString: function () {
+        return Object.create(null);
+      },
+    };
     var result = _.formatArgsAsString(['before', obj, 'after']);
 
     expect(result).to.eql('before [unformattable object] after');

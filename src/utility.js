@@ -34,10 +34,9 @@ function typeName(x) {
   if (x instanceof Error) {
     return 'error';
   }
-  return {}.toString
-    .call(x)
-    .match(/\s([a-zA-Z]+)/)[1]
-    .toLowerCase();
+  var match = {}.toString.call(x).match(/\s([a-zA-Z]+)/);
+  // A custom Symbol.toStringTag like '' or '123' leaves nothing to match.
+  return match ? match[1].toLowerCase() : 'object';
 }
 
 /* isFunction - a convenience function for checking if a value is a function
@@ -734,8 +733,7 @@ function formatArgsAsString(args) {
     try {
       str = formatArgAsString(args[i]);
     } catch (_e) {
-      // e.g. a Proxy whose traps throw, a revoked Proxy, or a
-      // Symbol.toStringTag that typeName can't parse.
+      // e.g. a Proxy whose traps throw, or a revoked Proxy.
       str = '[unformattable ' + typeof args[i] + ']';
     }
     result.push(str);
@@ -751,6 +749,9 @@ function formatArgsAsString(args) {
  */
 function formatArgAsString(arg) {
   switch (typeName(arg)) {
+    // Module namespace objects have no toString/valueOf, so String() would
+    // throw on them (#1127).
+    case 'module':
     case 'object':
       return stringifyArg(arg);
     case 'null':
@@ -758,13 +759,14 @@ function formatArgAsString(arg) {
     case 'undefined':
       return 'undefined';
     case 'symbol':
-      return arg.toString();
+      // An object tagged 'Symbol' can return anything from toString.
+      return String(arg.toString());
   }
   try {
     return String(arg);
   } catch (_e) {
-    // Values with no toString/valueOf, like the module namespace object from
-    // `await import()`, can't be converted to a primitive (#1127).
+    // Other values with no toString/valueOf, like Object.create(null) with a
+    // custom Symbol.toStringTag, can't be converted to a primitive either.
     return stringifyArg(arg);
   }
 }
@@ -777,9 +779,17 @@ function formatArgAsString(arg) {
  */
 function stringifyArg(arg) {
   var result = stringify(arg);
-  var str = String(result.error || result.value);
+  // Check the value rather than the error, since the thrown value can be
+  // falsy (e.g. `throw 0` from a getter).
+  var str = String(result.value !== undefined ? result.value : result.error);
   if (str.length > 500) {
-    str = str.substr(0, 497) + '...';
+    var end = 497;
+    var lastCode = str.charCodeAt(end - 1);
+    // Don't cut a surrogate pair in half, which leaves an ill-formed string.
+    if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
+      end -= 1;
+    }
+    str = str.slice(0, end) + '...';
   }
   return str;
 }
