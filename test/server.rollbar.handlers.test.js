@@ -451,6 +451,26 @@ describe('rollbar exception handlers', function () {
         process.removeListener('unhandledRejection', appHandler);
         logStub.restore();
       });
+
+      // The app's once listener is gone by the time Rollbar's handler runs,
+      // so this relies on the probe's snapshot matching a NaN reason.
+      it('should leave printing to an app once listener for a NaN reason', async function () {
+        const appHandler = sinon.spy();
+        process.once('unhandledRejection', appHandler);
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUnhandledRejections: true,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        Promise.reject(NaN);
+        await wait(500);
+        expect(appHandler.called).to.be.true;
+        expect(written(stderrWrite)).to.not.contain('NaN');
+
+        process.removeListener('unhandledRejection', appHandler);
+        logStub.restore();
+      });
     });
   });
 
@@ -630,6 +650,31 @@ describe('rollbar exception handlers', function () {
       });
 
       expect(child.stderr).to.not.contain('child reject');
+    });
+
+    // Node accepts underscores in option names and quoted values in
+    // NODE_OPTIONS; misreading either would print the rejection twice under
+    // warn, or at all under none.
+    it('should honour --unhandled_rejections spelled with an underscore', function () {
+      const child = runChild('reject', {
+        nodeArgs: ['--unhandled_rejections=warn'],
+      });
+
+      expect(occurrences(child.stderr, 'Error: child reject')).to.equal(1);
+    });
+
+    [
+      '--unhandled_rejections=none',
+      '--unhandled-rejections="none"',
+      '"--unhandled-rejections" none',
+    ].forEach((nodeOptions) => {
+      it(`should honour NODE_OPTIONS=${nodeOptions}`, function () {
+        const child = runChild('reject', {
+          env: { ...process.env, NODE_OPTIONS: nodeOptions },
+        });
+
+        expect(child.stderr).to.not.contain('child reject');
+      });
     });
   });
 });

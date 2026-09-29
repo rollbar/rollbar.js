@@ -13,8 +13,8 @@
 //   no-inspect     `util.inspect` throws, so only the stack is available.
 //   unprintable    `util.inspect` throws and the value has no stack.
 //   string         The thrown value or rejection reason is a plain string.
-// For the last three, Rollbar's logger is left on so the test can see whether
-// it reports a failed print.
+// For uninspectable, no-inspect and unprintable, Rollbar's logger is left on
+// so the test can see whether it reports a failed print.
 import process from 'node:process';
 import util from 'node:util';
 
@@ -22,6 +22,9 @@ import Rollbar from '../../../src/server/rollbar.js';
 
 const [, , mode, variant] = process.argv;
 const inspectFails = ['no-inspect', 'unprintable'].includes(variant);
+const loggerOn = ['uninspectable', 'no-inspect', 'unprintable'].includes(
+  variant,
+);
 
 if (variant === 'app-once') {
   process.once('uncaughtException', function () {});
@@ -34,8 +37,7 @@ if (variant === 'domain') {
 new Rollbar({
   accessToken: 'abc123',
   enabled: false,
-  logLevel:
-    variant === 'uninspectable' || inspectFails ? 'error' : 'disable',
+  logLevel: loggerOn ? 'error' : 'disable',
   captureUncaught: true,
   captureUnhandledRejections: true,
 });

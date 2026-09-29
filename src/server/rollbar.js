@@ -735,8 +735,9 @@ function addOrReplaceRollbarHandler(event, action) {
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
   var fn = function (a, b) {
+    // Object.is, so a NaN rejection reason still matches its snapshot.
     var appListening =
-      snapshot && snapshot.value === a
+      snapshot && Object.is(snapshot.value, a)
         ? snapshot.appListening
         : appIsListening(event);
     snapshot = undefined;
@@ -929,9 +930,11 @@ function writeToStderr(text) {
   }
 }
 
-function ignoreStderrError() {
-  // Nowhere left to report a failure to write the error report itself.
-}
+/**
+ * `error` listener for stderr that discards the error: there is nowhere left
+ * to report a failure to write the error report itself.
+ */
+function ignoreStderrError() {}
 
 /**
  * Whether Node, left to itself, would print an unhandled rejection that has
@@ -948,17 +951,71 @@ function ignoreStderrError() {
 function nodePrintsUnhandledRejections() {
   var mode = 'throw';
   // Flags on the command line take precedence over NODE_OPTIONS.
-  var args = (process.env.NODE_OPTIONS || '')
-    .split(/\s+/)
-    .concat(process.execArgv);
+  var args = parseNodeOptions(process.env.NODE_OPTIONS || '').concat(
+    process.execArgv,
+  );
   args.forEach(function (arg, i) {
-    if (arg === '--unhandled-rejections') {
+    var flag = normalizeFlagName(arg);
+    if (flag === '--unhandled-rejections') {
       mode = args[i + 1];
-    } else if (arg.indexOf('--unhandled-rejections=') === 0) {
-      mode = arg.slice('--unhandled-rejections='.length);
+    } else if (flag.indexOf('--unhandled-rejections=') === 0) {
+      mode = flag.slice('--unhandled-rejections='.length);
     }
   });
   return mode !== 'warn' && mode !== 'strict' && mode !== 'none';
+}
+
+/**
+ * Split `NODE_OPTIONS` into arguments the way Node does
+ * (`ParseNodeOptionsEnvVar` in `src/node_options.cc`): arguments are
+ * separated by spaces, double quotes group text containing spaces and are
+ * removed, and inside quotes a backslash escapes the next character.
+ *
+ * @param {string} value - The value of `NODE_OPTIONS`.
+ * @returns {string[]}
+ */
+function parseNodeOptions(value) {
+  var args = [];
+  var inQuotes = false;
+  var startsArg = true;
+  for (var i = 0; i < value.length; i++) {
+    var c = value.charAt(i);
+    if (c === '\\' && inQuotes) {
+      c = value.charAt(++i);
+    } else if (c === ' ' && !inQuotes) {
+      startsArg = true;
+      continue;
+    } else if (c === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (startsArg) {
+      args.push(c);
+      startsArg = false;
+    } else {
+      args[args.length - 1] += c;
+    }
+  }
+  return args;
+}
+
+/**
+ * Node accepts underscores in place of dashes in option names
+ * (`--unhandled_rejections`), so compare names with them replaced. The value
+ * after `=` is left as it is.
+ *
+ * @param {string} arg - A Node command-line argument.
+ * @returns {string}
+ */
+function normalizeFlagName(arg) {
+  if (arg.indexOf('--') !== 0) {
+    return arg;
+  }
+  var eq = arg.indexOf('=');
+  if (eq === -1) {
+    return arg.replace(/_/g, '-');
+  }
+  return arg.slice(0, eq).replace(/_/g, '-') + arg.slice(eq);
 }
 
 function RollbarError(message, nested) {
