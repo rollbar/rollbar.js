@@ -9,7 +9,7 @@ module.exports = (_env, argv) => ({
   output: {
     // rollbar.js tests require modified asset path.
     // Detect whether running JIT or building the webpack bundle.
-    publicPath: argv.build ? '/examples/react/dist/' : '',
+    publicPath: argv.build ? '/examples/react-16/dist/' : '',
   },
   module: {
     rules: [

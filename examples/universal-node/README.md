@@ -41,7 +41,6 @@ npm start
 1. **Server** (`server.js`): Initializes Rollbar for Node.js, handles Express errors
 2. **Client** (`app/App.js`): React app that triggers client-side errors
 3. **Webpack**: Bundles client code with Rollbar browser SDK included
-4. **Hot Reload**: Development mode includes webpack hot middleware
 
 ## Testing
 
