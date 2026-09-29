@@ -931,10 +931,12 @@ function writeToStderr(text) {
 }
 
 /**
- * `error` listener for stderr that discards the error: there is nowhere left
- * to report a failure to write the error report itself.
+ * `error` listener for stderr, installed by writeToStderr, that discards the
+ * error.
  */
-function ignoreStderrError() {}
+function ignoreStderrError() {
+  // Nowhere left to report a failure to write the error report itself.
+}
 
 /**
  * Whether Node, left to itself, would print an unhandled rejection that has
