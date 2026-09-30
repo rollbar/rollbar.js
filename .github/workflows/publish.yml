@@ -30,8 +30,6 @@ jobs:
   verify:
     runs-on: ubuntu-22.04 # same runner as ci.yml's build, so dist/ matches
     timeout-minutes: 20
-    outputs:
-      dist-tag: ${{ steps.version.outputs.dist-tag }}
 
     steps:
       # With no `ref`, a release run checks out the tagged commit (github.sha),
@@ -47,10 +45,8 @@ jobs:
           node-version: 24
 
       - name: Check versions match release tag
-        id: version
         env:
           TAG: ${{ github.event.release.tag_name }}
-          PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           version="$(node -p "require('./package.json').version")"
           if [ "$version" != "${TAG#v}" ]; then
@@ -63,6 +59,70 @@ jobs:
             echo "::error::src/defaults.js version '$sdk_version' does not match package.json version $version"
             exit 1
           fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # The publish job below packs the committed dist/, so fail if a fresh
+      # build differs. workflow.yml uploads the committed dist/ to the CDN on
+      # its own; this check doesn't gate that upload.
+      - name: Check committed dist/ matches the build
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -n "$(git status --porcelain -- dist/)" ]; then
+            git status --short -- dist/
+            echo "::error::dist/ committed at $TAG differs from a fresh build; commit the rebuilt dist/ before tagging"
+            exit 1
+          fi
+
+  # Publishes the committed tree verify just checked. It installs no
+  # dependencies and runs no build, so none of the repo's toolchain runs while
+  # the job holds id-token: write.
+  publish:
+    needs: verify
+    runs-on: ubuntu-22.04
+    environment: npm-publish
+    # The dist-tag is chosen in this job, after the environment gate, so a run
+    # that waited for approval never acts on dist-tags read before the wait.
+    # This group keeps a second publish from reading them before the first has
+    # published. GitHub keeps at most one run pending in a group and cancels
+    # an older pending one; a cancelled run publishes nothing and can be re-run.
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # No registry-url: that makes setup-node write an .npmrc with a
+      # placeholder NODE_AUTH_TOKEN, and the default registry is already npmjs.
+      - name: Set up node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      # Trusted publishing needs npm >= 11.5.1. Pinned exactly, like the
+      # actions above, since this job can publish.
+      - name: Update npm
+        run: npm install -g npm@11.20.0
+
+      - name: Choose dist-tag
+        id: dist-tag
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
 
           # A pre-release (e.g. 3.2.0-rc.1, or any release marked pre-release
           # on GitHub) must not become `latest`. Build metadata after `+` may
@@ -100,55 +160,7 @@ jobs:
           echo "::notice::$version is older than latest ($latest); publishing as $tag"
           echo "dist-tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Install
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      # workflow.yml uploads the committed dist/ to the CDN, and the publish
-      # job below packs the committed dist/ too. Fail if a fresh build differs.
-      - name: Check committed dist/ matches the build
-        env:
-          TAG: ${{ github.event.release.tag_name }}
-        run: |
-          if [ -n "$(git status --porcelain -- dist/)" ]; then
-            git status --short -- dist/
-            echo "::error::dist/ committed at $TAG differs from a fresh build; commit the rebuilt dist/ before tagging"
-            exit 1
-          fi
-
-  # Publishes the committed tree verify just checked. It installs no
-  # dependencies and runs no build, so nothing but npm itself runs while the
-  # job holds id-token: write.
-  publish:
-    needs: verify
-    runs-on: ubuntu-22.04
-    environment: npm-publish
-    timeout-minutes: 10
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checkout release tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          persist-credentials: false
-
-      # No registry-url: that makes setup-node write an .npmrc with a
-      # placeholder NODE_AUTH_TOKEN, and the default registry is already npmjs.
-      - name: Set up node 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 24
-
-      # Trusted publishing needs npm >= 11.5.1. Pinned exactly, like the
-      # actions above, since this job can publish.
-      - name: Update npm
-        run: npm install -g npm@11.20.0
-
       - name: Publish
         env:
-          DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
+          DIST_TAG: ${{ steps.dist-tag.outputs.dist-tag }}
         run: npm publish --provenance --access public --tag "$DIST_TAG"
