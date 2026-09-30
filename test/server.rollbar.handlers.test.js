@@ -144,6 +144,17 @@ describe('rollbar exception handlers', function () {
         expect(rollbarListeners('uncaughtException')).to.have.length(0);
       });
 
+      it('should not install a handler for other falsy enabled values', function () {
+        [0, '', null].forEach(function (enabled) {
+          new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            enabled: enabled,
+          });
+          expect(rollbarListeners('uncaughtException')).to.have.length(0);
+        });
+      });
+
       it('should not remove a handler installed by another instance', function () {
         new Rollbar({ accessToken: 'abc123', captureUncaught: true });
         expect(rollbarListeners('uncaughtException')).to.have.length(1);
@@ -315,6 +326,17 @@ describe('rollbar exception handlers', function () {
 
         rollbar.configure({ enabled: false });
         expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+      });
+
+      it('should not install a handler for other falsy enabled values', function () {
+        [0, '', null].forEach(function (enabled) {
+          new Rollbar({
+            accessToken: 'abc123',
+            captureUnhandledRejections: true,
+            enabled: enabled,
+          });
+          expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+        });
       });
     });
 

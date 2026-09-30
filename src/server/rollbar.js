@@ -663,7 +663,9 @@ function _getFirstFunction(args) {
  * at runtime hands those errors back to Node.
  */
 Rollbar.prototype.setupUnhandledCapture = function () {
-  var enabled = this.options.enabled !== false;
+  // Same truthiness test the notifier uses to drop items, so a falsy
+  // `enabled` such as `0`, `''` or `null` removes the handler too.
+  var enabled = Boolean(this.options.enabled);
   if (
     enabled &&
     (this.options.captureUncaught || this.options.handleUncaughtExceptions)
