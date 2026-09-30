@@ -290,8 +290,12 @@ describe('options.autoInstrument', function () {
     let openDescriptor;
 
     beforeEach(function () {
-      // Reproduces the condition reported from Chrome 97 on Windows 7, where
-      // XMLHttpRequest.prototype.open is non-writable on the page.
+      // Simulates the condition reported from Chrome 97 on Windows 7, where
+      // XMLHttpRequest.prototype.open is non-writable on the page. The outer
+      // beforeEach has already swapped in nise's FakeXMLHttpRequest as
+      // window.XMLHttpRequest, so this makes the fake's open read-only, not
+      // the native one. The SDK path is the same either way: instrumentNetwork
+      // patches whatever window.XMLHttpRequest.prototype is when it runs.
       // configurable: true lets afterEach undo it for the rest of the suite.
       xhrp = window.XMLHttpRequest.prototype;
       openDescriptor = Object.getOwnPropertyDescriptor(xhrp, 'open');
