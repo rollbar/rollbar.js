@@ -28,11 +28,12 @@ src/
 - **Build production**: `npm run build` (Webpack production build)
 - **Build development**: `npm run build:dev` (Webpack development build)
 - **Lint**: `npm run lint` (ESLint)
-- **Test all**: `npm run test` (builds the test example apps, then runs both server and browser tests)
+- **Test all**: `npm run test` (builds the test example apps, then runs the browser, server and React Native tests)
 - **Build test example apps**: `npm run build:test-examples` (needed before `npm run test:wtr`; `test/examples/` loads these bundles)
 - **Test browser**: `npm run test:wtr` (Web Test Runner)
 - **Test browser watch mode**: `npm run test:wtr:watch` (Web Test Runner with watch)
 - **Test server**: `npm run test:server` (Mocha)
+- **Test React Native**: `npm run test:react-native` (Mocha under Node, with `fetch` stubbed)
 - **Validate**: `npm run validate` (validates ES5 compatibility and examples)
 - **Pack**: `npm run pack` (creates distribution packages)
 
