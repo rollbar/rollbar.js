@@ -289,26 +289,6 @@ describe('transport', function () {
           transportFactory: factory,
         });
       });
-
-      it('should report the HTTP status on get', function (done) {
-        const factory = transportFactory(null, NGINX_502_PAGE, null, {
-          statusCode: 502,
-        });
-
-        t.get(
-          'abc123',
-          {},
-          {},
-          (err, resp) => {
-            expect(err).to.not.be.an.instanceof(SyntaxError);
-            expect(err.message).to.equal('Api error: 502 Bad Gateway');
-            expect(err.statusCode).to.equal(502);
-            expect(resp).to.not.exist;
-            done();
-          },
-          factory,
-        );
-      });
     });
 
     describe('with rate limiting', function () {
@@ -376,6 +356,29 @@ describe('transport', function () {
           transportFactory: factory,
         });
       });
+    });
+  });
+
+  describe('get', function () {
+    // https://github.com/rollbar/rollbar.js/issues/1092
+    it('should report the HTTP status for an HTML error page', function (done) {
+      const factory = transportFactory(null, NGINX_502_PAGE, null, {
+        statusCode: 502,
+      });
+
+      t.get(
+        'abc123',
+        {},
+        {},
+        (err, resp) => {
+          expect(err).to.not.be.an.instanceof(SyntaxError);
+          expect(err.message).to.equal('Api error: 502 Bad Gateway');
+          expect(err.statusCode).to.equal(502);
+          expect(resp).to.not.exist;
+          done();
+        },
+        factory,
+      );
     });
   });
 });
