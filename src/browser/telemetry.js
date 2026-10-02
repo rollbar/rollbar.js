@@ -667,8 +667,15 @@ class Instrumenter {
       const level = method === 'warn' ? 'warning' : method;
       c[method] = function () {
         const args = Array.prototype.slice.call(arguments);
-        const message = _.formatArgsAsString(args);
-        self.telemeter.captureLog(message, level, null, _.now());
+        try {
+          const message = _.formatArgsAsString(args);
+          self.telemeter.captureLog(message, level, null, _.now());
+        } catch (e) {
+          // Telemetry must never prevent the app's own console call. Record
+          // the failure in the payload diagnostics instead of logging it,
+          // since logging would call back into this wrapper.
+          self.diagnostic.captureLog = { error: e?.message };
+        }
         if (orig) {
           Function.prototype.apply.call(orig, origConsole, args);
         }
