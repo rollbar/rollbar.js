@@ -124,11 +124,7 @@ export default class Replay {
       this._recorder.exportRecordingSpan(this._tracing, {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': occurrenceUuid,
-        'rollbar.replay.trigger.type': trigger.type,
-        'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
-        'rollbar.replay.trigger': JSON.stringify(trigger),
-        'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
-        'rollbar.replay.options': JSON.stringify(this._options || {}),
+        ...this._triggerAttributes(trigger, triggerContext),
       });
     } catch (error) {
       // TODO(matux): No events probably, this is expected, be more graceful.
@@ -148,6 +144,25 @@ export default class Replay {
       this._scheduledCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
       this._trailingStatus.set(replayId, TrailingStatus.PENDING);
     }
+  }
+
+  /**
+   * Builds the span attributes that identify what triggered a replay and
+   * where it started.
+   *
+   * @param {Object} trigger - The matching trigger configuration
+   * @param {Object} triggerContext - The context the trigger matched against
+   * @returns {Object} The trigger, starting URL and options span attributes
+   * @private
+   */
+  _triggerAttributes(trigger, triggerContext) {
+    return {
+      'rollbar.replay.trigger.type': trigger.type,
+      'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+      'rollbar.replay.trigger': JSON.stringify(trigger),
+      'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
+      'rollbar.replay.options': JSON.stringify(this._options || {}),
+    };
   }
 
   /**
@@ -216,7 +231,11 @@ export default class Replay {
     }
 
     if (!this._recorder.isReady) {
-      return this._scheduleLeadingOnlyCapture(replayId, trigger);
+      return this._scheduleLeadingOnlyCapture(
+        replayId,
+        trigger,
+        triggerContext,
+      );
     }
 
     await this._exportSpansAndAddTracingPayload(
@@ -247,20 +266,30 @@ export default class Replay {
    * recorder was ready. The trailing capture is marked as skipped so the
    * leading chunks may be sent on their own.
    *
+   * Without a trailing recording span, the leading chunks are the only spans
+   * for this replay, so they carry the trigger and starting URL attributes
+   * the trailing span would otherwise have.
+   *
    * @param {string} replayId - The replay ID
    * @param {Object} trigger - The matching trigger configuration
+   * @param {Object} triggerContext - The context the trigger matched against
    * @returns {string|null} The replay ID if a leading capture was scheduled,
    *   otherwise null.
    * @private
    */
-  _scheduleLeadingOnlyCapture(replayId, trigger) {
+  _scheduleLeadingOnlyCapture(replayId, trigger, triggerContext) {
     const leadingSeconds = trigger.postDuration || 0;
     if (!this._recorder.isRecording || leadingSeconds <= 0) {
       return null;
     }
 
     this._trailingStatus.set(replayId, TrailingStatus.SKIPPED);
-    this._scheduledCapture.schedule(replayId, null, leadingSeconds);
+    this._scheduledCapture.schedule(
+      replayId,
+      null,
+      leadingSeconds,
+      this._triggerAttributes(trigger, triggerContext),
+    );
     return replayId;
   }
 

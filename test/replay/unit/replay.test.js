@@ -342,6 +342,22 @@ describe('Replay', function () {
         expect(replay._shouldSendScheduled('1234567890abcdef')).to.be.true;
       });
 
+      it('should pass the trigger attributes to the leading-only capture', async function () {
+        await replay.triggerReplay({ type: 'navigation', path: '/' });
+
+        const attributes = replay._scheduledCapture.schedule.firstCall.args[3];
+        expect(attributes).to.include({
+          'rollbar.replay.trigger.type': 'navigation',
+          'rollbar.replay.trigger.context': JSON.stringify({
+            type: 'navigation',
+            path: '/',
+          }),
+          'rollbar.replay.trigger': JSON.stringify(trigger),
+          'rollbar.replay.options': '{}',
+        });
+        expect(attributes['rollbar.replay.url.full']).to.be.a('string');
+      });
+
       it('should return null without scheduling when postDuration is 0', async function () {
         trigger.postDuration = 0;
 

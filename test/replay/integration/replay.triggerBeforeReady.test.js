@@ -92,9 +92,30 @@ describe('Replay triggers before the recorder is ready', function () {
   });
 
   afterEach(function () {
+    // Abort leading captures a test left scheduled so their timers don't
+    // outlive it.
+    for (const replayId of [
+      ...(replay?._scheduledCapture._pending.keys() ?? []),
+    ]) {
+      replay._scheduledCapture.discard(replayId);
+    }
     replay?.recorder.stop();
+    replay = null;
     sinon.restore();
   });
+
+  /**
+   * Returns the recording span from a posted OTLP payload, with its
+   * attributes flattened into a plain object.
+   */
+  function recordingSpanAttributes(payload) {
+    const span = payload.resourceSpans[0].scopeSpans[0].spans.find(
+      (s) => s.name === 'rrweb-replay-recording',
+    );
+    return Object.fromEntries(
+      span.attributes.map(({ key, value }) => [key, value.stringValue]),
+    );
+  }
 
   it('does not log "No replay found" for a navigation on DOMContentLoaded', async function () {
     createReplay();
@@ -128,6 +149,34 @@ describe('Replay triggers before the recorder is ready', function () {
       'X-Rollbar-Replay-Id': replayId,
     });
     expect(loggerErrorSpy.called).to.be.false;
+  });
+
+  it('identifies the leading-only replay by its trigger and starting URL', async function () {
+    this.timeout(2000);
+    createReplay({ triggerDefaults: { preDuration: 300, postDuration: 0.2 } });
+    replay.recorder.start();
+
+    const replayId = await replay.triggerReplay({
+      type: 'navigation',
+      path: '/',
+    });
+    recordFn.fireLoad();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(exporterPost.calledOnce).to.be.true;
+    const attributes = recordingSpanAttributes(exporterPost.firstCall.args[0]);
+    expect(attributes['rollbar.replay.id']).to.equal(replayId);
+    expect(attributes['rollbar.replay.trigger.type']).to.equal('navigation');
+    expect(
+      JSON.parse(attributes['rollbar.replay.trigger.context']),
+    ).to.deep.equal({ type: 'navigation', path: '/' });
+    expect(JSON.parse(attributes['rollbar.replay.trigger'])).to.include({
+      type: 'navigation',
+      postDuration: 0.2,
+    });
+    expect(attributes['rollbar.replay.url.full']).to.be.a('string').and.not.be
+      .empty;
+    expect(attributes['rollbar.replay.options']).to.be.a('string');
   });
 
   it('does nothing when the recorder was never started (autoStart: false)', async function () {
