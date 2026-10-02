@@ -139,7 +139,14 @@ describe('telemetry', function () {
         headers: testHeaders2(),
       });
 
-      await uncaught(rollbar);
+      // Rollbar prints the uncaught error to stderr, since it is the only
+      // listener; keep that out of the test report.
+      const stderrWrite = sinon.stub(process.stderr, 'write');
+      try {
+        await uncaught(rollbar);
+      } finally {
+        stderrWrite.restore();
+      }
     });
 
     afterEach(function () {
