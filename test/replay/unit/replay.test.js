@@ -358,6 +358,18 @@ describe('Replay', function () {
         expect(attributes['rollbar.replay.url.full']).to.be.a('string');
       });
 
+      it('should return null without scheduling when the trigger context cannot be serialised', async function () {
+        const context = { type: 'direct' };
+        context.self = context;
+
+        const replayId = await replay.triggerReplay(context);
+
+        expect(replayId).to.be.null;
+        expect(replay._scheduledCapture.schedule.called).to.be.false;
+        expect(replay._trailingStatus.size).to.equal(0);
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+
       it('should return null without scheduling when postDuration is 0', async function () {
         trigger.postDuration = 0;
 

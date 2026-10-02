@@ -274,7 +274,8 @@ export default class Replay {
    * @param {Object} trigger - The matching trigger configuration
    * @param {Object} triggerContext - The context the trigger matched against
    * @returns {string|null} The replay ID if a leading capture was scheduled,
-   *   otherwise null.
+   *   otherwise null (including when the trigger attributes can't be
+   *   serialised).
    * @private
    */
   _scheduleLeadingOnlyCapture(replayId, trigger, triggerContext) {
@@ -283,13 +284,18 @@ export default class Replay {
       return null;
     }
 
+    // Built before any state is recorded, so a context that can't be
+    // serialised drops the replay the same way it does on the ready path.
+    let attributes;
+    try {
+      attributes = this._triggerAttributes(trigger, triggerContext);
+    } catch (error) {
+      logger.debug('Error building replay trigger attributes:', error);
+      return null;
+    }
+
     this._trailingStatus.set(replayId, TrailingStatus.SKIPPED);
-    this._scheduledCapture.schedule(
-      replayId,
-      null,
-      leadingSeconds,
-      this._triggerAttributes(trigger, triggerContext),
-    );
+    this._scheduledCapture.schedule(replayId, null, leadingSeconds, attributes);
     return replayId;
   }
 
