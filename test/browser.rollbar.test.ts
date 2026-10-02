@@ -1107,6 +1107,40 @@ describe('callback options', function () {
     expect(server.requests.length).to.eql(0);
   });
 
+  // https://github.com/rollbar/rollbar.js/issues/1150
+  it('should pass args to checkIgnore and onSendCallback as a real array', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    class IgnoredError extends Error {}
+    const received = {};
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function (_isUncaught, args, _payload) {
+        received.onSendCallback = args;
+      },
+      checkIgnore: function (_isUncaught, args, _payload) {
+        received.checkIgnore = args;
+        return args.some((arg) => arg instanceof IgnoredError);
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.error('ignore me', new IgnoredError('test'), { a: 1 });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(Array.isArray(received.onSendCallback)).to.be.true;
+    expect(Array.isArray(received.checkIgnore)).to.be.true;
+    expect(received.checkIgnore.length).to.eql(3);
+    // If args.some() threw, the SDK would drop checkIgnore and send the item.
+    expect(server.requests.length).to.eql(0);
+  });
+
   describe('uncaught', function () {
     let __originalOnError = null;
 
