@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { fakeServer } from '../browser.rollbar.test-utils.ts';
-import { loadHtml } from '../util/fixtures.ts';
+import { loadExampleHtml } from '../util/fixtures.ts';
 import { setTimeoutAsync } from '../util/timers.ts';
 
 describe('webpack app', function () {
@@ -15,7 +15,7 @@ describe('webpack app', function () {
     window.onerror = () => false;
 
     // Load the HTML page.
-    await loadHtml('examples/webpack/src/index.html');
+    await loadExampleHtml('examples/webpack/src/index.html');
 
     // Give the snippet time to load and init.
     await setTimeoutAsync(250);
@@ -30,6 +30,10 @@ describe('webpack app', function () {
     __originalOnError = null;
   });
 
+  function accessToken(request) {
+    return request.requestHeaders['X-Rollbar-Access-Token'];
+  }
+
   function stubResponse(server) {
     server.respondWith('POST', 'api/1/item', [
       200,
@@ -38,7 +42,7 @@ describe('webpack app', function () {
     ]);
   }
 
-  it('should send a valid log event', function (done) {
+  it('should send a valid log event', async function () {
     const server = window.server;
 
     stubResponse(server);
@@ -48,17 +52,16 @@ describe('webpack app', function () {
     expect(element).to.exist;
     element.click();
 
+    await setTimeoutAsync(1);
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(accessToken(server.requests[0])).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.message.body).to.eql('webpack test log');
-
-    done();
   });
 
-  it('should report uncaught error', function (done) {
+  it('should report uncaught error', async function () {
     const server = window.server;
 
     stubResponse(server);
@@ -68,28 +71,17 @@ describe('webpack app', function () {
     expect(element).to.exist;
     element.click();
 
+    await setTimeoutAsync(1);
     server.respond();
 
     const body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(accessToken(server.requests[0])).to.eql('POST_CLIENT_ITEM_TOKEN');
 
-    // This has become necessary because Travis switched their Chrome stable
-    // version _down_ from 76 to 62, which handles this test case differently.
-    // 2020-05-06: Travis Chrome 62 is now returning the original message.
-    const version = parseInt(
-      window.navigator.userAgent.match(
-        new RegExp('^.*HeadlessChrome/([0-9]*).*$'),
-      )[1],
-    );
-    const message = version >= 62 ? 'webpack test error' : 'Script error.';
-
-    expect(body.data.body.trace.exception.message).to.eql(message);
-
-    done();
+    expect(body.data.body.trace.exception.message).to.eql('webpack test error');
   });
 
-  it('should store a payload and send stored payload', function (done) {
+  it('should store a payload and send stored payload', async function () {
     const server = window.server;
 
     stubResponse(server);
@@ -100,6 +92,7 @@ describe('webpack app', function () {
     expect(element).to.exist;
     element.click();
 
+    await setTimeoutAsync(1);
     server.respond();
 
     // Verify event is not sent to API
@@ -107,7 +100,8 @@ describe('webpack app', function () {
 
     // Verify valid stored payload
     const parsedJson = JSON.parse(window.jsonPayload);
-    expect(parsedJson.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    // The token travels in a header when the payload is sent, not in it.
+    expect(parsedJson.access_token).to.be.undefined;
     expect(parsedJson.data.body.message.body).to.eql('webpack test log');
 
     // Send stored payload
@@ -117,9 +111,7 @@ describe('webpack app', function () {
 
     const body = JSON.parse(server.requests[0].requestBody);
 
-    expect(body.access_token).to.eql('POST_CLIENT_ITEM_TOKEN');
+    expect(accessToken(server.requests[0])).to.eql('POST_CLIENT_ITEM_TOKEN');
     expect(body.data.body.message.body).to.eql('webpack test log');
-
-    done();
   });
 });

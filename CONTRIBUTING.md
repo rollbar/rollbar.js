@@ -53,7 +53,8 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 
 ### Tests
 
-- `npm test` runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- `npm test` builds the example apps that browser tests load (`npm run build:test-examples`), then runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- `npm run test:wtr` on its own needs those example builds. Run `npm run build:test-examples` first, and again after rebuilding the SDK, because it bundles the SDK's current `dist/`.
 - Browser tests need Node 22 or newer (a Web Test Runner requirement); server tests, lint, and builds run on Node 20+.
 - `npm run typecheck` runs the TypeScript pass (via `tsconfig.test.json`) so TS-based tests surface declaration mismatches early.
 - Scope runs as needed:
@@ -64,7 +65,7 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 ### Builds
 
 - `npm run build:dev` compiles bundles in development mode (faster debug cycle).
-- `npm run build` + `npm run postbuild` mirrors the release pipeline; only run this when you need to inspect distributables.
+- `npm run build` mirrors the release pipeline (webpack, ES5 check, example snippets, `examples/rollbar.tgz`); only run this when you need to inspect distributables.
 
 ## Code style philosophy
 
