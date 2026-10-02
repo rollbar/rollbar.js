@@ -208,16 +208,19 @@ class Rollbar {
   setupUnhandledCapture() {
     var gWindow = _gWindow();
 
+    // Flags are set before hooking so a hook that fails part-way isn't rerun
+    // by every later configure(), which would stack a second onerror handler
+    // or listener wrapper on top of the first.
     if (!this.unhandledExceptionsInitialized) {
       if (
         this.options.captureUncaught ||
         this.options.handleUncaughtExceptions
       ) {
-        globals.captureUncaughtExceptions(gWindow, this);
-        if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
-          this.wrapGlobals(gWindow, this);
-        }
         this.unhandledExceptionsInitialized = true;
+        _hookGlobals(() => globals.captureUncaughtExceptions(gWindow, this));
+        if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
+          _hookGlobals(() => this.wrapGlobals(gWindow, this));
+        }
       }
     }
     if (!this.unhandledRejectionsInitialized) {
@@ -225,8 +228,8 @@ class Rollbar {
         this.options.captureUnhandledRejections ||
         this.options.handleUnhandledRejections
       ) {
-        globals.captureUnhandledRejections(gWindow, this);
         this.unhandledRejectionsInitialized = true;
+        _hookGlobals(() => globals.captureUnhandledRejections(gWindow, this));
       }
     }
   }
@@ -583,6 +586,22 @@ function _gWindow() {
     (typeof window !== 'undefined' && window) ||
     (typeof self !== 'undefined' && self)
   );
+}
+
+/**
+ * Runs one step of hooking page globals, logging instead of throwing if it
+ * fails. Hooking must never make `new Rollbar()` throw and take the host page
+ * down with it (the snippet shim has the same guard), and one failing step
+ * must not stop the others from running.
+ *
+ * @param {Function} hook - The hooking step to run.
+ */
+function _hookGlobals(hook) {
+  try {
+    hook();
+  } catch (e) {
+    logger.error('[Rollbar]: Internal error', e);
+  }
 }
 
 const defaultOptions = {
