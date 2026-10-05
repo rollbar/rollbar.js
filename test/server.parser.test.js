@@ -82,63 +82,138 @@ describe('parser', function () {
     });
 
     describe('ReDoS protection (RB-01)', function () {
-      // A Node Error's `.stack` begins with its (possibly attacker-influenced)
-      // message. When the message contains a newline, the text after it becomes
-      // a parsed "frame" line. A crafted line of the form `at <a...><)...>` used
-      // to drive catastrophic backtracking in the trace regexes and block the
-      // event loop for seconds. These tests assert parsing stays fast and that
-      // normal frames are unaffected.
+      // A crafted frame line used to backtrack catastrophically in the frame
+      // regexes and block the event loop for seconds. Each scenario is a stack
+      // of 1000 crafted lines that took >1s (up to ~13s) before the fix.
       function parseTime(stack, done) {
         const item = { diagnostic: {} };
         const start = process.hrtime.bigint();
-        p.parseStack(stack, {}, item, function () {
-          const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
-          done(elapsedMs);
+        p.parseStack(stack, {}, item, function (err) {
+          expect(err).to.be.null;
+          done(Number(process.hrtime.bigint() - start) / 1e6);
         });
       }
 
-      it('parses a malicious tracePattern line quickly', function (done) {
-        const n = 2500;
-        const line = '    at ' + 'a'.repeat(n) + ')'.repeat(n);
-        const stack = 'Error: boom\n' + line + '\n';
-        parseTime(stack, function (elapsedMs) {
-          expect(elapsedMs).to.be.lessThan(1000);
-          done();
+      const scenarios = {
+        'trace pattern': '    at ' + 'a'.repeat(2500) + ')'.repeat(2500),
+        'trace pattern, short lines':
+          '    at ' + 'a'.repeat(508) + ')'.repeat(509),
+        'jade pattern': '    at ' + ' ( at'.repeat(2000) + 'x',
+        'jade pattern ending in ))': '    at ' + ' ( at'.repeat(202) + ')x))',
+      };
+      Object.keys(scenarios).forEach(function (name) {
+        it('parses crafted lines quickly: ' + name, function (done) {
+          const stack = 'Error: boom\n' + (scenarios[name] + '\n').repeat(1000);
+          parseTime(stack, function (elapsedMs) {
+            expect(elapsedMs).to.be.lessThan(500);
+            done();
+          });
         });
       });
 
-      it('parses a malicious jadeTracePattern line quickly', function (done) {
-        const line = '    at ' + ' ( at'.repeat(2000) + 'x';
-        const stack = 'Error: boom\n' + line + '\n';
-        parseTime(stack, function (elapsedMs) {
-          expect(elapsedMs).to.be.lessThan(1000);
-          done();
-        });
+      it('caps the number of parsed frames', function (done) {
+        const line = '  at fn (app/server.js:1:1)\n';
+        p.parseStack(
+          'Error: boom\n' + line.repeat(5000),
+          {},
+          { diagnostic: {} },
+          function (err, frames) {
+            expect(err).to.be.null;
+            expect(frames).to.have.lengthOf(1000);
+            done();
+          },
+        );
       });
+    });
+  });
 
-      it('parses many malicious lines quickly', function (done) {
-        const line = '    at ' + 'a'.repeat(1000) + ')'.repeat(1000);
-        const stack = 'Error: boom\n' + (line + '\n').repeat(2000);
-        parseTime(stack, function (elapsedMs) {
-          expect(elapsedMs).to.be.lessThan(2000);
-          done();
-        });
+  describe('frame matchers', function () {
+    // The regexes the linear matchers replace. They are only safe to run on
+    // the short strings generated here.
+    const tracePattern =
+      /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
+    const jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
+
+    // Deterministic PRNG (mulberry32) so failures are reproducible.
+    function prng(seed) {
+      return function () {
+        seed = (seed + 0x6d2b79f5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function randomLines(alphabet, prefixes, count, seed) {
+      const random = prng(seed);
+      const lines = [];
+      for (let i = 0; i < count; i++) {
+        let line = prefixes[Math.floor(random() * prefixes.length)];
+        const length = Math.floor(random() * 24);
+        for (let j = 0; j < length; j++) {
+          line += alphabet[Math.floor(random() * alphabet.length)];
+        }
+        lines.push(line);
+      }
+      return lines;
+    }
+
+    it('matchTraceLine matches the original regex', function () {
+      const alphabet = [
+        'a',
+        't',
+        ' ',
+        ' ',
+        '(',
+        ')',
+        ':',
+        ':',
+        '1',
+        '2',
+        '.',
+        '/',
+        '<',
+        '>',
+        '[',
+        ']',
+        ',',
+        '\r',
+        '\u2028',
+        ', <js>:',
+        ' at ',
+      ];
+      const prefixes = ['at ', '  at ', '    at (', '\tat ', 'at', ''];
+      randomLines(alphabet, prefixes, 50000, 1).forEach(function (line) {
+        const expected = line.match(tracePattern);
+        // JSON keeps unmatched groups as null placeholders, preserving arity.
+        expect(
+          JSON.stringify(p.matchTraceLine(line)),
+          JSON.stringify(line),
+        ).to.equal(JSON.stringify(expected && expected.slice(1)));
       });
+    });
 
-      it('still parses a normal frame correctly', function (done) {
-        const stack =
-          'ReferenceError: foo is not defined\n' +
-          '  at MethodClass.method (app/server.js:62:14)\n';
-        const item = { diagnostic: {} };
-        p.parseStack(stack, {}, item, function (err, frames) {
-          expect(err).to.be.null;
-          expect(frames).to.have.lengthOf(1);
-          expect(frames[0].method).to.equal('MethodClass.method');
-          expect(frames[0].filename).to.equal('app/server.js');
-          expect(frames[0].lineno).to.equal(62);
-          expect(frames[0].colno).to.equal(14 - 1);
-          done();
-        });
+    it('matchJadeTrace matches the original regex', function () {
+      const alphabet = [
+        'a',
+        't',
+        ' ',
+        ' ',
+        '(',
+        ')',
+        ')',
+        'x',
+        '\r',
+        ' at',
+        ' (',
+        '))',
+      ];
+      const prefixes = ['at ', '  at ', 'at x (', 'at', ''];
+      randomLines(alphabet, prefixes, 50000, 2).forEach(function (line) {
+        const expected = line.match(jadeTracePattern);
+        expect(p.matchJadeTrace(line), JSON.stringify(line)).to.equal(
+          expected && expected[1],
+        );
       });
     });
   });

@@ -9,26 +9,28 @@ import logger from '../logger.js';
 import * as stackTrace from './sourceMap/stackTrace.js';
 
 var linesOfContext = 3;
-// NOTE: the trailing `\)*` that used to sit after `(?:.*` has been removed.
-// `.` already matches `)`, so `(?:.*\)*)` captured exactly the same text as
-// `(?:.*)` but added overlapping quantifiers that caused catastrophic
-// backtracking (ReDoS) on attacker-influenced stack lines such as
-// `at <many non-'(' chars><many ')'>`. See the guards in parseFrameLine /
-// parseStack below, which bound the work this regex (and jadeTracePattern) can
-// be made to do.
-var tracePattern =
-  /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
 
-var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
+// Stack lines are untrusted input: a Node Error's `.stack` begins with its
+// message, so a newline in an attacker-influenced message turns the text after
+// it into a "frame" line. Frame lines used to be parsed with two regexes whose
+// overlapping quantifiers backtracked catastrophically on crafted lines,
+// blocking the event loop for seconds (RB-01). matchTraceLine and
+// matchJadeTrace below return exactly what those regexes captured, in linear
+// time:
+//
+//   /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/
+//   /^\s*at .+ \(.+ (at[^)]+\))\)$/
+//
+// test/server.parser.test.js checks both against these regexes on random input.
+var framePrefixPattern = /^\s*at /;
+var framePositionPattern = /:(\d+):(\d+)(?:, <js>:(\d+):(\d+))?\)?$/;
+// The characters `.` does not match (`\n` never occurs within a line).
+var lineTerminatorPattern = /[\r\u2028\u2029]/;
+
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 
-// A stack line is never influenced only by trusted code: a Node Error's `.stack`
-// begins with its (often attacker-influenced) message, so any newline in the
-// message turns the following text into a "frame" line fed to the regexes above.
-// These bounds keep that untrusted input from driving super-linear regex work.
-// Real V8 frame lines are short and stacks are shallow (Error.stackTraceLimit
-// defaults to 10), so these limits never truncate legitimate traces.
-var MAX_FRAME_LINE_LENGTH = 1024;
+// Bounds the per-frame work (parsing, source-map lookups, file reads) that a
+// newline-laden message can trigger. Node captures 10 frames by default.
 var MAX_STACK_FRAMES = 1000;
 
 var cache = new lru({ max: 100 });
@@ -154,35 +156,136 @@ function mapPosition(position, diagnostic) {
   );
 }
 
-function parseFrameLine(line, callback) {
-  var matched, curLine, data, frame, position;
-
-  curLine = line;
-
-  // Defensive bound: never run the backtracking-prone trace regexes on a line
-  // longer than any legitimate stack frame. Such lines only arise from
-  // attacker-influenced error messages and are the lever for a ReDoS.
-  if (curLine.length > MAX_FRAME_LINE_LENGTH) {
-    return callback(null, null);
+/**
+ * Parse a V8 stack frame line in linear time.
+ *
+ * Equivalent to the original trace regex (see the comment at the top of this
+ * file). Its greedy method group always ends at the last space that leaves a
+ * non-empty location, its location group is the shortest prefix followed by an
+ * optional `:line:col[, <js>:line:col]` suffix, and `.` rejects line
+ * terminators, which this reproduces explicitly.
+ *
+ * @param {string} line - A single stack trace line.
+ * @returns {Array|null} `[method, filename, line, column, compiledLine,
+ *   compiledColumn]` (unmatched parts undefined), or null if not a frame.
+ */
+export function matchTraceLine(line) {
+  var prefix = framePrefixPattern.exec(line);
+  if (!prefix) {
+    return null;
   }
 
-  // jadeTracePattern can only match a line ending in `))` (it ends with
-  // `\))\)$`). Gating on that cheap check first is behavior-preserving — a line
-  // that does not end in `))` never matched anyway — while avoiding catastrophic
-  // backtracking, which only happens on lines that ultimately fail to match.
-  if (curLine.slice(-2) === '))') {
-    matched = curLine.match(jadeTracePattern);
-    if (matched) {
-      curLine = matched[1];
+  var rest = line.slice(prefix[0].length);
+  var method;
+  var location = rest;
+  var split = rest.lastIndexOf(' ', rest.length - 2);
+  if (split > 0 && rest[0] !== '(') {
+    method = rest.slice(0, split);
+    location = rest.slice(split + 1);
+  }
+
+  if (!location || lineTerminatorPattern.test(location)) {
+    return null;
+  }
+  // A terminator can only sit in the method's leading `[^(]+` part.
+  if (method !== undefined) {
+    var paren = method.indexOf('(');
+    if (paren !== -1 && lineTerminatorPattern.test(method.slice(paren))) {
+      return null;
     }
   }
 
-  matched = curLine.match(tracePattern);
-  if (!matched) {
+  if (location.length > 1 && location[0] === '(') {
+    location = location.slice(1);
+  }
+
+  // The filename keeps at least one character, so search from index 1.
+  var position = framePositionPattern.exec(location.slice(1));
+  if (position) {
+    return [method, location.slice(0, position.index + 1)].concat(
+      position.slice(1),
+    );
+  }
+
+  if (location.length > 1 && location[location.length - 1] === ')') {
+    location = location.slice(0, -1);
+  }
+  return [method, location, undefined, undefined, undefined, undefined];
+}
+
+/**
+ * Extract the inner `at …)` of a Jade/eval frame line in linear time.
+ *
+ * Equivalent to the original jade regex (see the comment at the top of this
+ * file): `at <M1> (<M2> at<N>))`, where M1 and M2 are non-empty and free of
+ * line terminators, N is non-empty and contains no `)`, and the greedy M1 and
+ * then M2 pick the latest possible split.
+ *
+ * @param {string} line - A single stack trace line.
+ * @returns {string|null} The captured `at…)` text, or null if no match.
+ */
+export function matchJadeTrace(line) {
+  var n = line.length;
+  var prefix = framePrefixPattern.exec(line);
+  if (!prefix || line.slice(-2) !== '))') {
+    return null;
+  }
+  var start = prefix[0].length;
+
+  // Starts of a possible capture, latest first: ` at` followed by a non-empty,
+  // `)`-free run up to the closing `))`.
+  var lastParen = n >= 3 ? line.lastIndexOf(')', n - 3) : -1;
+  var captures = [];
+  for (var q = n - 5; q >= start + 5 && q + 2 > lastParen; q--) {
+    if (line[q - 1] === ' ' && line[q] === 'a' && line[q + 1] === 't') {
+      captures.push(q);
+    }
+  }
+  if (!captures.length) {
+    return null;
+  }
+
+  // nextTerminator[i]: index of the first line terminator at or after i.
+  var nextTerminator = new Array(n + 1);
+  nextTerminator[n] = n;
+  for (var i = n - 1; i >= 0; i--) {
+    nextTerminator[i] = lineTerminatorPattern.test(line[i])
+      ? i
+      : nextTerminator[i + 1];
+  }
+
+  // Try each ` (` (M1's end), latest first. M2 must not cross a terminator, and
+  // that bound only tightens as the ` (` moves left, so `c` never rewinds.
+  var c = 0;
+  var r = Math.min(nextTerminator[start], captures[0] - 4);
+  for (; r > start; r--) {
+    if (line[r] !== ' ' || line[r + 1] !== '(') {
+      continue;
+    }
+    var latest = nextTerminator[r + 2] + 1;
+    while (c < captures.length && captures[c] > latest) {
+      c++;
+    }
+    if (c === captures.length) {
+      return null;
+    }
+    if (captures[c] >= r + 4) {
+      return line.slice(captures[c], n - 1);
+    }
+  }
+  return null;
+}
+
+function parseFrameLine(line, callback) {
+  var curLine, data, frame, position;
+
+  curLine = matchJadeTrace(line) || line;
+
+  data = matchTraceLine(curLine);
+  if (!data) {
     return callback(null, null);
   }
 
-  data = matched.slice(1);
   var runtimePosition = {
     source: data[1],
     line: Math.floor(data[2]),
@@ -395,9 +498,6 @@ export function parseStack(stack, options, item, callback) {
   // grab all lines except the first
   lines = (_stack || '').split('\n').slice(1);
 
-  // Defensive bound: cap the number of frame lines parsed. A newline-laden,
-  // attacker-influenced error message can otherwise inflate a stack into a huge
-  // number of lines, each of which would be run through the trace regexes.
   if (lines.length > MAX_STACK_FRAMES) {
     lines = lines.slice(0, MAX_STACK_FRAMES);
   }
