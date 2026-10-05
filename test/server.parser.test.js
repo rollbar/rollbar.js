@@ -80,5 +80,66 @@ describe('parser', function () {
         expect(frame.colno).to.equal(4 - 1);
       });
     });
+
+    describe('ReDoS protection (RB-01)', function () {
+      // A Node Error's `.stack` begins with its (possibly attacker-influenced)
+      // message. When the message contains a newline, the text after it becomes
+      // a parsed "frame" line. A crafted line of the form `at <a...><)...>` used
+      // to drive catastrophic backtracking in the trace regexes and block the
+      // event loop for seconds. These tests assert parsing stays fast and that
+      // normal frames are unaffected.
+      function parseTime(stack, done) {
+        const item = { diagnostic: {} };
+        const start = process.hrtime.bigint();
+        p.parseStack(stack, {}, item, function () {
+          const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+          done(elapsedMs);
+        });
+      }
+
+      it('parses a malicious tracePattern line quickly', function (done) {
+        const n = 2500;
+        const line = '    at ' + 'a'.repeat(n) + ')'.repeat(n);
+        const stack = 'Error: boom\n' + line + '\n';
+        parseTime(stack, function (elapsedMs) {
+          expect(elapsedMs).to.be.lessThan(1000);
+          done();
+        });
+      });
+
+      it('parses a malicious jadeTracePattern line quickly', function (done) {
+        const line = '    at ' + ' ( at'.repeat(2000) + 'x';
+        const stack = 'Error: boom\n' + line + '\n';
+        parseTime(stack, function (elapsedMs) {
+          expect(elapsedMs).to.be.lessThan(1000);
+          done();
+        });
+      });
+
+      it('parses many malicious lines quickly', function (done) {
+        const line = '    at ' + 'a'.repeat(1000) + ')'.repeat(1000);
+        const stack = 'Error: boom\n' + (line + '\n').repeat(2000);
+        parseTime(stack, function (elapsedMs) {
+          expect(elapsedMs).to.be.lessThan(2000);
+          done();
+        });
+      });
+
+      it('still parses a normal frame correctly', function (done) {
+        const stack =
+          'ReferenceError: foo is not defined\n' +
+          '  at MethodClass.method (app/server.js:62:14)\n';
+        const item = { diagnostic: {} };
+        p.parseStack(stack, {}, item, function (err, frames) {
+          expect(err).to.be.null;
+          expect(frames).to.have.lengthOf(1);
+          expect(frames[0].method).to.equal('MethodClass.method');
+          expect(frames[0].filename).to.equal('app/server.js');
+          expect(frames[0].lineno).to.equal(62);
+          expect(frames[0].colno).to.equal(14 - 1);
+          done();
+        });
+      });
+    });
   });
 });

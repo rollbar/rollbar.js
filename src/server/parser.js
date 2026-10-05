@@ -9,11 +9,27 @@ import logger from '../logger.js';
 import * as stackTrace from './sourceMap/stackTrace.js';
 
 var linesOfContext = 3;
+// NOTE: the trailing `\)*` that used to sit after `(?:.*` has been removed.
+// `.` already matches `)`, so `(?:.*\)*)` captured exactly the same text as
+// `(?:.*)` but added overlapping quantifiers that caused catastrophic
+// backtracking (ReDoS) on attacker-influenced stack lines such as
+// `at <many non-'(' chars><many ')'>`. See the guards in parseFrameLine /
+// parseStack below, which bound the work this regex (and jadeTracePattern) can
+// be made to do.
 var tracePattern =
-  /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
+  /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
 
 var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
+
+// A stack line is never influenced only by trusted code: a Node Error's `.stack`
+// begins with its (often attacker-influenced) message, so any newline in the
+// message turns the following text into a "frame" line fed to the regexes above.
+// These bounds keep that untrusted input from driving super-linear regex work.
+// Real V8 frame lines are short and stacks are shallow (Error.stackTraceLimit
+// defaults to 10), so these limits never truncate legitimate traces.
+var MAX_FRAME_LINE_LENGTH = 1024;
+var MAX_STACK_FRAMES = 1000;
 
 var cache = new lru({ max: 100 });
 var pendingReads = {};
@@ -142,9 +158,23 @@ function parseFrameLine(line, callback) {
   var matched, curLine, data, frame, position;
 
   curLine = line;
-  matched = curLine.match(jadeTracePattern);
-  if (matched) {
-    curLine = matched[1];
+
+  // Defensive bound: never run the backtracking-prone trace regexes on a line
+  // longer than any legitimate stack frame. Such lines only arise from
+  // attacker-influenced error messages and are the lever for a ReDoS.
+  if (curLine.length > MAX_FRAME_LINE_LENGTH) {
+    return callback(null, null);
+  }
+
+  // jadeTracePattern can only match a line ending in `))` (it ends with
+  // `\))\)$`). Gating on that cheap check first is behavior-preserving — a line
+  // that does not end in `))` never matched anyway — while avoiding catastrophic
+  // backtracking, which only happens on lines that ultimately fail to match.
+  if (curLine.slice(-2) === '))') {
+    matched = curLine.match(jadeTracePattern);
+    if (matched) {
+      curLine = matched[1];
+    }
   }
 
   matched = curLine.match(tracePattern);
@@ -364,6 +394,13 @@ export function parseStack(stack, options, item, callback) {
 
   // grab all lines except the first
   lines = (_stack || '').split('\n').slice(1);
+
+  // Defensive bound: cap the number of frame lines parsed. A newline-laden,
+  // attacker-influenced error message can otherwise inflate a stack into a huge
+  // number of lines, each of which would be run through the trace regexes.
+  if (lines.length > MAX_STACK_FRAMES) {
+    lines = lines.slice(0, MAX_STACK_FRAMES);
+  }
 
   if (options.nodeSourceMaps) {
     item.diagnostic.node_source_maps = {};
