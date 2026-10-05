@@ -27,11 +27,15 @@ var framePositionPattern = /:(\d+):(\d+)(?:, <js>:(\d+):(\d+))?\)?$/;
 // The characters `.` does not match (`\n` never occurs within a line).
 var lineTerminatorPattern = /[\r\u2028\u2029]/;
 
+function isLineTerminator(ch) {
+  return ch === '\r' || ch === '\u2028' || ch === '\u2029';
+}
+
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 
 // Bounds the per-frame work (parsing, source-map lookups, file reads) that a
-// newline-laden message can trigger. Applied to frame-shaped lines only (see
-// parseStack). Node captures 10 frames by default.
+// newline-laden message can trigger. Applied to frame-shaped lines only, half
+// from each end (see parseStack). Node captures 10 frames by default.
 var MAX_STACK_FRAMES = 1000;
 
 var cache = new lru({ max: 100 });
@@ -236,13 +240,8 @@ export function matchJadeTrace(line) {
   // N (after the capture's `at`) must be `)`-free up to the closing `))`.
   var lastParen = line.lastIndexOf(')', n - 3);
   // M1 cannot extend past the first line terminator.
-  var firstTerminator = n;
-  for (var j = start; j < n; j++) {
-    if (lineTerminatorPattern.test(line[j])) {
-      firstTerminator = j;
-      break;
-    }
-  }
+  var firstTerminator = line.slice(start).search(lineTerminatorPattern);
+  firstTerminator = firstTerminator === -1 ? n : start + firstTerminator;
 
   // Walk the ` (` (M1's end) candidates latest first, tracking the latest
   // ` at` capture whose M2 stays terminator-free from i + 2. A terminator
@@ -250,7 +249,7 @@ export function matchJadeTrace(line) {
   // start at or before i, so it is picked up as the scan continues.
   var capture = -1;
   for (var i = n - 5; i > start; i--) {
-    if (lineTerminatorPattern.test(line[i + 2])) {
+    if (isLineTerminator(line[i + 2])) {
       capture = -1;
     }
     if (
@@ -503,8 +502,12 @@ export function parseStack(stack, options, item, callback) {
   lines = lines.filter(function (line) {
     return framePrefixPattern.test(line);
   });
+  // The message can also contain frame-shaped lines, and they come first.
+  // Keeping both ends means injected lines cannot displace the real frames
+  // that follow them, while a genuinely deep stack keeps its innermost frames.
   if (lines.length > MAX_STACK_FRAMES) {
-    lines = lines.slice(0, MAX_STACK_FRAMES);
+    var half = MAX_STACK_FRAMES / 2;
+    lines = lines.slice(0, half).concat(lines.slice(-half));
   }
 
   if (options.nodeSourceMaps) {

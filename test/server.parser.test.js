@@ -140,6 +140,40 @@ describe('parser', function () {
           done();
         });
       });
+
+      it('keeps real frames after many frame-shaped message lines', function (done) {
+        const stack =
+          'Error: message\n' +
+          '    at injected (fake.js:9:9)\n'.repeat(1001) +
+          '    at fn (app/server.js:1:2)\n' +
+          '    at main (app/index.js:3:4)';
+        p.parseStack(stack, {}, { diagnostic: {} }, function (err, frames) {
+          expect(err).to.be.null;
+          expect(frames).to.have.lengthOf(1000);
+          // Frames are returned outermost first.
+          expect(frames[0].method).to.equal('main');
+          expect(frames[0].filename).to.equal('app/index.js');
+          expect(frames[1].method).to.equal('fn');
+          expect(frames[1].filename).to.equal('app/server.js');
+          done();
+        });
+      });
+
+      it('keeps the innermost and outermost frames of a deep stack', function (done) {
+        let stack = 'Error: boom';
+        for (let i = 0; i < 5000; i++) {
+          stack += '\n    at fn' + i + ' (app/server.js:' + (i + 1) + ':1)';
+        }
+        p.parseStack(stack, {}, { diagnostic: {} }, function (err, frames) {
+          expect(err).to.be.null;
+          expect(frames).to.have.lengthOf(1000);
+          expect(frames[0].method).to.equal('fn4999');
+          expect(frames[499].method).to.equal('fn4500');
+          expect(frames[500].method).to.equal('fn499');
+          expect(frames[999].method).to.equal('fn0');
+          done();
+        });
+      });
     });
   });
 
