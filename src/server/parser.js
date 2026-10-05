@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import util from 'util';
 
 import async from 'async';
@@ -188,7 +189,12 @@ function parseFrameLine(line, callback) {
 function shouldReadFrameFile(frameFilename, callback) {
   var isValidFilename, isCached, isPending;
 
-  isValidFilename = frameFilename[0] === '/' || frameFilename[0] === '.';
+  // Absolute POSIX paths, relative paths, and absolute Windows paths
+  // (C:\app\server.js, \\server\share\app.js) can be read from disk.
+  isValidFilename =
+    frameFilename[0] === '/' ||
+    frameFilename[0] === '.' ||
+    path.win32.isAbsolute(frameFilename);
   isCached = Boolean(cache.get(frameFilename));
   isPending = Boolean(pendingReads[frameFilename]);
 

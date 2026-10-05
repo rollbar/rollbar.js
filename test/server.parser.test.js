@@ -1,4 +1,7 @@
+import fs from 'fs';
+
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import * as p from '../src/server/parser.js';
 
@@ -78,6 +81,45 @@ describe('parser', function () {
         expect(frame.filename).to.equal('app/server.js');
         expect(frame.lineno).to.equal(2);
         expect(frame.colno).to.equal(4 - 1);
+      });
+    });
+
+    describe('a stack trace with absolute Windows paths', function () {
+      const filename = 'C:\\app\\server.js';
+      const source = ['line 1', 'line 2', 'line 3', 'line 4', 'line 5'];
+
+      beforeEach(function () {
+        p.cache.reset();
+        sinon
+          .stub(fs, 'stat')
+          .callsFake((name, callback) =>
+            callback(name === filename ? null : new Error('ENOENT')),
+          );
+        sinon
+          .stub(fs, 'readFile')
+          .callsFake((name, callback) =>
+            callback(null, Buffer.from(source.join('\n'))),
+          );
+      });
+
+      afterEach(function () {
+        sinon.restore();
+        p.cache.reset();
+      });
+
+      it('should gather context lines for the frame', function (done) {
+        const item = { diagnostic: {} };
+        const stack = 'Error: boom\n' + `    at handler (${filename}:3:5)\n`;
+
+        p.parseStack(stack, {}, item, function (err, frames) {
+          expect(err).to.be.null;
+          const frame = frames[0];
+          expect(frame.filename).to.equal(filename);
+          expect(frame.code).to.equal('line 3');
+          expect(frame.context.pre).to.deep.equal(['line 1', 'line 2']);
+          expect(frame.context.post).to.deep.equal(['line 4', 'line 5']);
+          done();
+        });
       });
     });
   });
