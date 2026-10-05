@@ -30,7 +30,8 @@ var lineTerminatorPattern = /[\r\u2028\u2029]/;
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
 
 // Bounds the per-frame work (parsing, source-map lookups, file reads) that a
-// newline-laden message can trigger. Node captures 10 frames by default.
+// newline-laden message can trigger. Applied to frame-shaped lines only (see
+// parseStack). Node captures 10 frames by default.
 var MAX_STACK_FRAMES = 1000;
 
 var cache = new lru({ max: 100 });
@@ -232,45 +233,43 @@ export function matchJadeTrace(line) {
   }
   var start = prefix[0].length;
 
-  // Starts of a possible capture, latest first: ` at` followed by a non-empty,
-  // `)`-free run up to the closing `))`.
-  var lastParen = n >= 3 ? line.lastIndexOf(')', n - 3) : -1;
-  var captures = [];
-  for (var q = n - 5; q >= start + 5 && q + 2 > lastParen; q--) {
-    if (line[q - 1] === ' ' && line[q] === 'a' && line[q + 1] === 't') {
-      captures.push(q);
+  // N (after the capture's `at`) must be `)`-free up to the closing `))`.
+  var lastParen = line.lastIndexOf(')', n - 3);
+  // M1 cannot extend past the first line terminator.
+  var firstTerminator = n;
+  for (var j = start; j < n; j++) {
+    if (lineTerminatorPattern.test(line[j])) {
+      firstTerminator = j;
+      break;
     }
-  }
-  if (!captures.length) {
-    return null;
   }
 
-  // nextTerminator[i]: index of the first line terminator at or after i.
-  var nextTerminator = new Array(n + 1);
-  nextTerminator[n] = n;
-  for (var i = n - 1; i >= 0; i--) {
-    nextTerminator[i] = lineTerminatorPattern.test(line[i])
-      ? i
-      : nextTerminator[i + 1];
-  }
-
-  // Try each ` (` (M1's end), latest first. M2 must not cross a terminator, and
-  // that bound only tightens as the ` (` moves left, so `c` never rewinds.
-  var c = 0;
-  var r = Math.min(nextTerminator[start], captures[0] - 4);
-  for (; r > start; r--) {
-    if (line[r] !== ' ' || line[r + 1] !== '(') {
-      continue;
+  // Walk the ` (` (M1's end) candidates latest first, tracking the latest
+  // ` at` capture whose M2 stays terminator-free from i + 2. A terminator
+  // entering M2 invalidates the tracked capture; any valid capture must then
+  // start at or before i, so it is picked up as the scan continues.
+  var capture = -1;
+  for (var i = n - 5; i > start; i--) {
+    if (lineTerminatorPattern.test(line[i + 2])) {
+      capture = -1;
     }
-    var latest = nextTerminator[r + 2] + 1;
-    while (c < captures.length && captures[c] > latest) {
-      c++;
+    if (
+      capture < 0 &&
+      i >= start + 5 &&
+      i + 2 > lastParen &&
+      line[i - 1] === ' ' &&
+      line[i] === 'a' &&
+      line[i + 1] === 't'
+    ) {
+      capture = i;
     }
-    if (c === captures.length) {
-      return null;
-    }
-    if (captures[c] >= r + 4) {
-      return line.slice(captures[c], n - 1);
+    if (
+      i <= firstTerminator &&
+      line[i] === ' ' &&
+      line[i + 1] === '(' &&
+      capture >= i + 4
+    ) {
+      return line.slice(capture, n - 1);
     }
   }
   return null;
@@ -498,6 +497,12 @@ export function parseStack(stack, options, item, callback) {
   // grab all lines except the first
   lines = (_stack || '').split('\n').slice(1);
 
+  // The message precedes the frames, so a long multi-line message must not
+  // use up the cap. Lines without the frame prefix can never become frames:
+  // both matchers require it.
+  lines = lines.filter(function (line) {
+    return framePrefixPattern.test(line);
+  });
   if (lines.length > MAX_STACK_FRAMES) {
     lines = lines.slice(0, MAX_STACK_FRAMES);
   }

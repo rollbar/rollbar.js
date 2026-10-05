@@ -124,6 +124,22 @@ describe('parser', function () {
           },
         );
       });
+
+      it('keeps real frames after a long multi-line message', function (done) {
+        const stack =
+          'Error: message\n' +
+          'additional message line\n'.repeat(1001) +
+          '    at fn (app/server.js:1:2)';
+        p.parseStack(stack, {}, { diagnostic: {} }, function (err, frames) {
+          expect(err).to.be.null;
+          expect(frames).to.have.lengthOf(1);
+          expect(frames[0].method).to.equal('fn');
+          expect(frames[0].filename).to.equal('app/server.js');
+          expect(frames[0].lineno).to.equal(1);
+          expect(frames[0].colno).to.equal(1);
+          done();
+        });
+      });
     });
   });
 
@@ -204,6 +220,8 @@ describe('parser', function () {
         ')',
         'x',
         '\r',
+        '\u2028',
+        '\u2029',
         ' at',
         ' (',
         '))',
