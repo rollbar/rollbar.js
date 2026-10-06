@@ -1,28 +1,24 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	// The require scope
-/******/ 	var __webpack_require__ = {};
+/******/ 	const __webpack_require__ = {};
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
+/******/ 	// define getter/value functions for harmony exports
+/******/ 	__webpack_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
-/******/ 		};
-/******/ 	})();
+/******/ 		}
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
+/******/ 	__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop));
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
+let __webpack_exports__ = {};
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
@@ -232,7 +228,7 @@ function sanitizeUrl(url) {
   url = baseUrlParts.source.replace('?' + baseUrlParts.query, '');
   return url;
 }
-var parseUriOptions = {
+var parseUriOptions = (/* unused pure expression or super */ null && ({
   strictMode: false,
   key: ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'],
   q: {
@@ -243,7 +239,7 @@ var parseUriOptions = {
     strict: /^(?:([^:/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?))?((((?:[^?#/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
     loose: /^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#/]*\.[^?#/.]+(?:[?#]|$)))*\/?)?([^?#/]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
-};
+}));
 function parseUri(str) {
   if (!isType(str, 'string')) {
     return undefined;
@@ -997,7 +993,7 @@ function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = 
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',
@@ -1197,7 +1193,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '3.1.0';
+var version = '4.0.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -1210,7 +1206,7 @@ var requestScrubFields = ['request.session.csrf', 'request.session._csrf', 'requ
 var commonScrubHeaders = ['authorization', 'www-authorization', 'http_authorization', 'omniauth.auth', 'cookie', 'oauth-access-token', 'x-access-token', 'x_csrf_token', 'http_x_csrf_token', 'x-csrf-token'];
 
 // For backward compatibility with default export
-/* harmony default export */ const defaults = ({
+/* harmony default export */ const defaults = ((/* unused pure expression or super */ null && ({
   version: version,
   endpoint: endpoint,
   logLevel: logLevel,
@@ -1218,7 +1214,7 @@ var commonScrubHeaders = ['authorization', 'www-authorization', 'http_authorizat
   uncaughtErrorLevel: uncaughtErrorLevel,
   maxItems: maxItems,
   itemsPerMin: itemsPerMin
-});
+})));
 ;// ./src/logger.js
 var _log = function log() {};
 var levels = {
@@ -1275,7 +1271,7 @@ var logger = {
 function predicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = predicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function predicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return predicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? predicates_arrayLikeToArray(r, a) : void 0; } }
 function predicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 function checkLevel(item, settings) {
   var level = item.level;
   var levelVal = LEVELS[level] || 0;
@@ -1455,7 +1451,7 @@ function notifier_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { 
 function notifier_createClass(e, r, t) { return r && notifier_defineProperties(e.prototype, r), t && notifier_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function notifier_toPropertyKey(t) { var i = notifier_toPrimitive(t, "string"); return "symbol" == notifier_typeof(i) ? i : i + ""; }
 function notifier_toPrimitive(t, r) { if ("object" != notifier_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != notifier_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 /*
  * Notifier - delegates between the client exposed API, the chain of transforms
@@ -1593,7 +1589,7 @@ function queue_createClass(e, r, t) { return r && queue_defineProperties(e.proto
 function queue_defineProperty(e, r, t) { return (r = queue_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function queue_toPropertyKey(t) { var i = queue_toPrimitive(t, "string"); return "symbol" == queue_typeof(i) ? i : i + ""; }
 function queue_toPrimitive(t, r) { if ("object" != queue_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != queue_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 /**
  * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
@@ -2363,8 +2359,15 @@ function telemetry_defineProperties(e, r) { for (var t = 0; t < r.length; t++) {
 function telemetry_createClass(e, r, t) { return r && telemetry_defineProperties(e.prototype, r), t && telemetry_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function telemetry_toPropertyKey(t) { var i = telemetry_toPrimitive(t, "string"); return "symbol" == telemetry_typeof(i) ? i : i + ""; }
 function telemetry_toPrimitive(t, r) { if ("object" != telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var MAX_EVENTS = 100;
+
+// Upper bound on events held by the `rollbar-telemetry` span. The span is only
+// ended (and its events released) when Session Replay exports it, so without a
+// cap it grows for the lifetime of the page. The bound is larger than
+// MAX_EVENTS so a replay's default 300s pre-duration keeps its telemetry
+// timeline on busy pages.
+var MAX_SPAN_EVENTS = 1000;
 
 // Temporary workaround while solving commonjs -> esm issues in Node 18 - 20.
 function fromMillis(millis) {
@@ -2372,16 +2375,23 @@ function fromMillis(millis) {
 }
 var Telemeter = /*#__PURE__*/function () {
   function Telemeter(options, tracing) {
-    var _this$tracing;
     telemetry_classCallCheck(this, Telemeter);
     this.queue = [];
     this.options = merge(options);
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
     this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
     this.tracing = tracing;
-    this.telemetrySpan = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {});
+    this.telemetrySpan = this.startTelemetrySpan();
   }
   return telemetry_createClass(Telemeter, [{
+    key: "startTelemetrySpan",
+    value: function startTelemetrySpan() {
+      var _this$tracing;
+      return (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {
+        maxEvents: MAX_SPAN_EVENTS
+      });
+    }
+  }, {
     key: "configure",
     value: function configure(options) {
       var oldOptions = this.options;
@@ -2431,7 +2441,7 @@ var Telemeter = /*#__PURE__*/function () {
       var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       if (this.telemetrySpan) {
         this.telemetrySpan.end(attributes);
-        this.telemetrySpan = this.tracing.startSpan('rollbar-telemetry', {});
+        this.telemetrySpan = this.startTelemetrySpan();
       }
     }
   }, {
@@ -3034,7 +3044,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function truncation_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = truncation_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function truncation_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return truncation_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? truncation_arrayLikeToArray(r, a) : void 0; } }
 function truncation_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 
 function raw(payload, jsonBackup) {
   return [payload, stringify(payload, jsonBackup)];
@@ -3163,7 +3173,7 @@ function defaults_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r
 /**
  * Default server-side application options
  */
-
+;
 var notifierName = 'node_rollbar';
 var scrubHeaders = commonScrubHeaders;
 var scrubFields = [].concat(_toConsumableArray(commonScrubFields), _toConsumableArray(apiScrubFields), _toConsumableArray(requestScrubFields));
@@ -3173,7 +3183,7 @@ const external_node_async_hooks_namespaceObject = require("node:async_hooks");
 function rollbarExpressMiddleware_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = rollbarExpressMiddleware_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function rollbarExpressMiddleware_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return rollbarExpressMiddleware_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? rollbarExpressMiddleware_arrayLikeToArray(r, a) : void 0; } }
 function rollbarExpressMiddleware_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 function extractSessionId(headerValue) {
   if (!headerValue) {
     return null;
@@ -3584,7 +3594,7 @@ function scrub_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function scrub_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = scrub_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function scrub_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return scrub_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? scrub_arrayLikeToArray(r, a) : void 0; } }
 function scrub_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 
 function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
@@ -3898,16 +3908,39 @@ function stackTrace_sourceContent(source) {
 }
 ;// ./src/server/parser.js
 function parser_typeof(o) { "@babel/helpers - typeof"; return parser_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, parser_typeof(o); }
-
+;
 
 
 
 
 
 var linesOfContext = 3;
-var tracePattern = /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/;
-var jadeTracePattern = /^\s*at .+ \(.+ (at[^)]+\))\)$/;
+
+// Stack lines are untrusted input: a Node Error's `.stack` begins with its
+// message, so a newline in an attacker-influenced message turns the text after
+// it into a "frame" line. Frame lines used to be parsed with two regexes whose
+// overlapping quantifiers backtracked catastrophically on crafted lines,
+// blocking the event loop for seconds (RB-01). matchTraceLine and
+// matchJadeTrace below return exactly what those regexes captured, in linear
+// time:
+//
+//   /^\s*at (?:([^(]+(?: \[\w\s+\])?(?:.*\)*)) )?\(?(.+?)(?::(\d+):(\d+)(?:, <js>:(\d+):(\d+))?)?\)?$/
+//   /^\s*at .+ \(.+ (at[^)]+\))\)$/
+//
+// test/server.parser.test.js checks both against these regexes on random input.
+var framePrefixPattern = /^\s*at /;
+var framePositionPattern = /:(\d+):(\d+)(?:, <js>:(\d+):(\d+))?\)?$/;
+// The characters `.` does not match (`\n` never occurs within a line).
+var lineTerminatorPattern = /[\r\u2028\u2029]/;
+function isLineTerminator(ch) {
+  return ch === '\r' || ch === "\u2028" || ch === "\u2029";
+}
 var jadeFramePattern = /^\s*(>?) [0-9]+\|(\s*.+)$/m;
+
+// Bounds the per-frame work (parsing, source-map lookups, file reads) that a
+// newline-laden message can trigger. Applied to frame-shaped lines only, half
+// from each end (see parseStack). Node captures 10 frames by default.
+var MAX_STACK_FRAMES = 1000;
 var cache = new external_lru_cache_namespaceObject({
   max: 100
 });
@@ -3999,18 +4032,108 @@ function mapPosition(position, diagnostic) {
     column: position.column
   }, diagnostic);
 }
-function parseFrameLine(line, callback) {
-  var matched, curLine, data, frame, position;
-  curLine = line;
-  matched = curLine.match(jadeTracePattern);
-  if (matched) {
-    curLine = matched[1];
+
+/**
+ * Parse a V8 stack frame line in linear time.
+ *
+ * Equivalent to the original trace regex (see the comment at the top of this
+ * file). Its greedy method group always ends at the last space that leaves a
+ * non-empty location, its location group is the shortest prefix followed by an
+ * optional `:line:col[, <js>:line:col]` suffix, and `.` rejects line
+ * terminators, which this reproduces explicitly.
+ *
+ * @param {string} line - A single stack trace line.
+ * @returns {Array|null} `[method, filename, line, column, compiledLine,
+ *   compiledColumn]` (unmatched parts undefined), or null if not a frame.
+ */
+function matchTraceLine(line) {
+  var prefix = framePrefixPattern.exec(line);
+  if (!prefix) {
+    return null;
   }
-  matched = curLine.match(tracePattern);
-  if (!matched) {
+  var rest = line.slice(prefix[0].length);
+  var method;
+  var location = rest;
+  var split = rest.lastIndexOf(' ', rest.length - 2);
+  if (split > 0 && rest[0] !== '(') {
+    method = rest.slice(0, split);
+    location = rest.slice(split + 1);
+  }
+  if (!location || lineTerminatorPattern.test(location)) {
+    return null;
+  }
+  // A terminator can only sit in the method's leading `[^(]+` part.
+  if (method !== undefined) {
+    var paren = method.indexOf('(');
+    if (paren !== -1 && lineTerminatorPattern.test(method.slice(paren))) {
+      return null;
+    }
+  }
+  if (location.length > 1 && location[0] === '(') {
+    location = location.slice(1);
+  }
+
+  // The filename keeps at least one character, so search from index 1.
+  var position = framePositionPattern.exec(location.slice(1));
+  if (position) {
+    return [method, location.slice(0, position.index + 1)].concat(position.slice(1));
+  }
+  if (location.length > 1 && location[location.length - 1] === ')') {
+    location = location.slice(0, -1);
+  }
+  return [method, location, undefined, undefined, undefined, undefined];
+}
+
+/**
+ * Extract the inner `at …)` of a Jade/eval frame line in linear time.
+ *
+ * Equivalent to the original jade regex (see the comment at the top of this
+ * file): `at <M1> (<M2> at<N>))`, where M1 and M2 are non-empty and free of
+ * line terminators, N is non-empty and contains no `)`, and the greedy M1 and
+ * then M2 pick the latest possible split.
+ *
+ * @param {string} line - A single stack trace line.
+ * @returns {string|null} The captured `at…)` text, or null if no match.
+ */
+function matchJadeTrace(line) {
+  var n = line.length;
+  var prefix = framePrefixPattern.exec(line);
+  if (!prefix || line.slice(-2) !== '))') {
+    return null;
+  }
+  var start = prefix[0].length;
+
+  // N (after the capture's `at`) must be `)`-free up to the closing `))`.
+  var lastParen = line.lastIndexOf(')', n - 3);
+  // M1 cannot extend past the first line terminator.
+  var firstTerminator = line.slice(start).search(lineTerminatorPattern);
+  firstTerminator = firstTerminator === -1 ? n : start + firstTerminator;
+
+  // Walk the ` (` (M1's end) candidates latest first, tracking the latest
+  // ` at` capture whose M2 stays terminator-free from i + 2. A terminator
+  // entering M2 invalidates the tracked capture; any valid capture must then
+  // start at or before i, so it is picked up as the scan continues.
+  var capture = -1;
+  for (var i = n - 5; i > start; i--) {
+    if (isLineTerminator(line[i + 2])) {
+      capture = -1;
+    }
+    if (capture < 0 && i >= start + 5 && i + 2 > lastParen && line[i - 1] === ' ' && line[i] === 'a' && line[i + 1] === 't') {
+      capture = i;
+    }
+    if (i <= firstTerminator && line[i] === ' ' && line[i + 1] === '(' && capture >= i + 4) {
+      return line.slice(capture, n - 1);
+    }
+  }
+  return null;
+}
+function parseFrameLine(line, callback) {
+  var curLine, data, frame, position;
+  curLine = matchJadeTrace(line) || line;
+  data = matchTraceLine(curLine);
+  if (!data) {
     return callback(null, null);
   }
-  data = matched.slice(1);
   var runtimePosition = {
     source: data[1],
     line: Math.floor(data[2]),
@@ -4188,6 +4311,20 @@ function parseStack(stack, options, item, callback) {
 
   // grab all lines except the first
   lines = (_stack || '').split('\n').slice(1);
+
+  // The message precedes the frames, so a long multi-line message must not
+  // use up the cap. Lines without the frame prefix can never become frames:
+  // both matchers require it.
+  lines = lines.filter(function (line) {
+    return framePrefixPattern.test(line);
+  });
+  // The message can also contain frame-shaped lines, and they come first.
+  // Keeping both ends means injected lines cannot displace the real frames
+  // that follow them, while a genuinely deep stack keeps its innermost frames.
+  if (lines.length > MAX_STACK_FRAMES) {
+    var half = MAX_STACK_FRAMES / 2;
+    lines = lines.slice(0, half).concat(lines.slice(-half));
+  }
   if (options.nodeSourceMaps) {
     item.diagnostic.node_source_maps = {};
     item.diagnostic.node_source_maps.source_mapping_urls = {};

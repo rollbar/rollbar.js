@@ -143,7 +143,7 @@ Transport.prototype.handleResponse = function (resp, callback) {
 
   resp.on('end', function () {
     respData = respData.join('');
-    _parseApiResponse(respData, callback);
+    _parseApiResponse(respData, resp.statusCode, callback);
   });
 };
 
@@ -167,22 +167,44 @@ function _transport(options) {
   return { 'http:': http, 'https:': https }[options.protocol];
 }
 
-function _parseApiResponse(data, callback) {
+/**
+ * Turns a raw API response into the `(err, data)` pair expected by callers.
+ *
+ * @param {string} data - the raw response body
+ * @param {number} statusCode - the HTTP status code of the response
+ * @param {Function} callback - function(err, data)
+ */
+function _parseApiResponse(data, statusCode, callback) {
   var parsedData = _.jsonParse(data);
+  var body = parsedData.value;
+
+  if (body && body.err) {
+    logger.error('Received error: ' + body.message);
+    return callback(_apiError(body.message || 'Unknown error', statusCode));
+  }
+
+  // Proxies and load balancers in front of the API (e.g. nginx during a 502)
+  // reply with HTML or an empty body, so the status code is the only reliable
+  // signal; a JSON parse error would hide it.
+  if (statusCode >= 300) {
+    var message =
+      statusCode + ' ' + (http.STATUS_CODES[statusCode] || 'Unknown status');
+    logger.error('Received error: ' + message);
+    return callback(_apiError(message, statusCode));
+  }
+
   if (parsedData.error) {
     logger.error('Could not parse api response, err: ' + parsedData.error);
     return callback(parsedData.error);
   }
-  data = parsedData.value;
 
-  if (data.err) {
-    logger.error('Received error: ' + data.message);
-    return callback(
-      new Error('Api error: ' + (data.message || 'Unknown error')),
-    );
-  }
+  callback(null, body);
+}
 
-  callback(null, data);
+function _apiError(message, statusCode) {
+  var err = new Error('Api error: ' + message);
+  err.statusCode = statusCode;
+  return err;
 }
 
 function _wrapPostCallback(callback) {

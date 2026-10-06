@@ -1,6 +1,6 @@
 {
   "name": "rollbar",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "type": "module",
   "repository": {
     "type": "git",
@@ -138,8 +138,9 @@
     "build:dev": "webpack --mode development && npm run build:finalize",
     "build:finalize": "npm run validate:es5 && npm run update:snippets:examples && npm run pack",
     "build:test-examples": "npm run pack && node scripts/validate-examples.js -p react-16 webpack",
-    "test": "npm run build:test-examples && npm run test:wtr && npm run test:server",
+    "test": "npm run build:test-examples && npm run test:wtr && npm run test:server && npm run test:react-native",
     "test:server": "node scripts/run-server-tests.js",
+    "test:react-native": "mocha --node-option loader=./scripts/react-native-test-loader.js test/react-native.transport.test.js test/react-native.transforms.test.js",
     "test:wtr": "web-test-runner",
     "test:wtr:watch": "web-test-runner --watch",
     "lint": "eslint",
