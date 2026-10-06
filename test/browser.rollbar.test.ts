@@ -826,6 +826,57 @@ describe('log', function () {
     ]);
   });
 
+  it('should send when a failed fetch is passed to .catch(rollbar.error)', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const rollbar = (window.rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    }));
+
+    // A real network failure, handled the way application code often does.
+    await fetch('http://127.0.0.1:1/unreachable').catch(rollbar.error);
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests).to.have.lengthOf(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.level).to.eql('error');
+    expect(body.data.body.trace.exception.class).to.eql('TypeError');
+  });
+
+  it('should send through a logger object built from the level methods', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const rollbar = (window.rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    }));
+    const logger = {
+      info: rollbar.info,
+      warn: rollbar.warn,
+      error: rollbar.error,
+    };
+
+    logger.info('starting');
+    logger.warn('slow response');
+    logger.error(new Error('request failed'));
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const levels = server.requests.map(
+      (request) => JSON.parse(request.requestBody).data.level,
+    );
+    expect(levels.sort()).to.eql(['error', 'info', 'warning']);
+  });
+
   it('should add custom data when called with error context', async function () {
     const server = window.server;
     stubResponse(server);

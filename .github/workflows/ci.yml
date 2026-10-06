@@ -86,6 +86,9 @@ jobs:
       - name: Run server tests
         run: npm run test:server
 
+      - name: Run React Native tests
+        run: npm run test:react-native
+
       # Browser tests launch chromium; the harness Node version is irrelevant to
       # browser coverage, so run them on a single leg. Node 22 because
       # @web/test-runner 1.x requires Node >= 22, and the chromium download in
