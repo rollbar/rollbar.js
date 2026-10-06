@@ -30,7 +30,7 @@ describe('options', function () {
       },
       codeVersion: 'abc123',
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
@@ -51,7 +51,7 @@ describe('options', function () {
       },
       codeVersion: 'abc123',
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
@@ -72,7 +72,7 @@ describe('options', function () {
         codeVersion: 'abc123',
       },
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
