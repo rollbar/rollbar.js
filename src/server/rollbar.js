@@ -55,6 +55,7 @@ function Rollbar(options, client) {
   }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  _.bindLogMethods(this);
   this.setupUnhandledCapture();
 }
 
