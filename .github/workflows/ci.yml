@@ -72,6 +72,11 @@ jobs:
       - name: npm install
         run: npm install
 
+      # Covers src and the compile-time tests in test/types that pin the
+      # public types in index.d.ts.
+      - name: Type check
+        run: npm run typecheck:tests
+
       - name: Build
         run: npm run build
 

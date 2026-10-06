@@ -60,6 +60,58 @@ describe('userCheckIgnore', function () {
     };
     expect(p.userCheckIgnore(logger)(item, settings)).to.be.ok;
   });
+  // https://github.com/rollbar/rollbar.js/issues/1150
+  it('should pass args as a real array when given an arguments object', function () {
+    var err = new Error('bork');
+    var originalArgs = (function () {
+      return arguments;
+    })('hello', err);
+    var item = { level: 'debug', body: 'stuff', _originalArgs: originalArgs };
+    var received = {};
+    var settings = {
+      reportLevel: 'debug',
+      onSendCallback: function (_isUncaught, args) {
+        received.onSendCallback = args;
+      },
+      checkIgnore: function (_isUncaught, args) {
+        received.checkIgnore = args;
+        return args.some((arg) => arg instanceof Error);
+      },
+    };
+    expect(p.userCheckIgnore(logger)(item, settings)).to.not.be.ok;
+    expect(settings.checkIgnore).to.be.ok;
+    expect(received.onSendCallback).to.eql(['hello', err]);
+    expect(received.checkIgnore).to.eql(['hello', err]);
+  });
+  it('should give each hook its own copy of args', function () {
+    var item = { level: 'debug', body: 'stuff', _originalArgs: [1, 2, 3] };
+    var received;
+    var settings = {
+      reportLevel: 'debug',
+      onSendCallback: function (_isUncaught, args) {
+        args.shift();
+      },
+      checkIgnore: function (_isUncaught, args) {
+        received = args;
+        return false;
+      },
+    };
+    expect(p.userCheckIgnore(logger)(item, settings)).to.be.ok;
+    expect(received).to.eql([1, 2, 3]);
+  });
+  it('should pass an empty array when there are no original args', function () {
+    var item = { level: 'debug', body: 'stuff' };
+    var received;
+    var settings = {
+      reportLevel: 'debug',
+      checkIgnore: function (_isUncaught, args) {
+        received = args;
+        return false;
+      },
+    };
+    expect(p.userCheckIgnore(logger)(item, settings)).to.be.ok;
+    expect(received).to.eql([]);
+  });
 });
 
 describe('urlIsSafeListed', function () {

@@ -377,7 +377,6 @@ class Rollbar {
     }
     item.level = this.options.uncaughtErrorLevel;
     item._isUncaught = true;
-    item._originalArgs = item._originalArgs || [];
     item._originalArgs.push(promise);
     this.client.log(item);
   }
