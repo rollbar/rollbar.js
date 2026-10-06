@@ -554,6 +554,30 @@ describe('options.captureUncaught', function () {
       ]);
     });
 
+    it('should send when a level method is called without its instance', async function () {
+      const server = window.server;
+      expect(server).to.exist;
+
+      stubResponse(server);
+      server.requests.length = 0;
+
+      const rollbar = (window.rollbar = new Rollbar({
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      }));
+      const error = new Error('rejected');
+
+      await Promise.reject(error).catch(rollbar.error);
+
+      await setTimeoutAsync(1);
+
+      server.respond();
+
+      const body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.data.level).to.eql('error');
+      expect(body.data.body.trace.exception.message).to.eql('rejected');
+    });
+
     it('should send exception when called with error and extra args', async function () {
       const server = window.server;
       expect(server).to.exist;
