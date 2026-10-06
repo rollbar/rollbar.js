@@ -53,7 +53,7 @@ Keep branches focused on a single improvement. CI reruns the full suite on every
 
 ### Tests
 
-- `npm test` builds the example apps that browser tests load (`npm run build:test-examples`), then runs both browser (`npm run test:wtr`) and server (`npm run test:server`) suites.
+- `npm test` builds the example apps that browser tests load (`npm run build:test-examples`), then runs the browser (`npm run test:wtr`), server (`npm run test:server`) and React Native (`npm run test:react-native`) suites.
 - `npm run test:wtr` on its own needs those example builds. Run `npm run build:test-examples` first, and again after rebuilding the SDK, because it bundles the SDK's current `dist/`.
 - Browser tests need Node 22 or newer (a Web Test Runner requirement); server tests, lint, and builds run on Node 20+.
 - `npm run typecheck` runs the TypeScript pass (via `tsconfig.test.json`) so TS-based tests surface declaration mismatches early.
