@@ -4,6 +4,9 @@
  * Validates all examples in the `examples` directory by installing dependencies
  * and building each example using the local `rollbar.tgz` package. Pass
  * example directory names to validate only those.
+ *
+ * Examples whose `engines.node` range excludes the running Node version are
+ * skipped.
  */
 
 import { access, readdir, readFile, rm } from 'node:fs/promises';
@@ -11,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findUp, npm, parallelMap } from './util.js';
+import { findUp, npm, parallelMap, satisfiesRange } from './util.js';
 
 const args = process.argv.slice(2);
 const isParallelFlag = (a) => a === '--parallel' || a === '-p';
@@ -74,6 +77,7 @@ async function validateExamples() {
     .map((entry) => path.join(examplesDir, entry.name));
 
   let exampleDirs = [];
+  const skipped = [];
   for (const subdir of subdirs) {
     let pkg;
 
@@ -83,19 +87,30 @@ async function validateExamples() {
       continue;
     }
 
-    const { dependencies } = JSON.parse(pkg);
-    if (dependencies?.rollbar === 'file:../rollbar.tgz') {
-      exampleDirs.push(subdir);
+    const { dependencies, engines } = JSON.parse(pkg);
+    if (dependencies?.rollbar !== 'file:../rollbar.tgz') {
+      continue;
     }
+
+    // Skip examples whose toolchain cannot run on this Node version, eg.
+    // the Angular example on the older Node versions in the CI matrix.
+    if (engines?.node && !satisfiesRange(process.versions.node, engines.node)) {
+      skipped.push({ name: path.basename(subdir), range: engines.node });
+      continue;
+    }
+
+    exampleDirs.push(subdir);
   }
 
-  if (exampleDirs.length === 0) {
+  if (exampleDirs.length === 0 && skipped.length === 0) {
     throw new Error('No examples found using the local rollbar package.');
   }
 
   if (exampleNames.length > 0) {
     const available = exampleDirs.map((dir) => path.basename(dir));
-    const unknown = exampleNames.filter((n) => !available.includes(n));
+    const unknown = exampleNames.filter(
+      (n) => !available.includes(n) && !skipped.some((s) => s.name === n),
+    );
     if (unknown.length > 0) {
       throw new Error(
         `No example using the local rollbar package named: ` +
@@ -105,6 +120,15 @@ async function validateExamples() {
     exampleDirs = exampleDirs.filter((dir) =>
       exampleNames.includes(path.basename(dir)),
     );
+  }
+
+  for (const { name, range } of skipped) {
+    if (exampleNames.length === 0 || exampleNames.includes(name)) {
+      console.log(
+        `  - examples/${name} skipped ` +
+          `(requires Node ${range}, running ${process.versions.node})`,
+      );
+    }
   }
 
   await parallelMap(
