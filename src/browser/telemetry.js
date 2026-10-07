@@ -219,6 +219,7 @@ class Instrumenter {
 
     if ('XMLHttpRequest' in this._window) {
       const xhrp = this._window.XMLHttpRequest.prototype;
+      const xhrReplacements = { xhr: [] };
       replace(
         xhrp,
         'open',
@@ -246,8 +247,8 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
 
       replace(
@@ -274,8 +275,8 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
 
       replace(
@@ -425,9 +426,30 @@ class Instrumenter {
             return orig.apply(this, arguments);
           };
         },
-        this.replacements,
-        'network',
+        xhrReplacements,
+        'xhr',
       );
+
+      // open, setRequestHeader and send share __rollbar_xhr state, so a
+      // partially patched prototype would record broken telemetry. If any of
+      // them is read-only (#1451), leave XHR uninstrumented entirely.
+      if (xhrReplacements.xhr.length === 3) {
+        this.replacements.network.push(...xhrReplacements.xhr);
+      } else {
+        const patched = xhrReplacements.xhr.map((r) => r[1]);
+        const readOnly = ['open', 'setRequestHeader', 'send'].filter(
+          (m) => !patched.includes(m),
+        );
+        restore(xhrReplacements, 'xhr');
+        // Recorded in notifier.diagnostic so the missing XHR telemetry is
+        // explained on every occurrence (see addDiagnosticKeys). An injected
+        // client may not provide one, and this runs in the constructor.
+        if (this.diagnostic) {
+          this.diagnostic.instrumentNetwork = {
+            xhr: `skipped: XMLHttpRequest.prototype not writable (${readOnly.join(', ')})`,
+          };
+        }
+      }
     }
 
     if ('fetch' in this._window) {
