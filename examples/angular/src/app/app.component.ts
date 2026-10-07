@@ -1,11 +1,10 @@
 // src/app/app.component.ts
 import { Component, inject } from '@angular/core';
-import { RollbarService } from './rollbar.errorhandler';
-import Rollbar from 'rollbar';
+
+import { RollbarService } from './rollbar.service';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   template: `
     <h1>Rollbar Standalone App</h1>
     <button (click)="throwAnError()">Throw an Error</button>
@@ -13,16 +12,17 @@ import Rollbar from 'rollbar';
   `,
 })
 export class AppComponent {
-  // Option 1: using Angular’s `inject` function
-  private rollbar = inject<Rollbar>(RollbarService);
+  private readonly rollbarService = inject(RollbarService);
 
   throwAnError(): void {
     // This will be caught by our RollbarErrorHandler
     throw new Error('Test error from AppComponent!');
   }
 
-  logWarning(): void {
+  logWarning(): Promise<void> {
     // Manually log a warning to Rollbar
-    this.rollbar.warning('Test warning from AppComponent');
+    return this.rollbarService.load().then((rollbar) => {
+      rollbar?.warning('Test warning from AppComponent');
+    });
   }
 }

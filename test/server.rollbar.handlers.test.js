@@ -21,6 +21,10 @@ async function nodeThrow() {
   await wait(500);
 }
 
+function rollbarListeners(event) {
+  return process.listeners(event).filter((l) => l._rollbarHandler);
+}
+
 describe('rollbar exception handlers', function () {
   before(function () {
     // Increase max listeners to avoid warnings during tests
@@ -91,8 +95,90 @@ describe('rollbar exception handlers', function () {
         logStub.reset();
 
         rollbar.configure({ captureUncaught: false });
+        expect(rollbarListeners('uncaughtException')).to.have.length(0);
+
+        // Rollbar no longer handles the event, so without this the throw
+        // would crash the test process
+        const tempHandler = () => {};
+        process.on('uncaughtException', tempHandler);
+
         await nodeThrow();
         expect(logStub.called).to.be.false;
+
+        process.removeListener('uncaughtException', tempHandler);
+        logStub.restore();
+      });
+    });
+
+    describe('with enabled: false', function () {
+      it('should not install a handler, leaving Node to report the error', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+          enabled: false,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        expect(rollbarListeners('uncaughtException')).to.have.length(0);
+
+        const tempHandler = sinon.spy();
+        process.on('uncaughtException', tempHandler);
+
+        await nodeThrow();
+        expect(logStub.called).to.be.false;
+        expect(tempHandler.calledOnce).to.be.true;
+        expect(tempHandler.getCall(0).args[0].message).to.equal('node error');
+
+        process.removeListener('uncaughtException', tempHandler);
+        logStub.restore();
+      });
+
+      it('should remove the handler when disabled in configure', function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+        });
+        expect(rollbarListeners('uncaughtException')).to.have.length(1);
+
+        rollbar.configure({ enabled: false });
+        expect(rollbarListeners('uncaughtException')).to.have.length(0);
+      });
+
+      it('should not install a handler for other falsy enabled values', function () {
+        [0, '', null].forEach(function (enabled) {
+          new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            enabled: enabled,
+          });
+          expect(rollbarListeners('uncaughtException')).to.have.length(0);
+        });
+      });
+
+      it('should not remove a handler installed by another instance', function () {
+        new Rollbar({ accessToken: 'abc123', captureUncaught: true });
+        expect(rollbarListeners('uncaughtException')).to.have.length(1);
+
+        new Rollbar({ accessToken: 'abc123', enabled: false });
+        new Rollbar({ accessToken: 'abc123' });
+        expect(rollbarListeners('uncaughtException')).to.have.length(1);
+      });
+
+      it('should install the handler when enabled in configure', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUncaught: true,
+          enabled: false,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+        expect(rollbarListeners('uncaughtException')).to.have.length(0);
+
+        rollbar.configure({ enabled: true });
+        expect(rollbarListeners('uncaughtException')).to.have.length(1);
+
+        await nodeThrow();
+        expect(logStub.called).to.be.true;
+        expect(logStub.getCall(0).args[0].err.message).to.equal('node error');
 
         logStub.restore();
       });
@@ -193,10 +279,64 @@ describe('rollbar exception handlers', function () {
         logStub.reset();
 
         rollbar.configure({ captureUnhandledRejections: false });
+        expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+
+        // Rollbar no longer handles the event, so without this the rejection
+        // would crash the test process
+        const tempHandler = () => {};
+        process.on('unhandledRejection', tempHandler);
+
         await nodeReject();
         expect(logStub.called).to.be.false;
 
+        process.removeListener('unhandledRejection', tempHandler);
         logStub.restore();
+      });
+    });
+
+    describe('with enabled: false', function () {
+      it('should not install a handler, leaving Node to report the rejection', async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUnhandledRejections: true,
+          enabled: false,
+        });
+        const logStub = sinon.stub(rollbar.client.notifier, 'log');
+
+        expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+
+        const tempHandler = sinon.spy();
+        process.on('unhandledRejection', tempHandler);
+
+        await nodeReject();
+        expect(logStub.called).to.be.false;
+        expect(tempHandler.calledOnce).to.be.true;
+        expect(tempHandler.getCall(0).args[0].message).to.equal('node reject');
+
+        process.removeListener('unhandledRejection', tempHandler);
+        logStub.restore();
+      });
+
+      it('should remove the handler when disabled in configure', function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          captureUnhandledRejections: true,
+        });
+        expect(rollbarListeners('unhandledRejection')).to.have.length(1);
+
+        rollbar.configure({ enabled: false });
+        expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+      });
+
+      it('should not install a handler for other falsy enabled values', function () {
+        [0, '', null].forEach(function (enabled) {
+          new Rollbar({
+            accessToken: 'abc123',
+            captureUnhandledRejections: true,
+            enabled: enabled,
+          });
+          expect(rollbarListeners('unhandledRejection')).to.have.length(0);
+        });
       });
     });
 
