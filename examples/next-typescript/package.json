@@ -15,6 +15,11 @@
     "next": "15.5.26",
     "rollbar": "file:../rollbar.tgz"
   },
+  "overrides": {
+    "@rollbar/react": {
+      "rollbar": "$rollbar"
+    }
+  },
   "devDependencies": {
     "typescript": "^5",
     "@types/node": "^20",

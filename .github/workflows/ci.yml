@@ -7,10 +7,35 @@ on:
   pull_request:
 
 permissions:
-  checks: write
   contents: read
 
 jobs:
+  # Runs the linters directly so the job itself passes or fails. Reporting via
+  # separate check runs (e.g. wearerequired/lint-action) needs `checks: write`,
+  # which GitHub never grants to pull_request runs from forks, leaving those
+  # required checks permanently pending.
+  lint:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: npm install
+        run: npm install
+
+      - name: ESLint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Prettier
+        run: npm run format:check
+
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
@@ -47,15 +72,10 @@ jobs:
       - name: npm install
         run: npm install
 
-      - name: Lint
-        uses: wearerequired/lint-action@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prettier: true
-          prettier_extensions: js,cjs,mjs,md,json,yml,yaml
-          eslint: true
-          eslint_args: '--max-warnings 0'
-          eslint_extensions: js,mjs,cjs
+      # Covers src and the compile-time tests in test/types that pin the
+      # public types in index.d.ts.
+      - name: Type check
+        run: npm run typecheck:tests
 
       - name: Build
         run: npm run build
@@ -65,6 +85,9 @@ jobs:
 
       - name: Run server tests
         run: npm run test:server
+
+      - name: Run React Native tests
+        run: npm run test:react-native
 
       # Browser tests launch chromium; the harness Node version is irrelevant to
       # browser coverage, so run them on a single leg. Node 22 because
@@ -80,6 +103,12 @@ jobs:
             echo "playwright install attempt $i stalled or failed; retrying"
           done
           exit 1
+
+      # test/examples/ loads these apps' bundles, so build them from the SDK
+      # the Build step just produced instead of committing stale copies.
+      - name: Build example apps for browser tests
+        if: matrix.node == 22
+        run: npm run build:test-examples
 
       - name: Run browser tests (Web Test Runner)
         if: matrix.node == 22

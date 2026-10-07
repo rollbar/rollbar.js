@@ -55,6 +55,7 @@ function Rollbar(options, client) {
   }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  _.bindLogMethods(this);
   this.setupUnhandledCapture();
 }
 
@@ -651,15 +652,52 @@ function _getFirstFunction(args) {
   return undefined;
 }
 
+/**
+ * Installs or removes the process-level `uncaughtException` and
+ * `unhandledRejection` handlers so they match the current options.
+ *
+ * A listener on either event replaces Node's default behavior of printing the
+ * error and exiting, so a handler that is not going to report anything must
+ * not stay attached: the error would disappear and the process would either
+ * exit 0 or keep running in a broken state. This runs on every `configure()`,
+ * so turning `enabled`, `captureUncaught` or `captureUnhandledRejections` off
+ * at runtime hands those errors back to Node.
+ */
 Rollbar.prototype.setupUnhandledCapture = function () {
-  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+  // Same truthiness test the notifier uses to drop items, so a falsy
+  // `enabled` such as `0`, `''` or `null` removes the handler too.
+  var enabled = Boolean(this.options.enabled);
+  if (
+    enabled &&
+    (this.options.captureUncaught || this.options.handleUncaughtExceptions)
+  ) {
     this.handleUncaughtExceptions();
+  } else {
+    this._removeUnhandledHandler('uncaughtException');
   }
   if (
-    this.options.captureUnhandledRejections ||
-    this.options.handleUnhandledRejections
+    enabled &&
+    (this.options.captureUnhandledRejections ||
+      this.options.handleUnhandledRejections)
   ) {
     this.handleUnhandledRejections();
+  } else {
+    this._removeUnhandledHandler('unhandledRejection');
+  }
+};
+
+/**
+ * Removes the process listener this instance installed for `event`, if any.
+ * Listeners installed by other Rollbar instances are left alone, so creating
+ * a second, non-capturing instance does not disable the first one's capture.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ */
+Rollbar.prototype._removeUnhandledHandler = function (event) {
+  var handlers = this._unhandledHandlers;
+  if (handlers && handlers[event]) {
+    process.removeListener(event, handlers[event]);
+    delete handlers[event];
   }
 };
 
@@ -667,7 +705,7 @@ Rollbar.prototype.handleUncaughtExceptions = function () {
   var exitOnUncaught = Boolean(this.options.exitOnUncaughtException);
   delete this.options.exitOnUncaughtException;
 
-  addOrReplaceRollbarHandler(
+  this._addUnhandledHandler(
     'uncaughtException',
     function (err) {
       if (
@@ -699,7 +737,7 @@ Rollbar.prototype.handleUncaughtExceptions = function () {
 };
 
 Rollbar.prototype.handleUnhandledRejections = function () {
-  addOrReplaceRollbarHandler(
+  this._addUnhandledHandler(
     'unhandledRejection',
     function (reason) {
       if (
@@ -721,6 +759,19 @@ Rollbar.prototype.handleUnhandledRejections = function () {
   );
 };
 
+/**
+ * Installs `action` as the process listener for `event`, replacing any
+ * listener a Rollbar instance installed before, and remembers it so
+ * `_removeUnhandledHandler` can remove it later.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {Function} action - Called with the listener's arguments.
+ */
+Rollbar.prototype._addUnhandledHandler = function (event, action) {
+  this._unhandledHandlers = this._unhandledHandlers || {};
+  this._unhandledHandlers[event] = addOrReplaceRollbarHandler(event, action);
+};
+
 function addOrReplaceRollbarHandler(event, action) {
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
@@ -737,6 +788,7 @@ function addOrReplaceRollbarHandler(event, action) {
     }
   }
   process.on(event, fn);
+  return fn;
 }
 
 function RollbarError(message, nested) {

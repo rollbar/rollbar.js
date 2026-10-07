@@ -73,6 +73,7 @@ class Rollbar {
     this.anonymousErrorsPending = 0;
     addTransformsToNotifier(this.client.notifier, this, gWindow);
     addPredicatesToQueue(this.client.queue);
+    _.bindLogMethods(this);
     this.setupUnhandledCapture();
     if (Instrumenter) {
       this.instrumenter = new Instrumenter(
@@ -376,7 +377,6 @@ class Rollbar {
     }
     item.level = this.options.uncaughtErrorLevel;
     item._isUncaught = true;
-    item._originalArgs = item._originalArgs || [];
     item._originalArgs.push(promise);
     this.client.log(item);
   }
