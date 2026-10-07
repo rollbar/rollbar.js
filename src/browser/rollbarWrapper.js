@@ -15,7 +15,7 @@ function _setupForwarding(prototype) {
   };
 
   var _methods =
-    'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,captureDomContentLoaded,captureLoad'.split(
+    'log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,wait,captureDomContentLoaded,captureLoad'.split(
       ',',
     );
   for (const method of _methods) {

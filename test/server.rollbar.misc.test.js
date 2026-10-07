@@ -31,6 +31,32 @@ describe('rollbar miscellaneous methods', function () {
     });
   });
 
+  // https://github.com/rollbar/rollbar.js/issues/1150
+  describe('checkIgnore', function () {
+    it('should receive args as a real array', async function () {
+      class IgnoredError extends Error {}
+      let received;
+      const rollbar = new Rollbar({
+        accessToken: 'abc123',
+        transmit: false,
+        checkIgnore: function (_isUncaught, args, _item) {
+          received = args;
+          return args.some((arg) => arg instanceof IgnoredError);
+        },
+      });
+
+      const err = await new Promise((resolve) => {
+        rollbar.error('ignore me', new IgnoredError('test'), resolve);
+      });
+
+      expect(Array.isArray(received)).to.equal(true);
+      expect(received.length).to.equal(3);
+      // Ignored items stop at the predicate; a sent item would report
+      // 'Transmit disabled' instead.
+      expect(err).to.not.be.ok;
+    });
+  });
+
   describe('singleton', function () {
     it('should work like a constructor but with an init method', function () {
       const r = Rollbar.init({ accessToken: 'abc123' });

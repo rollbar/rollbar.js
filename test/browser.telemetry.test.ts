@@ -18,7 +18,7 @@ describe('instrumentNetwork', function () {
     windowMock.XMLHttpRequest.prototype.open = function () {};
     windowMock.XMLHttpRequest.prototype.send = function () {};
 
-    let i = createInstrumenter(callback, windowMock);
+    let i = createInstrumenter({ captureNetwork: callback }, windowMock);
     i.instrumentNetwork();
 
     const xhr = new windowMock.XMLHttpRequest();
@@ -30,7 +30,7 @@ describe('instrumentNetwork', function () {
     expect(callback.args[0][0].url).to.eql('http://first.call');
 
     i.deinstrumentNetwork();
-    i = createInstrumenter(callback, windowMock);
+    i = createInstrumenter({ captureNetwork: callback }, windowMock);
     i.instrumentNetwork();
     const xhr2 = new windowMock.XMLHttpRequest();
     xhr2.open('GET', new URL('http://second.call'));
@@ -48,7 +48,7 @@ describe('instrumentNetwork', function () {
       fetch: (_) => Promise.resolve(),
     };
 
-    let i = createInstrumenter(callback, windowMock);
+    let i = createInstrumenter({ captureNetwork: callback }, windowMock);
     i.instrumentNetwork();
 
     windowMock.fetch('http://first.call');
@@ -56,7 +56,7 @@ describe('instrumentNetwork', function () {
     expect(callback.args[0][0].url).to.eql('http://first.call');
 
     i.deinstrumentNetwork();
-    i = createInstrumenter(callback, windowMock);
+    i = createInstrumenter({ captureNetwork: callback }, windowMock);
     i.instrumentNetwork();
 
     windowMock.fetch(new URL('http://second.call'));
@@ -167,6 +167,34 @@ describe('instrumentNetwork', function () {
       expect(windowMock.fetch).to.equal(originals.fetch);
       expectXhrUntouched(windowMock, originals);
     });
+  });
+});
+
+describe('instrumentConsole', function () {
+  it('should capture module namespace objects', async function () {
+    const log = sinon.spy();
+    const captureLog = sinon.spy();
+    const windowMock = { console: { log } };
+    createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+
+    const ns = await import('./fixtures/esm-module.js');
+    windowMock.console.log(ns);
+
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(captureLog.args[0][0]).to.eql('{"x":1}');
+    expect(log.calledOnceWithExactly(ns)).to.eql(true);
+  });
+
+  it('should call the original console method if telemetry throws', function () {
+    const log = sinon.spy();
+    const captureLog = sinon.stub().throws(new Error('boom'));
+    const windowMock = { console: { log } };
+    const instrumenter = createInstrumenter({ captureLog }, windowMock);
+    instrumenter.instrumentConsole();
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+    expect(instrumenter.diagnostic.captureLog).to.eql({ error: 'boom' });
   });
 });
 
@@ -671,10 +699,18 @@ describe('instrumentDom', function () {
   });
 });
 
-function createInstrumenter(callback, windowMock) {
+/**
+ * Creates an Instrumenter wired to a stub telemeter and mock window.
+ *
+ * @param telemeter - Stub with the capture methods the test exercises,
+ *   e.g. `{ captureNetwork }` or `{ captureLog }`.
+ * @param windowMock - Mock window whose globals get instrumented.
+ * @returns The Instrumenter; call the relevant `instrument*()` method on it.
+ */
+function createInstrumenter(telemeter, windowMock) {
   return new Instrumenter(
     { scrubFields: [] },
-    { captureNetwork: callback },
+    telemeter,
     { wrap: () => {}, client: { notifier: { diagnostic: {} } } },
     windowMock,
   );

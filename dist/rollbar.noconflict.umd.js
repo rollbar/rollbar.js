@@ -9,48 +9,45 @@
 		root["rollbar"] = factory();
 })(this, function() {
 return /******/ (function() { // webpackBootstrap
-/******/ 	"use strict";
+/******/ 	// runtime can't be in strict mode because 'output.globalObject' reads 'this'.
 /******/ 	// The require scope
 /******/ 	var __webpack_require__ = {};
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
-/******/ 	!function() {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = function(exports, definition) {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
+/******/ 	// define getter/value functions for harmony exports
+/******/ 	__webpack_require__.d = function(exports, definition) {
+/******/ 		for(var key in definition) {
+/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
-/******/ 		};
-/******/ 	}();
+/******/ 		}
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	!function() {
-/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
-/******/ 	}();
+/******/ 	__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); };
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
-/******/ 	!function() {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = function(exports) {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	}();
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+!function() {
+"use strict";
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
   "default": function() { return /* binding */ rollbar_noconflict; }
 });
 
-// NAMESPACE OBJECT: ./src/browser/url.js
+// NAMESPACE OBJECT (decoupled): ./src/browser/url.js
 var url_namespaceObject = {};
 __webpack_require__.r(url_namespaceObject);
 __webpack_require__.d(url_namespaceObject, {
@@ -969,7 +966,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function scrub_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = scrub_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function scrub_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return scrub_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? scrub_arrayLikeToArray(r, a) : void 0; } }
 function scrub_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 
 function scrub(data, scrubFields, scrubPaths) {
   scrubFields = scrubFields || [];
@@ -1114,8 +1111,15 @@ function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = 
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == telemetry_typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != telemetry_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != telemetry_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var MAX_EVENTS = 100;
+
+// Upper bound on events held by the `rollbar-telemetry` span. The span is only
+// ended (and its events released) when Session Replay exports it, so without a
+// cap it grows for the lifetime of the page. The bound is larger than
+// MAX_EVENTS so a replay's default 300s pre-duration keeps its telemetry
+// timeline on busy pages.
+var MAX_SPAN_EVENTS = 1000;
 
 // Temporary workaround while solving commonjs -> esm issues in Node 18 - 20.
 function fromMillis(millis) {
@@ -1123,16 +1127,23 @@ function fromMillis(millis) {
 }
 var Telemeter = /*#__PURE__*/function () {
   function Telemeter(options, tracing) {
-    var _this$tracing;
     _classCallCheck(this, Telemeter);
     this.queue = [];
     this.options = merge(options);
     var maxTelemetryEvents = this.options.maxTelemetryEvents || MAX_EVENTS;
     this.maxQueueSize = Math.max(0, Math.min(maxTelemetryEvents, MAX_EVENTS));
     this.tracing = tracing;
-    this.telemetrySpan = (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {});
+    this.telemetrySpan = this.startTelemetrySpan();
   }
   return _createClass(Telemeter, [{
+    key: "startTelemetrySpan",
+    value: function startTelemetrySpan() {
+      var _this$tracing;
+      return (_this$tracing = this.tracing) === null || _this$tracing === void 0 ? void 0 : _this$tracing.startSpan('rollbar-telemetry', {
+        maxEvents: MAX_SPAN_EVENTS
+      });
+    }
+  }, {
     key: "configure",
     value: function configure(options) {
       var oldOptions = this.options;
@@ -1182,7 +1193,7 @@ var Telemeter = /*#__PURE__*/function () {
       var attributes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       if (this.telemetrySpan) {
         this.telemetrySpan.end(attributes);
-        this.telemetrySpan = this.tracing.startSpan('rollbar-telemetry', {});
+        this.telemetrySpan = this.startTelemetrySpan();
       }
     }
   }, {
@@ -1637,7 +1648,7 @@ function contextManager_defineProperties(e, r) { for (var t = 0; t < r.length; t
 function contextManager_createClass(e, r, t) { return r && contextManager_defineProperties(e.prototype, r), t && contextManager_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function contextManager_toPropertyKey(t) { var i = contextManager_toPrimitive(t, "string"); return "symbol" == contextManager_typeof(i) ? i : i + ""; }
 function contextManager_toPrimitive(t, r) { if ("object" != contextManager_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != contextManager_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var ContextManager = /*#__PURE__*/function () {
   function ContextManager() {
     contextManager_classCallCheck(this, ContextManager);
@@ -1803,7 +1814,7 @@ function exporter_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { 
 function exporter_createClass(e, r, t) { return r && exporter_defineProperties(e.prototype, r), t && exporter_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function exporter_toPropertyKey(t) { var i = exporter_toPrimitive(t, "string"); return "symbol" == exporter_typeof(i) ? i : i + ""; }
 function exporter_toPrimitive(t, r) { if ("object" != exporter_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != exporter_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 /**
  * SpanExporter is responsible for exporting ReadableSpan objects
@@ -2096,7 +2107,7 @@ function session_createClass(e, r, t) { return r && session_defineProperties(e.p
 function session_defineProperty(e, r, t) { return (r = session_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function session_toPropertyKey(t) { var i = session_toPrimitive(t, "string"); return "symbol" == session_typeof(i) ? i : i + ""; }
 function session_toPrimitive(t, r) { if ("object" != session_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != session_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var SESSION_KEY = 'RollbarSession';
 var Session = /*#__PURE__*/function () {
   function Session(tracing, options) {
@@ -2255,7 +2266,7 @@ function spanProcessor_defineProperties(e, r) { for (var t = 0; t < r.length; t+
 function spanProcessor_createClass(e, r, t) { return r && spanProcessor_defineProperties(e.prototype, r), t && spanProcessor_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function spanProcessor_toPropertyKey(t) { var i = spanProcessor_toPrimitive(t, "string"); return "symbol" == spanProcessor_typeof(i) ? i : i + ""; }
 function spanProcessor_toPrimitive(t, r) { if ("object" != spanProcessor_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != spanProcessor_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var SpanProcessor = /*#__PURE__*/function () {
   function SpanProcessor(exporter) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -2326,11 +2337,12 @@ function span_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var 
 function span_createClass(e, r, t) { return r && span_defineProperties(e.prototype, r), t && span_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function span_toPropertyKey(t) { var i = span_toPrimitive(t, "string"); return "symbol" == span_typeof(i) ? i : i + ""; }
 function span_toPrimitive(t, r) { if ("object" != span_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != span_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 var Span = /*#__PURE__*/function () {
   function Span(options) {
     span_classCallCheck(this, Span);
     this.usePerformance = options.usePerformance;
+    this.maxEvents = options.maxEvents;
     this.initReadableSpan(options);
     this.spanProcessor = options.spanProcessor;
     this.spanProcessor.onStart(this, options.context);
@@ -2402,12 +2414,29 @@ var Span = /*#__PURE__*/function () {
       }
       return this;
     }
+
+    /**
+     * Adds an event to the span.
+     *
+     * When the span was started with a positive `maxEvents`, the events list
+     * behaves as a ring buffer: once full, the oldest event is dropped and
+     * `droppedEventsCount` is incremented, so a long-lived span stays bounded.
+     *
+     * @param {string} name - Event name
+     * @param {Object} [attributes] - Event attributes
+     * @param {Array<number>} [time] - Event time as an hrtime tuple
+     * @returns {Span} This span
+     */
   }, {
     key: "addEvent",
     value: function addEvent(name) {
       var attributes = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var time = arguments.length > 2 ? arguments[2] : undefined;
       if (this.span.ended) return this;
+      if (this.maxEvents > 0 && this.span.events.length >= this.maxEvents) {
+        this.span.events.shift();
+        this.span.droppedEventsCount++;
+      }
       this.span.events.push({
         name: name,
         attributes: attributes,
@@ -2446,7 +2475,7 @@ function tracer_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { va
 function tracer_createClass(e, r, t) { return r && tracer_defineProperties(e.prototype, r), t && tracer_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function tracer_toPropertyKey(t) { var i = tracer_toPrimitive(t, "string"); return "symbol" == tracer_typeof(i) ? i : i + ""; }
 function tracer_toPrimitive(t, r) { if ("object" != tracer_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracer_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 var Tracer = /*#__PURE__*/function () {
   function Tracer(tracing, spanProcessor) {
@@ -2495,7 +2524,8 @@ var Tracer = /*#__PURE__*/function () {
         parentSpanId: parentSpanId,
         spanProcessor: this.spanProcessor,
         startTime: options.startTime,
-        usePerformance: options.usePerformance
+        usePerformance: options.usePerformance,
+        maxEvents: options.maxEvents
       });
       return span;
     }
@@ -2511,7 +2541,7 @@ function tracing_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { v
 function tracing_createClass(e, r, t) { return r && tracing_defineProperties(e.prototype, r), t && tracing_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function tracing_toPropertyKey(t) { var i = tracing_toPrimitive(t, "string"); return "symbol" == tracing_typeof(i) ? i : i + ""; }
 function tracing_toPrimitive(t, r) { if ("object" != tracing_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != tracing_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 
 
@@ -2638,7 +2668,7 @@ function truncation_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function truncation_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = truncation_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function truncation_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return truncation_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? truncation_arrayLikeToArray(r, a) : void 0; } }
 function truncation_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 
 function raw(payload, jsonBackup) {
   return [payload, stringify(payload, jsonBackup)];
@@ -2861,7 +2891,7 @@ function api_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o
 function api_createClass(e, r, t) { return r && api_defineProperties(e.prototype, r), t && api_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function api_toPropertyKey(t) { var i = api_toPrimitive(t, "string"); return "symbol" == api_typeof(i) ? i : i + ""; }
 function api_toPrimitive(t, r) { if ("object" != api_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != api_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 var defaultOptions = {
   hostname: 'api.rollbar.com',
@@ -3061,7 +3091,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '3.1.0';
+var version = '4.0.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -3365,7 +3395,7 @@ function _mostSpecificErrorName(error) {
 function predicates_createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = predicates_unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function predicates_unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return predicates_arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? predicates_arrayLikeToArray(r, a) : void 0; } }
 function predicates_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-
+;
 function checkLevel(item, settings) {
   var level = item.level;
   var levelVal = LEVELS[level] || 0;
@@ -3545,7 +3575,7 @@ function notifier_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { 
 function notifier_createClass(e, r, t) { return r && notifier_defineProperties(e.prototype, r), t && notifier_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function notifier_toPropertyKey(t) { var i = notifier_toPrimitive(t, "string"); return "symbol" == notifier_typeof(i) ? i : i + ""; }
 function notifier_toPrimitive(t, r) { if ("object" != notifier_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != notifier_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 /*
  * Notifier - delegates between the client exposed API, the chain of transforms
@@ -3683,7 +3713,7 @@ function queue_createClass(e, r, t) { return r && queue_defineProperties(e.proto
 function queue_defineProperty(e, r, t) { return (r = queue_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function queue_toPropertyKey(t) { var i = queue_toPrimitive(t, "string"); return "symbol" == queue_typeof(i) ? i : i + ""; }
 function queue_toPrimitive(t, r) { if ("object" != queue_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != queue_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 /**
  * Queue - an object which handles which handles a queue of items to be sent to Rollbar.
@@ -4591,7 +4621,7 @@ function defaults_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r
 /**
  * Default browser options
  */
-
+;
 var scrubFields = [].concat(defaults_toConsumableArray(commonScrubFields), ['cc-number', 'card number', 'cardnumber', 'cardnum', 'ccnum', 'ccnumber', 'cc num', 'creditcardnumber', 'credit card number', 'newcreditcardnumber', 'new credit card', 'creditcardno', 'credit card no', 'card#', 'card #', 'cc-csc', 'cvc', 'cvc2', 'cvv2', 'ccv2', 'security code', 'card verification', 'name on credit card', 'name on card', 'nameoncard', 'cardholder', 'card holder', 'name des karteninhabers', 'ccname', 'card type', 'cardtype', 'cc type', 'cctype', 'payment type', 'expiration date', 'expirationdate', 'expdate', 'cc-exp', 'ccmonth', 'ccyear']);
 
 // For compatibility with existing code that expects default export with scrubFields property
@@ -5089,7 +5119,7 @@ function fetch_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { va
 function fetch_defineProperty(e, r, t) { return (r = fetch_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function fetch_toPropertyKey(t) { var i = fetch_toPrimitive(t, "string"); return "symbol" == fetch_typeof(i) ? i : i + ""; }
 function fetch_toPrimitive(t, r) { if ("object" != fetch_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != fetch_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 function makeFetchRequest(_ref) {
   var accessToken = _ref.accessToken,
@@ -5142,7 +5172,7 @@ function xhr_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined"
 function xhr_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 /*global XDomainRequest*/
 
-
+;
 
 function makeXhrRequest(_ref) {
   var accessToken = _ref.accessToken,
@@ -5533,7 +5563,7 @@ function core_createClass(e, r, t) { return r && core_defineProperties(e.prototy
 function core_defineProperty(e, r, t) { return (r = core_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function core_toPropertyKey(t) { var i = core_toPrimitive(t, "string"); return "symbol" == core_typeof(i) ? i : i + ""; }
 function core_toPrimitive(t, r) { if ("object" != core_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != core_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-
+;
 
 
 
@@ -6470,7 +6500,7 @@ function telemetry_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = 
 /* eslint-disable @typescript-eslint/no-this-alias */
 // TODO(matux): refactor to remove no-this-alias disable
 
-
+;
 
 
 
@@ -7516,6 +7546,7 @@ if (typeof window !== 'undefined' && !window._rollbarStartTime) {
   window._rollbarStartTime = new Date().getTime();
 }
 /* harmony default export */ var rollbar_noconflict = (browser_rollbar);
+}();
 __webpack_exports__ = __webpack_exports__["default"];
 /******/ 	return __webpack_exports__;
 /******/ })()

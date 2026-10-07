@@ -56,6 +56,10 @@ function TestClientGen() {
       this.options = o;
       this.payloadData = payloadData;
     };
+    this.waitCalls = [];
+    this.wait = function (callback) {
+      this.waitCalls.push(callback);
+    };
     this.tracer = ValidOpenTracingTracerStub;
   };
 
@@ -78,6 +82,7 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
+    expect(rollbar.wait).to.be.a('function');
   });
 
   it('should have all of the expected methods', function () {
@@ -92,6 +97,7 @@ describe('Rollbar()', function () {
     expect(rollbar).to.have.property('warning');
     expect(rollbar).to.have.property('error');
     expect(rollbar).to.have.property('critical');
+    expect(rollbar.wait).to.be.a('function');
   });
 
   it('should have some default options', function () {
@@ -826,6 +832,57 @@ describe('log', function () {
     ]);
   });
 
+  it('should send when a failed fetch is passed to .catch(rollbar.error)', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const rollbar = (window.rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    }));
+
+    // A real network failure, handled the way application code often does.
+    await fetch('http://127.0.0.1:1/unreachable').catch(rollbar.error);
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests).to.have.lengthOf(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+
+    expect(body.data.level).to.eql('error');
+    expect(body.data.body.trace.exception.class).to.eql('TypeError');
+  });
+
+  it('should send through a logger object built from the level methods', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const rollbar = (window.rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    }));
+    const logger = {
+      info: rollbar.info,
+      warn: rollbar.warn,
+      error: rollbar.error,
+    };
+
+    logger.info('starting');
+    logger.warn('slow response');
+    logger.error(new Error('request failed'));
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    const levels = server.requests.map(
+      (request) => JSON.parse(request.requestBody).data.level,
+    );
+    expect(levels.sort()).to.eql(['error', 'info', 'warning']);
+  });
+
   it('should add custom data when called with error context', async function () {
     const server = window.server;
     stubResponse(server);
@@ -1107,6 +1164,40 @@ describe('callback options', function () {
     expect(server.requests.length).to.eql(0);
   });
 
+  // https://github.com/rollbar/rollbar.js/issues/1150
+  it('should pass args to checkIgnore and onSendCallback as a real array', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    class IgnoredError extends Error {}
+    const received = {};
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      onSendCallback: function (_isUncaught, args, _payload) {
+        received.onSendCallback = args;
+      },
+      checkIgnore: function (_isUncaught, args, _payload) {
+        received.checkIgnore = args;
+        return args.some((arg) => arg instanceof IgnoredError);
+      },
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.error('ignore me', new IgnoredError('test'), { a: 1 });
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(Array.isArray(received.onSendCallback)).to.be.true;
+    expect(Array.isArray(received.checkIgnore)).to.be.true;
+    expect(received.checkIgnore.length).to.eql(3);
+    // If args.some() threw, the SDK would drop checkIgnore and send the item.
+    expect(server.requests.length).to.eql(0);
+  });
+
   describe('uncaught', function () {
     let __originalOnError = null;
 
@@ -1227,6 +1318,23 @@ describe('callback options', function () {
     expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
       'function',
     );
+  });
+});
+
+describe('wait', function () {
+  afterEach(function () {
+    window.rollbar.configure({ autoInstrument: false, captureUncaught: false });
+  });
+
+  it('should pass the callback through to the client', function () {
+    const client = new (TestClientGen())();
+    const options = {};
+    const rollbar = (window.rollbar = new Rollbar(options, client));
+    const callback = function () {};
+
+    rollbar.wait(callback);
+
+    expect(client.waitCalls).to.eql([callback]);
   });
 });
 
@@ -1451,5 +1559,9 @@ describe('singleton', function () {
     const loggedItemSingleton = client.logCalls[1].item;
     expect(loggedItemDirect.message).to.eql('hello 1');
     expect(loggedItemSingleton.message).to.eql('hello 2');
+
+    const callback = function () {};
+    Rollbar.wait(callback);
+    expect(client.waitCalls).to.eql([callback]);
   });
 });

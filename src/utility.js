@@ -34,10 +34,9 @@ function typeName(x) {
   if (x instanceof Error) {
     return 'error';
   }
-  return {}.toString
-    .call(x)
-    .match(/\s([a-zA-Z]+)/)[1]
-    .toLowerCase();
+  var match = {}.toString.call(x).match(/\s([a-zA-Z]+)/);
+  // A custom Symbol.toStringTag like '' or '123' leaves nothing to match.
+  return match ? match[1].toLowerCase() : 'object';
 }
 
 /* isFunction - a convenience function for checking if a value is a function
@@ -717,32 +716,79 @@ function set(obj, path, value) {
   }
 }
 
+/**
+ * formatArgsAsString - Formats console method arguments as a single message.
+ *
+ * Never throws, so it is safe to call from the console wrapper. An argument
+ * that can't be formatted is replaced with a placeholder, so the rest of the
+ * message is kept.
+ *
+ * @param {Array} args - The arguments passed to a console method.
+ * @returns {string} The arguments formatted and joined by spaces.
+ */
 function formatArgsAsString(args) {
-  var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; ++i) {
-    arg = args[i];
-    switch (typeName(arg)) {
-      case 'object':
-        arg = stringify(arg);
-        arg = arg.error || arg.value;
-        if (arg.length > 500) {
-          arg = arg.substr(0, 497) + '...';
-        }
-        break;
-      case 'null':
-        arg = 'null';
-        break;
-      case 'undefined':
-        arg = 'undefined';
-        break;
-      case 'symbol':
-        arg = arg.toString();
-        break;
+  for (var i = 0, len = args.length; i < len; ++i) {
+    var str;
+    try {
+      str = formatArgAsString(args[i]);
+    } catch (_e) {
+      // e.g. a Proxy whose traps throw, or a revoked Proxy.
+      str = '[unformattable ' + typeof args[i] + ']';
     }
-    result.push(arg);
+    result.push(str);
   }
   return result.join(' ');
+}
+
+/**
+ * formatArgAsString - Formats a single console argument as a string.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The formatted value.
+ */
+function formatArgAsString(arg) {
+  // Checked directly, not via typeName, which an object can spoof with a
+  // Symbol.toStringTag like 'Null' or 'Symbol'.
+  if (arg === null || arg === undefined || typeof arg === 'symbol') {
+    return String(arg);
+  }
+  var type = typeName(arg);
+  // Module namespace objects have no toString/valueOf, so String() would
+  // throw on them (#1127).
+  if (type === 'object' || type === 'module') {
+    return stringifyArg(arg);
+  }
+  try {
+    return String(arg);
+  } catch (_e) {
+    // Other values with no toString/valueOf, like Object.create(null) with a
+    // custom Symbol.toStringTag, can't be converted to a primitive either.
+    return stringifyArg(arg);
+  }
+}
+
+/**
+ * stringifyArg - JSON-encodes a console argument, truncated to 500 chars.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The JSON, or the serialization error message.
+ */
+function stringifyArg(arg) {
+  var result = stringify(arg);
+  // Check the value rather than the error, since the thrown value can be
+  // falsy (e.g. `throw 0` from a getter).
+  var str = String(result.value !== undefined ? result.value : result.error);
+  if (str.length > 500) {
+    var end = 497;
+    var lastCode = str.charCodeAt(end - 1);
+    // Don't cut a surrogate pair in half, which leaves an ill-formed string.
+    if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
+      end -= 1;
+    }
+    str = str.slice(0, end) + '...';
+  }
+  return str;
 }
 
 function now() {
@@ -934,8 +980,36 @@ function getSessionIdFromAsyncLocalStorage(client) {
   return store?.sessionId || null;
 }
 
+var LOG_METHODS = [
+  'log',
+  'debug',
+  'info',
+  'warn',
+  'warning',
+  'error',
+  'critical',
+];
+
+/*
+ * bindLogMethods - Give an instance its own copies of the level methods that
+ * keep `this` pointing at the instance, so they still work when detached,
+ * e.g. `promise.catch(rollbar.error)` or `const { error } = rollbar`.
+ * Each copy looks the method up on the prototype at call time, so subclass
+ * overrides and stubs on the prototype still apply.
+ *
+ * @param instance - a Rollbar instance
+ */
+function bindLogMethods(instance) {
+  LOG_METHODS.forEach(function (method) {
+    instance[method] = function () {
+      return Object.getPrototypeOf(instance)[method].apply(instance, arguments);
+    };
+  });
+}
+
 export {
   addParamsAndAccessTokenToPath,
+  bindLogMethods,
   createItem,
   addErrorContext,
   createTelemetryEvent,

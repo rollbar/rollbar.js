@@ -170,7 +170,7 @@ describe('options.autoInstrument', function () {
         const body = JSON.parse(server.requests[0].requestBody);
 
         expect(body.data.body.telemetry[0].body.request_headers).to.include({
-          baggage: `rollbar.session.id=${rollbar.tracing.sessionId}`,
+          baggage: `rollbar.session.id=${(rollbar.tracing as any).sessionId}`,
         });
 
         rollbar.configure({ autoInstrument: false });
