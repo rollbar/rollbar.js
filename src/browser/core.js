@@ -563,6 +563,7 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(predicates.checkIgnore)
+    .addPredicate(predicates.checkBrowserExtension)
     .addPredicate(sharedPredicates.userCheckIgnore(logger))
     .addPredicate(sharedPredicates.urlIsNotBlockListed(logger))
     .addPredicate(sharedPredicates.urlIsSafeListed(logger))
@@ -600,6 +601,7 @@ const defaultOptions = {
   includeItemsInTelemetry: true,
   captureIp: true,
   inspectAnonymousErrors: true,
+  ignoreBrowserExtensions: false,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
   replay: replayDefaults,
