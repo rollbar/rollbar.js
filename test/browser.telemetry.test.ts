@@ -72,7 +72,7 @@ describe('instrumentNetwork', function () {
       const open = function () {};
       const setRequestHeader = function () {};
       const send = function () {};
-      const fetch = (_) => Promise.resolve();
+      const fetch = (_) => Promise.resolve(new Response());
       const XMLHttpRequest = function () {};
       XMLHttpRequest.prototype.open = open;
       XMLHttpRequest.prototype.setRequestHeader = setRequestHeader;
@@ -98,7 +98,7 @@ describe('instrumentNetwork', function () {
         writable: false,
       });
 
-      const i = createInstrumenter(callback, windowMock);
+      const i = createInstrumenter({ captureNetwork: callback }, windowMock);
       expect(() => i.instrumentNetwork()).to.not.throw();
 
       expectXhrUntouched(windowMock, originals);
@@ -115,7 +115,7 @@ describe('instrumentNetwork', function () {
         writable: false,
       });
 
-      const i = createInstrumenter(callback, windowMock);
+      const i = createInstrumenter({ captureNetwork: callback }, windowMock);
       expect(() => i.instrumentNetwork()).to.not.throw();
 
       // open and setRequestHeader were patchable, but without send the XHR
@@ -131,7 +131,7 @@ describe('instrumentNetwork', function () {
       const { windowMock, originals } = createWindowMock();
       Object.freeze(windowMock.XMLHttpRequest.prototype);
 
-      const i = createInstrumenter(callback, windowMock);
+      const i = createInstrumenter({ captureNetwork: callback }, windowMock);
       expect(() => i.instrumentNetwork()).to.not.throw();
 
       expectXhrUntouched(windowMock, originals);
@@ -144,18 +144,19 @@ describe('instrumentNetwork', function () {
       const callback = sinon.spy();
       const { windowMock } = createWindowMock();
 
-      const i = createInstrumenter(callback, windowMock);
+      const i = createInstrumenter({ captureNetwork: callback }, windowMock);
       i.instrumentNetwork();
 
       expect(i.diagnostic).to.not.have.property('instrumentNetwork');
     });
 
     it('should still instrument fetch and deinstrument cleanly', function () {
-      const callback = sinon.spy();
+      // Returns a telemetry event so the fetch response handler can complete.
+      const callback = sinon.stub().returns({});
       const { windowMock, originals } = createWindowMock();
       Object.freeze(windowMock.XMLHttpRequest.prototype);
 
-      const i = createInstrumenter(callback, windowMock);
+      const i = createInstrumenter({ captureNetwork: callback }, windowMock);
       i.instrumentNetwork();
 
       expect(windowMock.fetch).to.not.equal(originals.fetch);
