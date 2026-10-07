@@ -16,7 +16,7 @@ import * as _ from '../utility.js';
 
 import * as serverDefaults from './defaults.js';
 import rollbarExpressMiddleware from './middleware/rollbarExpressMiddleware.js';
-import Instrumenter from './telemetry.js';
+import Instrumenter, { withoutLogCapture } from './telemetry.js';
 import * as transforms from './transforms.js';
 import Transport from './transport.js';
 
@@ -773,10 +773,29 @@ Rollbar.prototype._addUnhandledHandler = function (event, action) {
 };
 
 function addOrReplaceRollbarHandler(event, action) {
+  var snapshot;
+  // Runs ahead of every other listener to record whether the app is
+  // listening. A listener added with `process.once` is removed just before
+  // Node calls it, so one registered ahead of Rollbar's is already gone by
+  // the time the handler below runs.
+  var probe = function (a) {
+    snapshot = { value: a, appListening: appIsListening(event) };
+  };
+  probe._rollbarHandler = true;
+
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
   var fn = function (a, b) {
+    // Object.is, so a NaN rejection reason still matches its snapshot.
+    var appListening =
+      snapshot && Object.is(snapshot.value, a)
+        ? snapshot.appListening
+        : appIsListening(event);
+    snapshot = undefined;
     action(a, b);
+    if (!appListening) {
+      printUnhandledError(event, a);
+    }
   };
   fn._rollbarHandler = true;
 
@@ -787,8 +806,270 @@ function addOrReplaceRollbarHandler(event, action) {
       process.removeListener(event, listeners[i]);
     }
   }
+  process.prependListener(event, probe);
   process.on(event, fn);
   return fn;
+}
+
+/**
+ * Whether anything other than Rollbar is listening for `event`.
+ *
+ * Node's `domain` module, once loaded, adds `domainUncaughtExceptionClear`
+ * as soon as any other `uncaughtException` listener is added. It only resets
+ * domain state and prints nothing, so it does not count as the app handling
+ * the error.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @returns {boolean}
+ */
+function appIsListening(event) {
+  return process.listeners(event).some(function (listener) {
+    return (
+      !listener._rollbarHandler &&
+      listener.name !== 'domainUncaughtExceptionClear'
+    );
+  });
+}
+
+/**
+ * Print an uncaught exception or unhandled rejection to stderr the way Node
+ * would have if Rollbar were not listening for it. Only called when the app
+ * has no listener of its own; if it does, reporting the error is left to it.
+ *
+ * Node only prints these errors when nothing is listening for the event, so
+ * installing Rollbar's listener hides them from developers and from tools
+ * that surface process output, such as nodemon (#1108).
+ *
+ * That holds on every Node version this SDK supports (20 and later), with one
+ * exception: under `--unhandled-rejections=warn`, Node prints rejections even
+ * with a listener (see nodePrintsUnhandledRejections). The separate-process
+ * tests in test/server.rollbar.handlers.test.js check this on each CI leg.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {*} err - The thrown value or rejection reason.
+ */
+function printUnhandledError(event, err) {
+  if (event === 'unhandledRejection' && !nodePrintsUnhandledRejections()) {
+    return;
+  }
+  try {
+    var text = formatUnhandledError(event, err);
+    withoutLogCapture(function () {
+      writeToStderr(text + '\n');
+    });
+  } catch (e) {
+    // This runs inside Rollbar's process listener. A throw from an
+    // uncaughtException listener makes Node exit with code 7, dropping the
+    // item just queued, and one from an unhandledRejection listener becomes
+    // a second, spurious uncaught exception.
+    logger.error('Failed to print unhandled error.', e);
+  }
+}
+
+/**
+ * Format an unhandled error the way Node does for its own fatal errors:
+ * ignoring any custom inspect method, which may itself throw, and falling
+ * back to the stack if inspecting fails.
+ *
+ * A value that isn't error-like (an object with its own `stack`, as Node
+ * defines it) has no stack to show where it came from, so it gets a label:
+ * rejections get Node's own `UnhandledPromiseRejection` message, and
+ * exceptions get `Uncaught`, as in Node's REPL. Node's fatal printer would
+ * show the throwing source line instead, which only Node can produce.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {*} err - The thrown value or rejection reason.
+ * @returns {string}
+ */
+function formatUnhandledError(event, err) {
+  if (!isErrorLike(err)) {
+    return event === 'unhandledRejection'
+      ? formatUnhandledRejection(err)
+      : 'Uncaught ' + util.inspect(err, inspectOptions());
+  }
+  try {
+    return util.inspect(err, inspectOptions());
+  } catch (e) {
+    if (typeof err.stack === 'string') {
+      return err.stack;
+    }
+    throw e;
+  }
+}
+
+/**
+ * The message Node prints for a rejection whose reason isn't error-like.
+ *
+ * Primitive reasons appear exactly as Node shows them. For objects Node only
+ * gives the constructor (`#<Object>`), so the value is inspected on one line
+ * instead.
+ *
+ * @param {*} reason - The rejection reason.
+ * @returns {string}
+ */
+function formatUnhandledRejection(reason) {
+  var described =
+    reason !== null &&
+    (typeof reason === 'object' || typeof reason === 'function')
+      ? util.inspect(
+          reason,
+          Object.assign(inspectOptions(), { breakLength: Infinity }),
+        )
+      : String(reason);
+  return (
+    'UnhandledPromiseRejection: This error originated either by throwing ' +
+    'inside of an async function without a catch block, or by rejecting a ' +
+    'promise which was not handled with .catch(). The promise rejected with ' +
+    'the reason "' +
+    described +
+    '".'
+  );
+}
+
+/**
+ * Whether Node treats `value` as an error when it is unhandled: an object
+ * with its own `stack` (`isErrorLike` in `lib/internal/process/promises.js`).
+ *
+ * @param {*} value - The thrown value or rejection reason.
+ * @returns {boolean}
+ */
+function isErrorLike(value) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    Object.prototype.hasOwnProperty.call(value, 'stack')
+  );
+}
+
+/**
+ * The options Node's fatal-error printer (`afterInspector` in
+ * `lib/internal/errors.js`) passes to `util.inspect`.
+ *
+ * @returns {object}
+ */
+function inspectOptions() {
+  return {
+    customInspect: false,
+    depth: Math.max(util.inspect.defaultOptions.depth, 5),
+  };
+}
+
+/**
+ * Write to stderr without letting a write error become an uncaught
+ * exception, the same way `console` does.
+ *
+ * Without this, a closed stderr pipe (`node app.js 2>&1 | head`, or a log
+ * collector that has exited) turns each print into an uncaught EPIPE, which
+ * Rollbar reports and prints again, looping forever.
+ *
+ * @param {string} text - The text to write.
+ */
+function writeToStderr(text) {
+  var stderr = process.stderr;
+  // Errors can surface synchronously (files, TTYs) or after the write
+  // returns (pipes), so guard both.
+  if (stderr.listenerCount('error') === 0) {
+    stderr.once('error', ignoreStderrError);
+  }
+  try {
+    stderr.write(text, function (err) {
+      if (err && !stderr.destroyed && stderr.listenerCount('error') === 0) {
+        stderr.once('error', ignoreStderrError);
+      }
+    });
+  } finally {
+    stderr.removeListener('error', ignoreStderrError);
+  }
+}
+
+/**
+ * `error` listener for stderr, installed by writeToStderr, that discards the
+ * error.
+ */
+function ignoreStderrError() {
+  // Nowhere left to report a failure to write the error report itself.
+}
+
+/**
+ * Whether Node, left to itself, would print an unhandled rejection that has
+ * no `unhandledRejection` listener, and would not already print it anyway.
+ *
+ * That holds for the default `throw` mode and for `warn-with-error-code`.
+ * Under `warn`, Node prints its own warning even with a listener installed.
+ * Under `strict`, the rejection is raised as an uncaught exception first, so
+ * it has already been printed or handled by the time this event fires. Under
+ * `none`, Node prints nothing.
+ *
+ * @returns {boolean}
+ */
+function nodePrintsUnhandledRejections() {
+  var mode = 'throw';
+  // Flags on the command line take precedence over NODE_OPTIONS.
+  var args = parseNodeOptions(process.env.NODE_OPTIONS || '').concat(
+    process.execArgv,
+  );
+  args.forEach(function (arg, i) {
+    var flag = normalizeFlagName(arg);
+    if (flag === '--unhandled-rejections') {
+      mode = args[i + 1];
+    } else if (flag.indexOf('--unhandled-rejections=') === 0) {
+      mode = flag.slice('--unhandled-rejections='.length);
+    }
+  });
+  return mode !== 'warn' && mode !== 'strict' && mode !== 'none';
+}
+
+/**
+ * Split `NODE_OPTIONS` into arguments the way Node does
+ * (`ParseNodeOptionsEnvVar` in `src/node_options.cc`): arguments are
+ * separated by spaces, double quotes group text containing spaces and are
+ * removed, and inside quotes a backslash escapes the next character.
+ *
+ * @param {string} value - The value of `NODE_OPTIONS`.
+ * @returns {string[]}
+ */
+function parseNodeOptions(value) {
+  var args = [];
+  var inQuotes = false;
+  var startsArg = true;
+  for (var i = 0; i < value.length; i++) {
+    var c = value.charAt(i);
+    if (c === '\\' && inQuotes) {
+      c = value.charAt(++i);
+    } else if (c === ' ' && !inQuotes) {
+      startsArg = true;
+      continue;
+    } else if (c === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (startsArg) {
+      args.push(c);
+      startsArg = false;
+    } else {
+      args[args.length - 1] += c;
+    }
+  }
+  return args;
+}
+
+/**
+ * Node accepts underscores in place of dashes in option names
+ * (`--unhandled_rejections`), so compare names with them replaced. The value
+ * after `=` is left as it is.
+ *
+ * @param {string} arg - A Node command-line argument.
+ * @returns {string}
+ */
+function normalizeFlagName(arg) {
+  if (arg.indexOf('--') !== 0) {
+    return arg;
+  }
+  var eq = arg.indexOf('=');
+  if (eq === -1) {
+    return arg.replace(/_/g, '-');
+  }
+  return arg.slice(0, eq).replace(/_/g, '-') + arg.slice(eq);
 }
 
 function RollbarError(message, nested) {
