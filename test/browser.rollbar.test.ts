@@ -1247,6 +1247,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       checkIgnore: function (_isUncaught, _args, _payload) {
         return false;
       },
@@ -1273,6 +1274,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       onSendCallback: function (_isUncaught, _args, payload) {
         payload.foo = 'bar';
       },
@@ -1300,6 +1302,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       transform: function (data, _item) {
         data.foo = 'baz';
       },
@@ -1318,6 +1321,29 @@ describe('callback options', function () {
     expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
       'function',
     );
+  });
+
+  it('should not send configured_options when sendConfig is not set', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const rollbar = (window.rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      checkIgnore: function (_isUncaught, _args, _payload) {
+        return false;
+      },
+    }));
+
+    rollbar.log('test'); // generate a payload to inspect
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.notifier.configured_options).to.not.exist;
   });
 });
 

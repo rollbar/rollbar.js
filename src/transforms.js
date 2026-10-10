@@ -104,6 +104,9 @@ function addFunctionOption(options, name) {
 }
 
 function addConfiguredOptions(item, options, callback) {
+  if (!options.sendConfig) {
+    return callback(null, item);
+  }
   var configuredOptions = options._configuredOptions;
 
   // These must be stringified or they'll get dropped during serialization.
