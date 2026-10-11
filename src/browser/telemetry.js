@@ -1155,9 +1155,13 @@ class Instrumenter {
       try {
         obj.addEventListener(t, handler, options);
       } catch (e) {
-        this.diagnostic.addListener ||= {};
-        this.diagnostic.addListener[section] ||= {};
-        this.diagnostic.addListener[section][t] = e.message;
+        // An injected client may not provide a diagnostic object, and this
+        // runs in the constructor.
+        if (this.diagnostic) {
+          this.diagnostic.addListener ||= {};
+          this.diagnostic.addListener[section] ||= {};
+          this.diagnostic.addListener[section][t] = e.message;
+        }
         continue;
       }
       this.eventRemovers[section].push(function () {

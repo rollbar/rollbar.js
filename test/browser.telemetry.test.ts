@@ -790,6 +790,19 @@ describe('instrument in a global without a DOM', function () {
     });
     expect(() => i.deinstrumentConnectivity()).to.not.throw();
   });
+
+  it('should not throw when a listener is rejected and the client has no diagnostic', function () {
+    const addEventListener = sinon.stub().throws(new TypeError('nope'));
+    const i = new Instrumenter(
+      { scrubFields: [] },
+      {},
+      { wrap: () => {}, client: { notifier: {} } },
+      { addEventListener },
+    );
+
+    expect(() => i.instrumentConnectivity()).to.not.throw();
+    expect(addEventListener.callCount).to.eql(2);
+  });
 });
 
 /**
