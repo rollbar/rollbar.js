@@ -27,6 +27,11 @@ const defaults = {
   errorOnContentSecurityPolicy: false,
 };
 
+// Capture so DOM events still reach telemetry when the page stops their
+// propagation. Connectivity events are dispatched on the window itself, so
+// they don't need these.
+const domListenerOptions = { capture: true, passive: true };
+
 function restore(replacements, type) {
   let b;
   while (replacements[type].length) {
@@ -719,32 +724,60 @@ class Instrumenter {
   }
 
   instrumentDom() {
+    // Workers (Web Workers, Cloudflare Workers) have an event target global
+    // but no DOM, and workerd rejects the capture listeners added below.
+    if (!this._window.document) {
+      return;
+    }
+
     this.addListener(
       'dom',
       this._window,
       ['click', 'dblclick', 'contextmenu'],
       (e) => this.handleEvent('click', e),
+      domListenerOptions,
     );
     this.addListener(
       'dom',
       this._window,
       ['dragstart', 'dragend', 'dragenter', 'dragleave', 'drop'],
       (e) => this.handleEvent('dragdrop', e),
+      domListenerOptions,
     );
-    this.addListener('dom', this._window, ['blur', 'focus'], (e) =>
-      this.handleEvent('focus', e),
+    this.addListener(
+      'dom',
+      this._window,
+      ['blur', 'focus'],
+      (e) => this.handleEvent('focus', e),
+      domListenerOptions,
     );
-    this.addListener('dom', this._window, ['submit', 'invalid'], (e) =>
-      this.handleEvent('form', e),
+    this.addListener(
+      'dom',
+      this._window,
+      ['submit', 'invalid'],
+      (e) => this.handleEvent('form', e),
+      domListenerOptions,
     );
-    this.addListener('dom', this._window, ['input', 'change'], (e) =>
-      this.handleEvent('input', e),
+    this.addListener(
+      'dom',
+      this._window,
+      ['input', 'change'],
+      (e) => this.handleEvent('input', e),
+      domListenerOptions,
     );
-    this.addListener('dom', this._window, ['resize'], (e) =>
-      this.handleEvent('resize', e),
+    this.addListener(
+      'dom',
+      this._window,
+      ['resize'],
+      (e) => this.handleEvent('resize', e),
+      domListenerOptions,
     );
-    this.addListener('dom', this._document, ['DOMContentLoaded'], (e) =>
-      this.handleEvent('contentLoaded', e),
+    this.addListener(
+      'dom',
+      this._document,
+      ['DOMContentLoaded'],
+      (e) => this.handleEvent('contentLoaded', e),
+      domListenerOptions,
     );
   }
 
@@ -1097,18 +1130,39 @@ class Instrumenter {
       this._document,
       ['securitypolicyviolation'],
       cspHandler,
+      domListenerOptions,
     );
   }
 
-  addListener(section, obj, types, handler) {
-    if (obj.addEventListener) {
-      for (const t of types) {
-        const options = { capture: true, passive: true };
-        obj.addEventListener(t, handler, options, true);
-        this.eventRemovers[section].push(function () {
-          obj.removeEventListener(t, handler, options);
-        });
+  /**
+   * Adds `handler` for each event type and records how to remove it.
+   *
+   * A runtime that rejects the listener (workerd throws on capture or passive
+   * listeners) gets a payload diagnostic instead of an exception, so telemetry
+   * can never make `new Rollbar()` throw.
+   *
+   * @param {string} section - Key in `eventRemovers` this listener belongs to.
+   * @param {EventTarget} obj - Target to listen on; skipped if not an EventTarget.
+   * @param {string[]} types - Event types to listen for.
+   * @param {Function} handler - Event handler.
+   * @param {AddEventListenerOptions} [options] - Passed to `addEventListener`.
+   */
+  addListener(section, obj, types, handler, options) {
+    if (!obj.addEventListener) {
+      return;
+    }
+    for (const t of types) {
+      try {
+        obj.addEventListener(t, handler, options);
+      } catch (e) {
+        this.diagnostic.addListener ||= {};
+        this.diagnostic.addListener[section] ||= {};
+        this.diagnostic.addListener[section][t] = e.message;
+        continue;
       }
+      this.eventRemovers[section].push(function () {
+        obj.removeEventListener(t, handler, options);
+      });
     }
   }
 
