@@ -71,6 +71,9 @@ export default class Notifier {
     callback = isFunction(callback) ? callback : () => {};
 
     if (!this.options.enabled) {
+      // `enabled: false` with `verbose: true` is a common development setup, so
+      // still echo the item even though it will not be transformed or sent.
+      this.queue?.maybeLogVerbose?.(item.err, item.message, item.level);
       return callback(new Error('Rollbar is not enabled'), null);
     }
 

@@ -94,6 +94,18 @@ describe('configure', function () {
     expect(queue.items.length).to.eql(0);
     done();
   });
+  it('should still offer the item for verbose logging if disabled', function () {
+    var queue = new (TestQueueGenerator())();
+    queue.maybeLogVerbose = sinon.spy();
+    var notifier = new Notifier(queue, { enabled: false });
+    var err = new Error('boom');
+
+    notifier.log({ err: err, message: 'a message', level: 'warning' });
+
+    expect(queue.items.length).to.eql(0);
+    expect(queue.maybeLogVerbose.calledOnceWith(err, 'a message', 'warning')).to
+      .be.true;
+  });
 });
 
 describe('addTransform', function () {

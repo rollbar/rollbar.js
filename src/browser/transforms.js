@@ -116,18 +116,26 @@ function addClientInfo(window) {
     }
     var nav = window.navigator || {};
     var scr = window.screen || {};
+    var javascript = {
+      browser: nav.userAgent,
+      language: nav.language,
+      cookie_enabled: nav.cookieEnabled,
+      screen: {
+        width: scr.width,
+        height: scr.height,
+      },
+    };
+    // The API reads the browser code version (used to pick source maps) from
+    // client.javascript.code_version. payload.client.javascript.code_version is
+    // merged in later by addPayloadOptions, so it still takes precedence.
+    var codeVersion = options.codeVersion || options.code_version;
+    if (codeVersion) {
+      javascript.code_version = codeVersion;
+    }
     _.set(item, 'data.client', {
       runtime_ms: item.timestamp - window._rollbarStartTime,
       timestamp: Math.round(item.timestamp / 1000),
-      javascript: {
-        browser: nav.userAgent,
-        language: nav.language,
-        cookie_enabled: nav.cookieEnabled,
-        screen: {
-          width: scr.width,
-          height: scr.height,
-        },
-      },
+      javascript: javascript,
     });
     callback(null, item);
   };

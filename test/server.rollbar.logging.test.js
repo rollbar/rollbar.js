@@ -14,6 +14,53 @@ import {
 } from './server.rollbar.test-utils.ts';
 
 describe('rollbar logging and tracing', function () {
+  describe('verbose', function () {
+    let consoleError;
+    let consoleInfo;
+
+    beforeEach(function () {
+      consoleError = sinon.stub(console, 'error');
+      consoleInfo = sinon.stub(console, 'info');
+    });
+
+    afterEach(function () {
+      consoleError.restore();
+      consoleInfo.restore();
+    });
+
+    [{ enabled: false }, { transmit: false }].forEach(function (options) {
+      it(`should log to the console with ${JSON.stringify(options)} and the default logLevel`, async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          verbose: true,
+          ...options,
+        });
+        const err = new Error('an error');
+
+        rollbar.error('an error message');
+        rollbar.info('an info message');
+        rollbar.error(err);
+        // Items that are not disabled go through the async transform pipeline.
+        await new Promise((resolve) => rollbar.wait(resolve));
+
+        expect(consoleError.calledWith('Rollbar:', 'an error message')).to.be
+          .true;
+        expect(consoleInfo.calledWith('Rollbar:', 'an info message')).to.be
+          .true;
+        expect(consoleError.calledWith('Rollbar:', err)).to.be.true;
+      });
+    });
+
+    it('should not log to the console when verbose is false', function () {
+      const rollbar = new Rollbar({ accessToken: 'abc123', enabled: false });
+
+      rollbar.error('an error message');
+
+      expect(consoleError.called).to.be.false;
+      expect(consoleInfo.called).to.be.false;
+    });
+  });
+
   describe('addTracingInfo', function () {
     describe('with valid tracer', function () {
       let rollbar;
