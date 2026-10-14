@@ -1,3 +1,4 @@
+import { checkLevel } from './predicates.js';
 import { merge, isFunction } from './utility.js';
 
 /*
@@ -73,7 +74,12 @@ export default class Notifier {
     if (!this.options.enabled) {
       // `enabled: false` with `verbose: true` is a common development setup, so
       // still echo the item even though it will not be transformed or sent.
-      this.queue?.maybeLogVerbose?.(item.err, item.message, item.level);
+      // Only `reportLevel` can be applied here: the other filters need the
+      // transformed payload, and some call user hooks that should not run
+      // while the SDK is disabled.
+      if (checkLevel(item, this.options)) {
+        this.queue?.maybeLogVerbose?.(item.err, item.message, item.level);
+      }
       return callback(new Error('Rollbar is not enabled'), null);
     }
 

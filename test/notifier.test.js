@@ -106,6 +106,18 @@ describe('configure', function () {
     expect(queue.maybeLogVerbose.calledOnceWith(err, 'a message', 'warning')).to
       .be.true;
   });
+  it('should not offer a disabled item below reportLevel for verbose logging', function () {
+    var queue = new (TestQueueGenerator())();
+    queue.maybeLogVerbose = sinon.spy();
+    var notifier = new Notifier(queue, {
+      enabled: false,
+      reportLevel: 'warning',
+    });
+
+    notifier.log({ message: 'a message', level: 'info' });
+
+    expect(queue.maybeLogVerbose.called).to.be.false;
+  });
 });
 
 describe('addTransform', function () {

@@ -51,6 +51,25 @@ describe('rollbar logging and tracing', function () {
       });
     });
 
+    [{ enabled: false }, { transmit: false }].forEach(function (options) {
+      it(`should not log items below reportLevel with ${JSON.stringify(options)}`, async function () {
+        const rollbar = new Rollbar({
+          accessToken: 'abc123',
+          verbose: true,
+          reportLevel: 'warning',
+          ...options,
+        });
+
+        rollbar.info('an info message');
+        rollbar.error('an error message');
+        await new Promise((resolve) => rollbar.wait(resolve));
+
+        expect(consoleInfo.called).to.be.false;
+        expect(consoleError.calledWith('Rollbar:', 'an error message')).to.be
+          .true;
+      });
+    });
+
     it('should not log to the console when verbose is false', function () {
       const rollbar = new Rollbar({ accessToken: 'abc123', enabled: false });
 

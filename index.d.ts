@@ -214,6 +214,12 @@ declare namespace Rollbar {
      * When `true`, items reported through the SDK are also logged to the
      * console, including when `enabled` or `transmit` is `false`. This output
      * is not filtered by `logLevel`.
+     *
+     * Items below `reportLevel` are never logged. When `enabled` is `true`,
+     * items dropped by `checkIgnore`, `ignoredMessages`, `hostSafeList` or
+     * `hostBlockList` are not logged either. When `enabled` is `false` the
+     * payload is never built and those filters (and `onSendCallback`) do not
+     * run, so every other item is logged.
      * @default false
      */
     verbose?: boolean;
