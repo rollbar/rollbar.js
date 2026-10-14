@@ -216,10 +216,11 @@ declare namespace Rollbar {
      * is not filtered by `logLevel`.
      *
      * Items below `reportLevel` are never logged. When `enabled` is `true`,
-     * items dropped by `checkIgnore`, `ignoredMessages`, `hostSafeList` or
-     * `hostBlockList` are not logged either. When `enabled` is `false` the
-     * payload is never built and those filters (and `onSendCallback`) do not
-     * run, so every other item is logged.
+     * items dropped by `checkIgnore`, `ignoredMessages`, `hostSafeList`,
+     * `hostBlockList` or, in the browser, `ignoreBrowserExtensions` and
+     * `plugins.jquery.ignoreAjaxErrors` are not logged either. When `enabled`
+     * is `false` the payload is never built and those filters (and
+     * `onSendCallback`) do not run, so every other item is logged.
      * @default false
      */
     verbose?: boolean;
