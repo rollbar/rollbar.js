@@ -283,6 +283,29 @@ describe('addClientInfo', function () {
       done(e);
     });
   });
+  it('should set code_version from the codeVersion option', function (done) {
+    const item = itemFromArgs(['a message']);
+    const options = { codeVersion: 'abc123', code_version: 'def456' };
+    t.addClientInfo(window)(item, options, function (e, i) {
+      expect(i.data.client.javascript.code_version).to.equal('abc123');
+      done(e);
+    });
+  });
+  it('should set code_version from the code_version option', function (done) {
+    const item = itemFromArgs(['a message']);
+    const options = { code_version: 'def456' };
+    t.addClientInfo(window)(item, options, function (e, i) {
+      expect(i.data.client.javascript.code_version).to.equal('def456');
+      done(e);
+    });
+  });
+  it('should not set code_version without a code version option', function (done) {
+    const item = itemFromArgs(['a message']);
+    t.addClientInfo(window)(item, {}, function (e, i) {
+      expect(i.data.client.javascript).to.not.have.property('code_version');
+      done(e);
+    });
+  });
 });
 
 describe('addPluginInfo', function () {
