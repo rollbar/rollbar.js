@@ -78,7 +78,9 @@ function typeName(x) {
   if (x instanceof Error) {
     return 'error';
   }
-  return {}.toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+  var match = {}.toString.call(x).match(/\s([a-zA-Z]+)/);
+  // A custom Symbol.toStringTag like '' or '123' leaves nothing to match.
+  return match ? match[1].toLowerCase() : 'object';
 }
 
 /* isFunction - a convenience function for checking if a value is a function
@@ -687,32 +689,80 @@ function set(obj, path, value) {
     return;
   }
 }
+
+/**
+ * formatArgsAsString - Formats console method arguments as a single message.
+ *
+ * Never throws, so it is safe to call from the console wrapper. An argument
+ * that can't be formatted is replaced with a placeholder, so the rest of the
+ * message is kept.
+ *
+ * @param {Array} args - The arguments passed to a console method.
+ * @returns {string} The arguments formatted and joined by spaces.
+ */
 function formatArgsAsString(args) {
-  var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; ++i) {
-    arg = args[i];
-    switch (typeName(arg)) {
-      case 'object':
-        arg = stringify(arg);
-        arg = arg.error || arg.value;
-        if (arg.length > 500) {
-          arg = arg.substr(0, 497) + '...';
-        }
-        break;
-      case 'null':
-        arg = 'null';
-        break;
-      case 'undefined':
-        arg = 'undefined';
-        break;
-      case 'symbol':
-        arg = arg.toString();
-        break;
+  for (var i = 0, len = args.length; i < len; ++i) {
+    var str;
+    try {
+      str = formatArgAsString(args[i]);
+    } catch (_e) {
+      // e.g. a Proxy whose traps throw, or a revoked Proxy.
+      str = '[unformattable ' + _typeof(args[i]) + ']';
     }
-    result.push(arg);
+    result.push(str);
   }
   return result.join(' ');
+}
+
+/**
+ * formatArgAsString - Formats a single console argument as a string.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The formatted value.
+ */
+function formatArgAsString(arg) {
+  // Checked directly, not via typeName, which an object can spoof with a
+  // Symbol.toStringTag like 'Null' or 'Symbol'.
+  if (arg === null || arg === undefined || _typeof(arg) === 'symbol') {
+    return String(arg);
+  }
+  var type = typeName(arg);
+  // Module namespace objects have no toString/valueOf, so String() would
+  // throw on them (#1127).
+  if (type === 'object' || type === 'module') {
+    return stringifyArg(arg);
+  }
+  try {
+    return String(arg);
+  } catch (_e) {
+    // Other values with no toString/valueOf, like Object.create(null) with a
+    // custom Symbol.toStringTag, can't be converted to a primitive either.
+    return stringifyArg(arg);
+  }
+}
+
+/**
+ * stringifyArg - JSON-encodes a console argument, truncated to 500 chars.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The JSON, or the serialization error message.
+ */
+function stringifyArg(arg) {
+  var result = stringify(arg);
+  // Check the value rather than the error, since the thrown value can be
+  // falsy (e.g. `throw 0` from a getter).
+  var str = String(result.value !== undefined ? result.value : result.error);
+  if (str.length > 500) {
+    var end = 497;
+    var lastCode = str.charCodeAt(end - 1);
+    // Don't cut a surrogate pair in half, which leaves an ill-formed string.
+    if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
+      end -= 1;
+    }
+    str = str.slice(0, end) + '...';
+  }
+  return str;
 }
 function now() {
   if (Date.now) {
@@ -892,7 +942,55 @@ function getSessionIdFromAsyncLocalStorage(client) {
   var store = storage.getStore();
   return (store === null || store === void 0 ? void 0 : store.sessionId) || null;
 }
+var LOG_METHODS = ['log', 'debug', 'info', 'warn', 'warning', 'error', 'critical'];
 
+/*
+ * bindLogMethods - Give an instance its own copies of the level methods that
+ * keep `this` pointing at the instance, so they still work when detached,
+ * e.g. `promise.catch(rollbar.error)` or `const { error } = rollbar`.
+ * Each copy looks the method up on the prototype at call time, so subclass
+ * overrides and stubs on the prototype still apply.
+ *
+ * @param instance - a Rollbar instance
+ */
+function bindLogMethods(instance) {
+  LOG_METHODS.forEach(function (method) {
+    instance[method] = function () {
+      return Object.getPrototypeOf(instance)[method].apply(instance, arguments);
+    };
+  });
+}
+
+;// ./src/utility/commonjsDefault.js
+
+
+/**
+ * Adds a non-enumerable `default` property that points back at `value`.
+ *
+ * The CommonJS and UMD bundles export the Rollbar constructor itself as
+ * `module.exports`, which is what `require('rollbar')` expects. TypeScript with
+ * `esModuleInterop` off (its default for `"module": "commonjs"`) compiles
+ * `import Rollbar from 'rollbar'` to `require('rollbar').default` instead, and
+ * `index.d.ts` declares a default export, so that form type-checks and then
+ * throws `rollbar_1.default is not a constructor` at runtime. Exposing both
+ * shapes lets either form construct Rollbar.
+ *
+ * See https://github.com/rollbar/rollbar.js/issues/1089.
+ *
+ * @param {Function} value - The value a bundle exports as `module.exports`.
+ * @returns {Function} The same value, for use in an `export default` statement.
+ */
+function withCommonJSDefault(value) {
+  if (!hasOwn(value, 'default')) {
+    Object.defineProperty(value, 'default', {
+      value: value,
+      configurable: true,
+      writable: true
+    });
+  }
+  return value;
+}
+/* harmony default export */ var commonjsDefault = (withCommonJSDefault);
 ;// ./src/utility/traverse.js
 
 function traverse(obj, func, seen) {
@@ -3074,7 +3172,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '4.0.0';
+var version = '4.1.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -3389,6 +3487,29 @@ function checkLevel(item, settings) {
   }
   return true;
 }
+
+/**
+ * Copies an item's original log arguments into a new array for a user hook.
+ *
+ * Log methods store their `arguments` object, which has no array methods,
+ * but the hooks are typed as receiving `LogArgument[]`. Each hook gets its
+ * own copy so that changes one hook makes don't reach the next.
+ *
+ * @param {ArrayLike<*>|undefined} args - The item's `_originalArgs`.
+ * @returns {Array<*>} A new array of the arguments, empty if there are none.
+ */
+function copyArgs(args) {
+  return Array.prototype.slice.call(args || []);
+}
+
+/**
+ * Creates the predicate that runs the user's `onSendCallback` and
+ * `checkIgnore` options.
+ *
+ * @param {Object} logger - Logger used to report a hook that throws.
+ * @returns {function(Object, Object): boolean} A predicate that returns
+ *   false when `checkIgnore` asks for the item to be dropped.
+ */
 function userCheckIgnore(logger) {
   return function (item, settings) {
     var isUncaught = Boolean(item._isUncaught);
@@ -3397,14 +3518,14 @@ function userCheckIgnore(logger) {
     delete item._originalArgs;
     try {
       if (isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
+        settings.onSendCallback(isUncaught, copyArgs(args), item);
       }
     } catch (e) {
       settings.onSendCallback = null;
       logger.error('Error while calling onSendCallback, removing', e);
     }
     try {
-      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, copyArgs(args), item)) {
         return false;
       }
     } catch (e) {
@@ -4707,6 +4828,59 @@ function checkIgnore(item, settings) {
   return true;
 }
 
+// Safari replaces the URLs of extension scripts with webkit-masked-url://hidden/
+// in stack traces, so that scheme is treated as an extension too. Scripts an
+// extension loads from blob URLs it created appear as blob:<extension-origin>.
+var EXTENSION_URL_REGEX = /^(?:blob:)?(?:(?:chrome|moz|safari|safari-web|ms-browser)-extension|webkit-masked-url):\/\//i;
+// Any `scheme:` counts as a URL, including blob: and data: scripts. Built-in
+// and unknown frames such as `(native)`, `[native code]` and `(unknown)` don't.
+var URL_REGEX = /^[a-z][a-z0-9+.-]*:/i;
+
+/**
+ * Finds the frame an error was thrown from. Rollbar orders frames with the
+ * most recent call last. Frames without a URL, such as `(native)` or
+ * `[native code]`, are skipped because they only show that the error passed
+ * through a built-in, not where the calling code lives.
+ *
+ * @param {Object} trace - A Rollbar trace with a `frames` array.
+ * @returns {Object|undefined} The originating frame, if one has a URL.
+ */
+function originatingFrame(trace) {
+  var frames = trace && trace.frames;
+  if (!frames) {
+    return undefined;
+  }
+  for (var i = frames.length - 1; i >= 0; i--) {
+    var filename = frames[i] && frames[i].filename;
+    if (isType(filename, 'string') && URL_REGEX.test(filename)) {
+      return frames[i];
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Predicate for the `ignoreBrowserExtensions` option. Drops an error when the
+ * frame it was thrown from belongs to a browser extension.
+ *
+ * Only the originating frame of the primary error is checked. Extensions
+ * commonly wrap `addEventListener`, `setTimeout` and `fetch`, so extension
+ * frames often sit lower in the stacks of errors thrown by application code;
+ * matching any frame, as `hostBlockList` does, would drop those errors.
+ *
+ * @param {Object} item - The item about to be queued.
+ * @param {Object} settings - The current Rollbar options.
+ * @returns {boolean} false if the item should be ignored.
+ */
+function checkBrowserExtension(item, settings) {
+  if (!settings.ignoreBrowserExtensions) {
+    return true;
+  }
+  var trace = get(item, 'body.trace') || get(item, 'body.trace_chain.0');
+  var frame = originatingFrame(trace);
+  return !(frame && EXTENSION_URL_REGEX.test(frame.filename));
+}
+
 ;// ./src/browser/replay/defaults.js
 /**
  * Default session replay recording options
@@ -5608,6 +5782,7 @@ var core_Rollbar = /*#__PURE__*/function () {
     this.anonymousErrorsPending = 0;
     addTransformsToNotifier(this.client.notifier, this, gWindow);
     addPredicatesToQueue(this.client.queue);
+    bindLogMethods(this);
     this.setupUnhandledCapture();
     if (Instrumenter) {
       this.instrumenter = new Instrumenter(this.options, this.client.telemeter, this, gWindow, gDocument);
@@ -5734,6 +5909,11 @@ var core_Rollbar = /*#__PURE__*/function () {
     key: "sendJsonPayload",
     value: function sendJsonPayload(jsonPayload) {
       return this.client.sendJsonPayload(jsonPayload);
+    }
+  }, {
+    key: "wait",
+    value: function wait(callback) {
+      this.client.wait(callback);
     }
   }, {
     key: "triggerDirectReplay",
@@ -5883,7 +6063,6 @@ var core_Rollbar = /*#__PURE__*/function () {
       }
       item.level = this.options.uncaughtErrorLevel;
       item._isUncaught = true;
-      item._originalArgs = item._originalArgs || [];
       item._originalArgs.push(promise);
       this.client.log(item);
     }
@@ -6111,15 +6290,21 @@ core_defineProperty(core_Rollbar, "sendJsonPayload", function () {
   }
   return _Rollbar.callInstance('sendJsonPayload', args);
 });
-core_defineProperty(core_Rollbar, "wrap", function () {
+core_defineProperty(core_Rollbar, "wait", function () {
   for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
     args[_key11] = arguments[_key11];
+  }
+  return _Rollbar.callInstance('wait', args);
+});
+core_defineProperty(core_Rollbar, "wrap", function () {
+  for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+    args[_key12] = arguments[_key12];
   }
   return _Rollbar.callInstance('wrap', args);
 });
 core_defineProperty(core_Rollbar, "captureEvent", function () {
-  for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-    args[_key12] = arguments[_key12];
+  for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+    args[_key13] = arguments[_key13];
   }
   return _Rollbar.callInstance('captureEvent', args);
 });
@@ -6127,7 +6312,7 @@ function addTransformsToNotifier(notifier, rollbar, gWindow) {
   notifier.addTransform(handleDomException).addTransform(handleItemWithError).addTransform(ensureItemHasSomethingToSay).addTransform(addBaseInfo).addTransform(addRequestInfo(gWindow)).addTransform(addClientInfo(gWindow)).addTransform(addPluginInfo(gWindow)).addTransform(addBody).addTransform(addMessageWithError).addTransform(addTelemetryData).addTransform(addConfigToPayload).addTransform(addScrubber(rollbar.scrub)).addTransform(addPayloadOptions).addTransform(userTransform(src_logger)).addTransform(addConfiguredOptions).addTransform(addDiagnosticKeys).addTransform(itemToPayload);
 }
 function addPredicatesToQueue(queue) {
-  queue.addPredicate(checkLevel).addPredicate(checkIgnore).addPredicate(userCheckIgnore(src_logger)).addPredicate(urlIsNotBlockListed(src_logger)).addPredicate(urlIsSafeListed(src_logger)).addPredicate(messageIsIgnored(src_logger));
+  queue.addPredicate(checkLevel).addPredicate(checkIgnore).addPredicate(checkBrowserExtension).addPredicate(userCheckIgnore(src_logger)).addPredicate(urlIsNotBlockListed(src_logger)).addPredicate(urlIsSafeListed(src_logger)).addPredicate(messageIsIgnored(src_logger));
 }
 function _getFirstFunction(args) {
   for (var i = 0, len = args.length; i < len; ++i) {
@@ -6155,6 +6340,7 @@ var core_defaultOptions = {
   includeItemsInTelemetry: true,
   captureIp: true,
   inspectAnonymousErrors: true,
+  ignoreBrowserExtensions: false,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
   replay: replay_defaults,
@@ -6249,12 +6435,35 @@ FetchHeaders.prototype.entries = function () {
 };
 /* harmony default export */ var utility_headers = (headers);
 ;// ./src/utility/replace.js
+/**
+ * Replaces `obj[name]` with `replacement(obj[name])`, optionally recording the
+ * original so it can be restored later.
+ *
+ * Some pages (or older browsers) expose properties we instrument as read-only,
+ * e.g. a non-writable `XMLHttpRequest.prototype.open` or a frozen object. In
+ * strict mode assigning to those throws, and since instrumentation runs inside
+ * the Rollbar constructor that would break the host page. Instead the property
+ * is left untouched and nothing is recorded.
+ *
+ * @param {Object} obj - The object that owns (or inherits) the property.
+ * @param {string} name - The property to replace.
+ * @param {Function} replacement - Receives the original value, returns the new one.
+ * @param {Object} [replacements] - Map of type to `[obj, name, orig]` restore entries.
+ * @param {string} [type] - Key in `replacements` to record the original under.
+ * @returns {boolean} Whether the property was replaced.
+ */
 function replace(obj, name, replacement, replacements, type) {
   var orig = obj[name];
-  obj[name] = replacement(orig);
+  var wrapped = replacement(orig);
+  try {
+    obj[name] = wrapped;
+  } catch (_e) {
+    return false;
+  }
   if (replacements) {
     replacements[type].push([obj, name, orig]);
   }
+  return true;
 }
 /* harmony default export */ var utility_replace = (replace);
 ;// ./src/browser/domUtility.js
@@ -6682,6 +6891,9 @@ var Instrumenter = /*#__PURE__*/function () {
       }
       if ('XMLHttpRequest' in this._window) {
         var xhrp = this._window.XMLHttpRequest.prototype;
+        var xhrReplacements = {
+          xhr: []
+        };
         utility_replace(xhrp, 'open', function (orig) {
           return function (method, url) {
             var isUrlObject = _isUrlObject(url);
@@ -6705,7 +6917,7 @@ var Instrumenter = /*#__PURE__*/function () {
             }
             return orig.apply(this, arguments);
           };
-        }, this.replacements, 'network');
+        }, xhrReplacements, 'xhr');
         utility_replace(xhrp, 'setRequestHeader', function (orig) {
           return function (header, value) {
             // If xhr.open is async, __rollbar_xhr may not be initialized yet.
@@ -6726,7 +6938,7 @@ var Instrumenter = /*#__PURE__*/function () {
             }
             return orig.apply(this, arguments);
           };
-        }, this.replacements, 'network');
+        }, xhrReplacements, 'xhr');
         utility_replace(xhrp, 'send', function (orig) {
           return function (data) {
             var _self$rollbar, _xhr$__rollbar_xhr;
@@ -6854,7 +7066,31 @@ var Instrumenter = /*#__PURE__*/function () {
             }
             return orig.apply(this, arguments);
           };
-        }, this.replacements, 'network');
+        }, xhrReplacements, 'xhr');
+
+        // open, setRequestHeader and send share __rollbar_xhr state, so a
+        // partially patched prototype would record broken telemetry. If any of
+        // them is read-only (#1451), leave XHR uninstrumented entirely.
+        if (xhrReplacements.xhr.length === 3) {
+          var _this$replacements$ne;
+          (_this$replacements$ne = this.replacements.network).push.apply(_this$replacements$ne, telemetry_toConsumableArray(xhrReplacements.xhr));
+        } else {
+          var patched = xhrReplacements.xhr.map(function (r) {
+            return r[1];
+          });
+          var readOnly = ['open', 'setRequestHeader', 'send'].filter(function (m) {
+            return !patched.includes(m);
+          });
+          restore(xhrReplacements, 'xhr');
+          // Recorded in notifier.diagnostic so the missing XHR telemetry is
+          // explained on every occurrence (see addDiagnosticKeys). An injected
+          // client may not provide one, and this runs in the constructor.
+          if (this.diagnostic) {
+            this.diagnostic.instrumentNetwork = {
+              xhr: "skipped: XMLHttpRequest.prototype not writable (".concat(readOnly.join(', '), ")")
+            };
+          }
+        }
       }
       if ('fetch' in this._window) {
         utility_replace(this._window, 'fetch', function (orig) {
@@ -7064,8 +7300,17 @@ var Instrumenter = /*#__PURE__*/function () {
         var level = method === 'warn' ? 'warning' : method;
         c[method] = function () {
           var args = Array.prototype.slice.call(arguments);
-          var message = formatArgsAsString(args);
-          self.telemeter.captureLog(message, level, null, now());
+          try {
+            var message = formatArgsAsString(args);
+            self.telemeter.captureLog(message, level, null, now());
+          } catch (e) {
+            // Telemetry must never prevent the app's own console call. Record
+            // the failure in the payload diagnostics instead of logging it,
+            // since logging would call back into this wrapper.
+            self.diagnostic.captureLog = {
+              error: e === null || e === void 0 ? void 0 : e.message
+            };
+          }
           if (orig) {
             Function.prototype.apply.call(orig, origConsole, args);
           }
@@ -7524,7 +7769,7 @@ core.setComponents({
 });
 /* harmony default export */ var browser_rollbar = (core);
 ;// ./src/browser/bundles/rollbar.js
-/* unused harmony import specifier */ var rollbar_rollbar;
+
 
 var options = typeof window !== 'undefined' && window._rollbarConfig;
 var alias = options && options.globalAlias || 'Rollbar';
@@ -7542,6 +7787,6 @@ if (!shimRunning && options) {
   self.rollbar = browser_rollbar;
   self._rollbarDidLoad = true;
 }
-/* harmony default export */ var bundles_rollbar = ((/* unused pure expression or super */ null && (rollbar_rollbar)));
+/* harmony default export */ var bundles_rollbar = (commonjsDefault(browser_rollbar));
 /******/ })()
 ;
