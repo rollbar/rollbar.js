@@ -106,7 +106,7 @@ describe('addTelemetryData', function () {
 });
 
 describe('addConfiguredOptions', function () {
-  it('adds the configured options', function (done) {
+  it('adds the configured options when sendConfig is true', function (done) {
     var item = {
       data: {
         body: {
@@ -121,6 +121,7 @@ describe('addConfiguredOptions', function () {
       accessToken: 'abc123',
       foo: 'bar',
       captureUncaught: true,
+      sendConfig: true,
       _configuredOptions: {
         accessToken: 'abc123',
         captureUncaught: true,
@@ -130,6 +131,33 @@ describe('addConfiguredOptions', function () {
       expect(i.data.notifier.configured_options).to.eql({
         captureUncaught: true,
       });
+      done(e);
+    });
+  });
+
+  it('does not add the configured options when sendConfig is false', function (done) {
+    var item = {
+      data: {
+        body: {
+          message: 'hello world',
+        },
+        notifier: {
+          name: 'rollbar-js',
+        },
+      },
+    };
+    var options = {
+      accessToken: 'abc123',
+      foo: 'bar',
+      captureUncaught: true,
+      sendConfig: false,
+      _configuredOptions: {
+        accessToken: 'abc123',
+        captureUncaught: true,
+      },
+    };
+    t.addConfiguredOptions(item, options, function (e, i) {
+      expect(i.data.notifier.configured_options).to.not.exist;
       done(e);
     });
   });
