@@ -22,17 +22,9 @@ let __webpack_exports__ = {};
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "default": () => (/* binding */ server_rollbar)
+  "default": () => (/* binding */ bundles_rollbar)
 });
 
-;// external "os"
-const external_os_namespaceObject = require("os");
-;// external "url"
-const external_url_namespaceObject = require("url");
-;// external "util"
-const external_util_namespaceObject = require("util");
-;// external "json-stringify-safe"
-const external_json_stringify_safe_namespaceObject = require("json-stringify-safe");
 ;// ./src/utility.js
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
@@ -74,7 +66,9 @@ function typeName(x) {
   if (x instanceof Error) {
     return 'error';
   }
-  return {}.toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+  var match = {}.toString.call(x).match(/\s([a-zA-Z]+)/);
+  // A custom Symbol.toStringTag like '' or '123' leaves nothing to match.
+  return match ? match[1].toLowerCase() : 'object';
 }
 
 /* isFunction - a convenience function for checking if a value is a function
@@ -683,32 +677,80 @@ function set(obj, path, value) {
     return;
   }
 }
+
+/**
+ * formatArgsAsString - Formats console method arguments as a single message.
+ *
+ * Never throws, so it is safe to call from the console wrapper. An argument
+ * that can't be formatted is replaced with a placeholder, so the rest of the
+ * message is kept.
+ *
+ * @param {Array} args - The arguments passed to a console method.
+ * @returns {string} The arguments formatted and joined by spaces.
+ */
 function formatArgsAsString(args) {
-  var i, len, arg;
   var result = [];
-  for (i = 0, len = args.length; i < len; ++i) {
-    arg = args[i];
-    switch (typeName(arg)) {
-      case 'object':
-        arg = stringify(arg);
-        arg = arg.error || arg.value;
-        if (arg.length > 500) {
-          arg = arg.substr(0, 497) + '...';
-        }
-        break;
-      case 'null':
-        arg = 'null';
-        break;
-      case 'undefined':
-        arg = 'undefined';
-        break;
-      case 'symbol':
-        arg = arg.toString();
-        break;
+  for (var i = 0, len = args.length; i < len; ++i) {
+    var str;
+    try {
+      str = formatArgAsString(args[i]);
+    } catch (_e) {
+      // e.g. a Proxy whose traps throw, or a revoked Proxy.
+      str = '[unformattable ' + _typeof(args[i]) + ']';
     }
-    result.push(arg);
+    result.push(str);
   }
   return result.join(' ');
+}
+
+/**
+ * formatArgAsString - Formats a single console argument as a string.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The formatted value.
+ */
+function formatArgAsString(arg) {
+  // Checked directly, not via typeName, which an object can spoof with a
+  // Symbol.toStringTag like 'Null' or 'Symbol'.
+  if (arg === null || arg === undefined || _typeof(arg) === 'symbol') {
+    return String(arg);
+  }
+  var type = typeName(arg);
+  // Module namespace objects have no toString/valueOf, so String() would
+  // throw on them (#1127).
+  if (type === 'object' || type === 'module') {
+    return stringifyArg(arg);
+  }
+  try {
+    return String(arg);
+  } catch (_e) {
+    // Other values with no toString/valueOf, like Object.create(null) with a
+    // custom Symbol.toStringTag, can't be converted to a primitive either.
+    return stringifyArg(arg);
+  }
+}
+
+/**
+ * stringifyArg - JSON-encodes a console argument, truncated to 500 chars.
+ *
+ * @param {*} arg - Any value.
+ * @returns {string} The JSON, or the serialization error message.
+ */
+function stringifyArg(arg) {
+  var result = stringify(arg);
+  // Check the value rather than the error, since the thrown value can be
+  // falsy (e.g. `throw 0` from a getter).
+  var str = String(result.value !== undefined ? result.value : result.error);
+  if (str.length > 500) {
+    var end = 497;
+    var lastCode = str.charCodeAt(end - 1);
+    // Don't cut a surrogate pair in half, which leaves an ill-formed string.
+    if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
+      end -= 1;
+    }
+    str = str.slice(0, end) + '...';
+  }
+  return str;
 }
 function now() {
   if (Date.now) {
@@ -888,7 +930,63 @@ function getSessionIdFromAsyncLocalStorage(client) {
   var store = storage.getStore();
   return (store === null || store === void 0 ? void 0 : store.sessionId) || null;
 }
+var LOG_METHODS = ['log', 'debug', 'info', 'warn', 'warning', 'error', 'critical'];
 
+/*
+ * bindLogMethods - Give an instance its own copies of the level methods that
+ * keep `this` pointing at the instance, so they still work when detached,
+ * e.g. `promise.catch(rollbar.error)` or `const { error } = rollbar`.
+ * Each copy looks the method up on the prototype at call time, so subclass
+ * overrides and stubs on the prototype still apply.
+ *
+ * @param instance - a Rollbar instance
+ */
+function bindLogMethods(instance) {
+  LOG_METHODS.forEach(function (method) {
+    instance[method] = function () {
+      return Object.getPrototypeOf(instance)[method].apply(instance, arguments);
+    };
+  });
+}
+
+;// ./src/utility/commonjsDefault.js
+
+
+/**
+ * Adds a non-enumerable `default` property that points back at `value`.
+ *
+ * The CommonJS and UMD bundles export the Rollbar constructor itself as
+ * `module.exports`, which is what `require('rollbar')` expects. TypeScript with
+ * `esModuleInterop` off (its default for `"module": "commonjs"`) compiles
+ * `import Rollbar from 'rollbar'` to `require('rollbar').default` instead, and
+ * `index.d.ts` declares a default export, so that form type-checks and then
+ * throws `rollbar_1.default is not a constructor` at runtime. Exposing both
+ * shapes lets either form construct Rollbar.
+ *
+ * See https://github.com/rollbar/rollbar.js/issues/1089.
+ *
+ * @param {Function} value - The value a bundle exports as `module.exports`.
+ * @returns {Function} The same value, for use in an `export default` statement.
+ */
+function withCommonJSDefault(value) {
+  if (!hasOwn(value, 'default')) {
+    Object.defineProperty(value, 'default', {
+      value: value,
+      configurable: true,
+      writable: true
+    });
+  }
+  return value;
+}
+/* harmony default export */ const commonjsDefault = (withCommonJSDefault);
+;// external "os"
+const external_os_namespaceObject = require("os");
+;// external "url"
+const external_url_namespaceObject = require("url");
+;// external "util"
+const external_util_namespaceObject = require("util");
+;// external "json-stringify-safe"
+const external_json_stringify_safe_namespaceObject = require("json-stringify-safe");
 ;// ./src/apiUtility.js
 
 function buildPayload(data) {
@@ -1193,7 +1291,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '4.0.0';
+var version = '4.1.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -1282,6 +1380,29 @@ function checkLevel(item, settings) {
   }
   return true;
 }
+
+/**
+ * Copies an item's original log arguments into a new array for a user hook.
+ *
+ * Log methods store their `arguments` object, which has no array methods,
+ * but the hooks are typed as receiving `LogArgument[]`. Each hook gets its
+ * own copy so that changes one hook makes don't reach the next.
+ *
+ * @param {ArrayLike<*>|undefined} args - The item's `_originalArgs`.
+ * @returns {Array<*>} A new array of the arguments, empty if there are none.
+ */
+function copyArgs(args) {
+  return Array.prototype.slice.call(args || []);
+}
+
+/**
+ * Creates the predicate that runs the user's `onSendCallback` and
+ * `checkIgnore` options.
+ *
+ * @param {Object} logger - Logger used to report a hook that throws.
+ * @returns {function(Object, Object): boolean} A predicate that returns
+ *   false when `checkIgnore` asks for the item to be dropped.
+ */
 function userCheckIgnore(logger) {
   return function (item, settings) {
     var isUncaught = Boolean(item._isUncaught);
@@ -1290,14 +1411,14 @@ function userCheckIgnore(logger) {
     delete item._originalArgs;
     try {
       if (isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
+        settings.onSendCallback(isUncaught, copyArgs(args), item);
       }
     } catch (e) {
       settings.onSendCallback = null;
       logger.error('Error while calling onSendCallback, removing', e);
     }
     try {
-      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, args, item)) {
+      if (isFunction(settings.checkIgnore) && settings.checkIgnore(isUncaught, copyArgs(args), item)) {
         return false;
       }
     } catch (e) {
@@ -3259,12 +3380,35 @@ const external_http_namespaceObject = require("http");
 ;// external "https"
 const external_https_namespaceObject = require("https");
 ;// ./src/utility/replace.js
+/**
+ * Replaces `obj[name]` with `replacement(obj[name])`, optionally recording the
+ * original so it can be restored later.
+ *
+ * Some pages (or older browsers) expose properties we instrument as read-only,
+ * e.g. a non-writable `XMLHttpRequest.prototype.open` or a frozen object. In
+ * strict mode assigning to those throws, and since instrumentation runs inside
+ * the Rollbar constructor that would break the host page. Instead the property
+ * is left untouched and nothing is recorded.
+ *
+ * @param {Object} obj - The object that owns (or inherits) the property.
+ * @param {string} name - The property to replace.
+ * @param {Function} replacement - Receives the original value, returns the new one.
+ * @param {Object} [replacements] - Map of type to `[obj, name, orig]` restore entries.
+ * @param {string} [type] - Key in `replacements` to record the original under.
+ * @returns {boolean} Whether the property was replaced.
+ */
 function replace(obj, name, replacement, replacements, type) {
   var orig = obj[name];
-  obj[name] = replacement(orig);
+  var wrapped = replacement(orig);
+  try {
+    obj[name] = wrapped;
+  } catch (_e) {
+    return false;
+  }
   if (replacements) {
     replacements[type].push([obj, name, orig]);
   }
+  return true;
 }
 /* harmony default export */ const utility_replace = (replace);
 ;// ./src/server/telemetry/urlHelpers.js
@@ -4744,7 +4888,7 @@ Transport.prototype.handleResponse = function (resp, callback) {
   });
   resp.on('end', function () {
     respData = respData.join('');
-    _parseApiResponse(respData, callback);
+    _parseApiResponse(respData, resp.statusCode, callback);
   });
 };
 
@@ -4769,18 +4913,40 @@ function _transport(options) {
     'https:': external_https_namespaceObject
   }[options.protocol];
 }
-function _parseApiResponse(data, callback) {
+
+/**
+ * Turns a raw API response into the `(err, data)` pair expected by callers.
+ *
+ * @param {string} data - the raw response body
+ * @param {number} statusCode - the HTTP status code of the response
+ * @param {Function} callback - function(err, data)
+ */
+function _parseApiResponse(data, statusCode, callback) {
   var parsedData = jsonParse(data);
+  var body = parsedData.value;
+  if (body && body.err) {
+    src_logger.error('Received error: ' + body.message);
+    return callback(_apiError(body.message || 'Unknown error', statusCode));
+  }
+
+  // Proxies and load balancers in front of the API (e.g. nginx during a 502)
+  // reply with HTML or an empty body, so the status code is the only reliable
+  // signal; a JSON parse error would hide it.
+  if (statusCode >= 300) {
+    var message = statusCode + ' ' + (external_http_namespaceObject.STATUS_CODES[statusCode] || 'Unknown status');
+    src_logger.error('Received error: ' + message);
+    return callback(_apiError(message, statusCode));
+  }
   if (parsedData.error) {
     src_logger.error('Could not parse api response, err: ' + parsedData.error);
     return callback(parsedData.error);
   }
-  data = parsedData.value;
-  if (data.err) {
-    src_logger.error('Received error: ' + data.message);
-    return callback(new Error('Api error: ' + (data.message || 'Unknown error')));
-  }
-  callback(null, data);
+  callback(null, body);
+}
+function _apiError(message, statusCode) {
+  var err = new Error('Api error: ' + message);
+  err.statusCode = statusCode;
+  return err;
 }
 function _wrapPostCallback(callback) {
   return function (err, data) {
@@ -4849,6 +5015,7 @@ function rollbar_Rollbar(options, client) {
   }
   addTransformsToNotifier(this.client.notifier);
   addPredicatesToQueue(this.client.queue);
+  bindLogMethods(this);
   this.setupUnhandledCapture();
 }
 function initLocals(localsOptions, logger) {
@@ -5347,18 +5514,52 @@ function _getFirstFunction(args) {
   }
   return undefined;
 }
+
+/**
+ * Installs or removes the process-level `uncaughtException` and
+ * `unhandledRejection` handlers so they match the current options.
+ *
+ * A listener on either event replaces Node's default behavior of printing the
+ * error and exiting, so a handler that is not going to report anything must
+ * not stay attached: the error would disappear and the process would either
+ * exit 0 or keep running in a broken state. This runs on every `configure()`,
+ * so turning `enabled`, `captureUncaught` or `captureUnhandledRejections` off
+ * at runtime hands those errors back to Node.
+ */
 rollbar_Rollbar.prototype.setupUnhandledCapture = function () {
-  if (this.options.captureUncaught || this.options.handleUncaughtExceptions) {
+  // Same truthiness test the notifier uses to drop items, so a falsy
+  // `enabled` such as `0`, `''` or `null` removes the handler too.
+  var enabled = Boolean(this.options.enabled);
+  if (enabled && (this.options.captureUncaught || this.options.handleUncaughtExceptions)) {
     this.handleUncaughtExceptions();
+  } else {
+    this._removeUnhandledHandler('uncaughtException');
   }
-  if (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections) {
+  if (enabled && (this.options.captureUnhandledRejections || this.options.handleUnhandledRejections)) {
     this.handleUnhandledRejections();
+  } else {
+    this._removeUnhandledHandler('unhandledRejection');
+  }
+};
+
+/**
+ * Removes the process listener this instance installed for `event`, if any.
+ * Listeners installed by other Rollbar instances are left alone, so creating
+ * a second, non-capturing instance does not disable the first one's capture.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ */
+rollbar_Rollbar.prototype._removeUnhandledHandler = function (event) {
+  var handlers = this._unhandledHandlers;
+  if (handlers && handlers[event]) {
+    process.removeListener(event, handlers[event]);
+    delete handlers[event];
   }
 };
 rollbar_Rollbar.prototype.handleUncaughtExceptions = function () {
   var exitOnUncaught = Boolean(this.options.exitOnUncaughtException);
   delete this.options.exitOnUncaughtException;
-  addOrReplaceRollbarHandler('uncaughtException', function (err) {
+  this._addUnhandledHandler('uncaughtException', function (err) {
     if (!this.options.captureUncaught && !this.options.handleUncaughtExceptions) {
       return;
     }
@@ -5378,7 +5579,7 @@ rollbar_Rollbar.prototype.handleUncaughtExceptions = function () {
   }.bind(this));
 };
 rollbar_Rollbar.prototype.handleUnhandledRejections = function () {
-  addOrReplaceRollbarHandler('unhandledRejection', function (reason) {
+  this._addUnhandledHandler('unhandledRejection', function (reason) {
     if (!this.options.captureUnhandledRejections && !this.options.handleUnhandledRejections) {
       return;
     }
@@ -5389,6 +5590,19 @@ rollbar_Rollbar.prototype.handleUnhandledRejections = function () {
       }
     });
   }.bind(this));
+};
+
+/**
+ * Installs `action` as the process listener for `event`, replacing any
+ * listener a Rollbar instance installed before, and remembers it so
+ * `_removeUnhandledHandler` can remove it later.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {Function} action - Called with the listener's arguments.
+ */
+rollbar_Rollbar.prototype._addUnhandledHandler = function (event, action) {
+  this._unhandledHandlers = this._unhandledHandlers || {};
+  this._unhandledHandlers[event] = addOrReplaceRollbarHandler(event, action);
 };
 function addOrReplaceRollbarHandler(event, action) {
   // We only support up to two arguments which is enough for how this is used
@@ -5405,6 +5619,7 @@ function addOrReplaceRollbarHandler(event, action) {
     }
   }
   process.on(event, fn);
+  return fn;
 }
 function RollbarError(message, nested) {
   Error.call(this);
@@ -5442,6 +5657,10 @@ rollbar_Rollbar.defaultOptions = {
   autoInstrument: false
 };
 /* harmony default export */ const server_rollbar = (rollbar_Rollbar);
+;// ./src/server/bundles/rollbar.js
+
+
+/* harmony default export */ const bundles_rollbar = (commonjsDefault(server_rollbar));
 module.exports = __webpack_exports__["default"];
 /******/ })()
 ;
