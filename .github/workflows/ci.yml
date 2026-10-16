@@ -72,6 +72,11 @@ jobs:
       - name: npm install
         run: npm install
 
+      # Covers src and the compile-time tests in test/types that pin the
+      # public types in index.d.ts.
+      - name: Type check
+        run: npm run typecheck:tests
+
       - name: Build
         run: npm run build
 
@@ -80,6 +85,9 @@ jobs:
 
       - name: Run server tests
         run: npm run test:server
+
+      - name: Run React Native tests
+        run: npm run test:react-native
 
       # Browser tests launch chromium; the harness Node version is irrelevant to
       # browser coverage, so run them on a single leg. Node 22 because

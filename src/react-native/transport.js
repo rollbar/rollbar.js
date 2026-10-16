@@ -20,7 +20,7 @@ Transport.prototype.get = function (accessToken, options, params, callback) {
     headers: headers,
   })
     .then(function (resp) {
-      _handleResponse(resp, callback);
+      return _handleResponse(resp, callback);
     })
     .catch(function (err) {
       callback(err);
@@ -79,10 +79,7 @@ function _makeRequest(headers, options, data, callback) {
     body: data,
   })
     .then(function (resp) {
-      return resp.json();
-    })
-    .then(function (data) {
-      _handleResponse(data, _wrapPostCallback(callback));
+      return _handleResponse(resp, _wrapPostCallback(callback));
     })
     .catch(function (err) {
       callback(err);
@@ -103,15 +100,48 @@ function _headers(accessToken, options, data) {
   return headers;
 }
 
-function _handleResponse(data, callback) {
-  if (data.err) {
-    logger.error('Received error: ' + data.message);
-    return callback(
-      new Error('Api error: ' + (data.message || 'Unknown error')),
-    );
-  }
+/**
+ * Reads a fetch `Response` and turns it into the `(err, data)` pair expected
+ * by callers.
+ *
+ * @param {Response} resp - the fetch response
+ * @param {Function} callback - function(err, data)
+ * @returns {Promise} resolves once the callback has been called
+ */
+function _handleResponse(resp, callback) {
+  return resp.text().then(function (text) {
+    var parsedData = _.jsonParse(text);
+    var body = parsedData.value;
 
-  callback(null, data);
+    if (body && body.err) {
+      logger.error('Received error: ' + body.message);
+      return callback(_apiError(body.message || 'Unknown error', resp.status));
+    }
+
+    // Proxies and load balancers in front of the API (e.g. nginx during a 502)
+    // reply with HTML or an empty body, so the status code is the only reliable
+    // signal; a JSON parse error would hide it. statusText is empty over
+    // HTTP/2, so it is only appended when present.
+    if (resp.status >= 300) {
+      var message =
+        resp.status + (resp.statusText ? ' ' + resp.statusText : '');
+      logger.error('Received error: ' + message);
+      return callback(_apiError(message, resp.status));
+    }
+
+    if (parsedData.error) {
+      logger.error('Could not parse api response, err: ' + parsedData.error);
+      return callback(parsedData.error);
+    }
+
+    callback(null, body);
+  });
+}
+
+function _apiError(message, statusCode) {
+  var err = new Error('Api error: ' + message);
+  err.statusCode = statusCode;
+  return err;
 }
 
 function _wrapPostCallback(callback) {

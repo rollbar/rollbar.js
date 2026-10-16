@@ -1,0 +1,166 @@
+name: Publish to npm
+
+# Publishes via npm trusted publishing (OIDC): npm exchanges this workflow's
+# GitHub identity for a short-lived publish token, so no NPM_TOKEN secret is
+# used. The trusted publisher on npmjs.com is bound to this file name
+# (publish.yml) and to the `npm-publish` environment -- renaming either breaks
+# publishing.
+#
+# The environment is what stops a modified copy of this file on another branch
+# from publishing: npm only accepts tokens from jobs running in `npm-publish`,
+# and that environment's protection rules (deployments limited to `v*` tags,
+# required reviewers) decide which runs may enter it.
+#
+# A release runs the copy of this file at its tag, so a release cut from a
+# branch that predates this workflow (e.g. a 2.x backport) won't publish until
+# publish.yml is cherry-picked onto that branch.
+#
+# The CDN upload of dist/ is a separate workflow (workflow.yml).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  # Everything that runs the repo's toolchain (npm ci, webpack, babel, ...)
+  # happens here, in a job that cannot mint an npm publish token.
+  verify:
+    runs-on: ubuntu-22.04 # same runner as ci.yml's build, so dist/ matches
+    timeout-minutes: 20
+
+    steps:
+      # With no `ref`, a release run checks out the tagged commit (github.sha),
+      # which is also the commit the provenance statement names.
+      - name: Checkout release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Check versions match release tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "$version" != "${TAG#v}" ]; then
+            echo "::error::package.json version $version does not match release tag $TAG"
+            exit 1
+          fi
+          # The SDK reports this version in every payload.
+          sdk_version="$(sed -n "s/^export const version = '\(.*\)';$/\1/p" src/defaults.js)"
+          if [ "$sdk_version" != "$version" ]; then
+            echo "::error::src/defaults.js version '$sdk_version' does not match package.json version $version"
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # The publish job below packs the committed dist/, so fail if a fresh
+      # build differs. workflow.yml uploads the committed dist/ to the CDN on
+      # its own; this check doesn't gate that upload.
+      - name: Check committed dist/ matches the build
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -n "$(git status --porcelain -- dist/)" ]; then
+            git status --short -- dist/
+            echo "::error::dist/ committed at $TAG differs from a fresh build; commit the rebuilt dist/ before tagging"
+            exit 1
+          fi
+
+  # Publishes the committed tree verify just checked. It installs no
+  # dependencies and runs no build, so none of the repo's toolchain runs while
+  # the job holds id-token: write.
+  publish:
+    needs: verify
+    runs-on: ubuntu-22.04
+    environment: npm-publish
+    # The dist-tag is chosen in this job, after the environment gate, so a run
+    # that waited for approval never acts on dist-tags read before the wait.
+    # This group keeps a second publish from reading them before the first has
+    # published. GitHub keeps at most one run pending in a group and cancels
+    # an older pending one; a cancelled run publishes nothing and can be re-run.
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # No registry-url: that makes setup-node write an .npmrc with a
+      # placeholder NODE_AUTH_TOKEN, and the default registry is already npmjs.
+      - name: Set up node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      # Trusted publishing needs npm >= 11.5.1. Pinned exactly, like the
+      # actions above, since this job can publish.
+      - name: Update npm
+        run: npm install -g npm@11.20.0
+
+      - name: Choose dist-tag
+        id: dist-tag
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+
+          # A pre-release (e.g. 3.2.0-rc.1, or any release marked pre-release
+          # on GitHub) must not become `latest`. Build metadata after `+` may
+          # itself contain hyphens, so strip it first.
+          core="${version%%+*}"
+          if [ "$PRERELEASE" = true ] || [[ "$core" == *-* ]]; then
+            echo "dist-tag=next" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # No dist-tag may move backwards. A release older than `latest` goes
+          # to the newest line it belongs to that `latest` isn't on:
+          # 2.26.6 after 3.1.0 -> latest-2, 3.0.6 after 3.1.0 -> latest-3.0.
+          # Anything else is ambiguous and fails rather than guessing.
+          newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n' "$1" "$2" | sort -V | tail -n 1)" = "$1" ]; }
+          latest="$(npm view rollbar dist-tags.latest)"
+          latest="${latest%%[-+]*}"
+          if ! newer "$latest" "$core"; then
+            echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${core%%.*}" -lt "${latest%%.*}" ]; then
+            tag="latest-${core%%.*}"
+          elif [ "${core%.*}" != "${latest%.*}" ]; then
+            tag="latest-${core%.*}"
+          else
+            echo "::error::$version is older than latest ($latest) on the same minor line; tag it by hand"
+            exit 1
+          fi
+          current="$(npm view rollbar "dist-tags.$tag")"
+          if [ -n "$current" ] && newer "${current%%[-+]*}" "$core"; then
+            echo "::error::$version is older than $tag ($current); tag it by hand"
+            exit 1
+          fi
+          echo "::notice::$version is older than latest ($latest); publishing as $tag"
+          echo "dist-tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Publish
+        env:
+          DIST_TAG: ${{ steps.dist-tag.outputs.dist-tag }}
+        run: npm publish --provenance --access public --tag "$DIST_TAG"

@@ -6,7 +6,7 @@ Rollbar.js is the cross-platform SDK for Rollbar error monitoring. Browser runti
 
 ## Build, Test, and Development Commands
 
-Use `npm run build` for production bundles and `npm run build:dev` during debugging. `npm test` executes both browser (Web Test Runner) and server (Mocha) suites; target subsets via `npm run test:wtr`, `npm run test:wtr:watch`, or `npm run test:server`. Run `npm run build:test-examples` before `test:wtr` on its own, since `test/examples/` loads those example builds; `npm test` does this for you. Lint with `npm run lint`, and rely on `npm run format` / `npm run format:check` for Prettier parity. Before publishing, run `npm run validate` to enforce ES5 compatibility and verify example snippets, then package distributables with `npm run pack`.
+Use `npm run build` for production bundles and `npm run build:dev` during debugging. `npm test` executes the browser (Web Test Runner), server (Mocha) and React Native (Mocha) suites; target subsets via `npm run test:wtr`, `npm run test:wtr:watch`, `npm run test:server`, or `npm run test:react-native`. Run `npm run build:test-examples` before `test:wtr` on its own, since `test/examples/` loads those example builds; `npm test` does this for you. Lint with `npm run lint`, and rely on `npm run format` / `npm run format:check` for Prettier parity. Before publishing, run `npm run validate` to enforce ES5 compatibility and verify example snippets, then package distributables with `npm run pack`.
 
 ## Coding Style & Naming Conventions
 

@@ -124,11 +124,7 @@ export default class Replay {
       this._recorder.exportRecordingSpan(this._tracing, {
         'rollbar.replay.id': replayId,
         'rollbar.occurrence.uuid': occurrenceUuid,
-        'rollbar.replay.trigger.type': trigger.type,
-        'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
-        'rollbar.replay.trigger': JSON.stringify(trigger),
-        'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
-        'rollbar.replay.options': JSON.stringify(this._options || {}),
+        ...this._triggerAttributes(trigger, triggerContext),
       });
     } catch (error) {
       // TODO(matux): No events probably, this is expected, be more graceful.
@@ -148,6 +144,25 @@ export default class Replay {
       this._scheduledCapture.schedule(replayId, occurrenceUuid, leadingSeconds);
       this._trailingStatus.set(replayId, TrailingStatus.PENDING);
     }
+  }
+
+  /**
+   * Builds the span attributes that identify what triggered a replay and
+   * where it started.
+   *
+   * @param {Object} trigger - The matching trigger configuration
+   * @param {Object} triggerContext - The context the trigger matched against
+   * @returns {Object} The trigger, starting URL and options span attributes
+   * @private
+   */
+  _triggerAttributes(trigger, triggerContext) {
+    return {
+      'rollbar.replay.trigger.type': trigger.type,
+      'rollbar.replay.trigger.context': JSON.stringify(triggerContext),
+      'rollbar.replay.trigger': JSON.stringify(trigger),
+      'rollbar.replay.url.full': _.sanitizeHref(window.location.href),
+      'rollbar.replay.options': JSON.stringify(this._options || {}),
+    };
   }
 
   /**
@@ -198,6 +213,10 @@ export default class Replay {
    * This method handles the non-occurrence based triggers, which don't require
    * special occurrence-specific handling.
    *
+   * When the recorder is not ready yet (e.g. a navigation trigger fired on
+   * DOMContentLoaded, before rrweb's first full snapshot), there is no
+   * trailing replay to send, so only the leading capture is scheduled.
+   *
    * @returns {string} A unique identifier for this replay or null if not sent.
    */
   async triggerReplay(triggerContext) {
@@ -211,22 +230,25 @@ export default class Replay {
       return null;
     }
 
-    if (this._recorder.isReady) {
-      await this._exportSpansAndAddTracingPayload(
+    if (!this._recorder.isReady) {
+      return this._scheduleLeadingOnlyCapture(
         replayId,
-        null,
         trigger,
         triggerContext,
       );
-    } else {
-      // If the recorder is not ready, mark the trailing capture as skipped and
-      // allow the leading capture to proceed.
-      this._trailingStatus.set(replayId, TrailingStatus.SKIPPED);
+    }
 
-      const leadingSeconds = this._recorder.options?.postDuration || 0;
-      if (leadingSeconds > 0) {
-        this._scheduledCapture.schedule(replayId, null, leadingSeconds);
-      }
+    await this._exportSpansAndAddTracingPayload(
+      replayId,
+      null,
+      trigger,
+      triggerContext,
+    );
+
+    // Nothing was stored (e.g. the recording had no events), so there is
+    // nothing to send or discard.
+    if (!this._map.has(replayId)) {
+      return null;
     }
 
     try {
@@ -236,6 +258,44 @@ export default class Replay {
       return null;
     }
 
+    return replayId;
+  }
+
+  /**
+   * Schedules a leading-only capture for a trigger that fired before the
+   * recorder was ready. The trailing capture is marked as skipped so the
+   * leading chunks may be sent on their own.
+   *
+   * Without a trailing recording span, the leading chunks are the only spans
+   * for this replay, so they carry the trigger and starting URL attributes
+   * the trailing span would otherwise have.
+   *
+   * @param {string} replayId - The replay ID
+   * @param {Object} trigger - The matching trigger configuration
+   * @param {Object} triggerContext - The context the trigger matched against
+   * @returns {string|null} The replay ID if a leading capture was scheduled,
+   *   otherwise null (including when the trigger attributes can't be
+   *   serialised).
+   * @private
+   */
+  _scheduleLeadingOnlyCapture(replayId, trigger, triggerContext) {
+    const leadingSeconds = trigger.postDuration || 0;
+    if (!this._recorder.isRecording || leadingSeconds <= 0) {
+      return null;
+    }
+
+    // Built before any state is recorded, so a context that can't be
+    // serialised drops the replay the same way it does on the ready path.
+    let attributes;
+    try {
+      attributes = this._triggerAttributes(trigger, triggerContext);
+    } catch (error) {
+      logger.debug('Error building replay trigger attributes:', error);
+      return null;
+    }
+
+    this._trailingStatus.set(replayId, TrailingStatus.SKIPPED);
+    this._scheduledCapture.schedule(replayId, null, leadingSeconds, attributes);
     return replayId;
   }
 

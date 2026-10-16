@@ -19,6 +19,11 @@
     "web-vitals": "^2.1.4",
     "rollbar": "file:../rollbar.tgz"
   },
+  "overrides": {
+    "@rollbar/react": {
+      "rollbar": "$rollbar"
+    }
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

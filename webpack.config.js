@@ -117,7 +117,7 @@ const UMDConfigBase = {
 
 const serverCJSConfigBase = {
   entry: {
-    rollbar: './src/server/rollbar.js',
+    rollbar: './src/server/bundles/rollbar.js',
   },
   output: {
     path: outputPath,

@@ -53,6 +53,14 @@ describe('typeName', function () {
     expect(_.typeName([1, { a: 42 }, null])).to.eql('array');
     done();
   });
+
+  it('should fall back to object for an unparseable Symbol.toStringTag', function () {
+    for (const tag of ['', '123', ' ']) {
+      const obj = { a: 1 };
+      obj[Symbol.toStringTag] = tag;
+      expect(_.typeName(obj)).to.eql('object');
+    }
+  });
 });
 
 describe('isType', function () {
@@ -442,15 +450,114 @@ describe('formatArgsAsString', function () {
 
     expect(result).to.eql('');
   });
-  /*
-   * PhantomJS does not support Symbol yet
-  it('should handle symbols', function() {
+  it('should handle symbols', function () {
     var args = [1, Symbol('hello')];
     var result = _.formatArgsAsString(args);
 
-    expect(result).to.eql('1 symbol(\'hello\')');
+    expect(result).to.eql('1 Symbol(hello)');
   });
-  */
+  it('should handle module namespace objects', async function () {
+    const ns = await import('./fixtures/esm-module.js');
+    var result = _.formatArgsAsString([1, ns]);
+
+    expect(result).to.eql('1 {"x":1}');
+  });
+  it('should handle objects that cannot be converted to a primitive', function () {
+    var obj = Object.create(null);
+    obj[Symbol.toStringTag] = 'Custom';
+    obj.a = 1;
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('{"a":1}');
+  });
+  it('should handle circular objects', function () {
+    var obj = { a: 1 };
+    obj.self = obj;
+    var result = _.formatArgsAsString([obj]);
+
+    // Engines word the message differently, e.g. Firefox says "cyclic".
+    expect(result).to.match(/^TypeError: /);
+  });
+  it('should handle objects whose toJSON returns undefined', function () {
+    var obj = {
+      toJSON: function () {
+        return undefined;
+      },
+    };
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('undefined');
+  });
+  it('should handle objects whose getter throws a falsy value', function () {
+    var obj = {
+      get a() {
+        throw 0;
+      },
+    };
+    var result = _.formatArgsAsString([obj]);
+
+    expect(result).to.eql('0');
+  });
+  it('should truncate long objects', function () {
+    var result = _.formatArgsAsString([{ a: 'x'.repeat(600) }]);
+
+    expect(result.length).to.eql(500);
+    expect(result.endsWith('...')).to.eql(true);
+  });
+  it('should not split a surrogate pair when truncating', function () {
+    // '{"a":"' is 6 chars, so the 497-char cut lands after a high surrogate.
+    var result = _.formatArgsAsString([{ a: '😀'.repeat(300) }]);
+
+    expect(result.length).to.eql(499);
+    expect(result.endsWith('😀...')).to.eql(true);
+  });
+  it('should use a placeholder for a Proxy whose traps throw', function () {
+    var proxy = new Proxy(
+      {},
+      {
+        get: function () {
+          throw new Error('trap');
+        },
+      },
+    );
+    var result = _.formatArgsAsString(['before', proxy, 'after']);
+
+    expect(result).to.eql('before [unformattable object] after');
+  });
+  it('should use a placeholder for a revoked Proxy', function () {
+    var revocable = Proxy.revocable({}, {});
+    revocable.revoke();
+    var result = _.formatArgsAsString(['before', revocable.proxy, 'after']);
+
+    expect(result).to.eql('before [unformattable object] after');
+  });
+  it('should handle objects with an unparseable Symbol.toStringTag', function () {
+    var obj = { a: 1 };
+    obj[Symbol.toStringTag] = '';
+    var result = _.formatArgsAsString(['before', obj, 'after']);
+
+    expect(result).to.eql('before {"a":1} after');
+  });
+  it('should not treat objects tagged Null, Undefined or Symbol as those values', function () {
+    var args = ['Null', 'Undefined', 'Symbol'].map(function (tag) {
+      return { a: 1, [Symbol.toStringTag]: tag };
+    });
+    var result = _.formatArgsAsString(args);
+
+    expect(result).to.eql('[object Null] [object Undefined] [object Symbol]');
+  });
+  it('should fall back to JSON for a Symbol-tagged object whose toString returns an object', function () {
+    var obj = {
+      a: 1,
+      [Symbol.toStringTag]: 'Symbol',
+      toString: function () {
+        return Object.create(null);
+      },
+    };
+    var result = _.formatArgsAsString(['before', obj, 'after']);
+
+    expect(result).to.eql('before {"a":1} after');
+  });
 });
 
 describe('addItemAttributes', function () {

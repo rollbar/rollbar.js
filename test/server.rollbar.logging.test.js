@@ -324,6 +324,55 @@ describe('rollbar logging and tracing', function () {
     });
   });
 
+  describe('detached level methods', function () {
+    let rollbar;
+    let client;
+
+    beforeEach(function () {
+      client = new TestClient();
+      rollbar = new Rollbar({ accessToken: 'abc123' }, client);
+    });
+
+    ['log', 'debug', 'info', 'warn', 'warning', 'error', 'critical'].forEach(
+      function (level) {
+        it(`should work when ${level} is called without its instance`, function () {
+          const logger = { [level]: rollbar[level] };
+          const { [level]: detached } = rollbar;
+
+          logger[level]('from object');
+          detached('from destructure');
+
+          expect(client.logCalls.map((call) => call.func)).to.deep.equal([
+            level,
+            level,
+          ]);
+          expect(client.logCalls[0].item.message).to.equal('from object');
+          expect(client.logCalls[1].item.message).to.equal('from destructure');
+        });
+      },
+    );
+
+    it('should work as a promise rejection handler', async function () {
+      const error = new Error('rejected');
+      await Promise.reject(error).catch(rollbar.error);
+
+      expect(client.logCalls[0].func).to.equal('error');
+      expect(client.logCalls[0].item.err).to.equal(error);
+    });
+
+    it('should dispatch through the prototype at call time', function () {
+      const detached = rollbar.error;
+      const stub = sinon.stub(Rollbar.prototype, 'error').returns('stubbed');
+      try {
+        expect(detached('hello')).to.equal('stubbed');
+        expect(stub.calledOnce).to.be.true;
+        expect(stub.firstCall.thisValue).to.equal(rollbar);
+      } finally {
+        stub.restore();
+      }
+    });
+  });
+
   describe('_addItemAttributes', function () {
     it('should use async local session id', function () {
       const rollbar = new Rollbar({

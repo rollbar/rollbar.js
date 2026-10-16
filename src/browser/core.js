@@ -73,6 +73,7 @@ class Rollbar {
     this.anonymousErrorsPending = 0;
     addTransformsToNotifier(this.client.notifier, this, gWindow);
     addPredicatesToQueue(this.client.queue);
+    _.bindLogMethods(this);
     this.setupUnhandledCapture();
     if (Instrumenter) {
       this.instrumenter = new Instrumenter(
@@ -193,6 +194,10 @@ class Rollbar {
 
   sendJsonPayload(jsonPayload) {
     return this.client.sendJsonPayload(jsonPayload);
+  }
+
+  wait(callback) {
+    this.client.wait(callback);
   }
 
   triggerDirectReplay(context) {
@@ -376,7 +381,6 @@ class Rollbar {
     }
     item.level = this.options.uncaughtErrorLevel;
     item._isUncaught = true;
-    item._originalArgs = item._originalArgs || [];
     item._originalArgs.push(promise);
     this.client.log(item);
   }
@@ -532,6 +536,7 @@ class Rollbar {
     Rollbar.callInstance('buildJsonPayload', args);
   static sendJsonPayload = (...args) =>
     Rollbar.callInstance('sendJsonPayload', args);
+  static wait = (...args) => Rollbar.callInstance('wait', args);
   static wrap = (...args) => Rollbar.callInstance('wrap', args);
   static captureEvent = (...args) => Rollbar.callInstance('captureEvent', args);
 }
@@ -563,6 +568,7 @@ function addPredicatesToQueue(queue) {
   queue
     .addPredicate(sharedPredicates.checkLevel)
     .addPredicate(predicates.checkIgnore)
+    .addPredicate(predicates.checkBrowserExtension)
     .addPredicate(sharedPredicates.userCheckIgnore(logger))
     .addPredicate(sharedPredicates.urlIsNotBlockListed(logger))
     .addPredicate(sharedPredicates.urlIsSafeListed(logger))
@@ -600,6 +606,7 @@ const defaultOptions = {
   includeItemsInTelemetry: true,
   captureIp: true,
   inspectAnonymousErrors: true,
+  ignoreBrowserExtensions: false,
   ignoreDuplicateErrors: true,
   wrapGlobalEventHandlers: false,
   replay: replayDefaults,

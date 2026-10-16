@@ -1,3 +1,4 @@
+import withCommonJSDefault from '../../utility/commonjsDefault.js';
 import rollbar from '../rollbar.js';
 
 var options = (typeof window !== 'undefined') && window._rollbarConfig;
@@ -19,4 +20,4 @@ if (!shimRunning && options) {
   self._rollbarDidLoad = true;
 }
 
-export default rollbar;
+export default withCommonJSDefault(rollbar);

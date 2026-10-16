@@ -274,6 +274,156 @@ describe('Replay', function () {
     });
   });
 
+  describe('triggerReplay', function () {
+    let trigger;
+    let loggerErrorSpy;
+
+    beforeEach(function () {
+      trigger = { type: 'navigation', pathMatch: /.*/, postDuration: 5 };
+      sinon
+        .stub(replay._predicates, 'shouldCaptureForTriggerContext')
+        .returns(trigger);
+      sinon.stub(replay._scheduledCapture, 'schedule');
+      loggerErrorSpy = sinon.spy(logger, 'error');
+    });
+
+    it('should send the trailing replay when the recorder is ready', async function () {
+      const sendSpy = sinon.spy(replay, 'send');
+
+      const replayId = await replay.triggerReplay({
+        type: 'navigation',
+        path: '/',
+      });
+
+      expect(replayId).to.equal('1234567890abcdef');
+      expect(sendSpy.calledOnceWith('1234567890abcdef')).to.be.true;
+      expect(mockTracing.exporter.post.calledOnce).to.be.true;
+      expect(loggerErrorSpy.called).to.be.false;
+    });
+
+    // https://github.com/rollbar/rollbar.js/issues/1459
+    describe('when the recorder has not taken its first snapshot yet', function () {
+      beforeEach(function () {
+        mockRecorder.isReady = false;
+        mockRecorder.isRecording = true;
+      });
+
+      it('should not log "No replay found"', async function () {
+        await replay.triggerReplay({ type: 'navigation', path: '/' });
+
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+
+      it('should not try to send or discard a trailing replay', async function () {
+        const sendSpy = sinon.spy(replay, 'send');
+        const discardSpy = sinon.spy(replay, 'discard');
+
+        await replay.triggerReplay({ type: 'navigation', path: '/' });
+
+        expect(sendSpy.called).to.be.false;
+        expect(discardSpy.called).to.be.false;
+        expect(mockTracing.exporter.post.called).to.be.false;
+      });
+
+      it('should schedule a leading-only capture using the trigger postDuration', async function () {
+        const replayId = await replay.triggerReplay({
+          type: 'navigation',
+          path: '/',
+        });
+
+        expect(replayId).to.equal('1234567890abcdef');
+        expect(
+          replay._scheduledCapture.schedule.calledOnceWith(
+            '1234567890abcdef',
+            null,
+            5,
+          ),
+        ).to.be.true;
+        expect(replay._shouldSendScheduled('1234567890abcdef')).to.be.true;
+      });
+
+      it('should pass the trigger attributes to the leading-only capture', async function () {
+        await replay.triggerReplay({ type: 'navigation', path: '/' });
+
+        const attributes = replay._scheduledCapture.schedule.firstCall.args[3];
+        expect(attributes).to.include({
+          'rollbar.replay.trigger.type': 'navigation',
+          'rollbar.replay.trigger.context': JSON.stringify({
+            type: 'navigation',
+            path: '/',
+          }),
+          'rollbar.replay.trigger': JSON.stringify(trigger),
+          'rollbar.replay.options': '{}',
+        });
+        expect(attributes['rollbar.replay.url.full']).to.be.a('string');
+      });
+
+      it('should return null without scheduling when the trigger context cannot be serialised', async function () {
+        const context = { type: 'direct' };
+        context.self = context;
+
+        const replayId = await replay.triggerReplay(context);
+
+        expect(replayId).to.be.null;
+        expect(replay._scheduledCapture.schedule.called).to.be.false;
+        expect(replay._trailingStatus.size).to.equal(0);
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+
+      it('should return null without scheduling when postDuration is 0', async function () {
+        trigger.postDuration = 0;
+
+        const replayId = await replay.triggerReplay({
+          type: 'navigation',
+          path: '/',
+        });
+
+        expect(replayId).to.be.null;
+        expect(replay._scheduledCapture.schedule.called).to.be.false;
+        expect(replay._trailingStatus.size).to.equal(0);
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+    });
+
+    describe('when the recorder is not recording (autoStart: false)', function () {
+      beforeEach(function () {
+        mockRecorder.isReady = false;
+        mockRecorder.isRecording = false;
+      });
+
+      it('should return null without logging or scheduling', async function () {
+        const replayId = await replay.triggerReplay({
+          type: 'navigation',
+          path: '/',
+        });
+
+        expect(replayId).to.be.null;
+        expect(replay._scheduledCapture.schedule.called).to.be.false;
+        expect(replay._trailingStatus.size).to.equal(0);
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+    });
+
+    describe('when the recording span cannot be exported', function () {
+      it('should return null without logging "No replay found"', async function () {
+        mockRecorder.exportRecordingSpan.throws(
+          new Error('Replay recording has no events'),
+        );
+        const discardSpy = sinon.spy(replay, 'discard');
+
+        const replayId = await replay.triggerReplay({
+          type: 'navigation',
+          path: '/',
+        });
+
+        expect(replayId).to.be.null;
+        expect(discardSpy.called).to.be.false;
+        expect(mockTracing.exporter.post.called).to.be.false;
+        expect(loggerErrorSpy.called).to.be.false;
+      });
+    });
+  });
+
   describe('send', function () {
     it('should send payload and remove it from the map', async function () {
       const mockPayload = [{ id: 'payload1' }, { id: 'payload2' }];

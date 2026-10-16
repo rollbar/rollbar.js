@@ -13,6 +13,11 @@
     "react-dom": "18.2.0",
     "rollbar": "../rollbar.tgz"
   },
+  "overrides": {
+    "@rollbar/react": {
+      "rollbar": "$rollbar"
+    }
+  },
   "engines": {
     "node": ">=18"
   }

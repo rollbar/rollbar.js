@@ -20,5 +20,10 @@
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "rollbar": "file:../rollbar.tgz"
+  },
+  "overrides": {
+    "@rollbar/react": {
+      "rollbar": "$rollbar"
+    }
   }
 }

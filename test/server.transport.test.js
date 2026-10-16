@@ -3,13 +3,14 @@ import { expect } from 'chai';
 import Transport from '../src/server/transport.js';
 
 class TestTransport {
-  constructor(options, error, response, assertions) {
+  constructor(options, error, response, assertions, responseOptions) {
     this.options = options;
     this.error = error;
     this.response = response;
     this.requestOpts = null;
     this.requestCallback = null;
     this.assertions = assertions;
+    this.responseOptions = responseOptions;
   }
 
   request(opts, cb) {
@@ -46,7 +47,7 @@ class TestRequest {
         this.events['error'](this.error);
       }
     } else {
-      this.response = new TestResponse();
+      this.response = new TestResponse(this.transport.responseOptions);
       this.transport.requestCallback(this.response);
       if (this.response.events['data']) {
         this.response.events['data'](this.responseData);
@@ -75,8 +76,19 @@ class TestResponse {
   }
 }
 
-const transportFactory = (error, response, assertions) => (options) =>
-  new TestTransport(options, error, response, assertions);
+const transportFactory =
+  (error, response, assertions, responseOptions) => (options) =>
+    new TestTransport(options, error, response, assertions, responseOptions);
+
+const NGINX_502_PAGE = [
+  '<html>',
+  '<head><title>502 Bad Gateway</title></head>',
+  '<body>',
+  '<center><h1>502 Bad Gateway</h1></center>',
+  '<hr><center>nginx/1.17.9</center>',
+  '</body>',
+  '</html>',
+].join('\n');
 
 describe('transport', function () {
   const t = new Transport();
@@ -191,6 +203,94 @@ describe('transport', function () {
       });
     });
 
+    // https://github.com/rollbar/rollbar.js/issues/1092
+    describe('with a non-2xx response', function () {
+      const baseData = {
+        accessToken: 'abc123',
+        options: {},
+        payload: {
+          access_token: 'abc123',
+          data: { a: 1 },
+        },
+      };
+
+      it('should report the HTTP status for an HTML error page', function (done) {
+        const factory = transportFactory(null, NGINX_502_PAGE, null, {
+          statusCode: 502,
+        });
+
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
+            expect(err).to.be.an.instanceof(Error);
+            expect(err).to.not.be.an.instanceof(SyntaxError);
+            expect(err.message).to.equal('Api error: 502 Bad Gateway');
+            expect(err.statusCode).to.equal(502);
+            expect(resp).to.not.exist;
+            done();
+          },
+          transportFactory: factory,
+        });
+      });
+
+      it('should report the HTTP status for an empty body', function (done) {
+        const factory = transportFactory(null, '', null, { statusCode: 503 });
+
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
+            expect(err).to.not.be.an.instanceof(SyntaxError);
+            expect(err.message).to.equal('Api error: 503 Service Unavailable');
+            expect(err.statusCode).to.equal(503);
+            expect(resp).to.not.exist;
+            done();
+          },
+          transportFactory: factory,
+        });
+      });
+
+      it('should not report success for a JSON body without err', function (done) {
+        const factory = transportFactory(
+          null,
+          '{"message":"upstream unavailable"}',
+          null,
+          { statusCode: 504 },
+        );
+
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
+            expect(err).to.exist;
+            expect(err.message).to.equal('Api error: 504 Gateway Timeout');
+            expect(err.statusCode).to.equal(504);
+            expect(resp).to.not.exist;
+            done();
+          },
+          transportFactory: factory,
+        });
+      });
+
+      it('should keep the API message for a JSON error body', function (done) {
+        const factory = transportFactory(
+          null,
+          '{"err":1,"message":"invalid access token"}',
+          null,
+          { statusCode: 403 },
+        );
+
+        t.post({
+          ...baseData,
+          callback: (err, resp) => {
+            expect(err.message).to.equal('Api error: invalid access token');
+            expect(err.statusCode).to.equal(403);
+            expect(resp).to.not.exist;
+            done();
+          },
+          transportFactory: factory,
+        });
+      });
+    });
+
     describe('with rate limiting', function () {
       let transport;
 
@@ -256,6 +356,29 @@ describe('transport', function () {
           transportFactory: factory,
         });
       });
+    });
+  });
+
+  describe('get', function () {
+    // https://github.com/rollbar/rollbar.js/issues/1092
+    it('should report the HTTP status for an HTML error page', function (done) {
+      const factory = transportFactory(null, NGINX_502_PAGE, null, {
+        statusCode: 502,
+      });
+
+      t.get(
+        'abc123',
+        {},
+        {},
+        (err, resp) => {
+          expect(err).to.not.be.an.instanceof(SyntaxError);
+          expect(err.message).to.equal('Api error: 502 Bad Gateway');
+          expect(err.statusCode).to.equal(502);
+          expect(resp).to.not.exist;
+          done();
+        },
+        factory,
+      );
     });
   });
 });

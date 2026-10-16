@@ -30,7 +30,7 @@ describe('options', function () {
       },
       codeVersion: 'abc123',
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
@@ -51,7 +51,7 @@ describe('options', function () {
       },
       codeVersion: 'abc123',
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
@@ -72,7 +72,7 @@ describe('options', function () {
         codeVersion: 'abc123',
       },
     });
-    const session = rollbar.tracing.session;
+    const session = (rollbar.tracing as any).session;
     expect(session).to.exist;
     expect(session.attributes['user.id']).to.equal('12345');
     expect(session.attributes['user.name']).to.equal('Test User');
@@ -552,6 +552,30 @@ describe('options.captureUncaught', function () {
         'string',
         'object',
       ]);
+    });
+
+    it('should send when a level method is called without its instance', async function () {
+      const server = window.server;
+      expect(server).to.exist;
+
+      stubResponse(server);
+      server.requests.length = 0;
+
+      const rollbar = (window.rollbar = new Rollbar({
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      }));
+      const error = new Error('rejected');
+
+      await Promise.reject(error).catch(rollbar.error);
+
+      await setTimeoutAsync(1);
+
+      server.respond();
+
+      const body = JSON.parse(server.requests[0].requestBody);
+
+      expect(body.data.level).to.eql('error');
+      expect(body.data.body.trace.exception.message).to.eql('rejected');
     });
 
     it('should send exception when called with error and extra args', async function () {

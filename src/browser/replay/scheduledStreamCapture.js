@@ -49,8 +49,10 @@ export default class ScheduledStreamCapture {
    * @param {string} replayId - The replay ID
    * @param {string} occurrenceUuid - The occurrence UUID
    * @param {number} postDuration - Duration in seconds to capture
+   * @param {Object} [attributes] - Extra attributes to set on every chunk's
+   *   recording span
    */
-  schedule(replayId, occurrenceUuid, postDuration) {
+  schedule(replayId, occurrenceUuid, postDuration, attributes = {}) {
     const startTime = Date.now();
     const endAt = startTime + postDuration * 1000;
     const chunkMs = this._recorder.checkoutEveryNms();
@@ -71,6 +73,7 @@ export default class ScheduledStreamCapture {
       endAt,
       postDuration,
       occurrenceUuid,
+      attributes,
       cursor,
       chunkQueue: [],
       sending: false,
@@ -102,6 +105,7 @@ export default class ScheduledStreamCapture {
       this._recorder.exportRecordingSpan(
         this._tracing,
         {
+          ...ctx.attributes,
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': ctx.occurrenceUuid,
         },
@@ -136,6 +140,7 @@ export default class ScheduledStreamCapture {
       this._recorder.exportRecordingSpan(
         this._tracing,
         {
+          ...ctx.attributes,
           'rollbar.replay.id': replayId,
           'rollbar.occurrence.uuid': ctx.occurrenceUuid,
         },

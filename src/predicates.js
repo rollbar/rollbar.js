@@ -12,6 +12,28 @@ function checkLevel(item, settings) {
   return true;
 }
 
+/**
+ * Copies an item's original log arguments into a new array for a user hook.
+ *
+ * Log methods store their `arguments` object, which has no array methods,
+ * but the hooks are typed as receiving `LogArgument[]`. Each hook gets its
+ * own copy so that changes one hook makes don't reach the next.
+ *
+ * @param {ArrayLike<*>|undefined} args - The item's `_originalArgs`.
+ * @returns {Array<*>} A new array of the arguments, empty if there are none.
+ */
+function copyArgs(args) {
+  return Array.prototype.slice.call(args || []);
+}
+
+/**
+ * Creates the predicate that runs the user's `onSendCallback` and
+ * `checkIgnore` options.
+ *
+ * @param {Object} logger - Logger used to report a hook that throws.
+ * @returns {function(Object, Object): boolean} A predicate that returns
+ *   false when `checkIgnore` asks for the item to be dropped.
+ */
 function userCheckIgnore(logger) {
   return function (item, settings) {
     var isUncaught = Boolean(item._isUncaught);
@@ -20,7 +42,7 @@ function userCheckIgnore(logger) {
     delete item._originalArgs;
     try {
       if (_.isFunction(settings.onSendCallback)) {
-        settings.onSendCallback(isUncaught, args, item);
+        settings.onSendCallback(isUncaught, copyArgs(args), item);
       }
     } catch (e) {
       settings.onSendCallback = null;
@@ -29,7 +51,7 @@ function userCheckIgnore(logger) {
     try {
       if (
         _.isFunction(settings.checkIgnore) &&
-        settings.checkIgnore(isUncaught, args, item)
+        settings.checkIgnore(isUncaught, copyArgs(args), item)
       ) {
         return false;
       }
