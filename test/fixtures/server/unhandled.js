@@ -38,9 +38,11 @@ if (variant === 'domain') {
   await import('node:domain');
 }
 
+// Rollbar must be enabled to install its listeners at all; `transmit: false`
+// keeps the reported item off the network.
 new Rollbar({
   accessToken: 'abc123',
-  enabled: false,
+  transmit: false,
   logLevel: loggerOn ? 'error' : 'disable',
   captureUncaught: true,
   captureUnhandledRejections: true,

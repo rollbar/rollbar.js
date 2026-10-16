@@ -696,7 +696,7 @@ Rollbar.prototype.setupUnhandledCapture = function () {
 Rollbar.prototype._removeUnhandledHandler = function (event) {
   var handlers = this._unhandledHandlers;
   if (handlers && handlers[event]) {
-    process.removeListener(event, handlers[event]);
+    removeRollbarHandler(event, handlers[event]);
     delete handlers[event];
   }
 };
@@ -781,7 +781,7 @@ function addOrReplaceRollbarHandler(event, action) {
   var probe = function (a) {
     snapshot = { value: a, appListening: appIsListening(event) };
   };
-  probe._rollbarHandler = true;
+  probe._rollbarProbe = true;
 
   // We only support up to two arguments which is enough for how this is used
   // rather than dealing with `arguments` and `apply`
@@ -798,17 +798,31 @@ function addOrReplaceRollbarHandler(event, action) {
     }
   };
   fn._rollbarHandler = true;
+  fn._probe = probe;
 
   var listeners = process.listeners(event);
   var len = listeners.length;
   for (var i = 0; i < len; ++i) {
-    if (listeners[i]._rollbarHandler) {
+    if (listeners[i]._rollbarHandler || listeners[i]._rollbarProbe) {
       process.removeListener(event, listeners[i]);
     }
   }
   process.prependListener(event, probe);
   process.on(event, fn);
   return fn;
+}
+
+/**
+ * Removes a handler installed by addOrReplaceRollbarHandler, together with
+ * the probe installed alongside it. A probe left behind would still count as
+ * a listener, keeping Node from printing the error itself.
+ *
+ * @param {string} event - `uncaughtException` or `unhandledRejection`.
+ * @param {Function} fn - The handler addOrReplaceRollbarHandler returned.
+ */
+function removeRollbarHandler(event, fn) {
+  process.removeListener(event, fn._probe);
+  process.removeListener(event, fn);
 }
 
 /**
@@ -826,6 +840,7 @@ function appIsListening(event) {
   return process.listeners(event).some(function (listener) {
     return (
       !listener._rollbarHandler &&
+      !listener._rollbarProbe &&
       listener.name !== 'domainUncaughtExceptionClear'
     );
   });

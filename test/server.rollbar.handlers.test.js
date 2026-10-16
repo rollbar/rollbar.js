@@ -76,6 +76,10 @@ function rollbarListeners(event) {
   return process.listeners(event).filter((l) => l._rollbarHandler);
 }
 
+function rollbarProbes(event) {
+  return process.listeners(event).filter((l) => l._rollbarProbe);
+}
+
 describe('rollbar exception handlers', function () {
   let stderrWrite;
 
@@ -307,19 +311,26 @@ describe('rollbar exception handlers', function () {
         logStub.restore();
       });
 
-      it('should print the error after captureUncaught is disabled in configure', async function () {
-        const rollbar = new Rollbar({
-          accessToken: 'abc123',
-          captureUncaught: true,
+      // Turning capture off removes Rollbar's handlers, which hands printing
+      // back to Node. The probe has to go with them: on its own it would
+      // still count as a listener and keep Node silent.
+      [
+        { captureUncaught: false, captureUnhandledRejections: false },
+        { enabled: false },
+      ].forEach((options) => {
+        it(`should remove its probes when configured with ${JSON.stringify(options)}`, function () {
+          const rollbar = new Rollbar({
+            accessToken: 'abc123',
+            captureUncaught: true,
+            captureUnhandledRejections: true,
+          });
+          expect(rollbarProbes('uncaughtException')).to.have.length(1);
+          expect(rollbarProbes('unhandledRejection')).to.have.length(1);
+
+          rollbar.configure(options);
+          expect(rollbarProbes('uncaughtException')).to.have.length(0);
+          expect(rollbarProbes('unhandledRejection')).to.have.length(0);
         });
-        const logStub = sinon.stub(rollbar.client.notifier, 'log');
-        rollbar.configure({ captureUncaught: false });
-
-        await nodeThrow();
-        expect(logStub.called).to.be.false;
-        expect(written(stderrWrite)).to.contain('Error: node error');
-
-        logStub.restore();
       });
 
       it('should not record the printed error as telemetry', async function () {
