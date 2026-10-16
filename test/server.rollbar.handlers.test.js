@@ -483,6 +483,10 @@ describe('rollbar exception handlers', function () {
   // listener is installed. CI runs these on every supported Node version, so
   // a version that also printed would fail here with a count of 2.
   describe('in a separate process (#1108)', function () {
+    // Each test blocks in spawnSync, which is capped at 10 s; Mocha's default
+    // 2 s timeout would otherwise fail a slow but passing child.
+    this.timeout(15000);
+
     it('should still print uncaught exceptions to stderr', function () {
       const child = runChild('throw');
 
@@ -618,8 +622,6 @@ describe('rollbar exception handlers', function () {
     // and prints again, forever.
     ['throw', 'reject'].forEach((mode) => {
       it(`should exit when stderr is a closed pipe (${mode})`, async function () {
-        this.timeout(15000);
-
         expect(await runChildWithClosedStderr(mode)).to.equal(0);
       });
     });
@@ -675,6 +677,23 @@ describe('rollbar exception handlers', function () {
 
         expect(child.stderr).to.not.contain('child reject');
       });
+    });
+
+    // Node reads NODE_OPTIONS once, at startup. An app that changes it later,
+    // for the processes it spawns, changes nothing for its own rejections.
+    it('should ignore NODE_OPTIONS set after startup', function () {
+      const child = runChild('reject', { variant: 'set-node-options' });
+
+      expect(occurrences(child.stderr, 'Error: child reject')).to.equal(1);
+    });
+
+    it('should ignore NODE_OPTIONS cleared after startup', function () {
+      const child = runChild('reject', {
+        env: { ...process.env, NODE_OPTIONS: '--unhandled-rejections=warn' },
+        variant: 'clear-node-options',
+      });
+
+      expect(occurrences(child.stderr, 'Error: child reject')).to.equal(1);
     });
   });
 });

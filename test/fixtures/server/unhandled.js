@@ -13,6 +13,10 @@
 //   no-inspect     `util.inspect` throws, so only the stack is available.
 //   unprintable    `util.inspect` throws and the value has no stack.
 //   string         The thrown value or rejection reason is a plain string.
+//   set-node-options    After Rollbar starts, the app sets NODE_OPTIONS to
+//                       `--unhandled-rejections=none`, as it might for
+//                       worker processes it spawns.
+//   clear-node-options  After Rollbar starts, the app deletes NODE_OPTIONS.
 // For uninspectable, no-inspect and unprintable, Rollbar's logger is left on
 // so the test can see whether it reports a failed print.
 import process from 'node:process';
@@ -45,6 +49,12 @@ new Rollbar({
 if (variant === 'app-listener') {
   process.on('uncaughtException', function () {});
   process.on('unhandledRejection', function () {});
+}
+if (variant === 'set-node-options') {
+  process.env.NODE_OPTIONS = '--unhandled-rejections=none';
+}
+if (variant === 'clear-node-options') {
+  delete process.env.NODE_OPTIONS;
 }
 
 setTimeout(function () {

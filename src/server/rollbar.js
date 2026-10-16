@@ -797,7 +797,7 @@ function appIsListening(event) {
  * @param {*} err - The thrown value or rejection reason.
  */
 function printUnhandledError(event, err) {
-  if (event === 'unhandledRejection' && !nodePrintsUnhandledRejections()) {
+  if (event === 'unhandledRejection' && !nodePrintsRejectionsAtStartup) {
     return;
   }
   try {
@@ -948,6 +948,9 @@ function ignoreStderrError() {
  * it has already been printed or handled by the time this event fires. Under
  * `none`, Node prints nothing.
  *
+ * Read once, into nodePrintsRejectionsAtStartup, rather than on each
+ * rejection.
+ *
  * @returns {boolean}
  */
 function nodePrintsUnhandledRejections() {
@@ -966,6 +969,11 @@ function nodePrintsUnhandledRejections() {
   });
   return mode !== 'warn' && mode !== 'strict' && mode !== 'none';
 }
+
+// Node parses NODE_OPTIONS once, at startup; changing process.env afterwards
+// only affects the processes the app spawns. The earliest this SDK can read it
+// is when this module loads, before any handler is installed.
+var nodePrintsRejectionsAtStartup = nodePrintsUnhandledRejections();
 
 /**
  * Split `NODE_OPTIONS` into arguments the way Node does
