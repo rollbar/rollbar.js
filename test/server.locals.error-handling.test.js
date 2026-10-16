@@ -18,8 +18,13 @@ import {
 describe('server.locals error handling', function () {
   let mochaExceptionHandlers;
   let mochaRejectionHandlers;
+  let stderrWrite;
 
   beforeEach(function () {
+    // With Mocha's handlers removed, Rollbar is the only listener and prints
+    // each unhandled error to stderr; keep that out of the test report.
+    stderrWrite = sinon.stub(process.stderr, 'write');
+
     // Remove Mocha's error handlers
     mochaExceptionHandlers = process.listeners('uncaughtException');
     mochaExceptionHandlers.forEach((handler) => {
@@ -33,6 +38,8 @@ describe('server.locals error handling', function () {
   });
 
   afterEach(function () {
+    stderrWrite.restore();
+
     // Restore Mocha's error handlers
     mochaExceptionHandlers.forEach((h) => process.on('uncaughtException', h));
     mochaRejectionHandlers.forEach((h) => process.on('unhandledRejection', h));
