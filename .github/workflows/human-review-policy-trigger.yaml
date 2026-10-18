@@ -1,0 +1,17 @@
+name: Human review policy trigger
+# No-op: its completion triggers human-review-policy.yaml, which runs from the
+# default branch so that a PR cannot change the policy it is judged by.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, edited, closed]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "PR ${{ github.event.pull_request.number }} ${{ github.event_name }}"

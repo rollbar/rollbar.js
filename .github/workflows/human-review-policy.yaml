@@ -1,0 +1,20 @@
+name: Human review policy
+# Reports the required `human-review-policy` status: 1 human approval besides
+# the author on a human-authored PR, 2 on a bot-authored one; labels PRs merged
+# past it (admin break glass) needs-post-merge-review. Triggered by
+# human-review-policy-trigger.yaml; runs from the default branch so a PR cannot
+# change the policy it is judged by. Details and options:
+# https://github.com/rollbar/human-review-policy
+
+on:
+  workflow_run:
+    workflows: ["Human review policy trigger"]
+    types: [completed]
+
+jobs:
+  policy:
+    permissions:
+      contents: read
+      pull-requests: write
+      statuses: write
+    uses: rollbar/human-review-policy/.github/workflows/human-review-policy.yaml@main
