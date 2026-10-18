@@ -416,6 +416,18 @@ function wrapCallback(logger, f) {
   };
 }
 
+/**
+ * Deep-copies custom data into plain objects, replacing circular references
+ * with a placeholder string.
+ *
+ * Only own enumerable properties are copied. Inherited properties are skipped
+ * so prototype getters are never invoked: Express 4 defines `req.host` as an
+ * enumerable getter on the request prototype that prints a deprecation warning
+ * when read (#1059), and other framework getters can have side effects.
+ *
+ * @param {*} obj - The value to clone, usually an object or array.
+ * @returns {Object|string} The clone, or an error message if cloning failed.
+ */
 function nonCircularClone(obj) {
   var seen = [obj];
 
@@ -427,6 +439,9 @@ function nonCircularClone(obj) {
 
     try {
       for (name in obj) {
+        if (!hasOwn(obj, name)) {
+          continue;
+        }
         value = obj[name];
 
         if (value && (isType(value, 'object') || isType(value, 'array'))) {
