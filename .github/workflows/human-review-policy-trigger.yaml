@@ -7,6 +7,9 @@ on:
     types: [opened, reopened, synchronize, ready_for_review, edited, closed]
   pull_request_review:
     types: [submitted, edited, dismissed]
+  # Repos with a merge queue: the merge group's commit needs the status too.
+  merge_group:
+    types: [checks_requested]
 
 permissions: {}
 

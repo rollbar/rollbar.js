@@ -8,7 +8,7 @@ name: Human review policy
 
 on:
   workflow_run:
-    workflows: ["Human review policy trigger"]
+    workflows: [Human review policy trigger]
     types: [completed]
 
 jobs:
