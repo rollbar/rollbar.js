@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
 import * as t from '../src/browser/transforms.js';
@@ -304,6 +305,181 @@ describe('addClientInfo', function () {
     t.addClientInfo(window)(item, {}, function (e, i) {
       expect(i.data.client.javascript).to.not.have.property('code_version');
       done(e);
+    });
+  });
+
+  // https://github.com/rollbar/rollbar.js/issues/1093
+  describe('User-Agent Client Hints', function () {
+    // Chrome 120 on Windows 11: the reduced user agent string freezes the OS at
+    // "Windows NT 10.0" and the browser at "120.0.0.0", so the real versions
+    // are only available from navigator.userAgentData.
+    const reducedUserAgent =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    const brands = [
+      { brand: 'Not_A Brand', version: '8' },
+      { brand: 'Chromium', version: '120' },
+      { brand: 'Google Chrome', version: '120' },
+    ];
+    const highEntropyValues = {
+      brands,
+      mobile: false,
+      platform: 'Windows',
+      platformVersion: '15.0.0',
+      architecture: 'x86',
+      bitness: '64',
+      model: '',
+      fullVersionList: [
+        { brand: 'Not_A Brand', version: '8.0.0.0' },
+        { brand: 'Chromium', version: '120.0.6099.130' },
+        { brand: 'Google Chrome', version: '120.0.6099.130' },
+      ],
+    };
+
+    function windowWithUserAgentData(getHighEntropyValues) {
+      return {
+        navigator: {
+          userAgent: reducedUserAgent,
+          userAgentData: {
+            brands: Object.freeze(brands.slice()),
+            mobile: false,
+            platform: 'Windows',
+            getHighEntropyValues,
+          },
+        },
+        screen: {},
+      };
+    }
+
+    function addClientInfoTo(w) {
+      const item = itemFromArgs(['a message']);
+      let result;
+      t.addClientInfo(w)(item, {}, function (e, i) {
+        result = i;
+      });
+      return result;
+    }
+
+    it('should send the OS version and full browser version', async function () {
+      const getHighEntropyValues = sinon.stub().resolves(highEntropyValues);
+      const transform = t.addClientInfo(
+        windowWithUserAgentData(getHighEntropyValues),
+      );
+      await Promise.resolve();
+
+      const item = itemFromArgs(['a message']);
+      transform(item, {}, function () {});
+      const js = item.data.client.javascript;
+
+      expect(js.browser).to.eql(reducedUserAgent);
+      expect(js.user_agent_data).to.eql({
+        brands,
+        mobile: false,
+        platform: 'Windows',
+        platform_version: '15.0.0',
+        architecture: 'x86',
+        bitness: '64',
+        model: '',
+        full_version_list: highEntropyValues.fullVersionList,
+      });
+      expect(getHighEntropyValues.calledOnce).to.be.true;
+      expect(getHighEntropyValues.firstCall.args[0]).to.have.members([
+        'architecture',
+        'bitness',
+        'fullVersionList',
+        'model',
+        'platformVersion',
+      ]);
+    });
+
+    it('should request the high-entropy values once, not per item', async function () {
+      const getHighEntropyValues = sinon.stub().resolves(highEntropyValues);
+      const transform = t.addClientInfo(
+        windowWithUserAgentData(getHighEntropyValues),
+      );
+      await Promise.resolve();
+
+      for (let n = 0; n < 3; n++) {
+        transform(itemFromArgs(['a message']), {}, function () {});
+      }
+      expect(getHighEntropyValues.calledOnce).to.be.true;
+    });
+
+    it('should send the low-entropy values before the hints resolve', function () {
+      const w = windowWithUserAgentData(() => new Promise(() => {}));
+      const js = addClientInfoTo(w).data.client.javascript;
+
+      expect(js.user_agent_data.brands).to.eql(brands);
+      expect(js.user_agent_data.mobile).to.eql(false);
+      expect(js.user_agent_data.platform).to.eql('Windows');
+      expect(js.user_agent_data.platform_version).to.be.undefined;
+    });
+
+    it('should keep the low-entropy values if the hints are rejected', async function () {
+      const getHighEntropyValues = sinon
+        .stub()
+        .rejects(new DOMException('blocked', 'NotAllowedError'));
+      const transform = t.addClientInfo(
+        windowWithUserAgentData(getHighEntropyValues),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const item = itemFromArgs(['a message']);
+      transform(item, {}, function () {});
+      const uaData = item.data.client.javascript.user_agent_data;
+
+      expect(uaData.platform).to.eql('Windows');
+      expect(uaData.platform_version).to.be.undefined;
+    });
+
+    it('should not fail if getHighEntropyValues throws', function () {
+      const w = windowWithUserAgentData(() => {
+        throw new Error('not supported');
+      });
+      const js = addClientInfoTo(w).data.client.javascript;
+
+      expect(js.user_agent_data.platform).to.eql('Windows');
+    });
+
+    it('should give each item its own copy of the hints', function () {
+      const w = windowWithUserAgentData(() => new Promise(() => {}));
+      const transform = t.addClientInfo(w);
+      const first = itemFromArgs(['a message']);
+      const second = itemFromArgs(['a message']);
+      transform(first, {}, function () {});
+      transform(second, {}, function () {});
+
+      const firstData = first.data.client.javascript.user_agent_data;
+      firstData.brands.push({ brand: 'Scrubbed', version: '0' });
+      firstData.platform = 'Scrubbed';
+
+      const secondData = second.data.client.javascript.user_agent_data;
+      expect(secondData.brands).to.eql(brands);
+      expect(secondData.platform).to.eql('Windows');
+    });
+
+    it('should omit the hints in browsers without userAgentData', function () {
+      const w = { navigator: { userAgent: reducedUserAgent }, screen: {} };
+      const js = addClientInfoTo(w).data.client.javascript;
+
+      expect(js.browser).to.eql(reducedUserAgent);
+      expect(js.user_agent_data).to.be.undefined;
+    });
+
+    it('should send the real browser hints from Chromium', async function () {
+      const transform = t.addClientInfo(window);
+      // Real getHighEntropyValues resolves on a later task, not a microtask.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const item = itemFromArgs(['a message']);
+      transform(item, {}, function () {});
+      const uaData = item.data.client.javascript.user_agent_data;
+
+      expect(uaData).to.be.ok;
+      expect(uaData.platform).to.eql((navigator as any).userAgentData.platform);
+      expect(uaData.platform_version).to.be.a('string');
+      expect(uaData.full_version_list).to.be.an('array').that.is.not.empty;
     });
   });
 });

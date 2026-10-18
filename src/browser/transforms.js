@@ -109,7 +109,83 @@ function addRequestInfo(window) {
   };
 }
 
+const USER_AGENT_HIGH_ENTROPY_HINTS = [
+  'architecture',
+  'bitness',
+  'fullVersionList',
+  'model',
+  'platformVersion',
+];
+
+/**
+ * Formats User-Agent Client Hints values for the item payload.
+ *
+ * @param {Object} values - A `NavigatorUAData` object or the result of
+ *   `getHighEntropyValues()`.
+ * @returns {Object} The values with the payload's snake_case keys.
+ */
+function formatUserAgentData(values) {
+  // The browser returns frozen arrays; copy them so transforms and user
+  // callbacks that run later can modify the payload.
+  const copyBrands = (brands) =>
+    brands && brands.map(({ brand, version }) => ({ brand, version }));
+
+  return {
+    brands: copyBrands(values.brands),
+    mobile: values.mobile,
+    platform: values.platform,
+    platform_version: values.platformVersion,
+    architecture: values.architecture,
+    bitness: values.bitness,
+    model: values.model,
+    full_version_list: copyBrands(values.fullVersionList),
+  };
+}
+
+/**
+ * Creates a reader for the browser's User-Agent Client Hints.
+ *
+ * Chromium browsers freeze the OS version and browser minor version in
+ * `navigator.userAgent`; the real values are only exposed through
+ * `navigator.userAgentData.getHighEntropyValues()`, which is asynchronous.
+ * The high-entropy values are requested once, when the transform is created,
+ * so items never wait on them. Items logged before that request resolves get
+ * the synchronously available low-entropy values instead.
+ *
+ * @param {Object} nav - The `navigator` to read from.
+ * @returns {Function} Returns the formatted Client Hints, or `undefined` when
+ *   the browser doesn't support them.
+ */
+function userAgentDataReader(nav) {
+  const uaData = nav && nav.userAgentData;
+  if (!uaData) {
+    return () => undefined;
+  }
+
+  let values = uaData;
+
+  if (typeof uaData.getHighEntropyValues === 'function') {
+    try {
+      uaData.getHighEntropyValues(USER_AGENT_HIGH_ENTROPY_HINTS).then(
+        (highEntropyValues) => {
+          values = highEntropyValues;
+        },
+        // Rejected with NotAllowedError when the browser declines to share
+        // the hints; keep the low-entropy values.
+        () => {},
+      );
+    } catch (e) {
+      logger.error('Error while reading User-Agent Client Hints.', e);
+    }
+  }
+
+  // Format per item so no two payloads share (and can mutate) the same object.
+  return () => formatUserAgentData(values);
+}
+
 function addClientInfo(window) {
+  const getUserAgentData = userAgentDataReader(window && window.navigator);
+
   return function (item, options, callback) {
     if (!window) {
       return callback(null, item);
@@ -118,6 +194,7 @@ function addClientInfo(window) {
     var scr = window.screen || {};
     var javascript = {
       browser: nav.userAgent,
+      user_agent_data: getUserAgentData(),
       language: nav.language,
       cookie_enabled: nav.cookieEnabled,
       screen: {
