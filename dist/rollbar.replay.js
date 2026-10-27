@@ -3172,7 +3172,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '4.1.0';
+var version = '4.2.0';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
@@ -5063,7 +5063,82 @@ function addRequestInfo(window) {
     callback(null, item);
   };
 }
+var USER_AGENT_HIGH_ENTROPY_HINTS = ['architecture', 'bitness', 'fullVersionList', 'model', 'platformVersion'];
+
+/**
+ * Formats User-Agent Client Hints values for the item payload.
+ *
+ * @param {Object} values - A `NavigatorUAData` object or the result of
+ *   `getHighEntropyValues()`.
+ * @returns {Object} The values with the payload's snake_case keys.
+ */
+function formatUserAgentData(values) {
+  // The browser returns frozen arrays; copy them so transforms and user
+  // callbacks that run later can modify the payload.
+  var copyBrands = function copyBrands(brands) {
+    return brands && brands.map(function (_ref) {
+      var brand = _ref.brand,
+        version = _ref.version;
+      return {
+        brand: brand,
+        version: version
+      };
+    });
+  };
+  return {
+    brands: copyBrands(values.brands),
+    mobile: values.mobile,
+    platform: values.platform,
+    platform_version: values.platformVersion,
+    architecture: values.architecture,
+    bitness: values.bitness,
+    model: values.model,
+    full_version_list: copyBrands(values.fullVersionList)
+  };
+}
+
+/**
+ * Creates a reader for the browser's User-Agent Client Hints.
+ *
+ * Chromium browsers freeze the OS version and browser minor version in
+ * `navigator.userAgent`; the real values are only exposed through
+ * `navigator.userAgentData.getHighEntropyValues()`, which is asynchronous.
+ * The high-entropy values are requested once, when the transform is created,
+ * so items never wait on them. Items logged before that request resolves get
+ * the synchronously available low-entropy values instead.
+ *
+ * @param {Object} nav - The `navigator` to read from.
+ * @returns {Function} Returns the formatted Client Hints, or `undefined` when
+ *   the browser doesn't support them.
+ */
+function userAgentDataReader(nav) {
+  var uaData = nav && nav.userAgentData;
+  if (!uaData) {
+    return function () {
+      return undefined;
+    };
+  }
+  var values = uaData;
+  if (typeof uaData.getHighEntropyValues === 'function') {
+    try {
+      uaData.getHighEntropyValues(USER_AGENT_HIGH_ENTROPY_HINTS).then(function (highEntropyValues) {
+        values = highEntropyValues;
+      },
+      // Rejected with NotAllowedError when the browser declines to share
+      // the hints; keep the low-entropy values.
+      function () {});
+    } catch (e) {
+      src_logger.error('Error while reading User-Agent Client Hints.', e);
+    }
+  }
+
+  // Format per item so no two payloads share (and can mutate) the same object.
+  return function () {
+    return formatUserAgentData(values);
+  };
+}
 function addClientInfo(window) {
+  var getUserAgentData = userAgentDataReader(window && window.navigator);
   return function (item, options, callback) {
     if (!window) {
       return callback(null, item);
@@ -5075,6 +5150,7 @@ function addClientInfo(window) {
       timestamp: Math.round(item.timestamp / 1000),
       javascript: {
         browser: nav.userAgent,
+        user_agent_data: getUserAgentData(),
         language: nav.language,
         cookie_enabled: nav.cookieEnabled,
         screen: {
