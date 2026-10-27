@@ -9,6 +9,7 @@ describe('transforms.nodeSourceMaps', function () {
   let rollbar;
   let addItemStub;
   let mochaHandlers;
+  let stderrWrite;
 
   before(function () {
     // Increase max listeners to avoid warnings during tests
@@ -21,6 +22,10 @@ describe('transforms.nodeSourceMaps', function () {
   });
 
   beforeEach(function () {
+    // With Mocha's handlers removed, Rollbar is the only listener and prints
+    // each uncaught error to stderr; keep that out of the test report.
+    stderrWrite = sinon.stub(process.stderr, 'write');
+
     // Remove Mocha's uncaught exception handlers to prevent interference
     mochaHandlers = process.listeners('uncaughtException');
     mochaHandlers.forEach((handler) => {
@@ -38,6 +43,7 @@ describe('transforms.nodeSourceMaps', function () {
 
   afterEach(function () {
     addItemStub.restore();
+    stderrWrite.restore();
 
     // Restore Mocha's handlers
     mochaHandlers.forEach((handler) => {
