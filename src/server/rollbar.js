@@ -615,10 +615,10 @@ function addTransformsToNotifier(notifier) {
     .addTransform(transforms.addRequestData)
     .addTransform(transforms.addLambdaData)
     .addTransform(sharedTransforms.addConfigToPayload)
+    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(transforms.scrubPayload)
     .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
-    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
 }

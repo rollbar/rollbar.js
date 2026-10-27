@@ -64,4 +64,25 @@ describe('react-native Rollbar', function () {
       expect(client.logCalls[0].item.err).to.equal(error);
     });
   });
+
+  // https://github.com/rollbar/rollbar.js/issues/1085
+  describe('sendConfig', function () {
+    it('does not send configured_options when sendConfig is false', async function () {
+      const rollbar = new Rollbar({
+        accessToken: 'abc123',
+        sendConfig: false,
+        payload: { person: { id: 1, email: 'user@example.com' } },
+      });
+      const api = rollbar.client.notifier.queue.api;
+      let sent;
+      api.postItem = (data, callback) => {
+        sent = data;
+        callback(null, {});
+      };
+
+      await new Promise((resolve) => rollbar.error('sendConfig test', resolve));
+
+      expect(sent.notifier).to.not.have.property('configured_options');
+    });
+  });
 });

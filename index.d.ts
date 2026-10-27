@@ -202,6 +202,12 @@ declare namespace Rollbar {
     scrubPaths?: string[];
     scrubRequestBody?: boolean;
     scrubTelemetryInputs?: boolean;
+    /**
+     * When true, the options passed to Rollbar are sent with each item, in
+     * `custom._rollbarConfig` and `notifier.configured_options` (the access
+     * token is removed, other values go through scrubbing). Defaults to false,
+     * in which case neither field is sent.
+     */
     sendConfig?: boolean;
     stackTraceLimit?: number;
     telemetryScrubber?: TelemetryScrubber;
