@@ -130,9 +130,15 @@ function networkRequestWrapper(orig, transport) {
     const [url, options, cb] = args;
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
     const requestUrl = urlHelpers.constructUrl(mergedOptions.options);
+    // Each instrumenter gets its own copy of the options: `captureHttpRequest`
+    // may add a baggage header and keeps a reference to the headers, which must
+    // not leak into another instance's telemetry.
     const captures = instrumenters.map((instrumenter) => ({
       autoInstrument: instrumenter.autoInstrument,
-      metadata: instrumenter.captureHttpRequest(mergedOptions, requestUrl),
+      metadata: instrumenter.captureHttpRequest(
+        urlHelpers.mergeOptions(url, options, cb),
+        requestUrl,
+      ),
     }));
 
     var wrappedCallback = responseCallbackWrapper(captures, mergedOptions.cb);

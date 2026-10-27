@@ -756,6 +756,55 @@ describe('telemetry', function () {
       });
     });
 
+    it('keeps http request headers separate per instance', async function () {
+      const sessionId = 'test-session-id';
+      const asyncLocalStorage = new AsyncLocalStorage();
+      const headersOnly = () =>
+        new Rollbar({
+          accessToken: 'abc123',
+          autoInstrument: {
+            network: true,
+            log: false,
+            networkRequestHeaders: true,
+          },
+        });
+      const headersBefore = headersOnly();
+      const propagating = new Rollbar({
+        accessToken: 'abc123',
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
+        autoInstrument: {
+          network: true,
+          log: false,
+          networkRequestHeaders: true,
+        },
+      });
+      propagating.client.asyncLocalStorage = asyncLocalStorage;
+      const headersAfter = headersOnly();
+      instances.push(headersBefore, propagating, headersAfter);
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+
+      await asyncLocalStorage.run({ sessionId }, () =>
+        request(https, 'https://example.com/api/users', {
+          method: 'GET',
+          headers: testHeaders1(),
+        }),
+      );
+
+      const requestHeaders = (instance) =>
+        networkEvents(instance)[0].body.request_headers;
+      expect(requestHeaders(propagating)).to.deep.equal({
+        ...testHeaders1(),
+        baggage: `rollbar.session.id=${sessionId}`,
+      });
+      expect(requestHeaders(headersBefore)).to.deep.equal(testHeaders1());
+      expect(requestHeaders(headersAfter)).to.deep.equal(testHeaders1());
+    });
+
     it('records each fetch once in every instance', async function () {
       if (typeof fetch !== 'function') {
         this.skip();
