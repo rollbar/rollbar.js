@@ -37,3 +37,39 @@ const config: Rollbar.Configuration = {
 const args: Rollbar.LogArgument[] = [];
 config.checkIgnore?.(false, args, {});
 config.onSendCallback?.(false, args, {});
+
+// These hooks get the item data. Without a type, users had to write
+// their own interfaces to read fields like item.body.
+const _checkIgnoreItem: Equals<
+  Parameters<NonNullable<Rollbar.Configuration['checkIgnore']>>[2],
+  Rollbar.ItemData
+> = true;
+const _onSendCallbackItem: Equals<
+  Parameters<NonNullable<Rollbar.Configuration['onSendCallback']>>[2],
+  Rollbar.ItemData
+> = true;
+const _transformData: Equals<
+  Parameters<NonNullable<Rollbar.Configuration['transform']>>[0],
+  Rollbar.ItemData
+> = true;
+
+const _itemDataConfig: Rollbar.Configuration = {
+  checkIgnore: (_isUncaught, _args, item) => {
+    const trace = item.body?.trace ?? item.body?.trace_chain?.[0];
+    return (
+      trace?.exception.message === 'ignored' ||
+      trace?.frames?.some((frame) => frame.filename === 'ignored.js') ||
+      item.body?.message?.body === 'ignored' ||
+      item.client?.javascript?.browser === 'ignored'
+    );
+  },
+  onSendCallback: (_isUncaught, _args, item) => {
+    const _level: Rollbar.Level | undefined = item.level;
+  },
+  transform: (data) => {
+    data.request = data.request || {};
+    data.request.url = '/path';
+    // Custom keys must still work.
+    data.sessionUrl = 'https://example.com/session';
+  },
+};
