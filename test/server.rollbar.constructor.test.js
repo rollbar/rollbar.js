@@ -1,10 +1,15 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
+import logger from '../src/logger.js';
 import Rollbar from '../src/server/rollbar.js';
 
 import {
   ValidOpenTracingTracerStub,
   InvalidOpenTracingTracerStub,
+  OpenTelemetryTraceApiStub,
+  OpenTelemetryTracerStub,
+  UnscopedOpenTracingTracerStub,
 } from './server.rollbar.test-utils.ts';
 
 describe('rollbar constructor and configuration', function () {
@@ -138,6 +143,54 @@ describe('rollbar constructor and configuration', function () {
         expect(r.client.tracer).to.be.null;
       });
     });
+
+    // https://github.com/rollbar/rollbar.js/issues/969
+    describe('with the OpenTelemetry trace API', function () {
+      it('should configure tracer', function () {
+        const traceApi = new OpenTelemetryTraceApiStub();
+        const r = new Rollbar({ environment: 'fake-env', tracer: traceApi });
+
+        expect(r.client.tracer).to.equal(traceApi);
+        expect(r.client.options.tracer).to.equal(
+          'opentelemetry-tracer-enabled',
+        );
+      });
+    });
+
+    describe('with a tracer that cannot report its active span', function () {
+      let errorStub;
+
+      beforeEach(function () {
+        errorStub = sinon.stub(logger, 'error');
+      });
+
+      afterEach(function () {
+        errorStub.restore();
+      });
+
+      [
+        ['an OpenTelemetry Tracer', OpenTelemetryTracerStub],
+        [
+          'an OpenTracing tracer without a scope manager',
+          UnscopedOpenTracingTracerStub,
+        ],
+      ].forEach(([name, TracerStub]) => {
+        it(`should ignore ${name} and log why`, function () {
+          const r = new Rollbar({
+            environment: 'fake-env',
+            tracer: new TracerStub(),
+          });
+
+          expect(r.client.tracer).to.be.null;
+          expect(r.client.options.tracer).to.equal('tracer-ignored');
+          expect(r.client.options._configuredOptions.tracer).to.equal(
+            'tracer-ignored',
+          );
+          expect(errorStub.calledOnce).to.be.true;
+          expect(errorStub.getCall(0).args[0]).to.include('@opentelemetry/api');
+        });
+      });
+    });
   });
 
   describe('configure', function () {
@@ -190,6 +243,29 @@ describe('rollbar constructor and configuration', function () {
           environment: 'fake-env',
         });
         rollbar.configure({ tracer: InvalidOpenTracingTracerStub });
+
+        expect(rollbar.client.tracer).to.be.null;
+      });
+    });
+
+    describe('with a tracer set at init', function () {
+      it('should keep the tracer when other options change', function () {
+        const traceApi = new OpenTelemetryTraceApiStub();
+        const rollbar = new Rollbar({
+          environment: 'fake-env',
+          tracer: traceApi,
+        });
+        rollbar.configure({ environment: 'new-env' });
+
+        expect(rollbar.client.tracer).to.equal(traceApi);
+      });
+
+      it('should remove the tracer when set to null', function () {
+        const rollbar = new Rollbar({
+          environment: 'fake-env',
+          tracer: ValidOpenTracingTracerStub,
+        });
+        rollbar.configure({ tracer: null });
 
         expect(rollbar.client.tracer).to.be.null;
       });
