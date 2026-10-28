@@ -208,7 +208,8 @@ Rollbar.prototype._sameAsLastError = function (item) {
  *
  * Supported tracers are those exposing `scope().active()` (dd-trace and other
  * OpenTracing tracers with a scope manager) and the OpenTelemetry `trace` API
- * from `@opentelemetry/api`. Anything else is ignored and an error is logged.
+ * from `@opentelemetry/api`. Anything else is ignored, its option is set to
+ * `'tracer-ignored'`, and an error is logged.
  * The error isn't logged again while a tracer stays ignored, because the
  * browser resolves its tracer on every configure() call.
  *
@@ -221,11 +222,15 @@ Rollbar.prototype._setTracer = function (tracer) {
   this._tracerKind = kind;
   this._tracerIgnored = !kind && Boolean(tracer);
 
-  if (kind) {
-    // set to a string for api response serialization
-    this.options.tracer = TRACER_PLACEHOLDERS[kind];
-    this.options._configuredOptions.tracer = TRACER_PLACEHOLDERS[kind];
-  } else if (this._tracerIgnored && !wasIgnored) {
+  if (tracer) {
+    // Replace the tracer object with a string, including an ignored one, so
+    // it isn't serialized into each item's configured_options.
+    const placeholder = kind ? TRACER_PLACEHOLDERS[kind] : TRACER_IGNORED;
+    this.options.tracer = placeholder;
+    this.options._configuredOptions.tracer = placeholder;
+  }
+
+  if (this._tracerIgnored && !wasIgnored) {
     this.logger.error(
       'The tracer option was ignored. Pass the `trace` object from ' +
         '@opentelemetry/api for OpenTelemetry, or a tracer with ' +
@@ -280,6 +285,7 @@ const TRACER_PLACEHOLDERS = {
   opentracing: 'opentracing-tracer-enabled',
   opentelemetry: 'opentelemetry-tracer-enabled',
 };
+const TRACER_IGNORED = 'tracer-ignored';
 
 // SpanStatusCode.ERROR in @opentelemetry/api
 const OTEL_STATUS_ERROR = 2;

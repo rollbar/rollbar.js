@@ -217,9 +217,10 @@ declare namespace Rollbar {
      * error and critical items also set the span's status to ERROR. A tracer
      * from `trace.getTracer()` can't report the active span, so it is
      * ignored. For OpenTracing, pass a tracer with a scope manager, such as
-     * dd-trace; its spans also get an `error` tag.
+     * dd-trace; its spans also get an `error` tag. Pass `null` to
+     * `configure()` to remove the tracer.
      */
-    tracer?: Tracer;
+    tracer?: Tracer | null;
     transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
     transmit?: boolean;
     uncaughtErrorLevel?: Level;

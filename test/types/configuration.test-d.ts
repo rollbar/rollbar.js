@@ -46,3 +46,5 @@ const _otelTracer: Rollbar.Configuration = {
 const _scopedTracer: Rollbar.Configuration = {
   tracer: { scope: () => ({ active: () => null }) },
 };
+// configure({ tracer: null }) is how a tracer is removed.
+const _removedTracer: Rollbar.Configuration = { tracer: null };

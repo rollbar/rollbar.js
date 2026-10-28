@@ -182,6 +182,10 @@ describe('rollbar constructor and configuration', function () {
           });
 
           expect(r.client.tracer).to.be.null;
+          expect(r.client.options.tracer).to.equal('tracer-ignored');
+          expect(r.client.options._configuredOptions.tracer).to.equal(
+            'tracer-ignored',
+          );
           expect(errorStub.calledOnce).to.be.true;
           expect(errorStub.getCall(0).args[0]).to.include('@opentelemetry/api');
         });

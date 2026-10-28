@@ -271,6 +271,9 @@ describe('configure', function () {
       rollbar.configure({ payload: { environment: 'barkbark' } });
 
       expect(rollbar.client.tracer).to.be.null;
+      expect(rollbar.client.options._configuredOptions.tracer).to.equal(
+        'tracer-ignored',
+      );
       expect(errorStub.calledOnce).to.be.true;
     });
 
