@@ -513,6 +513,110 @@ describe('addItem', function () {
             done();
           });
         });
+        describe('backoff', function () {
+          var clock;
+          var rateLimiter;
+          var api;
+          var apiRequestTimes;
+          var apiError = {
+            code: 'ENOTFOUND',
+            message: 'No internet connection',
+          };
+
+          beforeEach(function () {
+            clock = sinon.useFakeTimers();
+            rateLimiter = new (TestRateLimiterGenerator())();
+            rateLimiter.handler = function () {
+              return { error: null, shouldSend: true, payload: null };
+            };
+            api = new (TestApiGenerator())();
+            apiRequestTimes = [];
+            api.handler = function (_i, cb) {
+              apiRequestTimes.push(Date.now());
+              cb(apiError);
+            };
+          });
+
+          afterEach(function () {
+            clock.restore();
+          });
+
+          it('should double the delay before each retry', function () {
+            var options = { retryInterval: 100, maxRetries: 4, transmit: true };
+            var queue = new Queue(rateLimiter, api, null, options);
+            var callback = sinon.spy();
+
+            queue.addItem({ data: { mykey: 'myvalue' } }, callback);
+            clock.runAll();
+
+            expect(apiRequestTimes).to.eql([0, 100, 300, 700, 1500]);
+            expect(callback.calledOnceWith(apiError)).to.be.true;
+          });
+
+          it('should cap the delay at MAX_RETRY_INTERVAL', function () {
+            var options = {
+              retryInterval: 20000,
+              maxRetries: 4,
+              transmit: true,
+            };
+            var queue = new Queue(rateLimiter, api, null, options);
+
+            queue.addItem({ data: { mykey: 'myvalue' } }, function () {});
+            clock.runAll();
+
+            var delays = apiRequestTimes
+              .slice(1)
+              .map((t, i) => t - apiRequestTimes[i]);
+            expect(Queue.MAX_RETRY_INTERVAL).to.eql(60000);
+            expect(delays).to.eql([20000, 40000, 60000, 60000]);
+          });
+
+          it('should not cap a retryInterval longer than MAX_RETRY_INTERVAL', function () {
+            var options = {
+              retryInterval: 90000,
+              maxRetries: 2,
+              transmit: true,
+            };
+            var queue = new Queue(rateLimiter, api, null, options);
+
+            queue.addItem({ data: { mykey: 'myvalue' } }, function () {});
+            clock.runAll();
+
+            expect(apiRequestTimes).to.eql([0, 90000, 180000]);
+          });
+
+          it('should leave no timers running once the item is sent', function () {
+            var options = { retryInterval: 100, maxRetries: 4, transmit: true };
+            var queue = new Queue(rateLimiter, api, null, options);
+            var callback = sinon.spy();
+            api.handler = function (_i, cb) {
+              apiRequestTimes.push(Date.now());
+              if (apiRequestTimes.length < 3) {
+                cb(apiError);
+              } else {
+                cb(null, { success: true });
+              }
+            };
+
+            queue.addItem({ data: { mykey: 'myvalue' } }, callback);
+            clock.tick(1000);
+
+            expect(callback.calledOnceWith(null, { success: true })).to.be.true;
+            expect(clock.countTimers()).to.eql(0);
+          });
+
+          it('should track retries without adding them to the payload', function () {
+            var options = { retryInterval: 100, maxRetries: 2, transmit: true };
+            var queue = new Queue(rateLimiter, api, null, options);
+            var data = { mykey: 'myvalue' };
+
+            queue.addItem({ data }, function () {});
+            clock.runAll();
+
+            expect(apiRequestTimes).to.have.lengthOf(3);
+            expect(data).to.eql({ mykey: 'myvalue' });
+          });
+        });
       });
     });
     describe('transmit disabled', function () {
