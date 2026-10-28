@@ -1,7 +1,9 @@
 // @ts-nocheck
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
+import logger from '../src/logger.js';
 
 import { fakeServer } from './browser.rollbar.test-utils.ts';
 import { loadHtml } from './util/fixtures.ts';
@@ -232,6 +234,57 @@ describe('configure', function () {
     expect(rollbar.options.payload.environment).to.eql('borkbork');
     expect(client.options.payload.environment).to.eql('borkbork');
   });
+
+  // Browser configure() passes its merged options, raw tracer included, to the
+  // client, so the client resolves the tracer again on every call.
+  describe('with a tracer set at init', function () {
+    let errorStub;
+
+    beforeEach(function () {
+      errorStub = sinon.stub(logger, 'error');
+    });
+
+    afterEach(function () {
+      errorStub.restore();
+    });
+
+    it('should keep a valid tracer and its placeholder', function () {
+      const rollbar = (window.rollbar = new Rollbar({
+        tracer: ValidOpenTracingTracerStub,
+      }));
+      rollbar.configure({ payload: { environment: 'borkbork' } });
+
+      expect(rollbar.client.tracer).to.eql(ValidOpenTracingTracerStub);
+      expect(rollbar.client.options.tracer).to.equal(
+        'opentracing-tracer-enabled',
+      );
+      expect(rollbar.client.options._configuredOptions.tracer).to.equal(
+        'opentracing-tracer-enabled',
+      );
+    });
+
+    it('should log an ignored tracer only once', function () {
+      const rollbar = (window.rollbar = new Rollbar({
+        tracer: InvalidOpenTracingTracerStub,
+      }));
+      rollbar.configure({ payload: { environment: 'borkbork' } });
+      rollbar.configure({ payload: { environment: 'barkbark' } });
+
+      expect(rollbar.client.tracer).to.be.null;
+      expect(errorStub.calledOnce).to.be.true;
+    });
+
+    it('should log again for a tracer passed after it was removed', function () {
+      const rollbar = (window.rollbar = new Rollbar({
+        tracer: InvalidOpenTracingTracerStub,
+      }));
+      rollbar.configure({ tracer: null });
+      rollbar.configure({ tracer: InvalidOpenTracingTracerStub });
+
+      expect(errorStub.calledTwice).to.be.true;
+    });
+  });
+
   it('should accept a second parameter and use it as the payload value', function () {
     const client = new (TestClientGen())();
     const options = {

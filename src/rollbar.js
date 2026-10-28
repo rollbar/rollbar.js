@@ -57,9 +57,11 @@ Rollbar.prototype.configure = function (options, payloadData) {
 
   this.options = _.merge(oldOptions, options, payload);
 
-  // Only a tracer passed in this call is resolved. The merged options hold
-  // the placeholder string set by _setTracer, so resolving those would drop
-  // the tracer on every unrelated configure() call.
+  // Resolve only a tracer in `options`: the merged options hold the
+  // placeholder string set by _setTracer, so resolving those would drop the
+  // tracer. The server and React Native pass the caller's own options. The
+  // browser passes its merged options, which keep the raw tracer, so there it
+  // is resolved on every call and the placeholder is set again.
   // This must happen before the Notifier is configured
   if (_.hasOwn(options, 'tracer')) {
     this._setTracer(options.tracer);
@@ -207,19 +209,23 @@ Rollbar.prototype._sameAsLastError = function (item) {
  * Supported tracers are those exposing `scope().active()` (dd-trace and other
  * OpenTracing tracers with a scope manager) and the OpenTelemetry `trace` API
  * from `@opentelemetry/api`. Anything else is ignored and an error is logged.
+ * The error isn't logged again while a tracer stays ignored, because the
+ * browser resolves its tracer on every configure() call.
  *
  * @param {object} tracer - The `tracer` option.
  */
 Rollbar.prototype._setTracer = function (tracer) {
   const kind = getTracerKind(tracer);
+  const wasIgnored = this._tracerIgnored;
   this.tracer = kind ? tracer : null;
   this._tracerKind = kind;
+  this._tracerIgnored = !kind && Boolean(tracer);
 
   if (kind) {
     // set to a string for api response serialization
     this.options.tracer = TRACER_PLACEHOLDERS[kind];
     this.options._configuredOptions.tracer = TRACER_PLACEHOLDERS[kind];
-  } else if (tracer) {
+  } else if (this._tracerIgnored && !wasIgnored) {
     this.logger.error(
       'The tracer option was ignored. Pass the `trace` object from ' +
         '@opentelemetry/api for OpenTelemetry, or a tracer with ' +
