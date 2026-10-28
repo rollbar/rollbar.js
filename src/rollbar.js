@@ -26,17 +26,8 @@ function Rollbar(options, api, logger, telemeter, tracing, replay, platform) {
 
   this.tracing = tracing;
 
-  // Legacy OpenTracing support
   // This must happen before the Notifier is created
-  var tracer = this.options.tracer || null;
-  if (validateTracer(tracer)) {
-    this.tracer = tracer;
-    // set to a string for api response serialization
-    this.options.tracer = 'opentracing-tracer-enabled';
-    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
-  } else {
-    this.tracer = null;
-  }
+  this._setTracer(this.options.tracer);
 
   this.notifier = new Notifier(this.queue, this.options);
   this.telemeter = telemeter;
@@ -66,26 +57,18 @@ Rollbar.prototype.configure = function (options, payloadData) {
 
   this.options = _.merge(oldOptions, options, payload);
 
-  // Legacy OpenTracing support
+  // Only a tracer passed in this call is resolved. The merged options hold
+  // the placeholder string set by _setTracer, so resolving those would drop
+  // the tracer on every unrelated configure() call.
   // This must happen before the Notifier is configured
-  var tracer = this.options.tracer || null;
-  if (validateTracer(tracer)) {
-    this.tracer = tracer;
-    // set to a string for api response serialization
-    this.options.tracer = 'opentracing-tracer-enabled';
-    this.options._configuredOptions.tracer = 'opentracing-tracer-enabled';
-  } else {
-    this.tracer = null;
+  if (_.hasOwn(options, 'tracer')) {
+    this._setTracer(options.tracer);
   }
 
   this.notifier && this.notifier.configure(this.options);
   this.telemeter && this.telemeter.configure(this.options);
   setStackTraceLimit(options);
   this.global(this.options);
-
-  if (validateTracer(options.tracer)) {
-    this.tracer = options.tracer;
-  }
 
   return this;
 };
@@ -164,7 +147,6 @@ Rollbar.prototype._log = function (defaultLevel, item) {
 
     this._addItemAttributes(item);
 
-    // Legacy OpenTracing support
     this._addTracingInfo(item);
 
     const telemeter = this.telemeter;
@@ -219,41 +201,58 @@ Rollbar.prototype._sameAsLastError = function (item) {
   return false;
 };
 
-Rollbar.prototype._addTracingInfo = function (item) {
-  // Tracer validation occurs in the constructor
-  // or in the Rollbar.prototype.configure methods
-  if (this.tracer) {
-    // add rollbar occurrence uuid to span
-    var span = this.tracer.scope().active();
+/**
+ * Sets the tracer used to link items to the caller's active span.
+ *
+ * Supported tracers are those exposing `scope().active()` (dd-trace and other
+ * OpenTracing tracers with a scope manager) and the OpenTelemetry `trace` API
+ * from `@opentelemetry/api`. Anything else is ignored and an error is logged.
+ *
+ * @param {object} tracer - The `tracer` option.
+ */
+Rollbar.prototype._setTracer = function (tracer) {
+  const kind = getTracerKind(tracer);
+  this.tracer = kind ? tracer : null;
+  this._tracerKind = kind;
 
-    if (validateSpan(span)) {
-      span.setTag('rollbar.error_uuid', item.uuid);
-      span.setTag('rollbar.has_error', true);
-      span.setTag('error', true);
-      span.setTag(
-        'rollbar.item_url',
-        `https://rollbar.com/item/uuid/?uuid=${item.uuid}`,
-      );
-      span.setTag(
-        'rollbar.occurrence_url',
-        `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`,
-      );
-
-      // add span ID & trace ID to occurrence
-      var opentracingSpanId = span.context().toSpanId();
-      var opentracingTraceId = span.context().toTraceId();
-
-      if (item.custom) {
-        item.custom.opentracing_span_id = opentracingSpanId;
-        item.custom.opentracing_trace_id = opentracingTraceId;
-      } else {
-        item.custom = {
-          opentracing_span_id: opentracingSpanId,
-          opentracing_trace_id: opentracingTraceId,
-        };
-      }
-    }
+  if (kind) {
+    // set to a string for api response serialization
+    this.options.tracer = TRACER_PLACEHOLDERS[kind];
+    this.options._configuredOptions.tracer = TRACER_PLACEHOLDERS[kind];
+  } else if (tracer) {
+    this.logger.error(
+      'The tracer option was ignored. Pass the `trace` object from ' +
+        '@opentelemetry/api for OpenTelemetry, or a tracer with ' +
+        'scope().active() such as dd-trace.',
+    );
   }
+};
+
+/**
+ * Tags the tracer's active span with the item's uuid and adds the span's
+ * trace and span IDs to `item.custom`. Does nothing without an active span.
+ *
+ * @param {object} item - The item being logged.
+ */
+Rollbar.prototype._addTracingInfo = function (item) {
+  if (!this.tracer) {
+    return;
+  }
+
+  const ids =
+    this._tracerKind === 'opentelemetry'
+      ? tagOpenTelemetrySpan(this.tracer.getActiveSpan(), item)
+      : tagOpenTracingSpan(this.tracer.scope().active(), item);
+
+  if (!ids) {
+    return;
+  }
+
+  // The field names predate OpenTelemetry support and are kept for both
+  // tracer kinds so existing queries on them keep working.
+  item.custom = item.custom || {};
+  item.custom.opentracing_span_id = ids.spanId;
+  item.custom.opentracing_trace_id = ids.traceId;
 };
 
 function generateItemHash(item) {
@@ -271,51 +270,133 @@ function setStackTraceLimit(options) {
   }
 }
 
+const TRACER_PLACEHOLDERS = {
+  opentracing: 'opentracing-tracer-enabled',
+  opentelemetry: 'opentelemetry-tracer-enabled',
+};
+
+// SpanStatusCode.ERROR in @opentelemetry/api
+const OTEL_STATUS_ERROR = 2;
+
 /**
- * Validate the Tracer object provided to the Client
- * is valid for our Opentracing use case.
- * @param {opentracer.Tracer} tracer
+ * Identifies how to read the active span from a tracer.
+ *
+ * @param {object} tracer - The `tracer` option.
+ * @returns {'opentracing'|'opentelemetry'|null} The tracer kind, or null if
+ *   the active span can't be read from it.
  */
-function validateTracer(tracer) {
+function getTracerKind(tracer) {
   if (!tracer) {
-    return false;
+    return null;
   }
 
-  if (!tracer.scope || typeof tracer.scope !== 'function') {
-    return false;
+  if (typeof tracer.scope === 'function') {
+    const scope = tracer.scope();
+    if (scope && typeof scope.active === 'function') {
+      return 'opentracing';
+    }
   }
 
-  var scope = tracer.scope();
-
-  if (!scope || !scope.active || typeof scope.active !== 'function') {
-    return false;
+  if (typeof tracer.getActiveSpan === 'function') {
+    return 'opentelemetry';
   }
 
-  return true;
+  return null;
 }
 
 /**
- * Validate the Span object provided
- * @param {opentracer.Span} span
+ * Builds the span tags that link a span to a Rollbar item.
+ *
+ * @param {object} item - The item being logged.
+ * @returns {object} Tag names mapped to values.
  */
-function validateSpan(span) {
-  if (!span || !span.context || typeof span.context !== 'function') {
-    return false;
+function rollbarSpanTags(item) {
+  return {
+    'rollbar.error_uuid': item.uuid,
+    'rollbar.has_error': true,
+    'rollbar.item_url': `https://rollbar.com/item/uuid/?uuid=${item.uuid}`,
+    'rollbar.occurrence_url': `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`,
+  };
+}
+
+/**
+ * Tags a span from `tracer.scope().active()`.
+ *
+ * @param {object} span - An OpenTracing span, or null.
+ * @param {object} item - The item being logged.
+ * @returns {{spanId: string, traceId: string}|null} The span's IDs, or null if
+ *   it isn't a usable span.
+ */
+function tagOpenTracingSpan(span, item) {
+  if (!span || typeof span.context !== 'function') {
+    return null;
   }
 
-  var spanContext = span.context();
-
+  const spanContext = span.context();
   if (
     !spanContext ||
-    !spanContext.toSpanId ||
-    !spanContext.toTraceId ||
     typeof spanContext.toSpanId !== 'function' ||
     typeof spanContext.toTraceId !== 'function'
   ) {
-    return false;
+    return null;
   }
 
-  return true;
+  const tags = rollbarSpanTags(item);
+  for (const key of Object.keys(tags)) {
+    span.setTag(key, tags[key]);
+  }
+  span.setTag('error', true);
+
+  return {
+    spanId: spanContext.toSpanId(),
+    traceId: spanContext.toTraceId(),
+  };
+}
+
+/**
+ * Tags a span from OpenTelemetry's `trace.getActiveSpan()`.
+ *
+ * The span's status is only set to ERROR for error and critical items, since
+ * OpenTelemetry treats that status as the operation having failed.
+ *
+ * @param {object} span - An OpenTelemetry span, or undefined.
+ * @param {object} item - The item being logged.
+ * @returns {{spanId: string, traceId: string}|null} The span's IDs, or null if
+ *   it isn't a usable span.
+ */
+function tagOpenTelemetrySpan(span, item) {
+  if (
+    !span ||
+    typeof span.spanContext !== 'function' ||
+    typeof span.setAttributes !== 'function'
+  ) {
+    return null;
+  }
+
+  const { spanId, traceId } = span.spanContext() || {};
+  if (!isValidOtelId(spanId) || !isValidOtelId(traceId)) {
+    return null;
+  }
+
+  span.setAttributes(rollbarSpanTags(item));
+  if (
+    (item.level === 'error' || item.level === 'critical') &&
+    typeof span.setStatus === 'function'
+  ) {
+    span.setStatus({ code: OTEL_STATUS_ERROR });
+  }
+
+  return { spanId, traceId };
+}
+
+/**
+ * OpenTelemetry represents a missing span context with all-zero IDs.
+ *
+ * @param {string} id - A trace or span ID.
+ * @returns {boolean} Whether the ID identifies a real span or trace.
+ */
+function isValidOtelId(id) {
+  return typeof id === 'string' && /[1-9a-f]/i.test(id);
 }
 
 export default Rollbar;

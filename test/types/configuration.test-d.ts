@@ -37,3 +37,12 @@ const config: Rollbar.Configuration = {
 const args: Rollbar.LogArgument[] = [];
 config.checkIgnore?.(false, args, {});
 config.onSendCallback?.(false, args, {});
+
+// https://github.com/rollbar/rollbar.js/issues/969
+// Shapes of the OpenTelemetry `trace` API and of dd-trace's tracer.
+const _otelTracer: Rollbar.Configuration = {
+  tracer: { getActiveSpan: () => undefined },
+};
+const _scopedTracer: Rollbar.Configuration = {
+  tracer: { scope: () => ({ active: () => null }) },
+};

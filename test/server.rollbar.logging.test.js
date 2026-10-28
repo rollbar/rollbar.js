@@ -11,6 +11,10 @@ import {
   InvalidOpenTracingTracerStub,
   DUMMY_TRACE_ID,
   DUMMY_SPAN_ID,
+  DUMMY_OTEL_TRACE_ID,
+  DUMMY_OTEL_SPAN_ID,
+  createOpenTelemetrySpanStub,
+  OpenTelemetryTraceApiStub,
 } from './server.rollbar.test-utils.ts';
 
 describe('rollbar logging and tracing', function () {
@@ -53,6 +57,83 @@ describe('rollbar logging and tracing', function () {
         rollbar.client._addTracingInfo(item);
         expect(item.custom.opentracing_trace_id).to.be.undefined;
         expect(item.custom.opentracing_span_id).to.be.undefined;
+      });
+    });
+
+    // https://github.com/rollbar/rollbar.js/issues/969
+    describe('with the OpenTelemetry trace API', function () {
+      let rollbar;
+      let traceApi;
+      let span;
+      let logStub;
+
+      beforeEach(function () {
+        traceApi = new OpenTelemetryTraceApiStub();
+        span = createOpenTelemetrySpanStub();
+        traceApi.activeSpan = span;
+        rollbar = new Rollbar({
+          accessToken: 'abc123',
+          environment: 'fake-env',
+          tracer: traceApi,
+        });
+        logStub = sinon.stub(rollbar.client.notifier, 'log');
+      });
+
+      afterEach(function () {
+        logStub.restore();
+      });
+
+      it('should add the active span IDs to an error logged inside it', function () {
+        rollbar.error(new Error('boom'), { foo: 'foo' });
+
+        const item = logStub.getCall(0).args[0];
+        expect(item.custom.opentracing_trace_id).to.equal(DUMMY_OTEL_TRACE_ID);
+        expect(item.custom.opentracing_span_id).to.equal(DUMMY_OTEL_SPAN_ID);
+        expect(item.custom.foo).to.equal('foo');
+      });
+
+      it('should set the rollbar attributes and ERROR status on the active span', function () {
+        rollbar.error(new Error('boom'));
+
+        const item = logStub.getCall(0).args[0];
+        expect(span.setAttributes.calledOnce).to.be.true;
+        expect(span.setAttributes.getCall(0).args[0]).to.deep.equal({
+          'rollbar.error_uuid': item.uuid,
+          'rollbar.has_error': true,
+          'rollbar.item_url': `https://rollbar.com/item/uuid/?uuid=${item.uuid}`,
+          'rollbar.occurrence_url': `https://rollbar.com/occurrence/uuid/?uuid=${item.uuid}`,
+        });
+        expect(span.setStatus.calledOnceWithExactly({ code: 2 })).to.be.true;
+      });
+
+      it('should not set ERROR status for an info item', function () {
+        rollbar.info('hello');
+
+        const item = logStub.getCall(0).args[0];
+        expect(span.setAttributes.calledOnce).to.be.true;
+        expect(span.setStatus.called).to.be.false;
+        expect(item.custom.opentracing_span_id).to.equal(DUMMY_OTEL_SPAN_ID);
+      });
+
+      it('should do nothing when no span is active', function () {
+        traceApi.activeSpan = undefined;
+        rollbar.error(new Error('boom'));
+
+        const item = logStub.getCall(0).args[0];
+        expect(item.custom).to.be.undefined;
+      });
+
+      it('should ignore a span with an invalid span context', function () {
+        span = createOpenTelemetrySpanStub(
+          '00000000000000000000000000000000',
+          '0000000000000000',
+        );
+        traceApi.activeSpan = span;
+        rollbar.error(new Error('boom'));
+
+        const item = logStub.getCall(0).args[0];
+        expect(span.setAttributes.called).to.be.false;
+        expect(item.custom).to.be.undefined;
       });
     });
   });
