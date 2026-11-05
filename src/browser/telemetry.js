@@ -35,6 +35,62 @@ function restore(replacements, type) {
   }
 }
 
+/*
+ * Every Instrumenter that instruments a console method shares one wrapper,
+ * which calls each instrumenter's listener and then the original method.
+ * Wrapping once per instrumenter instead made every console call one frame
+ * deeper for each Rollbar client created on the page, until it overflowed the
+ * stack. The shared state is kept on the wrapper so that other copies of the
+ * SDK on the page find it too.
+ */
+const CONSOLE_STATE = '_rollbarConsoleState';
+
+function createConsoleWrapper(c, state) {
+  // eslint-disable-next-line strict
+  'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
+
+  const wrapper = function () {
+    const args = Array.prototype.slice.call(arguments);
+    for (const listener of state.listeners.slice()) {
+      listener(args);
+    }
+    if (state.orig) {
+      Function.prototype.apply.call(state.orig, c, args);
+    }
+  };
+  wrapper[CONSOLE_STATE] = state;
+  return wrapper;
+}
+
+/**
+ * Adds `listener` to the shared wrapper of `c[method]`, installing the
+ * wrapper unless the current method already is one.
+ *
+ * @returns {Function} The wrapper, to pass to `removeConsoleListener`.
+ */
+function addConsoleListener(c, method, listener) {
+  let wrapper = c[method];
+  if (!wrapper?.[CONSOLE_STATE]) {
+    wrapper = createConsoleWrapper(c, { listeners: [], orig: wrapper });
+    c[method] = wrapper;
+  }
+  wrapper[CONSOLE_STATE].listeners.push(listener);
+  return wrapper;
+}
+
+function removeConsoleListener(c, method, wrapper, listener) {
+  const state = wrapper[CONSOLE_STATE];
+  const index = state.listeners.indexOf(listener);
+  if (index !== -1) {
+    state.listeners.splice(index, 1);
+  }
+  // If something else has wrapped the method since, restoring the original
+  // would remove that wrapper too, so leave this one as a pass-through.
+  if (!state.listeners.length && c[method] === wrapper) {
+    c[method] = state.orig;
+  }
+}
+
 function nameFromDescription(description) {
   if (!description || !description.attributes) {
     return null;
@@ -668,7 +724,7 @@ class Instrumenter {
     let b;
     while (this.replacements['log'].length) {
       b = this.replacements['log'].shift();
-      this._window.console[b[0]] = b[1];
+      removeConsoleListener(b[0], b[1], b[2], b[3]);
     }
   }
 
@@ -681,14 +737,8 @@ class Instrumenter {
     const c = this._window.console;
 
     function wrapConsole(method) {
-      // eslint-disable-next-line strict
-      'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
-
-      const orig = c[method];
-      const origConsole = c;
       const level = method === 'warn' ? 'warning' : method;
-      c[method] = function () {
-        const args = Array.prototype.slice.call(arguments);
+      const listener = function (args) {
         try {
           const message = _.formatArgsAsString(args);
           self.telemeter.captureLog(message, level, null, _.now());
@@ -698,11 +748,9 @@ class Instrumenter {
           // since logging would call back into this wrapper.
           self.diagnostic.captureLog = { error: e?.message };
         }
-        if (orig) {
-          Function.prototype.apply.call(orig, origConsole, args);
-        }
       };
-      self.replacements['log'].push([method, orig]);
+      const wrapper = addConsoleListener(c, method, listener);
+      self.replacements['log'].push([c, method, wrapper, listener]);
     }
     const methods = ['debug', 'info', 'warn', 'error', 'log'];
     try {

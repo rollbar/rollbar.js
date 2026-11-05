@@ -197,6 +197,87 @@ describe('instrumentConsole', function () {
     expect(log.calledOnceWithExactly('hello')).to.eql(true);
     expect(instrumenter.diagnostic.captureLog).to.eql({ error: 'boom' });
   });
+
+  it('should share one console wrapper between instrumenters', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLogs = [sinon.spy(), sinon.spy(), sinon.spy()];
+
+    createInstrumenter(
+      { captureLog: captureLogs[0] },
+      windowMock,
+    ).instrumentConsole();
+    const wrapper = windowMock.console.log;
+    for (const captureLog of captureLogs.slice(1)) {
+      createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+    }
+
+    expect(windowMock.console.log).to.equal(wrapper);
+    windowMock.console.log('hello');
+    for (const captureLog of captureLogs) {
+      expect(captureLog.calledOnce).to.eql(true);
+      expect(captureLog.args[0][0]).to.eql('hello');
+    }
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should not overflow the stack with many instrumenters', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+
+    for (let i = 0; i < 20000; i++) {
+      createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+    }
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(captureLog.callCount).to.eql(20000);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should restore the original once the last instrumenter is removed', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = sinon.spy();
+    const second = sinon.spy();
+    const firstInstrumenter = createInstrumenter(
+      { captureLog: first },
+      windowMock,
+    );
+    const secondInstrumenter = createInstrumenter(
+      { captureLog: second },
+      windowMock,
+    );
+    firstInstrumenter.instrumentConsole();
+    secondInstrumenter.instrumentConsole();
+
+    firstInstrumenter.deinstrumentConsole();
+    windowMock.console.log('hello');
+    expect(first.called).to.eql(false);
+    expect(second.calledOnce).to.eql(true);
+
+    secondInstrumenter.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(log);
+  });
+
+  it('should keep a wrapper added later by someone else', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+    const instrumenter = createInstrumenter({ captureLog }, windowMock);
+    instrumenter.instrumentConsole();
+
+    const rollbarWrapper = windowMock.console.log;
+    const otherWrapper = sinon.spy((...args) => rollbarWrapper(...args));
+    windowMock.console.log = otherWrapper;
+    instrumenter.deinstrumentConsole();
+
+    expect(windowMock.console.log).to.equal(otherWrapper);
+    windowMock.console.log('hello');
+    expect(otherWrapper.calledOnce).to.eql(true);
+    expect(captureLog.called).to.eql(false);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
 });
 
 describe('instrumentDom', function () {
