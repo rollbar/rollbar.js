@@ -556,10 +556,10 @@ function addTransformsToNotifier(notifier, rollbar, gWindow) {
     .addTransform(sharedTransforms.addMessageWithError)
     .addTransform(sharedTransforms.addTelemetryData)
     .addTransform(sharedTransforms.addConfigToPayload)
+    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(transforms.addScrubber(rollbar.scrub))
     .addTransform(sharedTransforms.addPayloadOptions)
     .addTransform(sharedTransforms.userTransform(logger))
-    .addTransform(sharedTransforms.addConfiguredOptions)
     .addTransform(sharedTransforms.addDiagnosticKeys)
     .addTransform(sharedTransforms.itemToPayload);
 }

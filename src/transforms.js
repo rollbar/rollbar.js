@@ -103,7 +103,21 @@ function addFunctionOption(options, name) {
   }
 }
 
+/**
+ * Attaches the options passed by the caller to `data.notifier.configured_options`.
+ *
+ * Like `addConfigToPayload`, this only runs when `sendConfig` is enabled, since
+ * the configured options can hold person data or secrets supplied via `payload`.
+ * It must run before scrubbing and the user `transform` so both can act on it.
+ *
+ * @param {object} item - The item being built.
+ * @param {object} options - The active options, including `_configuredOptions`.
+ * @param {function} callback - Called with `(err, item)`.
+ */
 function addConfiguredOptions(item, options, callback) {
+  if (!options.sendConfig) {
+    return callback(null, item);
+  }
   var configuredOptions = options._configuredOptions;
 
   // These must be stringified or they'll get dropped during serialization.

@@ -121,16 +121,48 @@ describe('addConfiguredOptions', function () {
       accessToken: 'abc123',
       foo: 'bar',
       captureUncaught: true,
+      sendConfig: true,
       _configuredOptions: {
         accessToken: 'abc123',
         captureUncaught: true,
+        sendConfig: true,
       },
     };
     t.addConfiguredOptions(item, options, function (e, i) {
       expect(i.data.notifier.configured_options).to.eql({
         captureUncaught: true,
+        sendConfig: true,
       });
       done(e);
+    });
+  });
+
+  // https://github.com/rollbar/rollbar.js/issues/1085
+  [false, undefined].forEach(function (sendConfig) {
+    it(`does not add configured options when sendConfig is ${sendConfig}`, function (done) {
+      var item = {
+        data: {
+          body: {
+            message: 'hello world',
+          },
+          notifier: {
+            name: 'rollbar-js',
+          },
+        },
+      };
+      var options = {
+        accessToken: 'abc123',
+        sendConfig: sendConfig,
+        _configuredOptions: {
+          accessToken: 'abc123',
+          sendConfig: sendConfig,
+          payload: { person: { email: 'user@example.com' } },
+        },
+      };
+      t.addConfiguredOptions(item, options, function (e, i) {
+        expect(i.data.notifier).to.not.have.property('configured_options');
+        done(e);
+      });
     });
   });
 });

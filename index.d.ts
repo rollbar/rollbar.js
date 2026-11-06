@@ -202,6 +202,14 @@ declare namespace Rollbar {
     scrubPaths?: string[];
     scrubRequestBody?: boolean;
     scrubTelemetryInputs?: boolean;
+    /**
+     * When true, the SDK configuration is sent with each item: the resolved
+     * options in `custom._rollbarConfig`, and the options passed by the caller
+     * (with `accessToken` removed) in `notifier.configured_options`. Both go
+     * through scrubbing; `accessToken` in `custom._rollbarConfig` is redacted
+     * only while it is in `scrubFields` (the default). Defaults to false, in
+     * which case neither field is sent.
+     */
     sendConfig?: boolean;
     stackTraceLimit?: number;
     telemetryScrubber?: TelemetryScrubber;

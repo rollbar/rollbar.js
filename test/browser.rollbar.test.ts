@@ -1247,6 +1247,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       checkIgnore: function (_isUncaught, _args, _payload) {
         return false;
       },
@@ -1273,6 +1274,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       onSendCallback: function (_isUncaught, _args, payload) {
         payload.foo = 'bar';
       },
@@ -1300,6 +1302,7 @@ describe('callback options', function () {
 
     const options = {
       accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
       transform: function (data, _item) {
         data.foo = 'baz';
       },
@@ -1318,6 +1321,56 @@ describe('callback options', function () {
     expect(body.data.notifier.configured_options.transform.substr(0, 8)).to.eql(
       'function',
     );
+  });
+
+  // https://github.com/rollbar/rollbar.js/issues/1085
+  it('should not send configured_options when sendConfig is false', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: false,
+      payload: { person: { id: 1, email: 'user@example.com' } },
+      password: 'hunter2',
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test');
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.notifier).to.not.have.property('configured_options');
+    expect(JSON.stringify(body.data.notifier)).to.not.include('hunter2');
+  });
+
+  it('should scrub configured_options when sendConfig is true', async function () {
+    const server = window.server;
+    stubResponse(server);
+    server.requests.length = 0;
+
+    const options = {
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      sendConfig: true,
+      password: 'hunter2',
+    };
+    const rollbar = (window.rollbar = new Rollbar(options));
+
+    rollbar.log('test');
+
+    await setTimeoutAsync(1);
+
+    server.respond();
+
+    expect(server.requests.length).to.eql(1);
+    const body = JSON.parse(server.requests[0].requestBody);
+    expect(body.data.notifier.configured_options.sendConfig).to.eql(true);
+    expect(body.data.notifier.configured_options.password).to.match(/^\*+$/);
   });
 });
 
