@@ -210,6 +210,72 @@ describe('post', function () {
       }, 1);
     });
   });
+  describe('fetch errors', function () {
+    const fetchOptions = { ...options, transport: 'fetch' };
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    function post(callback, opts = fetchOptions) {
+      t.post({ accessToken, options: opts, payload, callback });
+    }
+
+    it('should callback with a retriable error on a network failure', function (done) {
+      sinon.stub(window, 'fetch').rejects(new TypeError('Failed to fetch'));
+      post(function (err, resp) {
+        expect(resp).to.not.be.ok;
+        expect(err.code).to.eql('ENOTFOUND');
+        expect(err.message).to.eql('Failed to fetch');
+        expect(err.cause).to.be.an.instanceof(TypeError);
+        done();
+      });
+    });
+    it('should callback with a retriable error when the timeout aborts the request', function (done) {
+      const fetchStub = sinon.stub(window, 'fetch').callsFake(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init.signal.addEventListener('abort', () => {
+              reject(new DOMException('signal is aborted', 'AbortError'));
+            });
+          }),
+      );
+      post(
+        function (err, resp) {
+          const init = fetchStub.firstCall.args[1];
+          expect(init.signal).to.be.an.instanceof(AbortSignal);
+          expect(init.headers).to.not.have.property('signal');
+          expect(resp).to.not.be.ok;
+          expect(err.code).to.eql('ETIMEDOUT');
+          done();
+        },
+        { ...fetchOptions, timeout: 10 },
+      );
+    });
+    it('should pass other errors through unchanged', function (done) {
+      const error = new Error('something else');
+      sinon.stub(window, 'fetch').rejects(error);
+      post(function (err) {
+        expect(err).to.equal(error);
+        expect(err.code).to.be.undefined;
+        done();
+      });
+    });
+    it('should not report an exception thrown by the callback as a failed request', async function () {
+      sinon
+        .stub(window, 'fetch')
+        .resolves(new Response('{"err": 0}', { status: 200 }));
+      const callback = sinon.spy(function (_err) {
+        throw new TypeError('bug in the callback');
+      });
+
+      post(callback);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(callback.calledOnce).to.be.true;
+      expect(callback.firstCall.args[0]).to.be.null;
+    });
+  });
 });
 
 const TestRequest = function (response, status, shouldThrowOnSend) {

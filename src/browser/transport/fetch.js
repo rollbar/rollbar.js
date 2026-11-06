@@ -23,7 +23,6 @@ function makeFetchRequest({
   headers = {
     'Content-Type': 'application/json',
     'X-Rollbar-Access-Token': accessToken,
-    signal: controller && controller.signal,
     ...headers,
   };
 
@@ -31,6 +30,7 @@ function makeFetchRequest({
     method,
     headers,
     body: payload,
+    signal: controller && controller.signal,
   })
     .then(function (response) {
       if (timeoutId) clearTimeout(timeoutId);
@@ -50,12 +50,49 @@ function makeFetchRequest({
         : {};
 
       const json = response.json();
-      callback(null, json, headers);
+      try {
+        callback(null, json, headers);
+      } catch (e) {
+        // Otherwise `.catch` below would take this (often a TypeError) for a
+        // network failure, and the item that was just delivered would be
+        // retried.
+        logger.error(e && e.message);
+      }
     })
     .catch(function (error) {
+      if (timeoutId) clearTimeout(timeoutId);
       logger.error(error.message);
-      callback(error);
+      callback(_toTransportError(error));
     });
+}
+
+/**
+ * Converts a fetch rejection into the error shape the queue understands.
+ *
+ * fetch rejects with a `TypeError` when the request fails at the network
+ * layer (offline, DNS failure, connection refused or reset) and with an
+ * `AbortError` when the timeout above aborts it. Neither carries a `code`, so
+ * `Queue` can't tell them from other failures and never retries them. Give
+ * them the same codes the XHR transport and the Node transport use.
+ *
+ * @param {Error} error - The rejection reason from `fetch`.
+ * @returns {Error} An error with a retriable `code` for network failures and
+ *   timeouts, otherwise `error` unchanged.
+ */
+function _toTransportError(error) {
+  let code;
+  if (error && error.name === 'AbortError') {
+    code = 'ETIMEDOUT';
+  } else if (error instanceof TypeError) {
+    code = 'ENOTFOUND';
+  } else {
+    return error;
+  }
+  // DOMException (AbortError) has a read-only `code`, so wrap rather than mutate.
+  const err = new Error(error.message);
+  err.code = code;
+  err.cause = error;
+  return err;
 }
 
 export default makeFetchRequest;
