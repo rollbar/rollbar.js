@@ -281,19 +281,32 @@ class Queue {
   }
 
   _maybeLog(data, originalError) {
-    if (this.logger && this.options.verbose) {
-      let message =
-        originalError ||
+    this.maybeLogVerbose(
+      originalError ||
         _.get(data, 'body.trace.exception.message') ||
-        _.get(data, 'body.trace_chain.0.exception.message');
-      if (message) {
-        this.logger.error(message);
-        return;
-      }
-      message = _.get(data, 'body.message.body');
-      if (message) {
-        this.logger.log(message);
-      }
+        _.get(data, 'body.trace_chain.0.exception.message'),
+      _.get(data, 'body.message.body'),
+      data && data.level,
+    );
+  }
+
+  /**
+   * Echoes an item to the console when the `verbose` option is set. Errors are
+   * preferred over messages, so an item carrying both is logged once.
+   *
+   * @param error - The error (or error message) of the item, if any
+   * @param message - The message of the item, if any
+   * @param level - The Rollbar level of the item, used to pick the console
+   *  method for messages
+   */
+  maybeLogVerbose(error, message, level) {
+    if (!this.logger || !this.options.verbose) {
+      return;
+    }
+    if (error) {
+      this.logger.verbose('error', error);
+    } else if (message) {
+      this.logger.verbose(consoleMethodForLevel(level), message);
     }
   }
 
@@ -310,6 +323,24 @@ class Queue {
       return true;
     }
     return false;
+  }
+}
+
+/**
+ * Maps a Rollbar level to the console method used for verbose output.
+ *
+ * @param {string} level - A Rollbar level, e.g. `'warning'`
+ * @returns {string} The name of a console method
+ */
+function consoleMethodForLevel(level) {
+  switch (level) {
+    case 'critical':
+    case 'error':
+      return 'error';
+    case 'warning':
+      return 'warn';
+    default:
+      return 'info';
   }
 }
 

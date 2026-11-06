@@ -45,6 +45,7 @@ function TestLoggerGenerator() {
       log: [],
       error: [],
       info: [],
+      verbose: [],
     };
   };
   TestLogger.prototype.log = function () {
@@ -55,6 +56,9 @@ function TestLoggerGenerator() {
   };
   TestLogger.prototype.info = function () {
     this.calls.info.push(arguments);
+  };
+  TestLogger.prototype.verbose = function () {
+    this.calls.verbose.push(arguments);
   };
   return TestLogger;
 }
@@ -184,7 +188,8 @@ describe('addItem', function () {
         };
         queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
-          expect(logger.calls.error[0][0]).to.eql('hello');
+          expect(logger.calls.verbose[0][0]).to.eql('error');
+          expect(logger.calls.verbose[0][1]).to.eql('hello');
           done(err);
         });
       });
@@ -208,9 +213,37 @@ describe('addItem', function () {
         };
         queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
-          expect(logger.calls.log[0][0]).to.eql('hello');
+          expect(logger.calls.verbose[0][0]).to.eql('info');
+          expect(logger.calls.verbose[0][1]).to.eql('hello');
           done(err);
         });
+      });
+      it('should log messages with the console method matching their level', function () {
+        var rateLimiter = new (TestRateLimiterGenerator())();
+        var api = new (TestApiGenerator())();
+        var logger = new (TestLoggerGenerator())();
+        var options = { verbose: true, transmit: false };
+        var queue = new Queue(rateLimiter, api, logger, options);
+
+        ['critical', 'error', 'warning', 'info', 'debug'].forEach(
+          function (level) {
+            queue.addItem({
+              data: { level: level, body: { message: { body: level } } },
+            });
+          },
+        );
+
+        expect(
+          logger.calls.verbose.map(function (call) {
+            return [call[0], call[1]];
+          }),
+        ).to.eql([
+          ['error', 'critical'],
+          ['error', 'error'],
+          ['warn', 'warning'],
+          ['info', 'info'],
+          ['info', 'debug'],
+        ]);
       });
       it('should not call the logger if verbose is false', function (done) {
         var rateLimiter = new (TestRateLimiterGenerator())();
@@ -232,7 +265,7 @@ describe('addItem', function () {
         };
         queue.addItem({ data: item }, function (err, resp) {
           expect(resp).to.eql(serverResponse);
-          expect(logger.calls.log.length).to.eql(0);
+          expect(logger.calls.verbose.length).to.eql(0);
           done(err);
         });
       });
