@@ -639,6 +639,229 @@ describe('telemetry', function () {
     });
   });
 
+  // rollbar/rollbar.js#982: code that runs `new Rollbar(...)` more than once
+  // (a Lambda handler, a test suite) used to wrap `http.request` once per
+  // instance, so each request got one `error` listener per instance.
+  describe('with multiple instances instrumenting the network', function () {
+    const instanceCount = 12;
+    let originalHttpRequest;
+    let originalHttpsRequest;
+    let originalFetch;
+    let instances;
+    let warnings;
+
+    function onWarning(warning) {
+      warnings.push(warning);
+    }
+
+    function createInstances(count) {
+      for (let i = 0; i < count; i++) {
+        instances.push(
+          new Rollbar({
+            accessToken: 'abc123',
+            autoInstrument: { network: true, log: false },
+          }),
+        );
+      }
+    }
+
+    function networkEvents(instance) {
+      return instance.client.telemeter
+        .copyEvents()
+        .filter((event) => event.type === 'network');
+    }
+
+    beforeEach(function () {
+      originalHttpRequest = http.request;
+      originalHttpsRequest = https.request;
+      originalFetch = globalThis.fetch;
+      instances = [];
+      warnings = [];
+      process.on('warning', onWarning);
+    });
+
+    afterEach(function () {
+      process.removeListener('warning', onWarning);
+      instances.forEach((instance) => {
+        instance.instrumenter.deinstrumentNetwork();
+      });
+      nock.cleanAll();
+    });
+
+    it('adds a single error listener per request', async function () {
+      createInstances(instanceCount);
+      stubGetWithResponse('http://example.com', 200, testHeaders3, testBody1);
+
+      const req = http.request('http://example.com/api/users');
+      const errorListeners = req.listenerCount('error');
+      const response = new Promise((resolve, reject) => {
+        req.on('response', resolve);
+        req.on('error', reject);
+      });
+      req.end();
+      await response;
+      // process.emitWarning() delivers on the next tick.
+      await wait(10);
+
+      expect(errorListeners).to.equal(1);
+      expect(
+        warnings.filter((w) => w.name === 'MaxListenersExceededWarning'),
+      ).to.deep.equal([]);
+    });
+
+    it('wraps http.request, https.request and fetch only once', function () {
+      createInstances(1);
+      const wrappedHttpRequest = http.request;
+      const wrappedHttpsRequest = https.request;
+      const wrappedFetch = globalThis.fetch;
+
+      createInstances(instanceCount - 1);
+
+      expect(wrappedHttpRequest).to.not.equal(originalHttpRequest);
+      expect(http.request).to.equal(wrappedHttpRequest);
+      expect(https.request).to.equal(wrappedHttpsRequest);
+      expect(globalThis.fetch).to.equal(wrappedFetch);
+    });
+
+    it('records each http request once in every instance', async function () {
+      createInstances(3);
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+
+      await request(https, 'https://example.com/api/users', { method: 'GET' });
+
+      instances.forEach((instance) => {
+        const events = networkEvents(instance);
+        expect(events).to.have.lengthOf(1);
+        expect(events[0].body.url).to.equal('https://example.com/api/users');
+        expect(events[0].body.status_code).to.equal(200);
+      });
+    });
+
+    it('records each request error once in every instance', async function () {
+      createInstances(3);
+      stubGetWithError('https://example.com');
+
+      const error = await request(
+        https,
+        'https://example.com/api/users',
+        {},
+      ).catch((e) => e);
+
+      expect(error).to.be.instanceof(Error);
+      instances.forEach((instance) => {
+        const events = networkEvents(instance);
+        expect(events).to.have.lengthOf(1);
+        expect(events[0].body.status_code).to.equal(0);
+        expect(events[0].body.error).to.equal('Error: dns error');
+      });
+    });
+
+    it('keeps http request headers separate per instance', async function () {
+      const sessionId = 'test-session-id';
+      const asyncLocalStorage = new AsyncLocalStorage();
+      const headersOnly = () =>
+        new Rollbar({
+          accessToken: 'abc123',
+          autoInstrument: {
+            network: true,
+            log: false,
+            networkRequestHeaders: true,
+          },
+        });
+      const headersBefore = headersOnly();
+      const propagating = new Rollbar({
+        accessToken: 'abc123',
+        tracing: {
+          propagation: {
+            enabledHeaders: ['baggage'],
+            enabledCorsUrls: ['https://example.com/api/users'],
+          },
+        },
+        autoInstrument: {
+          network: true,
+          log: false,
+          networkRequestHeaders: true,
+        },
+      });
+      propagating.client.asyncLocalStorage = asyncLocalStorage;
+      const headersAfter = headersOnly();
+      instances.push(headersBefore, propagating, headersAfter);
+      stubGetWithResponse('https://example.com', 200, testHeaders3, testBody1);
+
+      await asyncLocalStorage.run({ sessionId }, () =>
+        request(https, 'https://example.com/api/users', {
+          method: 'GET',
+          headers: testHeaders1(),
+        }),
+      );
+
+      const requestHeaders = (instance) =>
+        networkEvents(instance)[0].body.request_headers;
+      expect(requestHeaders(propagating)).to.deep.equal({
+        ...testHeaders1(),
+        baggage: `rollbar.session.id=${sessionId}`,
+      });
+      expect(requestHeaders(headersBefore)).to.deep.equal(testHeaders1());
+      expect(requestHeaders(headersAfter)).to.deep.equal(testHeaders1());
+    });
+
+    it('records each fetch once in every instance', async function () {
+      if (typeof fetch !== 'function') {
+        this.skip();
+      }
+      const originalDispatcher = getGlobalDispatcher();
+      const mockAgent = new MockAgent();
+      mockAgent.disableNetConnect();
+      setGlobalDispatcher(mockAgent);
+      mockAgent
+        .get('https://example.com')
+        .intercept({ path: '/api/users', method: 'GET' })
+        .reply(200, testBody1, { headers: testHeaders3 });
+
+      try {
+        createInstances(3);
+        const response = await fetch('https://example.com/api/users');
+
+        expect(response.status).to.equal(200);
+        instances.forEach((instance) => {
+          const events = networkEvents(instance);
+          expect(events).to.have.lengthOf(1);
+          expect(events[0].body.subtype).to.equal('fetch');
+          expect(events[0].body.status_code).to.equal(200);
+        });
+      } finally {
+        await mockAgent.close();
+        setGlobalDispatcher(originalDispatcher);
+      }
+    });
+
+    it('keeps instrumenting other instances when one deinstruments', async function () {
+      createInstances(2);
+      const [first, second] = instances;
+      const wrappedHttpRequest = http.request;
+
+      first.instrumenter.deinstrumentNetwork();
+      stubGetWithResponse('http://example.com', 200, testHeaders3, testBody1);
+      await request(http, 'http://example.com/api/users', { method: 'GET' });
+
+      expect(http.request).to.equal(wrappedHttpRequest);
+      expect(networkEvents(first)).to.have.lengthOf(0);
+      expect(networkEvents(second)).to.have.lengthOf(1);
+    });
+
+    it('restores the originals once every instance deinstruments', function () {
+      createInstances(instanceCount);
+
+      instances.forEach((instance) => {
+        instance.instrumenter.deinstrumentNetwork();
+      });
+
+      expect(http.request).to.equal(originalHttpRequest);
+      expect(https.request).to.equal(originalHttpsRequest);
+      expect(globalThis.fetch).to.equal(originalFetch);
+    });
+  });
+
   describe('while using autoinstrument', function () {
     it('mergeOptions should correctly handle URL and options', function () {
       const optionsUsingStringUrl = mergeOptions(
