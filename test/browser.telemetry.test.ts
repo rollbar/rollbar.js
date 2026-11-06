@@ -700,6 +700,111 @@ describe('instrumentDom', function () {
   });
 });
 
+// https://github.com/rollbar/rollbar.js/issues/1296 (and #1129)
+describe('instrument in a global without a DOM', function () {
+  /**
+   * Mimics the Cloudflare Workers (workerd) global scope: no `document`, and
+   * an `addEventListener` that rejects capture and passive listeners. The
+   * error messages are the ones workerd 1.20260426.1 throws.
+   *
+   * @returns The mock global and the event types it accepted listeners for.
+   */
+  function createWorkerdGlobal() {
+    const listeners: string[] = [];
+    return {
+      listeners,
+      workerdGlobal: {
+        console: { log() {} },
+        addEventListener(type: string, _handler: unknown, options?: unknown) {
+          if (options === true) {
+            throw new TypeError(
+              'addEventListener(): useCapture must be false.',
+            );
+          }
+          const opts = (options || {}) as AddEventListenerOptions;
+          if (opts.capture) {
+            throw new TypeError(
+              'addEventListener(): options.capture must be false.',
+            );
+          }
+          if (opts.passive) {
+            throw new TypeError(
+              'addEventListener(): options.passive must be false.',
+            );
+          }
+          listeners.push(type);
+        },
+        removeEventListener() {},
+      },
+    };
+  }
+
+  it('should not throw with the default autoInstrument settings', function () {
+    const { workerdGlobal, listeners } = createWorkerdGlobal();
+    const i = createInstrumenter({}, workerdGlobal);
+
+    expect(() => i.instrument()).to.not.throw();
+    expect(listeners).to.eql(['online', 'offline']);
+    expect(i.diagnostic).to.not.have.property('addListener');
+  });
+
+  it('should not throw with autoInstrument.dom disabled', function () {
+    const { workerdGlobal, listeners } = createWorkerdGlobal();
+    const i = new Instrumenter(
+      { scrubFields: [], autoInstrument: { dom: false } },
+      {},
+      { wrap: () => {}, client: { notifier: { diagnostic: {} } } },
+      workerdGlobal,
+    );
+
+    expect(() => i.instrument()).to.not.throw();
+    expect(listeners).to.eql(['online', 'offline']);
+  });
+
+  it('should not add DOM listeners when there is no document', function () {
+    const addEventListener = sinon.spy();
+    const i = createInstrumenter({}, { addEventListener });
+    i.instrumentDom();
+
+    expect(addEventListener.called).to.eql(false);
+  });
+
+  it('should keep capture and passive DOM listeners when there is a document', function () {
+    const addEventListener = sinon.spy();
+    const i = createInstrumenter({}, { document: {}, addEventListener });
+    i.instrumentDom();
+
+    expect(addEventListener.calledWith('click')).to.eql(true);
+    for (const call of addEventListener.getCalls()) {
+      expect(call.args[2]).to.eql({ capture: true, passive: true });
+    }
+  });
+
+  it('should record a diagnostic instead of throwing when a listener is rejected', function () {
+    const addEventListener = sinon.stub().throws(new TypeError('nope'));
+    const i = createInstrumenter({}, { addEventListener });
+
+    expect(() => i.instrumentConnectivity()).to.not.throw();
+    expect(i.diagnostic.addListener).to.eql({
+      connectivity: { online: 'nope', offline: 'nope' },
+    });
+    expect(() => i.deinstrumentConnectivity()).to.not.throw();
+  });
+
+  it('should not throw when a listener is rejected and the client has no diagnostic', function () {
+    const addEventListener = sinon.stub().throws(new TypeError('nope'));
+    const i = new Instrumenter(
+      { scrubFields: [] },
+      {},
+      { wrap: () => {}, client: { notifier: {} } },
+      { addEventListener },
+    );
+
+    expect(() => i.instrumentConnectivity()).to.not.throw();
+    expect(addEventListener.callCount).to.eql(2);
+  });
+});
+
 /**
  * Creates an Instrumenter wired to a stub telemeter and mock window.
  *
