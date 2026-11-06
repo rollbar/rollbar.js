@@ -121,7 +121,8 @@ export async function parallelMap(xs, f, c) {
  *
  * Supports `||` alternatives, space-separated comparators, the `^`, `~`, `>=`,
  * `>`, `<=`, `<` and `=` operators, and partial versions (`>=18`, `^22.12`).
- * Prerelease tags are not supported.
+ * Prerelease tags are not supported in ranges. As in node-semver, a prerelease
+ * version (eg. a `27.0.0-nightly` build) therefore satisfies no range.
  *
  * @param {string} version - The version to check, eg. `process.versions.node`.
  * @param {string} range - The range to check against.
@@ -130,9 +131,21 @@ export async function parallelMap(xs, f, c) {
  * @example
  * satisfiesRange('22.23.3', '^22.22.3 || ^24.15.0 || >=26.0.0'); // true
  * satisfiesRange('20.19.2', '>=18'); // true
+ * satisfiesRange('27.0.0-alpha.0', '>=26.0.0'); // false
  */
 export function satisfiesRange(version, range) {
-  const v = version.replace(/^v/, '').split('.').map(Number);
+  const [release, prerelease] = version
+    .replace(/^v/, '')
+    .replace(/\+.*$/, '')
+    .split(/-(.*)/);
+  const v = release.split('.').map(Number);
+
+  // node-semver only lets a prerelease satisfy a comparator that has a
+  // prerelease on the same release, and ranges here cannot have one. Tools
+  // such as the Angular CLI apply that rule and refuse to run on it.
+  if (prerelease) {
+    return false;
+  }
 
   return range.split('||').some((set) =>
     set
