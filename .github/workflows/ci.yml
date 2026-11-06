@@ -61,10 +61,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # setup-node resolves `latest` to the first entry of nodejs.org's
+      # index.json, which can be a prerelease (v27.0.0-alpha broke this leg).
+      # `*` with check-latest resolves against setup-node's manifest instead,
+      # where semver ranges skip prereleases: the newest stable release.
       - name: Set up node ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.node == 'latest' && '*' || matrix.node }}
+          check-latest: ${{ matrix.node == 'latest' }}
 
       - name: Update npm
         run: npm install -g npm@${{ matrix.npm }}
