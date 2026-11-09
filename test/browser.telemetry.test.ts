@@ -267,9 +267,11 @@ describe('instrumentConsole', function () {
     createInstrumenter({ captureLog }, windowMock).instrumentConsole();
 
     // A listener from another copy of the SDK that doesn't catch its errors.
-    windowMock.console.log._rollbarConsoleState.listeners.unshift(() => {
-      throw new Error('boom');
-    });
+    (windowMock.console.log as any)._rollbarConsoleState.listeners.unshift(
+      () => {
+        throw new Error('boom');
+      },
+    );
 
     expect(() => windowMock.console.log('hello')).to.not.throw();
     expect(captureLog.calledOnce).to.eql(true);
