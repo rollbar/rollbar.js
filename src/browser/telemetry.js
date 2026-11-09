@@ -52,7 +52,12 @@ function createConsoleWrapper(c, state) {
   const wrapper = function () {
     const args = Array.prototype.slice.call(arguments);
     for (const listener of state.listeners.slice()) {
-      listener(args);
+      try {
+        listener(args);
+      } catch (_e) {
+        // Listeners may come from other SDK copies on the page, so one that
+        // throws must not skip the others or the app's own console call.
+      }
     }
     if (state.orig) {
       Function.prototype.apply.call(state.orig, c, args);

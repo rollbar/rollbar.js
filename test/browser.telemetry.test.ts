@@ -260,6 +260,22 @@ describe('instrumentConsole', function () {
     expect(windowMock.console.log).to.equal(log);
   });
 
+  it('should call the original even if a listener throws', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+    createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+
+    // A listener from another copy of the SDK that doesn't catch its errors.
+    windowMock.console.log._rollbarConsoleState.listeners.unshift(() => {
+      throw new Error('boom');
+    });
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
   it('should keep a wrapper added later by someone else', function () {
     const log = sinon.spy();
     const windowMock = { console: { log } };
