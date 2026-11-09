@@ -45,6 +45,18 @@ function restore(replacements, type) {
  */
 const CONSOLE_STATE = '_rollbarConsoleState';
 
+/**
+ * Returns the shared state if `fn` is a Rollbar console wrapper, or undefined.
+ *
+ * Having the property is not enough: wrappers such as `sinon.spy` copy it from
+ * the function they wrap, and a Proxy forwards it. The state also records its
+ * own wrapper, so only that exact function counts.
+ */
+function consoleState(fn) {
+  const state = fn?.[CONSOLE_STATE];
+  return state?.wrapper === fn ? state : undefined;
+}
+
 function createConsoleWrapper(c, state) {
   // eslint-disable-next-line strict
   'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
@@ -63,6 +75,7 @@ function createConsoleWrapper(c, state) {
       Function.prototype.apply.call(state.orig, c, args);
     }
   };
+  state.wrapper = wrapper;
   wrapper[CONSOLE_STATE] = state;
   return wrapper;
 }
@@ -75,11 +88,11 @@ function createConsoleWrapper(c, state) {
  */
 function addConsoleListener(c, method, listener) {
   let wrapper = c[method];
-  if (!wrapper?.[CONSOLE_STATE]) {
+  if (!consoleState(wrapper)) {
     wrapper = createConsoleWrapper(c, { listeners: [], orig: wrapper });
     c[method] = wrapper;
   }
-  wrapper[CONSOLE_STATE].listeners.push(listener);
+  consoleState(wrapper).listeners.push(listener);
   return wrapper;
 }
 

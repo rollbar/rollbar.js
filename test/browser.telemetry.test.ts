@@ -296,6 +296,48 @@ describe('instrumentConsole', function () {
     expect(captureLog.called).to.eql(false);
     expect(log.calledOnceWithExactly('hello')).to.eql(true);
   });
+
+  it('should not mistake a spy that copied the wrapper state for the wrapper', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    // sinon copies the wrapped function's enumerable properties onto the spy.
+    const spy = sinon.spy(windowMock.console, 'log');
+    expect((spy as any)._rollbarConsoleState).to.exist;
+
+    const captureLog = sinon.spy();
+    const second = createInstrumenter({ captureLog }, windowMock);
+    second.instrumentConsole();
+    expect(windowMock.console.log).to.not.equal(spy);
+
+    windowMock.console.log('hello');
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(spy.calledOnceWithExactly('hello')).to.eql(true);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(spy);
+  });
+
+  it('should not mistake a Proxy of the wrapper for the wrapper', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    const proxy = new Proxy(windowMock.console.log, {});
+    windowMock.console.log = proxy;
+
+    const second = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    second.instrumentConsole();
+    expect(windowMock.console.log).to.not.equal(proxy);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(proxy);
+  });
 });
 
 describe('instrumentDom', function () {
