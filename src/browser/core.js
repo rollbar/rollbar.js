@@ -248,6 +248,9 @@ class Rollbar {
 
     this.instrumenter?.deinstrument();
     this.replay?.recorder?.stop();
+    // stop() keeps the buffered recording, and a later instance's hooks can
+    // keep this one reachable for the life of the page.
+    this.replay?.recorder?.clear();
     this.replay?.clear();
     // Only the notifier: the client's configure() would also re-apply this
     // instance's rate limits to the limiter every instance shares.

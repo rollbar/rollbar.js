@@ -2,10 +2,13 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import replayDefaults from '../src/browser/replay/defaults.js';
+import Replay from '../src/browser/replay/replay.js';
 import Rollbar from '../src/browser/rollbar.js';
 import RateLimiter from '../src/rateLimiter.js';
 
 import { fakeServer, stubResponse } from './browser.rollbar.test-utils.ts';
+import { allEvents } from './fixtures/replay/index.ts';
 import { setTimeoutAsync } from './util/timers.ts';
 
 function rejectionEvent(reason) {
@@ -220,6 +223,32 @@ describe('destroy', function () {
 
     expect(window.fetch).to.equal(originalFetch);
     expect(rollbar.client.notifier.options.enabled).to.equal(false);
+  });
+
+  it('should stop the replay recorder and drop its buffered recording', function () {
+    const rollbar = newInstance('TOKEN');
+    let emit;
+    const recordFn = (options) => {
+      emit = options.emit;
+      return () => {};
+    };
+    recordFn.takeFullSnapshot = () => {};
+    rollbar.replay = new Replay({
+      tracing: rollbar.tracing,
+      telemeter: rollbar.telemeter,
+      options: { ...replayDefaults, enabled: true, recordFn },
+    });
+    const recorder = rollbar.replay.recorder;
+    recorder.start();
+    emit(allEvents.meta, false);
+    emit(allEvents.fullSnapshot, false);
+    expect(recorder.isReady).to.equal(true);
+
+    rollbar.destroy();
+
+    expect(recorder.isRecording).to.equal(false);
+    expect(recorder.isReady).to.equal(false);
+    expect(recorder._buffers).to.eql([[], []]);
   });
 
   it('should be safe to call more than once', function () {
