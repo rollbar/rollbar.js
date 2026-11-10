@@ -358,6 +358,14 @@ class Rollbar {
     if (!this.options.inspectAnonymousErrors || !this.isChrome) {
       return;
     }
+    // The snippet replays its queued call on an instance that already set this
+    // up; installing again would record our own hook as the one to restore.
+    if (
+      this._prepareStackTrace &&
+      Error.prepareStackTrace === this._prepareStackTrace
+    ) {
+      return;
+    }
 
     const prepareStackTrace = (error, _stack) => {
       if (this.options.inspectAnonymousErrors) {

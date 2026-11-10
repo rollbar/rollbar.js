@@ -137,6 +137,48 @@ describe('destroy', function () {
     expect(requestTokens(window.server)).to.eql(['SECOND_TOKEN']);
   });
 
+  describe('anonymous error capture in Chrome', function () {
+    let originalChrome;
+    let originalPrepareStackTrace;
+
+    beforeEach(function () {
+      originalChrome = window.chrome;
+      originalPrepareStackTrace = Error.prepareStackTrace;
+      // ChromeHeadless doesn't expose chrome.runtime, which the check relies on.
+      window.chrome = { runtime: true };
+    });
+
+    afterEach(function () {
+      window.chrome = originalChrome;
+      Error.prepareStackTrace = originalPrepareStackTrace;
+    });
+
+    it('should restore the page Error.prepareStackTrace', function () {
+      const pagePrepareStackTrace = (error) => error.stack;
+      Error.prepareStackTrace = pagePrepareStackTrace;
+
+      const rollbar = newInstance('TOKEN', { inspectAnonymousErrors: true });
+      expect(Error.prepareStackTrace).to.not.equal(pagePrepareStackTrace);
+
+      rollbar.destroy();
+
+      expect(Error.prepareStackTrace).to.equal(pagePrepareStackTrace);
+    });
+
+    it('should restore it after the snippet replays handleAnonymousErrors', function () {
+      const pagePrepareStackTrace = (error) => error.stack;
+      Error.prepareStackTrace = pagePrepareStackTrace;
+
+      const rollbar = newInstance('TOKEN', { inspectAnonymousErrors: true });
+      // What the snippet loader replays on the full instance once it loads.
+      rollbar.handleAnonymousErrors();
+
+      rollbar.destroy();
+
+      expect(Error.prepareStackTrace).to.equal(pagePrepareStackTrace);
+    });
+  });
+
   it('should remove telemetry instrumentation', function () {
     const rollbar = newInstance('TOKEN');
     expect(window.fetch).to.not.equal(originalFetch);
