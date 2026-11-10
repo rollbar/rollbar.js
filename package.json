@@ -131,8 +131,13 @@
     "webpack-node-externals": "^3.0.0"
   },
   "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    },
     "mocha": {
-      "diff": "^8.0.3"
+      "diff": "^8.0.3",
+      "glob": "^14.0.4",
+      "minimatch": "^11.0.1"
     },
     "serialize-javascript": "^7.1.3"
   },
