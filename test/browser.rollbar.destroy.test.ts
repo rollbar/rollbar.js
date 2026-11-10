@@ -177,6 +177,67 @@ describe('destroy', function () {
 
       expect(Error.prepareStackTrace).to.equal(pagePrepareStackTrace);
     });
+
+    describe('with stacked instances', function () {
+      // What Chrome does for an error without an error object: onerror gets a
+      // null error and an empty url, then prepareStackTrace runs for it.
+      function anonymousError() {
+        window.onerror('Script error.', '', 0, 0, null);
+        Error.prepareStackTrace(new Error('anon error'), []);
+      }
+
+      function anonymousInstance(accessToken) {
+        return newInstance(accessToken, { inspectAnonymousErrors: true });
+      }
+
+      beforeEach(function () {
+        // Keep the test runner's own onerror out of the chain these tests call.
+        window.onerror = null;
+      });
+
+      it('should give the hook back to a live instance when destroyed in creation order', function () {
+        const container = anonymousInstance('CONTAINER_TOKEN');
+        const containerHook = Error.prepareStackTrace;
+        const containerLog = sinon.spy(container.client, 'log');
+        const first = anonymousInstance('FIRST_TOKEN');
+        const second = anonymousInstance('SECOND_TOKEN');
+
+        first.destroy();
+        second.destroy();
+
+        expect(Error.prepareStackTrace).to.equal(containerHook);
+        anonymousError();
+        expect(containerLog.calledOnce).to.equal(true);
+      });
+
+      it('should restore the page hook when destroyed in creation order', function () {
+        const pagePrepareStackTrace = (error) => error.stack;
+        Error.prepareStackTrace = pagePrepareStackTrace;
+        const first = anonymousInstance('FIRST_TOKEN');
+        const second = anonymousInstance('SECOND_TOKEN');
+
+        first.destroy();
+        second.destroy();
+
+        expect(Error.prepareStackTrace).to.equal(pagePrepareStackTrace);
+      });
+
+      it('should let an earlier instance see anonymous errors, so its count never goes stale', function () {
+        const container = anonymousInstance('CONTAINER_TOKEN');
+        const containerLog = sinon.spy(container.client, 'log');
+        const subApp = anonymousInstance('SUB_APP_TOKEN');
+        const subAppLog = sinon.spy(subApp.client, 'log');
+
+        anonymousError();
+        expect(containerLog.calledOnce).to.equal(true);
+        expect(subAppLog.calledOnce).to.equal(true);
+
+        subApp.destroy();
+        expect(container.anonymousErrorsPending).to.equal(0);
+        Error.prepareStackTrace(new Error('not anonymous'), []);
+        expect(containerLog.calledOnce).to.equal(true);
+      });
+    });
   });
 
   it('should remove telemetry instrumentation', function () {

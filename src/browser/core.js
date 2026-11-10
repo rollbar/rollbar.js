@@ -367,8 +367,9 @@ class Rollbar {
       return;
     }
 
-    const prepareStackTrace = (error, _stack) => {
-      if (this.options.inspectAnonymousErrors) {
+    const previous = Error.prepareStackTrace;
+    const prepareStackTrace = (error, stack) => {
+      if (!this._isDestroyed && this.options.inspectAnonymousErrors) {
         if (this.anonymousErrorsPending) {
           // This is the only known way to detect that onerror saw an anonymous error.
           // It depends on onerror reliably being called before Error.prepareStackTrace,
@@ -388,19 +389,28 @@ class Rollbar {
           error._isAnonymous = true;
 
           // url, lineno, colno shouldn't be needed for these errors.
-          // If that changes, update this accordingly, using the unused
-          // _stack param as needed (rather than parse error.toString()).
+          // If that changes, update this accordingly, using the stack param
+          // as needed (rather than parse error.toString()).
           this.handleUncaughtException(error.message, null, null, null, error);
         }
+      }
+
+      // Each Rollbar onerror calls the one it replaced, so an earlier instance
+      // counted this error as pending too and its hook must see it, or that
+      // count goes stale. Once destroyed, ours only passes it on. Hooks that
+      // aren't Rollbar's are not called, as before.
+      if (previous?._rollbarInstance) {
+        previous(error, stack);
       }
 
       // Workaround to ensure stack is preserved for normal errors.
       return error.stack;
     };
+    prepareStackTrace._rollbarInstance = this;
+    prepareStackTrace._rollbarPrevious = previous;
 
     // https://v8.dev/docs/stack-trace-api
     try {
-      this._oldPrepareStackTrace = Error.prepareStackTrace;
       Error.prepareStackTrace = prepareStackTrace;
       this._prepareStackTrace = prepareStackTrace;
     } catch (e) {
@@ -411,24 +421,31 @@ class Rollbar {
 
   /**
    * Puts back the `Error.prepareStackTrace` that `handleAnonymousErrors`
-   * replaced, unless something has replaced ours since.
+   * replaced, unless something has replaced ours since. Hooks of instances
+   * destroyed while ours was above them are skipped, so the hook that comes
+   * back belongs to a live instance or to the page.
    */
   _removeAnonymousErrorHandler() {
-    if (!this._prepareStackTrace) {
+    const ours = this._prepareStackTrace;
+    if (!ours) {
       return;
     }
+    this._prepareStackTrace = null;
     try {
-      if (Error.prepareStackTrace === this._prepareStackTrace) {
-        if (this._oldPrepareStackTrace === undefined) {
+      if (Error.prepareStackTrace === ours) {
+        let previous = ours._rollbarPrevious;
+        while (previous?._rollbarInstance?._isDestroyed) {
+          previous = previous._rollbarPrevious;
+        }
+        if (previous === undefined) {
           delete Error.prepareStackTrace;
         } else {
-          Error.prepareStackTrace = this._oldPrepareStackTrace;
+          Error.prepareStackTrace = previous;
         }
       }
     } catch (_e) {
       // Leave it: ours returns the normal stack and reports nothing once destroyed.
     }
-    this._prepareStackTrace = null;
   }
 
   handleUnhandledRejection(reason, promise) {
