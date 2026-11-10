@@ -701,6 +701,42 @@ describe('options.captureUncaught', function () {
       });
     });
 
+    // rollbar.js#991
+    it('should send bounded custom data when levels share their next level', async function () {
+      const server = window.server;
+      expect(server).to.exist;
+
+      stubResponse(server);
+      server.requests.length = 0;
+
+      const rollbar = (window.rollbar = new Rollbar({
+        accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      }));
+
+      let node: Record<string, unknown> = { leaf: true };
+      for (let i = 0; i < 40; i++) {
+        node = { left: node, right: node };
+      }
+
+      const start = Date.now();
+      rollbar.error(new Error('test error'), { data: node });
+      expect(Date.now() - start).to.be.below(1000);
+
+      await setTimeoutAsync(1);
+
+      server.respond();
+
+      const requestBody = server.requests[0].requestBody;
+      expect(requestBody.length).to.be.below(100000);
+      expect(requestBody).to.include('Removed duplicate reference: object');
+
+      let first = JSON.parse(requestBody).data.custom.data;
+      for (let i = 0; i < 40; i++) {
+        first = first.left;
+      }
+      expect(first).to.eql({ leaf: true });
+    });
+
     it('should send message when called with only null arguments', async function () {
       const server = window.server;
       expect(server).to.exist;

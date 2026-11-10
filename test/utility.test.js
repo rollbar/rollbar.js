@@ -560,6 +560,165 @@ describe('formatArgsAsString', function () {
   });
 });
 
+/**
+ * Builds custom data in which every level points twice at the same next level,
+ * so `levels + 1` distinct objects are reachable by `2 ** levels` paths. This
+ * is the shape that froze `rollbar.error()` in rollbar.js#991.
+ */
+function sharedChain(levels) {
+  let node = { leaf: true };
+  for (let i = 0; i < levels; i++) {
+    node = { left: node, right: node };
+  }
+  return node;
+}
+
+function countObjects(value) {
+  if (!value || typeof value !== 'object') {
+    return 0;
+  }
+  let count = 1;
+  for (const key in value) {
+    count += countObjects(value[key]);
+  }
+  return count;
+}
+
+describe('nonCircularClone', function () {
+  it('should copy plain data', function () {
+    const data = { a: 1, b: { c: 'two', d: [3, { e: null }] } };
+
+    const result = _.nonCircularClone(data);
+
+    expect(result).to.eql({
+      a: 1,
+      b: { c: 'two', d: { 0: 3, 1: { e: null } } },
+    });
+    expect(result.b).to.not.equal(data.b);
+  });
+
+  it('should keep every copy of an object referenced more than once', function () {
+    const user = { id: 1, name: 'someone' };
+
+    const result = _.nonCircularClone({
+      owner: user,
+      author: user,
+      list: [user, user],
+    });
+
+    expect(result).to.eql({
+      owner: user,
+      author: user,
+      list: { 0: user, 1: user },
+    });
+  });
+
+  it('should replace references back to an ancestor', function () {
+    const data = { name: 'root', child: { name: 'child' } };
+    data.child.parent = data;
+    data.child.self = data.child;
+
+    const result = _.nonCircularClone(data);
+
+    expect(result).to.eql({
+      name: 'root',
+      child: {
+        name: 'child',
+        parent: 'Removed circular reference: object',
+        self: 'Removed circular reference: object',
+      },
+    });
+  });
+
+  it('should not treat an object reused under different parents as circular', function () {
+    const shared = { value: 1 };
+    const data = {
+      a: { shared: shared },
+      b: { shared: shared, again: shared },
+    };
+
+    const result = _.nonCircularClone(data);
+
+    expect(result).to.eql({
+      a: { shared: { value: 1 } },
+      b: { shared: { value: 1 }, again: { value: 1 } },
+    });
+  });
+
+  // rollbar.js#991: before the repeat-copy limit, a 12-level chain produced
+  // 8,191 objects; every extra level doubled that, and 22 levels blocked
+  // rollbar.error() for seconds.
+  it('should bound the copy when levels share their next level', function () {
+    const result = _.nonCircularClone(sharedChain(12));
+
+    expect(countObjects(result)).to.be.at.most(13 + 1000);
+    expect(JSON.stringify(result)).to.include(
+      'Removed duplicate reference: object',
+    );
+
+    // The first path is always copied in full.
+    let node = result;
+    for (let i = 0; i < 12; i++) {
+      node = node.left;
+    }
+    expect(node).to.eql({ leaf: true });
+  });
+
+  it('should copy a deep shared chain without blocking', function () {
+    const start = Date.now();
+    const result = _.nonCircularClone(sharedChain(20));
+
+    // Before the limit this took ~750 ms and produced 2,097,151 objects.
+    expect(Date.now() - start).to.be.below(500);
+    expect(countObjects(result)).to.be.at.most(21 + 1000);
+  });
+
+  it('should stop repeating an object after 1000 repeat copies', function () {
+    const shared = { value: 1 };
+    const list = [];
+    for (let i = 0; i < 1500; i++) {
+      list.push(shared);
+    }
+
+    const result = _.nonCircularClone(list);
+
+    expect(result[0]).to.eql(shared);
+    expect(result[1000]).to.eql(shared);
+    expect(result[1001]).to.eql('Removed duplicate reference: object');
+    expect(result[1499]).to.eql('Removed duplicate reference: object');
+  });
+
+  it('should report data that cannot be read', function () {
+    const data = {
+      get broken() {
+        throw new Error('nope');
+      },
+    };
+
+    expect(_.nonCircularClone({ nested: data })).to.eql({
+      nested: 'Failed cloning custom data: nope',
+    });
+  });
+
+  it('should keep copying the rest of the data after one branch fails', function () {
+    const shared = { value: 1 };
+    const data = {
+      bad: {
+        shared: shared,
+        get broken() {
+          throw new Error('nope');
+        },
+      },
+      good: shared,
+    };
+
+    const result = _.nonCircularClone(data);
+
+    expect(result.bad).to.eql('Failed cloning custom data: nope');
+    expect(result.good).to.eql({ value: 1 });
+  });
+});
+
 describe('addItemAttributes', function () {
   it('should skip undefined values', function () {
     const item = { data: {} };

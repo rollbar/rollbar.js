@@ -416,13 +416,56 @@ function wrapCallback(logger, f) {
   };
 }
 
-function nonCircularClone(obj) {
-  var seen = [obj];
+// Enough to keep ordinary shared references such as `{ a: user, b: user }`
+// intact, while bounding the work for data whose shared references multiply.
+var MAX_REPEATED_COPIES = 1000;
 
-  function clone(obj, seen) {
+/**
+ * Deep-copies custom data into a tree that is safe to merge, scrub and
+ * serialize.
+ *
+ * A reference to an object that is already being copied further up the same
+ * path is replaced with `'Removed circular reference: <type>'`.
+ *
+ * An object reachable by several paths is copied again for each path, but at
+ * most `MAX_REPEATED_COPIES` repeat copies are made in total; after that, each
+ * further repeat is replaced with `'Removed duplicate reference: <type>'`. The
+ * first copy of every object is always complete. Without this limit, data in
+ * which every level points more than once at the next level (an object graph
+ * with shared, non-circular references) doubles the copy at every level and
+ * blocks the caller for seconds or minutes (rollbar.js#991).
+ *
+ * @param {object|Array} obj - The custom data to copy.
+ * @returns {object|string} The copy, with arrays converted to objects keyed by
+ *   index, or a failure message if the data could not be read.
+ */
+function nonCircularClone(obj) {
+  var ancestors = new Set();
+  var copied = new Set();
+  var repeatedCopies = 0;
+
+  function cloneReference(value) {
+    if (ancestors.has(value)) {
+      return 'Removed circular reference: ' + typeName(value);
+    }
+    if (copied.has(value)) {
+      if (repeatedCopies >= MAX_REPEATED_COPIES) {
+        return 'Removed duplicate reference: ' + typeName(value);
+      }
+      repeatedCopies++;
+    }
+    copied.add(value);
+    ancestors.add(value);
+    try {
+      return clone(value);
+    } finally {
+      ancestors.delete(value);
+    }
+  }
+
+  function clone(obj) {
     var value,
       name,
-      newSeen,
       result = {};
 
     try {
@@ -430,13 +473,7 @@ function nonCircularClone(obj) {
         value = obj[name];
 
         if (value && (isType(value, 'object') || isType(value, 'array'))) {
-          if (seen.includes(value)) {
-            result[name] = 'Removed circular reference: ' + typeName(value);
-          } else {
-            newSeen = seen.slice();
-            newSeen.push(value);
-            result[name] = clone(value, newSeen);
-          }
+          result[name] = cloneReference(value);
           continue;
         }
 
@@ -447,7 +484,8 @@ function nonCircularClone(obj) {
     }
     return result;
   }
-  return clone(obj, seen);
+
+  return cloneReference(obj);
 }
 
 function createItem(args, logger, notifier, requestKeys, lambdaContext) {
@@ -1034,6 +1072,7 @@ export {
   LEVELS,
   makeUnhandledStackInfo,
   merge,
+  nonCircularClone,
   now,
   redact,
   sanitizeHref,

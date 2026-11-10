@@ -393,4 +393,69 @@ describe('rollbar logging and tracing', function () {
       });
     });
   });
+
+  // rollbar.js#991: custom data whose levels share sub-objects blocked
+  // rollbar.error() while it was copied, before any user transform could run.
+  describe('custom data with shared references', function () {
+    function sharedChain(levels) {
+      let node = { leaf: true };
+      for (let i = 0; i < levels; i++) {
+        node = { left: node, right: node };
+      }
+      return node;
+    }
+
+    async function logAndCapturePayload(options, ...args) {
+      let resolvePayload;
+      const payloadPromise = new Promise((resolve) => {
+        resolvePayload = resolve;
+      });
+      const rollbar = new Rollbar({
+        accessToken: 'abc123',
+        captureUncaught: false,
+        captureUnhandledRejections: false,
+        ...options,
+        transform: (data) => {
+          resolvePayload(data);
+        },
+        checkIgnore: () => true,
+      });
+
+      const start = Date.now();
+      rollbar.error(...args);
+      const blocked = Date.now() - start;
+      const payload = await payloadPromise;
+      return { payload, blocked };
+    }
+
+    it('should send bounded custom data without blocking', async function () {
+      // Before the fix, 16 levels took 3.7 s to reach the transform and
+      // produced 2 MB of custom data; 18 levels took 50 s.
+      const { payload, blocked } = await logAndCapturePayload(
+        {},
+        new Error('shared references'),
+        { data: sharedChain(16) },
+      );
+
+      expect(blocked).to.be.below(1000);
+      const json = JSON.stringify(payload.custom);
+      expect(json.length).to.be.below(100000);
+      expect(json).to.include('Removed duplicate reference: object');
+    });
+
+    it('should bound error.rollbarContext the same way', async function () {
+      const error = new Error('shared references in context');
+      error.rollbarContext = { data: sharedChain(16) };
+
+      const { payload, blocked } = await logAndCapturePayload(
+        { addErrorContext: true },
+        error,
+      );
+
+      expect(blocked).to.be.below(1000);
+      const json = JSON.stringify(payload.custom);
+      expect(json.length).to.be.below(100000);
+      expect(json).to.include('Removed duplicate reference: object');
+    });
+  });
 });
