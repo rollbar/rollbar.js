@@ -110,6 +110,10 @@ class Rollbar {
   }
 
   configure(options, payloadData) {
+    if (this._isDestroyed) {
+      logger.warn('Rollbar.configure() called on a destroyed instance.');
+      return this;
+    }
     if (options.logLevel) {
       logger.init({ logLevel: options.logLevel });
     }
@@ -210,6 +214,49 @@ class Rollbar {
     return this.replay.triggerReplay(context);
   }
 
+  /**
+   * Detaches this instance from the page so it can be discarded, e.g. when a
+   * micro-frontend that created its own Rollbar instance is unmounted.
+   *
+   * Removes the `window.onerror` handler, the `unhandledrejection` listener,
+   * all telemetry instrumentation and the session replay recorder, stops the
+   * retry timer, and disables reporting. Later calls to `log()`, `error()`,
+   * etc. are dropped. If this was the instance created by `Rollbar.init()`,
+   * the next `Rollbar.init()` creates a new one.
+   *
+   * Hooks that another Rollbar instance or the app installed on top of ours
+   * are never overwritten; ours stays in their chain and passes calls through
+   * without reporting. The `addEventListener` wrappers installed by
+   * `wrapGlobalEventHandlers` also stay, because removing them would stop
+   * `removeEventListener` from finding listeners they already wrapped.
+   *
+   * Items still being sent are not cancelled, but queued retries are dropped.
+   * Call `wait()` first to let pending items finish sending.
+   */
+  destroy() {
+    if (this._isDestroyed) {
+      return;
+    }
+    this._isDestroyed = true;
+
+    const gWindow = _gWindow();
+    globals.removeUncaughtExceptions(gWindow, this, this._onErrorHandler);
+    globals.removeUnhandledRejections(gWindow, this._unhandledRejectionHandler);
+    this._onErrorHandler = null;
+    this._unhandledRejectionHandler = null;
+    this._removeAnonymousErrorHandler();
+
+    this.instrumenter?.deinstrument();
+    this.replay?.recorder?.stop();
+    this.replay?.clear();
+    this.client.configure({ enabled: false });
+    this.client.queue.destroy();
+
+    if (_instance === this) {
+      _instance = null;
+    }
+  }
+
   setupUnhandledCapture() {
     var gWindow = _gWindow();
 
@@ -218,7 +265,7 @@ class Rollbar {
         this.options.captureUncaught ||
         this.options.handleUncaughtExceptions
       ) {
-        globals.captureUncaughtExceptions(gWindow, this);
+        this._onErrorHandler = globals.captureUncaughtExceptions(gWindow, this);
         if (this.wrapGlobals && this.options.wrapGlobalEventHandlers) {
           this.wrapGlobals(gWindow, this);
         }
@@ -230,7 +277,10 @@ class Rollbar {
         this.options.captureUnhandledRejections ||
         this.options.handleUnhandledRejections
       ) {
-        globals.captureUnhandledRejections(gWindow, this);
+        this._unhandledRejectionHandler = globals.captureUnhandledRejections(
+          gWindow,
+          this,
+        );
         this.unhandledRejectionsInitialized = true;
       }
     }
@@ -238,8 +288,8 @@ class Rollbar {
 
   handleUncaughtException(message, url, lineno, colno, error, context) {
     if (
-      !this.options.captureUncaught &&
-      !this.options.handleUncaughtExceptions
+      this._isDestroyed ||
+      (!this.options.captureUncaught && !this.options.handleUncaughtExceptions)
     ) {
       return;
     }
@@ -333,17 +383,42 @@ class Rollbar {
 
     // https://v8.dev/docs/stack-trace-api
     try {
+      this._oldPrepareStackTrace = Error.prepareStackTrace;
       Error.prepareStackTrace = prepareStackTrace;
+      this._prepareStackTrace = prepareStackTrace;
     } catch (e) {
       this.options.inspectAnonymousErrors = false;
       this.error('anonymous error handler failed', e);
     }
   }
 
+  /**
+   * Puts back the `Error.prepareStackTrace` that `handleAnonymousErrors`
+   * replaced, unless something has replaced ours since.
+   */
+  _removeAnonymousErrorHandler() {
+    if (!this._prepareStackTrace) {
+      return;
+    }
+    try {
+      if (Error.prepareStackTrace === this._prepareStackTrace) {
+        if (this._oldPrepareStackTrace === undefined) {
+          delete Error.prepareStackTrace;
+        } else {
+          Error.prepareStackTrace = this._oldPrepareStackTrace;
+        }
+      }
+    } catch (_e) {
+      // Leave it: ours returns the normal stack and reports nothing once destroyed.
+    }
+    this._prepareStackTrace = null;
+  }
+
   handleUnhandledRejection(reason, promise) {
     if (
-      !this.options.captureUnhandledRejections &&
-      !this.options.handleUnhandledRejections
+      this._isDestroyed ||
+      (!this.options.captureUnhandledRejections &&
+        !this.options.handleUnhandledRejections)
     ) {
       return;
     }
@@ -537,6 +612,7 @@ class Rollbar {
   static sendJsonPayload = (...args) =>
     Rollbar.callInstance('sendJsonPayload', args);
   static wait = (...args) => Rollbar.callInstance('wait', args);
+  static destroy = () => _instance?.destroy();
   static wrap = (...args) => Rollbar.callInstance('wrap', args);
   static captureEvent = (...args) => Rollbar.callInstance('captureEvent', args);
 }

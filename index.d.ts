@@ -20,6 +20,14 @@ declare class Rollbar implements Rollbar.Components {
   public error(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
   public critical(...args: Rollbar.LogArgument[]): Rollbar.LogResult;
   public wait(callback: () => void): void;
+  /**
+   * Browser only. Detaches this instance from the page: removes its global
+   * error and unhandled rejection handlers, telemetry instrumentation and
+   * session replay recorder, and disables reporting. Use it when an app that
+   * created its own instance is unmounted. Call `wait()` first to let pending
+   * items finish sending.
+   */
+  public destroy(): void;
 
   public triggerDirectReplay(
     context: Rollbar.Dictionary,

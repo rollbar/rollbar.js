@@ -24,6 +24,7 @@ function captureUncaughtExceptions(window, handler, shim) {
     fn._rollbarOldOnError = oldOnError;
   }
   window.onerror = fn;
+  return fn;
 }
 
 function _rollbarWindowOnError(window, r, old, args) {
@@ -95,6 +96,50 @@ function captureUnhandledRejections(window, handler, shim) {
   rejectionHandler.belongsToShim = shim;
   window._rollbarURH = rejectionHandler;
   window.addEventListener('unhandledrejection', rejectionHandler);
+  return rejectionHandler;
 }
 
-export { captureUncaughtExceptions, captureUnhandledRejections };
+/**
+ * Detaches the `window.onerror` handler installed by
+ * `captureUncaughtExceptions`, putting back the handler it chained to.
+ *
+ * If something replaced `window.onerror` after Rollbar did, that handler is
+ * left in place, and it still calls ours. The caller must make sure ours no
+ * longer reports anything once it has been removed.
+ *
+ * @param {Window} window - The global the handler was installed on.
+ * @param {Object} handler - The Rollbar instance passed to `captureUncaughtExceptions`.
+ * @param {Function} fn - The function `captureUncaughtExceptions` returned.
+ */
+function removeUncaughtExceptions(window, handler, fn) {
+  if (!window || !fn) {
+    return;
+  }
+  if (window.onerror === fn) {
+    window.onerror = handler._rollbarOldOnError || null;
+  }
+}
+
+/**
+ * Detaches the `unhandledrejection` listener installed by
+ * `captureUnhandledRejections`.
+ *
+ * @param {Window} window - The global the listener was added to.
+ * @param {Function} rejectionHandler - The function `captureUnhandledRejections` returned.
+ */
+function removeUnhandledRejections(window, rejectionHandler) {
+  if (!window || !rejectionHandler) {
+    return;
+  }
+  window.removeEventListener('unhandledrejection', rejectionHandler);
+  if (window._rollbarURH === rejectionHandler) {
+    delete window._rollbarURH;
+  }
+}
+
+export {
+  captureUncaughtExceptions,
+  captureUnhandledRejections,
+  removeUncaughtExceptions,
+  removeUnhandledRejections,
+};

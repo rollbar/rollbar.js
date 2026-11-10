@@ -297,6 +297,21 @@ class Queue {
     }
   }
 
+  /**
+   * destroy - Stops the retry timer and fails any items waiting to be retried,
+   *   so a discarded instance holds no timers. Requests already in flight are
+   *   left to complete.
+   */
+  destroy() {
+    if (this.retryHandle) {
+      this.retryHandle = clearInterval(this.retryHandle);
+    }
+    while (this.retryQueue.length) {
+      const retryObject = this.retryQueue.shift();
+      retryObject.callback(new Error('Rollbar instance was destroyed'));
+    }
+  }
+
   _maybeCallWait() {
     if (
       _.isFunction(this.waitCallback) &&

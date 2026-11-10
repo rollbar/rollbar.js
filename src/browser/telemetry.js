@@ -27,11 +27,24 @@ const defaults = {
   errorOnContentSecurityPolicy: false,
 };
 
+/**
+ * Puts back the originals recorded by `replace()` for `type`.
+ *
+ * A property is only restored while it still holds our wrapper. If something
+ * else wrapped it afterwards (another Rollbar instance, or app code), writing
+ * the original back would silently remove that later wrapper, so ours is left
+ * in the chain instead.
+ *
+ * @param {Object} replacements - Map of type to `[obj, name, orig, wrapped]`.
+ * @param {string} type - Key in `replacements` to restore.
+ */
 function restore(replacements, type) {
   let b;
   while (replacements[type].length) {
     b = replacements[type].shift();
-    b[0][b[1]] = b[2];
+    if (b[0][b[1]] === b[3]) {
+      b[0][b[1]] = b[2];
+    }
   }
 }
 
@@ -200,6 +213,20 @@ class Instrumenter {
     ) {
       this.deinstrumentContentSecurityPolicy();
     }
+  }
+
+  /**
+   * Removes all auto-instrumentation: network, console, DOM, navigation,
+   * connectivity and CSP listeners and wrappers installed by `instrument()`.
+   */
+  deinstrument() {
+    this.deinstrumentNetwork();
+    this.deinstrumentConsole();
+    this.deinstrumentDom();
+    this.deinstrumentNavigation();
+    this.deinstrumentConnectivity();
+    this.deinstrumentContentSecurityPolicy();
+    this.autoInstrument = {};
   }
 
   deinstrumentNetwork() {
@@ -668,7 +695,9 @@ class Instrumenter {
     let b;
     while (this.replacements['log'].length) {
       b = this.replacements['log'].shift();
-      this._window.console[b[0]] = b[1];
+      if (this._window.console[b[0]] === b[2]) {
+        this._window.console[b[0]] = b[1];
+      }
     }
   }
 
@@ -687,7 +716,7 @@ class Instrumenter {
       const orig = c[method];
       const origConsole = c;
       const level = method === 'warn' ? 'warning' : method;
-      c[method] = function () {
+      const wrapped = function () {
         const args = Array.prototype.slice.call(arguments);
         try {
           const message = _.formatArgsAsString(args);
@@ -702,7 +731,8 @@ class Instrumenter {
           Function.prototype.apply.call(orig, origConsole, args);
         }
       };
-      self.replacements['log'].push([method, orig]);
+      c[method] = wrapped;
+      self.replacements['log'].push([method, orig, wrapped]);
     }
     const methods = ['debug', 'info', 'warn', 'error', 'log'];
     try {
