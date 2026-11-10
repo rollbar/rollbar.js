@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import Rollbar from '../src/browser/rollbar.js';
+import RateLimiter from '../src/rateLimiter.js';
 
 import { fakeServer, stubResponse } from './browser.rollbar.test-utils.ts';
 import { setTimeoutAsync } from './util/timers.ts';
@@ -28,6 +29,10 @@ function newInstance(accessToken, options = {}) {
 
 function requestTokens(server) {
   return server.requests.map((r) => r.requestHeaders['X-Rollbar-Access-Token']);
+}
+
+function telemetryEvents(rollbar, type) {
+  return rollbar.telemeter.queue.filter((e) => e.type === type);
 }
 
 describe('destroy', function () {
@@ -133,6 +138,65 @@ describe('destroy', function () {
     expect(window.console.log).to.equal(secondConsoleLog);
   });
 
+  describe('turning telemetry off under a later wrapper', function () {
+    afterEach(function () {
+      window.console.log = originalConsoleLog;
+      window.fetch = originalFetch;
+    });
+
+    it('should stop recording console calls, and record them once when turned back on', function () {
+      const rollbar = newInstance('TOKEN');
+      const rollbarConsoleLog = window.console.log;
+      const laterConsoleLog = function (...args) {
+        return rollbarConsoleLog.apply(this, args);
+      };
+      window.console.log = laterConsoleLog;
+      const messages = () =>
+        telemetryEvents(rollbar, 'log').map((e) => e.body.message);
+
+      rollbar.configure({ autoInstrument: { log: false } });
+      window.console.log('while off');
+
+      expect(window.console.log).to.equal(laterConsoleLog);
+      expect(messages()).to.not.include('while off');
+
+      rollbar.configure({ autoInstrument: { log: true } });
+      window.console.log('back on');
+
+      expect(messages().filter((m) => m === 'back on')).to.have.length(1);
+    });
+
+    it('should stop recording fetch requests', async function () {
+      window.fetch = sinon.stub().resolves(new Response('ok'));
+      const rollbar = newInstance('TOKEN');
+      const rollbarFetch = window.fetch;
+      const laterFetch = function (...args) {
+        return rollbarFetch.apply(this, args);
+      };
+      window.fetch = laterFetch;
+
+      rollbar.configure({ autoInstrument: { network: false } });
+      await window.fetch('https://example.com/while-off');
+
+      expect(window.fetch).to.equal(laterFetch);
+      expect(telemetryEvents(rollbar, 'network')).to.eql([]);
+    });
+  });
+
+  it('should leave the rate limits shared with other instances alone', function () {
+    const savedSettings = { ...RateLimiter.globalSettings };
+    try {
+      const subApp = newInstance('SUB_APP_TOKEN', { itemsPerMinute: 1 });
+      newInstance('CONTAINER_TOKEN', { itemsPerMinute: 60 });
+
+      subApp.destroy();
+
+      expect(RateLimiter.globalSettings.itemsPerMinute).to.equal(60);
+    } finally {
+      Object.assign(RateLimiter.globalSettings, savedSettings);
+    }
+  });
+
   it('should drop items logged after destroy', async function () {
     const rollbar = newInstance('TOKEN');
     rollbar.destroy();
@@ -189,5 +253,20 @@ describe('destroy', function () {
     expect(queue.retryQueue).to.eql([]);
     expect(callback.calledOnce).to.equal(true);
     expect(callback.firstCall.args[0]).to.be.an('error');
+  });
+
+  it('should not retry a send that fails after destroy', function () {
+    const rollbar = newInstance('TOKEN');
+    const queue = rollbar.client.queue;
+    queue.options.retryInterval = 1000;
+    const callback = sinon.spy();
+    const offline = Object.assign(new Error('offline'), { code: 'ENOTFOUND' });
+
+    rollbar.destroy();
+    queue._maybeRetry(offline, {}, callback);
+
+    expect(queue.retryHandle).to.not.exist;
+    expect(queue.retryQueue).to.eql([]);
+    expect(callback.calledOnceWithExactly(offline)).to.equal(true);
   });
 });

@@ -249,7 +249,9 @@ class Rollbar {
     this.instrumenter?.deinstrument();
     this.replay?.recorder?.stop();
     this.replay?.clear();
-    this.client.configure({ enabled: false });
+    // Only the notifier: the client's configure() would also re-apply this
+    // instance's rate limits to the limiter every instance shares.
+    this.client.notifier.configure({ enabled: false });
     this.client.queue.destroy();
 
     if (_instance === this) {
