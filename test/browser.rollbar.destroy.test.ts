@@ -137,6 +137,36 @@ describe('destroy', function () {
     expect(requestTokens(window.server)).to.eql(['SECOND_TOKEN']);
   });
 
+  it('should not let a listener error thrown after destroy reach a later instance', async function () {
+    window.onerror = null;
+    const first = newInstance('FIRST_TOKEN', { wrapGlobalEventHandlers: true });
+    const listener = () => {
+      throw new Error('stale listener error');
+    };
+    new EventTarget().addEventListener('ping', listener);
+    first.destroy();
+
+    // Called directly: dispatching would report the error to the test runner.
+    expect(() => listener._rollbar_wrapped()).to.throw('stale listener error');
+
+    newInstance('SECOND_TOKEN');
+    window.onerror(
+      'Script error.',
+      'https://cdn.example.com/app.js',
+      0,
+      0,
+      null,
+    );
+    await setTimeoutAsync(100);
+    window.server.respond();
+
+    expect(requestTokens(window.server)).to.eql(['SECOND_TOKEN']);
+    const body = window.server.requests[0].requestBody;
+    expect(body).to.include('Script error.');
+    expect(body).to.not.include('stale listener error');
+    expect(body).to.not.include('_wrappedSource');
+  });
+
   describe('anonymous error capture in Chrome', function () {
     let originalChrome;
     let originalPrepareStackTrace;

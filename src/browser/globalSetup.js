@@ -16,6 +16,12 @@ function captureUncaughtExceptions(window, handler, shim) {
 
   handler.handleAnonymousErrors();
 
+  // A wrapped error is picked up by the onerror call its throw triggers, in
+  // the same task, so one already set can't belong to an error this handler
+  // will see. It can be left over from a wrapper that outlived every Rollbar
+  // onerror handler, e.g. after destroy().
+  window._rollbarWrappedError = null;
+
   var fn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     _rollbarWindowOnError(window, handler, oldOnError, args);
