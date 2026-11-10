@@ -230,8 +230,10 @@ class Rollbar {
    * `wrapGlobalEventHandlers` also stay, because removing them would stop
    * `removeEventListener` from finding listeners they already wrapped.
    *
-   * Items still being sent are not cancelled, but queued retries are dropped.
-   * Call `wait()` first to let pending items finish sending.
+   * Items still being sent are not cancelled, and their session replays are
+   * still sent or discarded once the server responds; queued retries are
+   * dropped along with their replays. Call `wait()` first to let pending
+   * items finish sending.
    */
   destroy() {
     if (this._isDestroyed) {
@@ -251,7 +253,9 @@ class Rollbar {
     // stop() keeps the buffered recording, and a later instance's hooks can
     // keep this one reachable for the life of the page.
     this.replay?.recorder?.clear();
-    this.replay?.clear();
+    // Stored replays are left alone: each belongs to an item still being sent
+    // or waiting to retry, and is sent or discarded when that item finishes,
+    // including the queued retries that queue.destroy() fails below.
     // Only the notifier: the client's configure() would also re-apply this
     // instance's rate limits to the limiter every instance shares.
     this.client.notifier.configure({ enabled: false });

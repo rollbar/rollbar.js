@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import replayDefaults from '../src/browser/replay/defaults.js';
 import Replay from '../src/browser/replay/replay.js';
 import Rollbar from '../src/browser/rollbar.js';
+import logger from '../src/logger.js';
 import RateLimiter from '../src/rateLimiter.js';
 
 import { fakeServer, stubResponse } from './browser.rollbar.test-utils.ts';
@@ -32,6 +33,27 @@ function newInstance(accessToken, options = {}) {
 
 function requestTokens(server) {
   return server.requests.map((r) => r.requestHeaders['X-Rollbar-Access-Token']);
+}
+
+// Gives the instance a replay that stores one payload for every reported item,
+// wired into the queue the way the replay bundle does it.
+function attachReplay(rollbar) {
+  const recordFn = () => () => {};
+  recordFn.takeFullSnapshot = () => {};
+  const replay = new Replay({
+    tracing: rollbar.tracing,
+    telemeter: rollbar.telemeter,
+    options: { ...replayDefaults, enabled: true, recordFn },
+  });
+  let count = 0;
+  sinon.stub(replay, 'capture').callsFake(() => {
+    const replayId = `replay-${++count}`;
+    replay.setSpans(replayId, [{ name: 'span' }]);
+    return replayId;
+  });
+  rollbar.replay = replay;
+  rollbar.client.queue.replay = replay;
+  return replay;
 }
 
 function telemetryEvents(rollbar, type) {
@@ -249,6 +271,60 @@ describe('destroy', function () {
     expect(recorder.isRecording).to.equal(false);
     expect(recorder.isReady).to.equal(false);
     expect(recorder._buffers).to.eql([[], []]);
+  });
+
+  it('should still send the replay of an item it waited for', async function () {
+    window.server.respondWith('POST', /api\/1\/item/, [
+      200,
+      { 'Content-Type': 'application/json', 'Rollbar-Replay-Enabled': 'true' },
+      '{"err": 0, "result":{ "uuid": "d4c7acef55bf4c9ea95e4fe9428a8287"}}',
+    ]);
+    const rollbar = newInstance('TOKEN');
+    const replay = attachReplay(rollbar);
+    const postReplay = sinon.stub(rollbar.tracing.exporter, 'post').resolves();
+    const loggerError = sinon.stub(logger, 'error');
+
+    rollbar.error('before unmount');
+    await setTimeoutAsync(100);
+    const destroyed = new Promise((resolve) => {
+      rollbar.wait(() => {
+        rollbar.destroy();
+        resolve();
+      });
+    });
+    window.server.respond();
+    await destroyed;
+    await setTimeoutAsync(0);
+
+    expect(postReplay.calledOnce).to.equal(true);
+    expect(postReplay.firstCall.args[1]).to.eql({
+      'X-Rollbar-Replay-Id': 'replay-1',
+    });
+    expect(replay.size).to.equal(0);
+    expect(loggerError.called).to.equal(false);
+  });
+
+  it('should discard the replays of queued retries without errors', async function () {
+    const rollbar = newInstance('TOKEN');
+    const replay = attachReplay(rollbar);
+    const queue = rollbar.client.queue;
+    queue.options.retryInterval = 1000;
+    const offline = Object.assign(new Error('offline'), { code: 'ENOTFOUND' });
+    sinon.stub(rollbar.client.api, 'postItem').callsFake((_item, callback) => {
+      callback(offline);
+    });
+    const loggerError = sinon.stub(logger, 'error');
+
+    rollbar.error('while offline');
+    await setTimeoutAsync(100);
+    expect(queue.retryQueue.length).to.equal(1);
+    expect(replay.size).to.equal(1);
+
+    rollbar.destroy();
+    await setTimeoutAsync(0);
+
+    expect(replay.size).to.equal(0);
+    expect(loggerError.called).to.equal(false);
   });
 
   it('should be safe to call more than once', function () {
