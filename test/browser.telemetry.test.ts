@@ -197,6 +197,180 @@ describe('instrumentConsole', function () {
     expect(log.calledOnceWithExactly('hello')).to.eql(true);
     expect(instrumenter.diagnostic.captureLog).to.eql({ error: 'boom' });
   });
+
+  it('should share one console wrapper between instrumenters', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLogs = [sinon.spy(), sinon.spy(), sinon.spy()];
+
+    createInstrumenter(
+      { captureLog: captureLogs[0] },
+      windowMock,
+    ).instrumentConsole();
+    const wrapper = windowMock.console.log;
+    for (const captureLog of captureLogs.slice(1)) {
+      createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+    }
+
+    expect(windowMock.console.log).to.equal(wrapper);
+    windowMock.console.log('hello');
+    for (const captureLog of captureLogs) {
+      expect(captureLog.calledOnce).to.eql(true);
+      expect(captureLog.args[0][0]).to.eql('hello');
+    }
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should not overflow the stack with many instrumenters', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+
+    for (let i = 0; i < 20000; i++) {
+      createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+    }
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(captureLog.callCount).to.eql(20000);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should restore the original once the last instrumenter is removed', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = sinon.spy();
+    const second = sinon.spy();
+    const firstInstrumenter = createInstrumenter(
+      { captureLog: first },
+      windowMock,
+    );
+    const secondInstrumenter = createInstrumenter(
+      { captureLog: second },
+      windowMock,
+    );
+    firstInstrumenter.instrumentConsole();
+    secondInstrumenter.instrumentConsole();
+
+    firstInstrumenter.deinstrumentConsole();
+    windowMock.console.log('hello');
+    expect(first.called).to.eql(false);
+    expect(second.calledOnce).to.eql(true);
+
+    secondInstrumenter.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(log);
+  });
+
+  it('should call the original even if a listener throws', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+    createInstrumenter({ captureLog }, windowMock).instrumentConsole();
+
+    // A listener from another copy of the SDK that doesn't catch its errors.
+    (windowMock.console.log as any)._rollbarConsoleState.listeners.unshift(
+      () => {
+        throw new Error('boom');
+      },
+    );
+
+    expect(() => windowMock.console.log('hello')).to.not.throw();
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should keep a wrapper added later by someone else', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const captureLog = sinon.spy();
+    const instrumenter = createInstrumenter({ captureLog }, windowMock);
+    instrumenter.instrumentConsole();
+
+    const rollbarWrapper = windowMock.console.log;
+    const otherWrapper = sinon.spy((...args) => rollbarWrapper(...args));
+    windowMock.console.log = otherWrapper;
+    instrumenter.deinstrumentConsole();
+
+    expect(windowMock.console.log).to.equal(otherWrapper);
+    windowMock.console.log('hello');
+    expect(otherWrapper.calledOnce).to.eql(true);
+    expect(captureLog.called).to.eql(false);
+    expect(log.calledOnceWithExactly('hello')).to.eql(true);
+  });
+
+  it('should not mistake a spy that copied the wrapper state for the wrapper', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    // sinon copies the wrapped function's enumerable properties onto the spy.
+    const spy = sinon.spy(windowMock.console, 'log');
+    expect((spy as any)._rollbarConsoleState).to.exist;
+
+    const captureLog = sinon.spy();
+    const second = createInstrumenter({ captureLog }, windowMock);
+    second.instrumentConsole();
+    expect(windowMock.console.log).to.not.equal(spy);
+
+    windowMock.console.log('hello');
+    expect(captureLog.calledOnce).to.eql(true);
+    expect(spy.calledOnceWithExactly('hello')).to.eql(true);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(spy);
+  });
+
+  it('should not mistake a Proxy of the wrapper for the wrapper', function () {
+    const log = sinon.spy();
+    const windowMock = { console: { log } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    const proxy = new Proxy(windowMock.console.log, {});
+    windowMock.console.log = proxy;
+
+    const second = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    second.instrumentConsole();
+    expect(windowMock.console.log).to.not.equal(proxy);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(proxy);
+  });
+
+  it('should record each call once when the app aliases console methods', function () {
+    const log = sinon.spy();
+    const debug = sinon.spy();
+    const windowMock = { console: { log, debug } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    windowMock.console.debug = windowMock.console.log;
+
+    const captureLog = sinon.spy();
+    const second = createInstrumenter({ captureLog }, windowMock);
+    second.instrumentConsole();
+
+    windowMock.console.log('hello');
+    windowMock.console.debug('world');
+    expect(captureLog.args.map((a) => [a[0], a[1]])).to.eql([
+      ['hello', 'log'],
+      ['world', 'log'],
+    ]);
+    expect(log.args).to.eql([['hello'], ['world']]);
+    expect(debug.called).to.eql(false);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(log);
+
+    // The app's alias is left in place and still reaches the original log.
+    windowMock.console.debug('again');
+    expect(log.lastCall.args).to.eql(['again']);
+    expect(captureLog.callCount).to.eql(2);
+    expect(debug.called).to.eql(false);
+  });
 });
 
 describe('instrumentDom', function () {

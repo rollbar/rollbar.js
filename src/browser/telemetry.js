@@ -35,6 +35,87 @@ function restore(replacements, type) {
   }
 }
 
+/*
+ * Every Instrumenter that instruments a console method shares one wrapper,
+ * which calls each instrumenter's listener and then the original method.
+ * Wrapping once per instrumenter instead made every console call one frame
+ * deeper for each Rollbar client created on the page, until it overflowed the
+ * stack. The shared state is kept on the wrapper so that other copies of the
+ * SDK on the page find it too.
+ */
+const CONSOLE_STATE = '_rollbarConsoleState';
+
+/**
+ * Returns the shared state if `fn` is a Rollbar console wrapper, or undefined.
+ *
+ * Having the property is not enough: wrappers such as `sinon.spy` copy it from
+ * the function they wrap, and a Proxy forwards it. The state also records its
+ * own wrapper, so only that exact function counts.
+ */
+function consoleState(fn) {
+  const state = fn?.[CONSOLE_STATE];
+  return state?.wrapper === fn ? state : undefined;
+}
+
+function createConsoleWrapper(c, state) {
+  // eslint-disable-next-line strict
+  'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
+
+  const wrapper = function () {
+    const args = Array.prototype.slice.call(arguments);
+    for (const listener of state.listeners.slice()) {
+      try {
+        listener(args, state.method);
+      } catch (_e) {
+        // Listeners may come from other SDK copies on the page, so one that
+        // throws must not skip the others or the app's own console call.
+      }
+    }
+    if (state.orig) {
+      Function.prototype.apply.call(state.orig, c, args);
+    }
+  };
+  state.wrapper = wrapper;
+  wrapper[CONSOLE_STATE] = state;
+  return wrapper;
+}
+
+/**
+ * Adds `listener` to the shared wrapper of `c[method]`, installing the
+ * wrapper unless the current method already is one. The wrapper calls
+ * `listener(args, method)` with the method it was installed for.
+ *
+ * @returns {Function} The wrapper, to pass to `removeConsoleListener`.
+ */
+function addConsoleListener(c, method, listener) {
+  let wrapper = c[method];
+  if (!consoleState(wrapper)) {
+    wrapper = createConsoleWrapper(c, { method, listeners: [], orig: wrapper });
+    c[method] = wrapper;
+  }
+  // An app can point several methods at one wrapper, e.g.
+  // `console.debug = console.log`. Adding the listener once keeps each call
+  // recorded once, at the level of the method the wrapper was installed for.
+  const listeners = consoleState(wrapper).listeners;
+  if (listeners.indexOf(listener) === -1) {
+    listeners.push(listener);
+  }
+  return wrapper;
+}
+
+function removeConsoleListener(c, method, wrapper, listener) {
+  const state = wrapper[CONSOLE_STATE];
+  const index = state.listeners.indexOf(listener);
+  if (index !== -1) {
+    state.listeners.splice(index, 1);
+  }
+  // If something else has wrapped the method since, restoring the original
+  // would remove that wrapper too, so leave this one as a pass-through.
+  if (!state.listeners.length && c[method] === wrapper) {
+    c[method] = state.orig;
+  }
+}
+
 function nameFromDescription(description) {
   if (!description || !description.attributes) {
     return null;
@@ -668,7 +749,7 @@ class Instrumenter {
     let b;
     while (this.replacements['log'].length) {
       b = this.replacements['log'].shift();
-      this._window.console[b[0]] = b[1];
+      removeConsoleListener(b[0], b[1], b[2], b[3]);
     }
   }
 
@@ -680,34 +761,25 @@ class Instrumenter {
     const self = this;
     const c = this._window.console;
 
-    function wrapConsole(method) {
-      // eslint-disable-next-line strict
-      'use strict'; // See https://github.com/rollbar/rollbar.js/pull/778
-
-      const orig = c[method];
-      const origConsole = c;
-      const level = method === 'warn' ? 'warning' : method;
-      c[method] = function () {
-        const args = Array.prototype.slice.call(arguments);
-        try {
-          const message = _.formatArgsAsString(args);
-          self.telemeter.captureLog(message, level, null, _.now());
-        } catch (e) {
-          // Telemetry must never prevent the app's own console call. Record
-          // the failure in the payload diagnostics instead of logging it,
-          // since logging would call back into this wrapper.
-          self.diagnostic.captureLog = { error: e?.message };
-        }
-        if (orig) {
-          Function.prototype.apply.call(orig, origConsole, args);
-        }
-      };
-      self.replacements['log'].push([method, orig]);
-    }
+    // One listener for every method, so a wrapper shared by several methods
+    // only records each call once.
+    const listener = function (args, method) {
+      try {
+        const level = method === 'warn' ? 'warning' : method;
+        const message = _.formatArgsAsString(args);
+        self.telemeter.captureLog(message, level, null, _.now());
+      } catch (e) {
+        // Telemetry must never prevent the app's own console call. Record
+        // the failure in the payload diagnostics instead of logging it,
+        // since logging would call back into this wrapper.
+        self.diagnostic.captureLog = { error: e?.message };
+      }
+    };
     const methods = ['debug', 'info', 'warn', 'error', 'log'];
     try {
       for (const m of methods) {
-        wrapConsole(m);
+        const wrapper = addConsoleListener(c, m, listener);
+        this.replacements['log'].push([c, m, wrapper, listener]);
       }
     } catch (e) {
       this.diagnostic.instrumentConsole = { error: e.message };
