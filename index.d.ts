@@ -161,6 +161,10 @@ declare namespace Rollbar {
     locals?: LocalsOptions;
     logLevel?: Level;
     maxItems?: number;
+    /**
+     * The most times to retry an item after a network error. Only applies when
+     * `retryInterval` is set. When unset, items are retried until they're sent.
+     */
     maxRetries?: number;
     maxTelemetryEvents?: number;
     nodeSourceMaps?: boolean;
@@ -195,6 +199,15 @@ declare namespace Rollbar {
     replay?: ReplayOptions;
     reportLevel?: Level;
     resource?: StringAttributes;
+    /**
+     * Milliseconds to wait before retrying an item that failed to send because
+     * of a network error (offline, DNS failure, connection refused or reset,
+     * timeout). The wait doubles after each retry, up to 60 seconds or
+     * `retryInterval` if that's longer. Retries are off unless this is set.
+     *
+     * Applies in the browser (both the XHR and fetch transports) and in Node.
+     * HTTP error responses from the API are not retried.
+     */
     retryInterval?: number | null;
     rewriteFilenamePatterns?: string[];
     scrubFields?: string[];

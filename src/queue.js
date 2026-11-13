@@ -25,8 +25,6 @@ class Queue {
     this.predicates = [];
     this.pendingItems = [];
     this.pendingRequests = [];
-    this.retryQueue = [];
-    this.retryHandle = null;
     this.waitCallback = null;
     this.waitIntervalID = null;
   }
@@ -183,13 +181,14 @@ class Queue {
    *
    * @param item - an item ready to send to the backend
    * @param callback - function(err, response)
+   * @param retries - how many times this item has already been retried
    */
-  _makeApiRequest(item, callback) {
+  _makeApiRequest(item, callback, retries = 0) {
     const rateLimitResponse = this.rateLimiter.shouldSend(item);
     if (rateLimitResponse.shouldSend) {
       this.api.postItem(item, (err, resp, headers) => {
         if (err) {
-          this._maybeRetry(err, item, callback);
+          this._maybeRetry(err, item, callback, retries);
         } else {
           callback(err, resp, headers);
         }
@@ -213,6 +212,10 @@ class Queue {
     'EAI_AGAIN',
   ];
 
+  // Upper bound for the backoff between retries, unless `retryInterval` is
+  // itself longer.
+  static MAX_RETRY_INTERVAL = 60 * 1000;
+
   /**
    * Given the error returned by the API, decide if we should retry or just callback
    * with the error.
@@ -220,8 +223,9 @@ class Queue {
    * @param err - an error returned by the API transport
    * @param item - the item that was trying to be sent when this error occured
    * @param callback - function(err, response)
+   * @param retries - how many times this item has already been retried
    */
-  _maybeRetry(err, item, callback) {
+  _maybeRetry(err, item, callback, retries) {
     let shouldRetry = false;
     if (this.options.retryInterval) {
       for (let i = 0, len = Queue.RETRIABLE_ERRORS.length; i < len; i++) {
@@ -230,38 +234,45 @@ class Queue {
           break;
         }
       }
-      if (shouldRetry && _.isFiniteNumber(this.options.maxRetries)) {
-        item.retries = item.retries ? item.retries + 1 : 1;
-        if (item.retries > this.options.maxRetries) {
-          shouldRetry = false;
-        }
+      if (
+        shouldRetry &&
+        _.isFiniteNumber(this.options.maxRetries) &&
+        retries >= this.options.maxRetries
+      ) {
+        shouldRetry = false;
       }
     }
     if (shouldRetry) {
-      this._retryApiRequest(item, callback);
+      this._retryApiRequest(item, callback, retries + 1);
     } else {
       callback(err);
     }
   }
 
   /**
-   * Add an item and a callback to a queue and possibly start a timer to process
-   * that queue based on the retryInterval in the options for this queue.
+   * Send the item again once the backoff for this attempt has elapsed.
    *
    * @param item - an item that failed to send due to an error we deem retriable
    * @param callback - function(err, response)
+   * @param retries - which retry this is, starting at 1
    */
-  _retryApiRequest(item, callback) {
-    this.retryQueue.push({ item, callback });
+  _retryApiRequest(item, callback, retries) {
+    setTimeout(() => {
+      this._makeApiRequest(item, callback, retries);
+    }, this._retryDelay(retries));
+  }
 
-    if (!this.retryHandle) {
-      this.retryHandle = setInterval(() => {
-        while (this.retryQueue.length) {
-          const retryObject = this.retryQueue.shift();
-          this._makeApiRequest(retryObject.item, retryObject.callback);
-        }
-      }, this.options.retryInterval);
-    }
+  /**
+   * The delay before a retry: `retryInterval` before the first, doubling for
+   * each one after that, up to `MAX_RETRY_INTERVAL`.
+   *
+   * @param retries - which retry this is, starting at 1
+   * @returns {number} milliseconds to wait
+   */
+  _retryDelay(retries) {
+    const interval = this.options.retryInterval;
+    const max = Math.max(interval, Queue.MAX_RETRY_INTERVAL);
+    return Math.min(interval * Math.pow(2, retries - 1), max);
   }
 
   /**
