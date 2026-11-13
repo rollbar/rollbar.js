@@ -207,6 +207,20 @@ declare namespace Rollbar {
     telemetryScrubber?: TelemetryScrubber;
     timeout?: number;
     tracing?: TracingOptions;
+    /**
+     * Links each item to the span that is active when it is logged: the span
+     * gets `rollbar.error_uuid`, `rollbar.has_error`, `rollbar.item_url` and
+     * `rollbar.occurrence_url`, and the item gets the span's IDs as
+     * `custom.opentracing_span_id` and `custom.opentracing_trace_id`.
+     *
+     * For OpenTelemetry, pass the `trace` object from `@opentelemetry/api`;
+     * error and critical items also set the span's status to ERROR. A tracer
+     * from `trace.getTracer()` can't report the active span, so it is
+     * ignored. For OpenTracing, pass a tracer with a scope manager, such as
+     * dd-trace; its spans also get an `error` tag. Pass `null` to
+     * `configure()` to remove the tracer.
+     */
+    tracer?: Tracer | null;
     transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
     transmit?: boolean;
     uncaughtErrorLevel?: Level;
@@ -396,6 +410,14 @@ declare namespace Rollbar {
   export interface TransformSpanParams {
     span: any;
   }
+  /**
+   * The OpenTelemetry `trace` API, or an OpenTracing tracer with a scope
+   * manager. See `Configuration.tracer`.
+   */
+  export type Tracer =
+    | { getActiveSpan: () => unknown }
+    | { scope: () => { active: () => unknown } };
+
   export type TracingPropagationHeader =
     'baggage' | 'traceparent' | 'tracestate';
   export interface TracingPropagationOptions {
