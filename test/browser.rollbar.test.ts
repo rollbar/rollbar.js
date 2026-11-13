@@ -1565,3 +1565,46 @@ describe('singleton', function () {
     expect(client.waitCalls).to.eql([callback]);
   });
 });
+
+describe('options.codeVersion', function () {
+  async function sentData(options) {
+    let data = null;
+    const rollbar = new Rollbar({
+      accessToken: 'POST_CLIENT_ITEM_TOKEN',
+      captureUncaught: false,
+      captureUnhandledRejections: false,
+      autoInstrument: false,
+      transmit: false,
+      transform: (d) => {
+        data = d;
+      },
+      ...options,
+    });
+
+    rollbar.error('test error');
+    await setTimeoutAsync(1);
+    return data;
+  }
+
+  it('should send codeVersion as client.javascript.code_version', async function () {
+    const data = await sentData({ codeVersion: 'abc123' });
+
+    expect(data.client.javascript.code_version).to.eql('abc123');
+  });
+
+  it('should send code_version as client.javascript.code_version', async function () {
+    const data = await sentData({ code_version: 'abc123' });
+
+    expect(data.client.javascript.code_version).to.eql('abc123');
+  });
+
+  it('should prefer payload.client.javascript.code_version', async function () {
+    const data = await sentData({
+      codeVersion: 'abc123',
+      payload: { client: { javascript: { code_version: 'def456' } } },
+    });
+
+    expect(data.client.javascript.code_version).to.eql('def456');
+    expect(data.client.javascript.browser).to.be.ok;
+  });
+});
