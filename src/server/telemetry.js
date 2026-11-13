@@ -28,7 +28,6 @@ function Instrumenter(options, telemeter, rollbar) {
   this.rollbar = rollbar;
   this.diagnostic = rollbar.client.notifier.diagnostic;
   this.replacements = {
-    network: [],
     log: [],
   };
 }
@@ -66,95 +65,148 @@ Instrumenter.prototype.instrument = function (oldSettings) {
   }
 };
 
+// `http.request`, `https.request` and `fetch` are process-wide, but each
+// Rollbar instance has its own Instrumenter. Wrapping them once per instance
+// nested the wrappers, so every request got one `error` listener per instance
+// and `MaxListenersExceededWarning` after ten (rollbar/rollbar.js#982). They are
+// wrapped once instead, and each request is reported to every instrumenter in
+// this set.
+const networkInstrumenters = new Set();
+const networkReplacements = { network: [] };
+
 Instrumenter.prototype.deinstrumentNetwork = function () {
-  restore(this.replacements, 'network');
+  networkInstrumenters.delete(this);
+  if (networkInstrumenters.size === 0) {
+    restore(networkReplacements, 'network');
+  }
 };
 
 Instrumenter.prototype.instrumentNetwork = function () {
+  networkInstrumenters.add(this);
+  if (networkReplacements.network.length) {
+    return;
+  }
   replace(
     http,
     'request',
-    networkRequestWrapper.bind(this),
-    this.replacements,
+    (orig) => networkRequestWrapper(orig, http),
+    networkReplacements,
     'network',
   );
   replace(
     https,
     'request',
-    networkRequestWrapper.bind(this),
-    this.replacements,
+    (orig) => networkRequestWrapper(orig, https),
+    networkReplacements,
     'network',
   );
   if (typeof globalThis.fetch === 'function') {
     replace(
       globalThis,
       'fetch',
-      fetchRequestWrapper.bind(this),
-      this.replacements,
+      fetchRequestWrapper,
+      networkReplacements,
       'network',
     );
   }
 };
 
-function networkRequestWrapper(orig) {
-  var telemeter = this.telemeter;
-
+/**
+ * Wraps `http.request` or `https.request` so each request is captured by every
+ * registered instrumenter, with a single response callback and a single
+ * `error` listener however many instrumenters there are.
+ *
+ * @param {Function} orig - The original `request` function.
+ * @param {Object} transport - The `http` or `https` module that owns `orig`.
+ * @returns {Function} The wrapped `request` function.
+ */
+function networkRequestWrapper(orig, transport) {
   return (...args) => {
+    const instrumenters = [...networkInstrumenters];
+    if (!instrumenters.length) {
+      return orig.apply(transport, args);
+    }
+
     const [url, options, cb] = args;
     var mergedOptions = urlHelpers.mergeOptions(url, options, cb);
     const requestUrl = urlHelpers.constructUrl(mergedOptions.options);
-    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+    // Each instrumenter gets its own copy of the options: `captureHttpRequest`
+    // may add a baggage header and keeps a reference to the headers, which must
+    // not leak into another instance's telemetry.
+    const captures = instrumenters.map((instrumenter) => ({
+      autoInstrument: instrumenter.autoInstrument,
+      metadata: instrumenter.captureHttpRequest(
+        urlHelpers.mergeOptions(url, options, cb),
+        requestUrl,
+      ),
+    }));
 
-    if (
-      sessionId &&
-      _.shouldAddBaggageHeader(this.options, { sessionId }, requestUrl)
-    ) {
-      if (!mergedOptions.options.headers) {
-        mergedOptions.options.headers = {};
-      }
-      mergedOptions.options.headers.baggage = `rollbar.session.id=${sessionId}`;
-    }
-
-    var metadata = {
-      method: mergedOptions.options.method || 'GET',
-      url: requestUrl,
-      status_code: null,
-      start_time_ms: _.now(),
-      end_time_ms: null,
-    };
-
-    if (this.autoInstrument.networkRequestHeaders) {
-      metadata.request_headers = mergedOptions.options.headers;
-    }
-    telemeter.captureNetwork(metadata, 'http');
-
-    var wrappedCallback = responseCallbackWrapper(
-      this.autoInstrument,
-      metadata,
-      mergedOptions.cb,
-    );
+    var wrappedCallback = responseCallbackWrapper(captures, mergedOptions.cb);
     if (mergedOptions.cb) {
       args.pop();
     }
     args.push(wrappedCallback);
-    var req = orig.apply(https, args);
+    var req = orig.apply(transport, args);
 
     req.on('error', (err) => {
-      metadata.status_code = 0;
-      metadata.error = [err.name, err.message].join(': ');
+      for (const { metadata } of captures) {
+        metadata.status_code = 0;
+        metadata.error = [err.name, err.message].join(': ');
+      }
     });
 
     return req;
   };
 }
 
-function responseCallbackWrapper(options, metadata, callback) {
+/**
+ * Records an outgoing `http`/`https` request in this instrumenter's telemetry,
+ * adding the session baggage header first when tracing propagation allows it.
+ *
+ * @param {{options: Object, cb: Function}} mergedOptions - Output of `urlHelpers.mergeOptions`.
+ * @param {string} requestUrl - The request URL.
+ * @returns {Object} The telemetry metadata, completed when the response or error arrives.
+ */
+Instrumenter.prototype.captureHttpRequest = function (
+  mergedOptions,
+  requestUrl,
+) {
+  const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+
+  if (
+    sessionId &&
+    _.shouldAddBaggageHeader(this.options, { sessionId }, requestUrl)
+  ) {
+    if (!mergedOptions.options.headers) {
+      mergedOptions.options.headers = {};
+    }
+    mergedOptions.options.headers.baggage = `rollbar.session.id=${sessionId}`;
+  }
+
+  var metadata = {
+    method: mergedOptions.options.method || 'GET',
+    url: requestUrl,
+    status_code: null,
+    start_time_ms: _.now(),
+    end_time_ms: null,
+  };
+
+  if (this.autoInstrument.networkRequestHeaders) {
+    metadata.request_headers = mergedOptions.options.headers;
+  }
+  this.telemeter.captureNetwork(metadata, 'http');
+  return metadata;
+};
+
+function responseCallbackWrapper(captures, callback) {
   return function (res) {
-    metadata.end_time_ms = _.now();
-    metadata.status_code = res.statusCode;
-    metadata.response = {};
-    if (options.networkResponseHeaders) {
-      metadata.response.headers = res.headers;
+    for (const { autoInstrument, metadata } of captures) {
+      metadata.end_time_ms = _.now();
+      metadata.status_code = res.statusCode;
+      metadata.response = {};
+      if (autoInstrument.networkResponseHeaders) {
+        metadata.response.headers = res.headers;
+      }
     }
 
     if (callback) {
@@ -163,79 +215,104 @@ function responseCallbackWrapper(options, metadata, callback) {
   };
 }
 
+/**
+ * Wraps `fetch` so each request is captured by every registered instrumenter.
+ *
+ * @param {Function} orig - The original `fetch` function.
+ * @returns {Function} The wrapped `fetch` function.
+ */
 function fetchRequestWrapper(orig) {
-  var telemeter = this.telemeter;
-
   return (...args) => {
-    const input = args[0];
-    const init = args[1];
-    let method = 'GET';
-    let url;
-    const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
-
-    if (_.isType(input, 'string') || input instanceof URL) {
-      url = input.toString();
-    } else if (input) {
-      url = input.url;
-      if (input.method) {
-        method = input.method;
-      }
+    const instrumenters = [...networkInstrumenters];
+    if (!instrumenters.length) {
+      return orig.apply(globalThis, args);
     }
 
-    if (init && init.method) {
-      method = init.method;
-    }
-
-    if (
-      sessionId &&
-      _.shouldAddBaggageHeader(this.options, { sessionId }, url)
-    ) {
-      const headers = { baggage: `rollbar.session.id=${sessionId}` };
-
-      _.addHeadersToFetch(args, headers);
-    }
-
-    const metadata = {
-      method: method,
-      url: url,
-      status_code: null,
-      start_time_ms: _.now(),
-      end_time_ms: null,
-    };
-
-    if (this.autoInstrument.networkRequestHeaders) {
-      const requestHeaders = normalizeFetchHeaders(
-        init && init.headers ? init.headers : input && input.headers,
-      );
-      if (requestHeaders) {
-        metadata.request_headers = requestHeaders;
-      }
-    }
-
-    telemeter.captureNetwork(metadata, 'fetch');
+    const captures = instrumenters.map((instrumenter) => ({
+      autoInstrument: instrumenter.autoInstrument,
+      metadata: instrumenter.captureFetchRequest(args),
+    }));
 
     return orig.apply(globalThis, args).then(
       (res) => {
-        metadata.end_time_ms = _.now();
-        metadata.status_code = res.status;
-        if (this.autoInstrument.networkResponseHeaders) {
-          const responseHeaders = normalizeFetchHeaders(res.headers);
-          if (responseHeaders) {
-            metadata.response = metadata.response || {};
-            metadata.response.headers = responseHeaders;
+        for (const { autoInstrument, metadata } of captures) {
+          metadata.end_time_ms = _.now();
+          metadata.status_code = res.status;
+          if (autoInstrument.networkResponseHeaders) {
+            const responseHeaders = normalizeFetchHeaders(res.headers);
+            if (responseHeaders) {
+              metadata.response = metadata.response || {};
+              metadata.response.headers = responseHeaders;
+            }
           }
         }
         return res;
       },
       (err) => {
-        metadata.end_time_ms = _.now();
-        metadata.status_code = 0;
-        metadata.error = [err.name, err.message].join(': ');
+        for (const { metadata } of captures) {
+          metadata.end_time_ms = _.now();
+          metadata.status_code = 0;
+          metadata.error = [err.name, err.message].join(': ');
+        }
         throw err;
       },
     );
   };
 }
+
+/**
+ * Records an outgoing `fetch` in this instrumenter's telemetry, adding the
+ * session baggage header to `args` first when tracing propagation allows it.
+ *
+ * @param {Array} args - The arguments `fetch` was called with.
+ * @returns {Object} The telemetry metadata, completed when the response or error arrives.
+ */
+Instrumenter.prototype.captureFetchRequest = function (args) {
+  const input = args[0];
+  const init = args[1];
+  let method = 'GET';
+  let url;
+  const sessionId = _.getSessionIdFromAsyncLocalStorage(this.rollbar.client);
+
+  if (_.isType(input, 'string') || input instanceof URL) {
+    url = input.toString();
+  } else if (input) {
+    url = input.url;
+    if (input.method) {
+      method = input.method;
+    }
+  }
+
+  if (init && init.method) {
+    method = init.method;
+  }
+
+  if (sessionId && _.shouldAddBaggageHeader(this.options, { sessionId }, url)) {
+    const headers = { baggage: `rollbar.session.id=${sessionId}` };
+
+    _.addHeadersToFetch(args, headers);
+  }
+
+  const metadata = {
+    method: method,
+    url: url,
+    status_code: null,
+    start_time_ms: _.now(),
+    end_time_ms: null,
+  };
+
+  if (this.autoInstrument.networkRequestHeaders) {
+    const requestHeaders = normalizeFetchHeaders(
+      init && init.headers ? init.headers : input && input.headers,
+    );
+    if (requestHeaders) {
+      metadata.request_headers = requestHeaders;
+    }
+  }
+
+  this.telemeter.captureNetwork(metadata, 'fetch');
+  return metadata;
+};
 
 function normalizeFetchHeaders(headers) {
   if (!headers) return null;
