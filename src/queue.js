@@ -223,7 +223,7 @@ class Queue {
    */
   _maybeRetry(err, item, callback) {
     let shouldRetry = false;
-    if (this.options.retryInterval) {
+    if (this.options.retryInterval && !this._isDestroyed) {
       for (let i = 0, len = Queue.RETRIABLE_ERRORS.length; i < len; i++) {
         if (err.code === Queue.RETRIABLE_ERRORS[i]) {
           shouldRetry = true;
@@ -294,6 +294,22 @@ class Queue {
       if (message) {
         this.logger.log(message);
       }
+    }
+  }
+
+  /**
+   * destroy - Stops the retry timer and fails any items waiting to be retried,
+   *   so a discarded instance holds no timers. Requests already in flight are
+   *   left to complete, but are not retried if they fail.
+   */
+  destroy() {
+    this._isDestroyed = true;
+    if (this.retryHandle) {
+      this.retryHandle = clearInterval(this.retryHandle);
+    }
+    while (this.retryQueue.length) {
+      const retryObject = this.retryQueue.shift();
+      retryObject.callback(new Error('Rollbar instance was destroyed'));
     }
   }
 

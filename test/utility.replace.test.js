@@ -20,7 +20,7 @@ describe('replace', function () {
     expect(replace(obj, 'fn', wrapper, replacements, 'network')).to.equal(true);
 
     expect(obj.fn()).to.equal('wrapped original');
-    expect(replacements.network).to.eql([[obj, 'fn', original]]);
+    expect(replacements.network).to.eql([[obj, 'fn', original, obj.fn]]);
   });
 
   // https://github.com/rollbar/rollbar.js/issues/1451

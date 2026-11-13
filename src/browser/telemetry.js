@@ -27,11 +27,25 @@ const defaults = {
   errorOnContentSecurityPolicy: false,
 };
 
+/**
+ * Puts back the originals recorded by `replace()` for `type`.
+ *
+ * A property is only restored while it still holds our wrapper. If something
+ * else wrapped it afterwards (another Rollbar instance, or app code), writing
+ * the original back would silently remove that later wrapper, so ours is left
+ * in the chain instead. Callers must deactivate it first (see
+ * `Instrumenter#activateWrappers`) so it stops recording.
+ *
+ * @param {Object} replacements - Map of type to `[obj, name, orig, wrapped]`.
+ * @param {string} type - Key in `replacements` to restore.
+ */
 function restore(replacements, type) {
   let b;
   while (replacements[type].length) {
     b = replacements[type].shift();
-    b[0][b[1]] = b[2];
+    if (b[0][b[1]] === b[3]) {
+      b[0][b[1]] = b[2];
+    }
   }
 }
 
@@ -91,6 +105,7 @@ class Instrumenter {
       navigation: [],
       connectivity: [],
     };
+    this.wrapperState = {};
     this.eventRemovers = {
       dom: [],
       connectivity: [],
@@ -202,12 +217,60 @@ class Instrumenter {
     }
   }
 
+  /**
+   * Removes all auto-instrumentation: network, console, DOM, navigation,
+   * connectivity and CSP listeners and wrappers installed by `instrument()`.
+   */
+  deinstrument() {
+    this.deinstrumentNetwork();
+    this.deinstrumentConsole();
+    this.deinstrumentDom();
+    this.deinstrumentNavigation();
+    this.deinstrumentConnectivity();
+    this.deinstrumentContentSecurityPolicy();
+    this.autoInstrument = {};
+  }
+
+  /**
+   * Starts a new set of `type` wrappers and returns the state they check on
+   * every call before recording anything.
+   *
+   * Deinstrumenting can't always take a wrapper out of the chain: if something
+   * else wrapped the same function afterwards, ours stays under it (see
+   * `restore`). Deactivating its state turns it into a pass-through. Each call
+   * returns a new state, so turning the type back on later wraps afresh
+   * instead of reviving the old wrapper and recording every call twice.
+   *
+   * @param {string} type - Key in `replacements` the wrappers are recorded under.
+   * @returns {{active: boolean}} The state the new wrappers must check.
+   */
+  activateWrappers(type) {
+    this.deactivateWrappers(type);
+    const state = { active: true };
+    this.wrapperState[type] = state;
+    return state;
+  }
+
+  /**
+   * Stops the current `type` wrappers from recording, including any that
+   * `restore` has to leave in place.
+   *
+   * @param {string} type - Key in `replacements` the wrappers are recorded under.
+   */
+  deactivateWrappers(type) {
+    if (this.wrapperState[type]) {
+      this.wrapperState[type].active = false;
+    }
+  }
+
   deinstrumentNetwork() {
+    this.deactivateWrappers('network');
     restore(this.replacements, 'network');
   }
 
   instrumentNetwork() {
     const self = this;
+    const state = this.activateWrappers('network');
 
     function wrapProp(prop, xhr) {
       if (prop in xhr && _.isFunction(xhr[prop])) {
@@ -225,6 +288,9 @@ class Instrumenter {
         'open',
         function (orig) {
           return function (method, url) {
+            if (!state.active) {
+              return orig.apply(this, arguments);
+            }
             const isUrlObject = _isUrlObject(url);
             if (_.isType(url, 'string') || isUrlObject) {
               url = isUrlObject ? url.toString() : url;
@@ -256,6 +322,9 @@ class Instrumenter {
         'setRequestHeader',
         function (orig) {
           return function (header, value) {
+            if (!state.active) {
+              return orig.apply(this, arguments);
+            }
             // If xhr.open is async, __rollbar_xhr may not be initialized yet.
             if (!this.__rollbar_xhr) {
               this.__rollbar_xhr = {};
@@ -284,6 +353,9 @@ class Instrumenter {
         'send',
         function (orig) {
           return function (data) {
+            if (!state.active) {
+              return orig.apply(this, arguments);
+            }
             const xhr = this;
             const tracing = self.rollbar?.tracing;
             if (
@@ -458,6 +530,9 @@ class Instrumenter {
         'fetch',
         function (orig) {
           return function (_fn, _t) {
+            if (!state.active) {
+              return orig.apply(this, arguments);
+            }
             const args = [...arguments];
             const input = args[0];
             let method = 'GET';
@@ -665,10 +740,13 @@ class Instrumenter {
   }
 
   deinstrumentConsole() {
+    this.deactivateWrappers('log');
     let b;
     while (this.replacements['log'].length) {
       b = this.replacements['log'].shift();
-      this._window.console[b[0]] = b[1];
+      if (this._window.console[b[0]] === b[2]) {
+        this._window.console[b[0]] = b[1];
+      }
     }
   }
 
@@ -679,6 +757,7 @@ class Instrumenter {
 
     const self = this;
     const c = this._window.console;
+    const state = this.activateWrappers('log');
 
     function wrapConsole(method) {
       // eslint-disable-next-line strict
@@ -687,22 +766,25 @@ class Instrumenter {
       const orig = c[method];
       const origConsole = c;
       const level = method === 'warn' ? 'warning' : method;
-      c[method] = function () {
+      const wrapped = function () {
         const args = Array.prototype.slice.call(arguments);
-        try {
-          const message = _.formatArgsAsString(args);
-          self.telemeter.captureLog(message, level, null, _.now());
-        } catch (e) {
-          // Telemetry must never prevent the app's own console call. Record
-          // the failure in the payload diagnostics instead of logging it,
-          // since logging would call back into this wrapper.
-          self.diagnostic.captureLog = { error: e?.message };
+        if (state.active) {
+          try {
+            const message = _.formatArgsAsString(args);
+            self.telemeter.captureLog(message, level, null, _.now());
+          } catch (e) {
+            // Telemetry must never prevent the app's own console call. Record
+            // the failure in the payload diagnostics instead of logging it,
+            // since logging would call back into this wrapper.
+            self.diagnostic.captureLog = { error: e?.message };
+          }
         }
         if (orig) {
           Function.prototype.apply.call(orig, origConsole, args);
         }
       };
-      self.replacements['log'].push([method, orig]);
+      c[method] = wrapped;
+      self.replacements['log'].push([method, orig, wrapped]);
     }
     const methods = ['debug', 'info', 'warn', 'error', 'log'];
     try {
@@ -938,6 +1020,7 @@ class Instrumenter {
   }
 
   deinstrumentNavigation() {
+    this.deactivateWrappers('navigation');
     const chrome = this._window.chrome;
     const chromePackagedApp = chrome && chrome.app && chrome.app.runtime;
     // See https://github.com/angular/angular.js/pull/13945/files
@@ -963,13 +1046,15 @@ class Instrumenter {
       return;
     }
     const self = this;
+    const state = this.activateWrappers('navigation');
     replace(
       this._window,
       'onpopstate',
       function (orig) {
         return function () {
-          const current = self._location.href;
-          self.handleUrlChange(self._lastHref, current);
+          if (state.active) {
+            self.handleUrlChange(self._lastHref, self._location.href);
+          }
           if (orig) {
             orig.apply(this, arguments);
           }
@@ -985,7 +1070,7 @@ class Instrumenter {
       function (orig) {
         return function () {
           const url = arguments.length > 2 ? arguments[2] : undefined;
-          if (url) {
+          if (state.active && url) {
             self.handleUrlChange(self._lastHref, String(url));
           }
           return orig.apply(this, arguments);

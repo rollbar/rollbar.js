@@ -11,7 +11,7 @@
  * @param {Object} obj - The object that owns (or inherits) the property.
  * @param {string} name - The property to replace.
  * @param {Function} replacement - Receives the original value, returns the new one.
- * @param {Object} [replacements] - Map of type to `[obj, name, orig]` restore entries.
+ * @param {Object} [replacements] - Map of type to `[obj, name, orig, wrapped]` restore entries.
  * @param {string} [type] - Key in `replacements` to record the original under.
  * @returns {boolean} Whether the property was replaced.
  */
@@ -24,7 +24,7 @@ function replace(obj, name, replacement, replacements, type) {
     return false;
   }
   if (replacements) {
-    replacements[type].push([obj, name, orig]);
+    replacements[type].push([obj, name, orig, wrapped]);
   }
   return true;
 }
