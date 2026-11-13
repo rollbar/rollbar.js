@@ -12,7 +12,7 @@
     "@rollbar/react": "^1.0.0",
     "react": "19.1.4",
     "react-dom": "19.1.4",
-    "next": "15.5.26",
+    "next": "15.5.28",
     "rollbar": "file:../rollbar.tgz"
   },
   "overrides": {
