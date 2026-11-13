@@ -13,6 +13,30 @@ var defaults = {
   log: true,
 };
 
+var logCaptureSuspended = false;
+
+/**
+ * Run `fn` without recording stdout/stderr writes as telemetry log events.
+ *
+ * Rollbar uses this for output it writes on the application's behalf, such
+ * as the unhandled error it prints when it is the only listener. That text
+ * is not something the app logged, and `util.inspect` output includes the
+ * error's own properties (request config, headers), which scrubbing cannot
+ * reliably redact from free text.
+ *
+ * @param {function} fn - The function to run.
+ * @returns {*} The return value of `fn`.
+ */
+export function withoutLogCapture(fn) {
+  var previous = logCaptureSuspended;
+  logCaptureSuspended = true;
+  try {
+    return fn();
+  } finally {
+    logCaptureSuspended = previous;
+  }
+}
+
 function Instrumenter(options, telemeter, rollbar) {
   this.options = options;
   var autoInstrument = options.autoInstrument;
@@ -282,7 +306,9 @@ Instrumenter.prototype.instrumentConsole = function () {
     'write',
     function (orig) {
       return function (string) {
-        telemeter.captureLog(string, 'info');
+        if (!logCaptureSuspended) {
+          telemeter.captureLog(string, 'info');
+        }
         return orig.apply(stdout, arguments);
       };
     },
@@ -296,7 +322,9 @@ Instrumenter.prototype.instrumentConsole = function () {
     'write',
     function (orig) {
       return function (string) {
-        telemeter.captureLog(string, 'error');
+        if (!logCaptureSuspended) {
+          telemeter.captureLog(string, 'error');
+        }
         return orig.apply(stderr, arguments);
       };
     },
