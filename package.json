@@ -82,7 +82,7 @@
     }
   },
   "dependencies": {
-    "@rrweb/record": "^2.0.0-alpha.18",
+    "@rrweb/record": "^2.2.2",
     "async": "~3.2.3",
     "error-stack-parser-es": "^1.0.5",
     "json-stringify-safe": "~5.0.0",
@@ -144,7 +144,7 @@
   "scripts": {
     "build": "webpack --mode production && npm run build:finalize",
     "build:dev": "webpack --mode development && npm run build:finalize",
-    "build:finalize": "npm run validate:es5 && npm run update:snippets:examples && npm run pack",
+    "build:finalize": "npm run validate:es5 && npm run validate:bundled-deps && npm run update:snippets:examples && npm run pack",
     "build:test-examples": "npm run pack && node scripts/validate-examples.js -p react-16 webpack",
     "test": "npm run build:test-examples && npm run test:wtr && npm run test:server && npm run test:react-native",
     "test:server": "node scripts/run-server-tests.js",
@@ -158,8 +158,9 @@
     "pack": "node scripts/pack.js",
     "typecheck": "tsc --noEmit",
     "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
-    "validate": "npm run validate:es5 && npm run validate:examples && npm run typecheck && npm run typecheck:tests",
+    "validate": "npm run validate:es5 && npm run validate:bundled-deps && npm run validate:examples && npm run typecheck && npm run typecheck:tests",
     "validate:es5": "es-check es5 './dist/**/*.js' --verbose",
+    "validate:bundled-deps": "node scripts/check-bundled-dependencies.js",
     "validate:examples": "node scripts/validate-examples.js -p",
     "update:snippets:examples": "node scripts/update-snippets.js examples"
   }
