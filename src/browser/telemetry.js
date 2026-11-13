@@ -65,7 +65,7 @@ function createConsoleWrapper(c, state) {
     const args = Array.prototype.slice.call(arguments);
     for (const listener of state.listeners.slice()) {
       try {
-        listener(args);
+        listener(args, state.method);
       } catch (_e) {
         // Listeners may come from other SDK copies on the page, so one that
         // throws must not skip the others or the app's own console call.
@@ -82,17 +82,24 @@ function createConsoleWrapper(c, state) {
 
 /**
  * Adds `listener` to the shared wrapper of `c[method]`, installing the
- * wrapper unless the current method already is one.
+ * wrapper unless the current method already is one. The wrapper calls
+ * `listener(args, method)` with the method it was installed for.
  *
  * @returns {Function} The wrapper, to pass to `removeConsoleListener`.
  */
 function addConsoleListener(c, method, listener) {
   let wrapper = c[method];
   if (!consoleState(wrapper)) {
-    wrapper = createConsoleWrapper(c, { listeners: [], orig: wrapper });
+    wrapper = createConsoleWrapper(c, { method, listeners: [], orig: wrapper });
     c[method] = wrapper;
   }
-  consoleState(wrapper).listeners.push(listener);
+  // An app can point several methods at one wrapper, e.g.
+  // `console.debug = console.log`. Adding the listener once keeps each call
+  // recorded once, at the level of the method the wrapper was installed for.
+  const listeners = consoleState(wrapper).listeners;
+  if (listeners.indexOf(listener) === -1) {
+    listeners.push(listener);
+  }
   return wrapper;
 }
 
@@ -754,26 +761,25 @@ class Instrumenter {
     const self = this;
     const c = this._window.console;
 
-    function wrapConsole(method) {
-      const level = method === 'warn' ? 'warning' : method;
-      const listener = function (args) {
-        try {
-          const message = _.formatArgsAsString(args);
-          self.telemeter.captureLog(message, level, null, _.now());
-        } catch (e) {
-          // Telemetry must never prevent the app's own console call. Record
-          // the failure in the payload diagnostics instead of logging it,
-          // since logging would call back into this wrapper.
-          self.diagnostic.captureLog = { error: e?.message };
-        }
-      };
-      const wrapper = addConsoleListener(c, method, listener);
-      self.replacements['log'].push([c, method, wrapper, listener]);
-    }
+    // One listener for every method, so a wrapper shared by several methods
+    // only records each call once.
+    const listener = function (args, method) {
+      try {
+        const level = method === 'warn' ? 'warning' : method;
+        const message = _.formatArgsAsString(args);
+        self.telemeter.captureLog(message, level, null, _.now());
+      } catch (e) {
+        // Telemetry must never prevent the app's own console call. Record
+        // the failure in the payload diagnostics instead of logging it,
+        // since logging would call back into this wrapper.
+        self.diagnostic.captureLog = { error: e?.message };
+      }
+    };
     const methods = ['debug', 'info', 'warn', 'error', 'log'];
     try {
       for (const m of methods) {
-        wrapConsole(m);
+        const wrapper = addConsoleListener(c, m, listener);
+        this.replacements['log'].push([c, m, wrapper, listener]);
       }
     } catch (e) {
       this.diagnostic.instrumentConsole = { error: e.message };

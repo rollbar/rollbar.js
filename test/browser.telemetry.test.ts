@@ -338,6 +338,39 @@ describe('instrumentConsole', function () {
     first.deinstrumentConsole();
     expect(windowMock.console.log).to.equal(proxy);
   });
+
+  it('should record each call once when the app aliases console methods', function () {
+    const log = sinon.spy();
+    const debug = sinon.spy();
+    const windowMock = { console: { log, debug } };
+    const first = createInstrumenter({ captureLog: sinon.spy() }, windowMock);
+    first.instrumentConsole();
+
+    windowMock.console.debug = windowMock.console.log;
+
+    const captureLog = sinon.spy();
+    const second = createInstrumenter({ captureLog }, windowMock);
+    second.instrumentConsole();
+
+    windowMock.console.log('hello');
+    windowMock.console.debug('world');
+    expect(captureLog.args.map((a) => [a[0], a[1]])).to.eql([
+      ['hello', 'log'],
+      ['world', 'log'],
+    ]);
+    expect(log.args).to.eql([['hello'], ['world']]);
+    expect(debug.called).to.eql(false);
+
+    second.deinstrumentConsole();
+    first.deinstrumentConsole();
+    expect(windowMock.console.log).to.equal(log);
+
+    // The app's alias is left in place and still reaches the original log.
+    windowMock.console.debug('again');
+    expect(log.lastCall.args).to.eql(['again']);
+    expect(captureLog.callCount).to.eql(2);
+    expect(debug.called).to.eql(false);
+  });
 });
 
 describe('instrumentDom', function () {
