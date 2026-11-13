@@ -119,7 +119,7 @@ declare namespace Rollbar {
     checkIgnore?: (
       isUncaught: boolean,
       args: LogArgument[],
-      item: Dictionary,
+      item: ItemData,
     ) => boolean;
     /**
      * `codeVersion` takes precedence over `code_version`, if provided.
@@ -187,7 +187,7 @@ declare namespace Rollbar {
     onSendCallback?: (
       isUncaught: boolean,
       args: LogArgument[],
-      item: Dictionary,
+      item: ItemData,
     ) => void;
     overwriteScrubFields?: boolean;
     payload?: Payload;
@@ -207,7 +207,7 @@ declare namespace Rollbar {
     telemetryScrubber?: TelemetryScrubber;
     timeout?: number;
     tracing?: TracingOptions;
-    transform?: (data: Dictionary, item: Dictionary) => void | Promise<void>;
+    transform?: (data: ItemData, item: Dictionary) => void | Promise<void>;
     transmit?: boolean;
     uncaughtErrorLevel?: Level;
     verbose?: boolean;
@@ -230,6 +230,63 @@ declare namespace Rollbar {
     | undefined;
   export interface LogResult {
     uuid: string;
+  }
+  /**
+   * The item data that `transform`, `checkIgnore` and `onSendCallback`
+   * receive. Only common fields are listed. Other keys are allowed.
+   */
+  export interface ItemData {
+    level?: Level;
+    uuid?: string;
+    environment?: string;
+    body?: ItemBody;
+    request?: {
+      url?: string;
+      [key: string]: unknown;
+    };
+    client?: {
+      javascript?: {
+        /** The browser's user agent string. */
+        browser?: string;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+    custom?: Dictionary;
+    [key: string]: unknown;
+  }
+  /**
+   * An item has one of `trace`, `trace_chain` or `message`.
+   */
+  export interface ItemBody {
+    trace?: ItemTrace;
+    /**
+     * Node always uses this. The browser uses it only when the error has a cause.
+     * The first entry is the outer error.
+     */
+    trace_chain?: ItemTrace[];
+    message?: {
+      body: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }
+  export interface ItemTrace {
+    exception: {
+      class?: string;
+      message?: string;
+      description?: string;
+      [key: string]: unknown;
+    };
+    frames?: ItemFrame[];
+    [key: string]: unknown;
+  }
+  export interface ItemFrame {
+    filename?: string;
+    lineno?: number | null;
+    colno?: number;
+    method?: string;
+    [key: string]: unknown;
   }
   export interface TelemetryEvent {
     level: Level;
