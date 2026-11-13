@@ -3179,7 +3179,7 @@ function _getOTLPTransport(options, url) {
 /**
  * Default options shared across platforms
  */
-var version = '4.2.0';
+var version = '4.2.1';
 var endpoint = 'api.rollbar.com/api/1/item/';
 var logLevel = 'debug';
 var reportLevel = 'debug';
